@@ -45,16 +45,19 @@ struct SymmetryElement {
   virtual ~SymmetryElement() = default;
   virtual Matrix matrix() const = 0;
   virtual boost::optional<Vector> vector() const = 0;
+  virtual std::string name() const = 0;
 };
 
 struct Identity final : public SymmetryElement {
   Matrix matrix() const final;
   boost::optional<Vector> vector() const final;
+  std::string name() const final;
 };
 
 struct Inversion final : public SymmetryElement {
   Matrix matrix() const final;
   boost::optional<Vector> vector() const final;
+  std::string name() const final;
 };
 
 struct Rotation final : public SymmetryElement {
@@ -72,6 +75,7 @@ struct Rotation final : public SymmetryElement {
 
   Matrix matrix() const final;
   boost::optional<Vector> vector() const final;
+  std::string name() const final;
 
   Eigen::Vector3d axis;
   unsigned n;
@@ -84,6 +88,7 @@ struct Reflection final : public SymmetryElement {
 
   Matrix matrix() const final;
   boost::optional<Vector> vector() const final;
+  std::string name() const final;
 
   Eigen::Vector3d normal;
 };
@@ -94,10 +99,9 @@ using ElementsList = std::vector<std::unique_ptr<SymmetryElement>>;
  *
  * @param group Point group for which to enumerate symmetry elements
  *
- * @pre @p group is not Cinfv or Dinfh as infinite symmetry elements cannot
- * be represented!
- *
  * @note Yields an empty list of elements for invalid @p group values.
+ *
+ * @warning Cinfv and Dinfh return the elements for C8v and D8h, respectively.
  *
  * @warning Ih and I are not implemented yet. Will assert in Debug and yield a
  * single-element list in Release.

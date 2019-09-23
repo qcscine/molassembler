@@ -27,6 +27,8 @@ struct SO3NelderMead {
     unsigned iterations;
     //! Final function value
     FloatType value;
+    //! Simplex vertex with minimal function value
+    unsigned minimalIndex;
   };
 
   static FloatType distanceSquared(const Matrix& a, const Matrix& b) {
@@ -291,7 +293,8 @@ struct SO3NelderMead {
 
     return {
       iteration,
-      values.front().value
+      values.front().value,
+      values.front().column
     };
   }
 };

@@ -63,28 +63,12 @@ const std::vector<std::string>& pointGroupStrings() {
   return strings;
 }
 
-BOOST_AUTO_TEST_CASE(Recognition) {
-  const std::map<Name, PointGroup> expected {
-    {Name::Linear, PointGroup::Dinfh},
-    {Name::Bent, PointGroup::C2v},
-    {Name::TrigonalPlanar, PointGroup::D3h},
-    {Name::CutTetrahedral, PointGroup::C3v},
-    {Name::TShaped, PointGroup::C2v},
-    {Name::Tetrahedral, PointGroup::Td},
-    {Name::SquarePlanar, PointGroup::D4h},
-    {Name::Seesaw, PointGroup::C2v},
-    {Name::TrigonalPyramidal, PointGroup::C3v},
-    {Name::SquarePyramidal, PointGroup::C4v},
-    {Name::TrigonalBiPyramidal, PointGroup::D3h},
-    {Name::PentagonalPlanar, PointGroup::D5h},
-    {Name::Octahedral, PointGroup::Oh},
-    {Name::TrigonalPrismatic, PointGroup::D3h},
-    {Name::PentagonalPyramidal, PointGroup::C5v},
-    {Name::PentagonalBiPyramidal, PointGroup::D5h},
-    {Name::SquareAntiPrismatic, PointGroup::D4d}
-  };
+const std::string& pointGroupString(PointGroup group) {
+  return pointGroupStrings().at(underlying(group));
+}
 
-  const std::vector<std::string> topNames {
+const std::vector<std::string>& topNames() {
+  static const std::vector<std::string> strings {
     "Linear",
     "Asymmetric",
     "Prolate",
@@ -92,9 +76,41 @@ BOOST_AUTO_TEST_CASE(Recognition) {
     "Spherical"
   };
 
+  return strings;
+}
+
+const std::string& topName(Top top) {
+  return topNames().at(underlying(top));
+}
+
+BOOST_AUTO_TEST_CASE(Recognition) {
+  const std::map<Name, PointGroup> expected {
+    {Name::Bent, PointGroup::C2v}
+  };
+
+  // const std::map<Name, PointGroup> expected {
+  //   {Name::Linear, PointGroup::Dinfh},
+  //   {Name::Bent, PointGroup::C2v},
+  //   {Name::TrigonalPlanar, PointGroup::D3h},
+  //   {Name::CutTetrahedral, PointGroup::C3v},
+  //   {Name::TShaped, PointGroup::C2v},
+  //   {Name::Tetrahedral, PointGroup::Td},
+  //   {Name::SquarePlanar, PointGroup::D4h},
+  //   {Name::Seesaw, PointGroup::C2v},
+  //   {Name::TrigonalPyramidal, PointGroup::C3v},
+  //   {Name::SquarePyramidal, PointGroup::C4v},
+  //   {Name::TrigonalBiPyramidal, PointGroup::D3h},
+  //   {Name::PentagonalPlanar, PointGroup::D5h},
+  //   {Name::Octahedral, PointGroup::Oh},
+  //   {Name::TrigonalPrismatic, PointGroup::D3h},
+  //   {Name::PentagonalPyramidal, PointGroup::C5v},
+  //   {Name::PentagonalBiPyramidal, PointGroup::D5h},
+  //   {Name::SquareAntiPrismatic, PointGroup::D4d}
+  // };
+
   for(const auto& nameGroupPair : expected) {
     auto positions = addOrigin(symmetryData().at(nameGroupPair.first).coordinates);
-    distort(positions);
+    // distort(positions);
     auto normalized = detail::normalize(positions);
 
     // Add a random coordinate transformation
@@ -106,38 +122,27 @@ BOOST_AUTO_TEST_CASE(Recognition) {
     // Standardize the top
     Top top = standardizeTop(normalized);
 
-    // Linear tops get special treatment
-    if(top == Top::Linear) {
-      std::cout << Symmetry::name(nameGroupPair.first)
-        << " top is linear, no CSM calculation available.\n";
+    const double pgCSM = csm::pointGroup(
+      normalized,
+      nameGroupPair.second
+    ).value_or(1000);
+    BOOST_REQUIRE_MESSAGE(
+      pgCSM != 1000,
+      "Could not calculate "
+      << pointGroupString(nameGroupPair.second)
+      << " CSM for " << Symmetry::name(nameGroupPair.first)
+    );
 
-      PointGroup result = detail::linear(normalized);
-      BOOST_CHECK_MESSAGE(
-        result == nameGroupPair.second,
-        "Expected " << pointGroupStrings().at(underlying(nameGroupPair.second))
-        << " for " << Symmetry::name(nameGroupPair.first) << ", got "
-        << pointGroupStrings().at(underlying(result)) << " instead."
-      );
-    } else {
-      const double pgCSM = csm::pointGroup(
-        normalized,
-        nameGroupPair.second
-      ).value_or(1000);
-      BOOST_CHECK_MESSAGE(
-        pgCSM != 1000,
-        "Could not calculate "
-        << pointGroupStrings().at(underlying(nameGroupPair.second))
-        << " CSM for " << Symmetry::name(nameGroupPair.first)
-      );
-
-      std::cout << Symmetry::name(nameGroupPair.first)
-        << " top is " << topNames.at(underlying(top)) << ", "
-        << pointGroupStrings().at(underlying(nameGroupPair.second))
-        << " csm is " << pgCSM << "\n";
-    }
+    BOOST_CHECK_MESSAGE(
+      pgCSM < 1,
+      "Expected CSM(" << pointGroupString(nameGroupPair.second)
+      << ") < 1 for " << Symmetry::name(nameGroupPair.first)
+      << ", got " << pgCSM << " (top is " << topName(top) << ")"
+    );
   }
 }
 
+// TODO reframe as a test, not just as output testing
 BOOST_AUTO_TEST_CASE(PointGroupElements) {
   auto writeXYZ = [](const std::string& filename, const PositionCollection& positions) {
     std::ofstream outfile(filename);
@@ -161,17 +166,31 @@ BOOST_AUTO_TEST_CASE(PointGroupElements) {
   auto writePointGroup = [&](const PointGroup group) {
     const auto elements = elements::symmetryElements(group);
     const auto groupings = elements::npGroupings(elements);
-    std::cout << pointGroupStrings().at(underlying(group)) << "\n";
+    std::cout << pointGroupStrings().at(underlying(group)) << ": {";
+    for(const auto& element : elements) {
+      std::cout << element -> name() << ", ";
+    }
+    std::cout << "}\n";
     for(const auto& iterPair : groupings) {
       std::cout << "  np = " << iterPair.first << " along " << iterPair.second.probePoint.transpose() << " -> " << temple::stringify(iterPair.second.groups) << "\n";
+      std::cout << "  ";
+      std::cout << temple::stringifyContainer(iterPair.second.groups,
+        [&](const auto& grp) -> std::string {
+          return temple::stringifyContainer(grp,
+            [&elements](const unsigned elementIdx) -> std::string {
+              return elements.at(elementIdx)->name();
+            }
+          );
+        }
+      ) << "\n";
     }
   };
 
-  const PointGroup limit = PointGroup::Th;
-  for(unsigned g = 0; g < underlying(limit); ++g) {
-    writePointGroup(static_cast<PointGroup>(g));
-  }
-  writePointGroup(PointGroup::Oh);
+  // const PointGroup limit = PointGroup::Td;
+  // for(unsigned g = 0; g < underlying(limit); ++g) {
+  //   writePointGroup(static_cast<PointGroup>(g));
+  // }
+  writePointGroup(PointGroup::C2v);
 }
 
 BOOST_AUTO_TEST_CASE(PaperCSMExamples) {
@@ -202,7 +221,7 @@ BOOST_AUTO_TEST_CASE(PaperCSMExamples) {
   c3vPositions.col(2) = Eigen::Vector3d {0.75128605, -0.39338892, -0.52991926};
 
   /* NOTE: Sign inversion on x is speculative, paper reprints P3 = P4 positions
-   * although this does not make sense at all.
+   * although this does not make sense to me.
    */
   c3vPositions.col(3) = Eigen::Vector3d {-0.75128605, -0.39338892, -0.52991926};
 
@@ -251,14 +270,6 @@ BOOST_AUTO_TEST_CASE(InertialStandardization) {
     {Name::Tetrahedral, Top::Spherical}
   };
 
-  const std::vector<std::string> topNames {
-    "Linear",
-    "Asymmetric",
-    "Prolate",
-    "Oblate",
-    "Spherical"
-  };
-
   for(const auto nameTopPair : tops) {
     auto positions = addOrigin(symmetryData().at(nameTopPair.first).coordinates);
 
@@ -274,9 +285,84 @@ BOOST_AUTO_TEST_CASE(InertialStandardization) {
     BOOST_CHECK_MESSAGE(
       top == nameTopPair.second,
       "Top standardization failed. Expected "
-      << topNames.at(static_cast<unsigned>(nameTopPair.second))
+      << topNames().at(static_cast<unsigned>(nameTopPair.second))
       << " for symmetry " << Symmetry::name(nameTopPair.first)
-      << ", got " << topNames.at(static_cast<unsigned>(top)) << " instead."
+      << ", got " << topNames().at(static_cast<unsigned>(top)) << " instead."
     );
   }
+}
+
+BOOST_AUTO_TEST_CASE(FixedCnAxis) {
+  const std::vector<std::pair<Name, unsigned>> highestOrderAxis {
+    {Name::Bent, 2},
+    {Name::TrigonalPlanar, 3},
+    {Name::CutTetrahedral, 3},
+    {Name::TShaped, 2},
+    {Name::Tetrahedral, 3},
+    {Name::SquarePlanar, 4},
+    {Name::Seesaw, 2},
+    {Name::TrigonalPyramidal, 3},
+    {Name::SquarePyramidal, 4},
+    {Name::TrigonalBiPyramidal, 3},
+    {Name::PentagonalPlanar, 5},
+    {Name::Octahedral, 4},
+    {Name::TrigonalPrismatic, 3},
+    {Name::PentagonalPyramidal, 5},
+    {Name::PentagonalBiPyramidal, 5},
+    {Name::SquareAntiPrismatic, 4}
+  };
+
+  const Eigen::Matrix3d axes = Eigen::Matrix3d::Identity();
+
+  constexpr double acceptanceThreshold = 0.1;
+
+  for(const auto& nameOrderPair : highestOrderAxis) {
+    std::cout << "For symmetry " << Symmetry::name(nameOrderPair.first) << "\n";
+    auto positions = addOrigin(symmetryData().at(nameOrderPair.first).coordinates);
+    distort(positions);
+
+    auto normalizedPositions = detail::normalize(positions);
+    standardizeTop(normalizedPositions);
+
+    boost::optional<unsigned> highestFoundOrder;
+    for(unsigned i = 0; i < 3; ++i) {
+      Eigen::Vector3d axis = axes.col(i);
+      char axisChar = "xyz"[i];
+      for(unsigned n = 2; n < 6; ++n) {
+        const double cn = csm::element(normalizedPositions, elements::Rotation::Cn(axis, n));
+
+        if(cn < acceptanceThreshold) {
+          std::cout << "Found ";
+          highestFoundOrder = n;
+        }
+
+        std::cout << "C" << n << " = " << cn << " along " << axisChar << "-axis\n";
+      }
+    }
+
+    BOOST_CHECK_MESSAGE(
+      highestFoundOrder,
+      "No Cn axis found along any principal moment axis for "
+      << Symmetry::name(nameOrderPair.first)
+    );
+    if(highestFoundOrder) {
+      BOOST_CHECK_MESSAGE(
+        highestFoundOrder.value() == nameOrderPair.second,
+        "Expected to find Cn of order " << nameOrderPair.second << ", but found " << highestFoundOrder.value() << " instead."
+      );
+    }
+  }
+}
+
+BOOST_AUTO_TEST_CASE(AsymmetricTopStandardization) {
+  auto coordinates = addOrigin(symmetryData().at(Symmetry::Name::Bent).coordinates);
+  auto normalizedPositions = detail::normalize(coordinates);
+  Top top = standardizeTop(normalizedPositions);
+  BOOST_REQUIRE(top == Top::Asymmetric);
+
+  unsigned highestAxisOrder = reorientAsymmetricTop(normalizedPositions);
+  BOOST_CHECK(highestAxisOrder == 2);
+
+  // Ensure rotation of highest order axis to z worked
+  BOOST_CHECK(csm::element(normalizedPositions, elements::Rotation::Cn(Eigen::Vector3d::UnitZ(), 2)) < 1e-10);
 }

@@ -12,6 +12,7 @@
 #ifndef INCLUDE_MOLASSEMBLER_TEMPLE_FUNCTIONAL_H
 #define INCLUDE_MOLASSEMBLER_TEMPLE_FUNCTIONAL_H
 
+#include "temple/Functor.h"
 #include "temple/Invoke.h"
 #include "temple/AddToContainer.h"
 
@@ -237,8 +238,8 @@ template<
  *
  * @complexity{@math{O(N)}}
  */
-template<class Container, class UnaryPredicate>
-bool all_of(const Container& container, UnaryPredicate&& predicate) {
+template<class Container, class UnaryPredicate = functor::Identity>
+bool all_of(const Container& container, UnaryPredicate&& predicate = UnaryPredicate {}) {
   for(const auto& element : container) {
     if(!invoke(predicate, element)) {
       return false;
@@ -252,8 +253,8 @@ bool all_of(const Container& container, UnaryPredicate&& predicate) {
  *
  * @complexity{@math{O(N)}}
  */
-template<class Container, class UnaryPredicate>
-bool any_of(const Container& container, UnaryPredicate&& predicate) {
+template<class Container, class UnaryPredicate = functor::Identity>
+bool any_of(const Container& container, UnaryPredicate&& predicate = UnaryPredicate {}) {
   for(const auto& element : container) {
     if(invoke(predicate, element)) {
       return true;

@@ -47,11 +47,21 @@ Eigen::Matrix3d rotationMatrix(const CoordinateSystem& a, const CoordinateSystem
   /* If z is z', then z x z' is a null vector, with which we cannot rotate
    * anything. Catch the case that z matches already:
    */
-  if(std::fabs(detail::angle(a.z, b.z)) < 1e-8) {
+  if(a.z.isApprox(b.z, 1e-8)) {
     return Eigen::AngleAxisd(
       detail::signedAngle(a.x, b.x, a.z),
       a.z
     ).toRotationMatrix();
+  }
+
+  /* If z is -z', then z x z' is still a null vector with which we cannot
+   * rotate anything. Catch that case too:
+   */
+  if(a.z.isApprox(-b.z, 1e-8)) {
+    return Eigen::AngleAxisd(
+      -detail::signedAngle(a.x, b.x, a.z),
+      a.z
+    ).toRotationMatrix() * (-Eigen::Matrix3d::Identity());
   }
 
   const Eigen::Vector3d N = a.z.cross(b.z);

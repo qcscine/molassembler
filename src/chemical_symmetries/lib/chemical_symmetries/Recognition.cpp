@@ -15,7 +15,7 @@
 #include <Eigen/Geometry>
 #include "temple/Functional.h"
 #include "temple/Optimization/Common.h"
-#include "temple/Optimization/NelderMead.h"
+#include "temple/Optimization/SO3NelderMead.h"
 #include "temple/Optimization/TrustRegion.h"
 
 #include "temple/Stringify.h"
@@ -143,6 +143,7 @@ double calculateCSM(
   const std::vector<unsigned>& particles
 ) {
   const unsigned p = particles.size();
+  assert(p == unfoldMatrices.cols() / 3);
 
   double value = 0;
 
@@ -175,6 +176,7 @@ double calculateCSM(
   const unsigned p = particles.size();
   const unsigned l = elementGrouping.groups.front().size();
   assert(p * l == unfoldMatrices.cols() / 3);
+  assert(temple::all_of(elementGrouping.groups, [l](const auto& group) { return group.size() == l; }));
 
   double value = 0;
 
@@ -190,16 +192,17 @@ double calculateCSM(
 
   /* Unfold points */
   for(unsigned i = 0; i < p; ++i) {
-    const auto& elements = elementGrouping.groups.at(i);
-    for(unsigned j = 0; j < l; ++j) {
-      value += (
-        unfoldMatrices.block<3, 3>(0, 3 * elements.at(j)) * averagePoint
-        - normalizedPositions.col(particles.at(i))
-      ).squaredNorm();
-    }
+    /* The source paper proves that the average point is always on some
+     * symmetry element and there is no need to do each symmetry element of
+     * each group in unfolding
+     */
+    value += (
+      unfoldMatrices.block<3, 3>(0, 3 * elementGrouping.groups.at(i).front()) * averagePoint
+      - normalizedPositions.col(particles.at(i))
+    ).squaredNorm();
   }
 
-  value *= 100.0 / (p * l);
+  value *= 100.0 / p;
   return value;
 }
 
@@ -215,6 +218,8 @@ double allSymmetryElements(
   assert(P == G);
 
   double value = 1000;
+  // TODO remove this stuff when you're happy with the debug
+  std::vector<unsigned> bestPermutation;
 
   do {
     double permutationCSM = calculateCSM(
@@ -224,13 +229,72 @@ double allSymmetryElements(
       particleIndices
     );
 
-    value = std::min(value, permutationCSM);
+    if(permutationCSM < value) {
+      value = permutationCSM;
+      bestPermutation = particleIndices;
+    }
   } while(
     std::next_permutation(
       std::begin(particleIndices),
       std::end(particleIndices)
     )
   );
+
+#ifndef NDEBUG
+  static unsigned foldCount = 0;
+
+  std::ofstream outfile("fold" + std::to_string(foldCount) +".xyz");
+  const unsigned N = normalizedPositions.cols();
+  outfile << (2 * N + 3) << "\n\n";
+  outfile << std::fixed << std::setprecision(10);
+  /* Regular positions: N */
+  for(unsigned i = 0; i < N; ++i) {
+    outfile << std::left << std::setw(3) << "H";
+    outfile << std::right
+      << std::setw(16) << normalizedPositions.col(i).x()
+      << std::setw(16) << normalizedPositions.col(i).y()
+      << std::setw(16) << normalizedPositions.col(i).z()
+      << "\n";
+  }
+  // Z axis markers: 2
+  outfile << std::left << std::setw(3) << "Cl";
+  outfile << std::right
+    << std::setw(16) << 0.0
+    << std::setw(16) << 0.0
+    << std::setw(16) << 2.0
+    << "\n";
+  outfile << std::left << std::setw(3) << "Cl";
+  outfile << std::right
+    << std::setw(16) << 0.0
+    << std::setw(16) << 0.0
+    << std::setw(16) << -2.0
+    << "\n";
+  // Average position: 1
+  Eigen::Vector3d averagePoint = Eigen::Vector3d::Zero();
+  for(unsigned i = 0; i < N; ++i) {
+    averagePoint += foldMatrices.block<3, 3>(0, 3 * i) * normalizedPositions.col(particleIndices.at(i));
+  }
+  averagePoint /= N;
+  outfile << std::left << std::setw(3) << "Br";
+  outfile << std::right
+      << std::setw(16) << averagePoint.x()
+      << std::setw(16) << averagePoint.y()
+      << std::setw(16) << averagePoint.z()
+      << "\n";
+  /* Unfolded positions: N */
+  for(unsigned i = 0; i < N; ++i) {
+    const Eigen::Vector3d unfolded = unfoldMatrices.block<3, 3>(0, 3 * i) * averagePoint;
+    outfile << std::left << std::setw(3) << "F";
+    outfile << std::right
+        << std::setw(16) << unfolded.x()
+        << std::setw(16) << unfolded.y()
+        << std::setw(16) << unfolded.z()
+        << "\n";
+  }
+
+  outfile.close();
+  ++foldCount;
+#endif
 
   return value;
 }
@@ -295,7 +359,10 @@ double groupedSymmetryElements(
   assert(elementGrouping.groups.size() == particleIndices.size());
   assert(std::is_sorted(std::begin(particleIndices), std::end(particleIndices)));
 
+  // TODO get rid of bestPermutation
+
   double value = 1000;
+  std::vector<unsigned> bestPermutation;
 
   do {
     double permutationCSM = calculateCSM(
@@ -305,13 +372,102 @@ double groupedSymmetryElements(
       particleIndices,
       elementGrouping
     );
-    value = std::min(value, permutationCSM);
+    if(permutationCSM < value) {
+      value = permutationCSM;
+      bestPermutation = particleIndices;
+    }
   } while(
     std::next_permutation(
       std::begin(particleIndices),
       std::end(particleIndices)
     )
   );
+
+#ifndef NDEBUG
+  static unsigned foldCount = 0;
+
+  std::ofstream outfile("foldgrouped" + std::to_string(foldCount) +".xyz");
+  const unsigned N = normalizedPositions.cols();
+  const unsigned G = foldMatrices.cols() / 3;
+  outfile << (2 * N + 3 + G) << "\n";
+  outfile << "CSM  = " << value << "\n";
+  outfile << std::fixed << std::setprecision(10);
+  /* Regular positions: N */
+  // for(unsigned particle : particleIndices) {
+  //   outfile << std::left << std::setw(3) << "H";
+  //   outfile << std::right
+  //     << std::setw(16) << normalizedPositions.col(particle).x()
+  //     << std::setw(16) << normalizedPositions.col(particle).y()
+  //     << std::setw(16) << normalizedPositions.col(particle).z()
+  //     << "\n";
+  // }
+  for(unsigned i = 0; i < N; ++i) {
+    if(temple::makeContainsPredicate(particleIndices)(i)) {
+      outfile << std::left << std::setw(3) << "H";
+    } else {
+      outfile << std::left << std::setw(3) << "C";
+    }
+    outfile << std::right
+      << std::setw(16) << normalizedPositions.col(i).x()
+      << std::setw(16) << normalizedPositions.col(i).y()
+      << std::setw(16) << normalizedPositions.col(i).z()
+      << "\n";
+  }
+  // Z axis markers: 2
+  outfile << std::left << std::setw(3) << "Cl";
+  outfile << std::right
+    << std::setw(16) << 0.0
+    << std::setw(16) << 0.0
+    << std::setw(16) << 2.0
+    << "\n";
+  outfile << std::left << std::setw(3) << "Cl";
+  outfile << std::right
+    << std::setw(16) << 0.0
+    << std::setw(16) << 0.0
+    << std::setw(16) << -2.0
+    << "\n";
+  // Average position: G + 1
+  Eigen::Vector3d averagePoint = Eigen::Vector3d::Zero();
+  const unsigned p = particleIndices.size();
+  const unsigned l = elementGrouping.groups.front().size();
+  for(unsigned i = 0; i < p; ++i) {
+    const auto& elements = elementGrouping.groups.at(i);
+    for(unsigned j = 0; j < l; ++j) {
+      const Eigen::Vector3d folded = foldMatrices.block<3, 3>(0, 3 * elements.at(j)) * normalizedPositions.col(bestPermutation.at(i));
+      outfile << std::left << std::setw(3) << "N";
+      outfile << std::right
+        << std::setw(16) << folded.x()
+        << std::setw(16) << folded.y()
+        << std::setw(16) << folded.z()
+        << "\n";
+      averagePoint += folded;
+    }
+  }
+  averagePoint /= (p * l);
+
+  outfile << std::left << std::setw(3) << "Br";
+  outfile << std::right
+      << std::setw(16) << averagePoint.x()
+      << std::setw(16) << averagePoint.y()
+      << std::setw(16) << averagePoint.z()
+      << "\n";
+  /* Unfolded positions: N */
+  for(unsigned i = 0; i < p; ++i) {
+    const auto& elements = elementGrouping.groups.at(i);
+    for(unsigned j = 0; j < l; ++j) {
+      const Eigen::Vector3d unfolded = unfoldMatrices.block<3, 3>(0, 3 * elements.at(j)) * averagePoint;
+      outfile << std::left << std::setw(3) << "F";
+      outfile << std::right
+          << std::setw(16) << unfolded.x()
+          << std::setw(16) << unfolded.y()
+          << std::setw(16) << unfolded.z()
+          << "\n";
+    }
+  }
+
+  outfile.close();
+  ++foldCount;
+#endif
 
   return value;
 }
@@ -401,42 +557,16 @@ struct OrientationCSMFunctor {
     return fold;
   }
 
-  static Eigen::Matrix3d eulerRotation(const Eigen::VectorXd& parameters) {
-    // Three euler angles in radians
-    assert(parameters.size() == 3);
-    const double alpha = parameters(0);
-    const double beta = parameters(1);
-    const double gamma = parameters(2);
-
-    // Figure out N and z'
-    const Eigen::Vector3d N = Eigen::AngleAxisd(
-      alpha,
-      Eigen::Vector3d::UnitZ()
-    ) * Eigen::Vector3d::UnitX();
-
-    const Eigen::Vector3d zPrime = Eigen::AngleAxisd(
-      beta,
-      N
-    ) * Eigen::Vector3d::UnitZ();
-
-    // Compose the euler rotation matrix
-    return (
-      Eigen::AngleAxisd(gamma, zPrime.normalized())
-      * Eigen::AngleAxisd(beta, N.normalized())
-      * Eigen::AngleAxisd(alpha, Eigen::Vector3d::UnitZ())
-    ).toRotationMatrix();
-  }
-
   double direct_csm(
     const PositionCollection& positions,
-    const std::vector<unsigned>& particleIndices
+    std::vector<unsigned> particleIndices
   ) const {
     assert(particleIndices.size() == static_cast<decltype(particleIndices.size())>(foldMatrices.cols()) / 3);
     return allSymmetryElements(
       positions,
       unfoldMatrices,
       foldMatrices,
-      particleIndices
+      std::move(particleIndices)
     );
   }
 
@@ -451,6 +581,7 @@ struct OrientationCSMFunctor {
       throw std::logic_error("Diophantine failure! Couldn't find first solution");
     }
 
+    std::cout << "Diophantine constants: " << temple::condense(subdivisionGroupSizes) << " = " << P << "\n";
     double value = 1000;
     do {
       /* We have a composition of groups to subdivide our points:
@@ -482,6 +613,7 @@ struct OrientationCSMFunctor {
       assert(flatGroupMap.size() == P);
 
       do {
+        std::cout << " groups of equal size permutation " << temple::condense(flatGroupMap) << "\n";
         /* For each of these permutations, we sub-partition each group using
          * Partitioner. This is necessary to treat multipliers > 1 correctly.
          *
@@ -511,12 +643,15 @@ struct OrientationCSMFunctor {
             continue;
           }
 
+          std::cout << "  Group of size " << groupSize << " (index " << i << ")\n";
+
           /* Subpartition csm is minimized over the sub-partitions of
            * groups of equal size
            */
           Partitioner partitioner {multiplier, groupSize};
           double bestSubpartitionCSM = 1000;
           do {
+            std::cout << "  Partition: " << temple::condense(partitioner.map()) << "\n";
             double subpartitionCSM = 0;
             for(auto&& partitionIndices : partitioner.partitions()) {
               /* Map all the way back to actual particle indices:
@@ -531,22 +666,33 @@ struct OrientationCSMFunctor {
                 }
               );
 
-              subpartitionCSM += groupedSymmetryElements(
+              // TODO move partitionParticles
+              const double permutationalGroupCSM = groupedSymmetryElements(
                 positions,
                 partitionParticles,
                 unfoldMatrices,
                 foldMatrices,
                 npGroup
               );
+
+              std::cout << "   Subpartition: " << temple::condense(partitionParticles) << " CSM = " << permutationalGroupCSM << "\n";
+
+              subpartitionCSM += permutationalGroupCSM;
             }
+            subpartitionCSM /= multiplier;
             bestSubpartitionCSM = std::min(bestSubpartitionCSM, subpartitionCSM);
           } while(partitioner.next_partition());
 
-          partitionCSM += bestSubpartitionCSM;
+          // Weight by number of points in this subpartition
+          partitionCSM += multiplier * groupSize * bestSubpartitionCSM;
         }
+        // Average over number of points
+        partitionCSM /= P;
 
         value = std::min(value, partitionCSM);
       } while(std::next_permutation(std::begin(flatGroupMap), std::end(flatGroupMap)));
+
+      std::cout << "Diophantine multipliers: " << temple::condense(subdivisionMultipliers) << ", csm = " << value << "\n";
     } while(diophantine::next_solution(subdivisionMultipliers, subdivisionGroupSizes, P));
 
     return value;
@@ -576,8 +722,9 @@ struct OrientationCSMFunctor {
           particleIndices.push_back(j);
         }
 
+        // TODO reweight?
         const double oneSymmetrizedToOriginCSM = (
-          direct_csm(positions, particleIndices)
+          direct_csm(positions, std::move(particleIndices))
           + positions.col(i).squaredNorm() * 100
         );
 
@@ -624,6 +771,7 @@ struct OrientationCSMFunctor {
           particleIndices.push_back(j);
         }
 
+        // TODO reweight?
         const double oneSymmetrizedToOriginCSM = (
           diophantine_csm(positions, subdivisionGroupSizes, particleIndices)
           + positions.col(i).squaredNorm() * 100
@@ -638,8 +786,8 @@ struct OrientationCSMFunctor {
     throw std::logic_error("You shouldn't even instantiate this type if you know that you cannot calculate a CSM");
   }
 
-  double operator() (const Eigen::VectorXd& parameters) const {
-    const PositionCollection rotatedCoordinates = eulerRotation(parameters) * coordinates;
+  double operator() (const Eigen::Matrix3d& rotation) const {
+    const PositionCollection rotatedCoordinates = rotation * coordinates;
     return csm(rotatedCoordinates);
   }
 };
@@ -692,626 +840,195 @@ boost::optional<double> pointGroup(
 
   OrientationCSMFunctor functor {normalizedPositions, group};
 
-  // Set up the initial simplex
-  Eigen::MatrixXd simplex(3, 4);
-  simplex.col(0) = Eigen::Vector3d::Zero();
-  simplex.block<3, 3>(0, 1) = Eigen::Matrix3d::Identity();
+  using MinimizerType = temple::SO3NelderMead<>;
+  // Set up the initial simplex to capture asymmetric tops and x/y mixups
+  MinimizerType::Parameters simplex;
+  simplex[0] = Eigen::Matrix3d::Identity();
+  simplex[1] = Eigen::AngleAxisd(M_PI / 2, Eigen::Vector3d::UnitX()).toRotationMatrix();
+  simplex[2] = Eigen::AngleAxisd(M_PI / 2, Eigen::Vector3d::UnitY()).toRotationMatrix();
+  simplex[3] = Eigen::AngleAxisd(M_PI / 2, Eigen::Vector3d::UnitZ()).toRotationMatrix();
 
   struct NelderMeadChecker {
     bool shouldContinue(unsigned iteration, double lowestValue, double stddev) const {
-      return iteration < 1000 && lowestValue > 1e-3 && stddev > 1e-2;
+      return iteration < 1000 && lowestValue > 1e-3 && stddev > 1e-4;
     }
   };
 
-  auto minimizationResult = temple::NelderMead<>::minimize(
+  auto minimizationResult = MinimizerType::minimize(
     simplex,
     functor,
     NelderMeadChecker {}
   );
 
-  std::cout << "Minimized to " << minimizationResult.value << " in " << minimizationResult.iterations << " iterations. Final simplex:\n " << simplex << "\n";
+#ifndef NDEBUG
+  std::cout << "Minimized to " << minimizationResult.value << " in " << minimizationResult.iterations << " iterations.\n";
+
+  static unsigned optimizationNumber = 0;
+
+  auto writeXYZ = [](const std::string& filename, const PositionCollection& positions) {
+    std::ofstream outfile(filename);
+    const unsigned N = positions.cols();
+    outfile << (N + 2) << "\n\n";
+    outfile << std::fixed << std::setprecision(10);
+    for(unsigned i = 0; i < N; ++i) {
+      outfile << std::left << std::setw(3) << "H";
+      outfile << std::right
+        << std::setw(16) << positions.col(i).x()
+        << std::setw(16) << positions.col(i).y()
+        << std::setw(16) << positions.col(i).z()
+        << "\n";
+    }
+    outfile << std::left << std::setw(3) << "F";
+    outfile << std::right
+      << std::setw(16) << 0.0
+      << std::setw(16) << 0.0
+      << std::setw(16) << 2.0
+      << "\n";
+    outfile << std::left << std::setw(3) << "F";
+    outfile << std::right
+      << std::setw(16) << 0.0
+      << std::setw(16) << 0.0
+      << std::setw(16) << -2.0
+      << "\n";
+    outfile.close();
+  };
+
+  writeXYZ(
+    std::to_string(optimizationNumber)+".xyz",
+    simplex.at(minimizationResult.minimalIndex) * normalizedPositions
+  );
+
+  ++optimizationNumber;
+#endif
 
   return minimizationResult.value;
 }
 
-namespace cn {
-
-PositionCollection symmetrize(
+double element(
   const PositionCollection& normalizedPositions,
-  const Eigen::Vector3d& axis,
-  const unsigned n,
-  const std::vector<
-    std::vector<unsigned>
-  > groups
+  elements::Rotation rotation
 ) {
-  PositionCollection symmetrizedPositions = normalizedPositions;
-
-  for(const auto& group : groups) {
-    const double angleRadians = 2 * M_PI / n;
-    /* Fold */
-    // The first position is unchanged, hence we start with i = 1
-    for(unsigned i = 1; i < n; ++i) {
-      symmetrizedPositions.col(group.front()) += Eigen::AngleAxisd(i * angleRadians, axis) * normalizedPositions.col(group.at(i));
-    }
-
-    // Average the folded positions
-    symmetrizedPositions.col(group.front()) /= n;
-
-    /* Unfold */
-    for(unsigned i = 1; i < n; ++i) {
-      symmetrizedPositions.col(group.at(i)) = Eigen::AngleAxisd(-i * angleRadians, axis) * symmetrizedPositions.col(group.front());
-    }
-  }
-
-  return symmetrizedPositions;
-}
-
-double evaluatePermutation(
-  const PositionCollection& normalizedPositions,
-  const Eigen::Vector3d& axis,
-  const unsigned n,
-  const std::vector<unsigned>& groupPermutation
-) {
-  assert(n >= 2);
-
-  const double angleRadians = 2 * M_PI / n;
-  Eigen::Vector3d averagePoint = normalizedPositions.col(groupPermutation.front());
-
-  /* Fold and average */
-  averagePoint = normalizedPositions.col(groupPermutation.front());
-  for(unsigned i = 1; i < n; ++i) {
-    averagePoint.noalias() += Eigen::AngleAxisd(i * angleRadians, axis) * normalizedPositions.col(groupPermutation.at(i));
-  }
-  averagePoint /= n;
-
-  /* Calculate CSM while unfolding */
-  double csm = (
-    normalizedPositions.col(groupPermutation.front())
-    - averagePoint
-  ).squaredNorm();
-
-  for(unsigned i = 1; i < n; ++i) {
-    csm += (
-      normalizedPositions.col(groupPermutation.at(i))
-      - Eigen::AngleAxisd(i * angleRadians, -axis) * averagePoint
-    ).squaredNorm();
-  }
-
-  return csm;
-}
-
-/**
- * @brief Functor for minimizing csm as a function of cn axis
- */
-struct AxisMinimizationFunctor {
-  using GroupsType = std::vector<
-    std::vector<unsigned>
-  >;
-  std::reference_wrapper<const PositionCollection> normalizedPositionsRef;
-  std::reference_wrapper<const GroupsType> groupsRef;
-  unsigned axis_n;
-
-  AxisMinimizationFunctor(
-    const PositionCollection& positions,
-    const GroupsType& groups,
-    const unsigned axisOrder
-  ) : normalizedPositionsRef(positions),
-      groupsRef(groups),
-      axis_n(axisOrder)
-  {
-    assert(
-      temple::all_of(groups,
-        [axisOrder](const auto& g) { return g.size() == axisOrder; }
-      )
-    );
-  }
-
-  double evaluate(const Eigen::VectorXd& parameters) {
-    const Eigen::Vector3d axis {
-      std::sin(parameters(0)) * std::cos(parameters(1)),
-      std::sin(parameters(0)) * std::sin(parameters(1)),
-      std::cos(parameters(0))
-    };
-
-    double csm = 0;
-    for(const auto& group : groupsRef.get()) {
-      csm += evaluatePermutation(
-        normalizedPositionsRef.get(),
-        axis,
-        axis_n,
-        group
-      );
-    }
-
-    return csm;
-  }
-
-  void numericalEvaluation(
-    const Eigen::VectorXd& parameters,
-    double& value,
-    Eigen::Ref<Eigen::VectorXd> gradient,
-    Eigen::Ref<Eigen::MatrixXd> hessian
-  ) {
-    value = evaluate(parameters);
-    gradient = temple::optimization::numericalGradient(
-      [this](const Eigen::VectorXd& p) -> double {
-        return evaluate(p);
-      },
-      parameters
-    );
-    hessian = temple::optimization::numericalHessian(
-      [this](const Eigen::VectorXd& p) -> double {
-        return evaluate(p);
-      },
-      parameters
-    );
-  }
-
-  void explicitEvaluation(
-    const Eigen::VectorXd& parameters,
-    double& value,
-    Eigen::Ref<Eigen::VectorXd> gradient,
-    Eigen::Ref<Eigen::MatrixXd> hessian
-  ) {
-    assert(parameters.size() == 2);
-    assert(gradient.size() == 2);
-    assert(hessian.rows() == 2 && hessian.cols() == 2);
-
-    const double& theta = parameters(0);
-    const double& phi = parameters(1);
-    const Eigen::Vector3d n {
-      std::sin(theta) * std::cos(phi),
-      std::sin(theta) * std::sin(phi),
-      std::cos(theta)
-    };
-
-    assert(std::fabs(n.squaredNorm() - 1) <= 1e-10);
-
-    value = 0;
-
-    Eigen::Matrix3d M = Eigen::Matrix3d::Zero();
-    Eigen::Vector3d h = Eigen::Vector3d::Zero();
-    const double alpha = 2.0 * M_PI / axis_n;
-
-    const auto& groups = groupsRef.get();
-    const auto& normalizedPositions = normalizedPositionsRef.get();
-
-    for(const auto& group : groups) {
-      Eigen::Vector3d a, b, c;
-      for(unsigned i = 0; i < axis_n; ++i) {
-        a.setZero();
-        b.setZero();
-        c.setZero();
-
-        /* Calculate a, b and c */
-        // Terms of j < i
-        for(unsigned j = 0; j < i; ++j) {
-          const double compoundAngle = (axis_n + j - i) * alpha;
-          const double cosine = std::cos(compoundAngle);
-          const auto& position = normalizedPositions.col(group.at(j));
-
-          a.noalias() += cosine * position;
-          b.noalias() += (1 - cosine) * position;
-          c.noalias() += std::sin(compoundAngle) * position;
-        }
-        // Terms for j == i
-        a.noalias() += (1 - static_cast<int>(axis_n)) * normalizedPositions.col(group.at(i));
-        // Terms for j > i
-        for(unsigned j = i + 1; j < axis_n; ++j) {
-          const double compoundAngle = (j - i) * alpha;
-          const double cosine = std::cos(compoundAngle);
-          const auto& position = normalizedPositions.col(group.at(j));
-
-          a.noalias() += cosine * position;
-          b.noalias() += (1 - cosine) * position;
-          c.noalias() += std::sin(compoundAngle) * position;
-        }
-
-        // Average out all vectors
-        a /= axis_n;
-        b /= axis_n;
-        c /= axis_n;
-
-        // Add value contributions
-        value += (a + n.dot(b) * n + n.cross(c)).squaredNorm();
-
-        /* Add contributions to M and h */
-        const Eigen::Matrix3d intermediate = a * b.transpose();
-        M.noalias() += (
-          a * a.transpose()
-          - c * c.transpose()
-          + intermediate
-          + intermediate.transpose()
-        );
-        h.noalias() += c.cross(a);
-      }
-    }
-
-    // Calculate gradient components
-    const Eigen::Vector3d Mnph = M * n + h;
-    const Eigen::Vector3d nPartialTheta {
-      std::cos(theta) * std::cos(phi),
-      std::cos(theta) * std::sin(phi),
-      - std::sin(theta)
-    };
-    const Eigen::Vector3d nPartialPhi {
-      - std::sin(theta) * std::sin(phi),
-      std::sin(theta) * std::cos(phi),
-      0.0
-    };
-
-    gradient(0) = 2 * Mnph.dot(nPartialTheta);
-    gradient(1) = 2 * Mnph.dot(nPartialPhi);
-
-    // Calculate hessian components
-    const Eigen::Vector3d nPartialThetaPartialPhi {
-      - std::cos(theta) * std::sin(phi),
-      std::cos(theta) * std::cos(phi),
-      0
-    };
-
-    // Resolve a 1x1 matrix to its single entry
-    auto resolve = [](const Eigen::MatrixXd& matr) -> double {
-      assert(matr.rows() == 1 && matr.cols() == 1);
-      return matr(0);
-    };
-
-    hessian(0, 0) = 2 * (
-      resolve(nPartialTheta.transpose() * M * nPartialTheta)
-      + Mnph.dot(-n)
-    );
-    hessian(1, 1) = 2 * (
-      resolve(nPartialPhi.transpose() * M * nPartialPhi)
-      + Mnph.dot(Eigen::Vector3d {-n(0), -n(1), 0})
-    );
-    hessian(0, 1) = 2 * (
-      resolve(nPartialTheta.transpose() * M * nPartialPhi)
-      + Mnph.dot(nPartialThetaPartialPhi)
-    );
-    hessian(1, 0) = 2 * (
-      resolve(nPartialPhi.transpose() * M * nPartialTheta)
-      + Mnph.dot(nPartialThetaPartialPhi)
-    );
-  }
-
-  void operator() (
-    const Eigen::VectorXd& parameters,
-    double& value,
-    Eigen::Ref<Eigen::VectorXd> gradient,
-    Eigen::Ref<Eigen::MatrixXd> hessian
-  ) {
-    numericalEvaluation(parameters, value, gradient, hessian);
-    //explicitEvaluation(parameters, value, gradient, hessian);
-  }
-};
-
-/**
- * @brief Checker for LBFGS minimization
- */
-struct AxisMinimizationChecker {
-  using FloatType = double;
-  using VectorType = Eigen::VectorXd;
-
-  bool shouldContinue(
-    const unsigned iteration,
-    const FloatType /* value */,
-    const VectorType& gradient
-  ) {
-    return (
-      iteration <= 1000
-      && gradient.squaredNorm() > 1e-3
-    );
-  }
-};
-
-//! Data struct for axis minimization
-struct axis_optimization_t {
-  Eigen::Vector3d axis;
-  double csm;
-};
-
-axis_optimization_t optimize_axis_two_parameters(
-  const PositionCollection& normalizedPositions,
-  const unsigned n,
-  const std::vector<
-    std::vector<unsigned>
-  >& groups,
-  const Eigen::Vector3d& initialAxis
-) {
-  assert(std::fabs(initialAxis.squaredNorm() - 1) <= 1e-5);
-
-  Eigen::VectorXd parameters (2);
-  // Theta from z = cos(theta)
-  parameters(0) = std::acos(initialAxis(2));
-  // Phi from atan(y / x)
-  parameters(1) = std::atan2(initialAxis(1), initialAxis(0));
-
-  AxisMinimizationFunctor functor {
-    normalizedPositions,
-    groups,
-    n
-  };
-
-  auto optimizationResult = temple::TrustRegionOptimizer<>::minimize(
-    parameters,
-    functor,
-    AxisMinimizationChecker {}
-  );
-
-  if(optimizationResult.iterations >= 1000) {
-    throw std::logic_error("Could not minimize axis! Maximum iterations reached.");
-  }
-
-  const double theta = parameters(0);
-  const double phi = parameters(1);
-  Eigen::Vector3d axis {
-    std::sin(theta) * std::cos(phi),
-    std::sin(theta) * std::sin(phi),
-    std::cos(theta)
-  };
-
-  return {
-    axis,
-    100 * optimizationResult.value / (groups.size() * n)
-  };
-}
-
-struct cn_csm_t {
-  double csm;
-  std::vector<
-    std::vector<unsigned>
-  > groups;
-};
-
-//! @brief Greedy csm minimization at fixed axis. Not fully permutational.
-cn_csm_t fixedAxisGreedy(
-  const PositionCollection& normalizedPositions,
-  const unsigned n,
-  const Eigen::Vector3d& axis
-) {
-  std::mt19937_64 urbg;
-  std::random_device rd;
-  urbg.seed(rd());
-
-  assert(n >= 2);
-  const unsigned points = normalizedPositions.cols();
-  assert(n <= points);
-
-  // Axis vector must be normalized!
-  assert(std::fabs(axis.norm() - 1) < 1e-10);
-
-  /* On-axis points should be ignored */
-  Eigen::ParametrizedLine<double, 3> axisLine(
-    Eigen::Vector3d::Zero(),
-    axis
-  );
-
-  std::vector<unsigned> offAxisPointIndices;
-  offAxisPointIndices.reserve(points);
-  for(unsigned i = 0; i < points; ++i) {
-    if(axisLine.distance(normalizedPositions.col(i)) > 0.1) {
-      offAxisPointIndices.push_back(i);
-    }
-  }
-
-  const unsigned validPoints = offAxisPointIndices.size();
-  /* If there are fewer off-axis points than the rotation order being tested,
-   * the element is clearly not present
-   */
-  if(validPoints < n) {
-    cn_csm_t result;
-    result.csm = 100;
-    return result;
-  }
-
-  /* Precalculate the required rotation matrices */
-  const double angleRadians = 2 * M_PI / n;
-  Eigen::Matrix<double, 3, Eigen::Dynamic> foldMatrices(3, 3 * (n - 1));
-  Eigen::Matrix<double, 3, Eigen::Dynamic> unfoldMatrices(3, 3 * (n - 1));
-  for(unsigned i = 0; i < n - 1; ++i) {
-    foldMatrices.block<3, 3>(0, 3 * i) = Eigen::AngleAxisd((i + 1) * angleRadians, axis).toRotationMatrix();
-    unfoldMatrices.block<3, 3>(0, 3 * i) = foldMatrices.block<3, 3>(0, 3 *i).inverse();
-  }
-
-  /* Divide off-axis particle indices into groups of size n each */
-  const unsigned groups = validPoints / n;
-  assert(groups != 0);
-
-  cn_csm_t result;
-  result.csm = 100;
-  result.groups.resize(groups);
-
-  std::vector<unsigned> groupIndices(validPoints);
-  for(unsigned i = 0; i < validPoints; ++i) {
-    groupIndices[i] = i / n;
-  }
-
-  do {
-    /* Groups are subdivided, but unordered. Calculate csm for each subgroup
-     * and minimize csm over all permutations
-     */
-    double groupCollectiveCSM = 0;
-    for(unsigned g = 0; g < groups; ++g) {
-      // Collect all indices of the current group number
-      std::vector<unsigned> group;
-      group.reserve(n);
-      for(unsigned i = 0; i < validPoints; ++i) {
-        if(groupIndices.at(i) == g) {
-          group.push_back(offAxisPointIndices.at(i));
-        }
-      }
-
-      auto calculateCSM = [&](const std::vector<unsigned>& permutation) -> double {
-        Eigen::Vector3d averagePoint = normalizedPositions.col(permutation.front());
-
-        /* Fold and average in-place */
-        averagePoint.noalias() = normalizedPositions.col(permutation.front());
-        for(unsigned i = 1; i < n; ++i) {
-          averagePoint.noalias() += foldMatrices.block<3, 3>(0, 3 * (i - 1)) * normalizedPositions.col(permutation.at(i));
-        }
-        averagePoint /= n;
-
-        /* Calculate CSM while unfolding */
-        double csm = (
-          normalizedPositions.col(permutation.front())
-          - averagePoint
-        ).squaredNorm();
-
-        for(unsigned i = 1; i < n; ++i) {
-          csm += (
-            normalizedPositions.col(permutation.at(i))
-            - unfoldMatrices.block<3, 3>(0, 3 * (i - 1)) * averagePoint
-          ).squaredNorm();
-        }
-
-        return csm;
-      };
-
-      assert(group.size() == n);
-
-      std::shuffle(std::begin(group), std::end(group), urbg);
-
-      bool foundBetterAdjacentPermutation = false;
-      double currentCSM = calculateCSM(group);
-      do {
-        foundBetterAdjacentPermutation = false;
-        for(unsigned i = 0; i < n && !foundBetterAdjacentPermutation; ++i) {
-          for(unsigned j = i + 1; j < n; ++j) {
-            std::swap(group.at(i), group.at(j));
-
-            double adjacentCSM = calculateCSM(group);
-            if(adjacentCSM < currentCSM) {
-              currentCSM = adjacentCSM;
-              foundBetterAdjacentPermutation = true;
-              break;
-            }
-
-            std::swap(group.at(i), group.at(j));
-          }
-        }
-      } while(foundBetterAdjacentPermutation);
-      result.groups.at(g) = std::move(group);
-      groupCollectiveCSM += currentCSM;
-    }
-
-    result.csm = std::min(result.csm, groupCollectiveCSM);
-  } while(std::next_permutation(std::begin(groupIndices), std::end(groupIndices)));
-
-  result.csm *= 100.0 / (groups * n);
-  return result;
-}
-
-//! Minimizes CSM at fixed axis. Fully permutational
-double fixedAxis(
-  const PositionCollection& normalizedPositions,
-  const unsigned n,
-  const Eigen::Vector3d& axis
-) {
-  assert(n >= 2);
-  const unsigned points = normalizedPositions.cols();
-  assert(n <= points);
-
-  // Axis vector must be normalized!
-  assert(std::fabs(axis.norm() - 1) < 1e-10);
-
-  /* On-axis points should be ignored */
-  Eigen::ParametrizedLine<double, 3> axisLine(
-    Eigen::Vector3d::Zero(),
-    axis
-  );
-
-  std::vector<unsigned> offAxisPointIndices;
-  offAxisPointIndices.reserve(points);
-  for(unsigned i = 0; i < points; ++i) {
-    if(axisLine.distance(normalizedPositions.col(i)) > 0.1) {
-      offAxisPointIndices.push_back(i);
-    }
-  }
-
-  const unsigned validPoints = offAxisPointIndices.size();
-  /* If there are fewer off-axis points than the rotation order being tested,
-   * the element is clearly not present
-   */
-  if(validPoints < n) {
+  assert(std::fabs(rotation.axis.norm() - 1) < 1e-10);
+  assert(rotation.n >= 2);
+  const unsigned P = normalizedPositions.cols();
+
+  if(rotation.n > P) {
     return 100;
   }
 
-  std::vector<unsigned> groupIndices(validPoints);
-  for(unsigned i = 0; i < validPoints; ++i) {
-    groupIndices[i] = i / n;
+  Eigen::ParametrizedLine<double, 3> axisLine(
+    Eigen::Vector3d::Zero(),
+    rotation.axis
+  );
+
+  std::vector<unsigned> diophantineConstants {rotation.n, 1};
+  if(!diophantine::has_solution(diophantineConstants, P)) {
+    return 100;
   }
 
-  /* Precalculate the required rotation matrices */
-  const double angleRadians = 2 * M_PI / n;
-  Eigen::Matrix<double, 3, Eigen::Dynamic> foldMatrices(3, 3 * (n - 1));
-  Eigen::Matrix<double, 3, Eigen::Dynamic> unfoldMatrices(3, 3 * (n - 1));
-  for(unsigned i = 0; i < n - 1; ++i) {
-    foldMatrices.block<3, 3>(0, 3 * i) = Eigen::AngleAxisd((i + 1) * angleRadians, axis).toRotationMatrix();
-    unfoldMatrices.block<3, 3>(0, 3 * i) = Eigen::AngleAxisd((i + 1) * angleRadians, -axis).toRotationMatrix();
+  std::vector<unsigned> diophantineMultipliers;
+  if(!diophantine::first_solution(diophantineMultipliers, diophantineConstants, P)) {
+    throw std::logic_error("Diophantine failure! Couldn't find first solution");
   }
 
-  /* Divide off-axis particle indices into groups of size n each */
-  const unsigned groups = validPoints / n;
-  double overallLowestCSM = 100;
+  /* Precalculate fold and unfold matrices */
+  Eigen::Matrix<double, 3, Eigen::Dynamic> foldMatrices(3, 3 * (rotation.n - 1));
+  Eigen::Matrix<double, 3, Eigen::Dynamic> unfoldMatrices(3, 3 * (rotation.n - 1));
+  for(unsigned i = 0; i < rotation.n - 1; ++i) {
+    rotation.power = (i + 1);
+    foldMatrices.block<3, 3>(0, 3 * i) = rotation.matrix();
+    unfoldMatrices.block<3, 3>(0, 3 * i) = foldMatrices.block<3, 3>(0, 3 * i).inverse();
+  }
+
+  auto calculateBestPermutationCSM = [&](std::vector<unsigned> particlePermutation) -> double {
+    assert(std::is_sorted(std::begin(particlePermutation), std::end(particlePermutation)));
+    const unsigned p = particlePermutation.size();
+
+    double minimalPermutationCSM = 1000;
+    do {
+      /* Fold and average */
+      Eigen::Vector3d averagePoint = normalizedPositions.col(particlePermutation.front());
+      for(unsigned i = 1; i < p; ++i) {
+        averagePoint += foldMatrices.block<3, 3>(0, 3 * (i - 1)) * normalizedPositions.col(particlePermutation.at(i));
+      }
+      averagePoint /= p;
+
+      /* Unfold and calculate CSM */
+      double csm = (normalizedPositions.col(particlePermutation.front()) - averagePoint).squaredNorm();
+      for(unsigned i = 1; i < p; ++i) {
+        csm += (
+          unfoldMatrices.block<3, 3>(0, 3 * (i - 1)) * averagePoint
+          - normalizedPositions.col(particlePermutation.at(i))
+        ).squaredNorm();
+      }
+      csm /= p;
+
+      minimalPermutationCSM = std::min(minimalPermutationCSM, csm);
+    } while(std::next_permutation(std::begin(particlePermutation), std::end(particlePermutation)));
+
+    return minimalPermutationCSM;
+  };
+
+  double value = 1000;
   do {
-    /* Groups are subdivided, but unordered. Calculate csm for each subgroup
-     * and minimize csm there over all permutations
-     */
-    double groupCollectiveCSM = 0;
-    for(unsigned g = 0; g < groups; ++g) {
-      // Collect all indices of the current group number
-      std::vector<unsigned> group;
-      group.reserve(n);
-      for(unsigned i = 0; i < validPoints; ++i) {
-        if(groupIndices.at(i) == g) {
-          group.push_back(offAxisPointIndices.at(i));
+    // Handle case that all points are symmetrized
+    if(diophantineMultipliers.front() == 0) {
+      double allAxisSymmetrizedCSM = 0;
+      for(unsigned i = 0; i < P; ++i) {
+        allAxisSymmetrizedCSM += axisLine.squaredDistance(normalizedPositions.col(i));
+      }
+      allAxisSymmetrizedCSM /= P;
+      value = std::min(value, allAxisSymmetrizedCSM);
+      continue;
+    }
+
+    std::vector<unsigned> partitionOrAxisSymmetrize;
+    partitionOrAxisSymmetrize.reserve(P);
+    partitionOrAxisSymmetrize.resize(rotation.n * diophantineMultipliers.front(), 0);
+    partitionOrAxisSymmetrize.resize(P, 1);
+
+    double diophantineCSM = 1000;
+    do {
+      double permutationCSM = 0;
+      /* Collect indices to partition */
+      std::vector<unsigned> indicesToPartition;
+      for(unsigned i = 0; i < P; ++i) {
+        if(partitionOrAxisSymmetrize.at(i) == 0) {
+          indicesToPartition.push_back(i);
+        }
+      }
+      assert(!indicesToPartition.empty());
+
+      /* Perform partitioning */
+      Partitioner partitioner {diophantineMultipliers.front(), rotation.n};
+      assert(diophantineMultipliers.front() * rotation.n == indicesToPartition.size());
+      double bestPartitionCSM = 1000;
+      do {
+        double partitionCSM = 0;
+        for(auto&& partitionIndices : partitioner.partitions()) {
+          auto partitionParticleIndices = temple::map(partitionIndices, temple::functor::at(indicesToPartition));
+          const double subpartitionCSM = calculateBestPermutationCSM(partitionParticleIndices);
+          partitionCSM += subpartitionCSM;
+        }
+        partitionCSM /= diophantineMultipliers.front();
+        bestPartitionCSM = std::min(bestPartitionCSM, partitionCSM);
+      } while(partitioner.next_partition());
+      permutationCSM += rotation.n * diophantineMultipliers.front() * bestPartitionCSM;
+
+      /* Add indices to axis symmetrize contributions to CSM */
+      for(unsigned i = 0; i < P; ++i) {
+        if(partitionOrAxisSymmetrize.at(i) == 1) {
+          permutationCSM += axisLine.squaredDistance(normalizedPositions.col(i));
         }
       }
 
-      assert(group.size() == n);
-
-      /* All point indices of the current group are ordered ascending right now,
-       * so we can iterate through their permutations:
-       */
-      double lowestCSM = 100;
-      do {
-        // TODO this can be optimized to avoid foldedPositions and unfoldedPositions completely
-        /* Fold */
-        Eigen::MatrixXd foldedPositions(3, n);
-        foldedPositions.col(0) = normalizedPositions.col(group.front());
-
-        // The first position is unchanged, hence we start with i = 1
-        for(unsigned i = 1; i < n; ++i) {
-          foldedPositions.col(i) = foldMatrices.block<3, 3>(0, 3 * (i - 1)) * normalizedPositions.col(group.at(i));
-        }
-
-        /* Average */
-        Eigen::MatrixXd unfoldedPositions(3, n);
-        unfoldedPositions.col(0) = foldedPositions.rowwise().sum() / n;
-
-        /* Unfold */
-        for(unsigned i = 1; i < n; ++i) {
-          unfoldedPositions.col(i) = unfoldMatrices.block<3, 3>(0, 3 * (i - 1)) * unfoldedPositions.col(0);
-        }
-
-        /* Calculate CSM */
-        double csm = 0;
-        for(unsigned i = 0; i < n; ++i) {
-          csm += (normalizedPositions.col(group.at(i)) - unfoldedPositions.col(i)).squaredNorm();
-        }
-        lowestCSM = std::min(lowestCSM, csm);
-      } while(std::next_permutation(std::begin(group), std::end(group)));
-
-      groupCollectiveCSM += lowestCSM;
-    }
-
-    overallLowestCSM = std::min(overallLowestCSM, groupCollectiveCSM);
-  } while(std::next_permutation(std::begin(groupIndices), std::end(groupIndices)));
-
-  return 100 * overallLowestCSM / (groups * n);
+      permutationCSM /= P;
+      diophantineCSM = std::min(diophantineCSM, permutationCSM);
+    } while(std::next_permutation(std::begin(partitionOrAxisSymmetrize), std::end(partitionOrAxisSymmetrize)));
+    value = std::min(value, diophantineCSM);
+  } while(diophantine::next_solution(diophantineMultipliers, diophantineConstants, P));
+  return 100 * value;
 }
-
-} // namespace cn
 
 } // namespace csm
 
@@ -1348,15 +1065,6 @@ Top standardizeTop(Eigen::Ref<PositionCollection> normalizedPositions) {
 
   const unsigned degeneracy = detail::degeneracy(moments.moments);
 
-  /* We can immediately separate out linear cases: If IA << IB = IC and IA ~ 0,
-   * then we very likely have a linear molecule on our hands.
-   *
-   * The principal moments and the corresponding axes are ordered ascending.
-   */
-  if(moments.moments(0) < 0.1 && degeneracy == 2) {
-    return Top::Linear;
-  }
-
   auto rotateEverything = [&](const CoordinateSystem& sourceSystem) {
     const CoordinateSystem defaultCoordinateSystem {};
     assert(sourceSystem.isRightHanded());
@@ -1374,6 +1082,13 @@ Top standardizeTop(Eigen::Ref<PositionCollection> normalizedPositions) {
   };
 
   if(moments.moments(0) < 0.1 && degeneracy == 2) {
+    // The top is linear: If IA << IB = IC and IA ~ 0. We rotate IA to z
+    const CoordinateSystem inertialMomentSystem {
+      moments.axes.col(1),
+      moments.axes.col(2)
+    };
+    rotateEverything(inertialMomentSystem);
+    assert(moments.axes.col(0).cwiseAbs().isApprox(Eigen::Vector3d::UnitZ(), 1e-10));
     return Top::Linear;
   }
 
@@ -1382,9 +1097,8 @@ Top standardizeTop(Eigen::Ref<PositionCollection> normalizedPositions) {
      * highest moment of inertia to coincide with z, and the one with second most
      * to coincide with x.
      *
-     * TODO try to find Cn axes along the inertial moments and then orienting
-     * the one with highest order to +z. Fall back to inertial moment ordering
-     * if no axes are found.
+     * To better define orientation, we could look for Cn axes. This is done in
+     * another function. No need to burden this function with that here.
      */
     CoordinateSystem inertialMomentSystem {
       moments.axes.col(1), // second highest becomes x
@@ -1411,7 +1125,13 @@ Top standardizeTop(Eigen::Ref<PositionCollection> normalizedPositions) {
      * This is most likely rare and should occur only for largely undistorted
      * structures. Perhaps we can flowchart point groups here?
      */
-    if(std::fabs((moments.moments(2) - moments.moments(1)) / moments.moments(2)) <= 0.05) {
+    // Calculate Ray's asymmetry parameter
+    const double A = 1 / moments.moments(0);
+    const double B = 1 / moments.moments(1);
+    const double C = 1 / moments.moments(2);
+    const double kappa = (2 * B - A - C) / (A - C);
+    assert(-1 <= kappa && kappa <= 1);
+    if(kappa < 0) {
       // Prolate top. IA is unique
       CoordinateSystem inertialMomentSystem {
         moments.axes.col(1),
@@ -1477,6 +1197,56 @@ Top standardizeTop(Eigen::Ref<PositionCollection> normalizedPositions) {
   return Top::Spherical;
 }
 
+unsigned reorientAsymmetricTop(Eigen::Ref<PositionCollection> normalizedPositions) {
+  const unsigned P = normalizedPositions.cols();
+  const auto& axes = Eigen::Matrix3d::Identity();
+
+  struct AxisBest {
+    unsigned order = 1;
+    double csm = 1; // This functions much like a detection threshold below
+    unsigned axisIndex;
+
+    AxisBest(unsigned index) : axisIndex(index) {}
+
+    bool operator < (const AxisBest& other) const {
+      return order > other.order;
+    }
+  };
+
+  auto orderedAxisBest = temple::sort(
+    temple::map(
+      temple::iota<unsigned>(3),
+      [&](const unsigned axisIndex) -> AxisBest {
+        const Eigen::Vector3d axis = axes.col(axisIndex);
+        AxisBest best {axisIndex};
+        for(unsigned n = 2; n <= P; ++n) {
+          const double axisCSM = csm::element(normalizedPositions, elements::Rotation::Cn(axis, n));
+          if(axisCSM < best.csm) {
+            best.order = n;
+            best.csm = axisCSM;
+          }
+        }
+        return best;
+      }
+    )
+  );
+
+  if(orderedAxisBest.front().order > 1) {
+    /* Only mess with the coordinate frame if any sort of axis was found.
+     * We want the second-highest order axis on x, highest order axis along z,
+     * doesn't really matter if +z or -z
+     */
+    const CoordinateSystem highestOrderSystem {
+      axes.col(orderedAxisBest.at(1).axisIndex),
+      axes.col(orderedAxisBest.back().axisIndex)
+    };
+
+    normalizedPositions = rotationMatrix(highestOrderSystem, {}) * normalizedPositions;
+  }
+
+  return orderedAxisBest.front().order;
+}
+
 PointGroup flowchart(
   const PositionCollection& normalizedPositions,
   const Top top
@@ -1516,7 +1286,7 @@ PointGroup flowchart(
      * particle positions?
      */
     const double tetrahedralCSM = csm::pointGroup(normalizedPositions, PointGroup::Td).value_or(1000);
-    const double octahedralCSM = csm::pointGroup(normalizedPositions, PointGroup::Oh).value_or(10000);
+    const double octahedralCSM = csm::pointGroup(normalizedPositions, PointGroup::Oh).value_or(1000);
     // TODO icosahedral is also a spherical top!
     return tetrahedralCSM < octahedralCSM ? PointGroup::Td : PointGroup::Oh;
   }

@@ -65,11 +65,11 @@ void addToContainer(
 template<
   class TargetContainer,
   class SourceContainer,
-  class SizeModifierUnary = Identity
+  class SizeModifierUnary = functor::Identity
 > void reserveIfPossible(
   TargetContainer& target,
   const SourceContainer& source,
-  SizeModifierUnary&& sourceModifierUnary = Identity()
+  SizeModifierUnary&& sourceModifierUnary = SizeModifierUnary {}
 );
 
 namespace detail {

@@ -62,8 +62,7 @@ BOOST_AUTO_TEST_CASE(symmetryTypeAndPositionInEnumLockstep) {
       temple::TupleType::map<
         Symmetry::data::allSymmetryDataTypes,
         LockstepTest
-      >(),
-      temple::Identity {}
+      >()
     ),
     "Not all symmetries have the same order in Name and allSymmetryDataTypes"
   );
@@ -125,7 +124,6 @@ BOOST_AUTO_TEST_CASE( correctRotationVectorSize ) {
 }
 
 BOOST_AUTO_TEST_CASE( rotationVectorSanityTests ) {
-
   // every rotation may have every number 0 -> (size of symmetry - 1) only once
   for(const auto& name : allNames) {
     std::set<unsigned> members;
@@ -190,7 +188,6 @@ BOOST_AUTO_TEST_CASE( rotationVectorSanityTests ) {
 }
 
 BOOST_AUTO_TEST_CASE( angleFunctionInputSymmetry ) {
-
   // every angle function must be symmetrical on input of valid unsigned indices
   for(const auto& symmetryName: allNames) {
     bool passesAll = true;
@@ -214,7 +211,6 @@ BOOST_AUTO_TEST_CASE( angleFunctionInputSymmetry ) {
 }
 
 BOOST_AUTO_TEST_CASE( angleFunctionZeroForIdenticalInput) {
-
   // every angle function must return 0 for identical indices
   for(const auto& symmetryName: allNames) {
     bool passesAll = true;
@@ -761,8 +757,7 @@ BOOST_AUTO_TEST_CASE(constexprPropertiesTests) {
       temple::TupleType::map<
         Symmetry::data::allSymmetryDataTypes,
         RotationGenerationTest
-      >(),
-      temple::Identity {}
+      >()
     ),
     "There is a discrepancy between constexpr and dynamic rotation generation"
   );
@@ -774,8 +769,7 @@ BOOST_AUTO_TEST_CASE(constexprPropertiesTests) {
       temple::TupleType::mapAllPairs<
         Symmetry::data::allSymmetryDataTypes,
         LigandGainTest
-      >(),
-      temple::Identity {}
+      >()
     ),
     "There is a discrepancy between constexpr and dynamic ligand gain mapping"
     << " generation!"
@@ -832,8 +826,7 @@ BOOST_AUTO_TEST_CASE(numUnlinkedAlgorithms) {
       temple::TupleType::map<
         Symmetry::data::allSymmetryDataTypes,
         NumUnlinkedTestFunctor
-      >(),
-      temple::Identity {}
+      >()
     ),
     "Not all numbers of unlinked stereopermutations match across constexpr and dynamic"
     " algorithms"

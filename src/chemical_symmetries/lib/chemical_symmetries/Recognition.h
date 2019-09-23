@@ -42,11 +42,44 @@ enum class Top {
   Spherical
 };
 
+/**
+ * @brief Identifies the top of a set of positions and reorients the particle
+ *   positions, aligning the main axis along z
+ *
+ * @param normalizedPositions Particle positions
+ *
+ * @return The top of the molecule
+ */
 Top standardizeTop(Eigen::Ref<PositionCollection> normalizedPositions);
 
+/**
+ * @brief Searches for Cn axes along the coordinate system axes, aligns the
+ *   highest order Cn axis found along the z axis
+ *
+ * @param normalizedPositions Particle positions
+ *
+ * @note Call standardizeTop() and use this if you get an asymmetric top.
+ *
+ * @return The order of the highest Cn axis found. If no axis is found along
+ *   the coordinate system axes, the result is 1, and particle positions are
+ *   unaffected.
+ */
+unsigned reorientAsymmetricTop(Eigen::Ref<PositionCollection> normalizedPositions);
+
+/**
+ * @brief Attempts to find the point group of a set of positions by flowcharting
+ *   individual symmetry elements.
+ *
+ * @warning Incomplete
+ *
+ * @param normalizedPositions Particle positions
+ * @param top The result of top standardization
+ *
+ * @return The point group of the particle positions
+ */
 PointGroup flowchart(
   const PositionCollection& normalizedPositions,
-  const Top top
+  Top top
 );
 
 /**
@@ -93,6 +126,22 @@ boost::optional<double> pointGroup(
   const PositionCollection& normalizedPositions,
   const PointGroup pointGroup
 );
+
+/**
+ * @brief Returns the CSM for a Rotation symmetry element along the rotation
+ *   axis without optimizing the coordinates' rotation
+ *
+ * @param normalizedPositions Particle positions
+ * @param rotation Symmetry element of rotation Cn/Sn
+ *
+ * @return The CSM along the fixed axis of rotation
+ */
+double element(
+  const PositionCollection& normalizedPositions,
+  elements::Rotation rotation
+);
+
+// TODO more elements, optimize elements?
 
 } // namespace csm
 

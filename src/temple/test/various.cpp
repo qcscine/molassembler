@@ -9,6 +9,7 @@
 #include "boost/optional.hpp"
 
 #include "temple/Functional.h"
+#include "temple/Functor.h"
 #include "temple/OperatorSuppliers.h"
 #include "temple/Stringify.h"
 #include "temple/constexpr/Numeric.h"
@@ -181,4 +182,17 @@ BOOST_AUTO_TEST_CASE(ReferenceOptional) {
 
   temple::Optional<int&> g;
   BOOST_CHECK(!g.hasValue());
+}
+
+BOOST_AUTO_TEST_CASE(FunctorSafety) {
+  std::vector<unsigned> x {1, 4, 3};
+  // Bind x by const reference within the functor
+  auto at = temple::functor::at(x);
+  BOOST_CHECK(at(0) == x.at(0));
+  // External modification affects the functor too since access is referential
+  x.push_back(5);
+  BOOST_CHECK(at(3) == x.at(3));
+
+  auto at2 = temple::functor::at(std::vector<unsigned> {1, 2, 3});
+  BOOST_CHECK(at2(0) == 1);
 }

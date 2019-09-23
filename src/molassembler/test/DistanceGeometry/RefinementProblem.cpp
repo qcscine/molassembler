@@ -576,7 +576,7 @@ struct CompareImplementations {
           }
         );
 
-        return temple::all_of(passesComparisonMap, temple::Identity {});
+        return temple::all_of(passesComparisonMap);
       }
     );
   }
@@ -593,7 +593,7 @@ BOOST_AUTO_TEST_CASE(RefinementProblemEquivalence) {
   auto passes = temple::TupleType::mapAllPairs<EigenRefinementTypeVariations, CompareImplementations>();
 
   BOOST_CHECK_MESSAGE(
-    temple::all_of(passes, temple::Identity {}),
+    temple::all_of(passes),
     "Not all refinement template argument variations match pair-wise!"
   );
 }

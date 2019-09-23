@@ -33,12 +33,20 @@ boost::optional<SymmetryElement::Vector> Identity::vector() const {
   return boost::none;
 }
 
+std::string Identity::name() const {
+  return "E";
+}
+
 SymmetryElement::Matrix Inversion::matrix() const {
   return -Matrix::Identity();
 }
 
 boost::optional<SymmetryElement::Vector> Inversion::vector() const {
   return boost::none;
+}
+
+std::string Inversion::name() const {
+  return "i";
 }
 
 Rotation::Rotation(
@@ -111,6 +119,25 @@ boost::optional<SymmetryElement::Vector> Rotation::vector() const {
   return axis;
 }
 
+std::string Rotation::name() const {
+  std::string composite = (reflect ? "S" : "C");
+  composite += std::to_string(n);
+  if(power > 1) {
+    composite += "^" + std::to_string(power);
+  }
+  if(std::fabs(axis.z()) < 1e-8) {
+    composite += "'";
+  } else if(std::fabs(axis.x()) + std::fabs(axis.y()) > 1e-8) {
+    composite += (
+      " along {"
+      + std::to_string(axis.x()) + ", "
+      + std::to_string(axis.y()) + ", "
+      + std::to_string(axis.z()) + "}"
+    );
+  }
+  return composite;
+}
+
 Reflection::Reflection(const Eigen::Vector3d& passNormal) : normal(passNormal.normalized()) {}
 
 SymmetryElement::Matrix Reflection::matrix() const {
@@ -141,6 +168,31 @@ boost::optional<SymmetryElement::Vector> Reflection::vector() const {
   }
 
   return boost::none;
+}
+
+std::string Reflection::name() const {
+  std::string composite = "sigma";
+
+  if(normal.cwiseAbs().isApprox(Eigen::Vector3d::UnitZ(), 1e-8)) {
+    composite += "_h";
+  } else if(orthogonal(normal, Eigen::Vector3d::UnitZ())) {
+    composite += "_v";
+  } else {
+    composite += (
+      " w/ normal {"
+      + std::to_string(normal.x()) + ", "
+      + std::to_string(normal.y()) + ", "
+      + std::to_string(normal.z()) + "}"
+    );
+  }
+
+  if(normal.cwiseAbs().isApprox(Eigen::Vector3d::UnitX(), 1e-8)) {
+    composite += " (yz)";
+  } else if(normal.cwiseAbs().isApprox(Eigen::Vector3d::UnitY(), 1e-8)) {
+    composite += " (xz)";
+  }
+
+  return composite;
 }
 
 Rotation operator * (const Rotation& rot, const Reflection& reflection) {
@@ -207,8 +259,14 @@ Eigen::Matrix3d reflectionMatrix(const Eigen::Vector3d& planeNormal) {
 }
 
 //! Returns all symmetry elements of a point group
-std::vector<std::unique_ptr<SymmetryElement>> symmetryElements(const PointGroup group) noexcept {
-  assert(group != PointGroup::Cinfv && group != PointGroup::Dinfh);
+std::vector<std::unique_ptr<SymmetryElement>> symmetryElements(PointGroup group) noexcept {
+  if(group == PointGroup::Cinfv) {
+    group = PointGroup::C8v;
+  }
+
+  if(group == PointGroup::Dinfh) {
+    group = PointGroup::D8h;
+  }
 
   auto make = [](auto element) {
     using Type = decltype(element);
@@ -604,45 +662,61 @@ std::unordered_map<unsigned, ElementGrouping> npGroupings(
 
   std::unordered_map<unsigned, ElementGrouping> npGroupings;
 
+  auto testVector = [&](const Eigen::Vector3d& v) {
+    // Check if there is already a grouping for this vector
+    for(const auto& iterPair : npGroupings) {
+      if(iterPair.second.probePoint.isApprox(v, 1e-8)) {
+        return;
+      }
+    }
+
+    Eigen::Matrix<double, 3, Eigen::Dynamic> mappedPoints(3, E);
+    mappedPoints.col(0) = v;
+    unsigned np = 1;
+    std::vector<
+      std::vector<unsigned>
+    > groups {
+      {0}
+    };
+
+    for(unsigned i = 1; i < E; ++i) {
+      Eigen::Vector3d mapped = elements.at(i)->matrix() * mappedPoints.col(0);
+      bool found = false;
+      for(unsigned j = 0; j < np; ++j) {
+        if(mappedPoints.col(j).isApprox(mapped, 1e-8)) {
+          found = true;
+          groups.at(j).push_back(i);
+          break;
+        }
+      }
+
+      if(!found) {
+        mappedPoints.col(np) = mapped;
+        ++np;
+        groups.push_back(std::vector<unsigned> {i});
+      }
+    }
+
+    if(npGroupings.count(np) == 0) {
+      ElementGrouping grouping;
+      grouping.probePoint = mappedPoints.col(0);
+      grouping.groups = std::move(groups);
+
+      npGroupings.emplace(
+        np,
+        std::move(grouping)
+      );
+    }
+  };
+
+  testVector(Eigen::Vector3d::UnitZ());
+  testVector(Eigen::Vector3d::UnitZ() + 0.1 * Eigen::Vector3d::UnitX());
+  testVector(Eigen::Vector3d::UnitX());
+  testVector(Eigen::Vector3d::UnitY());
+
   for(const auto& elementPtr : elements) {
     if(auto axisOption = elementPtr->vector()) {
-      Eigen::Matrix<double, 3, Eigen::Dynamic> mappedPoints(3, E);
-      mappedPoints.col(0) = *axisOption;
-      unsigned np = 1;
-      std::vector<
-        std::vector<unsigned>
-      > groups {
-        {0}
-      };
-
-      for(unsigned i = 1; i < E; ++i) {
-        Eigen::Vector3d mapped = elements.at(i)->matrix() * mappedPoints.col(0);
-        bool found = false;
-        for(unsigned j = 0; j < np; ++j) {
-          if(mappedPoints.col(j).isApprox(mapped, 1e-8)) {
-            found = true;
-            groups.at(j).push_back(i);
-            break;
-          }
-        }
-
-        if(!found) {
-          mappedPoints.col(np) = mapped;
-          ++np;
-          groups.push_back(std::vector<unsigned> {i});
-        }
-      }
-
-      if(npGroupings.count(np) == 0) {
-        ElementGrouping grouping;
-        grouping.probePoint = mappedPoints.col(0);
-        grouping.groups = std::move(groups);
-
-        npGroupings.emplace(
-          np,
-          std::move(grouping)
-        );
-      }
+      testVector(*axisOption);
     }
   }
 
