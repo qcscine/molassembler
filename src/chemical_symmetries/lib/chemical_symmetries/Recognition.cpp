@@ -230,6 +230,7 @@ double allSymmetryElements(
     )
   );
 
+#ifdef WRITE_FOLDING_XYZS
 #ifndef NDEBUG
   static unsigned foldCount = 0;
 
@@ -284,6 +285,7 @@ double allSymmetryElements(
 
   outfile.close();
   ++foldCount;
+#endif
 #endif
 
   return value;
@@ -373,6 +375,7 @@ double groupedSymmetryElements(
     )
   );
 
+#ifdef WRITE_FOLDING_XYZS
 #ifndef NDEBUG
   static unsigned foldCount = 0;
 
@@ -458,6 +461,7 @@ double groupedSymmetryElements(
   outfile.close();
   ++foldCount;
 #endif
+#endif
 
   return value;
 }
@@ -518,7 +522,7 @@ struct OrientationCSMFunctor {
   const PositionCollection& coordinates;
   const MatrixType unfoldMatrices;
   const MatrixType foldMatrices;
-  const std::unordered_map<unsigned, elements::ElementGrouping> npGroups;
+  const elements::NPGroupingsMapType npGroups;
 
   OrientationCSMFunctor(
     const PositionCollection& normalizedPositions,
@@ -833,10 +837,10 @@ boost::optional<double> pointGroup(
   using MinimizerType = temple::SO3NelderMead<>;
   // Set up the initial simplex to capture asymmetric tops and x/y mixups
   MinimizerType::Parameters simplex;
-  simplex[0] = Eigen::Matrix3d::Identity();
-  simplex[1] = Eigen::AngleAxisd(M_PI / 2, Eigen::Vector3d::UnitX()).toRotationMatrix();
-  simplex[2] = Eigen::AngleAxisd(M_PI / 2, Eigen::Vector3d::UnitY()).toRotationMatrix();
-  simplex[3] = Eigen::AngleAxisd(M_PI / 2, Eigen::Vector3d::UnitZ()).toRotationMatrix();
+  simplex.at(0) = Eigen::Matrix3d::Identity();
+  simplex.at(1) = Eigen::AngleAxisd(M_PI / 2, Eigen::Vector3d::UnitX()).toRotationMatrix();
+  simplex.at(2) = Eigen::AngleAxisd(M_PI / 2, Eigen::Vector3d::UnitY()).toRotationMatrix();
+  simplex.at(3) = Eigen::AngleAxisd(M_PI / 2, Eigen::Vector3d::UnitZ()).toRotationMatrix();
 
   struct NelderMeadChecker {
     bool shouldContinue(unsigned iteration, double lowestValue, double stddev) const {

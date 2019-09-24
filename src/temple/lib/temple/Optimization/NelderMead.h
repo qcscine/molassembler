@@ -26,6 +26,14 @@ struct NelderMead {
     FloatType value;
   };
 
+  static VectorType generateVertex(
+    const FloatType coefficient,
+    const VectorType& centroid,
+    const VectorType& worstVertex
+  ) {
+    return centroid + coefficient * (centroid - worstVertex);
+  }
+
   template<
     typename UpdateFunction,
     typename Checker
@@ -34,14 +42,15 @@ struct NelderMead {
     UpdateFunction&& function,
     Checker&& check
   ) {
-    constexpr FloatType alpha = 1; // Reflection coefficient
-    constexpr FloatType gamma = 2; // Expansion coefficient
-    constexpr FloatType rho = 0.5; // Contraction coefficient
-    constexpr FloatType sigma = 0.5; // Shrink coefficient
+    constexpr FloatType reflectionCoefficient = 1;
+    constexpr FloatType expansionCoefficient = 2;
+    constexpr FloatType contractionCoefficient = 0.5;
+    constexpr FloatType shrinkCoefficient = 0.5;
 
-    static_assert(0 < alpha, "Alpha bounds not met");
-    static_assert(1 < gamma, "Gamma bounds not met");
-    static_assert(0 < rho && rho <= 0.5, "Rho bounds not met");
+    static_assert(0 < reflectionCoefficient, "Reflection coefficient bounds not met");
+    static_assert(1 < expansionCoefficient, "Expansion coefficient bounds not met");
+    static_assert(0 < contractionCoefficient && contractionCoefficient <= 0.5, "Contraction coefficient bounds not met");
+    static_assert(0 < shrinkCoefficient && shrinkCoefficient < 1, "Shrink coefficient bounds not met");
 
     const unsigned N = vertices.rows();
     assert(vertices.cols() == N + 1);
@@ -88,22 +97,22 @@ struct NelderMead {
     unsigned iteration = 0;
     do {
       const VectorType simplexCentroid = vertices.rowwise().sum() / (N + FloatType {1});
+      const VectorType& worstVertex = vertices.col(values.back().column);
+      const FloatType worstVertexValue = values.back().value;
+      const FloatType bestVertexValue = values.front().value;
 
       /* Reflect */
-      const VectorType reflectedVertex = (
-        simplexCentroid
-        + alpha * (simplexCentroid - vertices.col(values.back().column))
-      );
+      const VectorType reflectedVertex = generateVertex(reflectionCoefficient, simplexCentroid, worstVertex);
       const FloatType reflectedValue = function(reflectedVertex);
 
       if(
-        values.front().value <= reflectedValue
-        && reflectedValue < values.at(N - 1).value
+        bestVertexValue <= reflectedValue
+        && reflectedValue < worstVertexValue
       ) {
         replaceWorst(reflectedVertex, reflectedValue, vertices);
-      } else if(reflectedValue < values.front().value) {
+      } else if(reflectedValue < bestVertexValue) {
         /* Expansion */
-        const VectorType expandedVertex = simplexCentroid + gamma * (reflectedVertex - simplexCentroid);
+        const VectorType expandedVertex = generateVertex(expansionCoefficient, simplexCentroid, worstVertex);
         const FloatType expandedValue = function(expandedVertex);
 
         if(expandedValue < reflectedValue) {
@@ -114,12 +123,29 @@ struct NelderMead {
           replaceWorst(reflectedVertex, reflectedValue, vertices);
         }
       } else {
-        /* Contraction */
-        const VectorType contractedVertex = simplexCentroid + rho * (vertices.col(values.back().column) - simplexCentroid);
-        const FloatType contractedValue = function(contractedVertex);
-        if(contractedValue < values.back().value) {
-          replaceWorst(contractedVertex, contractedValue, vertices);
-        } else {
+        bool acceptedContraction = false;
+        if(reflectedValue < values.at(N - 2).value) {
+          /* Try contractions */
+          if(reflectedValue < worstVertexValue) {
+            /* Outside contraction */
+            const VectorType outsideContractedVertex = generateVertex(reflectionCoefficient * contractionCoefficient, simplexCentroid, worstVertex);
+            const FloatType outsideContractedValue = function(outsideContractedVertex);
+            if(outsideContractedValue <= reflectedValue) {
+              replaceWorst(outsideContractedVertex, outsideContractedValue, vertices);
+              acceptedContraction = true;
+            }
+          } else {
+            /* Inside contraction */
+            const VectorType insideContractedVertex = generateVertex(-contractionCoefficient, simplexCentroid, worstVertex);
+            const FloatType insideContractedValue = function(insideContractedVertex);
+            if(insideContractedValue < worstVertexValue) {
+              replaceWorst(insideContractedVertex, insideContractedValue, vertices);
+              acceptedContraction = true;
+            }
+          }
+        }
+
+        if(!acceptedContraction) {
           /* Shrink */
           const unsigned bestColumn = values.front().column;
           const auto& bestVertex = vertices.col(bestColumn);
@@ -128,7 +154,7 @@ struct NelderMead {
           for(unsigned i = 1; i < N + 1; ++i) {
             auto& value = values.at(i);
             auto vertex = vertices.col(value.column);
-            vertex = bestVertex + sigma * (vertex - bestVertex);
+            vertex = bestVertex + shrinkCoefficient * (vertex - bestVertex);
             value.value = function(vertex);
           }
           temple::inplace::sort(values);

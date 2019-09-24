@@ -643,7 +643,7 @@ std::vector<std::unique_ptr<SymmetryElement>> symmetryElements(PointGroup group)
   }
 }
 
-std::unordered_map<unsigned, ElementGrouping> npGroupings(
+NPGroupingsMapType npGroupings(
   const std::vector<std::unique_ptr<SymmetryElement>>& elements
 ) {
   assert(elements.front()->matrix() == elements::Identity().matrix());
@@ -660,7 +660,16 @@ std::unordered_map<unsigned, ElementGrouping> npGroupings(
    * TODO mark this resolved after it's been confirmed
    */
 
-  std::unordered_map<unsigned, ElementGrouping> npGroupings;
+  NPGroupingsMapType npGroupings;
+
+  /* Points are more interesting regarding the np groupings the less they lie
+   * on coordinate axes.
+   *
+   * Returns true if a is more "interesting" than b
+   */
+  auto moreInteresting = [](const Eigen::Vector3d& a, const Eigen::Vector3d& b) -> bool {
+    return a.array().abs().sum() > b.array().abs().sum();
+  };
 
   auto testVector = [&](const Eigen::Vector3d& v) {
     // Check if there is already a grouping for this vector
@@ -697,7 +706,8 @@ std::unordered_map<unsigned, ElementGrouping> npGroupings(
       }
     }
 
-    if(npGroupings.count(np) == 0) {
+    auto findIter = npGroupings.find(np);
+    if(findIter == std::end(npGroupings)) {
       ElementGrouping grouping;
       grouping.probePoint = mappedPoints.col(0);
       grouping.groups = std::move(groups);
@@ -706,6 +716,10 @@ std::unordered_map<unsigned, ElementGrouping> npGroupings(
         np,
         std::move(grouping)
       );
+    } else if(moreInteresting(mappedPoints.col(0), findIter->second.probePoint)) {
+      // Overwrite the existing grouping
+      findIter->second.probePoint = mappedPoints.col(0);
+      findIter->second.groups = std::move(groups);
     }
   };
 

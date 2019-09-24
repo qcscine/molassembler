@@ -124,6 +124,8 @@ struct ElementGrouping {
 
   Eigen::Vector3d probePoint;
   ElementIndexGroups groups;
+
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };
 
 /**
@@ -132,9 +134,15 @@ struct ElementGrouping {
  * So the resulting map can be indexed with four to get the symmetry element
  * groups.
  */
-std::unordered_map<unsigned, ElementGrouping> npGroupings(
-  const ElementsList& elements
-);
+using NPGroupingsMapType = std::unordered_map<
+  unsigned,
+  ElementGrouping,
+  std::hash<unsigned>,
+  std::equal_to<unsigned>,
+  Eigen::aligned_allocator<std::pair<unsigned, ElementGrouping>>
+>;
+
+NPGroupingsMapType npGroupings(const ElementsList& elements);
 
 } // namespace elements
 

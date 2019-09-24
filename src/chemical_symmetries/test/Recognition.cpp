@@ -85,28 +85,24 @@ const std::string& topName(Top top) {
 
 BOOST_AUTO_TEST_CASE(Recognition) {
   const std::map<Name, PointGroup> expected {
-    {Name::Bent, PointGroup::C2v}
+    {Name::Linear, PointGroup::Dinfh},
+    {Name::Bent, PointGroup::C2v},
+    {Name::TrigonalPlanar, PointGroup::D3h},
+    {Name::CutTetrahedral, PointGroup::C3v},
+    {Name::TShaped, PointGroup::C2v},
+    {Name::Tetrahedral, PointGroup::Td},
+    {Name::SquarePlanar, PointGroup::D4h},
+    {Name::Seesaw, PointGroup::C2v},
+    {Name::TrigonalPyramidal, PointGroup::C3v},
+    {Name::SquarePyramidal, PointGroup::C4v},
+    {Name::TrigonalBiPyramidal, PointGroup::D3h},
+    {Name::PentagonalPlanar, PointGroup::D5h},
+    {Name::Octahedral, PointGroup::Oh},
+    {Name::TrigonalPrismatic, PointGroup::D3h},
+    {Name::PentagonalPyramidal, PointGroup::C5v},
+    {Name::PentagonalBiPyramidal, PointGroup::D5h}
+  //  {Name::SquareAntiPrismatic, PointGroup::D4d}
   };
-
-  // const std::map<Name, PointGroup> expected {
-  //   {Name::Linear, PointGroup::Dinfh},
-  //   {Name::Bent, PointGroup::C2v},
-  //   {Name::TrigonalPlanar, PointGroup::D3h},
-  //   {Name::CutTetrahedral, PointGroup::C3v},
-  //   {Name::TShaped, PointGroup::C2v},
-  //   {Name::Tetrahedral, PointGroup::Td},
-  //   {Name::SquarePlanar, PointGroup::D4h},
-  //   {Name::Seesaw, PointGroup::C2v},
-  //   {Name::TrigonalPyramidal, PointGroup::C3v},
-  //   {Name::SquarePyramidal, PointGroup::C4v},
-  //   {Name::TrigonalBiPyramidal, PointGroup::D3h},
-  //   {Name::PentagonalPlanar, PointGroup::D5h},
-  //   {Name::Octahedral, PointGroup::Oh},
-  //   {Name::TrigonalPrismatic, PointGroup::D3h},
-  //   {Name::PentagonalPyramidal, PointGroup::C5v},
-  //   {Name::PentagonalBiPyramidal, PointGroup::D5h},
-  //   {Name::SquareAntiPrismatic, PointGroup::D4d}
-  // };
 
   for(const auto& nameGroupPair : expected) {
     auto positions = addOrigin(symmetryData().at(nameGroupPair.first).coordinates);
@@ -120,7 +116,10 @@ BOOST_AUTO_TEST_CASE(Recognition) {
     }
 
     // Standardize the top
-    Top top = standardizeTop(normalized);
+    const Top top = standardizeTop(normalized);
+    if(top == Top::Asymmetric) {
+      reorientAsymmetricTop(normalized);
+    }
 
     const double pgCSM = csm::pointGroup(
       normalized,
@@ -186,11 +185,10 @@ BOOST_AUTO_TEST_CASE(PointGroupElements) {
     }
   };
 
-  // const PointGroup limit = PointGroup::Td;
-  // for(unsigned g = 0; g < underlying(limit); ++g) {
-  //   writePointGroup(static_cast<PointGroup>(g));
-  // }
-  writePointGroup(PointGroup::C2v);
+  const PointGroup limit = PointGroup::Td;
+  for(unsigned g = 0; g < underlying(limit); ++g) {
+    writePointGroup(static_cast<PointGroup>(g));
+  }
 }
 
 BOOST_AUTO_TEST_CASE(PaperCSMExamples) {
@@ -373,22 +371,38 @@ BOOST_AUTO_TEST_CASE(AlleneS4FixedAxis) {
     "CSM(S4) = " << S4CSM << " of allene is over recognition threshold (0.1)"
   );
 
-  const double D4dCSM = csm::pointGroup(normalizedPositions, PointGroup::D4d).value_or(100);
+  const double D2dCSM = csm::pointGroup(normalizedPositions, PointGroup::D2d).value_or(100);
   BOOST_CHECK_MESSAGE(
-    D4dCSM < 0.1,
-    "CSM(D4d) = " << D4dCSM << " of allene is over recognition threshold (0.1)"
+    D2dCSM < 0.1,
+    "CSM(D2d) = " << D2dCSM << " of allene is over recognition threshold (0.1)"
   );
 }
 
 BOOST_AUTO_TEST_CASE(AsymmetricTopStandardization) {
-  auto coordinates = addOrigin(symmetryData().at(Symmetry::Name::Bent).coordinates);
-  auto normalizedPositions = detail::normalize(coordinates);
-  Top top = standardizeTop(normalizedPositions);
-  BOOST_REQUIRE(top == Top::Asymmetric);
+  std::vector<Name> asymmetricTopsWithC2 {
+    Name::Bent,
+    Name::TShaped,
+    Name::Seesaw
+  };
 
-  unsigned highestAxisOrder = reorientAsymmetricTop(normalizedPositions);
-  BOOST_CHECK(highestAxisOrder == 2);
+  for(const Name symmetryName : asymmetricTopsWithC2) {
+    auto coordinates = addOrigin(symmetryData().at(symmetryName).coordinates);
+    auto normalizedPositions = detail::normalize(coordinates);
+    const Top top = standardizeTop(normalizedPositions);
+    BOOST_CHECK_MESSAGE(
+      top == Top::Asymmetric,
+      "Expected asymmetric top for " << name(symmetryName) << ", got "
+      << topNames().at(underlying(top)) << " instead"
+    );
 
-  // Ensure rotation of highest order axis to z worked
-  BOOST_CHECK(csm::element(normalizedPositions, elements::Rotation::Cn(Eigen::Vector3d::UnitZ(), 2)) < 1e-10);
+    const unsigned highestAxisOrder = reorientAsymmetricTop(normalizedPositions);
+    BOOST_CHECK_EQUAL(highestAxisOrder, 2);
+
+    // Ensure rotation of highest order axis to z worked
+    const double CnCSM = csm::element(normalizedPositions, elements::Rotation::Cn(Eigen::Vector3d::UnitZ(), 2));
+    BOOST_CHECK_MESSAGE(
+      CnCSM < 1e-10,
+      "Expected Cn of order 2 along z < 1e-10, got " << CnCSM << " instead."
+    );
+  }
 }

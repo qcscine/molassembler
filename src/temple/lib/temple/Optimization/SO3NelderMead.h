@@ -19,7 +19,22 @@ namespace temple {
 template<typename FloatType = double>
 struct SO3NelderMead {
   using Matrix = Eigen::Matrix<FloatType, 3, 3>;
-  using Parameters = std::array<Matrix, 4>;
+  //! Four 3x3 matrices form the simplex vertices
+  struct Parameters {
+    Eigen::Matrix<FloatType, 3, 12> matrix;
+
+    decltype(auto) at(const unsigned i) {
+      assert(i < 4);
+      return matrix.template block<3, 3>(0, 3 * i);
+    }
+
+    decltype(auto) at(const unsigned i) const {
+      assert(i < 4);
+      return matrix.template block<3, 3>(0, 3 * i);
+    }
+
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+  };
 
   //! Type returned from an optimization
   struct OptimizationReturnType {
@@ -31,86 +46,106 @@ struct SO3NelderMead {
     unsigned minimalIndex;
   };
 
-  static FloatType distanceSquared(const Matrix& a, const Matrix& b) {
-    return FloatType {0.5} * (a.transpose() * b).log().squaredNorm();
-  }
+  struct Manifold {
+    // Returns the skew-symmetric parts of m
+    template<typename Derived>
+    static Matrix skew(const Eigen::MatrixBase<Derived>& m) {
+      return 0.5 * (m - m.transpose());
+    }
 
-  static Matrix geodesicExtrapolation(const Matrix& a, const Matrix& b, const FloatType tau) {
-    return b * (tau * (b.transpose() * a).log()).exp();
-  }
+    template<typename DerivedA, typename DerivedB>
+    static Matrix log(const Eigen::MatrixBase<DerivedA>& X, const Eigen::MatrixBase<DerivedB>& Y) {
+      return skew((X.transpose() * Y).log().real());
+    }
 
-  static bool isOrthogonal(const Matrix& m) {
-    return (m * m.transpose()).isApprox(Matrix::Identity(), 1e-5);
-  }
+    template<typename DerivedA, typename DerivedB>
+    static Matrix exp(const Eigen::MatrixBase<DerivedA>& X, const Eigen::MatrixBase<DerivedB>& Y) {
+      return X * (Y.exp());
+    }
 
-  static Matrix karcherMean(const Parameters& points) {
-    auto calculateOmega = [](const Parameters& p, const Matrix& speculativeMean) {
-      Matrix omega = Matrix::Zero();
-      for(const Matrix& point : p) {
-        Matrix U = (speculativeMean.transpose() * point).log();
-        omega += 0.5 * (U - U.transpose());
+    template<typename DerivedA, typename DerivedB>
+    static FloatType distanceSquared(const Eigen::MatrixBase<DerivedA>& X, const Eigen::MatrixBase<DerivedB>& Y) {
+      return FloatType {0.5} * log(X, Y).squaredNorm();
+    }
+
+    template<typename DerivedA, typename DerivedB>
+    static Matrix geodesic(const Eigen::MatrixBase<DerivedA>& a, const Eigen::MatrixBase<DerivedB>& b, const FloatType tau) {
+      return exp(b, tau * log(b, a));
+    }
+
+    template<typename Derived>
+    static bool contains(const Eigen::MatrixBase<Derived>& m) {
+      return (m * m.transpose()).isApprox(Matrix::Identity(), 1e-5);
+    }
+
+    static Matrix karcherMean(const Parameters& points) {
+      auto calculateOmega = [](const Parameters& p, const Matrix& speculativeMean) {
+        Matrix omega = Matrix::Zero();
+        for(unsigned i = 0; i < 4; ++i) {
+          omega += Manifold::log(speculativeMean, p.at(i));
+        }
+        omega /= 4;
+        return omega;
+      };
+
+      constexpr FloatType delta = 1e-5;
+      Matrix q = points.at(0);
+      Matrix omega = calculateOmega(points, q);
+
+      unsigned iterations = 0;
+      while(omega.norm() >= delta && iterations < 100) {
+        q = Manifold::exp(q, omega);
+        assert(q.allFinite());
+        assert(contains(q));
+        omega = calculateOmega(points, q);
+        ++iterations;
       }
-      omega /= 4;
-      return omega;
-    };
 
-    constexpr FloatType delta = 1e-5;
-    Matrix q = points.front();
-    Matrix omega = calculateOmega(points, q);
-
-    unsigned iterations = 0;
-    while(omega.norm() >= delta && iterations < 100) {
-      q = q * omega.exp();
-      assert(q.allFinite());
-      assert(isOrthogonal(q));
-      omega = calculateOmega(points, q);
-      ++iterations;
+      return q;
     }
 
-    return q;
-  }
+    static Matrix randomRotation() {
+      auto A = Matrix::Random();
+      Eigen::ColPivHouseholderQR<Matrix> decomposition(A);
+      Matrix Q = decomposition.householderQ();
+      auto R = decomposition.matrixR();
 
-  static Matrix randomRotation() {
-    auto A = Matrix::Random();
-    Eigen::ColPivHouseholderQR<Matrix> decomposition(A);
-    Matrix Q = decomposition.householderQ();
-    auto R = decomposition.matrixR();
-
-    Matrix intermediate = Matrix::Zero();
-    for(unsigned i = 0; i < 3; ++i) {
-      double value = R(i, i);
-      if(value < 0) {
-        intermediate(i, i) = -1;
-      } else if(value > 0) {
-        intermediate(i, i) = 1;
+      Matrix intermediate = Matrix::Zero();
+      for(unsigned i = 0; i < 3; ++i) {
+        double value = R(i, i);
+        if(value < 0) {
+          intermediate(i, i) = -1;
+        } else if(value > 0) {
+          intermediate(i, i) = 1;
+        }
       }
-    }
-    Q = Q * intermediate;
+      Q = Q * intermediate;
 
-    // Now Q is in O(n), but not yet in SO(n), which we can ensure with:
-    if(Q.determinant() < 0) {
-      Q.col(0).swap(Q.col(1));
-    }
+      // Now Q is in O(n), but not yet in SO(n), which we can ensure with:
+      if(Q.determinant() < 0) {
+        Q.col(0).swap(Q.col(1));
+      }
 
-    // Is it really orthogonal?
-    assert(isOrthogonal(Q));
-    assert(Q.allFinite());
-    return Q;
-  }
+      // Is it really orthogonal?
+      assert(Q.allFinite());
+      assert(contains(Q));
+      return Q;
+    }
+  };
 
   static Parameters randomParameters() {
     constexpr FloatType ballRadiusSquared = M_PI * M_PI;
     Parameters parameters;
-    parameters.front() = randomRotation();
+    parameters.at(0) = Manifold::randomRotation();
     for(unsigned i = 1; i < 4; ++i) {
       Matrix R;
       do {
-        R = randomRotation();
+        R = Manifold::randomRotation();
       } while(
         temple::any_of(
           temple::iota<unsigned>(i),
           [&](const unsigned j) -> bool {
-            return distanceSquared(R, parameters.at(j)) >= ballRadiusSquared;
+            return Manifold::distanceSquared(R, parameters.at(j)) >= ballRadiusSquared;
           }
         )
       );
@@ -128,14 +163,15 @@ struct SO3NelderMead {
     UpdateFunction&& function,
     Checker&& check
   ) {
-    constexpr FloatType alpha = 1; // Reflection coefficient
-    constexpr FloatType gamma = 2; // Expansion coefficient
-    constexpr FloatType rho = 0.5; // Contraction coefficient
-    constexpr FloatType sigma = 0.5; // Shrink coefficient
+    constexpr FloatType reflectionCoefficient = 1;
+    constexpr FloatType expansionCoefficient = 2;
+    constexpr FloatType contractionCoefficient = 0.5;
+    constexpr FloatType shrinkCoefficient = 0.5;
 
-    static_assert(0 < alpha, "Alpha bounds not met");
-    static_assert(1 < gamma, "Gamma bounds not met");
-    static_assert(0 < rho && rho <= 0.5, "Rho bounds not met");
+    static_assert(0 < reflectionCoefficient, "Reflection coefficient bounds not met");
+    static_assert(1 < expansionCoefficient, "Expansion coefficient bounds not met");
+    static_assert(0 < contractionCoefficient && contractionCoefficient <= 0.5, "Contraction coefficient bounds not met");
+    static_assert(0 < shrinkCoefficient && shrinkCoefficient < 1, "Shrink coefficient bounds not met");
 
     struct IndexValuePair {
       unsigned column;
@@ -155,9 +191,9 @@ struct SO3NelderMead {
     constexpr FloatType ballRadiusSquared = M_PI * M_PI;
     if(
       temple::any_of(
-        temple::adaptors::allPairs(points),
-        [](const Matrix& p1, const Matrix& p2) -> bool {
-          return distanceSquared(p1, p2) >= ballRadiusSquared;
+        temple::adaptors::allPairs(temple::iota<unsigned>(4)),
+        [&points](const unsigned i, const unsigned j) -> bool {
+          return Manifold::distanceSquared(points.at(i), points.at(j)) >= ballRadiusSquared;
         }
       )
     ) {
@@ -207,7 +243,7 @@ struct SO3NelderMead {
           continue;
         }
 
-        if(distanceSquared(speculativePoint, simplexVertices.at(i)) >= ballRadiusSquared) {
+        if(Manifold::distanceSquared(speculativePoint, simplexVertices.at(i)) >= ballRadiusSquared) {
           /* The new point will lie outside a ball of radius pi / 2 for the
            * existing points. Geodesics may no longer be unique and the Karcher
            * mean may be incalculable. Returning a near-infinite function value
@@ -223,11 +259,12 @@ struct SO3NelderMead {
     FloatType standardDeviation;
     unsigned iteration = 0;
     do {
-      const Matrix simplexCentroid = karcherMean(points);
-      assert(isOrthogonal(simplexCentroid));
+      const Matrix simplexCentroid = Manifold::karcherMean(points);
+      const Matrix& worstVertex = points.at(values.back().column);
+      const FloatType worstVertexValue = values.back().value;
 
       /* Reflect */
-      const Matrix reflectedVertex = geodesicExtrapolation(points.at(values.back().column), simplexCentroid, -alpha);
+      const Matrix reflectedVertex = Manifold::geodesic(worstVertex, simplexCentroid, -reflectionCoefficient);
       const FloatType reflectedValue = ballCheckingFunction(function, points, reflectedVertex, values.back().column);
 
       if(
@@ -237,7 +274,7 @@ struct SO3NelderMead {
         replaceWorst(reflectedVertex, reflectedValue, points);
       } else if(reflectedValue < values.front().value) {
         /* Expansion */
-        const Matrix expandedVertex = geodesicExtrapolation(points.at(values.back().column), simplexCentroid, -gamma);
+        const Matrix expandedVertex = Manifold::geodesic(worstVertex, simplexCentroid, -expansionCoefficient);
         const FloatType expandedValue = ballCheckingFunction(function, points, expandedVertex, values.back().column);
 
         if(expandedValue < reflectedValue) {
@@ -249,7 +286,7 @@ struct SO3NelderMead {
         }
       } else {
         /* Contraction */
-        const Matrix contractedVertex = geodesicExtrapolation(points.at(values.back().column), simplexCentroid, rho);
+        const Matrix contractedVertex = Manifold::geodesic(worstVertex, simplexCentroid, contractionCoefficient);
         const FloatType contractedValue = function(contractedVertex);
         // NOTE: No need to worry about ball radius in inside contraction
         if(contractedValue < values.back().value) {
@@ -261,8 +298,8 @@ struct SO3NelderMead {
           // Shrink all points besides the best one and recalculate function values
           for(unsigned i = 1; i < 4; ++i) {
             auto& value = values.at(i);
-            auto& vertex = points.at(value.column);
-            vertex = geodesicExtrapolation(vertex, bestVertex, sigma);
+            Eigen::Ref<Eigen::Matrix3d> vertex = points.at(value.column);
+            vertex = Manifold::geodesic(vertex, bestVertex, shrinkCoefficient);
             value.value = function(vertex);
             // NOTE: No need to worry about ball radius in shrink operation
           }

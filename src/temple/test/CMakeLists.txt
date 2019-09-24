@@ -9,7 +9,10 @@ add_executable(templeTests
   ${CMAKE_CURRENT_SOURCE_DIR}/Containers.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/Functional.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/Numeric.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/Optimization.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/Optimization/LBFGS.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/Optimization/NelderMead.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/Optimization/SO3NelderMead.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/Optimization/TrustRegionNewton.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/Variadic.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/constexprBTree.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/constexprTests.cpp
