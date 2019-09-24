@@ -11,6 +11,7 @@ set_target_properties(molassembler_python PROPERTIES
   LIBRARY_OUTPUT_NAME "molassembler"
 )
 target_link_libraries(molassembler_python PRIVATE molassembler Eigen3::Eigen)
+install(CODE "execute_process(WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR} COMMAND ${PYTHON_EXECUTABLE} -m pip install --prefix=${CMAKE_INSTALL_PREFIX} --upgrade .)")
 
 # Python tests
 if(SCINE_BUILD_TESTS)
@@ -24,10 +25,5 @@ endif()
 # Add the setup file in order to enable distribution and installation using pip
 file(
   COPY ${CMAKE_CURRENT_SOURCE_DIR}/setup.py
-  DESTINATION ${CMAKE_CURRENT_BINARY_DIR}
-)
-
-file(
-  COPY ${PROJECT_SOURCE_DIR}/README.md
   DESTINATION ${CMAKE_CURRENT_BINARY_DIR}
 )

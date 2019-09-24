@@ -3,10 +3,10 @@ project(RingDecomposerLib VERSION 1.0)
 enable_testing()
 
 # external options -- build our RDKit testing tool
-option(BUILD_RDKIT_BENCHMARK "Build the Benchmark with RDKit" OFF)
+#option(BUILD_RDKIT_BENCHMARK "Build the Benchmark with RDKit" OFF)
 
 # external options -- build python wrapper
-option(BUILD_PYTHON_WRAPPER "Build python wrapper" OFF)
+#option(BUILD_PYTHON_WRAPPER "Build python wrapper" OFF)
 
 # external options -- python executable
 set(PYTHON_EXECUTABLE "" CACHE STRING "Python executable for building of the extension")
