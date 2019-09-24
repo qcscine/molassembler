@@ -78,10 +78,14 @@ struct SO3NelderMead {
       return (m * m.transpose()).isApprox(Matrix::Identity(), 1e-5);
     }
 
-    static Matrix karcherMean(const Parameters& points) {
-      auto calculateOmega = [](const Parameters& p, const Matrix& speculativeMean) {
+    static Matrix karcherMean(const Parameters& points, const unsigned excludeIdx) {
+      auto calculateOmega = [excludeIdx](const Parameters& p, const Matrix& speculativeMean) {
         Matrix omega = Matrix::Zero();
         for(unsigned i = 0; i < 4; ++i) {
+          if(i == excludeIdx) {
+            continue;
+          }
+
           omega += Manifold::log(speculativeMean, p.at(i));
         }
         omega /= 4;
@@ -89,7 +93,7 @@ struct SO3NelderMead {
       };
 
       constexpr FloatType delta = 1e-5;
-      Matrix q = points.at(0);
+      Matrix q = (excludeIdx == 0) ? points.at(1) : points.at(0);
       Matrix omega = calculateOmega(points, q);
 
       unsigned iterations = 0;
@@ -155,6 +159,77 @@ struct SO3NelderMead {
     return parameters;
   }
 
+  struct IndexValuePair {
+    unsigned column;
+    FloatType value;
+
+    bool operator < (const IndexValuePair& other) const {
+      return value < other.value;
+    }
+  };
+
+  static FloatType valueStandardDeviation(const std::vector<IndexValuePair>& sortedPairs) {
+    const unsigned V = sortedPairs.size();
+    // Calculate standard deviation of values
+    const FloatType average = temple::accumulate(
+      sortedPairs,
+      FloatType {0},
+      [](const FloatType carry, const IndexValuePair& pair) -> FloatType {
+        return carry + pair.value;
+      }
+    ) / V;
+    return std::sqrt(
+      temple::accumulate(
+        sortedPairs,
+        FloatType {0},
+        [average](const FloatType carry, const IndexValuePair& pair) -> FloatType {
+          const FloatType diff = pair.value - average;
+          return carry + diff * diff;
+        }
+      ) / V
+    );
+  }
+
+  template<typename UpdateFunction>
+  static void shrink(
+    Parameters& points,
+    std::vector<IndexValuePair>& values,
+    UpdateFunction&& function
+  ) {
+    constexpr FloatType shrinkCoefficient = 0.5;
+    static_assert(0 < shrinkCoefficient && shrinkCoefficient < 1, "Shrink coefficient bounds not met");
+    const Matrix& bestVertex = points.at(values.front().column);
+
+    // Shrink all points besides the best one and recalculate function values
+    for(unsigned i = 1; i < 4; ++i) {
+      auto& value = values.at(i);
+      Eigen::Ref<Eigen::Matrix3d> vertex = points.at(value.column);
+      vertex = Manifold::geodesic(vertex, bestVertex, shrinkCoefficient);
+      value.value = function(vertex);
+      // NOTE: No need to worry about ball radius in shrink operation
+    }
+    temple::inplace::sort(values);
+  }
+
+  static void replaceWorst(
+    std::vector<IndexValuePair>& sortedPairs,
+    const Matrix& newVertex,
+    const FloatType newValue,
+    Parameters& vertices
+  ) {
+    assert(std::is_sorted(std::begin(sortedPairs), std::end(sortedPairs)));
+    IndexValuePair replacementPair {
+      sortedPairs.back().column,
+      newValue
+    };
+    // Insert the replacement into values, keeping ordering
+    temple::TinySet<IndexValuePair>::checked_insert(sortedPairs, replacementPair);
+    // Drop the worst value
+    sortedPairs.pop_back();
+    // Replace the worst column
+    vertices.at(replacementPair.column) = newVertex;
+  }
+
   template<
     typename UpdateFunction,
     typename Checker
@@ -166,21 +241,10 @@ struct SO3NelderMead {
     constexpr FloatType reflectionCoefficient = 1;
     constexpr FloatType expansionCoefficient = 2;
     constexpr FloatType contractionCoefficient = 0.5;
-    constexpr FloatType shrinkCoefficient = 0.5;
 
     static_assert(0 < reflectionCoefficient, "Reflection coefficient bounds not met");
     static_assert(1 < expansionCoefficient, "Expansion coefficient bounds not met");
     static_assert(0 < contractionCoefficient && contractionCoefficient <= 0.5, "Contraction coefficient bounds not met");
-    static_assert(0 < shrinkCoefficient && shrinkCoefficient < 1, "Shrink coefficient bounds not met");
-
-    struct IndexValuePair {
-      unsigned column;
-      FloatType value;
-
-      bool operator < (const IndexValuePair& other) const {
-        return value < other.value;
-      }
-    };
 
     /* We need the points of the simplex to always lie within a ball of radius
      * pi/2 so that geodesics and the karcher mean are unique.
@@ -215,23 +279,6 @@ struct SO3NelderMead {
       )
     );
 
-    auto replaceWorst = [&values](
-      const Matrix& point,
-      const FloatType value,
-      Parameters& simplexVertices
-    ) {
-      IndexValuePair replacementPair {
-        values.back().column,
-        value
-      };
-      // Insert the replacement into values, keeping ordering
-      temple::TinySet<IndexValuePair>::checked_insert(values, replacementPair);
-      // Drop the worst value
-      values.pop_back();
-      // Replace the worst column
-      simplexVertices.at(replacementPair.column) = point;
-    };
-
     auto ballCheckingFunction = [](
       auto&& objectiveFunction,
       const Parameters& simplexVertices,
@@ -259,72 +306,51 @@ struct SO3NelderMead {
     FloatType standardDeviation;
     unsigned iteration = 0;
     do {
-      const Matrix simplexCentroid = Manifold::karcherMean(points);
+      const Matrix simplexCentroid = Manifold::karcherMean(points, values.back().column);
       const Matrix& worstVertex = points.at(values.back().column);
       const FloatType worstVertexValue = values.back().value;
+      const FloatType bestVertexValue = values.front().value;
 
       /* Reflect */
       const Matrix reflectedVertex = Manifold::geodesic(worstVertex, simplexCentroid, -reflectionCoefficient);
       const FloatType reflectedValue = ballCheckingFunction(function, points, reflectedVertex, values.back().column);
 
-      if(
-        values.front().value <= reflectedValue
-        && reflectedValue < values.at(2).value
-      ) {
-        replaceWorst(reflectedVertex, reflectedValue, points);
-      } else if(reflectedValue < values.front().value) {
+      if(reflectedValue < bestVertexValue) {
         /* Expansion */
         const Matrix expandedVertex = Manifold::geodesic(worstVertex, simplexCentroid, -expansionCoefficient);
         const FloatType expandedValue = ballCheckingFunction(function, points, expandedVertex, values.back().column);
 
         if(expandedValue < reflectedValue) {
           // Replace the worst value with the expanded point
-          replaceWorst(expandedVertex, expandedValue, points);
+          replaceWorst(values, expandedVertex, expandedValue, points);
         } else {
           // Replace the worst value with the reflected point
-          replaceWorst(reflectedVertex, reflectedValue, points);
+          replaceWorst(values, reflectedVertex, reflectedValue, points);
+        }
+      } else if(bestVertexValue <= reflectedValue && reflectedValue < values.at(2).value) {
+        replaceWorst(values, reflectedVertex, reflectedValue, points);
+      } else if(values.at(2).value <= reflectedValue && reflectedValue < worstVertexValue) {
+        /* Outside contraction */
+        const Matrix outsideContractedVertex = Manifold::geodesic(worstVertex, simplexCentroid, -(reflectionCoefficient * contractionCoefficient));
+        const FloatType outsideContractedValue = ballCheckingFunction(function, points, reflectedVertex, values.back().column);
+        if(outsideContractedValue <= reflectedValue) {
+          replaceWorst(values, outsideContractedVertex, outsideContractedValue, points);
+        } else {
+          shrink(points, values, function);
         }
       } else {
-        /* Contraction */
-        const Matrix contractedVertex = Manifold::geodesic(worstVertex, simplexCentroid, contractionCoefficient);
-        const FloatType contractedValue = function(contractedVertex);
+        /* Inside contraction */
+        const Matrix insideContractedVertex = Manifold::geodesic(worstVertex, simplexCentroid, contractionCoefficient);
+        const FloatType insideContractedValue = function(insideContractedVertex);
         // NOTE: No need to worry about ball radius in inside contraction
-        if(contractedValue < values.back().value) {
-          replaceWorst(contractedVertex, contractedValue, points);
+        if(insideContractedValue < worstVertexValue) {
+          replaceWorst(values, insideContractedVertex, insideContractedValue, points);
         } else {
-          /* Shrink */
-          const Matrix& bestVertex = points.at(values.front().column);
-
-          // Shrink all points besides the best one and recalculate function values
-          for(unsigned i = 1; i < 4; ++i) {
-            auto& value = values.at(i);
-            Eigen::Ref<Eigen::Matrix3d> vertex = points.at(value.column);
-            vertex = Manifold::geodesic(vertex, bestVertex, shrinkCoefficient);
-            value.value = function(vertex);
-            // NOTE: No need to worry about ball radius in shrink operation
-          }
-          temple::inplace::sort(values);
+          shrink(points, values, function);
         }
       }
 
-      // Calculate standard deviation of values
-      const FloatType average = temple::accumulate(
-        values,
-        FloatType {0},
-        [](const FloatType carry, const IndexValuePair& pair) -> FloatType {
-          return carry + pair.value;
-        }
-      ) / 4;
-      standardDeviation = std::sqrt(
-        temple::accumulate(
-          values,
-          FloatType {0},
-          [average](const FloatType carry, const IndexValuePair& pair) -> FloatType {
-            const FloatType diff = pair.value - average;
-            return carry + diff * diff;
-          }
-        ) / 4
-      );
+      standardDeviation = valueStandardDeviation(values);
       ++iteration;
     } while(check.shouldContinue(iteration, values.front().value, standardDeviation));
 
