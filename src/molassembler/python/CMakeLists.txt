@@ -9,6 +9,7 @@ pybind11_add_module(molassembler_python ${MOLASSEMBLER_PYTHON_CPPS})
 set_target_properties(molassembler_python PROPERTIES
   SUFFIX ".so"
   LIBRARY_OUTPUT_NAME "molassembler"
+  LIBRARY_OUTPUT_DIRECTORY "molassembler"
 )
 target_link_libraries(molassembler_python PRIVATE molassembler Eigen3::Eigen)
 install(CODE "execute_process(WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR} COMMAND ${PYTHON_EXECUTABLE} -m pip install --prefix=${CMAKE_INSTALL_PREFIX} --upgrade .)")
@@ -26,4 +27,9 @@ endif()
 file(
   COPY ${CMAKE_CURRENT_SOURCE_DIR}/setup.py
   DESTINATION ${CMAKE_CURRENT_BINARY_DIR}
+)
+
+file(
+  COPY ${CMAKE_CURRENT_SOURCE_DIR}/__init__.py
+  DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/molassembler
 )

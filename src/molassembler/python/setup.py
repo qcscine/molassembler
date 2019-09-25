@@ -23,8 +23,8 @@ setuptools.setup(
     long_description=markdown_description,
     long_description_content_type="text/markdown",
     url="https://gitlab.chab.ethz.ch/scine/molassembler",
-    packages=[""],
-    package_data={"": ["molassembler.so"]},
+    packages=["molassembler"],
+    package_data={"molassembler": ["__init__.py", "molassembler.so"]},
     classifiers=[
         "Programming Language :: Python :: 3",
         "Programming Language :: C++",
