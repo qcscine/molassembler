@@ -8,8 +8,6 @@ if(NOT TARGET Boost::filesystem OR NOT TARGET Boost::system)
 endif()
 
 include(ScineUtils)
-include(ImportUtilsOS)
-import_utils_os()
 
 # Some notes on BLAS / LAPACK:
 # Eigen can use BLAS / LAPACK routines.

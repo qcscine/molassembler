@@ -1,3 +1,8 @@
+#
+# This file is licensed under the 3-clause BSD license.
+# Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+# See LICENSE.txt for details.
+#
 function(import_utils_os)
   # If the target already exists, do nothing
   if(TARGET Scine::UtilsOS)
@@ -5,7 +10,7 @@ function(import_utils_os)
   endif()
 
   # Try to find the package locally
-  find_package(Scine COMPONENTS UtilsOS QUIET)
+  find_package(Scine OPTIONAL_COMPONENTS UtilsOS QUIET)
   if(TARGET Scine::UtilsOS)
     message(STATUS "Scine::UtilsOS found locally at ${Scine_DIR}")
     return()
