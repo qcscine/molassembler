@@ -136,7 +136,7 @@ struct ElementGrouping {
  */
 using NPGroupingsMapType = std::unordered_map<
   unsigned,
-  ElementGrouping,
+  std::vector<ElementGrouping>,
   std::hash<unsigned>,
   std::equal_to<unsigned>,
   Eigen::aligned_allocator<std::pair<unsigned, ElementGrouping>>

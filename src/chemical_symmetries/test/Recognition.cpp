@@ -84,7 +84,7 @@ const std::string& topName(Top top) {
 }
 
 BOOST_AUTO_TEST_CASE(Recognition) {
-  const std::map<Name, PointGroup> expected {
+  std::map<Name, PointGroup> expected {
     {Name::Linear, PointGroup::Dinfh},
     {Name::Bent, PointGroup::C2v},
     {Name::TrigonalPlanar, PointGroup::D3h},
@@ -101,8 +101,14 @@ BOOST_AUTO_TEST_CASE(Recognition) {
     {Name::TrigonalPrismatic, PointGroup::D3h},
     {Name::PentagonalPyramidal, PointGroup::C5v},
     {Name::PentagonalBiPyramidal, PointGroup::D5h}
-  //  {Name::SquareAntiPrismatic, PointGroup::D4d}
   };
+
+#ifdef NDEBUG
+  /* Some pairs take really long in debug, so we test them only in Release
+   * build variants
+   */
+  expected.emplace(Name::SquareAntiPrismatic, PointGroup::D4d);
+#endif
 
   for(const auto& nameGroupPair : expected) {
     auto positions = addOrigin(symmetryData().at(nameGroupPair.first).coordinates);
@@ -110,10 +116,7 @@ BOOST_AUTO_TEST_CASE(Recognition) {
     auto normalized = detail::normalize(positions);
 
     // Add a random coordinate transformation
-    const Eigen::Matrix3d rot = rotationMatrix(CoordinateSystem {}, CoordinateSystem::random());
-    for(unsigned i = 0; i < normalized.cols(); ++i) {
-      normalized.col(i) = rot * normalized.col(i);
-    }
+    normalized = Eigen::Quaterniond::UnitRandom().toRotationMatrix() * normalized;
 
     // Standardize the top
     const Top top = standardizeTop(normalized);
@@ -133,32 +136,18 @@ BOOST_AUTO_TEST_CASE(Recognition) {
     );
 
     BOOST_CHECK_MESSAGE(
-      pgCSM < 1,
+      pgCSM < 0.01,
       "Expected CSM(" << pointGroupString(nameGroupPair.second)
-      << ") < 1 for " << Symmetry::name(nameGroupPair.first)
+      << ") < 0.01 for " << Symmetry::name(nameGroupPair.first)
       << ", got " << pgCSM << " (top is " << topName(top) << ")"
     );
+
+    std::cout << "CSM(" << pointGroupString(nameGroupPair.second) << ") = " << pgCSM << "\n";
   }
 }
 
 // TODO reframe as a test, not just as output testing
 BOOST_AUTO_TEST_CASE(PointGroupElements) {
-  auto writeXYZ = [](const std::string& filename, const PositionCollection& positions) {
-    std::ofstream outfile(filename);
-    const unsigned N = positions.cols();
-    outfile << N << "\n\n";
-    outfile << std::fixed << std::setprecision(10);
-    for(unsigned i = 0; i < N; ++i) {
-      outfile << std::left << std::setw(3) << "H";
-      outfile << std::right
-        << std::setw(16) << positions.col(i).x()
-        << std::setw(16) << positions.col(i).y()
-        << std::setw(16) << positions.col(i).z()
-        << "\n";
-    }
-    outfile.close();
-  };
-
   /* For each point group, create a point at unit x and z and apply all
    * transformations to each point
    */
@@ -171,17 +160,19 @@ BOOST_AUTO_TEST_CASE(PointGroupElements) {
     }
     std::cout << "}\n";
     for(const auto& iterPair : groupings) {
-      std::cout << "  np = " << iterPair.first << " along " << iterPair.second.probePoint.transpose() << " -> " << temple::stringify(iterPair.second.groups) << "\n";
-      std::cout << "  ";
-      std::cout << temple::stringifyContainer(iterPair.second.groups,
-        [&](const auto& grp) -> std::string {
-          return temple::stringifyContainer(grp,
-            [&elements](const unsigned elementIdx) -> std::string {
-              return elements.at(elementIdx)->name();
-            }
-          );
-        }
-      ) << "\n";
+      for(const auto& grouping : iterPair.second) {
+        std::cout << "  np = " << iterPair.first << " along " << grouping.probePoint.transpose() << " -> " << temple::stringify(grouping.groups) << "\n";
+        std::cout << "  ";
+        std::cout << temple::stringifyContainer(grouping.groups,
+          [&](const auto& grp) -> std::string {
+            return temple::stringifyContainer(grp,
+              [&elements](const unsigned elementIdx) -> std::string {
+                return elements.at(elementIdx)->name();
+              }
+            );
+          }
+        ) << "\n";
+      }
     }
   };
 

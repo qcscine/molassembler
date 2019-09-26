@@ -24,8 +24,7 @@ bool Partitioner::next_partition() {
 
   assert(mapping.size() > 1);
   assert(mapping.front() == 0);
-  const unsigned N = S * E;
-  assert(mapping.size() == N);
+  assert(mapping.size() == S * E);
   std::vector<unsigned> counts(S, E);
 
   /* The last position is not free, it is predetermined by all other counts.

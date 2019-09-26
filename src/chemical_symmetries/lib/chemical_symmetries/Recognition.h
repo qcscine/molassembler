@@ -111,7 +111,7 @@ double groupedSymmetryElements(
   std::vector<unsigned> particleIndices,
   const Eigen::Matrix<double, 3, Eigen::Dynamic>& unfoldMatrices,
   const Eigen::Matrix<double, 3, Eigen::Dynamic>& foldMatrices,
-  const elements::ElementGrouping& elementGrouping
+  const std::vector<elements::ElementGrouping>& elementGroupings
 );
 
 /** @brief Calculates the continuous symmetry measure for a set of particles

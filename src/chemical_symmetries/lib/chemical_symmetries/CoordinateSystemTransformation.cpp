@@ -23,7 +23,7 @@ inline double signedAngle(const Eigen::Vector3d& a, const Eigen::Vector3d& b, co
 } // namespace detail
 
 CoordinateSystem::CoordinateSystem() : x(Eigen::Vector3d::UnitX()), y(Eigen::Vector3d::UnitY()), z(Eigen::Vector3d::UnitZ()) {}
-CoordinateSystem::CoordinateSystem(const Eigen::Vector3d& a, const Eigen::Vector3d& b) : x(a.normalized()), y(b.normalized()), z(x.cross(y)) {
+CoordinateSystem::CoordinateSystem(const Eigen::Vector3d& a, const Eigen::Vector3d& b) : x(a.normalized()), y(b.normalized()), z(x.cross(y).normalized()) {
   // a and b need to be at right angles
   assert(std::fabs(detail::angle(a, b) - M_PI / 2) < 1e-4);
 }
@@ -40,6 +40,10 @@ bool CoordinateSystem::isRightHanded() const {
   return x.normalized().cross(y.normalized()).isApprox(z.normalized(), 1e-10);
 }
 
+bool isRotationMatrix(const Eigen::Matrix3d& R) {
+  return R.transpose().isApprox(R.inverse(), 1e-10);
+}
+
 Eigen::Matrix3d rotationMatrix(const CoordinateSystem& a, const CoordinateSystem& b) {
   assert(a.isRightHanded());
   assert(b.isRightHanded());
@@ -48,20 +52,24 @@ Eigen::Matrix3d rotationMatrix(const CoordinateSystem& a, const CoordinateSystem
    * anything. Catch the case that z matches already:
    */
   if(a.z.isApprox(b.z, 1e-8)) {
-    return Eigen::AngleAxisd(
+    const auto R = Eigen::AngleAxisd(
       detail::signedAngle(a.x, b.x, a.z),
-      a.z
+      a.z.normalized()
     ).toRotationMatrix();
+    assert(isRotationMatrix(R));
+    return R;
   }
 
   /* If z is -z', then z x z' is still a null vector with which we cannot
    * rotate anything. Catch that case too:
    */
   if(a.z.isApprox(-b.z, 1e-8)) {
-    return Eigen::AngleAxisd(
+    const auto R = Eigen::AngleAxisd(
       -detail::signedAngle(a.x, b.x, a.z),
-      a.z
+      a.z.normalized()
     ).toRotationMatrix() * (-Eigen::Matrix3d::Identity());
+    assert(isRotationMatrix(R));
+    return R;
   }
 
   const Eigen::Vector3d N = a.z.cross(b.z);
@@ -76,11 +84,13 @@ Eigen::Matrix3d rotationMatrix(const CoordinateSystem& a, const CoordinateSystem
 
   assert(!std::isnan(alpha) && !std::isnan(beta) && !std::isnan(gamma));
 
-  return (
+  const auto R = (
     Eigen::AngleAxisd(gamma, b.z.normalized())
     * Eigen::AngleAxisd(beta, N.normalized())
     * Eigen::AngleAxisd(alpha, a.z.normalized())
   ).toRotationMatrix();
+  assert(isRotationMatrix(R));
+  return R;
 }
 
 } // namespace Symmetry

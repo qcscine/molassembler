@@ -5,6 +5,7 @@
 
 #include "chemical_symmetries/PointGroups.h"
 
+#include "temple/Functional.h"
 #include "boost/optional.hpp"
 #include <Eigen/Geometry>
 
@@ -662,19 +663,15 @@ NPGroupingsMapType npGroupings(
 
   NPGroupingsMapType npGroupings;
 
-  /* Points are more interesting regarding the np groupings the less they lie
-   * on coordinate axes.
-   *
-   * Returns true if a is more "interesting" than b
-   */
-  auto moreInteresting = [](const Eigen::Vector3d& a, const Eigen::Vector3d& b) -> bool {
-    return a.array().abs().sum() > b.array().abs().sum();
-  };
-
   auto testVector = [&](const Eigen::Vector3d& v) {
     // Check if there is already a grouping for this vector
     for(const auto& iterPair : npGroupings) {
-      if(iterPair.second.probePoint.isApprox(v, 1e-8)) {
+      if(temple::any_of(
+        iterPair.second,
+        [&v](const ElementGrouping& grouping) -> bool {
+          return grouping.probePoint.isApprox(v, 1e-8);
+        }
+      )) {
         return;
       }
     }
@@ -706,20 +703,26 @@ NPGroupingsMapType npGroupings(
       }
     }
 
+    assert(std::is_sorted(std::begin(groups), std::end(groups)));
+
+    ElementGrouping grouping;
+    grouping.probePoint = mappedPoints.col(0);
+    grouping.groups = std::move(groups);
     auto findIter = npGroupings.find(np);
     if(findIter == std::end(npGroupings)) {
-      ElementGrouping grouping;
-      grouping.probePoint = mappedPoints.col(0);
-      grouping.groups = std::move(groups);
-
-      npGroupings.emplace(
-        np,
-        std::move(grouping)
-      );
-    } else if(moreInteresting(mappedPoints.col(0), findIter->second.probePoint)) {
-      // Overwrite the existing grouping
-      findIter->second.probePoint = mappedPoints.col(0);
-      findIter->second.groups = std::move(groups);
+      npGroupings.emplace(np, std::vector<ElementGrouping> {std::move(grouping)});
+    } else {
+      auto& groupingsList = findIter->second;
+      if(
+        !temple::any_of(
+          groupingsList,
+          [&grouping](const ElementGrouping& group) -> bool {
+            return grouping.groups == group.groups;
+          }
+        )
+      ) {
+        groupingsList.push_back(std::move(grouping));
+      }
     }
   };
 
