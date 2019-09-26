@@ -13,10 +13,7 @@
 #include "chemical_symmetries/Shapes.h"
 #include "chemical_symmetries/PointGroups.h"
 #include "chemical_symmetries/CompileTimeOptions.h"
-
-#ifdef USE_CONSTEXPR_SQUARE_ANTIPRISMATIC_LOOKUP_TABLE
 #include "chemical_symmetries/AngleLookup.h"
-#endif
 
 namespace Scine {
 
@@ -1059,6 +1056,105 @@ struct PentagonalBipyramid {
 };
 
 /*!
+ * @brief A capped octahedron shape
+ */
+struct CappedOctahedron {
+  static constexpr Symmetry::Shape shape = Symmetry::Shape::CappedOctahedron;
+  static constexpr unsigned size = 7;
+  static constexpr char stringName[] = "capped octahedron";
+  /*! [V(CO)7]+ in C3v
+   *
+   * Jay W. Dicke, Nathan J. Stibrich, Henry F. Schaefer,
+   * V(CO)7+: A capped octahedral structure completes the 18-electron rule,
+   * Chemical Physics Letters, Volume 456, Issues 1–3, 2008.
+   */
+  static constexpr std::array<temple::Vector, 7> coordinates {{
+    { 0.000000,  0.000000,  1.000000},
+    { 0.956305,  0.000000,  0.292372},
+    {-0.478152,  0.828184,  0.292372},
+    {-0.478152, -0.828184,  0.292372},
+    { 0.400888,  0.694358, -0.597625},
+    {-0.801776,  0.000000, -0.597625},
+    { 0.400888, -0.694358, -0.597625}
+  }};
+  static constexpr auto angleLookupTable = temple::makeUpperTriangularMatrix(
+    detail::makeArray<size>(coordinates)
+  );
+  static constexpr double angleFunction(const unsigned a, const unsigned b) {
+    if(a == b) {
+      return 0;
+    }
+
+    return angleLookupTable.at(
+      std::min(a, b),
+      std::max(a, b)
+    );
+  }
+  static constexpr std::array<
+    std::array<unsigned, 7>,
+    1
+  > rotations {{
+    {{0, 3, 1, 2, 6, 4, 5}} // C3 axial
+  }};
+
+  static constexpr std::array<
+    std::array<unsigned, 4>,
+    2
+  > tetrahedra {{
+    {{0, 1, 2, 3}},
+    {{0, 4, 5, 6}}
+  }};
+  static constexpr std::array<unsigned, 7> mirror {{0, 3, 2, 1, 6, 5, 4}};
+};
+
+/*!
+ * @brief A capped trigonal prisma shape
+ */
+struct CappedTrigonalPrisma {
+  static constexpr Symmetry::Shape shape = Symmetry::Shape::CappedTrigonalPrisma;
+  static constexpr unsigned size = 7;
+  static constexpr char stringName[] = "capped trigonal prisma";
+  //! [V(CO)7]+ in C2v, same as from CappedOctahedron
+  static constexpr std::array<temple::Vector, 7> coordinates {{
+    { 0.000000,  0.000000,  1.000000},
+    { 0.990268,  0.000000,  0.139173},
+    { 0.000000,  0.990268,  0.139173},
+    {-0.990268,  0.000000,  0.139173},
+    {-0.000000, -0.990268,  0.139173},
+    { 0.414628,  0.414628, -0.810042},
+    {-0.414628, -0.414628, -0.810042}
+  }};
+  static constexpr auto angleLookupTable = temple::makeUpperTriangularMatrix(
+    detail::makeArray<size>(coordinates)
+  );
+  static constexpr double angleFunction(const unsigned a, const unsigned b) {
+    if(a == b) {
+      return 0;
+    }
+
+    return angleLookupTable.at(
+      std::min(a, b),
+      std::max(a, b)
+    );
+  }
+  static constexpr std::array<
+    std::array<unsigned, 7>,
+    1
+  > rotations {{
+    {{0, 3, 4, 1, 2, 6, 5}} // C2 axial
+  }};
+
+  static constexpr std::array<
+    std::array<unsigned, 4>,
+    2
+  > tetrahedra {{
+    {{0, 1, 2, 5}},
+    {{0, 3, 4, 6}}
+  }};
+  static constexpr std::array<unsigned, 7> mirror {{0, 2, 1, 4, 3, 5, 6}};
+};
+
+/*!
  * @brief A square antiprismatic symmetry
  *
  * @verbatim
@@ -1106,10 +1202,9 @@ struct SquareAntiprism {
     {-0.79018301, -0.51909014,  0.32581627},
     {-0.39653401, -0.46341671, -0.79246813},
     { 0.72055552, -0.56338997, -0.40421711},
-    { 0.32690564, -0.61906403,  0.71406753},
+    { 0.32690564, -0.61906403,  0.71406753}
   }};
 
-#ifdef USE_CONSTEXPR_SQUARE_ANTIPRISMATIC_LOOKUP_TABLE
 /*!
  * An upper triangular matrix containing angles between particules i,j in
  * degrees using the square antiprismatic reference coordinates
@@ -1117,10 +1212,8 @@ struct SquareAntiprism {
   static constexpr auto angleLookupTable = temple::makeUpperTriangularMatrix(
     detail::makeArray<size>(coordinates)
   );
-#endif
 
   static constexpr double angleFunction(const unsigned a, const unsigned b) {
-#ifdef USE_CONSTEXPR_SQUARE_ANTIPRISMATIC_LOOKUP_TABLE
     if(a == b) {
       return 0;
     }
@@ -1129,32 +1222,6 @@ struct SquareAntiprism {
       std::min(a, b),
       std::max(a, b)
     );
-#else
-    if(a == b) {
-      return 0;
-    }
-
-    if(
-      (a < 4 && b < 4)
-      || (a >= 4 && b >= 4)
-    ) { // in plane
-      if((a + b) % 2 == 1) { // cis
-        return temple::Math::toRadians<double>(72.9875);
-      }
-
-      // otherwise trans
-      return temple::Math::toRadians<double>(114.475);
-    }
-
-    // remaining cases are between planes
-    unsigned minDiff = std::min(a - b, b - a);
-    if(minDiff == 3 || minDiff == 4 || minDiff == 7) { // short
-      return temple::Math::toRadians<double>(78.05);
-    }
-
-    // last case is long between planes
-    return temple::Math::toRadians<double>(142.275);
-#endif
   }
   static constexpr std::array<
     std::array<unsigned, 8>,
@@ -1207,6 +1274,103 @@ struct SquareAntiprism {
   }};
 #endif
   static constexpr std::array<unsigned, 8> mirror {{2, 1, 0, 3, 5, 4, 7, 6}};
+};
+
+/*!
+ * @brief A cube shape
+ */
+struct Cube {
+  static constexpr Symmetry::Shape shape = Symmetry::Shape::Cube;
+  static constexpr unsigned size = 8;
+  static constexpr char stringName[] = "cube";
+  //! [V(CO)7]+ in C2v
+  static constexpr std::array<temple::Vector, 8> coordinates {{
+    {  0.577350,  0.577350,  0.577350},
+    {  0.577350, -0.577350,  0.577350},
+    {  0.577350, -0.577350, -0.577350},
+    {  0.577350,  0.577350, -0.577350},
+    { -0.577350,  0.577350,  0.577350},
+    { -0.577350, -0.577350,  0.577350},
+    { -0.577350, -0.577350, -0.577350},
+    { -0.577350,  0.577350, -0.577350}
+  }};
+  static constexpr auto angleLookupTable = temple::makeUpperTriangularMatrix(
+    detail::makeArray<size>(coordinates)
+  );
+  static constexpr double angleFunction(const unsigned a, const unsigned b) {
+    if(a == b) {
+      return 0;
+    }
+
+    return angleLookupTable.at(
+      std::min(a, b),
+      std::max(a, b)
+    );
+  }
+  static constexpr std::array<
+    std::array<unsigned, 8>,
+    2
+  > rotations {{
+    {{3, 0, 1, 2, 7, 4, 5, 6}}, // C4
+    {{0, 4, 5, 1, 3, 7, 6, 2}} // C3
+  }};
+
+  static constexpr std::array<
+    std::array<unsigned, 4>,
+    2
+  > tetrahedra {{
+    {{0, 1, 3, 5}},
+    {{2, 4, 6, 7}}
+  }};
+  static constexpr std::array<unsigned, 8> mirror {{1, 0, 3, 2, 5, 4, 7, 6}};
+};
+
+/*!
+ * @brief A bicapped trigonal prisma
+ */
+struct BicappedTrigonalPrisma {
+  static constexpr Symmetry::Shape shape = Symmetry::Shape::BicappedTrigonalPrisma;
+  static constexpr unsigned size = 8;
+  static constexpr char stringName[] = "bicapped trigonal prisma";
+  static constexpr std::array<temple::Vector, 8> coordinates {{
+    {  0.577350,  0.577350,  0.577350},
+    {  0.577350, -0.577350,  0.577350},
+    {  0.577350, -0.577350, -0.577350},
+    {  0.577350,  0.577350, -0.577350},
+    { -0.577350,  0.577350,  0.577350},
+    { -0.577350, -0.577350,  0.577350},
+    { -0.577350, -0.577350, -0.577350},
+    { -0.577350,  0.577350, -0.577350}
+  }};
+  static constexpr auto angleLookupTable = temple::makeUpperTriangularMatrix(
+    detail::makeArray<size>(coordinates)
+  );
+  static constexpr double angleFunction(const unsigned a, const unsigned b) {
+    if(a == b) {
+      return 0;
+    }
+
+    return angleLookupTable.at(
+      std::min(a, b),
+      std::max(a, b)
+    );
+  }
+  static constexpr std::array<
+    std::array<unsigned, 8>,
+    2
+  > rotations {{
+    {{3, 0, 1, 2, 7, 4, 5, 6}}, // C4
+    {{0, 4, 5, 1, 3, 7, 6, 2}} // C3
+  }};
+
+  static constexpr std::array<
+    std::array<unsigned, 4>,
+    2
+  > tetrahedra {{
+    {{0, 1, 3, 5}},
+    {{2, 4, 6, 7}}
+  }};
+  static constexpr std::array<unsigned, 8> mirror {{1, 0, 3, 2, 5, 4, 7, 6}};
 };
 
 //! Type collecting all types of the Symmetry classes.

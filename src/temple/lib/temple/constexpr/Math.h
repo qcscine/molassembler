@@ -222,7 +222,7 @@ PURITY_STRONG constexpr T lnSeries(const T x) {
  */
 template<typename T>
 PURITY_STRONG constexpr T asinApprox(const T x) {
-  if(!(0.0 < x && x < 1.0)) {
+  if(!(0.0 < x && x <= 1.0)) {
     throw "Asin approximation domain error: only applicable for 0 < x < 1!";
   }
 
@@ -463,7 +463,7 @@ PURITY_STRONG constexpr traits::enableIfFloatingWithReturn<T, T> log(const T x, 
  */
 template<typename T>
 PURITY_STRONG constexpr traits::enableIfFloatingWithReturn<T, T> asin(const T x) {
-  if(!(-1 < x && x < 1)) {
+  if(!(-1 <= x && x <= 1)) {
     throw "Inverse sine domain error: only real if -1 < x < 1!";
   }
 
@@ -498,8 +498,8 @@ PURITY_STRONG constexpr traits::enableIfFloatingWithReturn<T, T> asin(const T x)
 
 template<typename T>
 PURITY_STRONG constexpr traits::enableIfFloatingWithReturn<T, T> acos(const T x) {
-  if(!(-1 < x && x < 1)) {
-    throw "Inverse cosine domain error: only real if -1 < x < 1!";
+  if(!(-1 <= x && x <= 1)) {
+    throw "Inverse cosine domain error: only real if -1 <= x <= 1!";
   }
 
   return M_PI / 2 - asin(x);

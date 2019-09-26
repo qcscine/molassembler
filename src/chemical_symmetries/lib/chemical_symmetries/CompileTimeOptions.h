@@ -27,14 +27,6 @@
  */
 #if defined(__clang__) || defined(CHEMICAL_SYMMETRIES_TRY_CONSTEXPR)
 
-/*! If defined, an angle lookup table is generated for square antiprismatic
- *
- * If USE_CONSTEXPR_SQUARE_ANTIPRISMATIC_LOOKUP_TABLE is defined, a table of all
- * angles resulting from a predefined set of positions is generated and that
- * symmetry's angle function turns into what is essentially a lookup table.
- */
-#define USE_CONSTEXPR_SQUARE_ANTIPRISMATIC_LOOKUP_TABLE
-
 /*!
  * @brief If defined, symmetry transition mappings are generated at compile time
  *
