@@ -719,7 +719,7 @@ std::vector<std::unique_ptr<SymmetryElement>> symmetryElements(PointGroup group)
         }
 
         /* 20 C3 along sums of three positions*/
-        Eigen::Matrix<double, 2, 3> threeAxesBases;
+        Eigen::Matrix<double, 3, 2> threeAxesBases;
         threeAxesBases.col(0) = (axes.col(0) + axes.col(3) + axes.col(5)) / 3;
         threeAxesBases.col(1) = (axes.col(3) + axes.col(5) - axes.col(3)) / 3;
         for(unsigned i = 0; i < 2; ++i) {
@@ -772,7 +772,7 @@ std::vector<std::unique_ptr<SymmetryElement>> symmetryElements(PointGroup group)
         }
 
         /* 20 S6, 20 C3 along sums of three positions */
-        Eigen::Matrix<double, 2, 3> threeAxesBases;
+        Eigen::Matrix<double, 3, 2> threeAxesBases;
         threeAxesBases.col(0) = (axes.col(0) + axes.col(3) + axes.col(5)) / 3;
         threeAxesBases.col(1) = (axes.col(3) + axes.col(5) - axes.col(3)) / 3;
         for(unsigned i = 0; i < 2; ++i) {
@@ -785,6 +785,8 @@ std::vector<std::unique_ptr<SymmetryElement>> symmetryElements(PointGroup group)
             compoundAxis = C5 * compoundAxis;
           }
         }
+        assert(elements.size() == 120);
+        return elements;
       }
 
     default:
