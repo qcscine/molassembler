@@ -1,3 +1,9 @@
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ * @brief For transformations between coordinate systems
+ */
+
 #include <Eigen/Geometry>
 #include <Eigen/Core>
 

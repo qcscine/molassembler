@@ -6,13 +6,12 @@ for i in $(find src -not \( -path src/extern -prune \) -name '*.cpp' -or -name '
 do
   if ! grep -q -i "Copyright ETH Zurich" $i
   then
-    echo "- $i"
+    echo $i
     let retvalue=1
   fi
 done
 
 if [ $retvalue -eq 1 ]; then
-  echo "ETH license is not present in all files!"
   exit 1
 fi
 

@@ -1,3 +1,10 @@
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ * @brief Sylvester's criterion for positive definiteness and positive
+ *   semi-definiteness
+ */
+
 #ifndef INCLUDE_TEMPLE_SYLVESTERS_CRITERION_H
 #define INCLUDE_TEMPLE_SYLVESTERS_CRITERION_H
 
