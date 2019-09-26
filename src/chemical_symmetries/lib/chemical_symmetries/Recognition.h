@@ -14,14 +14,20 @@ namespace Symmetry {
 
 using PositionCollection = Eigen::Matrix<double, 3, Eigen::Dynamic>;
 
+//! Inertial moments data struct
 struct InertialMoments {
+  //! Moments values
   Eigen::Vector3d moments;
+  //! Moment axes (column-wise)
   Eigen::Matrix3d axes;
 
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };
 
-//! @pre Assumes this is an inertial frame (COM is origin)
+/*! @brief Determine the inertial moments of a set of positions
+ *
+ * @pre Assumes this is an inertial frame (COM is origin)
+ */
 InertialMoments principalInertialMoments(
   const PositionCollection& normalizedPositions
 );
@@ -86,33 +92,6 @@ PointGroup flowchart(
  * @brief Namespace for calculation of continuous symmetry measures
  */
 namespace csm {
-
-/*! @brief Minimizes CSM for a point group, case: G = P
- *
- * This minimizes the continuous symmetry measure for the case that the number
- * of group symmetry elements matches the number of particles.
- */
-double allSymmetryElements(
-  const PositionCollection& normalizedPositions,
-  const Eigen::Matrix<double, 3, Eigen::Dynamic>& unfoldMatrices,
-  const Eigen::Matrix<double, 3, Eigen::Dynamic>& foldMatrices,
-  std::vector<unsigned> particleIndices
-);
-
-/*! @brief Minimizes CSM for a point group, case G = l * P
- *
- * This minimizes the continuous symmetry measure for the case that the number
- * of group symmetry elements is a multiple l of the number of particles.
- *
- * @todo consider particleIndices by-ref
- */
-double groupedSymmetryElements(
-  const PositionCollection& normalizedPositions,
-  std::vector<unsigned> particleIndices,
-  const Eigen::Matrix<double, 3, Eigen::Dynamic>& unfoldMatrices,
-  const Eigen::Matrix<double, 3, Eigen::Dynamic>& foldMatrices,
-  const std::vector<elements::ElementGrouping>& elementGroupings
-);
 
 /** @brief Calculates the continuous symmetry measure for a set of particles
  *   and a particular point group

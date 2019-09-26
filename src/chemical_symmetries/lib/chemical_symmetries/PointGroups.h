@@ -38,28 +38,36 @@ enum class PointGroup : unsigned {
 
 namespace elements {
 
+//! Base class for symmetry elements
 struct SymmetryElement {
   using Vector = Eigen::Vector3d;
   using Matrix = Eigen::Matrix3d;
 
   virtual ~SymmetryElement() = default;
+
+  //! Returns a matrix representation of the symmetry element operation
   virtual Matrix matrix() const = 0;
+  //! Returns a spatial vector unaffected by the symmetry element, if that exists
   virtual boost::optional<Vector> vector() const = 0;
+  //! Returns a debug string representation of the element
   virtual std::string name() const = 0;
 };
 
+//! E symmetry element
 struct Identity final : public SymmetryElement {
   Matrix matrix() const final;
   boost::optional<Vector> vector() const final;
   std::string name() const final;
 };
 
+//! i symmetry element
 struct Inversion final : public SymmetryElement {
   Matrix matrix() const final;
   boost::optional<Vector> vector() const final;
   std::string name() const final;
 };
 
+//! Abstraction of Cn and Sn symmetry elements
 struct Rotation final : public SymmetryElement {
   Rotation(
     const Eigen::Vector3d& passAxis,
@@ -68,21 +76,29 @@ struct Rotation final : public SymmetryElement {
     const bool passReflect
   );
 
+  //! Construct a proper rotation symmetry element
   static Rotation Cn(const Eigen::Vector3d& axis, const unsigned n, const unsigned power = 1);
+  //! Construct an improper rotation symmetry element
   static Rotation Sn(const Eigen::Vector3d& axis, const unsigned n, const unsigned power = 1);
 
+  //! Multiply this rotation element by another
   Rotation operator * (const Rotation& rhs) const;
 
   Matrix matrix() const final;
   boost::optional<Vector> vector() const final;
   std::string name() const final;
 
+  //! Axis of rotation
   Eigen::Vector3d axis;
+  //! Rotation order
   unsigned n;
+  //! Power of the symmetry element (i.e. C3^2 is a rotation by 240°)
   unsigned power;
+  //! Proper rotations reflect, improper rotations do not
   bool reflect;
 };
 
+//! Reflection by a plane symmetry element
 struct Reflection final : public SymmetryElement {
   Reflection(const Eigen::Vector3d& passNormal);
 
@@ -90,9 +106,11 @@ struct Reflection final : public SymmetryElement {
   boost::optional<Vector> vector() const final;
   std::string name() const final;
 
+  //! Normal of the reflection plane
   Eigen::Vector3d normal;
 };
 
+//! Heterogeneous list of symmetry elements
 using ElementsList = std::vector<std::unique_ptr<SymmetryElement>>;
 
 /** @brief Lists all symmetry elements for a point group
@@ -111,14 +129,6 @@ using ElementsList = std::vector<std::unique_ptr<SymmetryElement>>;
 PURITY_WEAK ElementsList symmetryElements(const PointGroup group) noexcept;
 
 
-/* There can be multiple groupings of symmetry elements of equal l for
- * different points in space. For now, we are ASSUMING that a particular
- * grouping of symmetry elements leads the folded point to lie along the
- * axis defined by the probe point used here to determine the grouping.
- *
- * So we store the point suggested by the element along with its grouping
- * so we can test this theory.
- */
 struct ElementGrouping {
   using ElementIndexGroups = std::vector<std::vector<unsigned>>;
 
@@ -142,6 +152,14 @@ using NPGroupingsMapType = std::unordered_map<
   Eigen::aligned_allocator<std::pair<unsigned, ElementGrouping>>
 >;
 
+/**
+ * @brief Generate all groupings of symmetry elements for those points in space
+ * for which some symmetry elements have the same effect
+ *
+ * @param elements Symmetry elements list
+ *
+ * @return Groups of symmetry elements
+ */
 NPGroupingsMapType npGroupings(const ElementsList& elements);
 
 } // namespace elements

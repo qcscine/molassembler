@@ -200,6 +200,11 @@ double calculateCSM(
 }
 
 
+/*! @brief Minimizes CSM for a point group, case: G = P
+ *
+ * This minimizes the continuous symmetry measure for the case that the number
+ * of group symmetry elements matches the number of particles.
+ */
 double allSymmetryElements(
   const PositionCollection& normalizedPositions,
   const Eigen::Matrix<double, 3, Eigen::Dynamic>& unfoldMatrices,
@@ -228,6 +233,13 @@ double allSymmetryElements(
   return value;
 }
 
+/*! @brief Minimizes CSM for a point group, case G = l * P
+ *
+ * This minimizes the continuous symmetry measure for the case that the number
+ * of group symmetry elements is a multiple l of the number of particles.
+ *
+ * @todo consider particleIndices by-ref
+ */
 double groupedSymmetryElements(
   const PositionCollection& normalizedPositions,
   std::vector<unsigned> particleIndices,
