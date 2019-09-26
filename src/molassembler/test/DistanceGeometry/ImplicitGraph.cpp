@@ -310,18 +310,17 @@ BOOST_AUTO_TEST_CASE(implicitNonVisualTests) {
       }
     }
 
-    std::cout << "In matrix of size " << matrN << ", got "
-      << triangleInequalitiesFailures
-      << " triangle inequality violations. There are "
-      << std::pow(matrN, 3) << " such relations in this matrix. ("
-      << (100 * static_cast<double>(triangleInequalitiesFailures) / std::pow(matrN, 3))
-      << " %)" << nl;
-
 #ifdef MOLASSEMBLER_IMPLICIT_GRAPH_USE_SPECIALIZED_GOR1_ALGORITHM
     BOOST_CHECK_MESSAGE(
       static_cast<double>(triangleInequalitiesFailures) < std::max(1.0, 1e-3 * std::pow(matrN, 3)),
       "More than 0.1 % triangle inequality violations!"
         << nl << distancesMatrix << nl
+        << "In matrix of size " << matrN << ", got "
+        << triangleInequalitiesFailures
+        << " triangle inequality violations. There are "
+        << std::pow(matrN, 3) << " such relations in this matrix. ("
+        << (100 * static_cast<double>(triangleInequalitiesFailures) / std::pow(matrN, 3))
+        << " %)" << nl
     );
 #else
     BOOST_CHECK_MESSAGE(

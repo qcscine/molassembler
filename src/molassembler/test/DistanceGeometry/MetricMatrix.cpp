@@ -175,78 +175,6 @@ BOOST_AUTO_TEST_CASE( reorderingWorks ) {
   BOOST_CHECK(allPassed);
 }
 
-void showEmbedding(const MetricMatrix& metricMatrix) {
-  auto dimensionality = 4u;
-
-  Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> eigenSolver(metricMatrix.access());
-
-  // reverse because smallest are listed first by Eigen
-  Eigen::VectorXd eigenValues = eigenSolver.eigenvalues().reverse();
-
-  auto numEigenValues = eigenValues.size();
-
-  std::cout << "Reversed eigenvalues of metric matrix:\n" << eigenValues << std::endl;
-
-  eigenValues.conservativeResize(dimensionality); // dimensionality x 1
-
-  std::cout << "reversed and resized eigenvalues of metric matrix:\n" << eigenValues << std::endl;
-
-  // If we have upscaled the eigenvalues, any new elements must be set to zero
-  if(numEigenValues < dimensionality) {
-    for(unsigned i = numEigenValues; i < dimensionality; i++) {
-      eigenValues(i) = 0;
-    }
-
-    std::cout << "We had fewer eigenvalues than dimensionality requires, so the new elements must be set zero:\n"
-      << eigenValues << std::endl;
-  }
-
-  // If any eigenvalues in the vector are negative, set them to 0
-  for(unsigned i = 0; i < dimensionality; i++) {
-    if(eigenValues(i) < 0) {
-      eigenValues(i) = 0;
-    }
-  }
-
-  std::cout << "After setting any negative eigenvalues to zero:\n" << eigenValues << std::endl;
-
-  // take square root of eigenvalues
-  eigenValues = eigenValues.cwiseSqrt();
-
-  std::cout << "sqrt-ed eigenvales of metric matrix: \n" << eigenValues << std::endl;
-
-  Eigen::MatrixXd L;
-  L.resize(dimensionality, dimensionality);
-  L.setZero();
-  L.diagonal() = eigenValues;
-
-  std::cout << "Resulting L matrix:\n" << L << std::endl;
-
-  Eigen::MatrixXd V = eigenSolver.eigenvectors();
-
-  std::cout << "Eigenvectors:\n" << V << std::endl;
-  // Eigen has its own concept of rows and columns, I would have thought it's
-  // columns. But tests have shown it has to be row-wise.
-  V.rowwise().reverseInPlace();
-
-  std::cout << "Post row-wise reverse:\n" << V << std::endl;
-
-  V.conservativeResize(
-    V.rows(),
-    dimensionality
-  ); // now Natoms x dimensionality
-
-  std::cout << "Post reduce to dimensionality:\n" << V << std::endl;
-
-  /* V * L
-   * (Natoms x dimensionality) · (dimensionality x dimensionality )
-   * -> (Natoms x dimensionality)
-   * transpose (V * L)
-   * -> dimensionality x Natoms
-   */
-  std::cout << "Resulting positions matrix:\n" << (V * L).transpose() << std::endl;
-}
-
 BOOST_AUTO_TEST_CASE( constructionIsInvariantUnderOrderingSwap ) {
   for(
     const boost::filesystem::path& currentFilePath :
@@ -340,15 +268,4 @@ BOOST_AUTO_TEST_CASE( explicitFromLecture ) {
     "Do not get expected metric matrix from explicit example from lecture. Expect \n"
     << expectedMetricMatrix << "\ngot " << metric.access() << " instead.\n"
   );
-}
-
-BOOST_AUTO_TEST_CASE( highSymmetryFailures ) {
-  Eigen::MatrixXd sampleLinearDistances(3, 3);
-  sampleLinearDistances <<     0, 1.882, 2.196,
-                           1.782,     0, 4.078,
-                           2.096, 3.878,     0;
-
-  auto metric = MetricMatrix(sampleLinearDistances);
-
-  showEmbedding(metric);
 }
