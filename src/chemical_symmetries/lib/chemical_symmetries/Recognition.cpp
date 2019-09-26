@@ -934,19 +934,12 @@ PointGroup flowchart(
 
   if(top == Top::Linear) {
     return detail::linear(normalizedPositions);
+  }
 
-    /* Do an extra test for collinearity: The rank of the positions matrix is
-     * one for linear molecules.
-     */
-    // Eigen::ColPivHouseholderQR<Eigen::MatrixXd> rankDecomposition(normalizedPositions);
-    // rankDecomposition.setThreshold(1e-3);
-    // if(rankDecomposition.rank() <= 1) {
-    //   // Confirmed linear
-    // }
-  } else if(top == Top::Spherical) {
+  if(top == Top::Spherical) {
     /* Getting a spherical top is rare and will only occur for nearly
-     * undistorted structures.  As a consequence, we can flowchart here. Only
-     * three point groups have spherical symmetry: Td, Oh, Ih.
+     * undistorted structures. Only three point groups have spherical symmetry:
+     * Td, Oh, Ih.
      *
      * TODO Maybe a faster way to flowchart is to search for axes along
      * particle positions?
@@ -957,49 +950,8 @@ PointGroup flowchart(
     return tetrahedralCSM < octahedralCSM ? PointGroup::Td : PointGroup::Oh;
   }
 
-  std::cout << "WARNING: Unimplemented flowchart result\n";
   return PointGroup::C1;
 }
-
-  /* Find a main axis and rotate it to z */
-  /* Rotate secondary axis to x */
-  // for(unsigned axisIndex = 0; axisIndex < 3; ++axisIndex) {
-  //   std::cout << "At axis " << axisIndex
-  //     << " along " << moments.axes.col(axisIndex).transpose()
-  //     << ", inertial moment: " << moments.moments(axisIndex)
-  //     << "\n";
-  //   for(unsigned n = 2; n <= N; ++n) {
-  //     const double axis_csm = csm::cn::fixedAxis(
-  //       transformed,
-  //       n,
-  //       moments.axes.col(axisIndex)
-  //     );
-
-  //     const auto csm_greedy = csm::cn::fixedAxisGreedy(
-  //       transformed,
-  //       n,
-  //       moments.axes.col(axisIndex)
-  //     );
-
-  //     if(std::fabs(axis_csm - csm_greedy.csm) > 0.1) {
-  //       std::cout << "C" << n << " reg and greedy differ strongly: " << axis_csm  << " and " << csm_greedy.csm << "\n";
-  //     }
-
-  //     std::cout << "S(C" << n << ") = " << csm_greedy.csm << "\n";
-
-  //     if(axis_csm < 0.1) {
-  //       // Cn symmetry csm
-  //       const PointGroup cn_point_group = static_cast<PointGroup>(
-  //         elements::underlying(PointGroup::C2) + n - 2
-  //       );
-  //       double symm_csm = csm::pointGroup(
-  //         transformed,
-  //         cn_point_group
-  //       );
-  //       std::cout << "C" << n << " point group symmetry csm: " << symm_csm << "\n";
-  //     }
-  //   }
-  // }
 
 } // namespace Symmetry
 } // namespace Scine

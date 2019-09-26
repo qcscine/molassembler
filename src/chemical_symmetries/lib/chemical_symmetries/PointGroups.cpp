@@ -552,14 +552,77 @@ std::vector<std::unique_ptr<SymmetryElement>> symmetryElements(PointGroup group)
       }
     case(PointGroup::Th):
       {
-        // TODO
+        elements.reserve(24);
+        /* i */
+        elements.push_back(make(inversion));
+        /* 4 S6, 4 C3, 4 C3^2, 4 S6^5 along lin. comb. of three axes */
+        { // +++ <-> ---
+          const Eigen::Vector3d axis_ppp = (  e_x + e_y + e_z).normalized();
+          addProperAxisElements(elements, axis_ppp, 3);
+          elements.push_back(make(Rotation::Sn(axis_ppp, 6)));
+          elements.push_back(make(Rotation::Sn(axis_ppp, 6, 5)));
+        }
+        { // ++- <-> --+
+          const Eigen::Vector3d axis_ppm = (  e_x + e_y - e_z).normalized();
+          addProperAxisElements(elements, axis_ppm, 3);
+          elements.push_back(make(Rotation::Sn(axis_ppm, 6)));
+          elements.push_back(make(Rotation::Sn(axis_ppm, 6, 5)));
+        }
+        { // +-+ <-> -+-
+          const Eigen::Vector3d axis_pmp = (  e_x - e_y + e_z).normalized();
+          addProperAxisElements(elements, axis_pmp, 3);
+          elements.push_back(make(Rotation::Sn(axis_pmp, 6)));
+          elements.push_back(make(Rotation::Sn(axis_pmp, 6, 5)));
+        }
+        { // -++ <-> +--
+          const Eigen::Vector3d axis_mpp = (- e_x + e_y + e_z).normalized();
+          addProperAxisElements(elements, axis_mpp, 3);
+          elements.push_back(make(Rotation::Sn(axis_mpp, 6)));
+          elements.push_back(make(Rotation::Sn(axis_mpp, 6, 5)));
+        }
+        /* 3 C2 along axes */
+        elements.push_back(make(Rotation::Cn(e_x, 2)));
+        elements.push_back(make(Rotation::Cn(e_y, 2)));
+        elements.push_back(make(Rotation::Cn(e_z, 2)));
+        /* 3 sigma_h with normals along axes */
+        elements.push_back(make(Reflection(e_x)));
+        elements.push_back(make(Reflection(e_y)));
+        elements.push_back(make(Reflection(e_z)));
         assert(elements.size() == 24);
         return elements;
       }
 
     case(PointGroup::O):
       {
-        // TODO
+        elements.reserve(24);
+        /* 6 C4, 3 C2 (C4^2) == C4, C2 and C4^3 along the coordinate axes */
+        addProperAxisElements(elements, e_x, 4);
+        addProperAxisElements(elements, e_y, 4);
+        addProperAxisElements(elements, e_z, 4);
+        /* 8 C3 along linear combinations of three axes */
+        { // +++ <-> ---
+          const Eigen::Vector3d axis_ppp = (  e_x + e_y + e_z).normalized();
+          addProperAxisElements(elements, axis_ppp, 3);
+        }
+        { // ++- <-> --+
+          const Eigen::Vector3d axis_ppm = (  e_x + e_y - e_z).normalized();
+          addProperAxisElements(elements, axis_ppm, 3);
+        }
+        { // +-+ <-> -+-
+          const Eigen::Vector3d axis_pmp = (  e_x - e_y + e_z).normalized();
+          addProperAxisElements(elements, axis_pmp, 3);
+        }
+        { // -++ <-> +--
+          const Eigen::Vector3d axis_mpp = (- e_x + e_y + e_z).normalized();
+          addProperAxisElements(elements, axis_mpp, 3);
+        }
+        /* 6 C2' along combinations of two axes */
+        elements.push_back(make(Rotation::Cn((e_x + e_y).normalized(), 2)));
+        elements.push_back(make(Rotation::Cn((e_x - e_y).normalized(), 2)));
+        elements.push_back(make(Rotation::Cn((e_x + e_z).normalized(), 2)));
+        elements.push_back(make(Rotation::Cn((e_x - e_z).normalized(), 2)));
+        elements.push_back(make(Rotation::Cn((e_y + e_z).normalized(), 2)));
+        elements.push_back(make(Rotation::Cn((e_y - e_z).normalized(), 2)));
         assert(elements.size() == 24);
         return elements;
       }
@@ -628,15 +691,100 @@ std::vector<std::unique_ptr<SymmetryElement>> symmetryElements(PointGroup group)
     /* Icosahedral groups */
     case(PointGroup::I):
       {
-        // TODO
+        elements.reserve(60);
+
+        const double phi = (1 + std::sqrt(5)) / 2;
+        Eigen::Matrix<double, 3, 6> axes;
+        axes << 0.0, 0.0, phi, -phi, 1.0, 1.0,
+                1.0, 1.0, 0.0, 0.0, phi, -phi,
+                phi, -phi, 1.0, 1.0, 0.0, 0.0;
+
+        /* 12 C5, 12 C5^2 */
+        for(unsigned i = 0; i < 6; ++i) {
+          addProperAxisElements(elements, axes.col(i), 5);
+        }
+
+        /* 15 C2 along sums of two positions*/
+        const Eigen::Matrix3d C5 = Eigen::AngleAxisd(2 * M_PI / 5, axes.col(0).normalized()).toRotationMatrix();
+        Eigen::Matrix3d twoAxesBases;
+        twoAxesBases.col(0) = (axes.col(0) + axes.col(2)) / 2;
+        twoAxesBases.col(1) = (axes.col(2) + axes.col(4)) / 2;
+        twoAxesBases.col(2) = (axes.col(2) - axes.col(3)) / 2;
+        for(unsigned i = 0; i < 3; ++i) {
+          Eigen::Vector3d compoundAxis = twoAxesBases.col(i);
+          for(unsigned j = 0; j < 5; ++j) {
+            elements.push_back(make(Rotation::Cn(compoundAxis, 2)));
+            compoundAxis = C5 * compoundAxis;
+          }
+        }
+
+        /* 20 C3 along sums of three positions*/
+        Eigen::Matrix<double, 2, 3> threeAxesBases;
+        threeAxesBases.col(0) = (axes.col(0) + axes.col(3) + axes.col(5)) / 3;
+        threeAxesBases.col(1) = (axes.col(3) + axes.col(5) - axes.col(3)) / 3;
+        for(unsigned i = 0; i < 2; ++i) {
+          Eigen::Vector3d compoundAxis = threeAxesBases.col(i);
+          for(unsigned j = 0; j < 5; ++j) {
+            elements.push_back(make(Rotation::Cn(compoundAxis, 3)));
+            elements.push_back(make(Rotation::Cn(-compoundAxis, 3)));
+            compoundAxis = C5 * compoundAxis;
+          }
+        }
+
         assert(elements.size() == 60);
         return elements;
       }
     case(PointGroup::Ih):
       {
-        // TODO
-        assert(elements.size() == 120);
-        return elements;
+        elements.reserve(120);
+        /* i */
+        elements.push_back(make(inversion));
+        const double phi = (1 + std::sqrt(5)) / 2;
+        Eigen::Matrix<double, 3, 6> axes;
+        axes << 0.0, 0.0, phi, -phi, 1.0, 1.0,
+                1.0, 1.0, 0.0, 0.0, phi, -phi,
+                phi, -phi, 1.0, 1.0, 0.0, 0.0;
+
+        /* 12 S10, 12 S10^3, 12 C5, 12 C5^2 */
+        for(unsigned i = 0; i < 6; ++i) {
+          const auto& axis = axes.col(i);
+          elements.push_back(make(Rotation::Sn(axis, 10)));
+          elements.push_back(make(Rotation::Sn(-axis, 10)));
+          elements.push_back(make(Rotation::Sn(axis, 10, 3)));
+          elements.push_back(make(Rotation::Sn(-axis, 10, 3)));
+          // C5, C5^2, C5^3 = -C5^2, C5^4 = -C5
+          addProperAxisElements(elements, axis, 5);
+        }
+
+        /* 15 C2, 15 sigma along sums of two positions */
+        const Eigen::Matrix3d C5 = Eigen::AngleAxisd(2 * M_PI / 5, axes.col(0).normalized()).toRotationMatrix();
+        Eigen::Matrix3d twoAxesBases;
+        twoAxesBases.col(0) = (axes.col(0) + axes.col(2)) / 2;
+        twoAxesBases.col(1) = (axes.col(2) + axes.col(4)) / 2;
+        twoAxesBases.col(2) = (axes.col(2) - axes.col(3)) / 2;
+        for(unsigned i = 0; i < 3; ++i) {
+          Eigen::Vector3d compoundAxis = twoAxesBases.col(i);
+          for(unsigned j = 0; j < 5; ++j) {
+            elements.push_back(make(Rotation::Cn(compoundAxis, 2)));
+            elements.push_back(make(Reflection(compoundAxis)));
+            compoundAxis = C5 * compoundAxis;
+          }
+        }
+
+        /* 20 S6, 20 C3 along sums of three positions */
+        Eigen::Matrix<double, 2, 3> threeAxesBases;
+        threeAxesBases.col(0) = (axes.col(0) + axes.col(3) + axes.col(5)) / 3;
+        threeAxesBases.col(1) = (axes.col(3) + axes.col(5) - axes.col(3)) / 3;
+        for(unsigned i = 0; i < 2; ++i) {
+          Eigen::Vector3d compoundAxis = threeAxesBases.col(i);
+          for(unsigned j = 0; j < 5; ++j) {
+            elements.push_back(make(Rotation::Sn(compoundAxis, 6)));
+            elements.push_back(make(Rotation::Sn(-compoundAxis, 6)));
+            elements.push_back(make(Rotation::Cn(compoundAxis, 3)));
+            elements.push_back(make(Rotation::Cn(-compoundAxis, 3)));
+            compoundAxis = C5 * compoundAxis;
+          }
+        }
       }
 
     default:
