@@ -30,6 +30,6 @@ file(
 )
 
 file(
-  COPY ${CMAKE_CURRENT_SOURCE_DIR}/__init__.py
-  DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/molassembler
+  WRITE ${CMAKE_CURRENT_BINARY_DIR}/molassembler/__init__.py
+  "from .molassembler import *\n"
 )
