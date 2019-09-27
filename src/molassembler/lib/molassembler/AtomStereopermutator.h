@@ -158,7 +158,7 @@ public:
    *
    * @note If the stereocenter is already assigned, it is reassigned.
    */
-  void assignRandom();
+  void assignRandom(random::Engine& engine);
 
   /** @brief Applies an atom index permutation
    *

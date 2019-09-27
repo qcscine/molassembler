@@ -73,7 +73,7 @@ BOOST_AUTO_TEST_CASE(implicitNonVisualTests) {
 
     using IG = DistanceGeometry::ImplicitGraph;
 
-    DistanceGeometry::SpatialModel spatialModel {molecule, DistanceGeometry::Configuration {}};
+    DistanceGeometry::SpatialModel spatialModel {molecule, DistanceGeometry::Configuration {}, randomnessEngine()};
 
     IG ig {
       molecule.graph().inner(),

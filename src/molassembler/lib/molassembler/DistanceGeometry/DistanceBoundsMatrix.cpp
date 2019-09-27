@@ -8,6 +8,8 @@
 #include "molassembler/DistanceGeometry/Error.h"
 #include "molassembler/Options.h"
 
+#include "temple/Random.h"
+
 #include <cassert>
 #include <algorithm>
 

@@ -59,7 +59,7 @@ struct RefinementBaseData {
   RefinementBaseData(const std::string& filename) {
     Molecule molecule = IO::read(filename);
 
-    auto DGInfo = gatherDGInformation(molecule, DistanceGeometry::Configuration {});
+    auto DGInfo = gatherDGInformation(molecule, DistanceGeometry::Configuration {}, randomnessEngine());
 
     distanceBounds = DistanceBoundsMatrix {
       molecule.graph().inner(),

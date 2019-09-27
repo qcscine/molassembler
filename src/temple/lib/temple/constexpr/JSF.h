@@ -97,8 +97,8 @@ public:
   }
 
   //! Construct from a single integer seed value
-  explicit JSF(int seed) {
-    _seed(seed);
+  explicit JSF(int seedInt) {
+    seed(seedInt);
   }
 //!@}
 

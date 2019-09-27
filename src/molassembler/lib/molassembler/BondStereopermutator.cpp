@@ -60,8 +60,8 @@ void BondStereopermutator::assign(boost::optional<unsigned> assignment) {
   _pImpl -> assign(std::move(assignment));
 }
 
-void BondStereopermutator::assignRandom() {
-  _pImpl -> assignRandom();
+void BondStereopermutator::assignRandom(random::Engine& engine) {
+  _pImpl -> assignRandom(engine);
 }
 
 void BondStereopermutator::applyPermutation(const std::vector<AtomIndex>& permutation) {

@@ -77,7 +77,7 @@ public:
   void assign(boost::optional<unsigned> assignment);
 
   //! Assigns the Stereopermutator randomly using relative stereopermutation weights
-  void assignRandom();
+  void assignRandom(random::Engine& engine);
 
   /**
    * @brief Applies an atom index permutation

@@ -9,6 +9,7 @@
 #include "boost/test/unit_test.hpp"
 #include "chemical_symmetries/Symmetries.h"
 #include "Eigen/Eigenvalues"
+#include "temple/Random.h"
 #include "temple/Stringify.h"
 
 #include "molassembler/Graph/InnerGraph.h"
@@ -182,7 +183,7 @@ BOOST_AUTO_TEST_CASE( constructionIsInvariantUnderOrderingSwap ) {
   ) {
     auto molecule = IO::read(currentFilePath.string());
 
-    auto DGData = DistanceGeometry::gatherDGInformation(molecule, DistanceGeometry::Configuration {});
+    auto DGData = DistanceGeometry::gatherDGInformation(molecule, DistanceGeometry::Configuration {}, randomnessEngine());
 
     DistanceBoundsMatrix distanceBounds {
       molecule.graph().inner(),

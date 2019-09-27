@@ -9,7 +9,6 @@
 
 #include "boost_outcome/outcome.hpp"
 #include <Eigen/Core>
-#include "temple/Random.h"
 
 #include "molassembler/DistanceGeometry/DistanceGeometry.h"
 #include "molassembler/Modeling/AtomInfo.h"

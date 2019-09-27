@@ -104,12 +104,18 @@ void Molecule::assignStereopermutator(
   _pImpl->assignStereopermutator(edge, assignment);
 }
 
-void Molecule::assignStereopermutatorRandomly(const AtomIndex a) {
-  _pImpl->assignStereopermutatorRandomly(a);
+void Molecule::assignStereopermutatorRandomly(
+  const AtomIndex a,
+  random::Engine& engine
+) {
+  _pImpl->assignStereopermutatorRandomly(a, engine);
 }
 
-void Molecule::assignStereopermutatorRandomly(const BondIndex& e) {
-  _pImpl->assignStereopermutatorRandomly(e);
+void Molecule::assignStereopermutatorRandomly(
+  const BondIndex& e,
+  random::Engine& engine
+) {
+  _pImpl->assignStereopermutatorRandomly(e, engine);
 }
 
 std::vector<AtomIndex> Molecule::canonicalize(

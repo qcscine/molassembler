@@ -21,7 +21,6 @@
 #include "temple/Adaptors/Transform.h"
 #include "temple/Functional.h"
 #include "temple/Optionals.h"
-#include "temple/Random.h"
 #include "temple/SetAlgorithms.h"
 #include "temple/Stringify.h"
 #include "temple/STL17.h"
@@ -87,7 +86,8 @@ ValueBounds SpatialModel::defaultDihedralBounds = {std::nextafter(-M_PI, 0), M_P
 
 SpatialModel::SpatialModel(
   const Molecule& molecule,
-  const Configuration& configuration
+  const Configuration& configuration,
+  random::Engine& engine
 ) : _molecule(molecule),
     _stereopermutators(molecule.stereopermutators())
 {
@@ -183,7 +183,7 @@ SpatialModel::SpatialModel(
    * So for every missing non-terminal atom, create a AtomStereopermutator in the
    * determined geometry
    */
-  _instantiateMissingAtomStereopermutators();
+  _instantiateMissingAtomStereopermutators(engine);
 
   /* For all flat cycles for which the internal angles can be determined
    * exactly, add that information
@@ -1697,7 +1697,7 @@ void SpatialModel::_addDefaultDihedrals() {
   }
 }
 
-void SpatialModel::_instantiateMissingAtomStereopermutators() {
+void SpatialModel::_instantiateMissingAtomStereopermutators(random::Engine& engine) {
   const unsigned N = _molecule.graph().N();
   for(unsigned i = 0; i < N; ++i) {
     // Already an instantiated AtomStereopermutator?
@@ -1731,7 +1731,7 @@ void SpatialModel::_instantiateMissingAtomStereopermutators() {
      * These are found here, though, and MUST be chosen randomly according to
      * the relative weights to get a single conformation in the final model
      */
-    newStereopermutator.assignRandom();
+    newStereopermutator.assignRandom(engine);
 
     // Add it to the list of stereopermutators
     _stereopermutators.add(std::move(newStereopermutator));

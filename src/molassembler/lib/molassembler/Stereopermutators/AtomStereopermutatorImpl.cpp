@@ -200,7 +200,7 @@ void AtomStereopermutator::Impl::assign(boost::optional<unsigned> assignment) {
   }
 }
 
-void AtomStereopermutator::Impl::assignRandom() {
+void AtomStereopermutator::Impl::assignRandom(random::Engine& engine) {
   assign(
     temple::random::pickDiscrete(
       // Map the feasible permutations onto their weights
@@ -210,7 +210,7 @@ void AtomStereopermutator::Impl::assignRandom() {
           return _abstract.permutations.weights.at(permutationIndex);
         }
       ),
-      randomnessEngine()
+      engine
     )
   );
 }

@@ -34,6 +34,10 @@ class Composite;
 
 namespace molassembler {
 
+namespace random {
+class Engine;
+} // namespace random
+
 // Forward-declarations
 class AngstromWrapper;
 class InnerGraph;
@@ -156,7 +160,7 @@ public:
    * @complexity{@math{\Theta(1)}}
    * @note If the stereocenter is already assigned, it is reassigned.
    */
-  void assignRandom();
+  void assignRandom(random::Engine& engine);
 
   /** @brief Applies an atom index permutation
    *

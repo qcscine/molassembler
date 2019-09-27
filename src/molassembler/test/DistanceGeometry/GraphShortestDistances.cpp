@@ -14,6 +14,7 @@
 #include "temple/Functional.h"
 #include "temple/constexpr/FloatingPointComparison.h"
 #include "temple/constexpr/Numeric.h"
+#include "temple/Random.h"
 #include "temple/Stringify.h"
 
 // DO NOT CHANGE THIS INCLUDE ORDER (implicit graph needs to go first)
@@ -28,6 +29,7 @@
 
 #include "gor1/Gor1.h"
 #include "molassembler/DistanceGeometry/Gor1.h"
+
 
 // This include order may seem weird, but it is necessary like this
 #include "boost/graph/bellman_ford_shortest_paths.hpp"
@@ -176,7 +178,7 @@ BOOST_AUTO_TEST_CASE(conceptTests) {
       currentFilePath.string()
     );
 
-    DistanceGeometry::SpatialModel spatialModel {molecule, DistanceGeometry::Configuration {}};
+    DistanceGeometry::SpatialModel spatialModel {molecule, DistanceGeometry::Configuration {}, randomnessEngine()};
 
     using EG = DistanceGeometry::ExplicitGraph;
     using Vertex = EG::GraphType::vertex_descriptor;
@@ -298,7 +300,7 @@ BOOST_AUTO_TEST_CASE(correctnessTests) {
       currentFilePath.string()
     );
 
-    DistanceGeometry::SpatialModel spatialModel {sampleMol, DistanceGeometry::Configuration {}};
+    DistanceGeometry::SpatialModel spatialModel {sampleMol, DistanceGeometry::Configuration {}, randomnessEngine()};
 
     const auto boundsList = spatialModel.makePairwiseBounds();
 

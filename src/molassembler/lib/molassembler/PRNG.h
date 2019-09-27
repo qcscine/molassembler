@@ -59,6 +59,9 @@ public:
    */
   result_type operator() () const;
 
+  //! Compare this engine's state with that of another engine
+  bool operator == (const Engine& other) const;
+
 private:
   struct Impl;
 

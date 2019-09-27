@@ -89,7 +89,7 @@ struct BondStereopermutator::Impl : public temple::crtp::LexicographicComparable
 
   void assign(boost::optional<unsigned> assignment);
 
-  void assignRandom();
+  void assignRandom(random::Engine& engine);
 
   void applyPermutation(const std::vector<AtomIndex>& permutation);
 

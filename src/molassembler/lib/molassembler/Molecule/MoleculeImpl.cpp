@@ -492,7 +492,7 @@ void Molecule::Impl::assignStereopermutator(
   }
 }
 
-void Molecule::Impl::assignStereopermutatorRandomly(const AtomIndex a) {
+void Molecule::Impl::assignStereopermutatorRandomly(const AtomIndex a, random::Engine& engine) {
   if(!_isValidIndex(a)) {
     throw std::out_of_range("Molecule::assignStereopermutatorRandomly: Supplied index is invalid!");
   }
@@ -503,21 +503,21 @@ void Molecule::Impl::assignStereopermutatorRandomly(const AtomIndex a) {
     throw std::out_of_range("assignStereopermutatorRandomly: No stereopermutator at this index!");
   }
 
-  stereopermutatorOption->assignRandom();
+  stereopermutatorOption->assignRandom(engine);
 
   // A reassignment can change ranking! See the RankingTree tests
   _propagateGraphChange();
   _canonicalComponents = AtomEnvironmentComponents::None;
 }
 
-void Molecule::Impl::assignStereopermutatorRandomly(const BondIndex& e) {
+void Molecule::Impl::assignStereopermutatorRandomly(const BondIndex& e, random::Engine& engine) {
   auto stereopermutatorOption = _stereopermutators.option(e);
 
   if(!stereopermutatorOption) {
     throw std::out_of_range("assignStereopermutatorRandomly: No stereopermutator at this edge!");
   }
 
-  stereopermutatorOption->assignRandom();
+  stereopermutatorOption->assignRandom(engine);
 
   // A reassignment can change ranking! See the RankingTree tests
   _propagateGraphChange();

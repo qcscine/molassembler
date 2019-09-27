@@ -49,8 +49,8 @@ void AtomStereopermutator::assign(boost::optional<unsigned> assignment) {
   _pImpl->assign(std::move(assignment));
 }
 
-void AtomStereopermutator::assignRandom() {
-  _pImpl->assignRandom();
+void AtomStereopermutator::assignRandom(random::Engine& engine) {
+  _pImpl->assignRandom(engine);
 }
 
 void AtomStereopermutator::applyPermutation(const std::vector<AtomIndex>& permutation) {

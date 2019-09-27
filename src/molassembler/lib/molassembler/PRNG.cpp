@@ -33,6 +33,10 @@ struct Engine::Impl {
   result_type operator() () {
     return engine();
   }
+
+  bool operator == (const Impl& other) const {
+    return engine == other.engine;
+  }
 };
 
 // Engine's special member functions
@@ -71,6 +75,10 @@ void Engine::seed(const std::vector<int>& seeds) {
 
 Engine::result_type Engine::operator() () const {
   return _pImpl->operator()();
+}
+
+bool Engine::operator == (const Engine& other) const {
+  return *_pImpl == *other._pImpl;
 }
 
 } // namespace random

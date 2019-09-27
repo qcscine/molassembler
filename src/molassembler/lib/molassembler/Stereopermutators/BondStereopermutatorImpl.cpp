@@ -812,13 +812,13 @@ void BondStereopermutator::Impl::assign(boost::optional<unsigned> assignment) {
   _assignment = assignment;
 }
 
-void BondStereopermutator::Impl::assignRandom() {
+void BondStereopermutator::Impl::assignRandom(random::Engine& engine) {
   assert(_composite.permutations() > 0);
 
   _assignment = temple::random::getSingle<unsigned>(
     0,
     _composite.permutations() - 1,
-    randomnessEngine()
+    engine
   );
 }
 

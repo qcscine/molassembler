@@ -16,6 +16,8 @@
 #include "molassembler/Options.h"
 #include "molassembler/Graph/InnerGraph.h"
 
+#include "temple/Random.h"
+
 #ifdef MOLASSEMBLER_EXPLICIT_GRAPH_USE_SPECIALIZED_GOR1_ALGORITHM
 #include "molassembler/DistanceGeometry/Gor1.h"
 #else

@@ -19,6 +19,7 @@
 #include "Utils/Math/QuaternionFit.h"
 
 #include "temple/Optimization/LBFGS.h"
+#include "temple/Random.h"
 
 namespace Scine {
 
@@ -82,7 +83,7 @@ Eigen::MatrixXd fitAndSetFixedPositions(
   return fit.getFittedData();
 }
 
-Molecule narrow(Molecule molecule) {
+Molecule narrow(Molecule molecule, random::Engine& engine) {
   const auto& stereopermutatorList = molecule.stereopermutators();
 
   do {
@@ -105,11 +106,12 @@ Molecule narrow(Molecule molecule) {
       unsigned choice = temple::random::getSingle<unsigned>(
         0,
         unassignedAtomStereopermutators.size() - 1,
-        randomnessEngine()
+        engine
       );
 
       molecule.assignStereopermutatorRandomly(
-        unassignedAtomStereopermutators.at(choice)
+        unassignedAtomStereopermutators.at(choice),
+        engine
       );
 
       // Re-check the loop condition
@@ -130,11 +132,12 @@ Molecule narrow(Molecule molecule) {
       unsigned choice = temple::random::getSingle<unsigned>(
         0,
         unassignedBondStereopermutators.size() - 1,
-        randomnessEngine()
+        engine
       );
 
       molecule.assignStereopermutatorRandomly(
-        unassignedBondStereopermutators.at(choice)
+        unassignedBondStereopermutators.at(choice),
+        engine
       );
     }
 
@@ -188,10 +191,11 @@ struct GradientOrIterLimitStop {
 
 MoleculeDGInformation gatherDGInformation(
   const Molecule& molecule,
-  const Configuration& configuration
+  const Configuration& configuration,
+  random::Engine& engine
 ) {
   // Generate a spatial model from the molecular graph and stereopermutators
-  SpatialModel spatialModel {molecule, configuration};
+  SpatialModel spatialModel {molecule, configuration, engine};
 
   // Extract gathered data
   MoleculeDGInformation data;
@@ -208,7 +212,7 @@ MoleculeDGInformation gatherDGInformation(
   std::string& spatialModelGraphvizString
 ) {
   // Generate a spatial model from the molecular graph and stereopermutators
-  SpatialModel spatialModel {molecule, configuration};
+  SpatialModel spatialModel {molecule, configuration, randomnessEngine()};
   spatialModelGraphvizString = spatialModel.dumpGraphviz();
 
   // Extract gathered data
@@ -265,7 +269,7 @@ std::list<RefinementData> debugRefinement(
     ++currentStructureNumber
   ) {
     if(regenerateEachStep) {
-      auto moleculeCopy = detail::narrow(molecule);
+      auto moleculeCopy = detail::narrow(molecule, randomnessEngine());
 
       if(moleculeCopy.stereopermutators().hasZeroAssignmentStereopermutators()) {
         Log::log(Log::Level::Warning)
@@ -296,12 +300,12 @@ std::list<RefinementData> debugRefinement(
       failures += 1;
 
       if(regenerateEachStep) {
-        auto moleculeCopy = detail::narrow(molecule);
+        auto moleculeCopy = detail::narrow(molecule, randomnessEngine());
 
-        SpatialModel model {moleculeCopy, configuration};
+        SpatialModel model {moleculeCopy, configuration, randomnessEngine()};
         model.writeGraphviz("DG-failure-spatial-model-" + std::to_string(currentStructureNumber) + ".dot");
       } else {
-        SpatialModel model {molecule, configuration};
+        SpatialModel model {molecule, configuration, randomnessEngine()};
         model.writeGraphviz("DG-failure-spatial-model-" + std::to_string(currentStructureNumber) + ".dot");
       }
 
@@ -797,14 +801,14 @@ outcome::result<AngstromWrapper> generateConformer(
   random::Engine& engine
 ) {
   if(regenerateDGDataEachStep) {
-    auto moleculeCopy = detail::narrow(molecule);
+    auto moleculeCopy = detail::narrow(molecule, engine);
 
     if(moleculeCopy.stereopermutators().hasZeroAssignmentStereopermutators()) {
       return DGError::ZeroAssignmentStereopermutators;
     }
 
     DGDataPtr = std::make_shared<MoleculeDGInformation>(
-      gatherDGInformation(moleculeCopy, configuration)
+      gatherDGInformation(moleculeCopy, configuration, engine)
     );
   }
 
@@ -883,7 +887,7 @@ std::vector<
   auto DGDataPtr = std::make_shared<MoleculeDGInformation>();
   bool regenerateEachStep = molecule.stereopermutators().hasUnassignedStereopermutators();
   if(!regenerateEachStep) {
-    *DGDataPtr = gatherDGInformation(molecule, configuration);
+    *DGDataPtr = gatherDGInformation(molecule, configuration, randomnessEngine());
   }
 
   ReturnType results;
@@ -891,21 +895,13 @@ std::vector<
 
 #pragma omp parallel
   {
-    /* We have to distribute pseudo-randomness into each thread consistently,
-     * so we provide each thread its own Engine, seeded with subsequent values
-     * from the global Engine:
-     */
 #ifdef _OPENMP
+    /* We have to distribute pseudo-randomness into each thread reproducibly
+     * and want to avoid having to guard the global PRNG against access from
+     * multiple threads, so we provide each thread its own Engine.
+     */
     const unsigned nThreads = omp_get_num_threads();
     std::vector<random::Engine> randomnessEngines(nThreads);
-#pragma omp single
-    {
-      for(unsigned i = 0; i < nThreads; ++i) {
-        randomnessEngines.at(i).seed(
-          randomnessEngine()()
-        );
-      }
-    }
 #endif
 
     /* Each thread has its own DGDataPtr, for the following reason: If we do
@@ -922,6 +918,11 @@ std::vector<
       random::Engine& engine = randomnessEngines.at(
         omp_get_thread_num()
       );
+
+      // Re-seed the thread-local PRNG engine for each conformer
+#pragma omp critical
+      engine.seed(randomnessEngine()());
+
 #else
       random::Engine& engine = randomnessEngine();
 #endif

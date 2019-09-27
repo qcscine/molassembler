@@ -10,11 +10,9 @@
 #ifndef INCLUDE_MOLASSEMBLER_MOLECULE_H
 #define INCLUDE_MOLASSEMBLER_MOLECULE_H
 
-#include "Utils/Geometry/ElementTypes.h"
 #include "boost/optional.hpp"
-#include "chemical_symmetries/Names.h"
 
-#include "molassembler/AngstromWrapper.h"
+#include "molassembler/Options.h"
 
 #if __cpp_lib_experimental_propagate_const >= 201505
 #define MOLASSEMBLER_ENABLE_PROPAGATE_CONST
@@ -333,7 +331,7 @@ public:
    *   StereopermutatorList members and any stereopermutator state stored
    *   external to a Molecule instance and its members invalidated.
    */
-  void assignStereopermutatorRandomly(AtomIndex a);
+  void assignStereopermutatorRandomly(AtomIndex a, random::Engine& engine = randomnessEngine());
 
   /*!
    * @brief Assigns a bond stereopermutator to a random assignment
@@ -351,7 +349,7 @@ public:
    *   StereopermutatorList members and any stereopermutator state stored
    *   external to a Molecule instance and its members invalidated.
    */
-  void assignStereopermutatorRandomly(const BondIndex& e);
+  void assignStereopermutatorRandomly(const BondIndex& e, random::Engine& engine = randomnessEngine());
 
   /** @brief Transform the molecule to a canonical form. Invalidates all atom
    *   and bond indices.

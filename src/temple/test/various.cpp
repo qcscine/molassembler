@@ -14,6 +14,7 @@
 #include "temple/Stringify.h"
 #include "temple/constexpr/Numeric.h"
 #include "temple/constexpr/Optional.h"
+#include "temple/constexpr/JSF.h"
 
 #include <chrono>
 #include <cmath>
@@ -195,4 +196,24 @@ BOOST_AUTO_TEST_CASE(FunctorSafety) {
 
   auto at2 = temple::functor::at(std::vector<unsigned> {1, 2, 3});
   BOOST_CHECK(at2(0) == 1);
+}
+
+BOOST_AUTO_TEST_CASE(JSF) {
+  const int fixedSeed = 1042;
+
+  temple::jsf::JSF64 engine;
+  engine.seed(fixedSeed);
+  auto engineStateCopy = engine;
+  for(unsigned i = 0; i < 10; ++i) {
+    engine();
+  }
+  engine.seed(fixedSeed);
+  BOOST_CHECK(engine == engineStateCopy);
+
+  temple::jsf::JSF64 directlySeededEngine {fixedSeed};
+  BOOST_CHECK(engine == directlySeededEngine);
+
+  std::seed_seq sequence {fixedSeed};
+  directlySeededEngine = temple::jsf::JSF64 {sequence};
+  BOOST_CHECK(engine == directlySeededEngine);
 }

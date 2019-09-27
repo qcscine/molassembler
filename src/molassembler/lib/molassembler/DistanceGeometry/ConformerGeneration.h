@@ -68,7 +68,7 @@ Eigen::MatrixXd fitAndSetFixedPositions(
  * @complexity{At least linear in the number of unassigned stereopermutators
  * multiplied by the number of atoms.}
  */
-Molecule narrow(Molecule molecule);
+Molecule narrow(Molecule molecule, random::Engine& engine);
 
 } // namespace detail
 
@@ -87,7 +87,8 @@ struct MoleculeDGInformation {
  */
 MoleculeDGInformation gatherDGInformation(
   const Molecule& molecule,
-  const Configuration& configuration
+  const Configuration& configuration,
+  random::Engine& engine
 );
 
 //! @overload
@@ -108,6 +109,15 @@ std::list<RefinementData> debugRefinement(
   const Molecule& molecule,
   unsigned numConformers,
   const Configuration& configuration
+);
+
+// TODO temp
+outcome::result<AngstromWrapper> generateConformer(
+  const Molecule& molecule,
+  const Configuration& configuration,
+  std::shared_ptr<MoleculeDGInformation>& DGDataPtr,
+  bool regenerateDGDataEachStep,
+  random::Engine& engine
 );
 
 /** @brief Main and parallel implementation of Distance Geometry. Generates an

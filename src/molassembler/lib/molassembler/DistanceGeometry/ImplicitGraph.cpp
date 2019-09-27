@@ -14,6 +14,8 @@
 #include "molassembler/Modeling/AtomInfo.h"
 #include "molassembler/Options.h"
 
+#include "temple/Random.h"
+
 #ifdef MOLASSEMBLER_IMPLICIT_GRAPH_USE_SPECIALIZED_GOR1_ALGORITHM
 #include "molassembler/DistanceGeometry/Gor1.h"
 #else

@@ -154,7 +154,7 @@ struct Molecule::Impl {
    * assignment change can trigger a ranking change, which can in turn lead
    * to the introduction of new stereopermutators or the removal of old ones.
    */
-  void assignStereopermutatorRandomly(AtomIndex a);
+  void assignStereopermutatorRandomly(AtomIndex a, random::Engine& engine);
 
   /*! Assigns a bond stereopermutator to a random assignment
    *
@@ -167,7 +167,7 @@ struct Molecule::Impl {
    * assignment change can trigger a ranking change, which can in turn lead
    * to the introduction of new stereopermutators or the removal of old ones.
    */
-  void assignStereopermutatorRandomly(const BondIndex& e);
+  void assignStereopermutatorRandomly(const BondIndex& e, random::Engine& engine);
 
   /**
    * @brief Canonicalizes the graph, invalidating all atom and bond indices.

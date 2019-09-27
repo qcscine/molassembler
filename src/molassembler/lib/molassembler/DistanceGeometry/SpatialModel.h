@@ -325,7 +325,8 @@ public:
    */
   SpatialModel(
     const Molecule& molecule,
-    const Configuration& configuration
+    const Configuration& configuration,
+    random::Engine& engine
   );
 //!@}
 
@@ -509,7 +510,7 @@ private:
    * even on non-terminal atoms. These have to be re-added in order for us
    * to be able to model everywhere.
    */
-  void _instantiateMissingAtomStereopermutators();
+  void _instantiateMissingAtomStereopermutators(random::Engine& engine);
 
   //! Add bond distances to the underlying model
   void _modelBondDistances(

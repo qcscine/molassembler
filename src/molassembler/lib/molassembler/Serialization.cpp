@@ -502,10 +502,7 @@ Molecule deserialize(const nlohmann::json& m) {
       AtomIndex a = j["e"].at(0);
       AtomIndex b = j["e"].at(1);
 
-      auto aStereopermutatorOption = stereopermutators.option(a);
-      auto bStereopermutatorOption = stereopermutators.option(b);
-
-      assert(aStereopermutatorOption && bStereopermutatorOption);
+      assert(stereopermutators.option(a) && stereopermutators.option(b));
 
       BondIndex molEdge {a, b};
 
