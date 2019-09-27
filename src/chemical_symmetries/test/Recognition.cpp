@@ -12,6 +12,9 @@
 
 #include "temple/Functional.h"
 
+#include <iostream>
+#include "temple/Stringify.h"
+
 using namespace Scine;
 using namespace Symmetry;
 
@@ -136,6 +139,76 @@ BOOST_AUTO_TEST_CASE(Recognition) {
       << ") < 0.01 for " << Symmetry::name(nameGroupPair.first)
       << ", got " << pgCSM << " (top is " << topName(top) << ")"
     );
+  }
+}
+
+std::ostream& operator << (std::ostream& os, const PointGroup group) {
+  const auto elements = elements::symmetryElements(group);
+  const auto groupings = elements::npGroupings(elements);
+  os << pointGroupStrings().at(underlying(group)) << ": {";
+  for(const auto& element : elements) {
+    os << element -> name() << ", ";
+  }
+  os << "}\n";
+  for(const auto& iterPair : groupings) {
+    for(const auto& grouping : iterPair.second) {
+      os << "  np = " << iterPair.first << " along " << grouping.probePoint.transpose() << " -> " << temple::stringify(grouping.groups) << "\n";
+      os << "  ";
+      os << temple::stringifyContainer(grouping.groups,
+        [&](const auto& grp) -> std::string {
+          return temple::stringifyContainer(grp,
+            [&elements](const unsigned elementIdx) -> std::string {
+              return elements.at(elementIdx)->name();
+            }
+          );
+        }
+      ) << "\n";
+    }
+  }
+
+  return os;
+}
+
+BOOST_AUTO_TEST_CASE(PointGroupElementGroupings) {
+  const PointGroup limit = PointGroup::Ih;
+  for(unsigned g = 0; g <= underlying(limit); ++g) {
+    const auto elements = elements::symmetryElements(static_cast<PointGroup>(g));
+    const auto groupings = elements::npGroupings(elements);
+
+    bool anyGroupSizeMismatches = false;
+    for(const auto& sizeGroupingsPair : groupings) {
+      BOOST_CHECK_MESSAGE(
+        elements.size() % sizeGroupingsPair.first == 0,
+        "Grouping does not evenly divide the group "
+        << pointGroupStrings().at(g) << ", G = " << elements.size()
+        << ", group size = " << sizeGroupingsPair.first
+      );
+
+      bool pass = temple::all_of(
+        sizeGroupingsPair.second,
+        [&](const elements::ElementGrouping& grouping) -> bool {
+          const auto size = grouping.groups.front().size();
+          return temple::all_of(
+            grouping.groups,
+            [&](const auto& groupSubVector) -> bool {
+              return groupSubVector.size() == size;
+            }
+          );
+        }
+      );
+
+      if(!pass) {
+        anyGroupSizeMismatches = true;
+      }
+
+      BOOST_CHECK_MESSAGE(
+        pass,
+        "Not all subgroups of " << pointGroupStrings().at(g) << " have the same size!"
+      );
+    }
+    if(anyGroupSizeMismatches) {
+      std::cout << static_cast<PointGroup>(g);
+    }
   }
 }
 

@@ -720,8 +720,8 @@ std::vector<std::unique_ptr<SymmetryElement>> symmetryElements(PointGroup group)
 
         /* 20 C3 along sums of three positions*/
         Eigen::Matrix<double, 3, 2> threeAxesBases;
-        threeAxesBases.col(0) = (axes.col(0) + axes.col(3) + axes.col(5)) / 3;
-        threeAxesBases.col(1) = (axes.col(3) + axes.col(5) - axes.col(3)) / 3;
+        threeAxesBases.col(0) = (axes.col(0) + axes.col(2) + axes.col(4)) / 3;
+        threeAxesBases.col(1) = (axes.col(2) + axes.col(4) - axes.col(3)) / 3;
         for(unsigned i = 0; i < 2; ++i) {
           Eigen::Vector3d compoundAxis = threeAxesBases.col(i);
           for(unsigned j = 0; j < 5; ++j) {
@@ -773,8 +773,8 @@ std::vector<std::unique_ptr<SymmetryElement>> symmetryElements(PointGroup group)
 
         /* 20 S6, 20 C3 along sums of three positions */
         Eigen::Matrix<double, 3, 2> threeAxesBases;
-        threeAxesBases.col(0) = (axes.col(0) + axes.col(3) + axes.col(5)) / 3;
-        threeAxesBases.col(1) = (axes.col(3) + axes.col(5) - axes.col(3)) / 3;
+        threeAxesBases.col(0) = (axes.col(0) + axes.col(2) + axes.col(4)) / 3;
+        threeAxesBases.col(1) = (axes.col(2) + axes.col(4) - axes.col(3)) / 3;
         for(unsigned i = 0; i < 2; ++i) {
           Eigen::Vector3d compoundAxis = threeAxesBases.col(i);
           for(unsigned j = 0; j < 5; ++j) {
