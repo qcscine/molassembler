@@ -85,6 +85,20 @@ void init_serialization(pybind11::module& m) {
     "Parse a binary JSON molecule serialization"
   );
 
+  serialization.def_static(
+    "base_64_encode",
+    &JSONSerialization::base64Encode,
+    pybind11::arg("binary"),
+    "Encode binary format as base-64 string"
+  );
+
+  serialization.def_static(
+    "base_64_decode",
+    &JSONSerialization::base64Decode,
+    pybind11::arg("base_64_string"),
+    "Decode base-64 string into binary"
+  );
+
   serialization.def(
     "__str__",
     &JSONSerialization::operator std::string,
