@@ -302,7 +302,7 @@ DirectedConformerGenerator::Impl::Impl(
 DirectedConformerGenerator::DecisionList
 DirectedConformerGenerator::Impl::generateNewDecisionList() {
   if(_relevantBonds.empty()) {
-    return {};
+    throw std::logic_error("List of relevant bonds is empty!");
   }
 
   detail::BoundedNodeTrieChooseFunctor<std::uint8_t> chooseFunctor {};

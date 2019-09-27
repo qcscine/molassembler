@@ -237,14 +237,13 @@ public:
    * @complexity{@math{\Theta(N)}}
    *
    * @throws std::logic_error If the underlying set is full, i.e. all decision
-   *   lists for conformers have been generated.
+   *   lists for conformers have been generated or if there are no bonds to
+   *   consider.
    * @post The new DecisionList is part of the stored list of generated
    *   decision lists and will not be generated again. The result of
    *   decisionListSetSize() is incremented.
    *
-   * @returns An empty DecisionList if the number of relevant bonds is zero.
-   *   Otherwise, returns a DecisionList of length matching the number of
-   *   relevant bonds.
+   * @returns a DecisionList of length matching the number of relevant bonds.
    */
   DecisionList generateNewDecisionList();
 
