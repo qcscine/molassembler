@@ -88,12 +88,12 @@ struct Floating {};
 
 template<>
 struct Floating<double> {
-  constexpr static double tolerance = 1e-6;
+  constexpr static double tolerance = 1e-8;
 };
 
 template<>
 struct Floating<float> {
-  constexpr static double tolerance = 1e-3;
+  constexpr static double tolerance = 1e-4;
 };
 
 constexpr double Floating<double>::tolerance;
@@ -583,17 +583,27 @@ struct CompareImplementations {
 };
 
 BOOST_AUTO_TEST_CASE(RefinementProblemEquivalence) {
-  using EigenRefinementTypeVariations = std::tuple<
+  using DoubleRefinementTypeVariations = std::tuple<
     EigenRefinementProblem<4, double, false>,
+    EigenRefinementProblem<4, double, true>
+  >;
+
+  auto doublePasses = temple::TupleType::mapAllPairs<DoubleRefinementTypeVariations, CompareImplementations>();
+
+  BOOST_CHECK_MESSAGE(
+    temple::all_of(doublePasses),
+    "Not all refinement template argument of double variations match pair-wise!"
+  );
+
+  using FloatRefinementTypeVariations = std::tuple<
     EigenRefinementProblem<4, float, false>,
-    EigenRefinementProblem<4, double, true>,
     EigenRefinementProblem<4, float, true>
   >;
 
-  auto passes = temple::TupleType::mapAllPairs<EigenRefinementTypeVariations, CompareImplementations>();
+  auto floatPasses = temple::TupleType::mapAllPairs<FloatRefinementTypeVariations, CompareImplementations>();
 
   BOOST_CHECK_MESSAGE(
-    temple::all_of(passes),
-    "Not all refinement template argument variations match pair-wise!"
+    temple::all_of(floatPasses),
+    "Not all refinement template argument of float variations match pair-wise!"
   );
 }
