@@ -88,12 +88,12 @@ struct Floating {};
 
 template<>
 struct Floating<double> {
-  constexpr static double tolerance = 1e-10;
+  constexpr static double tolerance = 1e-6;
 };
 
 template<>
 struct Floating<float> {
-  constexpr static double tolerance = 1e-5;
+  constexpr static double tolerance = 1e-3;
 };
 
 constexpr double Floating<double>::tolerance;
