@@ -924,7 +924,8 @@ std::vector<
       engine.seed(randomnessEngine()());
 
 #else
-      random::Engine& engine = randomnessEngine();
+      random::Engine engine;
+      engine.seed(randomnessEngine()());
 #endif
 
       /* We have to handle any and all exceptions here if this is a parallel
