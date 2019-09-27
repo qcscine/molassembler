@@ -148,7 +148,7 @@ void benchmark(
     filePath.string()
   );
 
-  DistanceGeometry::SpatialModel spatialModel {sampleMol, DistanceGeometry::Configuration {}};
+  DistanceGeometry::SpatialModel spatialModel {sampleMol, DistanceGeometry::Configuration {}, randomnessEngine()};
 
   const auto boundsMatrix = spatialModel.makePairwiseBounds();
 

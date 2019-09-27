@@ -117,7 +117,7 @@ void benchmark(
     return;
   }
 
-  DistanceGeometry::SpatialModel spatialModel {molecule, DistanceGeometry::Configuration {}};
+  DistanceGeometry::SpatialModel spatialModel {molecule, DistanceGeometry::Configuration {}, randomnessEngine()};
 
   const auto boundsList = spatialModel.makePairwiseBounds();
 

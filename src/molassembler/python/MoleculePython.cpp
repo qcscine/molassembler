@@ -137,18 +137,18 @@ void init_molecule(pybind11::module& m) {
 
   molecule.def(
     "assign_stereopermutator_randomly",
-    pybind11::overload_cast<AtomIndex>(
-      &Molecule::assignStereopermutatorRandomly
-    ),
+    [](Molecule& mol, AtomIndex a) {
+      mol.assignStereopermutatorRandomly(a, randomnessEngine());
+    },
     pybind11::arg("atom"),
     "Assigns an atom stereopermutator at random"
   );
 
   molecule.def(
     "assign_stereopermutator_randomly",
-    pybind11::overload_cast<const BondIndex&>(
-      &Molecule::assignStereopermutatorRandomly
-    ),
+    [](Molecule& mol, const BondIndex& b) {
+      mol.assignStereopermutatorRandomly(b, randomnessEngine());
+    },
     pybind11::arg("bond_index"),
     "Assigns a bond stereopermutator at random"
   );

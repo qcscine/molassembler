@@ -158,7 +158,8 @@ struct Configuration {
  * @endparblock
  *
  * @parblock @note This function is parallelized. Use the OMP_NUM_THREADS
- * environment variable to control the number of threads used.
+ * environment variable to control the number of threads used. The resulting
+ * order is unsequenced, but otherwise reproducible.
  * @endparblock
  *
  * @returns A result type which may or may not contain a vector of
