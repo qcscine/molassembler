@@ -96,9 +96,29 @@ void init_directed_conformer_generator(pybind11::module& m) {
     "The number of conformers needed for a full ensemble"
   );
 
+  using VariantType = boost::variant<
+    Scine::Utils::PositionCollection,
+    std::string
+  >;
+
   dirConfGen.def(
     "generate_conformation",
-    &DirectedConformerGenerator::generateConformation,
+    [](
+      DirectedConformerGenerator& generator,
+      const DirectedConformerGenerator::DecisionList& decisionList,
+      const DistanceGeometry::Configuration& configuration
+    ) -> VariantType {
+      auto result = generator.generateConformation(
+        decisionList,
+        configuration
+      );
+
+      if(result) {
+        return result.value();
+      }
+
+      return result.error().message();
+    },
     pybind11::arg("decision_list"),
     pybind11::arg("configuration") = DistanceGeometry::Configuration {},
     "Try to generate a conformer for a particular decision list."
