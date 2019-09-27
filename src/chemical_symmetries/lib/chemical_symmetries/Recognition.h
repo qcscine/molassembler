@@ -73,22 +73,6 @@ Top standardizeTop(Eigen::Ref<PositionCollection> normalizedPositions);
 unsigned reorientAsymmetricTop(Eigen::Ref<PositionCollection> normalizedPositions);
 
 /**
- * @brief Attempts to find the point group of a set of positions by flowcharting
- *   individual symmetry elements.
- *
- * @warning Incomplete
- *
- * @param normalizedPositions Particle positions
- * @param top The result of top standardization
- *
- * @return The point group of the particle positions
- */
-PointGroup flowchart(
-  const PositionCollection& normalizedPositions,
-  Top top
-);
-
-/**
  * @brief Namespace for calculation of continuous symmetry measures
  */
 namespace csm {
