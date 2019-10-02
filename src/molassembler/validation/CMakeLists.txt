@@ -11,7 +11,6 @@ endif()
 set(testFiles
   ${CMAKE_CURRENT_SOURCE_DIR}/GraphAlgorithms.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/RankingValidation.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/Sanity.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/StrainedMolecules.cpp
 )
 

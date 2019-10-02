@@ -23,6 +23,7 @@ set(analysisFiles
   ${CMAKE_CURRENT_SOURCE_DIR}/Interpret.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/MakeIsomorphism.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/RankingExplainer.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/SymmetryRecognition.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/TraceRefinement.cpp
 )
 

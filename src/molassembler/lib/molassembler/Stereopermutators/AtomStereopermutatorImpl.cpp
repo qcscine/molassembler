@@ -837,7 +837,7 @@ void AtomStereopermutator::Impl::fit(
     const double tau = Symmetry::tau(angles);
 
     if(S == 4) {
-      /* Significance
+      /* Thresholds
        * - τ₄' = 0 -> Symmetry is square planar
        * - τ₄' = 0.24 -> Symmetry is seesaw
        * - τ₄' = 1 -> Symmetry is tetrahedral
@@ -856,7 +856,7 @@ void AtomStereopermutator::Impl::fit(
         // Symmetry is tetrahedral
       }
     } else if(S == 5) {
-      /* Significance:
+      /* Thresholds:
        * - τ₅ = 0 -> Symmetry is square pyramidal
        * - τ₅ = 1 -> Symmetry is trigonal bipyramidal
        */

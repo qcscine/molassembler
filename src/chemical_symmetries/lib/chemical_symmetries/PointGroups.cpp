@@ -794,6 +794,24 @@ std::vector<std::unique_ptr<SymmetryElement>> symmetryElements(PointGroup group)
   }
 }
 
+unsigned order(const PointGroup group) {
+  const std::vector<unsigned> orders {
+    1, 2, 2, // C1, Ci, Cs
+    2, 3, 4, 5, 6, 7, 8, // Cn
+    4, 6, 8, 10, 12, 14, 16, // Cnh
+    4, 6, 8, 10, 12, 14, 16, // Cnv
+    4, 6, 8, // S4, S6, S8
+    4, 6, 8, 10, 12, 14, 16, // Dn
+    8, 12, 16, 20, 24, 28, 32, // Dnh
+    8, 12, 16, 20, 24, 28, 32, // Dnd
+    12, 24, 24, // T, Td, Th
+    24, 48, // O, Oh
+    60, 120, // I, Ih
+    16, 32 // Cinfv, Dinfh (forwarded to C8v and D8h)
+  };
+  return orders.at(underlying(group));
+}
+
 NPGroupingsMapType npGroupings(
   const std::vector<std::unique_ptr<SymmetryElement>>& elements
 ) {

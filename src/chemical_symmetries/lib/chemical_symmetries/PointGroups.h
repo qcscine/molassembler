@@ -128,6 +128,8 @@ using ElementsList = std::vector<std::unique_ptr<SymmetryElement>>;
  */
 PURITY_WEAK ElementsList symmetryElements(const PointGroup group) noexcept;
 
+unsigned order(const PointGroup group);
+
 
 struct ElementGrouping {
   using ElementIndexGroups = std::vector<std::vector<unsigned>>;
