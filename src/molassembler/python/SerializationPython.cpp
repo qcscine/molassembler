@@ -16,25 +16,9 @@
  * the interface library here (and linking it).
  */
 
-pybind11::bytes JSONToBytes(
-  const Scine::molassembler::JSONSerialization& serialization,
-  const Scine::molassembler::JSONSerialization::BinaryFormat format
-) {
-  auto binary = serialization.toBinary(format);
-
-  return {
-    reinterpret_cast<const char*>(&binary[0]),
-    binary.size() * sizeof(std::uint8_t)
-  };
-}
-
-Scine::molassembler::JSONSerialization JSONFromBytes(
-  const pybind11::bytes& bytes,
-  const Scine::molassembler::JSONSerialization::BinaryFormat format
-) {
+std::vector<std::uint8_t> binaryFromPythonBytes(const pybind11::bytes& bytes) {
   std::string binaryStr = bytes;
   const char* binaryStrC = binaryStr.c_str();
-
   std::vector<std::uint8_t> binary;
   unsigned size = binaryStr.size();
   binary.resize(size);
@@ -43,8 +27,28 @@ Scine::molassembler::JSONSerialization JSONFromBytes(
     // ooh, pointer arithmetic, don't we just love that, clang-tidy?
     binary[i] = *(reinterpret_cast<const std::uint8_t*>(binaryStrC) + i);
   }
+  return binary;
+}
 
-  return Scine::molassembler::JSONSerialization(binary, format);
+pybind11::bytes pythonBytesFromBinary(const std::vector<std::uint8_t>& binary) {
+  return {
+    reinterpret_cast<const char*>(&binary[0]),
+    binary.size() * sizeof(std::uint8_t)
+  };
+}
+
+pybind11::bytes JSONToBytes(
+  const Scine::molassembler::JSONSerialization& serialization,
+  const Scine::molassembler::JSONSerialization::BinaryFormat format
+) {
+  return pythonBytesFromBinary(serialization.toBinary(format));
+}
+
+Scine::molassembler::JSONSerialization JSONFromBytes(
+  const pybind11::bytes& bytes,
+  const Scine::molassembler::JSONSerialization::BinaryFormat format
+) {
+  return Scine::molassembler::JSONSerialization(binaryFromPythonBytes(bytes), format);
 }
 
 void init_serialization(pybind11::module& m) {
@@ -87,14 +91,18 @@ void init_serialization(pybind11::module& m) {
 
   serialization.def_static(
     "base_64_encode",
-    &JSONSerialization::base64Encode,
+    [](const pybind11::bytes& bytes) -> std::string {
+      return JSONSerialization::base64Encode(binaryFromPythonBytes(bytes));
+    },
     pybind11::arg("binary"),
     "Encode binary format as base-64 string"
   );
 
   serialization.def_static(
     "base_64_decode",
-    &JSONSerialization::base64Decode,
+    [](const std::string base64) -> pybind11::bytes {
+      return pythonBytesFromBinary(JSONSerialization::base64Decode(base64));
+    },
     pybind11::arg("base_64_string"),
     "Decode base-64 string into binary"
   );
