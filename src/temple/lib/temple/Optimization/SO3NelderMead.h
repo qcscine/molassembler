@@ -12,7 +12,6 @@
 #include <unsupported/Eigen/MatrixFunctions>
 #include "temple/Adaptors/AllPairs.h"
 #include "temple/Functional.h"
-#include "temple/TinySet.h"
 
 namespace temple {
 
@@ -222,8 +221,14 @@ struct SO3NelderMead {
       sortedPairs.back().column,
       newValue
     };
-    // Insert the replacement into values, keeping ordering
-    temple::TinySet<IndexValuePair>::checked_insert(sortedPairs, replacementPair);
+    sortedPairs.insert(
+      std::lower_bound(
+        std::begin(sortedPairs),
+        std::end(sortedPairs),
+        replacementPair
+      ),
+      replacementPair
+    );
     // Drop the worst value
     sortedPairs.pop_back();
     // Replace the worst column
@@ -278,6 +283,7 @@ struct SO3NelderMead {
         }
       )
     );
+    assert(values.size() == 4);
 
     auto ballCheckingFunction = [](
       auto&& objectiveFunction,
