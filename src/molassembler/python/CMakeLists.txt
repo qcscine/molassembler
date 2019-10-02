@@ -39,8 +39,11 @@ file(
   DESTINATION ${CMAKE_CURRENT_BINARY_DIR}
 )
 
-configure_file(
-  ${CMAKE_CURRENT_BINARY_DIR}/sphinx/Makefile.in
-  ${CMAKE_CURRENT_BINARY_DIR}/sphinx/Makefile
-  @ONLY
+file(GLOB_RECURSE MOLASSEMBLER_PYTHON_DOC_FILES ${CMAKE_CURRENT_SOURCE_DIR}/sphinx/*.rst)
+
+add_custom_target(PythonDocumentation
+  ALL
+  COMMAND ${PYTHON_EXECUTABLE} -m sphinx -M html "sphinx" "doc"
+  DEPENDS molassembler_python
+  SOURCES ${MOLASSEMBLER_PYTHON_DOC_FILES}
 )
