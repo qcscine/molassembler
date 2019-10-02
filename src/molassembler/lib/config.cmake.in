@@ -8,6 +8,10 @@ if(NOT TARGET Boost::filesystem OR NOT TARGET Boost::system)
   find_dependency(Boost REQUIRED COMPONENTS filesystem system)
 endif()
 
+if(NOT "${SCINE_MARCH}" STREQUAL "@SCINE_MARCH@")
+  message(FATAL_ERROR "You are trying to use an installed version of molassembler that was compiled with different -march flag values! Current march flags: ${SCINE_MARCH}, installed flags: @SCINE_MARCH@")
+endif()
+
 set(MOLASSEMBLER_VERSION 0.1.0)
 
 include(${CMAKE_CURRENT_LIST_DIR}/molassemblerTargets.cmake)

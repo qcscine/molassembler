@@ -31,25 +31,9 @@ if(MOLASSEMBLER_ADDRESS_SANITIZE)
 endif()
 
 # Handle opportunity for architecture-specific instruction sets
-if(MOLASSEMBLER_TUNE_ISA AND CMAKE_BUILD_TYPE MATCHES Release|RelWithDebInfo)
-  include(CheckCXXCompilerFlag)
-  check_cxx_compiler_flag(-march=native MARCH_FLAG)
-  if(MARCH_FLAG)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native" PARENT_SCOPE)
-    message(STATUS "Adding -march=native compiler flag")
-  endif()
-
-  check_cxx_compiler_flag(-mtune=native MTUNE_FLAG)
-  if(MTUNE_FLAG)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mtune=native" PARENT_SCOPE)
-    message(STATUS "Adding -mtune=native compiler flag")
-  endif()
-
-  if(MARCH_FLAG OR MTUNE_FLAG)
-    message(WARNING "Instruction set tuning can cause ABI incompatibility with dependencies that have not been compiled the same way. Set MOLASSEMBLER_TUNE_ISA to OFF to avoid this.")
-  endif()
+if(NOT "${SCINE_MARCH}" STREQUAL "" AND NOT MSVC)
+  list(APPEND MOLASSEMBLER_CXX_FLAGS -march=${SCINE_MARCH})
 endif()
-
 
 # Compilation flags
 if(MSVC)

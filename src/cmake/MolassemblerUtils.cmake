@@ -25,7 +25,7 @@ function(molassembler_install_component_cmake_files)
   set(valueArgs EXPORT_NAME COMPONENT)
   set(listArgs "")
   cmake_parse_arguments(ARGS "${bools}" "${valueArgs}" "${listArgs}" ${ARGN})
-  
+
   # -- Config version file
   write_basic_package_version_file(
     "${CMAKE_CURRENT_BINARY_DIR}/${ARGS_COMPONENT}/${ARGS_COMPONENT}ConfigVersion.cmake"
@@ -46,7 +46,7 @@ function(molassembler_install_component_cmake_files)
 
   # Install config and configVersion
   install(
-    FILES 
+    FILES
       "${CMAKE_CURRENT_BINARY_DIR}/${ARGS_COMPONENT}/${ARGS_COMPONENT}Config.cmake"
       "${CMAKE_CURRENT_BINARY_DIR}/${ARGS_COMPONENT}/${ARGS_COMPONENT}ConfigVersion.cmake"
     DESTINATION "${MOLASSEMBLER_CMAKE_ROOT}/${ARGS_COMPONENT}"
