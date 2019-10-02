@@ -31,5 +31,16 @@ file(
 
 file(
   WRITE ${CMAKE_CURRENT_BINARY_DIR}/molassembler/__init__.py
-  "from .molassembler import *\n"
+  "from .molassembler import *\ndel molassembler\n"
+)
+
+file(
+  COPY ${CMAKE_CURRENT_SOURCE_DIR}/sphinx
+  DESTINATION ${CMAKE_CURRENT_BINARY_DIR}
+)
+
+configure_file(
+  ${CMAKE_CURRENT_BINARY_DIR}/sphinx/Makefile.in
+  ${CMAKE_CURRENT_BINARY_DIR}/sphinx/Makefile
+  @ONLY
 )

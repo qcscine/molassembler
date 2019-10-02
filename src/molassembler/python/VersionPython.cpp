@@ -8,6 +8,8 @@
 void init_version(pybind11::module& m) {
   using namespace Scine::molassembler;
 
+  m.attr("__version__") = Scine::molassembler::version::fullVersion();
+
   auto versionSubmodule = m.def_submodule("version");
 
   versionSubmodule.attr("MAJOR") = pybind11::int_(version::major);

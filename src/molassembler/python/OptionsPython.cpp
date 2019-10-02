@@ -16,8 +16,8 @@ void init_options(pybind11::module& m) {
     "occurs, so that all nitrogen atoms can be stereocenters. If High is set, "
     "then only nitrogen geometries in particularly strained cycles (3, 4) can "
     "be stereocenters"
-  ).value("Low", TemperatureRegime::Low)
-    .value("High", TemperatureRegime::High);
+  ).value("Low", TemperatureRegime::Low, "No pyramidal inversion, all nitrogen atoms can be stereopermutators")
+    .value("High", TemperatureRegime::High, "Only nitrogen atoms in particularly strained cycles (3, 4) can be stereopermutators");
 
   /* Chiral state preservation */
   pybind11::enum_<ChiralStatePreservation>(
@@ -33,10 +33,28 @@ void init_options(pybind11::module& m) {
     "but not back. Under RandomFromMultipleBest, random mappings are chosen "
     "from the set of best mappings, permitting chiral state propagation in all "
     "cases. "
-  ).value("None", ChiralStatePreservation::None)
-    .value("EffortlessAndUnique", ChiralStatePreservation::EffortlessAndUnique)
-    .value("Unique", ChiralStatePreservation::Unique)
-    .value("RandomFromMultipleBest", ChiralStatePreservation::RandomFromMultipleBest);
+  ).value("None", ChiralStatePreservation::None, "Don't try to preserve chiral state")
+    .value(
+      "EffortlessAndUnique",
+      ChiralStatePreservation::EffortlessAndUnique,
+      "Use only completely unambiguous zero-effort mappings. Those are the green"
+      "edges in the graphs below. Note that the ligand gain situation from square"
+      "planar to square pyramidal is not unique, and therefore not shown as"
+      "green."
+    ).value(
+      "Unique",
+      ChiralStatePreservation::Unique,
+      "Propagates if the best symmetry mapping is unique, i.e. there are no other"
+      "mappings with the same quality measures. This enables all green and black"
+      "edges."
+    ).value(
+      "RandomFromMultipleBest",
+      ChiralStatePreservation::RandomFromMultipleBest,
+      "Chooses randomly from the set of best mappings, permitting chiral state"
+      "propagation in all cases. So propagating chiral state from square planar"
+      "to square pyramidal is now possible -- there are two ways of placing the"
+      "new apical ligand -- but you only get one of them."
+    );
 
   /* Tau criterion */
   pybind11::enum_<TauCriterion>(

@@ -24,7 +24,14 @@ void init_types(pybind11::module& m);
 void init_version(pybind11::module& m);
 
 PYBIND11_MODULE(molassembler, m) {
-  m.doc() = "Pybind11 Bindings for molassembler";
+  m.doc() = R"(
+    Pybind11 bindings for molassembler
+
+    .. currentmodule:: molassembler
+
+    .. autosummary::
+       :toctree:
+  )";
 
   // Order is important here, do not reorder
   init_version(m);

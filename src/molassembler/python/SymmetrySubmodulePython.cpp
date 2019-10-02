@@ -9,6 +9,7 @@ void init_symmetry_submodule(pybind11::module& m) {
   using namespace Scine;
 
   auto symmetrySubmodule = m.def_submodule("symmetry");
+  symmetrySubmodule.doc() = R"(Symmetry submodule)";
 
   pybind11::enum_<Symmetry::Name> name(symmetrySubmodule, "SymmetryName", "Symmetry name enum");
 

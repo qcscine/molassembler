@@ -65,10 +65,10 @@ void init_serialization(pybind11::module& m) {
     "BinaryFormat",
     "Specifies the type of JSON binary format"
   );
-  binaryFormat.value("CBOR", JSONSerialization::BinaryFormat::CBOR)
-   .value("BSON", JSONSerialization::BinaryFormat::BSON)
-   .value("MsgPack", JSONSerialization::BinaryFormat::MsgPack)
-   .value("UBJSON", JSONSerialization::BinaryFormat::UBJSON);
+  binaryFormat.value("CBOR", JSONSerialization::BinaryFormat::CBOR, "Compact Binary Object Representation")
+   .value("BSON", JSONSerialization::BinaryFormat::BSON, "Binary JSON")
+   .value("MsgPack", JSONSerialization::BinaryFormat::MsgPack, "MsgPack")
+   .value("UBJSON", JSONSerialization::BinaryFormat::UBJSON, "Universal Binary JSON");
 
   serialization.def(
     pybind11::init<const std::string&>(),

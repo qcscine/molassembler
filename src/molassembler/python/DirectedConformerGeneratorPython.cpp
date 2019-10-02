@@ -25,12 +25,12 @@ void init_directed_conformer_generator(pybind11::module& m) {
     dirConfGen,
     "IgnoreReason",
     "Reason why a bond is ignored for directed conformer generation"
-  ).value("AtomStereopermutatorPreconditionsUnmet", DirectedConformerGenerator::IgnoreReason::AtomStereopermutatorPreconditionsUnmet)
-    .value("HasAssignedBondStereopermutator", DirectedConformerGenerator::IgnoreReason::HasAssignedBondStereopermutator)
-    .value("HasTerminalConstitutingAtom", DirectedConformerGenerator::IgnoreReason::HasTerminalConstitutingAtom)
-    .value("InCycle", DirectedConformerGenerator::IgnoreReason::InCycle)
-    .value("IsEtaBond", DirectedConformerGenerator::IgnoreReason::IsEtaBond)
-    .value("RotationIsIsotropic", DirectedConformerGenerator::IgnoreReason::RotationIsIsotropic);
+  ).value("AtomStereopermutatorPreconditionsUnmet", DirectedConformerGenerator::IgnoreReason::AtomStereopermutatorPreconditionsUnmet, "There is not an assigned stereopermutator on both ends of the bond")
+    .value("HasAssignedBondStereopermutator", DirectedConformerGenerator::IgnoreReason::HasAssignedBondStereopermutator, "There is already an assigne bond stereopermutator on the bond")
+    .value("HasTerminalConstitutingAtom", DirectedConformerGenerator::IgnoreReason::HasTerminalConstitutingAtom, "At least one consituting atom is terminal")
+    .value("InCycle", DirectedConformerGenerator::IgnoreReason::InCycle, "The bond is in a cycle (see C++ documentation for details)")
+    .value("IsEtaBond", DirectedConformerGenerator::IgnoreReason::IsEtaBond, "The bond is an eta bond")
+    .value("RotationIsIsotropic", DirectedConformerGenerator::IgnoreReason::RotationIsIsotropic, "Rotation around this bond is isotropic (at least one side's rotating substituents all have the same ranking)");
 
   dirConfGen.def_static(
     "consider_bond",

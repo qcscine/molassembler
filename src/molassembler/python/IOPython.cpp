@@ -16,6 +16,7 @@ void init_io(pybind11::module& m) {
   using namespace Scine::Utils;
 
   auto io = m.def_submodule("io");
+  io.doc() = R"(IO Submodule)";
 
   /* Line notations */
   pybind11::class_<IO::LineNotation> lineNotation(

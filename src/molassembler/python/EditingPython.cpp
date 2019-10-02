@@ -12,6 +12,7 @@ void init_editing(pybind11::module& m) {
   using namespace Scine::molassembler;
 
   auto editing = m.def_submodule("editing");
+  editing.doc() = "Editing submodule";
 
   editing.def(
     "cleave",

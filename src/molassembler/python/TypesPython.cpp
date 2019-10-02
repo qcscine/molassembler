@@ -22,13 +22,13 @@ void init_types(pybind11::module& m) {
   );
 
   bondType
-  .value("Single", BondType::Single)
-  .value("Double", BondType::Double)
-  .value("Triple", BondType::Triple)
-  .value("Quadruple", BondType::Quadruple)
-  .value("Quintuple", BondType::Quintuple)
-  .value("Sextuple", BondType::Sextuple)
-  .value("Eta", BondType::Eta);
+  .value("Single", BondType::Single, "Single bond")
+  .value("Double", BondType::Double, "Double bond")
+  .value("Triple", BondType::Triple, "Triple bond")
+  .value("Quadruple", BondType::Quadruple, "Quadruple bond")
+  .value("Quintuple", BondType::Quintuple, "Quintuple bond")
+  .value("Sextuple", BondType::Sextuple, "Sextuple bond")
+  .value("Eta", BondType::Eta, "Eta bond, indicates haptic bonding");
 
   // Leave out LengthUnit, it should not be necessary
 
@@ -104,21 +104,23 @@ void init_types(pybind11::module& m) {
     m,
     "AtomEnvironmentComponents",
     pybind11::arithmetic()
-  ).value("NoComponents", AtomEnvironmentComponents::None)
-   .value("ElementTypes", AtomEnvironmentComponents::ElementTypes)
-   .value("BondOrders", AtomEnvironmentComponents::BondOrders)
-   .value("Symmetries", AtomEnvironmentComponents::Symmetries)
-   .value("Stereopermutations", AtomEnvironmentComponents::Stereopermutations)
+  ).value("NoComponents", AtomEnvironmentComponents::None, "Consider only the graph")
+   .value("ElementTypes", AtomEnvironmentComponents::ElementTypes, "Element types")
+   .value("BondOrders", AtomEnvironmentComponents::BondOrders, "Bond orders")
+   .value("Symmetries", AtomEnvironmentComponents::Symmetries, "Symmetries")
+   .value("Stereopermutations", AtomEnvironmentComponents::Stereopermutations, "Stereopermutations")
    .value(
       "ElementsAndBonds",
       AtomEnvironmentComponents::ElementTypes
-      | AtomEnvironmentComponents::BondOrders
+      | AtomEnvironmentComponents::BondOrders,
+      "Consider element types and bond orders"
     )
    .value(
       "ElementsBondsAndSymmetries",
       AtomEnvironmentComponents::ElementTypes
       | AtomEnvironmentComponents::BondOrders
-      | AtomEnvironmentComponents::Symmetries
+      | AtomEnvironmentComponents::Symmetries,
+      "Consider element types, bond orders and symmetries"
    )
-   .value("All", AtomEnvironmentComponents::All);
+   .value("All", AtomEnvironmentComponents::All, "Consider element types, bond orders, symmetries and stereopermutations");
 }

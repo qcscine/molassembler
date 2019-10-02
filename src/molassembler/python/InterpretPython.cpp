@@ -18,10 +18,9 @@ void init_interpret(pybind11::module& m) {
     m,
     "BondDiscretization",
     "Specifies the algorithm used to discretize floating-point bond orders into "
-    "discrete bond types. Binary indicates that all bond orders >= 0.5 are "
-    "considered single bonds. RoundToNearest does just that."
-  ).value("Binary", BondDiscretizationOption::Binary)
-    .value("RoundToNearest", BondDiscretizationOption::RoundToNearest);
+    "discrete bond types."
+  ).value("Binary", BondDiscretizationOption::Binary, "All bond orders >= 0.5 are considered single bonds")
+    .value("RoundToNearest", BondDiscretizationOption::RoundToNearest, "Round bond orders to nearest integer");
 
   pybind11::class_<InterpretResult> interpretResult(
     m,
