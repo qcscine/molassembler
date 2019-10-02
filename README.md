@@ -85,25 +85,17 @@ $ make
 
 ## Tests
 
-We recommend running the tests in a release build of the library. The tests are
-split into two sets. After building the library and tests, run:
-
-- Brief end-to-end tests: `make check`
-- Library validation: `make validate`
-- Both: `make test`
+We recommend running the tests in a release build of the library. After
+building the library and tests, run `make test`. For the python bindings, the
+python module `pytest` must be available.
 
 
 ## Documentation
 
-The documentation can be built from the root directory with:
+If `doxygen` is installed, the C++ library documentation is built too. If the
+python bindings are built and the sphinx module is available, the python
+binding documentation is generated too.
 
-```bash
-$ cd build
-$ cmake ..
-$ make doc
-```
-
-This generates the Doxygen documentation in a `doc` subfolder.
 
 [^1]: Flachsenberg, F.; Andresen, N.; Rarey, M. RingDecomposerLib: An
   Open-Source implementation of Unique Ring Families and Other Cycle Bases. J.

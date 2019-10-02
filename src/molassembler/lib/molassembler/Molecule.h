@@ -74,10 +74,10 @@ struct RankingInformation;
  *   at any atom does not grow with the number of atoms in the graph. Any
  *   function linear in the number of an atom's substituents is therefore of
  *   constant complexity. The variables used in the complexity notations are:
- *   - V = #atoms/vertices
- *   - E = #bonds/edges
- *   - A = #atom stereopermutators
- *   - B = #bond stereopermutators
+ *   - V = number of atoms/vertices
+ *   - E = number of bonds/edges
+ *   - A = number of atom stereopermutators
+ *   - B = number of bond stereopermutators
  * @note The notations used are the Bachmann-Landau notations:
  *   - @math{O} implies that the function grows asymptotically no faster than
  *   - @math{\Theta} implies that the function grow asymptotically as fast as

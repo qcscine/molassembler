@@ -12,10 +12,16 @@ set_target_properties(molassembler_python PROPERTIES
   LIBRARY_OUTPUT_DIRECTORY "molassembler"
 )
 target_link_libraries(molassembler_python PRIVATE molassembler Eigen3::Eigen)
-install(CODE "execute_process(WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR} COMMAND ${PYTHON_EXECUTABLE} -m pip install --prefix=${CMAKE_INSTALL_PREFIX} --upgrade .)")
+
+include(FindPythonModule)
+
+find_python_module(pytest)
+if(NOT PY_PYTEST)
+  message(WARNING "Python module will not be tested since the python module pytest could not be found.")
+endif()
 
 # Python tests
-if(SCINE_BUILD_TESTS)
+if(SCINE_BUILD_TESTS AND PY_PYTEST)
   add_test(
     NAME MASMPythonBindings
     COMMAND ${PYTHON_EXECUTABLE} -B -m pytest ${CMAKE_CURRENT_SOURCE_DIR} --junitxml=${CMAKE_CURRENT_BINARY_DIR}/pytest_report.xml
@@ -23,27 +29,45 @@ if(SCINE_BUILD_TESTS)
   )
 endif()
 
+find_python_module(pip)
+if(PY_PIP)
 # Add the setup file in order to enable distribution and installation using pip
-file(
-  COPY ${CMAKE_CURRENT_SOURCE_DIR}/setup.py
-  DESTINATION ${CMAKE_CURRENT_BINARY_DIR}
-)
+  file(
+    COPY ${CMAKE_CURRENT_SOURCE_DIR}/setup.py
+    DESTINATION ${CMAKE_CURRENT_BINARY_DIR}
+  )
 
-file(
-  WRITE ${CMAKE_CURRENT_BINARY_DIR}/molassembler/__init__.py
-  "from .molassembler import *\ndel molassembler\n"
-)
+  file(
+    WRITE ${CMAKE_CURRENT_BINARY_DIR}/molassembler/__init__.py
+    "from .molassembler import *\ndel molassembler\n"
+  )
 
-file(
-  COPY ${CMAKE_CURRENT_SOURCE_DIR}/sphinx
-  DESTINATION ${CMAKE_CURRENT_BINARY_DIR}
-)
+  install(CODE "execute_process(WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR} COMMAND ${PYTHON_EXECUTABLE} -m pip install --prefix=${CMAKE_INSTALL_PREFIX} --upgrade .)")
+else()
+  message(WARNING "Python will not be installed since the python module pip is unavailable.")
+endif()
 
-file(GLOB_RECURSE MOLASSEMBLER_PYTHON_DOC_FILES ${CMAKE_CURRENT_SOURCE_DIR}/sphinx/*.rst)
+find_python_module(sphinx)
+if(PY_SPHINX)
+  file(
+    COPY ${CMAKE_CURRENT_SOURCE_DIR}/sphinx
+    DESTINATION ${CMAKE_CURRENT_BINARY_DIR}
+  )
 
-add_custom_target(PythonDocumentation
-  ALL
-  COMMAND ${PYTHON_EXECUTABLE} -m sphinx -M html "sphinx" "doc"
-  DEPENDS molassembler_python
-  SOURCES ${MOLASSEMBLER_PYTHON_DOC_FILES}
-)
+  file(GLOB_RECURSE MOLASSEMBLER_PYTHON_DOC_FILES ${CMAKE_CURRENT_SOURCE_DIR}/sphinx/*.rst)
+
+  add_custom_target(PythonDocumentation
+    ALL
+    COMMAND ${PYTHON_EXECUTABLE} -m sphinx -M html "sphinx" "doc"
+    DEPENDS molassembler_python
+    SOURCES ${MOLASSEMBLER_PYTHON_DOC_FILES} ${CMAKE_CURRENT_SOURCE_DIR}/sphinx/conf.py
+    COMMENT "Generate python documentation with sphinx"
+  )
+
+  install(
+    DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/doc/html/
+    DESTINATION share/molassembler/sphinx
+    MESSAGE_NEVER
+    OPTIONAL
+  )
+endif()

@@ -210,7 +210,7 @@ std::vector<DistortionInfo> symmetryTransitionMappings(
  * Generates symmetry transition index mappings for the special case of ligand
  * loss, in which a ligand is removed from a particular position in the symmetry
  *
- * @compleity{@math{\Theta(S!)}}
+ * @complexity{@math{\Theta(S!)}}
  *
  * @param symmetryFrom Transition source symmetry
  * @param symmetryTo Transition target symmetry

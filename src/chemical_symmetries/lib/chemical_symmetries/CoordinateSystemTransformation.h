@@ -27,7 +27,7 @@ struct CoordinateSystem {
    * @param b The y coordinate of the coordinate system
    *
    * @pre @p a and @p b need to be orthogonal.
-   * @post #x, #y and #z are normalized, the coordinate system is right-handed
+   * @post x, y and z are normalized, the coordinate system is right-handed
    */
   CoordinateSystem(const Eigen::Vector3d& a, const Eigen::Vector3d& b);
 

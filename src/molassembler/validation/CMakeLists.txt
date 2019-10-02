@@ -38,11 +38,4 @@ foreach(filename ${testFiles})
 
   target_compile_definitions(${targetName} PRIVATE BOOST_ALL_DYN_LINK)
   target_compile_options(${targetName} PRIVATE ${MOLASSEMBLER_CXX_FLAGS})
-
-  add_test(
-    NAME ${targetName}
-    COMMAND ${targetName}
-    WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/../data/"
-  )
-  set_tests_properties(${targetName} PROPERTIES LABELS "validation")
 endforeach()

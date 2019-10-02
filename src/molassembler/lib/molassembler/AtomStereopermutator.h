@@ -176,8 +176,6 @@ public:
    *
    * @param graph The molecule's graph which this permutator helps model
    * @param angstromWrapper The wrapped positions
-   * @param excludeSymmetries Any symmetries that should be excluded from
-   *   the fitting procedure
    *
    * @complexity{@math{\Theta(S!)}}
    *

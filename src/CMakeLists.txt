@@ -9,15 +9,6 @@ endmacro()
 # CMake modules
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
-# Set up testing
-enable_testing()
-add_custom_target(check
-  COMMAND ${CMAKE_CTEST_COMMAND} -LE validation --output-on-failure
-)
-add_custom_target(validate
-  COMMAND ${CMAKE_CTEST_COMMAND} -L validation --output-on-failure
-)
-
 # Externalize parts for sake of brevity
 include(CompilerSpecificSetup)
 include(Dependencies)

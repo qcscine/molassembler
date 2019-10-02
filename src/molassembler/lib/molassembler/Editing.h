@@ -23,7 +23,7 @@ struct Editing {
    *
    * @complexity{@math{\Theta(N)}}
    *
-   * @throws std::logic_error If @bridge a is not a bridge edge, i.e. the graph
+   * @throws std::logic_error If @p bridge is not a bridge edge, i.e. the graph
    *   is not disconnected by cleaving the indicated bonds. This can be tested
    *   for using @code{.cpp} a.graph().canRemove(bridge) == false) @endcode.
    *
@@ -39,7 +39,7 @@ struct Editing {
    *
    * @param log The molecule being inserted into
    * @param wedge The molecule being inserted
-   * @param logBond The bond in @log into which @p wedge is being inserted into
+   * @param logBond The bond in @p log into which @p wedge is being inserted into
    * @param firstWedgeAtom The atom of wedge to bond to the first atom in @p logBond
    * @param secondWedgeAtom The atom of wedge to bond to the second atom in @p logBond
    *

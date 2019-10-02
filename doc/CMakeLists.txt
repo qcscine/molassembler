@@ -15,7 +15,15 @@ configure_file(
 )
 
 add_custom_target(doc
-  ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile
+  ALL
+  COMMAND ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile
   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
   COMMENT "Generate documentation with Doxygen" VERBATIM
+)
+
+install(
+  DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/html/
+  DESTINATION share/molassembler/doxygen
+  MESSAGE_NEVER
+  OPTIONAL
 )

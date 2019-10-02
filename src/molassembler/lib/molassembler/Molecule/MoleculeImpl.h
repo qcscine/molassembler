@@ -187,7 +187,7 @@ struct Molecule::Impl {
    *   molecules.
    *
    * @return Permutation mapping from old indices to new:
-   * @begincode{.cpp}
+   * @code{.cpp}
    * auto indexMapping = mol.canonicalize();
    * AtomIndex newIndex = indexMapping.at(oldIndex);
    * @endcode

@@ -34,8 +34,8 @@ bool has_solution(
 
 /*! @brief Finds the next solution of the diophantine equation, if it exists
  *
- * Finds the next solution of the linear diophantine \$\sum_i a_ix_i = b\$ with
- * positive \$a_i\$, non-negative \$x_i\$ and positive \$b\$.
+ * Finds the next solution of the linear diophantine @math{\sum_i a_ix_i = b} with
+ * positive @math{a_i}, non-negative @math{x_i} and positive @math{b}.
  *
  * Use the following pattern:
  * @code{cpp}
@@ -70,8 +70,8 @@ bool next_solution(
 
 /*! @brief Finds the first solution of the diophantine equation, if it exists
  *
- * Finds the first solution of the linear diophantine \$\sum_i a_ix_i = b\$ with
- * positive \$a_i\$, non-negative \$x_i\$ and positive \$b\$.
+ * Finds the first solution of the linear diophantine @math{\sum_i a_ix_i = b} with
+ * positive @math{a_i}, non-negative @math{x_i} and positive @math{b}.
  *
  * Use the following pattern:
  * @code{cpp}

@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.9)
 
 project(molassembler)
 
+enable_testing()
+
 # Version information
 set(molassembler_VERSION_MAJOR 0)
 set(molassembler_VERSION_MINOR 1)
