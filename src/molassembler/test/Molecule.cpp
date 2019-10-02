@@ -13,6 +13,7 @@
 #include "chemical_symmetries/Symmetries.h"
 
 #include "temple/Adaptors/AllPairs.h"
+#include "temple/Adaptors/Iota.h"
 #include "temple/Functional.h"
 #include "temple/Random.h"
 #include "temple/Invoke.h"
@@ -275,6 +276,34 @@ BOOST_AUTO_TEST_CASE(atomEnvironmentHashesRegularity) {
         "Mismatch: hash(a, " << i << ") = " << aWideHashes.at(i) << " != " << bWideHashes.at(permutation.at(i)) << " = hash(b, " << permutation.at(i) << ")"
       );
     }
+  }
+}
+
+BOOST_AUTO_TEST_CASE(MoleculeCanonicalizationAtomMap) {
+  boost::filesystem::path directoryBase("ranking_tree_molecules");
+
+  for(
+    const boost::filesystem::path& currentFilePath :
+    boost::filesystem::recursive_directory_iterator(directoryBase)
+  ) {
+    if(currentFilePath.extension() != ".mol") {
+      continue;
+    }
+
+    const Molecule m = IO::read(currentFilePath.string());
+    Molecule n = m;
+    auto indexMap = n.canonicalize();
+
+    BOOST_CHECK_MESSAGE(
+      temple::all_of(
+        temple::adaptors::range(m.graph().N()),
+        [&](const unsigned oldIndex) -> bool {
+          unsigned newIndex = indexMap.at(oldIndex);
+          return n.graph().elementType(newIndex) == m.graph().elementType(oldIndex);
+        }
+      ),
+      "Index map from canonicalization is not consistent with reordering"
+    );
   }
 }
 
