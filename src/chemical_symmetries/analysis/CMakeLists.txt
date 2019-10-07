@@ -10,6 +10,7 @@ endif()
 find_package(Eigen3 3.1.1 REQUIRED)
 
 set(analysisFiles
+  ${CMAKE_CURRENT_SOURCE_DIR}/csm.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/writeMappings.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/writeTransitionDotFiles.cpp
 )

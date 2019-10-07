@@ -898,6 +898,7 @@ NPGroupingsMapType npGroupings(
   testVector(Eigen::Vector3d::UnitZ() + 0.1 * Eigen::Vector3d::UnitX());
   testVector(Eigen::Vector3d::UnitX());
   testVector(Eigen::Vector3d::UnitY());
+  testVector(Eigen::Vector3d::Zero());
 
   for(const auto& elementPtr : elements) {
     if(auto axisOption = elementPtr->vector()) {

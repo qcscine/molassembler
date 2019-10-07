@@ -83,7 +83,7 @@ const std::string& topName(Top top) {
 
 BOOST_AUTO_TEST_CASE(Recognition) {
   std::map<Name, PointGroup> expected {
-    {Name::Linear, PointGroup::Dinfh},
+    {Name::Linear, PointGroup::Cinfv},
     {Name::Bent, PointGroup::C2v},
     {Name::TrigonalPlanar, PointGroup::D3h},
     {Name::CutTetrahedral, PointGroup::C3v},
@@ -125,7 +125,7 @@ BOOST_AUTO_TEST_CASE(Recognition) {
     const double pgCSM = csm::pointGroup(
       normalized,
       nameGroupPair.second
-    ).value_or(1000);
+    );
     BOOST_REQUIRE_MESSAGE(
       pgCSM != 1000,
       "Could not calculate "
@@ -174,6 +174,11 @@ BOOST_AUTO_TEST_CASE(PointGroupElementGroupings) {
   for(unsigned g = 0; g <= underlying(limit); ++g) {
     const auto elements = elements::symmetryElements(static_cast<PointGroup>(g));
     const auto groupings = elements::npGroupings(elements);
+
+    BOOST_CHECK_MESSAGE(
+      groupings.count(1) > 0,
+      "There is no single-point element group for point group " << pointGroupStrings().at(g)
+    );
 
     bool anyGroupSizeMismatches = false;
     for(const auto& sizeGroupingsPair : groupings) {
@@ -258,7 +263,7 @@ BOOST_AUTO_TEST_CASE(SquarePlanarC4D4PointGroups) {
   const double pointGroupCSM = csm::pointGroup(
     detail::normalize(symmetryData().at(Name::SquarePlanar).coordinates),
     PointGroup::C4
-  ).value_or(1000);
+  );
   BOOST_CHECK_MESSAGE(
     std::fabs(pointGroupCSM) < 1e-10,
     "C4 point group CSM on square planar coordinates is not zero, but " << pointGroupCSM
@@ -267,7 +272,7 @@ BOOST_AUTO_TEST_CASE(SquarePlanarC4D4PointGroups) {
   const double D4CSM = csm::pointGroup(
     detail::normalize(symmetryData().at(Name::SquarePlanar).coordinates),
     PointGroup::D4
-  ).value_or(1000);
+  );
 
   BOOST_CHECK_MESSAGE(
     0 < D4CSM && D4CSM < 1e-10,
@@ -368,7 +373,7 @@ BOOST_AUTO_TEST_CASE(FixedCnAxis) {
   }
 }
 
-BOOST_AUTO_TEST_CASE(AlleneS4FixedAxis) {
+BOOST_AUTO_TEST_CASE(AlleneS4) {
   PositionCollection allenePositions(3, 7);
   allenePositions << 0.0, 0.0, 0.0, 0.0, 0.0, 0.928334, -0.928334,
                      0.0, 0.0, 0.0, 0.928334, -0.928334, 0.0, 0.0,
@@ -387,11 +392,59 @@ BOOST_AUTO_TEST_CASE(AlleneS4FixedAxis) {
     "CSM(S4) = " << S4CSM << " of allene is over recognition threshold (0.1)"
   );
 
-  const double D2dCSM = csm::pointGroup(normalizedPositions, PointGroup::D2d).value_or(100);
+  const double D2dCSM = csm::pointGroup(normalizedPositions, PointGroup::D2d);
   BOOST_CHECK_MESSAGE(
     D2dCSM < 0.1,
     "CSM(D2d) = " << D2dCSM << " of allene is over recognition threshold (0.1)"
   );
+
+  const auto optimizedS4Result = csm::optimize(
+    normalizedPositions,
+    elements::Rotation::Sn(
+      Eigen::Vector3d::UnitZ() + 0.1 * Eigen::Vector3d::Random().normalized(),
+      4
+    )
+  );
+
+  BOOST_CHECK_MESSAGE(
+    optimizedS4Result.second.axis.isApprox(Eigen::Vector3d::UnitZ(), 1e-2),
+    "Axis of optimized S4 is not +z, but " << optimizedS4Result.second.axis.transpose()
+  );
+
+  BOOST_CHECK_LT(optimizedS4Result.first, 0.1);
+}
+
+BOOST_AUTO_TEST_CASE(ReflectionPlaneOptimization) {
+  // Generate 8 points in the xy plane
+  PositionCollection planarPositions(3, 8);
+  for(unsigned i = 0; i < 8; ++i) {
+    Eigen::Vector3d v = 3 * Eigen::Vector3d::Random();
+    v.z() = 0;
+    planarPositions.col(i) = v;
+  }
+
+  auto normalized = detail::normalize(planarPositions);
+
+  const double zPlaneCSM = csm::element(
+    normalized,
+    elements::Reflection {Eigen::Vector3d::UnitZ()}
+  );
+
+  BOOST_CHECK_LT(zPlaneCSM, 0.1);
+
+  const auto optimizedSigma = csm::optimize(
+    normalized,
+    elements::Reflection {
+      Eigen::Vector3d::UnitZ() + 0.1 * Eigen::Vector3d::Random().normalized()
+    }
+  );
+
+  BOOST_CHECK_MESSAGE(
+    optimizedSigma.second.normal.isApprox(Eigen::Vector3d::UnitZ(), 1e-2),
+    "Optimized sigma plane's normal is not +z, but " << optimizedSigma.second.normal.transpose()
+  );
+
+  BOOST_CHECK_LT(optimizedSigma.first, 0.1);
 }
 
 BOOST_AUTO_TEST_CASE(AsymmetricTopStandardization) {

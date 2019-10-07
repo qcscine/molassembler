@@ -96,6 +96,8 @@ struct Rotation final : public SymmetryElement {
   unsigned power;
   //! Proper rotations reflect, improper rotations do not
   bool reflect;
+
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };
 
 //! Reflection by a plane symmetry element
@@ -108,6 +110,8 @@ struct Reflection final : public SymmetryElement {
 
   //! Normal of the reflection plane
   Eigen::Vector3d normal;
+
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };
 
 //! Heterogeneous list of symmetry elements

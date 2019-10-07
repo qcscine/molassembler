@@ -85,7 +85,7 @@ namespace csm {
  *
  * @return The continuous symmetry measure
  */
-boost::optional<double> pointGroup(
+double pointGroup(
   const PositionCollection& normalizedPositions,
   const PointGroup pointGroup
 );
@@ -107,7 +107,28 @@ double element(
   const elements::Rotation& rotation
 );
 
-// TODO more elements, optimize elements?
+/**
+ * @brief Returns the CSM for a fixed reflection symmetry element
+ *
+ * @param normalizedPositions Particle positions
+ * @param reflection Symmetry element of reflection
+ *
+ * @return The CSM along the reflection plane
+ */
+double element(
+  const PositionCollection& normalizedPositions,
+  const elements::Reflection& reflection
+);
+
+std::pair<double, elements::Rotation> optimize(
+  const PositionCollection& normalizedPositions,
+  elements::Rotation rotation
+);
+
+std::pair<double, elements::Reflection> optimize(
+  const PositionCollection& normalizedPositions,
+  elements::Reflection reflection
+);
 
 } // namespace csm
 

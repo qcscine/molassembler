@@ -14,13 +14,13 @@
 #include <Eigen/Eigenvalues>
 #include <Eigen/Geometry>
 #include "temple/Functional.h"
+#include "temple/Adaptors/Iota.h"
+#include "temple/Adaptors/Transform.h"
+#include "temple/constexpr/Numeric.h"
 #include "temple/Optimization/Common.h"
 #include "temple/Optimization/SO3NelderMead.h"
 #include "temple/Optimization/TrustRegion.h"
 
-#include "temple/Stringify.h"
-#include <iostream>
-#include <fstream>
 #include <random>
 
 namespace Scine {
@@ -505,11 +505,62 @@ struct OrientationCSMFunctor {
   }
 };
 
-boost::optional<double> pointGroup(
+double cinfv(const PositionCollection& normalizedPositions) {
+  struct Functor {
+    const PositionCollection& coordinates;
+    Functor(const PositionCollection& normalizedPositions) : coordinates(normalizedPositions) {}
+    double operator() (const Eigen::Matrix3d& rotation) const {
+      const PositionCollection rotatedCoordinates = rotation * coordinates;
+      Eigen::ParametrizedLine<double, 3> zAxisLine(
+        Eigen::Vector3d::Zero(),
+        Eigen::Vector3d::UnitZ()
+      );
+      const unsigned P = rotatedCoordinates.cols();
+      double value = 0;
+      for(unsigned i = 0; i < P; ++i) {
+        value += zAxisLine.squaredDistance(rotatedCoordinates.col(i));
+      }
+      return value / P;
+    }
+  };
+
+  Functor functor {normalizedPositions};
+
+  using MinimizerType = temple::SO3NelderMead<>;
+
+  // Set up the initial simplex to capture asymmetric tops and x/y mixups
+  MinimizerType::Parameters simplex;
+  simplex.at(0) = Eigen::Matrix3d::Identity();
+  simplex.at(1) = Eigen::AngleAxisd(M_PI / 2, Eigen::Vector3d::UnitX()).toRotationMatrix();
+  simplex.at(2) = Eigen::AngleAxisd(M_PI / 2, Eigen::Vector3d::UnitY()).toRotationMatrix();
+  simplex.at(3) = Eigen::AngleAxisd(M_PI / 2, Eigen::Vector3d::UnitZ()).toRotationMatrix();
+
+  struct NelderMeadChecker {
+    bool shouldContinue(unsigned iteration, double lowestValue, double stddev) const {
+      return iteration < 1000 && lowestValue > 1e-3 && stddev > 1e-4;
+    }
+  };
+
+  auto minimizationResult = MinimizerType::minimize(
+    simplex,
+    functor,
+    NelderMeadChecker {}
+  );
+
+  return minimizationResult.value;
+}
+
+double pointGroup(
   const PositionCollection& normalizedPositions,
   const PointGroup group
 ) {
   assert(detail::isNormalized(normalizedPositions));
+
+  // Special-case Cinfv
+  if(group == PointGroup::Cinfv) {
+    return cinfv(normalizedPositions);
+  }
+
   const auto elements = elements::symmetryElements(group);
   const auto npGroups = npGroupings(elements);
 
@@ -538,10 +589,7 @@ boost::optional<double> pointGroup(
   );
 
   if(!diophantine::has_solution(subdivisionGroupSizes, P)) {
-    /* If none of these possibilities are true, then we cannot calculate a CSM
-     * for this number of particles and this particular point group.
-     */
-    return boost::none;
+    throw std::logic_error("Cannot calculate a CSM for this number of points and this point group. This is most likely an implementation error.");
   }
 
   OrientationCSMFunctor functor {normalizedPositions, group};
@@ -659,11 +707,13 @@ double element(
     double diophantineCSM = 1000;
     do {
       double permutationCSM = 0;
-      /* Collect indices to partition */
+      /* Collect indices to partition, axis symmetrize the rest */
       std::vector<unsigned> indicesToPartition;
       for(unsigned i = 0; i < P; ++i) {
         if(partitionOrAxisSymmetrize.at(i) == 0) {
           indicesToPartition.push_back(i);
+        } else {
+          permutationCSM += axisLine.squaredDistance(normalizedPositions.col(i));
         }
       }
       assert(!indicesToPartition.empty());
@@ -683,20 +733,177 @@ double element(
         bestPartitionCSM = std::min(bestPartitionCSM, partitionCSM);
       } while(partitioner.next_partition());
       permutationCSM += rotation.n * diophantineMultipliers.front() * bestPartitionCSM;
-
-      /* Add indices to axis symmetrize contributions to CSM */
-      for(unsigned i = 0; i < P; ++i) {
-        if(partitionOrAxisSymmetrize.at(i) == 1) {
-          permutationCSM += axisLine.squaredDistance(normalizedPositions.col(i));
-        }
-      }
-
       permutationCSM /= P;
       diophantineCSM = std::min(diophantineCSM, permutationCSM);
     } while(std::next_permutation(std::begin(partitionOrAxisSymmetrize), std::end(partitionOrAxisSymmetrize)));
     value = std::min(value, diophantineCSM);
   } while(diophantine::next_solution(diophantineMultipliers, diophantineConstants, P));
+
   return 100 * value;
+}
+
+double element(
+  const PositionCollection& normalizedPositions,
+  const elements::Reflection& reflection
+) {
+  /* TODO
+   * - calculateReflectionCSM could be memoized across its a,b arguments
+   */
+
+  const unsigned P = normalizedPositions.cols();
+  assert(P > 0);
+
+  Eigen::Hyperplane<double, 3> plane(reflection.normal, 0);
+  const Eigen::Matrix3d reflectMatrix = reflection.matrix();
+  assert(reflectMatrix.inverse().isApprox(reflectMatrix, 1e-10));
+
+  const std::vector<unsigned> diophantineConstants {2, 1};
+  assert(diophantine::has_solution(diophantineConstants, P));
+  std::vector<unsigned> diophantineMultipliers;
+  if(!diophantine::first_solution(diophantineMultipliers, diophantineConstants, P)) {
+    throw std::logic_error("Diophantine failure! Couldn't find first solution");
+  }
+
+  auto calculateReflectionCSM = [](
+    const unsigned a,
+    const unsigned b,
+    const Eigen::Matrix3d& R,
+    const PositionCollection& positions
+  ) -> double {
+    /* Average */
+    const Eigen::Vector3d average = (positions.col(a) + R * positions.col(b)) / 2;
+    return (
+      (positions.col(a) - average).squaredNorm()
+      + ((R * average) - positions.col(b)).squaredNorm()
+    ) / 2;
+  };
+
+  double value = 1000;
+  do {
+    if(diophantineMultipliers.front() == 0) {
+      /* All points are symmetrized to the plane */
+      const double csm = temple::sum(
+        temple::adaptors::transform(
+          temple::adaptors::range(P),
+          [&](const unsigned i) -> double {
+            return std::pow(plane.absDistance(normalizedPositions.col(i)), 2);
+          }
+        )
+      ) / P;
+      value = std::min(value, csm);
+      continue;
+    }
+
+    std::vector<unsigned> pairOrPlaneSymmetrize;
+    pairOrPlaneSymmetrize.reserve(P);
+    pairOrPlaneSymmetrize.resize(2 * diophantineMultipliers.front(), 0);
+    pairOrPlaneSymmetrize.resize(P, 1);
+
+    double diophantineCSM = 1000;
+    do {
+      double permutationCSM = 0;
+      /* Collect indices to partition */
+      std::vector<unsigned> indicesToPartition;
+      for(unsigned i = 0; i < P; ++i) {
+        if(pairOrPlaneSymmetrize.at(i) == 0) {
+          indicesToPartition.push_back(i);
+        } else {
+          permutationCSM += std::pow(plane.absDistance(normalizedPositions.col(i)), 2);
+        }
+      }
+
+      /* Perform partitioning into groups of size two */
+      Partitioner partitioner {diophantineMultipliers.front(), 2};
+      assert(diophantineMultipliers.front() * 2 == indicesToPartition.size());
+      double bestPartitionCSM = 1000;
+      do {
+        double partitionCSM = 0;
+        for(auto&& partitionIndices : partitioner.partitions()) {
+          assert(partitionIndices.size() == 2);
+          const unsigned i = indicesToPartition.at(partitionIndices.front());
+          const unsigned j = indicesToPartition.at(partitionIndices.back());
+          const double subpartitionCSM = calculateReflectionCSM(i, j, reflectMatrix, normalizedPositions);
+          partitionCSM += subpartitionCSM;
+        }
+        partitionCSM /= 2;
+        bestPartitionCSM = std::min(bestPartitionCSM, partitionCSM);
+      } while(partitioner.next_partition());
+      permutationCSM += 2 * diophantineMultipliers.front() * bestPartitionCSM;
+      permutationCSM /= P;
+      diophantineCSM = std::min(diophantineCSM, permutationCSM);
+    } while(std::next_permutation(std::begin(pairOrPlaneSymmetrize), std::end(pairOrPlaneSymmetrize)));
+    value = std::min(value, diophantineCSM);
+  } while(diophantine::next_solution(diophantineMultipliers, diophantineConstants, P));
+
+  return 100 * value;
+}
+
+std::pair<double, elements::Rotation> optimize(
+  const PositionCollection& normalizedPositions,
+  elements::Rotation rotation
+) {
+  using MinimizerType = temple::SO3NelderMead<>;
+
+  MinimizerType::Parameters simplex;
+  simplex.at(0) = Eigen::Matrix3d::Identity();
+  simplex.at(1) = Eigen::AngleAxisd(M_PI / 2, Eigen::Vector3d::UnitX()).toRotationMatrix();
+  simplex.at(2) = Eigen::AngleAxisd(M_PI / 2, Eigen::Vector3d::UnitY()).toRotationMatrix();
+  simplex.at(3) = Eigen::AngleAxisd(M_PI / 2, Eigen::Vector3d::UnitZ()).toRotationMatrix();
+
+  struct NelderMeadChecker {
+    bool shouldContinue(unsigned iteration, double lowestValue, double stddev) const {
+      return iteration < 1000 && lowestValue > 1e-3 && stddev > 1e-4;
+    }
+  };
+
+  auto minimizationResult = MinimizerType::minimize(
+    simplex,
+    [&](const Eigen::Matrix3d& R) -> double {
+      return element(R * normalizedPositions, rotation);
+    },
+    NelderMeadChecker {}
+  );
+
+  rotation.axis = simplex.at(minimizationResult.minimalIndex).inverse() * rotation.axis;
+
+  return {
+    minimizationResult.value,
+    rotation
+  };
+}
+
+std::pair<double, elements::Reflection> optimize(
+  const PositionCollection& normalizedPositions,
+  elements::Reflection reflection
+) {
+  using MinimizerType = temple::SO3NelderMead<>;
+
+  MinimizerType::Parameters simplex;
+  simplex.at(0) = Eigen::Matrix3d::Identity();
+  simplex.at(1) = Eigen::AngleAxisd(M_PI / 2, Eigen::Vector3d::UnitX()).toRotationMatrix();
+  simplex.at(2) = Eigen::AngleAxisd(M_PI / 2, Eigen::Vector3d::UnitY()).toRotationMatrix();
+  simplex.at(3) = Eigen::AngleAxisd(M_PI / 2, Eigen::Vector3d::UnitZ()).toRotationMatrix();
+
+  struct NelderMeadChecker {
+    bool shouldContinue(unsigned iteration, double lowestValue, double stddev) const {
+      return iteration < 1000 && lowestValue > 1e-3 && stddev > 1e-4;
+    }
+  };
+
+  auto minimizationResult = MinimizerType::minimize(
+    simplex,
+    [&](const Eigen::Matrix3d& R) -> double {
+      return element(R * normalizedPositions, reflection);
+    },
+    NelderMeadChecker {}
+  );
+
+  return {
+    minimizationResult.value,
+    elements::Reflection {
+      simplex.at(minimizationResult.minimalIndex).inverse() * reflection.normal
+    }
+  };
 }
 
 } // namespace csm
@@ -943,9 +1150,11 @@ PointGroup flowchart(
      *
      * TODO Maybe a faster way to flowchart is to search for axes along
      * particle positions?
+     *
+     * TODO this is probably flawed as CSMs aren't particularly comparable
      */
-    const double tetrahedralCSM = csm::pointGroup(normalizedPositions, PointGroup::Td).value_or(1000);
-    const double octahedralCSM = csm::pointGroup(normalizedPositions, PointGroup::Oh).value_or(1000);
+    const double tetrahedralCSM = csm::pointGroup(normalizedPositions, PointGroup::Td);
+    const double octahedralCSM = csm::pointGroup(normalizedPositions, PointGroup::Oh);
     // TODO icosahedral is also a spherical top!
     return tetrahedralCSM < octahedralCSM ? PointGroup::Td : PointGroup::Oh;
   }
