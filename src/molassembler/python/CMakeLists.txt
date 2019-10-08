@@ -11,6 +11,7 @@ set_target_properties(molassembler_python PROPERTIES
   LIBRARY_OUTPUT_NAME "molassembler"
   LIBRARY_OUTPUT_DIRECTORY "molassembler"
 )
+target_compile_options(molassembler_python PRIVATE ${MOLASSEMBLER_CXX_FLAGS})
 target_link_libraries(molassembler_python PRIVATE molassembler Eigen3::Eigen)
 
 include(FindPythonModule)
