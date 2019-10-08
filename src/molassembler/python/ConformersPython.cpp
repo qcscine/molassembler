@@ -69,7 +69,7 @@ void init_conformers(pybind11::module& m) {
     "Partiality",
     "Limit triangle inequality bounds smoothing to a subset of all atoms"
   ).value("FourAtom", DistanceGeometry::Partiality::FourAtom, "Resmooth only after each of the first four atom choices")
-    .value("TenPercent", DistanceGeometry::Partiality::TenPercent, "Resmooth for the first 10\% of all atoms")
+    .value("TenPercent", DistanceGeometry::Partiality::TenPercent, "Resmooth for the first 10% of all atoms")
     .value("All", DistanceGeometry::Partiality::All, "Resmooth after each distance choice");
 
   pybind11::class_<DistanceGeometry::Configuration> configuration(
