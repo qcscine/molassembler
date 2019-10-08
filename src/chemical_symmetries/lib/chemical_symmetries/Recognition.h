@@ -120,10 +120,23 @@ double element(
   const elements::Reflection& reflection
 );
 
+/*! @brief Calculates the CSM for centroid inversion
+ *
+ * @note An inversion element cannot be optimized. There is no corresponding
+ * optimize function for this.
+ */
+double element(
+  const PositionCollection& normalizedPositions,
+  const elements::Inversion& /* inversion */
+);
+
 std::pair<double, elements::Rotation> optimize(
   const PositionCollection& normalizedPositions,
   elements::Rotation rotation
 );
+
+//! @brief Calculates the continuous symmetry measure for an infinite order rotation axis
+double optimizeCinf(const PositionCollection& normalizedPositions);
 
 std::pair<double, elements::Reflection> optimize(
   const PositionCollection& normalizedPositions,

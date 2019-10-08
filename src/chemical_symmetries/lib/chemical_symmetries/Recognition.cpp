@@ -505,51 +505,6 @@ struct OrientationCSMFunctor {
   }
 };
 
-double cinfv(const PositionCollection& normalizedPositions) {
-  struct Functor {
-    const PositionCollection& coordinates;
-    Functor(const PositionCollection& normalizedPositions) : coordinates(normalizedPositions) {}
-    double operator() (const Eigen::Matrix3d& rotation) const {
-      const PositionCollection rotatedCoordinates = rotation * coordinates;
-      Eigen::ParametrizedLine<double, 3> zAxisLine(
-        Eigen::Vector3d::Zero(),
-        Eigen::Vector3d::UnitZ()
-      );
-      const unsigned P = rotatedCoordinates.cols();
-      double value = 0;
-      for(unsigned i = 0; i < P; ++i) {
-        value += zAxisLine.squaredDistance(rotatedCoordinates.col(i));
-      }
-      return value / P;
-    }
-  };
-
-  Functor functor {normalizedPositions};
-
-  using MinimizerType = temple::SO3NelderMead<>;
-
-  // Set up the initial simplex to capture asymmetric tops and x/y mixups
-  MinimizerType::Parameters simplex;
-  simplex.at(0) = Eigen::Matrix3d::Identity();
-  simplex.at(1) = Eigen::AngleAxisd(M_PI / 2, Eigen::Vector3d::UnitX()).toRotationMatrix();
-  simplex.at(2) = Eigen::AngleAxisd(M_PI / 2, Eigen::Vector3d::UnitY()).toRotationMatrix();
-  simplex.at(3) = Eigen::AngleAxisd(M_PI / 2, Eigen::Vector3d::UnitZ()).toRotationMatrix();
-
-  struct NelderMeadChecker {
-    bool shouldContinue(unsigned iteration, double lowestValue, double stddev) const {
-      return iteration < 1000 && lowestValue > 1e-3 && stddev > 1e-4;
-    }
-  };
-
-  auto minimizationResult = MinimizerType::minimize(
-    simplex,
-    functor,
-    NelderMeadChecker {}
-  );
-
-  return minimizationResult.value;
-}
-
 double pointGroup(
   const PositionCollection& normalizedPositions,
   const PointGroup group
@@ -558,7 +513,7 @@ double pointGroup(
 
   // Special-case Cinfv
   if(group == PointGroup::Cinfv) {
-    return cinfv(normalizedPositions);
+    return optimizeCinf(normalizedPositions);
   }
 
   const auto elements = elements::symmetryElements(group);
@@ -838,6 +793,77 @@ double element(
   return 100 * value;
 }
 
+double element(
+  const PositionCollection& normalizedPositions,
+  const elements::Inversion& /* inversion */
+) {
+  auto calculateInversionCSM = [&](
+    const unsigned a,
+    const unsigned b,
+    const PositionCollection& positions
+  ) -> double {
+    const Eigen::Vector3d average = (positions.col(a) - positions.col(b)) / 2;
+    return (
+      (positions.col(a) - average).squaredNorm()
+      + (positions.col(b) + average).squaredNorm()
+    );
+  };
+
+  // If the number of points is even, we can go fast
+  const unsigned P = normalizedPositions.cols();
+  if(P % 2 == 0) {
+    double bestPartitionCSM = 1000;
+    Partitioner partitioner {P / 2, 2};
+    do {
+      double partitionCSM = 0;
+      for(auto&& partitionIndices : partitioner.partitions()) {
+        assert(partitionIndices.size() == 2);
+        const unsigned i = partitionIndices.front();
+        const unsigned j = partitionIndices.back();
+        partitionCSM += calculateInversionCSM(i, j, normalizedPositions);
+      }
+      bestPartitionCSM = std::min(bestPartitionCSM, partitionCSM);
+    } while(partitioner.next_partition());
+    return 100 * bestPartitionCSM / P;
+  }
+
+  /* If the number of points is not even, then one point may be symmetrized to
+   * the origin, but all others must be paired off and CSM calculated like for
+   * Reflection.
+   */
+  double bestCSM = 1000;
+
+  for(unsigned excludedIndex = 0; excludedIndex < P; ++excludedIndex) {
+    // i is the index to exclude from partitioning
+    std::vector<unsigned> indicesToPartition;
+    indicesToPartition.reserve(P - 1);
+    for(unsigned j = 0; j < excludedIndex; ++j) {
+      indicesToPartition.push_back(j);
+    }
+    for(unsigned j = excludedIndex + 1; j < P; ++j) {
+      indicesToPartition.push_back(j);
+    }
+
+    double bestPartitionCSM = 1000;
+    Partitioner partitioner {P / 2, 2};
+    do {
+      double partitionCSM = 0;
+      for(auto&& partitionIndices : partitioner.partitions()) {
+        assert(partitionIndices.size() == 2);
+        const unsigned i = indicesToPartition.at(partitionIndices.front());
+        const unsigned j = indicesToPartition.at(partitionIndices.back());
+        partitionCSM += calculateInversionCSM(i, j, normalizedPositions);
+      }
+      bestPartitionCSM = std::min(bestPartitionCSM, partitionCSM);
+    } while(partitioner.next_partition());
+
+    const double csmValue = bestPartitionCSM + normalizedPositions.col(excludedIndex).squaredNorm();
+    bestCSM = std::min(bestCSM, csmValue);
+  }
+
+  return 100 * bestCSM / P;
+}
+
 std::pair<double, elements::Rotation> optimize(
   const PositionCollection& normalizedPositions,
   elements::Rotation rotation
@@ -871,6 +897,52 @@ std::pair<double, elements::Rotation> optimize(
     rotation
   };
 }
+
+double optimizeCinf(const PositionCollection& normalizedPositions) {
+  struct Functor {
+    const PositionCollection& coordinates;
+    Functor(const PositionCollection& normalizedPositions) : coordinates(normalizedPositions) {}
+    double operator() (const Eigen::Matrix3d& rotation) const {
+      const PositionCollection rotatedCoordinates = rotation * coordinates;
+      Eigen::ParametrizedLine<double, 3> zAxisLine(
+        Eigen::Vector3d::Zero(),
+        Eigen::Vector3d::UnitZ()
+      );
+      const unsigned P = rotatedCoordinates.cols();
+      double value = 0;
+      for(unsigned i = 0; i < P; ++i) {
+        value += zAxisLine.squaredDistance(rotatedCoordinates.col(i));
+      }
+      return 100 * value / P;
+    }
+  };
+
+  Functor functor {normalizedPositions};
+
+  using MinimizerType = temple::SO3NelderMead<>;
+
+  // Set up the initial simplex to capture asymmetric tops and x/y mixups
+  MinimizerType::Parameters simplex;
+  simplex.at(0) = Eigen::Matrix3d::Identity();
+  simplex.at(1) = Eigen::AngleAxisd(M_PI / 2, Eigen::Vector3d::UnitX()).toRotationMatrix();
+  simplex.at(2) = Eigen::AngleAxisd(M_PI / 2, Eigen::Vector3d::UnitY()).toRotationMatrix();
+  simplex.at(3) = Eigen::AngleAxisd(M_PI / 2, Eigen::Vector3d::UnitZ()).toRotationMatrix();
+
+  struct NelderMeadChecker {
+    bool shouldContinue(unsigned iteration, double lowestValue, double stddev) const {
+      return iteration < 1000 && lowestValue > 1e-3 && stddev > 1e-4;
+    }
+  };
+
+  auto minimizationResult = MinimizerType::minimize(
+    simplex,
+    functor,
+    NelderMeadChecker {}
+  );
+
+  return minimizationResult.value;
+}
+
 
 std::pair<double, elements::Reflection> optimize(
   const PositionCollection& normalizedPositions,
