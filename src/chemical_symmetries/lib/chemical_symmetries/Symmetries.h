@@ -71,22 +71,7 @@ struct SymmetryInformation {
   const TetrahedronList tetrahedra;
   const CoordinateList coordinates;
   const MirrorMap mirror;
-
-  // Direct initialization
-  SymmetryInformation(
-    std::string passStringName,
-    unsigned passSize,
-    RotationsList passRotations,
-    TetrahedronList passTetrahedra,
-    const CoordinateList& passCoordinates,
-    MirrorMap passMirror
-  ) : stringName(std::move(passStringName)),
-      size(passSize),
-      rotations(std::move(passRotations)),
-      tetrahedra(std::move(passTetrahedra)),
-      coordinates(passCoordinates),
-      mirror(std::move(passMirror))
-  {}
+  const PointGroup pointGroup;
 
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };
@@ -222,13 +207,14 @@ MirrorMap makeMirror(
  */
 template<typename SymmetryClass>
 SymmetryInformation makeSymmetryInformation() {
-  return {
+  return SymmetryInformation {
     SymmetryClass::stringName,
     SymmetryClass::size,
     makeRotations(SymmetryClass::rotations),
     makeTetrahedra(SymmetryClass::tetrahedra),
     makeCoordinates(SymmetryClass::coordinates),
-    makeMirror(SymmetryClass::mirror)
+    makeMirror(SymmetryClass::mirror),
+    SymmetryClass::pointGroup
   };
 }
 
@@ -251,7 +237,7 @@ std::pair<Name, SymmetryInformation> makeMapInitPair() {
  */
 template<typename ...SymmetryClasses>
 struct symmetryInformationFunctor {
-  static const SymmetryDataMapType value() {
+  static SymmetryDataMapType value() {
     return {{
       makeMapInitPair<SymmetryClasses>()...
     }};
@@ -333,6 +319,14 @@ inline const MirrorMap& mirror(const Name name) {
 inline data::AngleFunctionPtr angleFunction(const Name name) {
   auto symmetryIndex = static_cast<unsigned>(name);
   return data::angleFunctions.at(symmetryIndex);
+}
+
+/*! @brief Get a symmetry's point group
+ *
+ * @complexity{@math{\Theta(1)}}
+ */
+inline PointGroup pointGroup(const Name name) {
+  return symmetryData().at(name).pointGroup;
 }
 
 /*! @brief Returns the index of a symmetry name within allNames

@@ -3,7 +3,7 @@
  *   See LICENSE.txt
  */
 
-#include "chemical_symmetries/PointGroups.h"
+#include "chemical_symmetries/PointGroupElements.h"
 
 #include "temple/Functional.h"
 #include "boost/optional.hpp"

@@ -7,7 +7,7 @@
 #ifndef INCLUDE_MOLASSEMBLER_CHEMICAL_SYMMETRIES_RECOGNITION_H
 #define INCLUDE_MOLASSEMBLER_CHEMICAL_SYMMETRIES_RECOGNITION_H
 
-#include "chemical_symmetries/PointGroups.h"
+#include "chemical_symmetries/PointGroupElements.h"
 
 namespace Scine {
 namespace Symmetry {

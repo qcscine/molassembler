@@ -196,6 +196,11 @@ BOOST_AUTO_TEST_CASE(FunctorSafety) {
 
   auto at2 = temple::functor::at(std::vector<unsigned> {1, 2, 3});
   BOOST_CHECK(at2(0) == 1);
+
+  constexpr std::tuple<int, double> t {4, 1.0};
+  static_assert(temple::functor::get<0>()(t) == 4, "Get functor doesn't work");
+  static_assert(temple::functor::pair_first(t) == 4, "Pair_first doesn't work");
+  BOOST_CHECK_EQUAL(temple::functor::pair_second(t), 1.0);
 }
 
 BOOST_AUTO_TEST_CASE(JSF) {

@@ -42,7 +42,7 @@ void distort(Eigen::Ref<PositionCollection> positions, const double distortionNo
   }
 }
 
-const std::vector<std::string>& pointGroupStrings() {
+const std::string& pointGroupString(PointGroup group) {
   static const std::vector<std::string> strings {
     "C1", "Ci", "Cs",
     "C2", "C3", "C4", "C5", "C6", "C7", "C8",
@@ -58,11 +58,9 @@ const std::vector<std::string>& pointGroupStrings() {
     "Cinfv", "Dinfh"
   };
 
-  return strings;
-}
-
-const std::string& pointGroupString(PointGroup group) {
-  return pointGroupStrings().at(underlying(group));
+  return strings.at(
+    static_cast<std::underlying_type<PointGroup>::type>(group)
+  );
 }
 
 const std::vector<std::string>& topNames() {
@@ -82,34 +80,15 @@ const std::string& topName(Top top) {
 }
 
 BOOST_AUTO_TEST_CASE(Recognition) {
-  std::map<Name, PointGroup> expected {
-    {Name::Linear, PointGroup::Cinfv},
-    {Name::Bent, PointGroup::C2v},
-    {Name::TrigonalPlanar, PointGroup::D3h},
-    {Name::CutTetrahedral, PointGroup::C3v},
-    {Name::TShaped, PointGroup::C2v},
-    {Name::Tetrahedral, PointGroup::Td},
-    {Name::SquarePlanar, PointGroup::D4h},
-    {Name::Seesaw, PointGroup::C2v},
-    {Name::TrigonalPyramidal, PointGroup::C3v},
-    {Name::SquarePyramidal, PointGroup::C4v},
-    {Name::TrigonalBiPyramidal, PointGroup::D3h},
-    {Name::PentagonalPlanar, PointGroup::D5h},
-    {Name::Octahedral, PointGroup::Oh},
-    {Name::TrigonalPrismatic, PointGroup::D3h},
-    {Name::PentagonalPyramidal, PointGroup::C5v},
-    {Name::PentagonalBiPyramidal, PointGroup::D5h}
-  };
-
+  for(const Name name : allNames) {
 #ifdef NDEBUG
-  /* Some pairs take really long in debug, so we test them only in Release
-   * build variants
-   */
-  expected.emplace(Name::SquareAntiPrismatic, PointGroup::D4d);
+    // Skip sizes greater 8 in debug builds
+    if(size(name) >= 8) {
+      continue;
+    }
 #endif
 
-  for(const auto& nameGroupPair : expected) {
-    auto positions = addOrigin(symmetryData().at(nameGroupPair.first).coordinates);
+    auto positions = addOrigin(symmetryData().at(name).coordinates);
     // distort(positions);
     auto normalized = detail::normalize(positions);
 
@@ -124,19 +103,19 @@ BOOST_AUTO_TEST_CASE(Recognition) {
 
     const double pgCSM = csm::pointGroup(
       normalized,
-      nameGroupPair.second
+      pointGroup(name)
     );
     BOOST_REQUIRE_MESSAGE(
       pgCSM != 1000,
       "Could not calculate "
-      << pointGroupString(nameGroupPair.second)
-      << " CSM for " << Symmetry::name(nameGroupPair.first)
+      << pointGroupString(pointGroup(name))
+      << " CSM for " << Symmetry::name(name)
     );
 
     BOOST_CHECK_MESSAGE(
       pgCSM < 0.01,
-      "Expected CSM(" << pointGroupString(nameGroupPair.second)
-      << ") < 0.01 for " << Symmetry::name(nameGroupPair.first)
+      "Expected CSM(" << pointGroupString(pointGroup(name))
+      << ") < 0.01 for " << Symmetry::name(name)
       << ", got " << pgCSM << " (top is " << topName(top) << ")"
     );
   }
@@ -145,7 +124,7 @@ BOOST_AUTO_TEST_CASE(Recognition) {
 std::ostream& operator << (std::ostream& os, const PointGroup group) {
   const auto elements = elements::symmetryElements(group);
   const auto groupings = elements::npGroupings(elements);
-  os << pointGroupStrings().at(underlying(group)) << ": {";
+  os << pointGroupString(group) << ": {";
   for(const auto& element : elements) {
     os << element -> name() << ", ";
   }
@@ -172,12 +151,13 @@ std::ostream& operator << (std::ostream& os, const PointGroup group) {
 BOOST_AUTO_TEST_CASE(PointGroupElementGroupings) {
   const PointGroup limit = PointGroup::Ih;
   for(unsigned g = 0; g <= underlying(limit); ++g) {
-    const auto elements = elements::symmetryElements(static_cast<PointGroup>(g));
+    const PointGroup pointGroup = static_cast<PointGroup>(g);
+    const auto elements = elements::symmetryElements(pointGroup);
     const auto groupings = elements::npGroupings(elements);
 
     BOOST_CHECK_MESSAGE(
       groupings.count(1) > 0,
-      "There is no single-point element group for point group " << pointGroupStrings().at(g)
+      "There is no single-point element group for point group " << pointGroupString(pointGroup)
     );
 
     bool anyGroupSizeMismatches = false;
@@ -185,7 +165,7 @@ BOOST_AUTO_TEST_CASE(PointGroupElementGroupings) {
       BOOST_CHECK_MESSAGE(
         elements.size() % sizeGroupingsPair.first == 0,
         "Grouping does not evenly divide the group "
-        << pointGroupStrings().at(g) << ", G = " << elements.size()
+        << pointGroupString(pointGroup) << ", G = " << elements.size()
         << ", group size = " << sizeGroupingsPair.first
       );
 
@@ -208,7 +188,7 @@ BOOST_AUTO_TEST_CASE(PointGroupElementGroupings) {
 
       BOOST_CHECK_MESSAGE(
         pass,
-        "Not all subgroups of " << pointGroupStrings().at(g) << " have the same size!"
+        "Not all subgroups of " << pointGroupString(pointGroup) << " have the same size!"
       );
     }
     if(anyGroupSizeMismatches) {

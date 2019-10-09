@@ -72,20 +72,6 @@ PositionCollection normalize(const PositionCollection& positions) {
 
   // Rescale all distances so that the longest is a unit vector
   transformed /= std::sqrt(transformed.colwise().squaredNorm().maxCoeff());
-
-  // Drop any vectors that are very close to the center of mass
-  for(int i = 0; i < transformed.cols(); ++i) {
-    if(transformed.col(i).norm() < 1e-3) {
-      const int r = transformed.rows();
-      const int c = transformed.cols() - 1;
-      if(i < c) {
-        transformed.block(0, i, r, c - i) = transformed.rightCols(c - i);
-      }
-      transformed.conservativeResize(r, c);
-      --i;
-    }
-  }
-
   // At least two points must remain
   assert(transformed.cols() >= 2);
   assert(isNormalized(transformed));

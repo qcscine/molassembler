@@ -11,6 +11,7 @@
 #include "temple/constexpr/TupleType.h"
 
 #include "chemical_symmetries/Names.h"
+#include "chemical_symmetries/PointGroups.h"
 #include "chemical_symmetries/CompileTimeOptions.h"
 
 #ifdef USE_CONSTEXPR_SQUARE_ANTIPRISMATIC_LOOKUP_TABLE
@@ -51,6 +52,7 @@ template<typename T>
 struct SymmetryClass : std::integral_constant<bool,
   (
     std::is_same<Name, std::decay_t<decltype(T::name)>>::value
+    && std::is_same<PointGroup, std::decay_t<decltype(T::pointGroup)>>::value
     && std::is_same<unsigned, std::decay_t<decltype(T::size)>>::value
     && std::is_same<const char*, std::decay_t<decltype(T::stringName)>>::value
     && std::is_same<double, decltype(T::angleFunction(0u, 1u))>::value
@@ -95,6 +97,7 @@ namespace data {
  */
 struct Linear {
   static constexpr Symmetry::Name name = Symmetry::Name::Linear;
+  static constexpr PointGroup pointGroup = PointGroup::Cinfv;
   static constexpr unsigned size = 2;
   static constexpr char stringName[] = "linear";
   static constexpr double angleFunction(const unsigned a, const unsigned b) {
@@ -134,6 +137,7 @@ struct Linear {
  */
 struct Bent {
   static constexpr Symmetry::Name name = Symmetry::Name::Bent;
+  static constexpr PointGroup pointGroup = PointGroup::C2v;
   static constexpr unsigned size = 2;
   static constexpr char stringName[] = "bent";
   static constexpr double angleFunction(const unsigned a, const unsigned b) {
@@ -183,6 +187,7 @@ struct Bent {
  */
 struct TrigonalPlanar {
   static constexpr Symmetry::Name name = Symmetry::Name::TrigonalPlanar;
+  static constexpr PointGroup pointGroup = PointGroup::D3h;
   static constexpr unsigned size = 3;
   static constexpr char stringName[] = "trigonal planar";
   static constexpr double angleFunction(const unsigned a, const unsigned b) {
@@ -230,6 +235,7 @@ struct TrigonalPlanar {
  */
 struct CutTetrahedral {
   static constexpr Symmetry::Name name = Symmetry::Name::CutTetrahedral;
+  static constexpr PointGroup pointGroup = PointGroup::C3v;
   static constexpr unsigned size = 3;
   static constexpr char stringName[] = "cut tetrahedral";
   static constexpr double angleFunction(const unsigned a, const unsigned b) {
@@ -272,6 +278,7 @@ struct CutTetrahedral {
  */
 struct TShaped {
   static constexpr Symmetry::Name name = Symmetry::Name::TShaped;
+  static constexpr PointGroup pointGroup = PointGroup::C2v;
   static constexpr unsigned size = 3;
   static constexpr char stringName[] = "T-shaped";
   static constexpr double angleFunction(const unsigned a, const unsigned b) {
@@ -320,6 +327,7 @@ struct TShaped {
  */
 struct Tetrahedral {
   static constexpr Symmetry::Name name = Symmetry::Name::Tetrahedral;
+  static constexpr PointGroup pointGroup = PointGroup::Td;
   static constexpr unsigned size = 4;
   static constexpr char stringName[] = "tetrahedral";
   static constexpr double angleFunction(const unsigned a, const unsigned b) {
@@ -368,6 +376,7 @@ struct Tetrahedral {
  */
 struct SquarePlanar {
   static constexpr Symmetry::Name name = Symmetry::Name::SquarePlanar;
+  static constexpr PointGroup pointGroup = PointGroup::D4h;
   static constexpr unsigned size = 4;
   static constexpr char stringName[] = "square planar";
   static constexpr double angleFunction(const unsigned a, const unsigned b) {
@@ -417,6 +426,7 @@ struct SquarePlanar {
  */
 struct Seesaw {
   static constexpr Symmetry::Name name = Symmetry::Name::Seesaw;
+  static constexpr PointGroup pointGroup = PointGroup::C2v;
   static constexpr unsigned size = 4;
   static constexpr char stringName[] = "seesaw";
   static constexpr double angleFunction(const unsigned a, const unsigned b) {
@@ -489,6 +499,7 @@ struct Seesaw {
  */
 struct TrigonalPyramidal {
   static constexpr Symmetry::Name name = Symmetry::Name::TrigonalPyramidal;
+  static constexpr PointGroup pointGroup = PointGroup::C3v;
   static constexpr unsigned size = 4;
   static constexpr char stringName[] = "trigonal pyramidal";
   static constexpr double angleFunction(const unsigned a, const unsigned b) {
@@ -541,6 +552,7 @@ struct TrigonalPyramidal {
  */
 struct SquarePyramidal {
   static constexpr Symmetry::Name name = Symmetry::Name::SquarePyramidal;
+  static constexpr PointGroup pointGroup = PointGroup::C4v;
   static constexpr unsigned size = 5;
   static constexpr char stringName[] = "square pyramidal";
   static constexpr double angleFunction(const unsigned a, const unsigned b) {
@@ -616,6 +628,7 @@ struct SquarePyramidal {
  */
 struct TrigonalBiPyramidal {
   static constexpr Symmetry::Name name = Symmetry::Name::TrigonalBiPyramidal;
+  static constexpr PointGroup pointGroup = PointGroup::D3h;
   static constexpr unsigned size = 5;
   static constexpr char stringName[] = "trigonal bipyramidal";
   static constexpr double angleFunction(const unsigned a, const unsigned b) {
@@ -685,6 +698,7 @@ struct TrigonalBiPyramidal {
  */
 struct PentagonalPlanar {
   static constexpr Symmetry::Name name = Symmetry::Name::PentagonalPlanar;
+  static constexpr PointGroup pointGroup = PointGroup::D5h;
   static constexpr unsigned size = 5;
   static constexpr char stringName[] = "pentagonal planar";
   static constexpr double angleFunction(const unsigned a, const unsigned b) {
@@ -737,6 +751,7 @@ struct PentagonalPlanar {
  */
 struct Octahedral {
   static constexpr Symmetry::Name name = Symmetry::Name::Octahedral;
+  static constexpr PointGroup pointGroup = PointGroup::Oh;
   static constexpr unsigned size = 6;
   static constexpr char stringName[] = "octahedral";
   static constexpr double angleFunction(const unsigned a, const unsigned b) {
@@ -825,6 +840,7 @@ struct Octahedral {
  */
 struct TrigonalPrismatic {
   static constexpr Symmetry::Name name = Symmetry::Name::TrigonalPrismatic;
+  static constexpr PointGroup pointGroup = PointGroup::D3h;
   static constexpr unsigned size = 6;
   static constexpr char stringName[] = "trigonal prismatic";
   static constexpr double angleFunction(const unsigned a, const unsigned b) {
@@ -893,6 +909,7 @@ struct TrigonalPrismatic {
  */
 struct PentagonalPyramidal {
   static constexpr Symmetry::Name name = Symmetry::Name::PentagonalPyramidal;
+  static constexpr PointGroup pointGroup = PointGroup::C5v;
   static constexpr unsigned size = 6;
   static constexpr char stringName[] = "pentagonal pyramidal";
   static constexpr double angleFunction(const unsigned a, const unsigned b) {
@@ -970,6 +987,7 @@ struct PentagonalPyramidal {
  */
 struct PentagonalBiPyramidal {
   static constexpr Symmetry::Name name = Symmetry::Name::PentagonalBiPyramidal;
+  static constexpr PointGroup pointGroup = PointGroup::D5h;
   static constexpr unsigned size = 7;
   static constexpr char stringName[] = "pentagonal bipyramidal";
   static constexpr double angleFunction(const unsigned a, const unsigned b) {
@@ -1076,6 +1094,7 @@ struct PentagonalBiPyramidal {
  */
 struct SquareAntiPrismatic {
   static constexpr Symmetry::Name name = Symmetry::Name::SquareAntiPrismatic;
+  static constexpr PointGroup pointGroup = PointGroup::D4d;
   static constexpr unsigned size = 8;
   static constexpr char stringName[] = "square antiprismatic";
   static constexpr std::array<temple::Vector, 8> coordinates {{

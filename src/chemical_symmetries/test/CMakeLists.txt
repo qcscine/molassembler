@@ -7,6 +7,7 @@ find_package(temple 0.1.0 REQUIRED)
 set(TestFiles
   ${CMAKE_CURRENT_SOURCE_DIR}/CoordinateSystemTransformation.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/Diophantine.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/Flowchart.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/Partitioner.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/Recognition.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/tests.cpp
