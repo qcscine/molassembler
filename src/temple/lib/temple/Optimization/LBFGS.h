@@ -693,7 +693,7 @@ private:
       stepLength = 1;
     }
 
-    for(iterations = 0; stepLength > 0; ++iterations) {
+    for(iterations = 0; stepLength > 0 && iterations < 100; ++iterations) {
       const FloatType currentGradDotDirection = step.gradients.current.dot(direction);
 
       /* Armijo rule (Wolfe condition I) */
