@@ -689,6 +689,7 @@ double element(
 ) {
   /* TODO
    * - calculateReflectionCSM could be memoized across its a,b arguments
+   *   also try memoizing other elements' basic calculation fns
    */
 
   const unsigned P = normalizedPositions.cols();

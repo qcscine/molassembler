@@ -199,8 +199,8 @@ BOOST_AUTO_TEST_CASE(FunctorSafety) {
 
   constexpr std::tuple<int, double> t {4, 1.0};
   static_assert(temple::functor::get<0>()(t) == 4, "Get functor doesn't work");
-  static_assert(temple::functor::pair_first(t) == 4, "Pair_first doesn't work");
-  BOOST_CHECK_EQUAL(temple::functor::pair_second(t), 1.0);
+  static_assert(temple::functor::first(t) == 4, "Pair_first doesn't work");
+  BOOST_CHECK_EQUAL(temple::functor::second(t), 1.0);
 }
 
 BOOST_AUTO_TEST_CASE(JSF) {

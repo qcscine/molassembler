@@ -20,6 +20,7 @@
 #include <Eigen/Core>
 #include <random>
 #include <iostream>
+#include <iomanip>
 
 using namespace Scine;
 using namespace Symmetry;
@@ -79,12 +80,40 @@ Eigen::Matrix<double, 3, Eigen::Dynamic> generateCoordinates(unsigned P, PRNG& p
   return positions;
 }
 
-constexpr unsigned nExperiments = 100;
+constexpr unsigned nExperiments = 1000;
+
+template<typename PRNG, typename F>
+std::vector<double> averageRandomCsm(const unsigned N, PRNG& prng, F&& f) {
+  assert(N >= 2);
+  return temple::map(
+    temple::adaptors::range(nExperiments),
+    [&](unsigned /* i */) -> double {
+      auto normalized = detail::normalize(generateCoordinates(N, prng));
+      Top top = standardizeTop(normalized);
+      if(top == Top::Asymmetric) {
+        reorientAsymmetricTop(normalized);
+      }
+      return f(normalized);
+    }
+  );
+}
+
+std::ostream& operator << (std::ostream& os, const std::vector<double>& values) {
+  const auto end = std::end(values);
+  for(auto it = std::begin(values); it != end; ++it) {
+    os << *it;
+    if(it != end - 1) {
+      os << ", ";
+    }
+  }
+
+  return os;
+}
 
 struct RScriptWriter {
   std::ofstream file;
 
-  RScriptWriter() : file("uniform_csm_data.R") {
+  RScriptWriter(std::string str) : file(str) {
     writeHeader();
   }
 
@@ -105,7 +134,32 @@ struct RScriptWriter {
 
   void addResults(const Symmetry::Name name, const std::vector<double>& results) {
     const unsigned symmetryIndex = nameIndex(name) + 1;
-    file << "results[" << symmetryIndex << ",] <- c(" << temple::condense(results) << ")\n";
+    file << "results[" << symmetryIndex << ",] <- c(" << results << ")\n";
+  }
+
+  template<typename F, typename PRNG>
+  void addElementArray(const std::string& nameBase, F&& f, PRNG&& prng) {
+    file << std::scientific;
+    file << nameBase << "Array <- array()numeric(), c(7, " << nExperiments << "))\n";
+
+    std::array<int, 7> seeds;
+    for(unsigned i = 0; i < 7; ++i) {
+      seeds[i] = prng();
+    }
+
+#pragma omp parallel for
+    for(unsigned N = 2; N <= 8; ++N) {
+      temple::jsf::JSF64 localPrng {seeds.at(N - 2)};
+      const auto values = averageRandomCsm(N, localPrng, std::forward<F>(f));
+
+#pragma omp critical
+      {
+        std::cout << "CSM(" << nameBase << ", " << N << ") = " << temple::average(values) << " +- " << temple::stddev(values) << "\n";
+        file << nameBase << "Array[" << (N - 1) << ",] <- c(" << values << ")\n";
+      }
+    }
+
+    file << "elementArrays <- c(elementArrays, tuple(\"" << nameBase << "\", " << nameBase << "Array))\n";
   }
 };
 
@@ -140,7 +194,9 @@ int main(int argc, char* argv[]) {
   );
   boost::program_options::notify(options_variables_map);
 
-  RScriptWriter writer;
+  RScriptWriter writer {
+    showElements ? "elements.R" : "point_groups_data.R"
+  };
   temple::jsf::JSF64 prng;
   if(options_variables_map.count("seed")) {
     const int seed = options_variables_map["seed"].as<int>();
@@ -155,59 +211,67 @@ int main(int argc, char* argv[]) {
     writer.writeSeed(seed);
   }
 
+  writer.file << std::scientific;
+
   if(showElements) {
-    for(unsigned N = 2; N < 8; ++N) {
-      const auto values = temple::map(
-        temple::adaptors::range(2 * nExperiments),
-        [&](unsigned /* i */) -> double {
-          auto normalized = detail::normalize(generateCoordinates(N, prng));
-          Top top = standardizeTop(normalized);
-          if(top == Top::Asymmetric) {
-            reorientAsymmetricTop(normalized);
-          }
-          return csm::element(normalized, elements::Inversion {});
-        }
+    writer.file << "elementArrays <- c()\n";
+
+    /* Inversion */
+    writer.addElementArray(
+      "inversion",
+      [](const PositionCollection& positions) -> double {
+        return csm::element(positions, elements::Inversion {});
+      },
+      prng
+    );
+
+    /* Cinf */
+    writer.addElementArray(
+      "Cinf",
+      [](const PositionCollection& positions) -> double {
+        return csm::optimizeCinf(positions);
+      },
+      prng
+    );
+
+    /* Sigma */
+    writer.addElementArray(
+      "sigma",
+      [](const PositionCollection& positions) -> double {
+        return csm::optimize(positions, elements::Reflection {Eigen::Vector3d::UnitZ()}).first;
+      },
+      prng
+    );
+
+    /* Cn axes */
+    for(unsigned order = 2; order <= 8; ++order) {
+      writer.addElementArray(
+        "C" + std::to_string(order),
+        [order](const PositionCollection& positions) -> double {
+          return csm::optimize(positions,
+            elements::Rotation::Cn(Eigen::Vector3d::UnitZ(), order)
+          ).first;
+        },
+        prng
       );
-      std::cout << "CSM(i, " << N << ") = " << temple::average(values) << " +- " << temple::stddev(values) << "\n";
     }
 
-    for(unsigned N = 2; N < 8; ++N) {
-      const auto values = temple::map(
-        temple::adaptors::range(2 * nExperiments),
-        [&](unsigned /* i */) -> double {
-          auto normalized = detail::normalize(generateCoordinates(N, prng));
-          Top top = standardizeTop(normalized);
-          if(top == Top::Asymmetric) {
-            reorientAsymmetricTop(normalized);
-          }
-          return csm::optimizeCinf(normalized);
-        }
+    /* Sn axes */
+    for(unsigned order = 4; order <= 8; order += 2) {
+      writer.addElementArray(
+        "S" + std::to_string(order),
+        [order](const PositionCollection& positions) -> double {
+          return csm::optimize(positions,
+            elements::Rotation::Sn(Eigen::Vector3d::UnitZ(), order)
+          ).first;
+        },
+        prng
       );
-      std::cout << "CSM(Cinf, " << N << ") = " << temple::average(values) << " +- " << temple::stddev(values) << "\n";
     }
   } else {
-    const std::map<Name, PointGroup> expected {
-      {Name::Linear, PointGroup::Cinfv},
-      {Name::Bent, PointGroup::C2v},
-      {Name::TrigonalPlanar, PointGroup::D3h},
-      {Name::CutTetrahedral, PointGroup::C3v},
-      {Name::TShaped, PointGroup::C2v},
-      {Name::Tetrahedral, PointGroup::Td},
-      {Name::SquarePlanar, PointGroup::D4h},
-      {Name::Seesaw, PointGroup::C2v},
-      {Name::TrigonalPyramidal, PointGroup::C3v},
-      {Name::SquarePyramidal, PointGroup::C4v},
-      {Name::TrigonalBiPyramidal, PointGroup::D3h},
-      {Name::PentagonalPlanar, PointGroup::D5h},
-      {Name::Octahedral, PointGroup::Oh},
-      {Name::TrigonalPrismatic, PointGroup::D3h},
-      {Name::PentagonalPyramidal, PointGroup::C5v},
-      {Name::PentagonalBiPyramidal, PointGroup::D5h}
-    };
-
     std::cout << "Average CSM for uniform coordinates in sphere:\n";
-
-    for(const auto& pair : expected) {
+    for(const Name& symmetryName : allNames) {
+      const PointGroup group = pointGroup(symmetryName);
       for(unsigned N = 2; N < 8; ++N) {
         /* Generate 100 random coordinates within a uniform sphere for each
          * symmetry and evaluate the CSM
@@ -220,14 +284,14 @@ int main(int argc, char* argv[]) {
             if(top == Top::Asymmetric) {
               reorientAsymmetricTop(normalized);
             }
-            return csm::pointGroup(normalized, pair.second);
+            return csm::pointGroup(normalized, group);
           }
         );
         const double csmAverage = temple::average(values);
         const double csmStddev = temple::stddev(values);
 
-        writer.addResults(pair.first, values);
-        std::cout << name(pair.first) << " - " << N << ": " << csmAverage << " +- " << csmStddev << "\n";
+        writer.addResults(symmetryName, values);
+        std::cout << name(symmetryName) << " - " << N << ": " << csmAverage << " +- " << csmStddev << "\n";
       }
     }
   }

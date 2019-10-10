@@ -9,6 +9,10 @@ if(NOT TARGET Boost::unit_test_framework OR NOT TARGET Boost::program_options OR
 endif()
 find_package(Eigen3 3.1.1 REQUIRED)
 
+if(MOLASSEMBLER_PARALLELIZE AND NOT TARGET OpenMP::OpenMP_CXX)
+  find_package(OpenMP)
+endif()
+
 set(analysisFiles
   ${CMAKE_CURRENT_SOURCE_DIR}/csm.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/writeMappings.cpp
@@ -29,6 +33,7 @@ foreach(filename ${analysisFiles})
       Boost::program_options
       Boost::system
       chemical_symmetries
+      $<$<BOOL:${OpenMP_CXX_FOUND}>:OpenMP::OpenMP_CXX>
   )
 
   target_compile_options(${targetName} PRIVATE ${MOLASSEMBLER_CXX_FLAGS})
