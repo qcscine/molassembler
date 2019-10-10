@@ -156,7 +156,7 @@ void init_molecule(pybind11::module& m) {
   molecule.def(
     "canonicalize",
     &Molecule::canonicalize,
-    pybind11::arg("components_bitmask"),
+    pybind11::arg("components_bitmask") = AtomEnvironmentComponents::All,
     "Canonicalizes the molecular graph"
   );
 

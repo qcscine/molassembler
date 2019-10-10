@@ -541,7 +541,13 @@ Molecule deserialize(const nlohmann::json& m) {
 
 struct JSONSerialization::Impl {
   explicit Impl(const std::string& jsonString) : serialization(nlohmann::json::parse(jsonString)) {}
-  explicit Impl(const Molecule& molecule) : serialization(detail::serialize(molecule)) {}
+  explicit Impl(const Molecule& molecule) : serialization(detail::serialize(molecule)) {
+    // If the molecule is fully canonical, make serializations canonical too
+    if(molecule.canonicalComponents() == AtomEnvironmentComponents::All) {
+      detail::standardizeJSON(serialization);
+    }
+  }
+
   Impl(
     const BinaryType& binary,
     const BinaryFormat format
