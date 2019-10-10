@@ -63,6 +63,8 @@ enum class Name : unsigned {
   TrigonalPrismatic,
   //! See data::PentagonalPyramidal
   PentagonalPyramidal,
+  //! See data::HexagonalPlanar
+  HexagonalPlanar,
 
   /* 7 */
   //! See data::PentagonalBiPyramidal
@@ -106,7 +108,7 @@ enum class Name : unsigned {
 };
 
 //! Total number of contained symmetries
-constexpr unsigned nSymmetries = 29;
+constexpr unsigned nSymmetries = 30;
 static_assert(nSymmetries == static_cast<unsigned>(Name::Cuboctahedron) + 1, "Miscounted?");
 
 } // namespace Symmetry
