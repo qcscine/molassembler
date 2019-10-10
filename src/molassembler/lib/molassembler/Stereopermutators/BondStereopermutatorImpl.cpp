@@ -933,8 +933,17 @@ void BondStereopermutator::Impl::fit(
       penalty += std::fabs(dihedralDifference);
     }
 
-    // Check if this penalty is within acceptance threshold
-    if(penalty > assignmentAcceptanceDihedralThreshold * _composite.dihedrals(feasiblePermutationIndex).size()) {
+    /* Check if this penalty is within acceptance threshold
+     *
+     * The logic here is that the acceptable deviation per dihedral should
+     * depend on the order of the Composite (i.e. if there are three
+     * substituents at one side, the deviation per dihedral should be smaller
+     * than if there were only two).
+     */
+    if(
+      penalty / _composite.dihedrals(feasiblePermutationIndex).size()
+      > assignmentAcceptanceParameter * 2 * M_PI / _composite.order()
+    ) {
       continue;
     }
 

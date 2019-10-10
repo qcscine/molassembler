@@ -82,8 +82,17 @@ public:
 
 //!@name Static members
 //!@{
-  //! An assignment is accepted if the fit for each dihedral is below this value
-  static constexpr double assignmentAcceptanceDihedralThreshold = M_PI / 25.0; // ~7°
+  /*! @brief Assignment acceptance is dependent on this parameter
+   *
+   * An assignment is accepted if the sum of absolute angular deviations of all
+   * dihedrals involved in a stereopermutation divided by the number of
+   * dihedrals is less than this factor times two pi divided by the larger
+   * number of involved substituents at the ends of the bond.
+   *
+   * For the classic E/Z double bond case, there are two involved substituents
+   * at both sides. The tolerance per dihedral is then 0.1 * 360° / 2 = 18°.
+   */
+  static constexpr double assignmentAcceptanceParameter = 0.1;
 //!@}
 
 //!@name Static functions

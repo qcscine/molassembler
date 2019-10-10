@@ -11,6 +11,7 @@
 #include "chemical_symmetries/DynamicProperties.h"
 #include "chemical_symmetries/Symmetries.h"
 #include "temple/Adaptors/AllPairs.h"
+#include "temple/Functor.h"
 #include "temple/Functional.h"
 #include "temple/Permutations.h"
 #include "temple/Stringify.h"
@@ -865,6 +866,21 @@ const std::vector<Composite::DihedralTuple>& Composite::dihedrals(unsigned permu
 
 bool Composite::isIsotropic() const {
   return _isotropic;
+}
+
+unsigned Composite::order() const {
+  auto countDistinct = [&](auto&& f) {
+    std::set<unsigned> positions;
+    for(const DihedralTuple& t : _stereopermutations.front()) {
+      positions.insert(f(t));
+    }
+    return positions.size();
+  };
+
+  return std::max(
+    countDistinct(temple::functor::first),
+    countDistinct(temple::functor::second)
+  );
 }
 
 const temple::OrderedPair<Composite::OrientationState>& Composite::orientations() const {

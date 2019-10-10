@@ -51,6 +51,20 @@ auto at(Container&& container) {
   return At<Container&&> {std::forward<Container>(container)};
 }
 
+template<unsigned i>
+struct Get {
+  template<typename T>
+  constexpr auto operator() (const T& t) const {
+    return std::get<i>(t);
+  }
+};
+
+template<unsigned i>
+constexpr auto get() { return Get<i> {}; }
+
+constexpr Get<0> first;
+constexpr Get<1> second;
+
 } // namespace functor
 
 } // namespace temple

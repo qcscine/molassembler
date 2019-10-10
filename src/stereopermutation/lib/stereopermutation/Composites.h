@@ -242,6 +242,11 @@ public:
    */
   bool isIsotropic() const;
 
+  /*! @brief Returns the higher number of relevant substituent symmetry indices
+   *   of both sides
+   */
+  unsigned order() const;
+
   /*! @brief Returns the orientation state of the composite
    *
    * @complexity{@math{\Theta(1)}}

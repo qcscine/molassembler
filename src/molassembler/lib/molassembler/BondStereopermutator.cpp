@@ -9,7 +9,7 @@ namespace Scine {
 
 namespace molassembler {
 
-constexpr double BondStereopermutator::assignmentAcceptanceDihedralThreshold;
+constexpr double BondStereopermutator::assignmentAcceptanceParameter;
 
 /* Impl */
 
