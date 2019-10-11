@@ -10,6 +10,7 @@
 
 #include "chemical_symmetries/Symmetries.h"
 #include "chemical_symmetries/Recognition.h"
+#include "chemical_symmetries/Diophantine.h"
 
 #include "temple/Adaptors/Iota.h"
 #include "temple/Functional.h"
@@ -110,6 +111,67 @@ std::ostream& operator << (std::ostream& os, const std::vector<double>& values) 
   return os;
 }
 
+/* Does it make more sense to just maximize the CSM using two parameters at
+ * each point and use LBFGS with numerical derivatives? More principled than
+ * many random points, no guarantee maximum CSM is actually found.
+ *
+ * Procedure for finding upper bounds on the CSM for which clear distinctions
+ * can be made between unrelated point groups (unrelated meaning neither is a
+ * subset of the other).
+ * - Generate points P for which CSM(P, D3h) = 0, and points Q for which CSM(Q, Oh) = 0.
+ * - Add uniform direction fixed magnitude (fuzz) distortions to P and Q, making P' and Q'
+ * - Find the maximum CSM(P', D3h) and maximum CSM(Q', Oh)
+ * - Find the minimum CSM(Q', D3h) and minimum CSM(P', Oh)
+ * - If the maximum CSM(P', D3h) < minimum CSM(Q', D3h)
+ *   and the maximum CSM(Q', Oh) < minimum CSM(P', Oh),
+ *   increase the fuzz magnitude
+ *
+ * To find the maximum and minimum CSM for a particular fuzziness of a set of
+ * group symmetric points by numerical optimization:
+ * - Generate A-symmetric points: Go through each solution of the diophantine
+ *   for the usable group sizes and the required number of points (exclude
+ *   groups whose probe point is the origin):
+ *   - If only a single group size has multiplier > 0, generate group-symmetric
+ *     points by applying a symmetry element from each group to the normalized
+ *     probe point.
+ *   - If there are multiple group sizes with multiplier > 0, the norms of each
+ *     probe point are meta-parameters that need to be optimized too.
+ */
+
+std::vector<PositionCollection> groupPoints(
+  const elements::ElementsList elements,
+  const elements::NPGroupingsMapType& npGroupings,
+  const unsigned N
+) {
+  std::vector<unsigned> usableGroupSizes;
+  for(const auto& iterPair : npGroupings) {
+    if(
+      iterPair.first <= N
+      && !temple::all_of(
+        iterPair.second,
+        [](const auto& elementGrouping) {
+          return elementGrouping.probePoint.isApprox(Eigen::Vector3d::Zero(), 1e-5);
+        }
+      )
+    ) {
+      usableGroupSizes.push_back(iterPair.first);
+    }
+  }
+
+  std::vector<unsigned> groupSizeMultipliers;
+  if(!diophantine::has_solution(usableGroupSizes, N)) {
+    throw std::logic_error("No P = N groupings for this point group");
+  }
+
+  if(!diophantine::first_solution(groupSizeMultipliers, usableGroupSizes, N)) {
+    throw std::logic_error("Diophantine failed");
+  }
+
+  do {
+
+  } while(diophantine::next_solution(groupSizeMultipliers, usableGroupSizes, N));
+}
+
 struct RScriptWriter {
   std::ofstream file;
 
@@ -140,7 +202,7 @@ struct RScriptWriter {
   template<typename F, typename PRNG>
   void addElementArray(const std::string& nameBase, F&& f, PRNG&& prng) {
     file << std::scientific;
-    file << nameBase << "Array <- array()numeric(), c(7, " << nExperiments << "))\n";
+    file << nameBase << "Array <- array(numeric(), c(7, " << nExperiments << "))\n";
 
     std::array<int, 7> seeds;
     for(unsigned i = 0; i < 7; ++i) {
@@ -159,12 +221,13 @@ struct RScriptWriter {
       }
     }
 
-    file << "elementArrays <- c(elementArrays, tuple(\"" << nameBase << "\", " << nameBase << "Array))\n";
+    file << "elementArrays[[\"" << nameBase << "\"]] <- " << nameBase << "Array)\n";
   }
 };
 
 int main(int argc, char* argv[]) {
   bool showElements = false;
+  bool fuzzPointGroups = false;
   /* Set up program options */
   boost::program_options::options_description options_description("Recognized options");
   options_description.add_options()
@@ -178,6 +241,11 @@ int main(int argc, char* argv[]) {
       "elements,e",
       boost::program_options::bool_switch(&showElements),
       "Show element CSM statistics instead of point groups"
+    )
+    (
+      "fuzz,f",
+      boost::program_options::bool_switch(&fuzzPointGroups),
+      "Fuzz point groups"
     )
   ;
 
@@ -214,7 +282,7 @@ int main(int argc, char* argv[]) {
   writer.file << std::scientific;
 
   if(showElements) {
-    writer.file << "elementArrays <- c()\n";
+    writer.file << "elementArrays <- list()\n";
 
     /* Inversion */
     writer.addElementArray(
@@ -268,7 +336,42 @@ int main(int argc, char* argv[]) {
         prng
       );
     }
-  } else {
+  }
+
+  if(fuzzPointGroups) {
+    const unsigned N = 6;
+    const unsigned nStructures = 100;
+    const double fuzzDelta = 0.05;
+    const double maxFuzz = 1.00;
+    const std::vector<PointGroup> groups {
+      PointGroup::Oh,
+      PointGroup::D3h
+    };
+
+    for(const PointGroup group : groups) {
+      /* Need to use diophantine of all groupings smaller or equal in size to N
+       * to generate all types of structure compatible with the point group
+       */
+      auto elements = elements::symmetryElements(group);
+      auto npGroupings = elements::npGroupings(elements);
+
+
+      // Generate random point group symmetric structures
+      auto structures = temple::map(
+        temple::adaptors::range(100),
+        [&](unsigned /* i */) -> PositionCollection {
+
+        }
+      );
+
+
+      for(double fuzz = 0; fuzz <= maxFuzz; fuzz += fuzzDelta) {
+
+      }
+    }
+  }
+
+  if(!fuzzPointGroups && !showElements) {
     std::cout << "Average CSM for uniform coordinates in sphere:\n";
     for(const Name& symmetryName : allNames) {
       const PointGroup group = pointGroup(symmetryName);
