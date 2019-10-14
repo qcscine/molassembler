@@ -116,7 +116,7 @@ void init_types(pybind11::module& m) {
       "Consider element types and bond orders"
     )
    .value(
-      "ElementsBondsAndShapes"
+      "ElementsBondsAndShapes",
       AtomEnvironmentComponents::ElementTypes
       | AtomEnvironmentComponents::BondOrders
       | AtomEnvironmentComponents::Shapes,
