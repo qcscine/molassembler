@@ -186,7 +186,7 @@ public:
     const unsigned N = squaredBounds.cols();
     const unsigned strictlyUpperTriangularElements = N * (N - 1) / 2;
 
-    // Linearize upper distance bounds squared
+    // Lineize upper distance bounds squared
     upperDistanceBoundsSquared.resize(strictlyUpperTriangularElements);
     lowerDistanceBoundsSquared.resize(strictlyUpperTriangularElements);
     for(unsigned linearIndex = 0, i = 0; i < N; ++i) {

@@ -75,8 +75,8 @@ public:
   }
 };
 
-std::string getGraphvizNodeName(const Symmetry::Name symmetryName) {
-  auto stringName = Symmetry::name(symmetryName);
+std::string getGraphvizNodeName(const Symmetry::Shape shape) {
+  auto stringName = Symmetry::name(shape);
 
   stringName.erase(
     std::remove_if(
@@ -116,29 +116,29 @@ void writeSymmetryTransitionDotFile(
     << R"(  node [fontname = "Arial", style = "filled", fillcolor="white"];)" << br
     << R"(  edge [fontname = "Arial", penwidth=2, labelfontsize="10"];)" << br;
 
-  std::set<Symmetry::Name> redNodes {
-    Symmetry::Name::Linear,
-    Symmetry::Name::Bent,
-    Symmetry::Name::TrigonalPlanar
+  std::set<Symmetry::Shape> redNodes {
+    Symmetry::Shape::Line,
+    Symmetry::Shape::Bent,
+    Symmetry::Shape::EquilateralTriangle
   };
 
   // Write clusters for every symmetry name node
   unsigned currentSize = 1;
-  for(const auto& symmetryName : Symmetry::allNames) {
-    if(Symmetry::size(symmetryName) > currentSize) {
+  for(const auto& shape : Symmetry::allShapes) {
+    if(Symmetry::size(shape) > currentSize) {
       if(currentSize > 1) {
         dotFile << "  }" << br;
       }
-      currentSize = Symmetry::size(symmetryName);
+      currentSize = Symmetry::size(shape);
       dotFile << "  subgraph cluster_size" << currentSize << " {" << br;
       dotFile << R"(    color="white";)" << br;
     }
 
-    dotFile << "    " << getGraphvizNodeName(symmetryName) << R"( [label=")"
-      << Symmetry::name(symmetryName) << R"(")";
+    dotFile << "    " << getGraphvizNodeName(shape) << R"( [label=")"
+      << Symmetry::name(shape) << R"(")";
 
 
-    if(redNodes.count(symmetryName) == 1) {
+    if(redNodes.count(shape) == 1) {
       dotFile << R"(, fillcolor="tomato", fontcolor="white")";
     }
 
@@ -148,13 +148,13 @@ void writeSymmetryTransitionDotFile(
   // Final cluster closing bracket
   dotFile << "  }" << br << br;
 
-  for(const auto& sourceSymmetry : Symmetry::allNames) {
+  for(const auto& sourceSymmetry : Symmetry::allShapes) {
     std::map<
-      Symmetry::Name,
+      Symmetry::Shape,
       Symmetry::properties::SymmetryTransitionGroup
     > distortionsMap;
 
-    for(const auto& targetSymmetry : Symmetry::allNames) {
+    for(const auto& targetSymmetry : Symmetry::allShapes) {
       if(predicate(sourceSymmetry, targetSymmetry)) { // Ligand gain
         distortionsMap[targetSymmetry] = selectBestTransitionMappings(
           symmetryTransitionMappings(
@@ -283,29 +283,29 @@ void writeLigandLossDotFile(
     << R"(  edge [fontname = "Arial", penwidth=2, labelfontsize="10"];)" << br
     << R"(  rankdir="LR";)" << br;
 
-  std::set<Symmetry::Name> redNodes {
-    Symmetry::Name::Linear,
-    Symmetry::Name::Bent,
-    Symmetry::Name::TrigonalPlanar
+  std::set<Symmetry::Shape> redNodes {
+    Symmetry::Shape::Line,
+    Symmetry::Shape::Bent,
+    Symmetry::Shape::EquilateralTriangle
   };
 
   // Write clusters for every symmetry name node
   unsigned currentSize = 1;
-  for(const auto& symmetryName : Symmetry::allNames) {
-    if(Symmetry::size(symmetryName) > currentSize) {
+  for(const Symmetry::Shape shape : Symmetry::allShapes) {
+    if(Symmetry::size(shape) > currentSize) {
       if(currentSize > 1) {
         dotFile << "  }" << br;
       }
-      currentSize = Symmetry::size(symmetryName);
+      currentSize = Symmetry::size(shape);
       dotFile << "  subgraph cluster_size" << currentSize << " {" << br;
       dotFile << R"(    color="white";)" << br;
     }
 
-    dotFile << "    " << getGraphvizNodeName(symmetryName) << R"( [label=")"
-      << Symmetry::name(symmetryName) << R"(")";
+    dotFile << "    " << getGraphvizNodeName(shape) << R"( [label=")"
+      << Symmetry::name(shape) << R"(")";
 
 
-    if(redNodes.count(symmetryName) == 1) {
+    if(redNodes.count(shape) == 1) {
       dotFile << R"(, fillcolor="tomato", fontcolor="white")";
     }
 
@@ -315,8 +315,8 @@ void writeLigandLossDotFile(
   // Final cluster closing bracket
   dotFile << "  }" << br << br;
 
-  for(const auto& sourceSymmetry : Symmetry::allNames) {
-    for(const auto& targetSymmetry : Symmetry::allNames) {
+  for(const auto& sourceSymmetry : Symmetry::allShapes) {
+    for(const auto& targetSymmetry : Symmetry::allShapes) {
 
       if(Symmetry::size(sourceSymmetry) == Symmetry::size(targetSymmetry) + 1) {
 

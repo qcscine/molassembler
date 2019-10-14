@@ -4,7 +4,7 @@ after 1000 iterations, and sometimes structures remain that are clearly
 superimposable (what gives?). All question marks indicate instances where fits 
 do not converge or it is impossible to count the number of different structures.
 
-#different | Symmetry name | Size
+#different | Shape name | Size
 
 1          | Linear,       | 2
 2          | Bent,

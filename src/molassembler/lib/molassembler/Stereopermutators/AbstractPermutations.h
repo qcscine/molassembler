@@ -16,7 +16,7 @@ namespace molassembler {
 
 /**
  * @brief Class to compute the set of abstract permutations from ranking
- *   and symmetry
+ *   and shape
  */
 struct AbstractStereopermutations {
 //!@name Static functions
@@ -80,7 +80,7 @@ struct AbstractStereopermutations {
 
   /*!
    * @brief Generates the reduced character representation of sites at their
-   *   current symmetry positions
+   *   current shape positions
    *
    * @complexity{@math{O(S^2)} worst case}
    */
@@ -104,11 +104,11 @@ struct AbstractStereopermutations {
    *
    * @param ranking Ranking object indicating chemical differences between
    *    substituents and sites
-   * @param symmetry Symmetry name
+   * @param shape Shape name
    */
   AbstractStereopermutations(
     const RankingInformation& ranking,
-    Symmetry::Name symmetry
+    Symmetry::Shape shape
   );
 //!@}
 

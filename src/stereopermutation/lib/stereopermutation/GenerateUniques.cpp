@@ -21,12 +21,12 @@ namespace stereopermutation {
 
 bool hasTransArrangedPairs(
   const Stereopermutation& stereopermutation,
-  const Symmetry::Name symmetryName
+  const Symmetry::Shape shape
 ) {
   // for every pair in links
   for(const auto& indexPair : stereopermutation.links) {
     if(
-      Symmetry::angleFunction(symmetryName)(
+      Symmetry::angleFunction(shape)(
         indexPair.first,
         indexPair.second
       ) == M_PI
@@ -41,7 +41,7 @@ bool hasTransArrangedPairs(
 
 std::vector<Stereopermutation> uniques(
   const Stereopermutation& initial,
-  const Symmetry::Name symmetryName,
+  const Symmetry::Shape shape,
   const bool removeTransSpanningGroups
 ) {
   /* NOTE: This algorithm may seem wasteful in terms of memory (after all, one
@@ -65,7 +65,7 @@ std::vector<Stereopermutation> uniques(
    * have any trans spanning pairs
    */
   if(removeTransSpanningGroups) {
-    while(hasTransArrangedPairs(stereopermutation, symmetryName)) {
+    while(hasTransArrangedPairs(stereopermutation, shape)) {
       bool hasAnotherPermutation = stereopermutation.nextPermutation();
       if(!hasAnotherPermutation) {
         /* This can happen, e.g. in square-planar AAAB with
@@ -78,7 +78,7 @@ std::vector<Stereopermutation> uniques(
   }
 
   // Generate all rotations of the initial stereopermutation
-  auto rotationsSet = stereopermutation.generateAllRotations(symmetryName);
+  auto rotationsSet = stereopermutation.generateAllRotations(shape);
 
   // The lowest rotation of the passed stereopermutation is the first unique stereopermutation
   std::vector<Stereopermutation> uniqueStereopermutations {*rotationsSet.begin()};
@@ -87,7 +87,7 @@ std::vector<Stereopermutation> uniques(
   while(stereopermutation.nextPermutation()) {
     if( // skip permutations with trans pairs if desired
       removeTransSpanningGroups
-      && hasTransArrangedPairs(stereopermutation, symmetryName)
+      && hasTransArrangedPairs(stereopermutation, shape)
     ) {
       continue;
     }
@@ -97,7 +97,7 @@ std::vector<Stereopermutation> uniques(
       rotationsSet.count(stereopermutation) == 0
     ) {
       // if so, it is a unique stereopermutation, generate all rotations
-      auto stereopermutationRotations = stereopermutation.generateAllRotations(symmetryName);
+      auto stereopermutationRotations = stereopermutation.generateAllRotations(shape);
 
       // add the smallest stereopermutation from the generated set to the list of uniques
       uniqueStereopermutations.push_back(*stereopermutationRotations.begin());
@@ -116,7 +116,7 @@ std::vector<Stereopermutation> uniques(
 
 StereopermutationsWithWeights uniquesWithWeights(
   const Stereopermutation& initial,
-  const Symmetry::Name symmetryName,
+  const Symmetry::Shape shape,
   const bool removeTransSpanningGroups
 ) {
   /* NOTE: This algorithm may seem wasteful in terms of memory (after all, one
@@ -150,7 +150,7 @@ StereopermutationsWithWeights uniquesWithWeights(
    * have any trans spanning pairs
    */
   if(removeTransSpanningGroups) {
-    while(hasTransArrangedPairs(stereopermutation, symmetryName)) {
+    while(hasTransArrangedPairs(stereopermutation, shape)) {
       bool hasAnotherPermutation = stereopermutation.nextPermutation();
       if(!hasAnotherPermutation) {
         /* This can happen, e.g. in square-planar AAAB with
@@ -162,7 +162,7 @@ StereopermutationsWithWeights uniquesWithWeights(
     }
   }
 
-  auto initialRotations = stereopermutation.generateAllRotations(symmetryName);
+  auto initialRotations = stereopermutation.generateAllRotations(shape);
   const Stereopermutation& lowestRotation = *initialRotations.begin();
 
   StereopermutationsWithWeights data;
@@ -185,14 +185,14 @@ StereopermutationsWithWeights uniquesWithWeights(
   while(stereopermutation.nextPermutation()) {
     if( // skip permutations with trans pairs if desired
       removeTransSpanningGroups
-      && hasTransArrangedPairs(stereopermutation, symmetryName)
+      && hasTransArrangedPairs(stereopermutation, shape)
     ) {
       continue;
     }
 
     auto findIter = rotationCounterMap.find(stereopermutation);
     if(findIter == rotationCounterMap.end()) {
-      auto rotations = stereopermutation.generateAllRotations(symmetryName);
+      auto rotations = stereopermutation.generateAllRotations(shape);
       data.stereopermutations.push_back(*rotations.begin());
       data.weights.push_back(1);
 

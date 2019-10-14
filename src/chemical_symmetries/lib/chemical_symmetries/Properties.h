@@ -15,7 +15,7 @@ namespace Scine {
 namespace Symmetry {
 
 //! Precomputed min and max angle values in radians for all symmetries
-extern const temple::Array<std::pair<double, double>, nSymmetries> symmetryAngleBounds;
+extern const temple::Array<std::pair<double, double>, nShapes> symmetryAngleBounds;
 
 /*! @brief Calculate the minimum angle in a symmetry
  *
@@ -24,14 +24,14 @@ extern const temple::Array<std::pair<double, double>, nSymmetries> symmetryAngle
  * @complexity{@math{\Theta(S^2)}}
  * @see constexprProperties::calculateSmallestAngle
  */
-double minimumAngle(Symmetry::Name symmetryName);
+double minimumAngle(Shape symmetryName);
 /*! @brief Calculate the maximum angle in a symmetry
  *
  * Calculates the maximum angle between symmetry positions in a symmetry class
  *
  * @complexity{@math{\Theta(S^2)}}
  */
-double maximumAngle(Symmetry::Name symmetryName);
+double maximumAngle(Shape symmetryName);
 
 /* Derived stored constexpr data */
 /*! @brief The smallest angle between ligands in all symmetries
@@ -42,7 +42,7 @@ double maximumAngle(Symmetry::Name symmetryName);
  */
 constexpr double smallestAngle [[gnu::unused]]
 = temple::TupleType::unpackToFunction<
-  data::allSymmetryDataTypes,
+  data::allShapeDataTypes,
   constexprProperties::minAngleFunctor
 >();
 
@@ -57,7 +57,7 @@ constexpr double smallestAngle [[gnu::unused]]
  */
 extern const temple::UpperTriangularMatrix<
   temple::Optional<constexprProperties::MappingsReturnType>,
-  nSymmetries * (nSymmetries - 1) / 2
+  nShapes * (nShapes - 1) / 2
 > allMappings;
 #endif
 
@@ -67,7 +67,7 @@ extern const temple::UpperTriangularMatrix<
  * Accesses allMappings if it was generated.
  */
 extern temple::MinimalCache<
-  std::tuple<Symmetry::Name, Symmetry::Name, boost::optional<unsigned>>,
+  std::tuple<Shape, Shape, boost::optional<unsigned>>,
   properties::SymmetryTransitionGroup
 > mappingsCache;
 
@@ -85,8 +85,8 @@ extern temple::MinimalCache<
  * @returns The symmetry transition if possible, None otherwise
  */
 const boost::optional<const properties::SymmetryTransitionGroup&> getMapping(
-  Symmetry::Name a,
-  Symmetry::Name b,
+  Shape a,
+  Shape b,
   const boost::optional<unsigned>& removedIndexOption = boost::none
 );
 
@@ -99,14 +99,14 @@ const boost::optional<const properties::SymmetryTransitionGroup&> getMapping(
  * @complexity{@math{\Theta(S!)} where @math{S} is the size of the largest symmetry}
  */
 extern const temple::Array<
-  temple::DynamicArray<bool, constexprProperties::maxSymmetrySize>,
-  nSymmetries
+  temple::DynamicArray<bool, constexprProperties::maxShapeSize>,
+  nShapes
 > allHasMultipleUnlinkedStereopermutations;
 #endif
 
 //! Run-time cache
 extern temple::MinimalCache<
-  Symmetry::Name,
+  Shape,
   std::vector<bool>
 > hasMultipleUnlinkedCache;
 
@@ -126,7 +126,7 @@ extern temple::MinimalCache<
  *   are linked
  */
 bool hasMultipleUnlinkedStereopermutations(
-  Symmetry::Name symmetryName,
+  Shape symmetryName,
   unsigned nIdenticalLigands
 );
 

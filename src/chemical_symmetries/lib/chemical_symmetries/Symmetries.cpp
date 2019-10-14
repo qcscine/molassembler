@@ -34,15 +34,15 @@ Eigen::Vector3d toEigen(const temple::Vector& cVector) {
  */
 const SymmetryDataMapType& symmetryData() {
   static const auto dataMap = temple::TupleType::unpackToFunction<
-    data::allSymmetryDataTypes,
+    data::allShapeDataTypes,
     data::symmetryInformationFunctor
   >();
 
   return dataMap;
 }
 
-std::string spaceFreeName(const Name name) {
-  std::string toModify = symmetryData().at(name).stringName;
+std::string spaceFreeName(const Shape shape) {
+  std::string toModify = symmetryData().at(shape).stringName;
 
   std::replace(
     toModify.begin(),
@@ -54,12 +54,12 @@ std::string spaceFreeName(const Name name) {
   return toModify;
 }
 
-unsigned nameIndex(const Name name) {
+unsigned nameIndex(const Shape shape) {
   return std::find(
-    allNames.begin(),
-    allNames.end(),
-    name
-  ) - allNames.begin();
+    allShapes.begin(),
+    allShapes.end(),
+    shape
+  ) - allShapes.begin();
 }
 
 } // namespace Symmetry

@@ -122,7 +122,7 @@ Eigen::MatrixXd rotateAndTranslate(
 }
 
 template<typename EigenRefinementType>
-auto rotateAndTranslateLinear(
+auto rotateAndTranslateLine(
   const typename EigenRefinementType::VectorType& positionVector,
   const Eigen::Matrix3d& rotationMatrix,
   const Eigen::Vector3d& translationVector
@@ -274,7 +274,7 @@ struct RotationalTranslationalInvarianceTest {
 
         if(gradientRotationalInvariance) {
           // Rotate reference accordingly
-          auto rotatedReferenceGradient = rotateAndTranslateLinear<EigenRefinementType>(
+          auto rotatedReferenceGradient = rotateAndTranslateLine<EigenRefinementType>(
             referenceGradient,
             rotationMatrix,
             Eigen::Vector3d::Zero()

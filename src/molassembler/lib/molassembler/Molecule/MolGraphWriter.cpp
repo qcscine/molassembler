@@ -34,7 +34,7 @@ std::vector<std::string> MolGraphWriter::edgeTooltips(const AtomIndex /* source 
 
 std::vector<std::string> MolGraphWriter::atomStereopermutatorTooltips(const AtomStereopermutator& permutator) const {
   return {
-    Symmetry::name(permutator.getSymmetry()),
+    Symmetry::name(permutator.getShape()),
     permutator.info()
   };
 }

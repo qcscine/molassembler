@@ -9,7 +9,7 @@
 
 #include "chemical_symmetries/Properties.h"
 
-#include "chemical_symmetries/Names.h"
+#include "chemical_symmetries/Shapes.h"
 #include "temple/constexpr/UpperTriangularMatrix.h"
 
 
@@ -97,7 +97,7 @@ struct VertexComparator {
    * use lookups
    */
   struct LowEffortMappingCache {
-    static constexpr std::size_t upperTrigSize = Symmetry::nSymmetries * (Symmetry::nSymmetries - 1) / 2;
+    static constexpr std::size_t upperTrigSize = Symmetry::nShapes * (Symmetry::nShapes - 1) / 2;
 
     static std::array<bool, upperTrigSize> defaultMatrixData() {
       std::array<bool, upperTrigSize> data;
@@ -108,8 +108,8 @@ struct VertexComparator {
     //! Constructor establishing the matrix elements
     LowEffortMappingCache() : mappingMatrix(defaultMatrixData()) {
       // Populate with immediately adjacent information from symmetry mapping cache
-      for(const auto from : Symmetry::allNames) {
-        for(const auto to : Symmetry::allNames) {
+      for(const auto from : Symmetry::allShapes) {
+        for(const auto to : Symmetry::allShapes) {
           /* Smaller and equal sized to symmetries are always false and not stored
            * in the matrix at all. We can only anser directly adjacent cases,
            * so we skip everything else.
@@ -143,8 +143,8 @@ struct VertexComparator {
       /* auto copyIn = [
 
       // Add transferability information
-      for(const auto from : Symmetry::allNames) {
-        for(const auto to : Symmetry::allNames) {
+      for(const auto from : Symmetry::allShapes) {
+        for(const auto to : Symmetry::allShapes) {
           // Skip smaller and equal-size target symmetries
           if(Symmetry::size(to) <= Symmetry::size(from)) {
             continue;
@@ -155,7 +155,7 @@ struct VertexComparator {
       }*/
     }
 
-    bool subsumes(const Symmetry::Name from, const Symmetry::Name to) const {
+    bool subsumes(const Symmetry::Shape from, const Symmetry::Shape to) const {
       if(from == to) {
         return true;
       }
@@ -170,8 +170,8 @@ struct VertexComparator {
   };
 
   static bool lowEffortMapping(
-    const Symmetry::Name from,
-    const Symmetry::Name to
+    const Symmetry::Shape from,
+    const Symmetry::Shape to
   ) {
     static LowEffortMappingCache subsumptionMatrix;
     return subsumptionMatrix.subsumes(from, to);
@@ -188,10 +188,10 @@ struct VertexComparator {
       return false;
     }
 
-    if(underlying(strictness) >= underlying(VertexStrictness::SubsumeSymmetry)) {
+    if(underlying(strictness) >= underlying(VertexStrictness::SubsumeShape)) {
       throw std::logic_error("Not implemented!");
       /* Determine if there is a low-effort (< 0.2 per step) transition from
-       * the lower symmetry to the larger one, provided both vertices are
+       * the lower shape to the larger one, provided both vertices are
        * non-terminal in each molecule and both have a stereocenter defined on
        * it
        */
@@ -199,16 +199,16 @@ struct VertexComparator {
       auto jAtomStereocenterOption = b.stereopermutators().option(j);
 
       if(iAtomStereocenterOption && jAtomStereocenterOption) {
-        Symmetry::Name iSymmetry = iAtomStereocenterOption->getSymmetry();
-        Symmetry::Name jSymmetry = jAtomStereocenterOption->getSymmetry();
+        Symmetry::Shape iShape = iAtomStereocenterOption->getShape();
+        Symmetry::Shape jShape = jAtomStereocenterOption->getShape();
 
-        if(iSymmetry != jSymmetry) {
+        if(iShape != jShape) {
           // Establish ordering for the call to lowEffortMapping
-          if(Symmetry::size(iSymmetry) > Symmetry::size(jSymmetry)) {
-            std::swap(iSymmetry, jSymmetry);
+          if(Symmetry::size(iShape) > Symmetry::size(jShape)) {
+            std::swap(iShape, jShape);
           }
 
-          if(!lowEffortMapping(iSymmetry, jSymmetry)) {
+          if(!lowEffortMapping(iShape, jShape)) {
             return false;
           }
         }
@@ -216,7 +216,7 @@ struct VertexComparator {
     }
 
     if(underlying(strictness) >= underlying(VertexStrictness::SubsumeStereopermutation)) {
-      /* Determine if the symmetry on both vertices is the same, provided both
+      /* Determine if the shape on both vertices is the same, provided both
        * vertices are non-terminal
        */
       throw std::logic_error("Not implemented!");

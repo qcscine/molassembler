@@ -40,16 +40,16 @@ namespace molassembler {
 
 namespace detail {
 
-Symmetry::Name pickTransition(
-  const Symmetry::Name symmetryName,
+Symmetry::Shape pickTransition(
+  const Symmetry::Shape shape,
   const unsigned T,
   boost::optional<unsigned> removedSymmetryPositionOptional
 ) {
   boost::optional<Symmetry::properties::SymmetryTransitionGroup> bestTransition;
-  std::vector<Symmetry::Name> propositions;
+  std::vector<Symmetry::Shape> propositions;
 
   auto replaceOrAdd = [&](
-    Symmetry::Name newName,
+    Symmetry::Shape newName,
     const Symmetry::properties::SymmetryTransitionGroup& transitionGroup
   ) {
     if(bestTransition){
@@ -67,13 +67,13 @@ Symmetry::Name pickTransition(
     }
   };
 
-  // Populate the list of symmetries with candidates
-  for(const Symmetry::Name propositionalName : Symmetry::allNames) {
-    if(Symmetry::size(propositionalName) != T) {
+  // Populate the list of shape with candidates
+  for(const Symmetry::Shape propositionalShape : Symmetry::allShapes) {
+    if(Symmetry::size(propositionalShape) != T) {
       continue;
     }
 
-    if(auto transitionOptional = Symmetry::getMapping(symmetryName, propositionalName, removedSymmetryPositionOptional)) {
+    if(auto transitionOptional = Symmetry::getMapping(shape, propositionalShape, removedSymmetryPositionOptional)) {
       if(transitionOptional->indexMappings.empty()) {
         continue;
       }
@@ -83,18 +83,18 @@ Symmetry::Name pickTransition(
         && transitionOptional->indexMappings.size() == 1
         && transitionOptional->angularDistortion <= 0.2
       ) {
-        replaceOrAdd(propositionalName, *transitionOptional);
+        replaceOrAdd(propositionalShape, *transitionOptional);
       }
 
       if(
         Options::chiralStatePreservation == ChiralStatePreservation::Unique
         && transitionOptional->indexMappings.size() == 1
       ) {
-        replaceOrAdd(propositionalName, *transitionOptional);
+        replaceOrAdd(propositionalShape, *transitionOptional);
       }
 
       if(Options::chiralStatePreservation == ChiralStatePreservation::RandomFromMultipleBest) {
-        replaceOrAdd(propositionalName, *transitionOptional);
+        replaceOrAdd(propositionalShape, *transitionOptional);
       }
     }
   }
@@ -112,12 +112,12 @@ Symmetry::Name pickTransition(
 
 } // namespace detail
 
-Symmetry::Name AtomStereopermutator::Impl::up(const Symmetry::Name symmetryName) {
-  return detail::pickTransition(symmetryName, Symmetry::size(symmetryName) + 1, boost::none);
+Symmetry::Shape AtomStereopermutator::Impl::up(const Symmetry::Shape shape) {
+  return detail::pickTransition(shape, Symmetry::size(shape) + 1, boost::none);
 }
 
-Symmetry::Name AtomStereopermutator::Impl::down(const Symmetry::Name symmetryName, const unsigned removedSymmetryPosition) {
-  return detail::pickTransition(symmetryName, Symmetry::size(symmetryName) - 1, removedSymmetryPosition);
+Symmetry::Shape AtomStereopermutator::Impl::down(const Symmetry::Shape shape, const unsigned removedShapePosition) {
+  return detail::pickTransition(shape, Symmetry::size(shape) - 1, removedShapePosition);
 }
 
 boost::optional<std::vector<unsigned>> AtomStereopermutator::Impl::getIndexMapping(
@@ -160,18 +160,18 @@ boost::optional<std::vector<unsigned>> AtomStereopermutator::Impl::getIndexMappi
 AtomStereopermutator::Impl::Impl(
   const OuterGraph& graph,
   // The symmetry of this Stereopermutator
-  const Symmetry::Name symmetry,
+  const Symmetry::Shape shape,
   // The atom this Stereopermutator is centered on
   const AtomIndex centerAtom,
   // Ranking information of substituents
   RankingInformation ranking
 ) : _centerAtom {centerAtom},
-    _symmetry {symmetry},
+    _shape {shape},
     _ranking {std::move(ranking)},
-    _abstract {_ranking, _symmetry},
-    _feasible {_abstract, _symmetry, _centerAtom, _ranking, graph},
+    _abstract {_ranking, _shape},
+    _feasible {_abstract, _shape, _centerAtom, _ranking, graph},
     _assignmentOption {boost::none},
-    _symmetryPositionMap {}
+    _shapePositionMap {}
 {}
 
 /* Modification */
@@ -187,7 +187,7 @@ void AtomStereopermutator::Impl::assign(boost::optional<unsigned> assignment) {
    * assigning (AtomIndex -> unsigned).
    */
   if(_assignmentOption) {
-    _symmetryPositionMap = siteToSymmetryPositionMap(
+    _shapePositionMap = siteToSymmetryPositionMap(
       _abstract.permutations.stereopermutations.at(
         _feasible.indices.at(
           _assignmentOption.value()
@@ -196,7 +196,7 @@ void AtomStereopermutator::Impl::assign(boost::optional<unsigned> assignment) {
       _abstract.canonicalSites
     );
   } else { // Wipe the map
-    _symmetryPositionMap.clear();
+    _shapePositionMap.clear();
   }
 }
 
@@ -222,7 +222,7 @@ void AtomStereopermutator::Impl::applyPermutation(const std::vector<AtomIndex>& 
   // _centerAtom must change
   _centerAtom = permutation.at(_centerAtom);
 
-  // Neither symmetry nor assignment change
+  // Neither shape nor assignment change
 
   /* Although ranking and central atom are implicated in its creation,
    * abstract and feasible's states are independent of atom indices.
@@ -232,7 +232,7 @@ void AtomStereopermutator::Impl::applyPermutation(const std::vector<AtomIndex>& 
 boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Impl::propagate(
   const OuterGraph& graph,
   RankingInformation newRanking,
-  boost::optional<Symmetry::Name> symmetryOption
+  boost::optional<Symmetry::Shape> shapeOption
 ) {
   // If nothing changes, nothing changes, and you don't get any internal state
   if(newRanking == _ranking) {
@@ -256,15 +256,15 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
 
   /* There are five possible situations that can occur here:
    * - A substituent is removed, and that substituent was sole constituent of a
-   *   site, leading to a symmetry size decrease.
+   *   site, leading to a shape size decrease.
    * - A substituent is removed, but that substituent was part of a site with
-   *   multiple constituents. The symmetry stays the same.
+   *   multiple constituents. The shape stays the same.
    * - No substituent is removed or added, but there is a ranking change. The
-   *   symmetry stays the same.
-   * - A substituent is added, but to an existing site. The symmetry stays
+   *   shape stays the same.
+   * - A substituent is added, but to an existing site. The shape stays
    *   the same.
    * - A substituent is added that by itself constitutes a new site. The
-   *   symmetry size increases.
+   *   shape size increases.
    */
   enum class PropagationSituation {
     Unknown,
@@ -372,15 +372,15 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
     situation = PropagationSituation::RankingChange;
   }
 
-  /* Decide the new symmetry */
-  Symmetry::Name newSymmetry = symmetryOption.value_or_eval(
+  /* Decide the new shape */
+  Symmetry::Shape newShape = shapeOption.value_or_eval(
     [&]() {
       if(siteCountChange == +1) {
-        return up(_symmetry);
+        return up(_shape);
       }
 
       if(siteCountChange == 0) {
-        return _symmetry;
+        return _shape;
       }
 
       assert(siteCountChange == -1);
@@ -392,8 +392,8 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
        */
       if(_assignmentOption) {
         return down(
-          _symmetry,
-          _symmetryPositionMap.at(alteredSiteIndex.value())
+          _shape,
+          _shapePositionMap.at(alteredSiteIndex.value())
         );
       }
 
@@ -407,12 +407,12 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
   /* Generate new assignments */
   AbstractStereopermutations newAbstract {
     newRanking,
-    newSymmetry
+    newShape
   };
 
   FeasibleStereopermutations newFeasible {
     newAbstract,
-    newSymmetry,
+    newShape,
     _centerAtom,
     newRanking,
     graph
@@ -442,8 +442,8 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
        */
       auto suitableMappingOption = temple::optionals::flatMap(
         Symmetry::getMapping(
-          _symmetry,
-          newSymmetry,
+          _shape,
+          newShape,
           boost::none
         ),
         [&](const auto& mappingOption) {
@@ -462,21 +462,21 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
 
         // Apply the mapping to get old symmetry positions at their places in the new symmetry
         auto oldSymmetryPositionsInNewSymmetry = Symmetry::properties::applyIndexMapping(
-          newSymmetry,
+          newShape,
           symmetryMapping
         );
 
         // Invert symmetryPositionMap to get: site = map.at(symmetryPosition)
-        std::vector<unsigned> oldSymmetryPositionToSiteMap(_symmetryPositionMap.size());
-        for(unsigned i = 0 ; i < _symmetryPositionMap.size(); ++i) {
+        std::vector<unsigned> oldSymmetryPositionToSiteMap(_shapePositionMap.size());
+        for(unsigned i = 0 ; i < _shapePositionMap.size(); ++i) {
           oldSymmetryPositionToSiteMap.at(
-            _symmetryPositionMap.at(i)
+            _shapePositionMap.at(i)
           ) = i;
         }
         /* We assume the new site is also merely added to the end! This may
          * not always be true
          */
-        oldSymmetryPositionToSiteMap.push_back(_symmetryPositionMap.size());
+        oldSymmetryPositionToSiteMap.push_back(_shapePositionMap.size());
 
         // Replace old symmetry positions by their site indices
         sitesAtNewSymmetryPositions = temple::map(
@@ -499,12 +499,12 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
        */
       auto suitableMappingOptional = temple::optionals::flatMap(
         Symmetry::getMapping(
-          _symmetry,
-          newSymmetry,
+          _shape,
+          newShape,
           /* Last parameter is the deleted symmetry position, which is the
            * symmetry position at which the site being removed is currently at
            */
-          _symmetryPositionMap.at(*alteredSiteIndex)
+          _shapePositionMap.at(*alteredSiteIndex)
         ),
         [&](const auto& mappingOptional) {
           return getIndexMapping(mappingOptional, Options::chiralStatePreservation);
@@ -525,16 +525,16 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
         const auto& symmetryMapping = suitableMappingOptional.value();
 
         // Invert symmetryPositionMap to get: site = map.at(symmetryPosition)
-        std::vector<unsigned> oldSymmetryPositionToSiteMap(_symmetryPositionMap.size());
-        for(unsigned i = 0 ; i < _symmetryPositionMap.size(); ++i) {
+        std::vector<unsigned> oldSymmetryPositionToSiteMap(_shapePositionMap.size());
+        for(unsigned i = 0 ; i < _shapePositionMap.size(); ++i) {
           oldSymmetryPositionToSiteMap.at(
-            _symmetryPositionMap.at(i)
+            _shapePositionMap.at(i)
           ) = i;
         }
 
         // Transfer indices from current symmetry to new symmetry
-        sitesAtNewSymmetryPositions.resize(Symmetry::size(newSymmetry));
-        for(unsigned i = 0; i < Symmetry::size(newSymmetry); ++i) {
+        sitesAtNewSymmetryPositions.resize(Symmetry::size(newShape));
+        for(unsigned i = 0; i < Symmetry::size(newShape); ++i) {
           // i is a symmetry position
           sitesAtNewSymmetryPositions.at(i) = oldSymmetryPositionToSiteMap.at(
             symmetryMapping.at(i)
@@ -572,10 +572,10 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
       );
 
       // Write the found mapping into sitesAtNewSymmetryPositions
-      sitesAtNewSymmetryPositions.resize(Symmetry::size(newSymmetry));
+      sitesAtNewSymmetryPositions.resize(Symmetry::size(newShape));
       for(unsigned i = 0; i < siteMapping.size(); ++i) {
         sitesAtNewSymmetryPositions.at(i) = siteMapping.at(
-          _symmetryPositionMap.at(i)
+          _shapePositionMap.at(i)
         );
       }
 
@@ -613,11 +613,11 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
         }
       );
 
-      sitesAtNewSymmetryPositions.resize(Symmetry::size(newSymmetry));
+      sitesAtNewSymmetryPositions.resize(Symmetry::size(newShape));
       // Transfer sites to new mapping
       for(unsigned i = 0; i < siteMapping.size(); ++i) {
         sitesAtNewSymmetryPositions.at(i) = siteMapping.at(
-          _symmetryPositionMap.at(i)
+          _shapePositionMap.at(i)
         );
       }
 
@@ -666,7 +666,7 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
       );
 
       // Generate all rotations of this trial assignment
-      auto allTrialRotations = trialStereopermutation.generateAllRotations(newSymmetry);
+      auto allTrialRotations = trialStereopermutation.generateAllRotations(newShape);
 
       // Find out which of the new assignments has a rotational equivalent
       for(unsigned i = 0; i < newAbstract.permutations.stereopermutations.size(); ++i) {
@@ -708,7 +708,7 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
   );
 
   // Overwrite the class state
-  _symmetry = newSymmetry;
+  _shape = newShape;
   _ranking = std::move(newRanking);
   _abstract = std::move(newAbstract);
   _feasible = std::move(newFeasible);
@@ -782,11 +782,11 @@ const RankingInformation& AtomStereopermutator::Impl::getRanking() const {
   return _ranking;
 }
 
-Symmetry::Name AtomStereopermutator::Impl::getSymmetry() const {
-  return _symmetry;
+Symmetry::Shape AtomStereopermutator::Impl::getShape() const {
+  return _shape;
 }
 
-const std::vector<unsigned>& AtomStereopermutator::Impl::getSymmetryPositionMap() const {
+const std::vector<unsigned>& AtomStereopermutator::Impl::getShapePositionMap() const {
   if(_assignmentOption == boost::none) {
     throw std::logic_error(
       "The AtomStereopermutator is unassigned, sites are not assigned to "
@@ -794,14 +794,14 @@ const std::vector<unsigned>& AtomStereopermutator::Impl::getSymmetryPositionMap(
     );
   }
 
-  return _symmetryPositionMap;
+  return _shapePositionMap;
 }
 
 void AtomStereopermutator::Impl::fit(
   const OuterGraph& graph,
   const AngstromWrapper& angstromWrapper
 ) {
-  const unsigned S = Symmetry::size(_symmetry);
+  const unsigned S = Symmetry::size(_shape);
   assert(S == _ranking.sites.size());
 
   // For all atoms making up a site, decide on the spatial average position
@@ -810,7 +810,7 @@ void AtomStereopermutator::Impl::fit(
     sitePositions.col(i) = cartesian::averagePosition(angstromWrapper.positions, _ranking.sites.at(i));
   }
 
-  std::vector<Symmetry::Name> excludeSymmetries;
+  std::vector<Symmetry::Shape> excludeShapes;
 
   /* Special case for trigonal bipyramidal and square pyramidal: tau-calculation
    */
@@ -844,15 +844,15 @@ void AtomStereopermutator::Impl::fit(
        */
       if(tau < 0.12) {
         // Symmetry is square planar
-        excludeSymmetries.push_back(Symmetry::Name::Seesaw);
-        excludeSymmetries.push_back(Symmetry::Name::Tetrahedral);
+        excludeShapes.push_back(Symmetry::Shape::Disphenoid);
+        excludeShapes.push_back(Symmetry::Shape::Tetrahedron);
       } else if(0.12 <= tau && tau < 0.62) {
-        excludeSymmetries.push_back(Symmetry::Name::SquarePlanar);
+        excludeShapes.push_back(Symmetry::Shape::Square);
         // Symmetry is seesaw
-        excludeSymmetries.push_back(Symmetry::Name::Tetrahedral);
+        excludeShapes.push_back(Symmetry::Shape::Tetrahedron);
       } else if(0.62 <= tau) {
-        excludeSymmetries.push_back(Symmetry::Name::SquarePlanar);
-        excludeSymmetries.push_back(Symmetry::Name::Seesaw);
+        excludeShapes.push_back(Symmetry::Shape::Square);
+        excludeShapes.push_back(Symmetry::Shape::Disphenoid);
         // Symmetry is tetrahedral
       }
     } else if(S == 5) {
@@ -862,37 +862,37 @@ void AtomStereopermutator::Impl::fit(
        */
 
       if(tau < 0.5) {
-        excludeSymmetries.push_back(Symmetry::Name::TrigonalBiPyramidal);
+        excludeShapes.push_back(Symmetry::Shape::TrigonalBipyramid);
       } else if(tau > 0.5) {
-        excludeSymmetries.push_back(Symmetry::Name::SquarePyramidal);
+        excludeShapes.push_back(Symmetry::Shape::SquarePyramid);
       }
     }
   }
 
   // Save stereopermutator state to return to if no fit is viable
-  const Symmetry::Name priorSymmetry = _symmetry;
+  const Symmetry::Shape priorShape = _shape;
   const boost::optional<unsigned> priorStereopermutation  = _assignmentOption;
 
-  const Symmetry::Name initialSymmetry {Symmetry::Name::Linear};
+  const Symmetry::Shape initialShape {Symmetry::Shape::Line};
   const unsigned initialStereopermutation = 0;
   const double initialPenalty = 100;
 
-  Symmetry::Name bestSymmetry = initialSymmetry;
+  Symmetry::Shape bestShape = initialShape;
   unsigned bestStereopermutation = initialStereopermutation;
   double bestPenalty = initialPenalty;
   unsigned bestStereopermutationMultiplicity = 1;
 
-  auto excludesContains = temple::makeContainsPredicate(excludeSymmetries);
+  auto excludesContains = temple::makeContainsPredicate(excludeShapes);
 
   // Cycle through all symmetries
-  for(const auto& symmetryName : Symmetry::allNames) {
-    // Skip any Symmetries of different size
-    if(Symmetry::size(symmetryName) != S || excludesContains(symmetryName)) {
+  for(const auto& shape : Symmetry::allShapes) {
+    // Skip any shapes of different size
+    if(Symmetry::size(shape) != S || excludesContains(shape)) {
       continue;
     }
 
-    // Change the symmetry of the AtomStereopermutator
-    setSymmetry(symmetryName, graph);
+    // Change the shape of the AtomStereopermutator
+    setShape(shape, graph);
 
     const unsigned assignmentCount = numAssignments();
 
@@ -903,7 +903,7 @@ void AtomStereopermutator::Impl::fit(
       const double angleDeviations = temple::sum(
         temple::adaptors::transform(
           temple::adaptors::allPairs(
-            temple::adaptors::range(Symmetry::size(_symmetry))
+            temple::adaptors::range(Symmetry::size(_shape))
           ),
           [&](const unsigned siteI, const unsigned siteJ) -> double {
             return std::fabs(
@@ -928,7 +928,7 @@ void AtomStereopermutator::Impl::fit(
       const double oneThreeDistanceDeviations = temple::sum(
         temple::adaptors::transform(
           temple::adaptors::allPairs(
-            temple::adaptors::range(Symmetry::size(_symmetry))
+            temple::adaptors::range(Symmetry::size(_shape))
           ),
           [&](const unsigned siteI, const unsigned siteJ) -> double {
             return std::fabs(
@@ -991,14 +991,16 @@ void AtomStereopermutator::Impl::fit(
         )
       );
 
-      double fitPenalty = angleDeviations
+      double fitPenalty = (
+        angleDeviations
         + oneThreeDistanceDeviations
-        + chiralityDeviations;
+        + chiralityDeviations
+      );
 
 
 #ifndef NDEBUG
       Log::log(Log::Particulars::AtomStereopermutatorFit)
-        << Symmetry::nameIndex(symmetryName)
+        << Symmetry::nameIndex(shape)
         << ", " << assignment
         << ", " << std::setprecision(4) << std::fixed
         << angleDeviations << ", "
@@ -1008,13 +1010,13 @@ void AtomStereopermutator::Impl::fit(
 #endif
 
       if(fitPenalty < bestPenalty) {
-        bestSymmetry = symmetryName;
+        bestShape = shape;
         bestStereopermutation = assignment;
         bestPenalty = fitPenalty;
         bestStereopermutationMultiplicity = 1;
       } else if(fitPenalty == bestPenalty) {
         // Assume that IF we have multiplicity, it's from the same symmetry
-        assert(bestSymmetry == symmetryName);
+        assert(bestShape == shape);
         bestStereopermutationMultiplicity += 1;
       }
     }
@@ -1031,16 +1033,16 @@ void AtomStereopermutator::Impl::fit(
    * Just being safe.
    */
   if(
-    bestSymmetry == initialSymmetry
+    bestShape == initialShape
     && bestStereopermutation == initialStereopermutation
     && bestPenalty == initialPenalty
   ) {
     // Return to prior
-    setSymmetry(priorSymmetry, graph);
+    setShape(priorShape, graph);
     assign(priorStereopermutation);
   } else {
     // Set to best fit
-    setSymmetry(bestSymmetry, graph);
+    setShape(bestShape, graph);
 
     /* How to handle multiplicity?
      * Current policy: If there is multiplicity, do not assign
@@ -1059,11 +1061,11 @@ double AtomStereopermutator::Impl::angle(
   const unsigned j
 ) const {
   assert(i != j);
-  assert(!_symmetryPositionMap.empty());
+  assert(!_shapePositionMap.empty());
 
-  return Symmetry::angleFunction(_symmetry)(
-    _symmetryPositionMap.at(i),
-    _symmetryPositionMap.at(j)
+  return Symmetry::angleFunction(_shape)(
+    _shapePositionMap.at(i),
+    _shapePositionMap.at(j)
   );
 }
 
@@ -1128,7 +1130,7 @@ AtomStereopermutator::Impl::minimalChiralConstraints(bool enforce) const {
     );
 
     // Get list of tetrahedra from symmetry
-    const auto& tetrahedraList = Symmetry::tetrahedra(_symmetry);
+    const auto& tetrahedraList = Symmetry::tetrahedra(_shape);
 
     precursors.reserve(tetrahedraList.size());
     for(const auto& tetrahedron : tetrahedraList) {
@@ -1159,7 +1161,7 @@ AtomStereopermutator::Impl::minimalChiralConstraints(bool enforce) const {
 
 std::string AtomStereopermutator::Impl::info() const {
   std::string returnString = "A on "s
-    + std::to_string(_centerAtom) + " ("s + Symmetry::name(_symmetry) +", "s;
+    + std::to_string(_centerAtom) + " ("s + Symmetry::name(_shape) +", "s;
 
   const auto& characters = _abstract.symbolicCharacters;
   std::copy(
@@ -1196,7 +1198,7 @@ std::string AtomStereopermutator::Impl::rankInfo() const {
    * and MUST use indices of permutation
    */
   return (
-    "A-"s + std::to_string(static_cast<unsigned>(_symmetry))
+    "A-"s + std::to_string(static_cast<unsigned>(_shape))
     + "-"s + std::to_string(numStereopermutations())
     + "-"s + (
       indexOfPermutation()
@@ -1214,25 +1216,25 @@ unsigned AtomStereopermutator::Impl::numStereopermutations() const {
   return _abstract.permutations.stereopermutations.size();
 }
 
-void AtomStereopermutator::Impl::setSymmetry(
-  const Symmetry::Name symmetryName,
+void AtomStereopermutator::Impl::setShape(
+  const Symmetry::Shape shape,
   const OuterGraph& graph
 ) {
-  if(_symmetry == symmetryName) {
+  if(_shape == shape) {
     // If the symmetry doesn't actually change, then nothing does
     return;
   }
 
-  _symmetry = symmetryName;
+  _shape = shape;
 
   _abstract = AbstractStereopermutations {
     _ranking,
-    _symmetry
+    _shape
   };
 
   _feasible = FeasibleStereopermutations {
     _abstract,
-    _symmetry,
+    _shape,
     _centerAtom,
     _ranking,
     graph

@@ -29,7 +29,7 @@ bool enantiomeric(const Molecule& a, const Molecule& b) {
   // Use weaker definition
   constexpr auto bitmask = AtomEnvironmentComponents::ElementTypes
     | AtomEnvironmentComponents::BondOrders
-    | AtomEnvironmentComponents::Symmetries;
+    | AtomEnvironmentComponents::Shapes;
 
   if(
     a.canonicalComponents() != bitmask
@@ -61,12 +61,12 @@ bool enantiomeric(const Molecule& a, const Molecule& b) {
   }
 
   /* Comparing stereopermutations for enantiomerism can yield three results:
-   * - In this symmetry, there are no enantiomers
-   * - In this symmetry, there are enantiomers
+   * - In this shape, there are no enantiomers
+   * - In this shape, there are enantiomers
    *   - These two are enantiomeric
    *   - These two are not enantiomeric
    *
-   * If we encounter only pairs in whose symmetries no enantiomers exist, then
+   * If we encounter only pairs in whose shapes no enantiomers exist, then
    * the molecules are not enantiomeric.
    *
    * If we encounter a single pair that is not enantiomeric, then the molecules
@@ -74,7 +74,7 @@ bool enantiomeric(const Molecule& a, const Molecule& b) {
    *
    * For the molecules to be enantiomeric, we must encounter at least one
    * enantiomeric pair of permutators and no non-enantiomeric pairs. Pairs
-   * of permutators whose symmetries have no enantiomers are ignored.
+   * of permutators whose shapes have no enantiomers are ignored.
    */
   bool atLeastOneEnantiomericPair = false;
 
@@ -104,8 +104,8 @@ bool enantiomeric(const Molecule& a, const Molecule& b) {
       return false;
     }
 
-    // If the symmetries do not match, these molecules cannot be enantiomers
-    if(aPermutator.getSymmetry() != bPermutator.getSymmetry()) {
+    // If the shapes do not match, these molecules cannot be enantiomers
+    if(aPermutator.getShape() != bPermutator.getShape()) {
       return false;
     }
 
@@ -119,7 +119,7 @@ bool enantiomeric(const Molecule& a, const Molecule& b) {
     // Stereopermutation enantiomerism comparison
     boost::optional<bool> enantiomericPairOption = aPermutation.isEnantiomer(
       bPermutation,
-      aPermutator.getSymmetry()
+      aPermutator.getShape()
     );
 
     if(enantiomericPairOption) {
@@ -149,8 +149,8 @@ Molecule enantiomer(const Molecule& a) {
       continue;
     }
 
-    // If there are no enantiomers for this symmetry, we skip the permutator
-    const auto& mirrorPermutation = Symmetry::mirror(permutator.getSymmetry());
+    // If there are no enantiomers for this shape, we skip the permutator
+    const auto& mirrorPermutation = Symmetry::mirror(permutator.getShape());
     if(mirrorPermutation.empty()) {
       continue;
     }
@@ -171,7 +171,7 @@ Molecule enantiomer(const Molecule& a) {
       [&](const auto& permutation) -> bool {
         return permutation.isRotationallySuperimposable(
           currentStereopermutation,
-          permutator.getSymmetry()
+          permutator.getShape()
         );
       }
     );

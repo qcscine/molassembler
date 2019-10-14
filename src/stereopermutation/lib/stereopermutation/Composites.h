@@ -11,7 +11,7 @@
 #ifndef INCLUDE_MOLASSEMBLER_STEREOPERMUTATION_COMPOSITES_H
 #define INCLUDE_MOLASSEMBLER_STEREOPERMUTATION_COMPOSITES_H
 
-#include "chemical_symmetries/Names.h"
+#include "chemical_symmetries/Shapes.h"
 #include "temple/OrderedPair.h"
 #include "temple/constexpr/FloatingPointComparison.h"
 #include "temple/OperatorSuppliers.h"
@@ -56,7 +56,7 @@ public:
    */
   struct OrientationState : public temple::crtp::LexicographicComparable<OrientationState> {
     //! The symmetry of either positional symmetry
-    Symmetry::Name symmetry;
+    Symmetry::Shape symmetry;
     //! The symmetry position of the local symmetry that the other is fused at
     unsigned fusedPosition;
     //! Abstract ranking-characters of the ligands at their symmetry positions
@@ -72,7 +72,7 @@ public:
 
     //! Member initializing constructor
     OrientationState(
-      Symmetry::Name passSymmetry,
+      Symmetry::Shape passSymmetry,
       unsigned passFusedPosition,
       std::vector<char> passCharacters,
       std::size_t passIdentifier
@@ -194,20 +194,20 @@ public:
   /*!
    * @brief Generates a symmetry rotation subject to constraints
    *
-   * @param symmetryName The symmetry in which the rotation is sought
-   * @param fixedSymmetryPosition The symmetry position in symmetryName that is
+   * @param shape The symmetry in which the rotation is sought
+   * @param fixedSymmetryPosition The symmetry position in shape that is
    *   to be kept constant
    * @param changedPositions The symmetry positions which must change in the
    *   sought rotation
    */
   static std::vector<unsigned> generateRotation(
-    Symmetry::Name symmetryName,
+    Symmetry::Shape shape,
     unsigned fixedSymmetryPosition,
     const std::vector<unsigned>& changedPositions
   );
 
   static std::vector<unsigned> rotation(
-    Symmetry::Name symmetryName,
+    Symmetry::Shape shape,
     unsigned fixedSymmetryPosition,
     const std::vector<unsigned>& perpendicularPlanePositions
   );
@@ -215,7 +215,7 @@ public:
   //! Creates sets of within-group cross angles in the perpendicular plane
   static PerpendicularAngleGroups inGroupAngles(
     const AngleGroup& angleGroup,
-    Symmetry::Name symmetryName
+    Symmetry::Shape shape
   );
 //!@}
 

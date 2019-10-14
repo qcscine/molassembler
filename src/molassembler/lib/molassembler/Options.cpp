@@ -25,7 +25,7 @@ random::Engine& randomnessEngine() {
 TemperatureRegime Options::temperatureRegime = TemperatureRegime::High;
 ChiralStatePreservation Options::chiralStatePreservation = ChiralStatePreservation::EffortlessAndUnique;
 TauCriterion Options::tauCriterion = TauCriterion::Enable;
-SymmetryTransition Options::symmetryTransition = SymmetryTransition::MaximizeChiralStatePreservation;
+ShapeTransition Options::shapeTransition = ShapeTransition::MaximizeChiralStatePreservation;
 
 bool disregardStereopermutator(
   const AtomStereopermutator& stereopermutator,
@@ -35,7 +35,7 @@ bool disregardStereopermutator(
 ) {
   if(
     temperatureRegimeSetting == TemperatureRegime::High
-    && stereopermutator.getSymmetry() == Symmetry::Name::CutTetrahedral
+    && stereopermutator.getShape() == Symmetry::Shape::ApicalTrigonalPyramid
     && centralType == Scine::Utils::ElementType::N
   ) {
     // Figure out if the nitrogen is in a cycle of size 4 or smaller

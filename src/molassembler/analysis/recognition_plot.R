@@ -39,7 +39,7 @@ barplot_matrix <- function(symmetryIndex, recognizer) {
   bp <- barplot(
     m,
     horiz=TRUE,
-    main=paste(c(recognizers[recognizer], symmetryNames[symmetryIndex])),
+    main=paste(c(recognizers[recognizer], shapeNames[symmetryIndex])),
     xlab="Identified symmetry frequencies",
     ylab="Distortion vector norms",
     names.arg=x.values
@@ -51,8 +51,8 @@ barplot_matrix <- function(symmetryIndex, recognizer) {
   for(i in 1:nrow(m)) {
     for(j in 1:ncol(m)) {
       # Populate the current label only if the name can fit into the bar
-      if(m[i, j] > strwidth(symmetryNames[expected_symmetry_indices[i] + 1]) + 1) {
-        xlabels <- c(xlabels, symmetryNames[expected_symmetry_indices[i] + 1])
+      if(m[i, j] > strwidth(shapeNames[expected_symmetry_indices[i] + 1]) + 1) {
+        xlabels <- c(xlabels, shapeNames[expected_symmetry_indices[i] + 1])
       } else {
         xlabels <- c(xlabels, "")
       }
@@ -81,7 +81,7 @@ multibarplot <- function(symmetryIndex) {
   dev.off()
 }
 
-for(i in 1:length(symmetryNames)) {
+for(i in 1:length(shapeNames)) {
   multibarplot(i)
 }
 
@@ -107,7 +107,7 @@ compare_algorithms_plot <- function(symmetryIndex) {
     ylim=c(0, 100),
     xlab="Distortion vector norms",
     ylab="Frequency correctly identified symmetry",
-    main=paste("Algorithm comparison", symmetryNames[symmetryIndex])
+    main=paste("Algorithm comparison", shapeNames[symmetryIndex])
   )
   colors <- c("black", "tomato", "steelblue", "slateblue", "yellowgreen")
   for(i in 1:length(recognizers)) {

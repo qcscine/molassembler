@@ -48,7 +48,7 @@ struct Expectation {
 };
 
 /* This is the current interpretation of yielded indices of permutations of
- * BondStereopermutator for all combinations of the symmetries trigonal planar and
+ * BondStereopermutator for all combinations of the shapes triangle and
  * bent.
  */
 constexpr unsigned Z = 1;
@@ -253,7 +253,7 @@ BOOST_AUTO_TEST_CASE(StereocentersInSmallCycles) {
 
     // Set geometries
     for(unsigned i = 0; i < cycleSize; ++i) {
-      mol.setGeometryAtAtom(i, Symmetry::Name::Bent);
+      mol.setShapeAtAtom(i, Symmetry::Shape::Bent);
     }
 
     auto bondStereopermutatorOption = mol.stereopermutators().option(BondIndex {0, 1});

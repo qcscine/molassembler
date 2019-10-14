@@ -3,6 +3,7 @@ build*
 install/
 install*
 .lvimrc
+.nvimrc
 .commit-notes
 *.log
 *.aux

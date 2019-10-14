@@ -93,7 +93,7 @@ void init_molecule(pybind11::module& m) {
   molecule.def(
     pybind11::init<OuterGraph>(),
     pybind11::arg("graph"),
-    "Initialize a molecule from connectivity alone, inferring symmetries and "
+    "Initialize a molecule from connectivity alone, inferring shapes and "
     "stereopermutators from the graph"
   );
 
@@ -209,11 +209,11 @@ void init_molecule(pybind11::module& m) {
   );
 
   molecule.def(
-    "set_geometry_at_atom",
-    &Molecule::setGeometryAtAtom,
+    "set_shape_at_atom",
+    &Molecule::setShapeAtAtom,
     pybind11::arg("atom"),
-    pybind11::arg("symmetry"),
-    "Change the local geometry at an atom"
+    pybind11::arg("shape"),
+    "Change the local shape at an atom"
   );
 
   /* Information */

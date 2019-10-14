@@ -10,7 +10,7 @@
 #ifndef INCLUDE_MOLASSEMBLER_STEREOPERMUTATIONS_STEREOPERMUTATION_H
 #define INCLUDE_MOLASSEMBLER_STEREOPERMUTATIONS_STEREOPERMUTATION_H
 
-#include "chemical_symmetries/Names.h"
+#include "chemical_symmetries/Shapes.h"
 #include "temple/Preprocessor.h"
 #include "temple/OperatorSuppliers.h"
 
@@ -162,7 +162,7 @@ public:
    * @complexity{@math{O(\prod_i^Rm_i)} where @math{R} is the set of rotations and
    * @math{m_i} is the multiplicity of rotation @math{i}}
    */
-  std::set<Stereopermutation> generateAllRotations(const Symmetry::Name& symmetryName) const;
+  std::set<Stereopermutation> generateAllRotations(const Symmetry::Shape& shape) const;
 
   /*!
    * Gets a map of ligand symbol character to position(s) in the permutational
@@ -193,7 +193,7 @@ public:
    */
   boost::optional<bool> isEnantiomer(
     const Stereopermutation& other,
-    const Symmetry::Name& symmetryName
+    const Symmetry::Shape& shape
   ) const;
 
   /*!
@@ -204,7 +204,7 @@ public:
    */
   bool isRotationallySuperimposable(
     const Stereopermutation& other,
-    const Symmetry::Name& symmetryName
+    const Symmetry::Shape& shape
   ) const;
 
   /*!
@@ -244,7 +244,7 @@ private:
     const std::function<
       bool(const Stereopermutation&, const Stereopermutation&)
     >& interruptCallbackOnNewStereopermutation,
-    const Symmetry::Name symmetryName
+    const Symmetry::Shape shape
   ) const;
 };
 

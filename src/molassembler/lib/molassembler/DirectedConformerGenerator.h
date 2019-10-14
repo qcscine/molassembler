@@ -153,7 +153,7 @@ public:
    * @param smallestCycleMap A map of atom indices to the smallest cycle
    *   they are in
    *
-   * @complexity{@math{O(S!)} where @math{S} is the size of the larger symmetry
+   * @complexity{@math{O(S!)} where @math{S} is the size of the larger shape
    * constituting @p bondIndex}
    *
    * @see makeSmallestCycleMap
@@ -215,7 +215,7 @@ public:
    *   tested against considerBond().
    *
    * @complexity{@math{\Theta(B)} where @math{B} is the number of bonds in the
-   * molecule. If there is a particularly large symmetry in the molecule, this
+   * molecule. If there is a particularly large shape in the molecule, this
    * can dominate with @math{\Theta(S!)}.}
    *
    * Scales linearly with the number of bonds in @p molecule or

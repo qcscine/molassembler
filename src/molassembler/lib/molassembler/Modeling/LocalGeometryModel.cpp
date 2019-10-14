@@ -32,7 +32,7 @@ const std::map<BondType, double> bondWeights {
   {BondType::Eta, 0.0}
 };
 
-boost::optional<Symmetry::Name> vsepr(
+boost::optional<Symmetry::Shape> vsepr(
   const Scine::Utils::ElementType centerAtomType,
   const std::vector<BindingSiteInformation>& sites,
   const int formalCharge
@@ -96,82 +96,82 @@ boost::optional<Symmetry::Name> vsepr(
     return boost::none;
   }
 
-  using Symmetry::Name;
+  using Symmetry::Shape;
 
   const auto XESum = X + E;
 
   if(XESum == 2) {
-    return Name::Linear;
+    return Shape::Line;
   }
 
   if(XESum == 3) {
     if(X == 3) {
-      return Name::TrigonalPlanar;
+      return Shape::EquilateralTriangle;
     }
 
-    return Name::Bent;
+    return Shape::Bent;
   }
 
   if(XESum == 4) {
     if(X == 4) {
-      return Name::Tetrahedral;
+      return Shape::Tetrahedron;
     }
 
     if(X == 3) {
-      /* In VSEPR naming, this is Trigonal pyramidal, but that symmetry exists
+      /* In VSEPR naming, this is Trigonal pyramidal, but that shape exists
        * too, which is trigonal bipyramidal minus an apical ligand.
        */
-      return Name::CutTetrahedral;
+      return Shape::ApicalTrigonalPyramid;
     }
 
-    return Name::Bent;
+    return Shape::Bent;
   }
 
   if(XESum == 5) {
     if(X == 5) {
-      return Name::TrigonalBiPyramidal;
+      return Shape::TrigonalBipyramid;
     }
 
     if(X == 4) {
-      return Name::Seesaw;
+      return Shape::Disphenoid;
     }
 
     if(X == 3) {
-      return Name::TShaped;
+      return Shape::T;
     }
 
-    return Name::Linear;
+    return Shape::Line;
   }
 
   if(XESum == 6) {
     if(X == 6) {
-      return Name::Octahedral;
+      return Shape::Octahedron;
     }
 
     if(X == 5) {
-      return Name::SquarePyramidal;
+      return Shape::SquarePyramid;
     }
 
-    return Name::SquarePlanar;
+    return Shape::Square;
   }
 
   if(XESum == 7) {
     if(X == 7) {
-      return Name::PentagonalBiPyramidal;
+      return Shape::PentagonalBipyramid;
     }
 
     if(X == 6) {
-      return Name::PentagonalPyramidal;
+      return Shape::PentagonalPyramid;
     }
 
-    return Name::PentagonalPlanar;
+    return Shape::Pentagon;
   }
 
   if(XESum == 8) {
-    return Name::SquareAntiPrismatic;
+    return Shape::SquareAntiprism;
   }
 
-  /* "Could not find a fitting symmetry for your X + E case: "
+  /* "Could not find a fitting shape for your X + E case: "
     << "X = " << X << ", E = " << E << ". Maybe your molecular graph is "
     << " too weird for VSEPR. Have another look at it.";*/
 
@@ -179,18 +179,18 @@ boost::optional<Symmetry::Name> vsepr(
   return boost::none;
 }
 
-Symmetry::Name firstOfSize(const unsigned size) {
-  // Pick the first Symmetry of fitting size
+Symmetry::Shape firstOfSize(const unsigned size) {
+  // Pick the first shape of fitting size
   auto findIter = std::find_if(
-    std::begin(Symmetry::allNames),
-    std::end(Symmetry::allNames),
-    [&size](const auto symmetryName) -> bool {
-      return Symmetry::size(symmetryName) == size;
+    std::begin(Symmetry::allShapes),
+    std::end(Symmetry::allShapes),
+    [&size](const auto shape) -> bool {
+      return Symmetry::size(shape) == size;
     }
   );
 
-  if(findIter == std::end(Symmetry::allNames)) {
-    throw std::logic_error("No symmetries of that size!");
+  if(findIter == std::end(Symmetry::allShapes)) {
+    throw std::logic_error("No shapes of that size!");
   }
 
   return *findIter;
@@ -270,7 +270,7 @@ int formalCharge(
   return formalCharge;
 }
 
-boost::optional<Symmetry::Name> inferSymmetry(
+boost::optional<Symmetry::Shape> inferShape(
   const OuterGraph& graph,
   const AtomIndex index,
   const RankingInformation& ranking

@@ -89,7 +89,7 @@
  * given symmetry depending on the number of identical ligands is generated for
  * all symmetries at compile time.
  *
- * E.g. for Tetrahedral:
+ * E.g. for Tetrahedron:
  *
  *   0 == ABCD -> 2 -> true
  *   1 == ABCD -> 2 -> true

@@ -66,9 +66,9 @@ void init_atom_stereopermutator(pybind11::module& m) {
   );
 
   atomStereopermutator.def_property_readonly(
-    "symmetry",
-    &AtomStereopermutator::getSymmetry,
-    "Returns the underlying symmetry"
+    "shape",
+    &AtomStereopermutator::getShape,
+    "Returns the underlying shape"
   );
 
   atomStereopermutator.def(

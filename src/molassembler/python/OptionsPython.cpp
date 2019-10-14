@@ -44,7 +44,7 @@ void init_options(pybind11::module& m) {
     ).value(
       "Unique",
       ChiralStatePreservation::Unique,
-      "Propagates if the best symmetry mapping is unique, i.e. there are no other"
+      "Propagates if the best shape mapping is unique, i.e. there are no other"
       "mappings with the same quality measures. This enables all green and black"
       "edges."
     ).value(
@@ -60,7 +60,7 @@ void init_options(pybind11::module& m) {
   pybind11::enum_<TauCriterion>(
     m,
     "TauCriterion",
-    "Specifies use of the tau criterion in differentiating between symmetries "
+    "Specifies use of the tau criterion in differentiating between shapes "
     "of sizes four and five."
   ).value("Enable", TauCriterion::Enable)
     .value("Disable", TauCriterion::Disable);

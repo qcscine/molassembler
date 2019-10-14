@@ -1016,7 +1016,7 @@ private:
    * was instantiated upon by the sequential application of the 2013 IUPAC Blue
    * Book sequence rules 2-5 (the ctor applies #1). They are somewhat adapted
    * since the priority of asymmetric centers of higher (and also lower)
-   * symmetry must also be considered because transition metal chemistry is
+   * shape must also be considered because transition metal chemistry is
    * also included in this library.
    */
   void _applySequenceRules(
@@ -1027,7 +1027,7 @@ private:
    * This function ranks the direct substituents of a selected central tree
    * vertex by the sequential application of the 2013 IUPAC Blue Book sequence
    * rules. They are somewhat adapted since the priority of asymmetric centers
-   * of higher (and also lower) symmetry must also be considered because
+   * of higher (and also lower) shape must also be considered because
    * transition metal chemistry is also included in this library.
    *
    * It returns a sorted vector of vectors, in which every sub-vector

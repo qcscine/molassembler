@@ -34,7 +34,7 @@ class Molecule;
  *     - l: Ligands
  *     - lr: Ranked ligands
  *     - lnk: Links (key omitted if empty)
- *   - s: Symmetry index
+ *   - s: Shape name index
  * - b: List of BondStereopermutator Objects
  *   - a: Assignment index (key omitted if unassigned)
  *   - e: Edge on which it is placed

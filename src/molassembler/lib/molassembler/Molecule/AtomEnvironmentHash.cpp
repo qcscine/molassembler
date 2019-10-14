@@ -90,7 +90,7 @@ WideHashType hash(
   const AtomEnvironmentComponents bitmask,
   const Scine::Utils::ElementType elementType,
   const std::vector<BondInformation>& sortedBonds,
-  const boost::optional<Symmetry::Name>& symmetryNameOptional,
+  const boost::optional<Symmetry::Shape>& shapeOptional,
   const boost::optional<unsigned>& assignedOptional
 ) {
   static_assert(
@@ -98,18 +98,18 @@ WideHashType hash(
     (
       // Element type (fixed as this cannot possibly increase)
       7
-      // Bond information: exactly as many as the largest possible symmetry
-      + Symmetry::constexprProperties::maxSymmetrySize * (
+      // Bond information: exactly as many as the largest possible shape
+      + Symmetry::constexprProperties::maxShapeSize * (
         BondInformation::hashWidth
       )
-      // The bits needed to store the symmetry name (plus none)
+      // The bits needed to store the shape name (plus none)
       + temple::Math::ceil(
-        temple::Math::log(Symmetry::nSymmetries + 1.0, 2.0)
+        temple::Math::log(Symmetry::nShapes + 1.0, 2.0)
       )
       // Roughly 5040 possible assignment values (maximally asymmetric square antiprismatic)
       + 13
     ) <= 128,
-    "Element type, bond and symmetry information no longer fit into a 64-bit unsigned integer"
+    "Element type, bond and shape information no longer fit into a 64-bit unsigned integer"
   );
 
   /* First 7 bits of the 64 bit unsigned number are from the element type
@@ -135,7 +135,7 @@ WideHashType hash(
    * So, left shift by 7 bits (so there are 7 zeros on the right in the bit
    * representation, where the element type is stored) plus the current bond
    * number multiplied by the width of a BondInformation hash to place a
-   * maximum of 8 bond types (maximum symmetry size currently)
+   * maximum of 8 bond types (maximum shape size currently)
    *
    * This occupies 6 * 8 = 48 bits.
    */
@@ -150,11 +150,11 @@ WideHashType hash(
     }
   }
 
-  if((bitmask & AtomEnvironmentComponents::Symmetries) && symmetryNameOptional) {
-    /* We add symmetry information on non-terminal atoms. There are currently
-     * 16 symmetries, plus None is 17, which fits into 5 bits (2^5 = 32)
+  if((bitmask & AtomEnvironmentComponents::Shapes) && shapeOptional) {
+    /* We add shape information on non-terminal atoms. There are currently
+     * 16 shapes, plus None is 17, which fits into 5 bits (2^5 = 32)
      */
-    value += (WideHashType(symmetryNameOptional.value()) + 1) << (7 + 48);
+    value += (WideHashType(shapeOptional.value()) + 1) << (7 + 48);
 
     if(bitmask & AtomEnvironmentComponents::Stereopermutations) {
       /* The remaining space 128 - (7 + 48 + 5) = 68 bits is used for the current
@@ -182,7 +182,7 @@ std::vector<BondInformation> gatherBonds(
   const AtomIndex i
 ) {
   std::vector<BondInformation> bonds;
-  bonds.reserve(Symmetry::constexprProperties::maxSymmetrySize);
+  bonds.reserve(Symmetry::constexprProperties::maxShapeSize);
 
   if(componentsBitmask & AtomEnvironmentComponents::Stereopermutations) {
     for(
@@ -245,7 +245,7 @@ WideHashType atomEnvironment(
   AtomIndex i
 ) {
   std::vector<BondInformation> bonds;
-  boost::optional<Symmetry::Name> symmetryNameOption;
+  boost::optional<Symmetry::Shape> shapeOption;
   boost::optional<unsigned> assignmentOption;
 
   if(bitmask & AtomEnvironmentComponents::BondOrders) {
@@ -253,7 +253,7 @@ WideHashType atomEnvironment(
   }
 
   if(auto refOption = stereopermutators.option(i)) {
-    symmetryNameOption = refOption->getSymmetry();
+    shapeOption = refOption->getShape();
     assignmentOption = refOption->assigned();
   }
 
@@ -261,7 +261,7 @@ WideHashType atomEnvironment(
     bitmask,
     inner.elementType(i),
     bonds,
-    symmetryNameOption,
+    shapeOption,
     assignmentOption
   );
 }

@@ -36,8 +36,8 @@ InertialMoments principalInertialMoments(
  * @brief What kind of top is the particle collection?
  */
 enum class Top {
-  //! Linear top: 0 ≅ IA << IB = IC
-  Linear,
+  //! Line top: 0 ≅ IA << IB = IC
+  Line,
   //! Asymmetric top: IA < IB < IC, degeneracy 0
   Asymmetric,
   //! Prolate top (think rugby football): IA < IB = IC

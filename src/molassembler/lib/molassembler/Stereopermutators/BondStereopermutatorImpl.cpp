@@ -178,23 +178,23 @@ double BondStereopermutator::Impl::dihedral(
   auto symmetryPositionMaps = temple::map_stl(
     references,
     [](const PermutatorReference& ref) {
-      return ref.get().getSymmetryPositionMap();
+      return ref.get().getShapePositionMap();
     }
   );
 
-  std::pair<unsigned, unsigned> symmetryPositions;
+  std::pair<unsigned, unsigned> shapePositions;
   double dihedralAngle;
 
   for(const auto& dihedralTuple : _composite.dihedrals(*_assignment)) {
-    std::tie(symmetryPositions.first, symmetryPositions.second, dihedralAngle) = dihedralTuple;
+    std::tie(shapePositions.first, shapePositions.second, dihedralAngle) = dihedralTuple;
 
     if(
       SymmetryMapHelper::getSiteIndexAt(
-        symmetryPositions.first,
+        shapePositions.first,
         symmetryPositionMaps.first
       ) == siteIndices.first
       && SymmetryMapHelper::getSiteIndexAt(
-        symmetryPositions.second,
+        shapePositions.second,
         symmetryPositionMaps.second
       ) == siteIndices.second
     ) {
@@ -228,16 +228,16 @@ BondStereopermutator::Impl::_makeOrientationState(
   const AtomStereopermutator& attachedStereopermutator
 ) {
   return {
-    focalStereopermutator.getSymmetry(),
+    focalStereopermutator.getShape(),
     SymmetryMapHelper::getSymmetryPositionOf(
       focalStereopermutator.getRanking().getSiteIndexOf(
         attachedStereopermutator.centralIndex()
       ),
-      focalStereopermutator.getSymmetryPositionMap()
+      focalStereopermutator.getShapePositionMap()
     ),
     _charifyRankedSites(
       focalStereopermutator.getRanking().siteRanking,
-      focalStereopermutator.getSymmetryPositionMap()
+      focalStereopermutator.getShapePositionMap()
     ),
     focalStereopermutator.centralIndex()
   };
@@ -573,8 +573,8 @@ bool BondStereopermutator::Impl::cycleObviouslyInfeasible(
 //             );
 //           } else {
 //             angleValueBounds = {
-//               Symmetry::minimumAngle(permutatorOption->getSymmetry()),
-//               Symmetry::maximumAngle(permutatorOption->getSymmetry())
+//               Symmetry::minimumAngle(permutatorOption->getShape()),
+//               Symmetry::maximumAngle(permutatorOption->getShape())
 //             };
 //           }
 //         }
@@ -689,7 +689,7 @@ std::vector<unsigned> BondStereopermutator::Impl::notObviouslyInfeasibleStereope
 
       const unsigned siteIndexIAtFirst = SymmetryMapHelper::getSiteIndexAt(
         firstSymmetryPosition,
-        permutatorReferences.first.getSymmetryPositionMap()
+        permutatorReferences.first.getShapePositionMap()
       );
       if(siteIndexIAtFirst != link.indexPair.first) {
         continue;
@@ -697,7 +697,7 @@ std::vector<unsigned> BondStereopermutator::Impl::notObviouslyInfeasibleStereope
 
       const unsigned siteIndexLAtSecond = SymmetryMapHelper::getSiteIndexAt(
         secondSymmetryPosition,
-        permutatorReferences.second.getSymmetryPositionMap()
+        permutatorReferences.second.getShapePositionMap()
       );
       if(siteIndexLAtSecond != link.indexPair.second) {
         continue;
@@ -866,7 +866,7 @@ void BondStereopermutator::Impl::fit(
 
   auto makeSitePositions = [&angstromWrapper](const AtomStereopermutator& permutator) -> Eigen::Matrix<double, 3, Eigen::Dynamic> {
     const unsigned S = permutator.getRanking().sites.size();
-    assert(S == Symmetry::size(permutator.getSymmetry()));
+    assert(S == Symmetry::size(permutator.getShape()));
     Eigen::Matrix<double, 3, Eigen::Dynamic> sitePositions(3, S);
     for(unsigned i = 0; i < S; ++i) {
       sitePositions.col(i) = cartesian::averagePosition(
@@ -896,11 +896,11 @@ void BondStereopermutator::Impl::fit(
       // Get site index of leftSymmetryPosition in left
       const unsigned firstSiteIndex = SymmetryMapHelper::getSiteIndexAt(
         firstSymmetryPosition,
-        firstStereopermutator.getSymmetryPositionMap()
+        firstStereopermutator.getShapePositionMap()
       );
       const unsigned secondSiteIndex = SymmetryMapHelper::getSiteIndexAt(
         secondSymmetryPosition,
-        secondStereopermutator.getSymmetryPositionMap()
+        secondStereopermutator.getShapePositionMap()
       );
 
       /* Dihedral angle differences aren't as easy as |b - a|, since
@@ -1023,16 +1023,16 @@ void BondStereopermutator::Impl::propagateGraphChange(
 
   // Generate a new OrientationState for the modified stereopermutator
   stereopermutation::Composite::OrientationState possiblyModifiedOrientation {
-    newPermutator.getSymmetry(),
+    newPermutator.getShape(),
     SymmetryMapHelper::getSymmetryPositionOf(
       newPermutator.getRanking().getSiteIndexOf(
         unchangedOrientation.identifier
       ),
-      newPermutator.getSymmetryPositionMap()
+      newPermutator.getShapePositionMap()
     ),
     _charifyRankedSites(
       newPermutator.getRanking().siteRanking,
-      newPermutator.getSymmetryPositionMap()
+      newPermutator.getShapePositionMap()
     ),
     newPermutator.centralIndex()
   };
@@ -1145,7 +1145,7 @@ void BondStereopermutator::Impl::propagateGraphChange(
 
     return SymmetryMapHelper::getSymmetryPositionOf(
       newSiteIndex,
-      newPermutator.getSymmetryPositionMap()
+      newPermutator.getShapePositionMap()
     );
   };
 
@@ -1239,7 +1239,7 @@ BondStereopermutator::Alignment BondStereopermutator::Impl::alignment() const {
 
 boost::optional<unsigned> BondStereopermutator::Impl::assigned() const {
   /* If the underlying composite is isotropic, it does not matter which of those
-   * permutations by symmetry position is the factual spatial arrangement (since
+   * permutations by shape position is the factual spatial arrangement (since
    * they are all rotationally equivalent). We have to spoof that there is only
    * one arrangement in this case (although we need all of them for spatial
    * fitting).

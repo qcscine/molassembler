@@ -60,20 +60,20 @@ struct Recognizer {
    * @param positions Positions of all particles of the symmetry. The first
    * column is the central particle of the symmetry.
    */
-  virtual Symmetry::Name identify(const Positions& positions) const = 0;
+  virtual Symmetry::Shape identify(const Positions& positions) const = 0;
   virtual std::string name() const = 0;
 };
 
 struct AngularDeviation {
   template<typename F>
-  static Symmetry::Name identify(const Positions& positions, F&& f) {
+  static Symmetry::Shape identify(const Positions& positions, F&& f) {
     const unsigned S = positions.cols() - 1;
-    using CarryType = std::pair<double, Symmetry::Name>;
+    using CarryType = std::pair<double, Symmetry::Shape>;
 
     return temple::accumulate(
-      Symmetry::allNames,
-      CarryType {std::numeric_limits<double>::max(), Symmetry::Name::Linear},
-      [&](const CarryType& carry, const Symmetry::Name name) -> CarryType {
+      Symmetry::allShapes,
+      CarryType {std::numeric_limits<double>::max(), Symmetry::Shape::Line},
+      [&](const CarryType& carry, const Symmetry::Shape name) -> CarryType {
         if(Symmetry::size(name) != S) {
           return carry;
         }
@@ -125,7 +125,7 @@ struct PureAngularDeviationAbs final : public Recognizer {
     }
   };
 
-  Symmetry::Name identify(const Positions& positions) const final {
+  Symmetry::Shape identify(const Positions& positions) const final {
     return AngularDeviation::identify(positions, FabsFunctor {});
   }
 
@@ -142,7 +142,7 @@ struct PureAngularDeviationSquare final : public Recognizer {
     }
   };
 
-  Symmetry::Name identify(const Positions& positions) const final {
+  Symmetry::Shape identify(const Positions& positions) const final {
     return AngularDeviation::identify(positions, SquareFunctor {});
   }
 
@@ -152,12 +152,12 @@ struct PureAngularDeviationSquare final : public Recognizer {
 };
 
 struct AngularDeviationGeometryIndexHybrid final : public Recognizer {
-  Symmetry::Name identify(const Positions& positions) const final {
+  Symmetry::Shape identify(const Positions& positions) const final {
     const unsigned S = positions.cols() - 1;
-    using CarryType = std::pair<double, Symmetry::Name>;
+    using CarryType = std::pair<double, Symmetry::Shape>;
 
     /* Exclude symmetries using geometry indices if a relevant size */
-    std::vector<Symmetry::Name> excludedSymmetries;
+    std::vector<Symmetry::Shape> excludedSymmetries;
     if(S == 4 || S == 5) {
       const double tau = Symmetry::tau(
         temple::sort(
@@ -182,15 +182,15 @@ struct AngularDeviationGeometryIndexHybrid final : public Recognizer {
          */
         if(tau < 0.12) {
           // Symmetry is square planar
-          excludedSymmetries.push_back(Symmetry::Name::Seesaw);
-          excludedSymmetries.push_back(Symmetry::Name::Tetrahedral);
+          excludedSymmetries.push_back(Symmetry::Shape::Disphenoid);
+          excludedSymmetries.push_back(Symmetry::Shape::Tetrahedron);
         } else if(0.12 <= tau && tau < 0.62) {
-          excludedSymmetries.push_back(Symmetry::Name::SquarePlanar);
+          excludedSymmetries.push_back(Symmetry::Shape::Square);
           // Symmetry is seesaw
-          excludedSymmetries.push_back(Symmetry::Name::Tetrahedral);
+          excludedSymmetries.push_back(Symmetry::Shape::Tetrahedron);
         } else if(0.62 <= tau) {
-          excludedSymmetries.push_back(Symmetry::Name::SquarePlanar);
-          excludedSymmetries.push_back(Symmetry::Name::Seesaw);
+          excludedSymmetries.push_back(Symmetry::Shape::Square);
+          excludedSymmetries.push_back(Symmetry::Shape::Disphenoid);
           // Symmetry is tetrahedral
         }
       } else if(S == 5) {
@@ -200,17 +200,17 @@ struct AngularDeviationGeometryIndexHybrid final : public Recognizer {
          */
 
         if(tau < 0.5) {
-          excludedSymmetries.push_back(Symmetry::Name::TrigonalBiPyramidal);
+          excludedSymmetries.push_back(Symmetry::Shape::TrigonalBipyramid);
         } else if(tau > 0.5) {
-          excludedSymmetries.push_back(Symmetry::Name::SquarePyramidal);
+          excludedSymmetries.push_back(Symmetry::Shape::SquarePyramid);
         }
       }
     }
 
     return temple::accumulate(
-      Symmetry::allNames,
-      CarryType {std::numeric_limits<double>::max(), Symmetry::Name::Linear},
-      [&](const CarryType& carry, const Symmetry::Name name) -> CarryType {
+      Symmetry::allShapes,
+      CarryType {std::numeric_limits<double>::max(), Symmetry::Shape::Line},
+      [&](const CarryType& carry, const Symmetry::Shape name) -> CarryType {
         if(Symmetry::size(name) != S || temple::makeContainsPredicate(excludedSymmetries)(name)) {
           return carry;
         }
@@ -259,30 +259,30 @@ struct AngularDeviationGeometryIndexHybrid final : public Recognizer {
   }
 };
 
-const std::map<Symmetry::Name, Symmetry::PointGroup> pointGroupMapping {
-  {Symmetry::Name::Linear, Symmetry::PointGroup::Dinfh},
-  {Symmetry::Name::Bent, Symmetry::PointGroup::C2v},
-  {Symmetry::Name::TrigonalPlanar, Symmetry::PointGroup::D3h},
-  {Symmetry::Name::CutTetrahedral, Symmetry::PointGroup::C3v},
-  {Symmetry::Name::TShaped, Symmetry::PointGroup::C2v},
-  {Symmetry::Name::Tetrahedral, Symmetry::PointGroup::Td},
-  {Symmetry::Name::SquarePlanar, Symmetry::PointGroup::D4h},
-  {Symmetry::Name::Seesaw, Symmetry::PointGroup::C2v},
-  {Symmetry::Name::TrigonalPyramidal, Symmetry::PointGroup::C3v},
-  {Symmetry::Name::SquarePyramidal, Symmetry::PointGroup::C4v},
-  {Symmetry::Name::TrigonalBiPyramidal, Symmetry::PointGroup::D3h},
-  {Symmetry::Name::PentagonalPlanar, Symmetry::PointGroup::D5h},
-  {Symmetry::Name::Octahedral, Symmetry::PointGroup::Oh},
-  {Symmetry::Name::TrigonalPrismatic, Symmetry::PointGroup::D3h},
-  {Symmetry::Name::PentagonalPyramidal, Symmetry::PointGroup::C5v},
-  {Symmetry::Name::PentagonalBiPyramidal, Symmetry::PointGroup::D5h},
-  {Symmetry::Name::SquareAntiPrismatic, Symmetry::PointGroup::D4d}
+const std::map<Symmetry::Shape, Symmetry::PointGroup> pointGroupMapping {
+  {Symmetry::Shape::Line, Symmetry::PointGroup::Dinfh},
+  {Symmetry::Shape::Bent, Symmetry::PointGroup::C2v},
+  {Symmetry::Shape::EquilateralTriangle, Symmetry::PointGroup::D3h},
+  {Symmetry::Shape::ApicalTrigonalPyramid, Symmetry::PointGroup::C3v},
+  {Symmetry::Shape::T, Symmetry::PointGroup::C2v},
+  {Symmetry::Shape::Tetrahedron, Symmetry::PointGroup::Td},
+  {Symmetry::Shape::Square, Symmetry::PointGroup::D4h},
+  {Symmetry::Shape::Disphenoid, Symmetry::PointGroup::C2v},
+  {Symmetry::Shape::TrigonalPyramid, Symmetry::PointGroup::C3v},
+  {Symmetry::Shape::SquarePyramid, Symmetry::PointGroup::C4v},
+  {Symmetry::Shape::TrigonalBipyramid, Symmetry::PointGroup::D3h},
+  {Symmetry::Shape::Pentagon, Symmetry::PointGroup::D5h},
+  {Symmetry::Shape::Octahedron, Symmetry::PointGroup::Oh},
+  {Symmetry::Shape::TrigonalPrism, Symmetry::PointGroup::D3h},
+  {Symmetry::Shape::PentagonalPyramid, Symmetry::PointGroup::C5v},
+  {Symmetry::Shape::PentagonalBipyramid, Symmetry::PointGroup::D5h},
+  {Symmetry::Shape::SquareAntiprism, Symmetry::PointGroup::D4d}
 };
 
 struct PureCSM final : public Recognizer {
-  Symmetry::Name identify(const Positions& positions) const final {
+  Symmetry::Shape identify(const Positions& positions) const final {
     const unsigned S = positions.cols() - 1;
-    using CarryType = std::pair<double, Symmetry::Name>;
+    using CarryType = std::pair<double, Symmetry::Shape>;
 
     Positions normalized = Symmetry::detail::normalize(positions);
     const Symmetry::Top top = Symmetry::standardizeTop(normalized);
@@ -291,9 +291,9 @@ struct PureCSM final : public Recognizer {
     }
 
     return temple::accumulate(
-      Symmetry::allNames,
-      CarryType {std::numeric_limits<double>::max(), Symmetry::Name::Linear},
-      [&](const CarryType& bestPair, const Symmetry::Name name) -> CarryType {
+      Symmetry::allShapes,
+      CarryType {std::numeric_limits<double>::max(), Symmetry::Shape::Line},
+      [&](const CarryType& bestPair, const Symmetry::Shape name) -> CarryType {
         if(Symmetry::size(name) != S) {
           return bestPair;
         }
@@ -318,9 +318,9 @@ struct PureCSM final : public Recognizer {
 };
 
 struct OrderRespectingCSM final : public Recognizer {
-  Symmetry::Name identify(const Positions& positions) const final {
+  Symmetry::Shape identify(const Positions& positions) const final {
     const unsigned S = positions.cols() - 1;
-    using CarryType = std::pair<double, Symmetry::Name>;
+    using CarryType = std::pair<double, Symmetry::Shape>;
 
     Positions normalized = Symmetry::detail::normalize(positions);
     const Symmetry::Top top = Symmetry::standardizeTop(normalized);
@@ -329,9 +329,9 @@ struct OrderRespectingCSM final : public Recognizer {
     }
 
     return temple::accumulate(
-      Symmetry::allNames,
-      CarryType {std::numeric_limits<double>::max(), Symmetry::Name::Linear},
-      [&](const CarryType& bestPair, const Symmetry::Name name) -> CarryType {
+      Symmetry::allShapes,
+      CarryType {std::numeric_limits<double>::max(), Symmetry::Shape::Line},
+      [&](const CarryType& bestPair, const Symmetry::Shape name) -> CarryType {
         if(Symmetry::size(name) != S) {
           return bestPair;
         }
@@ -359,9 +359,9 @@ struct OrderRespectingCSM final : public Recognizer {
 };
 
 struct PositionManipulatingCSM final : public Recognizer {
-  Symmetry::Name identify(const Positions& positions) const final {
+  Symmetry::Shape identify(const Positions& positions) const final {
     const unsigned S = positions.cols() - 1;
-    using CarryType = std::pair<double, Symmetry::Name>;
+    using CarryType = std::pair<double, Symmetry::Shape>;
 
     Positions manipulated = positions;
     // Normalize all positions to norm 1 from the central atom
@@ -376,9 +376,9 @@ struct PositionManipulatingCSM final : public Recognizer {
     }
 
     return temple::accumulate(
-      Symmetry::allNames,
-      CarryType {std::numeric_limits<double>::max(), Symmetry::Name::Linear},
-      [&](const CarryType& bestPair, const Symmetry::Name name) -> CarryType {
+      Symmetry::allShapes,
+      CarryType {std::numeric_limits<double>::max(), Symmetry::Shape::Line},
+      [&](const CarryType& bestPair, const Symmetry::Shape name) -> CarryType {
         if(Symmetry::size(name) != S) {
           return bestPair;
         }
@@ -407,10 +407,10 @@ struct Random final : public Recognizer {
 
   Random(PRNG& globalPRNG) : prngRef(globalPRNG) {}
 
-  Symmetry::Name identify(const Positions& positions) const final {
+  Symmetry::Shape identify(const Positions& positions) const final {
     const unsigned S = positions.cols() - 1;
-    std::vector<Symmetry::Name> viableSymmetries;
-    for(const auto& name : Symmetry::allNames) {
+    std::vector<Symmetry::Shape> viableSymmetries;
+    for(const auto& name : Symmetry::allShapes) {
       if(Symmetry::size(name) == S) {
         viableSymmetries.push_back(name);
       }
@@ -470,23 +470,23 @@ struct RScriptWriter {
     file << "nDistortionValues <- " << nDistortionValues << "\n";
     file << "maxDistortion <- " << maxDistortion << "\n";
     file << "nRepeats <- " << nRepeats << "\n";
-    file << "symmetryNames <- c(\"" << temple::condense(
-      temple::map(Symmetry::allNames, [](auto name) { return Symmetry::name(name); }),
+    file << "shapes <- c(\"" << temple::condense(
+      temple::map(Symmetry::allShapes, [](auto name) { return Symmetry::name(name); }),
       "\",\""
     ) << "\")\n";
     file << "symmetrySizes <- c(" << temple::condense(
-      temple::map(Symmetry::allNames, [](auto name) { return Symmetry::size(name); })
+      temple::map(Symmetry::allShapes, [](auto name) { return Symmetry::size(name); })
     ) << ")\n";
     file << "recognizers <- c(\"" << temple::condense(recognizerNames(), "\",\"") << "\")\n";
     file << "x.values <- c(0:" << (nDistortionValues - 1) << ") * " << maxDistortion << " / " << (nDistortionValues - 1) << "\n";
-    file << "results <- array(numeric(), c(" << nRepeats << ", " << nDistortionValues << ", " << nRecognizers << ", " << Symmetry::allNames.size() << "))\n";
+    file << "results <- array(numeric(), c(" << nRepeats << ", " << nDistortionValues << ", " << nRecognizers << ", " << Symmetry::allShapes.size() << "))\n";
   }
 
   void writeSeed(int seed) {
     file << "seed <- " << seed << "\n";
   }
 
-  void addResults(const Symmetry::Name name, const std::vector<std::vector<std::vector<Symmetry::Name>>>& results) {
+  void addResults(const Symmetry::Shape name, const std::vector<std::vector<std::vector<Symmetry::Shape>>>& results) {
     const unsigned symmetryIndex = Symmetry::nameIndex(name);
     for(unsigned recognizerIndex = 0; recognizerIndex < nRecognizers; ++recognizerIndex) {
       const std::string array = (
@@ -498,8 +498,8 @@ struct RScriptWriter {
               return temple::condense(
                 temple::map(
                   distortionResult,
-                  [](Symmetry::Name n) -> unsigned {
-                    return static_cast<std::underlying_type<Symmetry::Name>::type>(n);
+                  [](Symmetry::Shape n) -> unsigned {
+                    return static_cast<std::underlying_type<Symmetry::Shape>::type>(n);
                   }
                 )
               );
@@ -570,12 +570,12 @@ int main(int argc, char* argv[]) {
 
   const unsigned R = recognizerPtrs.size();
 
-  for(const Symmetry::Name name : Symmetry::allNames) {
+  for(const Symmetry::Shape name : Symmetry::allShapes) {
     const unsigned S = Symmetry::size(name);
     unsigned symmetriesOfSameSize = temple::accumulate(
-      Symmetry::allNames,
+      Symmetry::allShapes,
       0u,
-      [&S](const unsigned carry, Symmetry::Name n) -> unsigned {
+      [&S](const unsigned carry, Symmetry::Shape n) -> unsigned {
         if(Symmetry::size(n) == S) {
           return carry + 1;
         }
@@ -594,13 +594,13 @@ int main(int argc, char* argv[]) {
 
     std::vector< // each recognizer has its own vector
       std::vector< // each distortion value
-        std::vector<Symmetry::Name>
+        std::vector<Symmetry::Shape>
       >
     > recognizerCounts(R);
 
     for(unsigned i = 0; i < nDistortionValues; ++i) {
       for(unsigned r = 0; r < R; ++r) {
-        recognizerCounts.at(r).push_back(std::vector<Symmetry::Name> {});
+        recognizerCounts.at(r).push_back(std::vector<Symmetry::Shape> {});
       }
 
       const double distortion = i * maxDistortion / (nDistortionValues - 1);

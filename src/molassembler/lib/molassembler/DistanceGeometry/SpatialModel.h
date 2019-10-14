@@ -222,7 +222,7 @@ public:
    */
   static double siteCentralAngle(
     AtomIndex centralIndex,
-    const Symmetry::Name& symmetryName,
+    const Symmetry::Shape& shape,
     const RankingInformation& ranking,
     const std::vector<unsigned>& symmetryPositionMap,
     const std::pair<unsigned, unsigned>& sites,
@@ -378,7 +378,7 @@ public:
    *   collects chiral constraints
    *
    * @complexity{@math{O(S^2)} where @math{S} is the size of the modeled
-   * symmetry}
+   * shape}
    *
    * @param permutator The AtomStereopermutator to collect information from
    * @param cycleMultiplierForIndex A function yielding factors with which to
@@ -400,7 +400,7 @@ public:
    *   collects dihedral constraints
    *
    * @complexity{@math{O(S^2)} where @math{S} is the size of the larger modeled
-   * symmetry}
+   * shape}
    *
    * @param permutator The BondStereopermutator to collect information from
    * @param stereopermutatorA One AtomStereopermutator constituting the BondStereopermutator

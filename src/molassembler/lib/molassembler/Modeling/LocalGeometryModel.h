@@ -1,7 +1,7 @@
 /*!@file
  * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
  *   See LICENSE.txt
- * @brief Algorithms to determine local symmetry from graph information
+ * @brief Algorithms to determine local shape from graph information
  *
  * Declarations for the general interface with which a number of classes can
  * determine the local geometry that a specific arrangement of atoms should
@@ -14,7 +14,7 @@
 #include "boost/optional/optional_fwd.hpp"
 
 #include "Utils/Geometry/ElementTypes.h"
-#include "chemical_symmetries/Names.h"
+#include "chemical_symmetries/Shapes.h"
 
 #include "molassembler/RankingInformation.h"
 
@@ -89,23 +89,23 @@ int formalCharge(
 );
 
 /* Models */
-/*! @brief Applies very basic VSEPR theory to derive a symmetry based on graph
+/*! @brief Applies very basic VSEPR theory to derive a shape based on graph
  *   information
  *
  * @complexity{@math{\Theta(1)}}
  */
-boost::optional<Symmetry::Name> vsepr(
+boost::optional<Symmetry::Shape> vsepr(
   Scine::Utils::ElementType centerAtomType,
   const std::vector<BindingSiteInformation>& sites,
   int formalCharge
 );
 
-/*! @brief Yields the first symmetry of required size.
+/*! @brief Yields the first shape of required size.
  *
  * @complexity{@math{\Theta(1)}}
- * @throws std::logic_error If no symmetries of @p size exist
+ * @throws std::logic_error If no shapes of @p size exist
  */
-Symmetry::Name firstOfSize(unsigned size);
+Symmetry::Shape firstOfSize(unsigned size);
 
 
 /* Tiered geometry determination function */
@@ -115,7 +115,7 @@ std::vector<LocalGeometry::BindingSiteInformation> reduceToSiteInformation(
   const RankingInformation& ranking
 );
 
-boost::optional<Symmetry::Name> inferSymmetry(
+boost::optional<Symmetry::Shape> inferShape(
   const OuterGraph& graph,
   AtomIndex index,
   const RankingInformation& ranking

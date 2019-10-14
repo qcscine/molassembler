@@ -35,23 +35,23 @@ public:
 //!@name Static functions
 //!@{
   /*!
-   * @brief Picks a symmetry retaining as much chiral state as possible on a
-   *   symmetry position increase
-   * @throws std::logic_error If there are no larger symmetries
+   * @brief Picks a shape retaining as much chiral state as possible on a
+   *   shape size increase
+   * @throws std::logic_error If there are no larger shapes
    * @note Behavior is dependent on ChiralStatePreservation option
    */
-  static Symmetry::Name up(Symmetry::Name symmetryName);
+  static Symmetry::Shape up(Symmetry::Shape shape);
 
   /*!
-   * @brief Picks a symmetry retaining as much chiral state as possible on a
-   *   symmetry position decrease
-   * @throws std::logic_error If there are no smaller symmetries
+   * @brief Picks a shape retaining as much chiral state as possible on a
+   *   shape size decrease
+   * @throws std::logic_error If there are no smaller shapes
    * @note Behavior is dependent on ChiralStatePreservation option
    */
-  static Symmetry::Name down(Symmetry::Name symmetryName, unsigned removedSymmetryPosition);
+  static Symmetry::Shape down(Symmetry::Shape shape, unsigned removedShapePosition);
 
   /*!
-   * @brief Generates an symmetry position index mapping from a symmetry
+   * @brief Generates an shape position index mapping from a shape
    *   transition group
    */
   boost::optional<std::vector<unsigned>> getIndexMapping(
@@ -64,8 +64,8 @@ public:
   Impl(
     // The base graph
     const OuterGraph& graph,
-    // The symmetry of this Stereopermutator
-    Symmetry::Name symmetry,
+    // The shape of this Stereopermutator
+    Symmetry::Shape shape,
     // The atom this Stereopermutator is centered on
     AtomIndex centerAtom,
     // Ranking information of substituents
@@ -87,9 +87,9 @@ public:
   void applyPermutation(const std::vector<AtomIndex>& permutation);
 
   /*!
-   * The symmetry and assignment are determined based on three-dimensional
+   * The shape and assignment are determined based on three-dimensional
    * positions using angle and chiral distortions from the respective idealized
-   * symmetries.
+   * shapes.
    */
   void fit(
     const OuterGraph& graph,
@@ -104,7 +104,7 @@ public:
   boost::optional<PropagatedState> propagate(
     const OuterGraph& graph,
     RankingInformation newRanking,
-    boost::optional<Symmetry::Name> symmetryOption
+    boost::optional<Symmetry::Shape> shapeOption
   );
 
   /*!
@@ -113,14 +113,14 @@ public:
    */
   void propagateVertexRemoval(AtomIndex removedIndex);
 
-  //! If the central symmetry group is changed, we must adapt
-  void setSymmetry(
-    Symmetry::Name symmetryName,
+  //! If the shape is changed, we must adapt
+  void setShape(
+    Symmetry::Shape shape,
     const OuterGraph& graph
   );
 
 /* Information */
-  //! Returns the angle between two site indices in the idealized symmetry
+  //! Returns the angle between two site indices in the idealized shape
   double angle(unsigned i, unsigned j) const;
 
   /*!
@@ -149,7 +149,7 @@ public:
    *
    * Every minimal representation consists only of ligand indices.
    *
-   * The minimal representation assumes that all Symmetry tetrahedron
+   * The minimal representation assumes that all shape tetrahedron
    * definitions are defined to be Positive targets, which is checked in
    * the chemical_symmetries tests.
    *
@@ -180,14 +180,14 @@ public:
   //! Returns the underlying ranking
   const RankingInformation& getRanking() const;
 
-  //! Returns the underlying symmetry
-  Symmetry::Name getSymmetry() const;
+  //! Returns the underlying shape
+  Symmetry::Shape getShape() const;
 
   /*!
-   * @brief Yields the mapping from ligand indices to symmetry positions
+   * @brief Yields the mapping from site indices to shape positions
    * @throws std::logic_error if the stereopermutator is unassigned.
    */
-  const std::vector<unsigned>& getSymmetryPositionMap() const;
+  const std::vector<unsigned>& getShapePositionMap() const;
 
   /*!
    * @brief Returns the number of possible permutations
@@ -209,7 +209,7 @@ public:
 
 /* Operators */
   inline auto tie() const {
-    return std::make_tuple(_symmetry, _centerAtom, numStereopermutations(), _assignmentOption);
+    return std::make_tuple(_shape, _centerAtom, numStereopermutations(), _assignmentOption);
   }
 
 private:
@@ -217,8 +217,8 @@ private:
   //! Central atom of the Stereopermutator
   AtomIndex _centerAtom;
 
-  //! The symmetry the stereopermutator represents
-  Symmetry::Name _symmetry;
+  //! The shape the stereopermutator represents
+  Symmetry::Shape _shape;
 
   //! Ranking information of substituents
   RankingInformation _ranking;
@@ -233,7 +233,7 @@ private:
   boost::optional<unsigned> _assignmentOption;
 
   //! Derived property of @p _assignmentOption
-  std::vector<unsigned> _symmetryPositionMap;
+  std::vector<unsigned> _shapePositionMap;
 };
 
 } // namespace molassembler

@@ -51,7 +51,7 @@ proper geometric modeling
   including them in the model (significant additional effort)
 - Angles involving external atoms are given additional tolerance - no approach
   immediately clear for resolving angles including external angles for all
-  symmetries
+  shapes
 
 
 simple cop-out

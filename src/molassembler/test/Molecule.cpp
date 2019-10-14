@@ -42,7 +42,7 @@ static_assert(
   AtomEnvironmentComponents::All == (
     AtomEnvironmentComponents::ElementTypes
     | AtomEnvironmentComponents::BondOrders
-    | AtomEnvironmentComponents::Symmetries
+    | AtomEnvironmentComponents::Shapes
     | AtomEnvironmentComponents::Stereopermutations
   ),
   "All needs to include all components in its definition"
@@ -111,7 +111,7 @@ BOOST_AUTO_TEST_CASE(MoleculeRuleOfFiveTrivial) {
 using HashArgumentsType = std::tuple<
   Utils::ElementType,
   std::vector<molassembler::hashes::BondInformation>,
-  boost::optional<Symmetry::Name>,
+  boost::optional<Symmetry::Shape>,
   boost::optional<unsigned>
 >;
 
@@ -135,10 +135,10 @@ HashArgumentsType randomArguments() {
     };
   };
 
-  boost::optional<Symmetry::Name> symmetryOptional;
+  boost::optional<Symmetry::Shape> shapeOptional;
   boost::optional<unsigned> assignmentOptional;
   if(temple::random::getSingle<bool>(randomnessEngine())) {
-    symmetryOptional = static_cast<Symmetry::Name>(
+    shapeOptional = static_cast<Symmetry::Shape>(
       temple::random::getSingle<unsigned>(0, 15, randomnessEngine())
     );
 
@@ -149,8 +149,8 @@ HashArgumentsType randomArguments() {
   // If a symmetry is specified, the bond number must match
   std::vector<molassembler::hashes::BondInformation> bonds;
   unsigned S;
-  if(symmetryOptional) {
-    S = Symmetry::size(*symmetryOptional);
+  if(shapeOptional) {
+    S = Symmetry::size(*shapeOptional);
   } else {
     S = temple::random::getSingle<unsigned>(1, 8, randomnessEngine());
   }
@@ -165,7 +165,7 @@ HashArgumentsType randomArguments() {
       temple::random::getSingle<unsigned>(1, 112, randomnessEngine())
     ),
     bonds,
-    symmetryOptional,
+    shapeOptional,
     assignmentOptional
   };
 }
@@ -407,7 +407,7 @@ BOOST_AUTO_TEST_CASE(MoleculeBasicRSInequivalency) {
   a.addAtom(Utils::ElementType::F, 0, BondType::Single);
   a.addAtom(Utils::ElementType::Cl, 0, BondType::Single);
   a.addAtom(Utils::ElementType::Br, 0, BondType::Single);
-  a.setGeometryAtAtom(0, Symmetry::Name::Tetrahedral);
+  a.setShapeAtAtom(0, Symmetry::Shape::Tetrahedron);
 
   // Make sure it's recognized as asymmetric
   auto centralStereopermutatorOption = a.stereopermutators().option(0);
@@ -433,9 +433,9 @@ BOOST_AUTO_TEST_CASE(MoleculeBasicEZInequivalency) {
   a.addAtom(Utils::ElementType::H, 1, BondType::Single);
   a.addAtom(Utils::ElementType::F, 1, BondType::Single);
 
-  // Set the geometries
-  a.setGeometryAtAtom(0, Symmetry::Name::TrigonalPlanar);
-  a.setGeometryAtAtom(1, Symmetry::Name::TrigonalPlanar);
+  // Set the shapes
+  a.setShapeAtAtom(0, Symmetry::Shape::EquilateralTriangle);
+  a.setShapeAtAtom(1, Symmetry::Shape::EquilateralTriangle);
 
   // Progression must recognize the new stereopermutator
   auto stereopermutatorOption = a.stereopermutators().option(
@@ -504,7 +504,7 @@ BOOST_AUTO_TEST_CASE(PropagateGraphChangeTests) {
 
 
   /* Bug reported by Stephanie: Central stereopermutator does not propagate
-   * to original abstract site case after forcing cut-tetrahedral symmetries
+   * to original abstract site case after forcing cut-tetrahedral shapes
    * for each nitrogen.
    */
   auto complex = IO::read("various/propagation-test-case-1.json");
@@ -513,9 +513,9 @@ BOOST_AUTO_TEST_CASE(PropagateGraphChangeTests) {
     if(
       complex.graph().elementType(i) == Utils::ElementType::N
       && complex.stereopermutators().option(i)
-      && Symmetry::size(complex.stereopermutators().option(i)->getSymmetry()) == 3
+      && Symmetry::size(complex.stereopermutators().option(i)->getShape()) == 3
     ) {
-      complex.setGeometryAtAtom(i, Symmetry::Name::CutTetrahedral);
+      complex.setShapeAtAtom(i, Symmetry::Shape::ApicalTrigonalPyramid);
     }
   }
 
@@ -541,7 +541,7 @@ BOOST_AUTO_TEST_CASE(MoleculeSplitRecognition) {
   Molecule water {Utils::ElementType::O};
   water.addAtom(Utils::ElementType::H, 0, BondType::Single);
   water.addAtom(Utils::ElementType::H, 0, BondType::Single);
-  water.setGeometryAtAtom(0, Symmetry::Name::Bent);
+  water.setShapeAtAtom(0, Symmetry::Shape::Bent);
 
   Molecule ethane {Utils::ElementType::C};
   ethane.addAtom(Utils::ElementType::H, 0, BondType::Single);
@@ -551,8 +551,8 @@ BOOST_AUTO_TEST_CASE(MoleculeSplitRecognition) {
   ethane.addAtom(Utils::ElementType::H, otherCarbon, BondType::Single);
   ethane.addAtom(Utils::ElementType::H, otherCarbon, BondType::Single);
   ethane.addAtom(Utils::ElementType::H, otherCarbon, BondType::Single);
-  ethane.setGeometryAtAtom(0, Symmetry::Name::Tetrahedral);
-  ethane.setGeometryAtAtom(otherCarbon, Symmetry::Name::Tetrahedral);
+  ethane.setShapeAtAtom(0, Symmetry::Shape::Tetrahedron);
+  ethane.setShapeAtAtom(otherCarbon, Symmetry::Shape::Tetrahedron);
 
   Molecule potassium {Utils::ElementType::K};
 
@@ -598,16 +598,16 @@ BOOST_AUTO_TEST_CASE(MoleculeGeometryChoices) {
   auto stereocenterOption = testMol.stereopermutators().option(1u);
   BOOST_REQUIRE(stereocenterOption);
 
-  if(auto suggestedSymmetryOption = testMol.inferSymmetry(1u, stereocenterOption->getRanking())) {
-    BOOST_CHECK(suggestedSymmetryOption.value() == Symmetry::Name::CutTetrahedral);
-    testMol.setGeometryAtAtom(1u, suggestedSymmetryOption.value());
+  if(auto suggestedShapeOption = testMol.inferShape(1u, stereocenterOption->getRanking())) {
+    BOOST_CHECK(suggestedShapeOption.value() == Symmetry::Shape::ApicalTrigonalPyramid);
+    testMol.setShapeAtAtom(1u, suggestedShapeOption.value());
   }
 
   testMol.addAtom(Utils::ElementType::H, 1u, BondType::Single);
 
   BOOST_CHECK(
     testMol.stereopermutators().option(1u)
-    && testMol.stereopermutators().option(1u)->getSymmetry() == Symmetry::Name::Tetrahedral
+    && testMol.stereopermutators().option(1u)->getShape() == Symmetry::Shape::Tetrahedron
   );
 }
 
@@ -619,7 +619,7 @@ BOOST_AUTO_TEST_CASE(IsomerPredicateTests) {
 
   constexpr auto bitmask = AtomEnvironmentComponents::ElementTypes
     | AtomEnvironmentComponents::BondOrders
-    | AtomEnvironmentComponents::Symmetries;
+    | AtomEnvironmentComponents::Shapes;
 
   a.canonicalize(bitmask);
   b.canonicalize(bitmask);

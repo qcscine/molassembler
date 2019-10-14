@@ -181,20 +181,20 @@ struct RScriptWriter {
 
   void writeHeader() {
     file << "symmetryNames <- c(\"" << temple::condense(
-      temple::map(Symmetry::allNames, [](auto name) { return Symmetry::name(name); }),
+      temple::map(Symmetry::allShapes, [](auto name) { return Symmetry::name(name); }),
       "\",\""
     ) << "\")\n";
     file << "symmetrySizes <- c(" << temple::condense(
-      temple::map(Symmetry::allNames, [](auto name) { return Symmetry::size(name); })
+      temple::map(Symmetry::allShapes, [](auto name) { return Symmetry::size(name); })
     ) << ")\n";
-    file << "results <- array(numeric(), c(" << Symmetry::allNames.size() << ", " << nExperiments << "))\n";
+    file << "results <- array(numeric(), c(" << Symmetry::allShapes.size() << ", " << nExperiments << "))\n";
   }
 
   void writeSeed(int seed) {
     file << "seed <- " << seed << "\n";
   }
 
-  void addResults(const Symmetry::Name name, const std::vector<double>& results) {
+  void addResults(const Symmetry::Shape name, const std::vector<double>& results) {
     const unsigned symmetryIndex = nameIndex(name) + 1;
     file << "results[" << symmetryIndex << ",] <- c(" << results << ")\n";
   }
@@ -373,8 +373,8 @@ int main(int argc, char* argv[]) {
 
   if(!fuzzPointGroups && !showElements) {
     std::cout << "Average CSM for uniform coordinates in sphere:\n";
-    for(const Name& symmetryName : allNames) {
-      const PointGroup group = pointGroup(symmetryName);
+    for(const Shape shape : allShapes) {
+      const PointGroup group = pointGroup(shape);
       for(unsigned N = 2; N < 8; ++N) {
         /* Generate 100 random coordinates within a uniform sphere for each
          * symmetry and evaluate the CSM
@@ -393,8 +393,8 @@ int main(int argc, char* argv[]) {
         const double csmAverage = temple::average(values);
         const double csmStddev = temple::stddev(values);
 
-        writer.addResults(symmetryName, values);
-        std::cout << name(symmetryName) << " - " << N << ": " << csmAverage << " +- " << csmStddev << "\n";
+        writer.addResults(shape, values);
+        std::cout << name(shape) << " - " << N << ": " << csmAverage << " +- " << csmStddev << "\n";
       }
     }
   }

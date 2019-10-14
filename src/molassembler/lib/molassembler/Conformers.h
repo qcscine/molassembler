@@ -95,7 +95,7 @@ struct Configuration {
    * @brief Sets the gradient at which a refinement is considered complete
    *
    * The default value is fairly tight, and can be loosened if faster results
-   * are desired and looser local symmetries are tolerable.
+   * are desired and looser local shapes are tolerable.
    */
   double refinementGradientTarget {1e-5};
 

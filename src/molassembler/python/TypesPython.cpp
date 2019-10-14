@@ -107,7 +107,7 @@ void init_types(pybind11::module& m) {
   ).value("NoComponents", AtomEnvironmentComponents::None, "Consider only the graph")
    .value("ElementTypes", AtomEnvironmentComponents::ElementTypes, "Element types")
    .value("BondOrders", AtomEnvironmentComponents::BondOrders, "Bond orders")
-   .value("Symmetries", AtomEnvironmentComponents::Symmetries, "Symmetries")
+   .value("Shapes", AtomEnvironmentComponents::Shapes, "Shapes")
    .value("Stereopermutations", AtomEnvironmentComponents::Stereopermutations, "Stereopermutations")
    .value(
       "ElementsAndBonds",
@@ -116,11 +116,11 @@ void init_types(pybind11::module& m) {
       "Consider element types and bond orders"
     )
    .value(
-      "ElementsBondsAndSymmetries",
+      "ElementsBondsAndShapes"
       AtomEnvironmentComponents::ElementTypes
       | AtomEnvironmentComponents::BondOrders
-      | AtomEnvironmentComponents::Symmetries,
-      "Consider element types, bond orders and symmetries"
+      | AtomEnvironmentComponents::Shapes,
+      "Consider element types, bond orders and shapes"
    )
-   .value("All", AtomEnvironmentComponents::All, "Consider element types, bond orders, symmetries and stereopermutations");
+   .value("All", AtomEnvironmentComponents::All, "Consider element types, bond orders, shapes and stereopermutations");
 }

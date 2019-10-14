@@ -1,7 +1,7 @@
 /*!@file
  * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
  *   See LICENSE.txt
- * @brief Handle rotational arrangements of adjacent atom-centered symmetries
+ * @brief Handle rotational arrangements of adjacent atom-centered shapes
  *
  * Contains the BondStereopermutator class declaration, which models E/Z double bond
  * stereopermutators in molecules.
@@ -57,7 +57,7 @@ struct ChiralConstraint;
  *   joined by a bond
  *
  * This class exists to model rotational barriers in bond orders higher than
- * Single that join an arbitrary pair of idealized symmetries.
+ * Single that join an arbitrary pair of idealized shapes.
  */
 class BondStereopermutator {
 public:
@@ -137,7 +137,7 @@ public:
    *   without checking whether stereopermutations are feasible or not
    *
    * @complexity{@math{O(S!)} where @math{S} is the size of the larger involved
-   * symmetry}
+   * shape}
    */
   BondStereopermutator(
     const AtomStereopermutator& stereopermutatorA,
@@ -150,7 +150,7 @@ public:
    *   removing obviously infeasible stereopermutations
    *
    * @complexity{@math{O(S!)} where @math{S} is the size of the larger involved
-   * symmetry}
+   * shape}
    */
   BondStereopermutator(
     const InnerGraph& graph,
@@ -221,7 +221,7 @@ public:
    *   internal state has been propagated through a ranking change
    *
    * @complexity{@math{O(S!)} where @math{S} is the size of the larger involved
-   * symmetry}
+   * shape}
    */
   void propagateGraphChange(
     const AtomStereopermutatorPropagatedState& oldPermutator,

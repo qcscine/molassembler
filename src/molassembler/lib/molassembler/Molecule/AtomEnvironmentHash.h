@@ -11,7 +11,7 @@
 #include "boost/optional.hpp"
 #include "Utils/Geometry/ElementTypes.h"
 
-#include "chemical_symmetries/Names.h"
+#include "chemical_symmetries/Shapes.h"
 
 #include "molassembler/Types.h"
 
@@ -72,7 +72,7 @@ WideHashType hash(
   AtomEnvironmentComponents bitmask,
   Scine::Utils::ElementType elementType,
   const std::vector<BondInformation>& sortedBonds,
-  const boost::optional<Symmetry::Name>& symmetryNameOptional,
+  const boost::optional<Symmetry::Shape>& shapeOptional,
   const boost::optional<unsigned>& assignedOptional
 );
 

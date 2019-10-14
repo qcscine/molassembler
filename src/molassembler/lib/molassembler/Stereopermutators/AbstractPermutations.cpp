@@ -112,7 +112,7 @@ std::vector<char> AbstractStereopermutations::makeStereopermutationCharacters(
 
 AbstractStereopermutations::AbstractStereopermutations(
   const RankingInformation& ranking,
-  const Symmetry::Name symmetry
+  const Symmetry::Shape shape
 ) : canonicalSites(canonicalize(ranking.siteRanking)),
     symbolicCharacters(transferToSymbolicCharacters(canonicalSites)),
     selfReferentialLinks(selfReferentialTransform(ranking.links, canonicalSites)),
@@ -122,7 +122,7 @@ AbstractStereopermutations::AbstractStereopermutations(
           symbolicCharacters,
           selfReferentialLinks
         },
-        symmetry,
+        shape,
         false
       )
     )

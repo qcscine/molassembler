@@ -6,7 +6,7 @@
 #include <boost/test/unit_test.hpp>
 
 #include "chemical_symmetries/CoordinateSystemTransformation.h"
-#include "chemical_symmetries/Names.h"
+#include "chemical_symmetries/Shapes.h"
 #include "chemical_symmetries/Symmetries.h"
 #include "chemical_symmetries/Recognition.h"
 
@@ -65,7 +65,7 @@ const std::string& pointGroupString(PointGroup group) {
 
 const std::vector<std::string>& topNames() {
   static const std::vector<std::string> strings {
-    "Linear",
+    "Line",
     "Asymmetric",
     "Prolate",
     "Oblate",
@@ -80,15 +80,15 @@ const std::string& topName(Top top) {
 }
 
 BOOST_AUTO_TEST_CASE(Recognition) {
-  for(const Name name : allNames) {
+  for(const Shape shape : allShapes) {
 #ifdef NDEBUG
     // Skip sizes greater 8 in debug builds
-    if(size(name) >= 8) {
+    if(size(shape) >= 8) {
       continue;
     }
 #endif
 
-    auto positions = addOrigin(symmetryData().at(name).coordinates);
+    auto positions = addOrigin(symmetryData().at(shape).coordinates);
     // distort(positions);
     auto normalized = detail::normalize(positions);
 
@@ -103,19 +103,19 @@ BOOST_AUTO_TEST_CASE(Recognition) {
 
     const double pgCSM = csm::pointGroup(
       normalized,
-      pointGroup(name)
+      pointGroup(shape)
     );
     BOOST_REQUIRE_MESSAGE(
       pgCSM != 1000,
       "Could not calculate "
-      << pointGroupString(pointGroup(name))
-      << " CSM for " << Symmetry::name(name)
+      << pointGroupString(pointGroup(shape))
+      << " CSM for " << Symmetry::name(shape)
     );
 
     BOOST_CHECK_MESSAGE(
       pgCSM < 0.01,
-      "Expected CSM(" << pointGroupString(pointGroup(name))
-      << ") < 0.01 for " << Symmetry::name(name)
+      "Expected CSM(" << pointGroupString(pointGroup(shape))
+      << ") < 0.01 for " << Symmetry::name(shape)
       << ", got " << pgCSM << " (top is " << topName(top) << ")"
     );
   }
@@ -239,9 +239,9 @@ BOOST_AUTO_TEST_CASE(PointGroupElementGroupings) {
 //   BOOST_CHECK_CLOSE(expectedC3vCSM, calculatedC3v, 1);
 // }
 
-BOOST_AUTO_TEST_CASE(SquarePlanarC4D4PointGroups) {
+BOOST_AUTO_TEST_CASE(SquareC4D4PointGroups) {
   const double pointGroupCSM = csm::pointGroup(
-    detail::normalize(symmetryData().at(Name::SquarePlanar).coordinates),
+    detail::normalize(symmetryData().at(Shape::Square).coordinates),
     PointGroup::C4
   );
   BOOST_CHECK_MESSAGE(
@@ -250,7 +250,7 @@ BOOST_AUTO_TEST_CASE(SquarePlanarC4D4PointGroups) {
   );
 
   const double D4CSM = csm::pointGroup(
-    detail::normalize(symmetryData().at(Name::SquarePlanar).coordinates),
+    detail::normalize(symmetryData().at(Shape::Square).coordinates),
     PointGroup::D4
   );
 
@@ -262,16 +262,16 @@ BOOST_AUTO_TEST_CASE(SquarePlanarC4D4PointGroups) {
 
 BOOST_AUTO_TEST_CASE(InertialStandardization) {
   const std::vector<
-    std::pair<Name, Top>
+    std::pair<Shape, Top>
   > tops {
-    {Name::Linear, Top::Linear},
-    {Name::Bent, Top::Asymmetric},
-    {Name::Seesaw, Top::Asymmetric},
-    {Name::TrigonalBiPyramidal, Top::Prolate},
-    {Name::PentagonalBiPyramidal, Top::Oblate},
-    {Name::SquarePlanar, Top::Oblate},
-    {Name::Octahedral, Top::Spherical},
-    {Name::Tetrahedral, Top::Spherical}
+    {Shape::Line, Top::Line},
+    {Shape::Bent, Top::Asymmetric},
+    {Shape::Disphenoid, Top::Asymmetric},
+    {Shape::TrigonalBipyramid, Top::Prolate},
+    {Shape::PentagonalBipyramid, Top::Oblate},
+    {Shape::Square, Top::Oblate},
+    {Shape::Octahedron, Top::Spherical},
+    {Shape::Tetrahedron, Top::Spherical}
   };
 
   for(const auto nameTopPair : tops) {
@@ -297,23 +297,23 @@ BOOST_AUTO_TEST_CASE(InertialStandardization) {
 }
 
 BOOST_AUTO_TEST_CASE(FixedCnAxis) {
-  const std::vector<std::pair<Name, unsigned>> highestOrderAxis {
-    {Name::Bent, 2},
-    {Name::TrigonalPlanar, 3},
-    {Name::CutTetrahedral, 3},
-    {Name::TShaped, 2},
-    {Name::Tetrahedral, 3},
-    {Name::SquarePlanar, 4},
-    {Name::Seesaw, 2},
-    {Name::TrigonalPyramidal, 3},
-    {Name::SquarePyramidal, 4},
-    {Name::TrigonalBiPyramidal, 3},
-    {Name::PentagonalPlanar, 5},
-    {Name::Octahedral, 4},
-    {Name::TrigonalPrismatic, 3},
-    {Name::PentagonalPyramidal, 5},
-    {Name::PentagonalBiPyramidal, 5},
-    {Name::SquareAntiPrismatic, 4}
+  const std::vector<std::pair<Shape, unsigned>> highestOrderAxis {
+    {Shape::Bent, 2},
+    {Shape::EquilateralTriangle, 3},
+    {Shape::ApicalTrigonalPyramid, 3},
+    {Shape::T, 2},
+    {Shape::Tetrahedron, 3},
+    {Shape::Square, 4},
+    {Shape::Disphenoid, 2},
+    {Shape::TrigonalPyramid, 3},
+    {Shape::SquarePyramid, 4},
+    {Shape::TrigonalBipyramid, 3},
+    {Shape::Pentagon, 5},
+    {Shape::Octahedron, 4},
+    {Shape::TrigonalPrism, 3},
+    {Shape::PentagonalPyramid, 5},
+    {Shape::PentagonalBipyramid, 5},
+    {Shape::SquareAntiprism, 4}
   };
 
   const Eigen::Matrix3d axes = Eigen::Matrix3d::Identity();
@@ -428,19 +428,19 @@ BOOST_AUTO_TEST_CASE(ReflectionPlaneOptimization) {
 }
 
 BOOST_AUTO_TEST_CASE(AsymmetricTopStandardization) {
-  std::vector<Name> asymmetricTopsWithC2 {
-    Name::Bent,
-    Name::TShaped,
-    Name::Seesaw
+  std::vector<Shape> asymmetricTopsWithC2 {
+    Shape::Bent,
+    Shape::T,
+    Shape::Disphenoid
   };
 
-  for(const Name symmetryName : asymmetricTopsWithC2) {
-    auto coordinates = addOrigin(symmetryData().at(symmetryName).coordinates);
+  for(const Shape shape : asymmetricTopsWithC2) {
+    auto coordinates = addOrigin(symmetryData().at(shape).coordinates);
     auto normalizedPositions = detail::normalize(coordinates);
     const Top top = standardizeTop(normalizedPositions);
     BOOST_CHECK_MESSAGE(
       top == Top::Asymmetric,
-      "Expected asymmetric top for " << name(symmetryName) << ", got "
+      "Expected asymmetric top for " << name(shape) << ", got "
       << topNames().at(underlying(top)) << " instead"
     );
 

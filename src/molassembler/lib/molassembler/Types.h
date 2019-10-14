@@ -88,15 +88,15 @@ std::size_t hash_value(const BondIndex& bond);
  * Differing strictnesses of comparisons may be desirable for various
  * purposes, hence a modular comparison function is provided.
  *
- * @warning Setting Stereopermutations without setting Symmetries does nothing.
+ * @warning Setting Stereopermutations without setting Shapes does nothing.
  */
 enum class AtomEnvironmentComponents : unsigned {
   None = 0,
   ElementTypes = (1 << 0),
   BondOrders = (1 << 1),
-  Symmetries = (1 << 2),
+  Shapes = (1 << 2),
   Stereopermutations = (1 << 3),
-  All = ElementTypes | BondOrders | Symmetries | Stereopermutations
+  All = ElementTypes | BondOrders | Shapes | Stereopermutations
 };
 
 } // namespace molassembler

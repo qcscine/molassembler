@@ -1,4 +1,4 @@
-symmetryNames <- c(
+shapeNames <- c(
   "linear", # 2
   "bent",
   "T-shaped", # 3
@@ -35,7 +35,7 @@ errorCol <- as.numeric(filedata$V2)
 
 symmetryErrors <- list()
 filedata <- list()
-for(i in seq(1:length(symmetryNames) - 1)) {
+for(i in seq(1:length(shapeNames) - 1)) {
   # add into list
   symmetryErrors[[i]] <- errorCol[
     which(
@@ -48,10 +48,10 @@ for(i in seq(1:length(symmetryNames) - 1)) {
 pdf("histograms.pdf", width=14, height=14)
 par(mfrow=c(4,4))
 
-for(i in seq(1:length(symmetryNames) - 1)) {
+for(i in seq(1:length(shapeNames) - 1)) {
   hist(
     symmetryErrors[[i]],
-    main = symmetryNames[i],
+    main = shapeNames[i],
     xlab="errf"
     #breaks=20,
   )
@@ -61,7 +61,7 @@ dev.off()
 
 # 2 Coordination Number vs average errf plot
 averages <- c()
-for(i in seq(1:length(symmetryNames) - 1)) {
+for(i in seq(1:length(shapeNames) - 1)) {
   averages <- c(averages, mean(symmetryErrors[[i]]))
 }
 
@@ -78,19 +78,19 @@ bp <- barplot(
 
 axis(2, at=bp, labels=coordinationNumber)
 
-for(i in 1:length(symmetryNames)) {
+for(i in 1:length(shapeNames)) {
   if(averages[i] < 0.5 * max(averages)) { # this boundary must be varied if values change
     text(
       averages[i],
       bp[i],
-      labels=symmetryNames[i],
+      labels=shapeNames[i],
       pos=4
     )
   } else {
     text(
       averages[i],
       bp[i],
-      labels=symmetryNames[i],
+      labels=shapeNames[i],
       pos=2,
       col="white"
     )

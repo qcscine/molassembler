@@ -153,7 +153,7 @@ private:
   //! Index optional into _feasiblePermutations of the current assignment
   boost::optional<unsigned> _assignment;
 
-  //! Yields abstract site characters at their symmetry positions
+  //! Yields abstract site characters at their shape positions
   static std::vector<char> _charifyRankedSites(
     const std::vector<std::vector<unsigned>>& sitesRanking,
     const std::vector<unsigned>& symmetryPositionMap

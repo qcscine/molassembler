@@ -78,25 +78,25 @@ struct SymmetryInformation {
 
 // Helper function to create all names vector
 template<size_t ... Inds>
-constexpr std::array<Name, nSymmetries> makeAllNames(
+constexpr std::array<Shape, nShapes> makeAllShapes(
   std::index_sequence<Inds...> /* indexSequence */
 ) {
   return {{
-    static_cast<Name>(Inds)...
+    static_cast<Shape>(Inds)...
   }};
 }
 
 //! A list of all the enum class values
-constexpr std::array<Name, nSymmetries> allNames = makeAllNames(
-  std::make_index_sequence<nSymmetries>()
+constexpr std::array<Shape, nShapes> allShapes = makeAllShapes(
+  std::make_index_sequence<nShapes>()
 );
 
 //! Map type used to store symmetry information structs
 using SymmetryDataMapType = std::map<
-  Name,
+  Shape,
   SymmetryInformation,
   std::less<>,
-  Eigen::aligned_allocator<std::pair<const Name, SymmetryInformation>>
+  Eigen::aligned_allocator<std::pair<const Shape, SymmetryInformation>>
 >;
 
 namespace data {
@@ -225,9 +225,9 @@ SymmetryInformation makeSymmetryInformation() {
  * @tparam SymmetryClass model of concepts::SymmetryClass
  */
 template<typename SymmetryClass>
-std::pair<Name, SymmetryInformation> makeMapInitPair() {
+std::pair<Shape, SymmetryInformation> makeMapInitPair() {
   return {
-    SymmetryClass::name,
+    SymmetryClass::shape,
     makeSymmetryInformation<SymmetryClass>()
   };
 }
@@ -246,7 +246,7 @@ struct symmetryInformationFunctor {
 
 //! An array containing pointers to all symmetry data types' angle function
 constexpr auto angleFunctions = temple::TupleType::unpackToFunction<
-  allSymmetryDataTypes,
+  allShapeDataTypes,
   angleFunctionFunctor
 >();
 
@@ -259,12 +259,12 @@ constexpr auto angleFunctions = temple::TupleType::unpackToFunction<
 const SymmetryDataMapType& symmetryData();
 
 /* Interface */
-/*! @brief Fetch the string name of a symmetry
+/*! @brief Fetch the string name of a shape
  *
  * @complexity{@math{\Theta(1)}}
  */
-inline const std::string& name(const Name name) {
-  return symmetryData().at(name).stringName;
+inline const std::string& name(const Shape shape) {
+  return symmetryData().at(shape).stringName;
 }
 
 /*! @brief Fetch the symmetry name from its string
@@ -272,52 +272,52 @@ inline const std::string& name(const Name name) {
  * @complexity{@math{\Theta(S)}}
  * @throws std::logic_error if no matching symmetry can be found
  */
-inline Name nameFromString(const std::string& nameString) {
-  for(const Name symmetryName : allNames) {
-    if(symmetryData().at(symmetryName).stringName == nameString) {
-      return symmetryName;
+inline Shape nameFromString(const std::string& shapeNameString) {
+  for(const Shape shape : allShapes) {
+    if(symmetryData().at(shape).stringName == shapeNameString) {
+      return shape;
     }
   }
 
-  throw std::logic_error("No symmetry exists under that name!");
+  throw std::logic_error("No shape exists under that string name!");
 }
 
-/*! @brief Fetch a space-free name for file naming
+/*! @brief Fetch a space-free string of a shape for file naming
  *
  * @complexity{@math{\Theta(1)}}
  */
-std::string spaceFreeName(Name name);
+std::string spaceFreeName(Shape shape);
 
 /*! @brief Fetch the number of symmetry positions of a symmetry
  *
  * @complexity{@math{\Theta(1)}}
  */
-inline unsigned size(const Name name) {
-  return symmetryData().at(name).size;
+inline unsigned size(const Shape shape) {
+  return symmetryData().at(shape).size;
 }
 
 /*! @brief Fetches a symmetry's list of rotations
  *
  * @complexity{@math{\Theta(1)}}
  */
-inline const RotationsList& rotations(const Name name) {
-  return symmetryData().at(name).rotations;
+inline const RotationsList& rotations(const Shape shape) {
+  return symmetryData().at(shape).rotations;
 }
 
 /*! @brief Fetches the mirror index mapping for a particular symmetry
  *
  * @complexity{@math{\Theta(1)}}
  */
-inline const MirrorMap& mirror(const Name name) {
-  return symmetryData().at(name).mirror;
+inline const MirrorMap& mirror(const Shape shape) {
+  return symmetryData().at(shape).mirror;
 }
 
 /*! @brief Gets a symmetry's angle function
  *
  * @complexity{@math{\Theta(1)}}
  */
-inline data::AngleFunctionPtr angleFunction(const Name name) {
-  auto symmetryIndex = static_cast<unsigned>(name);
+inline data::AngleFunctionPtr angleFunction(const Shape shape) {
+  auto symmetryIndex = static_cast<unsigned>(shape);
   return data::angleFunctions.at(symmetryIndex);
 }
 
@@ -325,22 +325,22 @@ inline data::AngleFunctionPtr angleFunction(const Name name) {
  *
  * @complexity{@math{\Theta(1)}}
  */
-inline PointGroup pointGroup(const Name name) {
-  return symmetryData().at(name).pointGroup;
+inline PointGroup pointGroup(const Shape shape) {
+  return symmetryData().at(shape).pointGroup;
 }
 
-/*! @brief Returns the index of a symmetry name within allNames
+/*! @brief Returns the index of a shape within allShapes
  *
  * @complexity{@math{\Theta(S)}}
  */
-PURITY_STRONG unsigned nameIndex(Name name);
+PURITY_STRONG unsigned nameIndex(Shape shape);
 
 /*! @brief Fetches the list of tetrahedra defined in a symmetry
  *
  * @complexity{@math{\Theta(1)}}
  */
-inline const TetrahedronList& tetrahedra(const Name name) {
-  return symmetryData().at(name).tetrahedra;
+inline const TetrahedronList& tetrahedra(const Shape shape) {
+  return symmetryData().at(shape).tetrahedra;
 }
 
 } // namespace Symmetry

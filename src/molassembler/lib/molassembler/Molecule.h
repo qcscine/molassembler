@@ -142,7 +142,7 @@ public:
   /*!
    * @brief Constructs from connectivity alone, inferring the stereopermutators from graph
    *
-   * Constructs a molecule from connectivity alone. Local symmetries and
+   * Constructs a molecule from connectivity alone. Local shapes and
    * stereopermutators are inferred from the graph alone.
    *
    * @complexity{\math{O(V + E)} in rankings and stereopermutator
@@ -155,7 +155,7 @@ public:
   /*! @brief Construct from connectivity and positions
    *
    * Construct an instance from a constituting graph and positional information.
-   * Local symmetries are deduced from positional information. Stereopermutators
+   * Local shapes are deduced from positional information. Stereopermutators
    * are inferred from the graph and assigned using the supplied positional
    * information.
    *
@@ -200,7 +200,7 @@ public:
    *
    * Adds a new atom, attaching it to an existing atom by a specified bond type.
    *
-   * @complexity{Factorial in size of the new symmetry at @p adjacentTo and
+   * @complexity{Factorial in size of the new shape at @p adjacentTo and
    * linear in re-rankings and propagations of non-terminal positions}
    *
    * @param elementType The element type of the new atom
@@ -228,7 +228,7 @@ public:
    *
    * Adds a bond between two already-existing atoms.
    *
-   * @complexity{Factorial in size of the larger new symmetry at either end of
+   * @complexity{Factorial in size of the larger new shape at either end of
    * the bond and linear in re-rankings and propagations of non-terminal
    * positions}
    *
@@ -376,8 +376,8 @@ public:
    * @complexity{Theoretically the algorithm falls into the exponential class,
    * but for typical molecules much faster.}
    *
-   * @param components The components of the molecular graph to include in the
-   *   canonicalization procedure.
+   * @param componentBitmask The components of the molecular graph to include
+   *   in the canonicalization procedure.
    *
    * @warning This invalidates all atom indices and bond indices and any
    *   references to constituting members of the molecule.
@@ -512,12 +512,12 @@ public:
     Utils::ElementType elementType
   );
 
-  /*! @brief Sets the local geometry at an atom index
+  /*! @brief Sets the local shape at an atom index
    *
-   * This sets the local geometry at a specific atom index. There are a number
+   * This sets the local shape at a specific atom index. There are a number
    * of cases that this function treats differently, besides faulty arguments:
    * If there is already a AtomStereopermutator instantiated at this atom index, its
-   * underlying symmetry is altered. If there is no AtomStereopermutator at
+   * underlying shape is altered. If there is no AtomStereopermutator at
    * this index, one is instantiated. In all cases, new or modified
    * stereopermutators are default-assigned if there is only one possible
    * assignment.
@@ -525,7 +525,7 @@ public:
    * @complexity{@math{\Theta(N)} re-rankings and propagations}
    *
    * @throws std::out_of_range if the supplied atomic index is invalid
-   * @throws std::logic_error if the provided symmetry is a different size than
+   * @throws std::logic_error if the provided shape is a different size than
    *   that of the existing AtomStereopermutator
    *
    * @note Any molecular edit causes a full re-rank at each non-terminal
@@ -536,9 +536,9 @@ public:
    *   any stereopermutator state stored external to a Molecule instance and its
    *   members invalidated.
    */
-  void setGeometryAtAtom(
+  void setShapeAtAtom(
     AtomIndex a,
-    Symmetry::Name symmetryName
+    Symmetry::Shape shape
   );
 //!@}
 
@@ -550,35 +550,35 @@ public:
    */
   AtomEnvironmentComponents canonicalComponents() const;
 
-  /*! @brief Determines what the local symmetry at a non-terminal atom ought to
+  /*! @brief Determines what the local shape at a non-terminal atom ought to
    *   be based on the underlying graph
    *
    * @complexity{@math{\Theta(1)} currently since only basic VSEPR is implemented}
    *
-   * Returns the expected symmetry name at a non-terminal atom by inference
+   * Returns the expected shape name at a non-terminal atom by inference
    * from graph information only.
    *
    * Can be extended to apply various levels of theory to determine the
-   * geometry based on various information contained in the graph, such as
+   * shape based on various information contained in the graph, such as
    * ligand field theory.
    *
-   * @param index The atom index where the local geometry should be determined
+   * @param index The atom index where the local shape should be determined
    * @param ranking The ranking of all substituents at the supplied index. See
    *   rankPriority()
    *
-   * @returns A local geometry (of the appropriate size to fit the number of
-   *   ligand sites) which may or may not be the symmetry with the lowest
+   * @returns A local shape (of the appropriate size to fit the number of
+   *   ligand sites) which may or may not be the shape with the lowest
    *   energy.
    *
    * @throws std::out_of_range If the supplied atomic index is >= N()
    * @throws std::logic_error If the supplied atom is terminal or if the amount
-   *   of ligand sites exceeds the size of the largest defined symmetry.
+   *   of ligand sites exceeds the size of the largest defined shape.
    *
    * @note Currently applies VSEPR if the element type at the supplied index is
-   *   not a transition metal, and returns the first symmetry of appropriate
+   *   not a transition metal, and returns the first shape of appropriate
    *   size otherwise.
    */
-  boost::optional<Symmetry::Name> inferSymmetry(
+  boost::optional<Symmetry::Shape> inferShape(
     AtomIndex index,
     const RankingInformation& ranking
   ) const;
@@ -611,10 +611,10 @@ public:
   /*! @brief Generates stereopermutators from connectivity and positional information
    *
    * Positions are an important source of information for stereopermutators as they
-   * will alleviate graph-based symmetry-determination errors and allow for the
+   * will alleviate graph-based shape-determination errors and allow for the
    * determination of stereopermutator assignments through spatial fitting.
    *
-   * @complexity{@math{\Theta(S!)} where @math{S} is the largest symmetry size
+   * @complexity{@math{\Theta(S!)} where @math{S} is the largest shape size
    * fitted}
    *
    * @param angstromWrapper Wrapped positions in angstrom length units
@@ -674,7 +674,7 @@ public:
    *
    * @complexity{@math{O(N)}}
    *
-   * @param The other canonical molecule to compare against
+   * @param other The other canonical molecule to compare against
    * @param componentBitmask The components of an atom's environment to include
    *   in the comparison. You should use the same componentBitmask as when
    *   canonicalizing the molecules you are comparing here. It may be possible
@@ -712,7 +712,7 @@ public:
    * in isomorphism tests. May not be None.
    *
    * @note The number of stereopermutations that a stereopermutator has is
-   * considered part of the Symmetry ComparisonOptions.
+   * considered part of the shape ComparisonOptions.
    *
    * @note If you choose to discard bond order checking, this merely
    * deactivates bond order hashing and a post-isomorphism-search bond order

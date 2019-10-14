@@ -1,7 +1,8 @@
 /*!@file
  * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
  *   See LICENSE.txt
- * @brief Handle arrangements of substituents around an atom-centered symmetry
+ * @brief Handle arrangements of substituents at corners of an atom-centered
+ *   shape
  *
  * Coordinative stereopermutator class header file. Permits the storage of
  * particular arrangements of bonded atoms around a central atom and their
@@ -96,19 +97,19 @@ public:
    *
    * @param graph The molecule's graph. This information is needed to model
    *   haptic ligands.
-   * @param symmetry The local idealized symmetry to model. Typically the
-   *   result of Molecule's determineLocalSymmetry.
+   * @param shape The local idealized shape to model. Typically the
+   *   result of Molecule's inferShape.
    * @param centerAtom The atom index within the molecule that is the center of
-   *   the local idealized symmetry
+   *   the local idealized shape
    * @param ranking The ranking of the central atom's substituents and ligand
    *   sites. Typically the result of Molecule's rankPriority.
    *
    * @complexity{@math{L\cdot S!} where @math{L} is the number of links and
-   * @math{S} is the size of @p symmetry}
+   * @math{S} is the size of @p shape}
    */
   AtomStereopermutator(
     const OuterGraph& graph,
-    Symmetry::Name symmetry,
+    Symmetry::Shape shape,
     AtomIndex centerAtom,
     RankingInformation ranking
   );
@@ -116,22 +117,22 @@ public:
 
 //!@name Static functions
 //!@{
-  /*! @brief Picks a symmetry retaining as much chiral state as possible on a
-   *   symmetry position increase
+  /*! @brief Picks a shape retaining as much chiral state as possible on a
+   *   shape size increase
    *
    * @complexity{@math{O(S!)} if uncached, @math{\Theta(1)} otherwise}
-   * @throws std::logic_error If there are no larger symmetries
+   * @throws std::logic_error If there are no larger shapes
    */
-  static Symmetry::Name up(Symmetry::Name symmetryName);
+  static Symmetry::Shape up(Symmetry::Shape shape);
 
   /*!
-   * @brief Picks a symmetry retaining as much chiral state as possible on a
-   *   symmetry position decrease
+   * @brief Picks a shape retaining as much chiral state as possible on a
+   *   shape size decrease
    *
    * @complexity{@math{O(S!)} if uncached, @math{\Theta(1)} otherwise}
-   * @throws std::logic_error If there are no smaller symmetries
+   * @throws std::logic_error If there are no smaller shapes
    */
-  static Symmetry::Name down(Symmetry::Name symmetryName, unsigned removedSymmetryPosition);
+  static Symmetry::Shape down(Symmetry::Shape shape, unsigned removedShapePosition);
 //!@}
 
 //!@name Modifiers
@@ -168,11 +169,11 @@ public:
    */
   void applyPermutation(const std::vector<AtomIndex>& permutation);
 
-  /*! @brief Determine the symmetry and assignment realized in positions
+  /*! @brief Determine the shape and assignment realized in positions
    *
-   * The symmetry and assignment are determined based on three-dimensional
+   * The shape and assignment are determined based on three-dimensional
    * positions using angle and chiral distortions from the respective idealized
-   * symmetries.
+   * shapes.
    *
    * @param graph The molecule's graph which this permutator helps model
    * @param angstromWrapper The wrapped positions
@@ -180,7 +181,7 @@ public:
    * @complexity{@math{\Theta(S!)}}
    *
    * @note If Options::tauCriterion is set to @p Enable, this function may
-   *   exclude some symmetries from the fitting procedure based on geometric
+   *   exclude some shapes from the fitting procedure based on geometric
    *   criteria.
    */
   void fit(
@@ -195,12 +196,12 @@ public:
    * stereopermutator and if so, which assignment corresponds to the previous one.
    *
    * @complexity{@math{L\cdot S!} where @math{L} is the number of links and
-   * @math{S} is the size of @p symmetry}
+   * @math{S} is the size of @p shape}
    */
   boost::optional<PropagatedState> propagate(
     const OuterGraph& graph,
     RankingInformation newRanking,
-    boost::optional<Symmetry::Name> symmetryOption
+    boost::optional<Symmetry::Shape> shapeOption
   );
 
   /*! @brief Adapts atom indices in the internal state to the removal of an atom
@@ -212,23 +213,23 @@ public:
    */
   void propagateVertexRemoval(AtomIndex removedIndex);
 
-  /*! @brief Change the symmetry of the permutator
+  /*! @brief Change the underlying shape of the permutator
    *
    * @complexity{@math{L\cdot S!} where @math{L} is the number of links and
-   * @math{S} is the size of @p symmetry}
+   * @math{S} is the size of @p shape}
    *
-   * @todo Consider trying to propagate within same symmetry size
+   * @todo Consider trying to propagate within same shape size
    * @post The permutator is unassigned (chiral state is discarded)
    */
-  void setSymmetry(
-    Symmetry::Name symmetryName,
+  void setShape(
+    Symmetry::Shape shape,
     const OuterGraph& graph
   );
 //!@}
 
 //!@name Information
 //!@{
-  /*! @brief Fetches angle between binding sites in the idealized symmetry
+  /*! @brief Fetches angle between binding sites in the idealized shape
    *
    * @param i Site index one
    * @param j Site index two
@@ -272,12 +273,12 @@ public:
    * Every minimal representation consists only of site indices. If no site
    * index is present, this position is the location of the central atom.
    *
-   * The minimal representation assumes that all Symmetry tetrahedra are
+   * The minimal representation assumes that all shape tetrahedra are
    * defined as Positive targets, which is checked in the
    * chemical_symmetries tests.
    *
    * @complexity{@math{\Theta(T)} where @math{T} is the number of tetrahedra
-   * defined for the modeled symmetry}
+   * defined for the modeled shape}
    *
    * @param enforce Emit minimal representations of chiral constraints even if
    * the stereopermutator does not have any chiral state, i.e.
@@ -317,18 +318,18 @@ public:
    */
   const RankingInformation& getRanking() const;
 
-  /*! @brief Returns the underlying symmetry
+  /*! @brief Returns the underlying shape
    *
    * @complexity{@math{\Theta(1)}}
    */
-  Symmetry::Name getSymmetry() const;
+  Symmetry::Shape getShape() const;
 
-  /*! @brief Yields the mapping from site indices to symmetry positions
+  /*! @brief Yields the mapping from site indices to shape positions
    *
    * @complexity{@math{\Theta(1)}}
    * @throws std::logic_error if the stereopermutator is unassigned.
    */
-  const std::vector<unsigned>& getSymmetryPositionMap() const;
+  const std::vector<unsigned>& getShapePositionMap() const;
 
   /*! @brief Returns the number of possible assignments
    *
@@ -380,12 +381,12 @@ public:
 
 //!@name Operators
 //!@{
-  /** @brief Checks whether the underlying symmetry, central atom index, number
+  /** @brief Checks whether the underlying shape, central atom index, number
    *   of stereopermutations and current assignment match
    *
    * @param other The other atom stereopermutator to compare against
    *
-   * @return Whether the underlying symmetry, central atom index, number of
+   * @return Whether the underlying shape, central atom index, number of
    *   stereopermutations and current assignment match
    */
   bool operator == (const AtomStereopermutator& other) const;
@@ -393,7 +394,7 @@ public:
   bool operator != (const AtomStereopermutator& other) const;
 
   /**
-   * @brief Lexicographically compares the central atom index, the symmetry,
+   * @brief Lexicographically compares the central atom index, the shape,
    *   the number of stereopermutations, and the current assignment
    *
    * @param other The other atom stereopermutator to compare against

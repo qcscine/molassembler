@@ -42,13 +42,13 @@ enum class VertexStrictness : unsigned {
   //! Element type must be the same
   ElementType,
   /*!
-   * There must be a low-effort transition from the symmetry of the needle
-   * vertex to the larger symmetry of the haystack vertex.
+   * There must be a low-effort transition from the shape of the needle
+   * vertex to the larger shape of the haystack vertex.
    *
    * E.g. Trigonal pyramidal is subsumed in tetrahedral, seesaw is subsumed in
    * square pyramidal, square pyramidal is subsumed in octahedral, etc.
    */
-  SubsumeSymmetry,
+  SubsumeShape,
   /*!
    * If a needle vertex carries an assigned stereopermutator, a haystack vertex
    * matches only if its chiral state encompasses

@@ -241,16 +241,16 @@ std::pair<Molecule, Molecule> Editing::cleave(const Molecule& a, const BondIndex
         return;
       }
 
-      boost::optional<Symmetry::Name> symmetryOption;
-      if(Options::symmetryTransition == SymmetryTransition::PrioritizeInferenceFromGraph) {
-        symmetryOption = molecule.inferSymmetry(notifyIndex, localRanking);
+      boost::optional<Symmetry::Shape> shapeOption;
+      if(Options::shapeTransition == ShapeTransition::PrioritizeInferenceFromGraph) {
+        shapeOption = molecule.inferShape(notifyIndex, localRanking);
       }
 
       // Notify the stereopermutator to remove the placeholder
       stereopermutatorOption->propagate(
         molecule._pImpl->_adjacencies,
         std::move(localRanking),
-        symmetryOption
+        shapeOption
       );
 
       // Default-assign if possible
@@ -365,15 +365,15 @@ Molecule Editing::insert(
     if(auto permutatorOption = logStereopermutators.option(newWedgeIndex)) {
       auto localRanking = log.rankPriority(newWedgeIndex);
 
-      boost::optional<Symmetry::Name> symmetryOption;
-      if(Options::symmetryTransition == SymmetryTransition::PrioritizeInferenceFromGraph) {
-        symmetryOption = log.inferSymmetry(newWedgeIndex, localRanking);
+      boost::optional<Symmetry::Shape> shapeOption;
+      if(Options::shapeTransition == ShapeTransition::PrioritizeInferenceFromGraph) {
+        shapeOption = log.inferShape(newWedgeIndex, localRanking);
       }
 
       permutatorOption->propagate(
         log._pImpl->_adjacencies,
         std::move(localRanking),
-        symmetryOption
+        shapeOption
       );
 
       // Default assign if possible
@@ -475,15 +475,15 @@ Molecule Editing::superpose(
     if(topPermutatorOption) {
       auto localRanking = top.rankPriority(topAtom);
 
-      boost::optional<Symmetry::Name> symmetryOption;
-      if(Options::symmetryTransition == SymmetryTransition::PrioritizeInferenceFromGraph) {
-        symmetryOption = top.inferSymmetry(topAtom, localRanking);
+      boost::optional<Symmetry::Shape> shapeOption;
+      if(Options::shapeTransition == ShapeTransition::PrioritizeInferenceFromGraph) {
+        shapeOption = top.inferShape(topAtom, localRanking);
       }
 
       topPermutatorOption->propagate(
         top._pImpl->_adjacencies,
         std::move(localRanking),
-        symmetryOption
+        shapeOption
       );
 
       // Default assign if possible

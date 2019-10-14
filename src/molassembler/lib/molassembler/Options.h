@@ -7,7 +7,7 @@
 #ifndef INCLUDE_MOLASSEMBLER_OPTIONS_H
 #define INCLUDE_MOLASSEMBLER_OPTIONS_H
 
-#include "chemical_symmetries/Names.h"
+#include "chemical_symmetries/Shapes.h"
 #include "molassembler/PRNG.h"
 
 #include "Utils/Geometry/ElementTypes.h"
@@ -58,7 +58,7 @@ enum class TemperatureRegime {
  * are possible under which setting.
  *
  * The first is for the situation of ligand gain. There are very few edges and
- * symmetries in this graph because in nearly all cases, there are multiple
+ * shapes in this graph because in nearly all cases, there are multiple
  * best mappings, and propagation in these cases are enabled only in
  * RandomFromMultipleBest, in which case the graph gets quite dense, so it's
  * not shown. The green edges here are the ligand gain situations propagated
@@ -90,7 +90,7 @@ enum class TemperatureRegime {
  * \enddot
  *
  * The second is for the situation of ligand loss. The edge label indicates
- * the group of symmetry ligands from which a ligand is being removed. Green
+ * the group of shape ligands from which a ligand is being removed. Green
  * edges represent situtations propagated under EffortlessAndUnique, black
  * edges those under Unique. RandomFromMultipleBest is not shown due to graph
  * density.
@@ -150,7 +150,7 @@ enum class ChiralStatePreservation {
    */
   EffortlessAndUnique,
   /*!
-   * Propagates if the best symmetry mapping is unique, i.e. there are no other
+   * Propagates if the best shape mapping is unique, i.e. there are no other
    * mappings with the same quality measures. This enables all green and black
    * edges.
    */
@@ -166,10 +166,10 @@ enum class ChiralStatePreservation {
 
 /**
  * @brief Specifies use of the tau criterion in differentiating between
- *   symmetries of sizes four and five
+ *   shapes of sizes four and five
  *
  * If enabled, enables hard thresholds for tau values to differentiate between
- * some symmetries of sizes four @cite Okuniewski2015 and five @cite Addison1984.
+ * some shapes of sizes four @cite Okuniewski2015 and five @cite Addison1984.
  */
 enum class TauCriterion {
   Enable,
@@ -177,17 +177,17 @@ enum class TauCriterion {
 };
 
 /**
- * @brief Influences the choice of symmetry in substituent additions and
+ * @brief Influences the choice of shape in substituent additions and
  *   removals that lead to increases or decreases of ligand size
  */
-enum class SymmetryTransition {
+enum class ShapeTransition {
   /*!
-   * Try to infer a symmetry from graph information first. Supplant with best
-   * symmetry for chiral state preservation.
+   * Try to infer a shape from graph information first. Supplant with best
+   * shape for chiral state preservation.
    */
   PrioritizeInferenceFromGraph,
   /*!
-   * Always choose the symmetry so that the maximum amount of chiral
+   * Always choose the shape so that the maximum amount of chiral
    * information can be preserved (as per ChiralStatePreservation setting).
    */
   MaximizeChiralStatePreservation
@@ -212,19 +212,19 @@ struct Options {
 
   /**
    * @brief Specifies whether the tau criterion is used throughout the library
-   *   in symmetry fitting.
+   *   in shape fitting.
    *
    * Defaults to Enable
    */
   static TauCriterion tauCriterion;
 
   /**
-   * @brief Specifies AtomStereopermutator symmetry choice behavior on ligand
+   * @brief Specifies AtomStereopermutator shape choice behavior on ligand
    *   additions or removals
    *
    * Defaults to MaximizeChiralStatePreservation
    */
-  static SymmetryTransition symmetryTransition;
+  static ShapeTransition shapeTransition;
 };
 
 // Forward-declare Cycles and AtomStereopermutator

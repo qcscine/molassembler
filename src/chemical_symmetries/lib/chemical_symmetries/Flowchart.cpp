@@ -247,7 +247,7 @@ std::pair<PointGroup, double> linearPointGroups(
   temple::jsf::JSF64& prng,
   const double cumulativeCertainty
 ) {
-  // Yes branch for Cinf -> Linear molecules group
+  // Yes branch for Cinf -> Line molecules group
   // Test for inversion
   const double iCertainty = predicates::inversion(normalizedPositions, prng);
   if(iCertainty >= 0.5) {

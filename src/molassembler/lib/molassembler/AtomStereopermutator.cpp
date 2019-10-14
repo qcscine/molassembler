@@ -12,13 +12,13 @@ namespace molassembler {
 /* AtomStereopermutator implementations */
 AtomStereopermutator::AtomStereopermutator(
   const OuterGraph& graph,
-  const Symmetry::Name symmetry,
+  const Symmetry::Shape shape,
   const AtomIndex centerAtom,
   RankingInformation ranking
 ) : _pImpl(
   std::make_unique<Impl>(
     graph,
-    symmetry,
+    shape,
     centerAtom,
     std::move(ranking)
   )
@@ -37,12 +37,12 @@ AtomStereopermutator& AtomStereopermutator::operator = (const AtomStereopermutat
 
 AtomStereopermutator::~AtomStereopermutator() = default;
 
-Symmetry::Name AtomStereopermutator::up(const Symmetry::Name symmetryName) {
-  return Impl::up(symmetryName);
+Symmetry::Shape AtomStereopermutator::up(const Symmetry::Shape shape) {
+  return Impl::up(shape);
 }
 
-Symmetry::Name AtomStereopermutator::down(const Symmetry::Name symmetryName, const unsigned removedSymmetryPosition) {
-  return Impl::down(symmetryName, removedSymmetryPosition);
+Symmetry::Shape AtomStereopermutator::down(const Symmetry::Shape shape, const unsigned removedShapePosition) {
+  return Impl::down(shape, removedShapePosition);
 }
 
 void AtomStereopermutator::assign(boost::optional<unsigned> assignment) {
@@ -67,12 +67,12 @@ void AtomStereopermutator::fit(
 boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::propagate(
   const OuterGraph& graph,
   RankingInformation newRanking,
-  boost::optional<Symmetry::Name> symmetryOption
+  boost::optional<Symmetry::Shape> shapeOption
 ) {
   return _pImpl->propagate(
     graph,
     std::move(newRanking),
-    std::move(symmetryOption)
+    std::move(shapeOption)
   );
 }
 
@@ -80,11 +80,11 @@ void AtomStereopermutator::propagateVertexRemoval(const AtomIndex removedIndex) 
   _pImpl->propagateVertexRemoval(removedIndex);
 }
 
-void AtomStereopermutator::setSymmetry(
-  const Symmetry::Name symmetryName,
+void AtomStereopermutator::setShape(
+  const Symmetry::Shape shape,
   const OuterGraph& graph
 ) {
-  _pImpl->setSymmetry(symmetryName, graph);
+  _pImpl->setShape(shape, graph);
 }
 
 /* Information */
@@ -132,12 +132,12 @@ const RankingInformation& AtomStereopermutator::getRanking() const {
   return _pImpl->getRanking();
 }
 
-Symmetry::Name AtomStereopermutator::getSymmetry() const {
-  return _pImpl->getSymmetry();
+Symmetry::Shape AtomStereopermutator::getShape() const {
+  return _pImpl->getShape();
 }
 
-const std::vector<unsigned>& AtomStereopermutator::getSymmetryPositionMap() const {
-  return _pImpl->getSymmetryPositionMap();
+const std::vector<unsigned>& AtomStereopermutator::getShapePositionMap() const {
+  return _pImpl->getShapePositionMap();
 }
 
 unsigned AtomStereopermutator::numAssignments() const {

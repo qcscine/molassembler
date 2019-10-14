@@ -14,8 +14,6 @@
 
 #include <iostream>
 
-#include "chemical_symmetries/Symmetries.h"
-
 using namespace std::string_literals;
 using namespace Scine;
 using namespace molassembler;
@@ -39,7 +37,7 @@ void explainDifference(
 
 /* NOTE: This tests reflects upon a lot of things.
  */
-BOOST_AUTO_TEST_CASE(CGReinterpretYieldsSameSymmetries) {
+BOOST_AUTO_TEST_CASE(CGReinterpretYieldsSameShapes) {
   using namespace Scine;
   DistanceGeometry::Configuration DGConfiguration;
   DGConfiguration.partiality = DistanceGeometry::Partiality::All;
@@ -56,7 +54,7 @@ BOOST_AUTO_TEST_CASE(CGReinterpretYieldsSameSymmetries) {
     Utils::ElementType::P
   };
 
-  for(const auto& symmetryName: Symmetry::allNames) {
+  for(const auto& shape: Symmetry::allShapes) {
     // Build an abstract asymmetric molecule (all ligands different) for the current molecule
     Molecule molecule(
       Utils::ElementType::Ru,
@@ -64,7 +62,7 @@ BOOST_AUTO_TEST_CASE(CGReinterpretYieldsSameSymmetries) {
       BondType::Single
     );
 
-    for(unsigned i = 0; molecule.graph().N() - 1 < Symmetry::size(symmetryName); ++i) {
+    for(unsigned i = 0; molecule.graph().N() - 1 < Symmetry::size(shape); ++i) {
       molecule.addAtom(
         elements.at(i),
         0,
@@ -81,7 +79,7 @@ BOOST_AUTO_TEST_CASE(CGReinterpretYieldsSameSymmetries) {
     // Randomize
     temple::random::shuffle(assignments, randomnessEngine());
 
-    /* Limit the number of assignments we're testing per symmetry to 10.
+    /* Limit the number of assignments we're testing per shape to 10.
      * Otherwise, with maximally asymmetric square antiprismatic (5040),
      * we're never going to get done.
      *

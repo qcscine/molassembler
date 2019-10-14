@@ -59,7 +59,7 @@ void Molecule::Impl::_tryAddAtomStereopermutator(
     return;
   }
 
-  Symmetry::Name symmetry = inferSymmetry(candidateIndex, localRanking).value_or_eval(
+  Symmetry::Shape shape = inferShape(candidateIndex, localRanking).value_or_eval(
     [&]() {return LocalGeometry::firstOfSize(localRanking.sites.size());}
   );
 
@@ -67,7 +67,7 @@ void Molecule::Impl::_tryAddAtomStereopermutator(
   // Construct a Stereopermutator here
   auto newStereopermutator = AtomStereopermutator {
     _adjacencies,
-    symmetry,
+    shape,
     candidateIndex,
     std::move(localRanking)
   };
@@ -235,17 +235,17 @@ void Molecule::Impl::_propagateGraphChange() {
         }
       }
 
-      // Suggest a symmetry if desired
-      boost::optional<Symmetry::Name> newSymmetryOption;
-      if(Options::symmetryTransition == SymmetryTransition::PrioritizeInferenceFromGraph) {
-        newSymmetryOption = inferSymmetry(vertex, localRanking);
+      // Suggest a shape if desired
+      boost::optional<Symmetry::Shape> newShapeOption;
+      if(Options::shapeTransition == ShapeTransition::PrioritizeInferenceFromGraph) {
+        newShapeOption = inferShape(vertex, localRanking);
       }
 
       // Propagate the state
       auto oldAtomStereopermutatorStateOption = stereopermutatorOption -> propagate(
         _adjacencies,
         std::move(localRanking),
-        newSymmetryOption
+        newShapeOption
       );
 
       /* If the modified stereopermutator has only one assignment and is
@@ -637,15 +637,15 @@ void Molecule::Impl::removeAtom(const AtomIndex a) {
         continue;
       }
 
-      boost::optional<Symmetry::Name> newSymmetryOption;
-      if(Options::symmetryTransition == SymmetryTransition::PrioritizeInferenceFromGraph) {
-        newSymmetryOption = inferSymmetry(indexToUpdate, localRanking);
+      boost::optional<Symmetry::Shape> newShapeOption;
+      if(Options::shapeTransition == ShapeTransition::PrioritizeInferenceFromGraph) {
+        newShapeOption = inferShape(indexToUpdate, localRanking);
       }
 
       stereopermutatorOption->propagate(
         _adjacencies,
         std::move(localRanking),
-        newSymmetryOption
+        newShapeOption
       );
     }
 
@@ -709,15 +709,15 @@ void Molecule::Impl::removeBond(
         return;
       }
 
-      boost::optional<Symmetry::Name> newSymmetryOption;
-      if(Options::symmetryTransition == SymmetryTransition::PrioritizeInferenceFromGraph) {
-        newSymmetryOption = inferSymmetry(indexToUpdate, localRanking);
+      boost::optional<Symmetry::Shape> newShapeOption;
+      if(Options::shapeTransition == ShapeTransition::PrioritizeInferenceFromGraph) {
+        newShapeOption = inferShape(indexToUpdate, localRanking);
       }
 
       stereopermutatorOption->propagate(
         _adjacencies,
         std::move(localRanking),
-        newSymmetryOption
+        newShapeOption
       );
     }
 
@@ -788,12 +788,12 @@ void Molecule::Impl::setElementType(
   _canonicalComponents = AtomEnvironmentComponents::None;
 }
 
-void Molecule::Impl::setGeometryAtAtom(
+void Molecule::Impl::setShapeAtAtom(
   const AtomIndex a,
-  const Symmetry::Name symmetryName
+  const Symmetry::Shape shape
 ) {
   if(!_isValidIndex(a)) {
-    throw std::out_of_range("Molecule::setGeometryAtAtom: Supplied atom index is invalid");
+    throw std::out_of_range("Molecule::setShapeAtAtom: Supplied atom index is invalid");
   }
 
   auto stereopermutatorOption = _stereopermutators.option(a);
@@ -802,9 +802,9 @@ void Molecule::Impl::setGeometryAtAtom(
   if(!stereopermutatorOption) {
     RankingInformation localRanking = rankPriority(a);
 
-    if(localRanking.sites.size() != Symmetry::size(symmetryName)) {
+    if(localRanking.sites.size() != Symmetry::size(shape)) {
       throw std::logic_error(
-        "Molecule::setGeometryAtAtom: The size of the supplied symmetry is not "
+        "Molecule::setShapeAtAtom: The size of the supplied shape is not "
         " the same as the number of determined sites"
       );
     }
@@ -812,7 +812,7 @@ void Molecule::Impl::setGeometryAtAtom(
     // Add the stereopermutator irrespective of how many assignments it has
     auto newStereopermutator = AtomStereopermutator {
       _adjacencies,
-      symmetryName,
+      shape,
       a,
       std::move(localRanking)
     };
@@ -830,21 +830,21 @@ void Molecule::Impl::setGeometryAtAtom(
   }
 
   if(
-    Symmetry::size(stereopermutatorOption->getSymmetry())
-    != Symmetry::size(symmetryName)
+    Symmetry::size(stereopermutatorOption->getShape())
+    != Symmetry::size(shape)
   ) {
     throw std::logic_error(
-      "Molecule::setGeometryAtAtom: The size of the supplied symmetry is "
-      "not the same as that of the existing stereopermutator's current symmetry!"
+      "Molecule::setShapeAtAtom: The size of the supplied shape is "
+      "not the same as that of the existing stereopermutator's current shape!"
     );
   }
 
-  if(stereopermutatorOption->getSymmetry() == symmetryName) {
+  if(stereopermutatorOption->getShape() == shape) {
     // Do nothing
     return;
   }
 
-  stereopermutatorOption->setSymmetry(symmetryName, _adjacencies);
+  stereopermutatorOption->setShape(shape, _adjacencies);
   if(stereopermutatorOption->numAssignments() == 1) {
     stereopermutatorOption->assign(0);
   }
@@ -863,21 +863,21 @@ AtomEnvironmentComponents Molecule::Impl::canonicalComponents() const {
   return _canonicalComponents;
 }
 
-boost::optional<Symmetry::Name> Molecule::Impl::inferSymmetry(
+boost::optional<Symmetry::Shape> Molecule::Impl::inferShape(
   const AtomIndex index,
   const RankingInformation& ranking
 ) const {
   if(!_isValidIndex(index)) {
-    throw std::out_of_range("Molecule::inferSymmetry: Supplied index is invalid!");
+    throw std::out_of_range("Molecule::inferShape: Supplied index is invalid!");
   }
 
   if(graph().degree(index) <= 1) {
     throw std::logic_error(
-      "Molecule::inferSymmetry: No geometries exist for terminal atoms"
+      "Molecule::inferShape: No geometries exist for terminal atoms"
     );
   }
 
-  return LocalGeometry::inferSymmetry(
+  return LocalGeometry::inferShape(
     _adjacencies,
     index,
     ranking
@@ -926,12 +926,12 @@ StereopermutatorList Molecule::Impl::inferStereopermutatorsFromPositions(
       continue;
     }
 
-    Symmetry::Name dummySymmetry = LocalGeometry::firstOfSize(localRanking.sites.size());
+    Symmetry::Shape dummyShape = LocalGeometry::firstOfSize(localRanking.sites.size());
 
     // Construct it
     auto stereopermutator = AtomStereopermutator {
       _adjacencies,
-      dummySymmetry,
+      dummyShape,
       vertex,
       std::move(localRanking)
     };

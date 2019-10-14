@@ -1019,7 +1019,7 @@ Top standardizeTop(Eigen::Ref<PositionCollection> normalizedPositions) {
     };
     rotateEverything(inertialMomentSystem);
     assert(moments.axes.col(0).cwiseAbs().isApprox(Eigen::Vector3d::UnitZ(), 1e-10));
-    return Top::Linear;
+    return Top::Line;
   }
 
   if(degeneracy == 1) {
@@ -1198,7 +1198,7 @@ PointGroup flowchart(
    *   i + j + k (i != j != k) if n > 4
    */
 
-  if(top == Top::Linear) {
+  if(top == Top::Line) {
     return detail::linear(normalizedPositions);
   }
 

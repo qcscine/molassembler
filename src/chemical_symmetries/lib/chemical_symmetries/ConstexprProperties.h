@@ -31,7 +31,7 @@ namespace Symmetry {
  * @brief Compile-time amenable calculation of symmetry classes' properties
  *
  * Here we calculate various properties of symmetry classes (i.e. classes that
- * fulfill the concepts::SymmetryClass concept). Also, transition mappings can
+ * fulfill the concepts::ShapeClass concept). Also, transition mappings can
  * be calculated at compile time using functions in this namespace.
  *
  * Data from Primitives.h takes two paths through this library: Symmetry classes,
@@ -49,17 +49,17 @@ constexpr double floatingPointEqualityTolerance = 1e-4;
 
 /*! @brief Calculates the minimum angle returned in a symmetry class
  *
- * @tparam SymmetryClass A Symmetry class
+ * @tparam ShapeClass A Symmetry class
  *
  * @complexity{@math{\Theta(S^2)}}
  */
-template<typename SymmetryClass>
+template<typename ShapeClass>
 constexpr double calculateSmallestAngle() {
   double smallestAngle = M_PI;
 
-  for(unsigned i = 0; i < SymmetryClass::size; ++i) {
-    for(unsigned j = i + 1; j < SymmetryClass::size; ++j) {
-      double returnedAngle = SymmetryClass::angleFunction(i, j);
+  for(unsigned i = 0; i < ShapeClass::size; ++i) {
+    for(unsigned j = i + 1; j < ShapeClass::size; ++j) {
+      double returnedAngle = ShapeClass::angleFunction(i, j);
       if(returnedAngle < smallestAngle) {
         smallestAngle = returnedAngle;
       }
@@ -73,11 +73,11 @@ constexpr double calculateSmallestAngle() {
  * @brief Metafunction calculating the smallest and largest angle that exist in
  *   a symmetry
  *
- * @tparam SymmetryClass A class fulfilling concepts::SymmetryClass
+ * @tparam ShapeClass A class fulfilling concepts::ShapeClass
  */
-template<typename SymmetryClass>
+template<typename ShapeClass>
 struct AngleBoundsFunctor {
-  /*! @brief Smallest and largest angles of the @p SymmetryClass
+  /*! @brief Smallest and largest angles of the @p ShapeClass
    *
    * @complexity{@math{\Theta(S^2)}}
    */
@@ -85,9 +85,9 @@ struct AngleBoundsFunctor {
     double smallestAngle = M_PI;
     double largestAngle = 0;
 
-    for(unsigned i = 0; i < SymmetryClass::size; ++i) {
-      for(unsigned j = i + 1; j < SymmetryClass::size; ++j) {
-        double returnedAngle = SymmetryClass::angleFunction(i, j);
+    for(unsigned i = 0; i < ShapeClass::size; ++i) {
+      for(unsigned j = i + 1; j < ShapeClass::size; ++j) {
+        double returnedAngle = ShapeClass::angleFunction(i, j);
         if(returnedAngle < smallestAngle) {
           smallestAngle = returnedAngle;
         }
@@ -106,23 +106,23 @@ struct AngleBoundsFunctor {
  * @brief Functor to find out the minimum angle among all symmetry class
  *   types passed as template arguments
  *
- * @tparam SymmetryClasses pack of classes fulfilling concepts::SymmetryClass
+ * @tparam ShapeClass pack of classes fulfilling concepts::ShapeClass
  */
-template<typename ... SymmetryClasses>
+template<typename ... ShapeClass>
 struct minAngleFunctor {
   /*! @brief Minimum angle among all symmetry classes
    *
    * @complexity{@math{\Theta(N S^2)}} where @math{N} is the number of symmetry classes and @math{S} the largest symmetry size
    */
   static constexpr double value() {
-    const std::array<double, sizeof...(SymmetryClasses)> smallestAngles {{
-      calculateSmallestAngle<SymmetryClasses>()...
+    const std::array<double, sizeof...(ShapeClass)> smallestAngles {{
+      calculateSmallestAngle<ShapeClass>()...
     }};
 
     // C++17 min_element (isn't constexpr before)
     double minElement = smallestAngles.at(0);
 
-    for(unsigned i = 1; i < sizeof...(SymmetryClasses); ++i) {
+    for(unsigned i = 1; i < sizeof...(ShapeClass); ++i) {
       if(smallestAngles.at(i) < minElement) {
         minElement = smallestAngles.at(i);
       }
@@ -141,21 +141,21 @@ template<typename T, size_t size>
 using ArrayType = temple::Array<T, size>;
 
 //! Generate an integer sequence to use with stereopermutations
-template<typename SymmetryClass>
+template<typename ShapeClass>
 constexpr auto startingIndexSequence() {
-  return temple::iota<ArrayType, unsigned, SymmetryClass::size>();
+  return temple::iota<ArrayType, unsigned, ShapeClass::size>();
 }
 
 //! Helper to perform applyRotation in constexpr fashion
-template<typename SymmetryClass, size_t... Indices>
-constexpr ArrayType<unsigned, SymmetryClass::size> applyRotationImpl(
-  const ArrayType<unsigned, SymmetryClass::size>& indices,
+template<typename ShapeClass, size_t... Indices>
+constexpr ArrayType<unsigned, ShapeClass::size> applyRotationImpl(
+  const ArrayType<unsigned, ShapeClass::size>& indices,
   const unsigned rotationFunctionIndex,
   std::index_sequence<Indices...> /* inds */
 ) {
   return {
     indices.at(
-      SymmetryClass::rotations.at(rotationFunctionIndex).at(Indices)
+      ShapeClass::rotations.at(rotationFunctionIndex).at(Indices)
     )...
   };
 }
@@ -164,35 +164,35 @@ constexpr ArrayType<unsigned, SymmetryClass::size> applyRotationImpl(
  *
  * @complexity{@math{\Theta(S)}}
  */
-template<typename SymmetryClass>
-constexpr ArrayType<unsigned, SymmetryClass::size> applyRotation(
-  const ArrayType<unsigned, SymmetryClass::size>& indices,
+template<typename ShapeClass>
+constexpr ArrayType<unsigned, ShapeClass::size> applyRotation(
+  const ArrayType<unsigned, ShapeClass::size>& indices,
   const unsigned rotationFunctionIndex
 ) {
-  return applyRotationImpl<SymmetryClass>(
+  return applyRotationImpl<ShapeClass>(
     indices,
     rotationFunctionIndex,
-    std::make_index_sequence<SymmetryClass::size>{}
+    std::make_index_sequence<ShapeClass::size>{}
   );
 }
 
 //! Helper to perform rotationPeriodicity in constexpr fashion
-template<typename SymmetryClass, unsigned rotationFunctionIndex>
+template<typename ShapeClass, unsigned rotationFunctionIndex>
 constexpr unsigned rotationPeriodicityImpl(
-  const ArrayType<unsigned, SymmetryClass::size>& runningIndices,
+  const ArrayType<unsigned, ShapeClass::size>& runningIndices,
   const unsigned count
 ) {
   if(
     temple::arraysEqual(
       runningIndices,
-      startingIndexSequence<SymmetryClass>()
+      startingIndexSequence<ShapeClass>()
     )
   ) {
     return count;
   }
 
-  return rotationPeriodicityImpl<SymmetryClass, rotationFunctionIndex>(
-    applyRotation<SymmetryClass>(
+  return rotationPeriodicityImpl<ShapeClass, rotationFunctionIndex>(
+    applyRotation<ShapeClass>(
       runningIndices,
       rotationFunctionIndex
     ),
@@ -208,13 +208,13 @@ constexpr unsigned rotationPeriodicityImpl(
  * @complexity{@math{\Theta(M S)} where @math{M} is the multiplicity of the
  * rotation and @math{S} is the symmetry size}
  *
- * @tparam SymmetryClass a model of concepts::SymmetryClass
+ * @tparam ShapeClass a model of concepts::ShapeClass
  */
-template<typename SymmetryClass, unsigned rotationFunctionIndex>
+template<typename ShapeClass, unsigned rotationFunctionIndex>
 constexpr unsigned rotationPeriodicity() {
-  return rotationPeriodicityImpl<SymmetryClass, rotationFunctionIndex>(
-    applyRotation<SymmetryClass>(
-      startingIndexSequence<SymmetryClass>(),
+  return rotationPeriodicityImpl<ShapeClass, rotationFunctionIndex>(
+    applyRotation<ShapeClass>(
+      startingIndexSequence<ShapeClass>(),
       rotationFunctionIndex
     ),
     1
@@ -222,17 +222,17 @@ constexpr unsigned rotationPeriodicity() {
 }
 
 //! Helper function to calculate all rotation periodicities
-template<typename SymmetryClass, size_t ...Inds>
-constexpr ArrayType<unsigned, SymmetryClass::rotations.size()>
+template<typename ShapeClass, size_t ...Inds>
+constexpr ArrayType<unsigned, ShapeClass::rotations.size()>
 rotationPeriodicitiesImpl(std::index_sequence<Inds...> /* inds */) {
-  return { rotationPeriodicity<SymmetryClass, Inds>()... };
+  return { rotationPeriodicity<ShapeClass, Inds>()... };
 }
 
 //! Calculates all multiplicities of a symmetry group's rotations.
-template<typename SymmetryClass>
-constexpr ArrayType<unsigned, SymmetryClass::rotations.size()> rotationPeriodicities() {
-  return rotationPeriodicitiesImpl<SymmetryClass>(
-    std::make_index_sequence<SymmetryClass::rotations.size()>{}
+template<typename ShapeClass>
+constexpr ArrayType<unsigned, ShapeClass::rotations.size()> rotationPeriodicities() {
+  return rotationPeriodicitiesImpl<ShapeClass>(
+    std::make_index_sequence<ShapeClass::rotations.size()>{}
   );
 }
 
@@ -245,24 +245,24 @@ constexpr ArrayType<unsigned, SymmetryClass::rotations.size()> rotationPeriodici
  * of the symmetry, @math{M} is the largest multiplicity of those rotations and
  * @math{S} is the size of the symmetry}
  *
- * @tparam SymmetryClass a model of concepts::SymmetryClass
+ * @tparam ShapeClass a model of concepts::ShapeClass
  */
-template<typename SymmetryClass>
+template<typename ShapeClass>
 struct allRotationPeriodicities {
   static constexpr ArrayType<
     unsigned,
-    SymmetryClass::rotations
-  > value = rotationPeriodicitiesImpl<SymmetryClass>(
-    std::make_index_sequence<SymmetryClass::rotations.size()>{}
+    ShapeClass::rotations
+  > value = rotationPeriodicitiesImpl<ShapeClass>(
+    std::make_index_sequence<ShapeClass::rotations.size()>{}
   );
 };
 
 //! Finds the largest size value of a set of symmetries
-template<typename ... SymmetryClasses>
-struct maxSymmetrySizeFunctor {
+template<typename ... ShapeClasses>
+struct maxShapeSizeFunctor {
   static constexpr unsigned value() {
-    ArrayType<unsigned, sizeof...(SymmetryClasses)> sizes {
-      SymmetryClasses::size...
+    ArrayType<unsigned, sizeof...(ShapeClasses)> sizes {
+      ShapeClasses::size...
     };
 
     return temple::max(sizes);
@@ -270,9 +270,9 @@ struct maxSymmetrySizeFunctor {
 };
 
 //! The largest symmetry size defined in the library
-constexpr unsigned maxSymmetrySize = temple::TupleType::unpackToFunction<
-  Symmetry::data::allSymmetryDataTypes,
-  maxSymmetrySizeFunctor
+constexpr unsigned maxShapeSize = temple::TupleType::unpackToFunction<
+  Symmetry::data::allShapeDataTypes,
+  maxShapeSizeFunctor
 >();
 
 /*! @brief Fetches the coordinates of an index in a Symmetry
@@ -282,10 +282,10 @@ constexpr unsigned maxSymmetrySize = temple::TupleType::unpackToFunction<
  *
  * @complexity{@math{\Theta(1)}}
  */
-template<typename SymmetryClass>
+template<typename ShapeClass>
 constexpr temple::Vector getCoordinates(const unsigned indexInSymmetry) {
   if(indexInSymmetry != ORIGIN_PLACEHOLDER) {
-    return SymmetryClass::coordinates.at(indexInSymmetry);
+    return ShapeClass::coordinates.at(indexInSymmetry);
   }
 
   return {0, 0, 0};
@@ -375,40 +375,40 @@ constexpr unsigned propagateSymmetryPosition(
  * @param indexMapping The index mapping that specifies how indices are mapped
  *   from a source symmetry to a target symmetry
  */
-template<typename SymmetryClassFrom, typename SymmetryClassTo>
+template<typename ShapeClassFrom, typename ShapeClassTo>
 constexpr double calculateChiralDistortion(
   const ArrayType<
     unsigned,
     temple::Math::max(
-      SymmetryClassFrom::size,
-      SymmetryClassTo::size
+      ShapeClassFrom::size,
+      ShapeClassTo::size
     )
   >& indexMapping
 ) {
   double chiralDistortion = 0;
 
   // C++17:
-  // for(const auto& tetrahedron : SymmetryClassFrom::tetrahedra) {
-  for(unsigned i = 0; i < SymmetryClassFrom::tetrahedra.size(); ++i) {
-    const auto& tetrahedron = SymmetryClassFrom::tetrahedra.at(i);
+  // for(const auto& tetrahedron : ShapeClassFrom::tetrahedra) {
+  for(unsigned i = 0; i < ShapeClassFrom::tetrahedra.size(); ++i) {
+    const auto& tetrahedron = ShapeClassFrom::tetrahedra.at(i);
 
     chiralDistortion += temple::Math::abs(
       getTetrahedronVolume(
-        getCoordinates<SymmetryClassFrom>(tetrahedron.at(0)),
-        getCoordinates<SymmetryClassFrom>(tetrahedron.at(1)),
-        getCoordinates<SymmetryClassFrom>(tetrahedron.at(2)),
-        getCoordinates<SymmetryClassFrom>(tetrahedron.at(3))
+        getCoordinates<ShapeClassFrom>(tetrahedron.at(0)),
+        getCoordinates<ShapeClassFrom>(tetrahedron.at(1)),
+        getCoordinates<ShapeClassFrom>(tetrahedron.at(2)),
+        getCoordinates<ShapeClassFrom>(tetrahedron.at(3))
       ) - getTetrahedronVolume(
-        getCoordinates<SymmetryClassTo>(
+        getCoordinates<ShapeClassTo>(
           propagateSymmetryPosition(tetrahedron.at(0), indexMapping)
         ),
-        getCoordinates<SymmetryClassTo>(
+        getCoordinates<ShapeClassTo>(
           propagateSymmetryPosition(tetrahedron.at(1), indexMapping)
         ),
-        getCoordinates<SymmetryClassTo>(
+        getCoordinates<ShapeClassTo>(
           propagateSymmetryPosition(tetrahedron.at(2), indexMapping)
         ),
-        getCoordinates<SymmetryClassTo>(
+        getCoordinates<ShapeClassTo>(
           propagateSymmetryPosition(tetrahedron.at(3), indexMapping)
         )
       )
@@ -440,9 +440,9 @@ constexpr ArrayType<unsigned, size> symPosMapping(
    *  1  –▶  0
    *  |      |
    * (_)    (_) – 1 (new)
-   *  |      |                Linear pos. 0 to
+   *  |      |                Line pos. 0 to
    *  0  –▶  2                pos. 2 in Tshaped
-   *                                 |  ┌– Linear pos. 1 to pos. 0 in Tshaped
+   *                                 |  ┌– Line pos. 1 to pos. 0 in Tshaped
    *                                 |  |  ┌– This position is new
    * This mapping is represented as {2, 0, 1}.
    *
@@ -492,14 +492,14 @@ constexpr ArrayType<unsigned, size> symPosMapping(
  * of the symmetry, @math{M} is the largest multiplicity of those rotations and
  * @math{S} is the size of the symmetry}
  *
- * @tparam SymmetryClass A Symmetry class as defined in Primitives.h
+ * @tparam ShapeClass A Symmetry class as defined in Primitives.h
  */
-template<typename SymmetryClass>
+template<typename ShapeClass>
 constexpr unsigned maxRotations() {
   /* For each rotation in the symmetry class, figure out the multiplicity, i.e.
    * how often a rotation has to be applied to return to identity
    */
-  constexpr auto symmetryRotationPeriodicities = rotationPeriodicities<SymmetryClass>();
+  constexpr auto symmetryRotationPeriodicities = rotationPeriodicities<ShapeClass>();
 
   return temple::reduce(
     symmetryRotationPeriodicities,
@@ -509,52 +509,52 @@ constexpr unsigned maxRotations() {
 }
 
 // Some helper types for use in generateAllRotations
-template<typename SymmetryClass>
-using IndicesList = ArrayType<unsigned, SymmetryClass::size>;
+template<typename ShapeClass>
+using IndicesList = ArrayType<unsigned, ShapeClass::size>;
 
 using IndexListStorageType = unsigned;
 
-template<typename SymmetryClass>
+template<typename ShapeClass>
 using RotationsSetType = temple::DynamicSet<
-  IndicesList<SymmetryClass>,
-  maxRotations<SymmetryClass>()
+  IndicesList<ShapeClass>,
+  maxRotations<ShapeClass>()
 >;
 
-template<typename SymmetryClass>
+template<typename ShapeClass>
 using ChainStructuresArrayType = temple::DynamicArray<
-  IndicesList<SymmetryClass>,
-  maxRotations<SymmetryClass>() * 2 // factor is entirely arbitrary
+  IndicesList<ShapeClass>,
+  maxRotations<ShapeClass>() * 2 // factor is entirely arbitrary
 >;
 
-template<typename SymmetryClass>
+template<typename ShapeClass>
 using ChainArrayType = temple::DynamicArray<
   unsigned,
-  maxRotations<SymmetryClass>() * 2 // factor is entirely arbitrary
+  maxRotations<ShapeClass>() * 2 // factor is entirely arbitrary
 >;
 
 /*! @brief Generates all rotations of a sequence of indices within a symmetry group
  *
- * @tparam SymmetryClass a model of concepts::SymmetryClass
+ * @tparam ShapeClass a model of concepts::ShapeClass
  *
  * @complexity{At most maxRotation iterations}
  */
-template<typename SymmetryClass>
-constexpr auto generateAllRotations(const IndicesList<SymmetryClass>& indices) {
-  RotationsSetType<SymmetryClass> rotations;
+template<typename ShapeClass>
+constexpr auto generateAllRotations(const IndicesList<ShapeClass>& indices) {
+  RotationsSetType<ShapeClass> rotations;
 
   rotations.insert(indices);
 
-  ChainStructuresArrayType<SymmetryClass> chainStructures;
+  ChainStructuresArrayType<ShapeClass> chainStructures;
   chainStructures.push_back(indices);
 
-  ChainArrayType<SymmetryClass> chain {0u};
+  ChainArrayType<ShapeClass> chain {0u};
 
   while(
-    chain.front() < SymmetryClass::rotations.size()
-    && rotations.size() < maxRotations<SymmetryClass>()
+    chain.front() < ShapeClass::rotations.size()
+    && rotations.size() < maxRotations<ShapeClass>()
   ) {
 
-    auto generated = applyRotation<SymmetryClass>(
+    auto generated = applyRotation<ShapeClass>(
       chainStructures.back(),
       chain.back()
     );
@@ -567,7 +567,7 @@ constexpr auto generateAllRotations(const IndicesList<SymmetryClass>& indices) {
       // collapse the chain until we are at an incrementable position (if need be)
       while(
         chain.size() > 1
-        && chain.back() == SymmetryClass::rotations.size() - 1
+        && chain.back() == ShapeClass::rotations.size() - 1
       ) {
         chain.pop_back();
         chainStructures.pop_back();
@@ -589,7 +589,7 @@ struct MappingsReturnType {
   static constexpr size_t maxMappingsSize = 50;
 
   using MappingsList = temple::DynamicSet<
-    temple::DynamicArray<unsigned, maxSymmetrySize>,
+    temple::DynamicArray<unsigned, maxShapeSize>,
     maxMappingsSize
   >;
 
@@ -635,15 +635,15 @@ struct MappingsReturnType {
  *
  * @complexity{@math{\Theta(S!)}}
  *
- * @tparam SymmetryClassFrom A model of concepts::SymmetryClass
- * @tparam SymmetryClassTo A model of concepts::SymmetryClass
+ * @tparam ShapeClassFrom A model of concepts::ShapeClass
+ * @tparam ShapeClassTo A model of concepts::ShapeClass
  */
-template<class SymmetryClassFrom, class SymmetryClassTo>
+template<class ShapeClassFrom, class ShapeClassTo>
 constexpr auto symmetryTransitionMappings() {
   static_assert(
     (
-      SymmetryClassTo::size == SymmetryClassFrom::size + 1
-      || SymmetryClassTo::size == SymmetryClassFrom::size
+      ShapeClassTo::size == ShapeClassFrom::size + 1
+      || ShapeClassTo::size == ShapeClassFrom::size
     ),
     "This function can handle only cases of equal or increasing symmetry size"
   );
@@ -653,9 +653,9 @@ constexpr auto symmetryTransitionMappings() {
   double lowestAngleDistortion = 100;
   double lowestChiralDistortion = 100;
 
-  auto indexMapping = startingIndexSequence<SymmetryClassTo>();
+  auto indexMapping = startingIndexSequence<ShapeClassTo>();
 
-  temple::Bitset<temple::Math::factorial(SymmetryClassTo::size)> encounteredMappings;
+  temple::Bitset<temple::Math::factorial(ShapeClassTo::size)> encounteredMappings;
 
   temple::floating::ExpandedRelativeEqualityComparator<double> comparator {
     floatingPointEqualityTolerance
@@ -668,14 +668,14 @@ constexpr auto symmetryTransitionMappings() {
     if(!encounteredMappings.test(storageVersion)) {
       double angularDistortion = calculateAngularDistortion(
         indexMapping,
-        SymmetryClassFrom::size,
-        SymmetryClassFrom::angleFunction,
-        SymmetryClassTo::angleFunction
+        ShapeClassFrom::size,
+        ShapeClassFrom::angleFunction,
+        ShapeClassTo::angleFunction
       );
 
       double chiralDistortion = calculateChiralDistortion<
-        SymmetryClassFrom,
-        SymmetryClassTo
+        ShapeClassFrom,
+        ShapeClassTo
       >(indexMapping);
 
       /* Summary of cases:
@@ -715,7 +715,7 @@ constexpr auto symmetryTransitionMappings() {
       }
 
       // Add all rotations to the encountered mappings
-      auto allRotations = generateAllRotations<SymmetryClassTo>(mapped);
+      auto allRotations = generateAllRotations<ShapeClassTo>(mapped);
 
       for(const auto& rotation : allRotations) {
         encounteredMappings.set(
@@ -736,18 +736,18 @@ constexpr auto symmetryTransitionMappings() {
  *
  * @complexity{@math{\Theta(S!)}}
  *
- * @tparam SymmetryClassFrom A model of concepts::SymmetryClass
- * @tparam SymmetryClassTo A model of concepts::SymmetryClass
+ * @tparam ShapeClassFrom A model of concepts::ShapeClass
+ * @tparam ShapeClassTo A model of concepts::ShapeClass
  */
-template<class SymmetryClassFrom, class SymmetryClassTo>
+template<class ShapeClassFrom, class ShapeClassTo>
 constexpr auto ligandLossMappings(const unsigned deletedSymmetryPosition) {
 
   static_assert(
-    SymmetryClassFrom::size == SymmetryClassTo::size + 1,
+    ShapeClassFrom::size == ShapeClassTo::size + 1,
     "Ligand loss pathway calculation must involve symmetry size decrease"
   );
 
-  assert(deletedSymmetryPosition < SymmetryClassFrom::size);
+  assert(deletedSymmetryPosition < ShapeClassFrom::size);
 
 
   typename MappingsReturnType::MappingsList bestMappings;
@@ -756,18 +756,18 @@ constexpr auto ligandLossMappings(const unsigned deletedSymmetryPosition) {
   double lowestChiralDistortion = 100;
 
   // Construct the initial index mapping
-  ArrayType<unsigned, SymmetryClassTo::size> indexMapping;
+  ArrayType<unsigned, ShapeClassTo::size> indexMapping;
   for(unsigned i = 0; i < deletedSymmetryPosition; ++i) {
     indexMapping.at(i) = i;
   }
-  for(unsigned i = deletedSymmetryPosition; i < SymmetryClassFrom::size - 1; ++i) {
+  for(unsigned i = deletedSymmetryPosition; i < ShapeClassFrom::size - 1; ++i) {
     indexMapping.at(i) = i + 1;
   }
 
   /* NOTE: From here the algorithm is identical to symmetryTransitionMappings
    * save that symmetryTo and symmetryFrom are swapped in all occasions
    */
-  temple::Bitset<temple::Math::factorial(SymmetryClassFrom::size)> encounteredMappings;
+  temple::Bitset<temple::Math::factorial(ShapeClassFrom::size)> encounteredMappings;
 
   temple::floating::ExpandedRelativeEqualityComparator<double> comparator {
     floatingPointEqualityTolerance
@@ -780,14 +780,14 @@ constexpr auto ligandLossMappings(const unsigned deletedSymmetryPosition) {
     if(!encounteredMappings.test(storageVersion)) {
       double angularDistortion = calculateAngularDistortion(
         indexMapping,
-        SymmetryClassTo::size,
-        SymmetryClassTo::angleFunction,
-        SymmetryClassFrom::angleFunction
+        ShapeClassTo::size,
+        ShapeClassTo::angleFunction,
+        ShapeClassFrom::angleFunction
       );
 
       double chiralDistortion = calculateChiralDistortion<
-        SymmetryClassTo,
-        SymmetryClassFrom
+        ShapeClassTo,
+        ShapeClassFrom
       >(indexMapping);
 
       bool addMapping = (
@@ -817,7 +817,7 @@ constexpr auto ligandLossMappings(const unsigned deletedSymmetryPosition) {
       }
 
       // Add all rotations to the encountered mappings
-      auto allRotations = generateAllRotations<SymmetryClassTo>(indexMapping);
+      auto allRotations = generateAllRotations<ShapeClassTo>(indexMapping);
 
       for(const auto& rotation : allRotations) {
         encounteredMappings.set(
@@ -868,25 +868,25 @@ std::enable_if_t<
  *
  * @complexity{@math{\Theta(S!)}}
  *
- * @tparam SymmetryClass A model of concepts::SymmetryClass
+ * @tparam ShapeClass A model of concepts::ShapeClass
  * @param nIdenticalLigands The number of ligands whose ranking is identical.
  *   E.g. 0 generates ABCDEF, 3 generates AAABCD, etc. for octahedral.
  */
-template<typename SymmetryClass>
+template<typename ShapeClass>
 constexpr unsigned numUnlinkedStereopermutations(
   const unsigned nIdenticalLigands
 ) {
   unsigned count = 1;
 
-  auto indices = startingIndexSequence<SymmetryClass>();
+  auto indices = startingIndexSequence<ShapeClass>();
 
   for(unsigned i = 0; i < nIdenticalLigands; ++i) {
     indices.at(i) = 0;
   }
 
-  temple::Bitset<temple::Math::factorial(SymmetryClass::size)> rotations;
+  temple::Bitset<temple::Math::factorial(ShapeClass::size)> rotations;
 
-  auto initialRotations = generateAllRotations<SymmetryClass>(indices);
+  auto initialRotations = generateAllRotations<ShapeClass>(indices);
 
   for(const auto& rotation : initialRotations) {
     rotations.set(temple::permutationIndex(rotation));
@@ -894,7 +894,7 @@ constexpr unsigned numUnlinkedStereopermutations(
 
   while(temple::inPlaceNextPermutation(indices)) {
     if(!rotations.test(temple::permutationIndex(indices))) {
-      auto allRotations = generateAllRotations<SymmetryClass>(indices);
+      auto allRotations = generateAllRotations<ShapeClass>(indices);
       for(const auto& rotation : allRotations) {
         rotations.set(temple::permutationIndex(rotation));
       }
@@ -914,21 +914,21 @@ constexpr unsigned numUnlinkedStereopermutations(
  * @param nIdenticalLigands The number of ligands whose ranking is identical.
  *   E.g. 0 generates ABCDEF, 3 generates AAABCD, etc. for octahedral.
  */
-template<typename SymmetryClass>
+template<typename ShapeClass>
 constexpr bool hasMultipleUnlinkedStereopermutations(const unsigned nIdenticalLigands) {
-  if(nIdenticalLigands == SymmetryClass::size) {
+  if(nIdenticalLigands == ShapeClass::size) {
     return false;
   }
 
-  auto indices = startingIndexSequence<SymmetryClass>();
+  auto indices = startingIndexSequence<ShapeClass>();
 
   for(unsigned i = 0; i < nIdenticalLigands; ++i) {
     indices.at(i) = 0;
   }
 
-  temple::Bitset<temple::Math::factorial(SymmetryClass::size)> rotations;
+  temple::Bitset<temple::Math::factorial(ShapeClass::size)> rotations;
 
-  auto initialRotations = generateAllRotations<SymmetryClass>(indices);
+  auto initialRotations = generateAllRotations<ShapeClass>(indices);
 
   for(const auto& rotation : initialRotations) {
     rotations.set(temple::permutationIndex(rotation));

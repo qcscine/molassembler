@@ -64,25 +64,25 @@ int main(int argc, char* argv[]) {
   ) {
     // Validate symmetry argument
     unsigned argSymmetry = options_variables_map["s"].as<unsigned>();
-    if(argSymmetry >= Symmetry::allNames.size()) {
+    if(argSymmetry >= Symmetry::allShapes.size()) {
       std::cout << "Specified symmetry out of bounds. Valid symmetries are 0-"
-        << (Symmetry::allNames.size() - 1) << ":\n\n";
-      for(unsigned i = 0; i < Symmetry::allNames.size(); i++) {
-        std::cout << "  " << i << " - " << Symmetry::name(Symmetry::allNames.at(i)) << "\n";
+        << (Symmetry::allShapes.size() - 1) << ":\n\n";
+      for(unsigned i = 0; i < Symmetry::allShapes.size(); i++) {
+        std::cout << "  " << i << " - " << Symmetry::name(Symmetry::allShapes.at(i)) << "\n";
       }
       std::cout << std::endl;
       return 0;
     }
 
-    Symmetry::Name symmetryName = Symmetry::allNames[argSymmetry];
+    Symmetry::Shape shape = Symmetry::allShapes[argSymmetry];
 
     // Validate characters
     std::string chars = options_variables_map["c"].as<std::string>();
 
-    if(chars.size() != Symmetry::size(symmetryName)) {
+    if(chars.size() != Symmetry::size(shape)) {
       std::cout << "Number of characters does not fit specified symmetry size: "
         << chars.size() << " characters specified, symmetry size is "
-        << Symmetry::size(symmetryName) << nl;
+        << Symmetry::size(shape) << nl;
 
       return 0;
     }
@@ -156,11 +156,11 @@ int main(int argc, char* argv[]) {
 
     auto uniques = uniquesWithWeights(
       base,
-      symmetryName,
+      shape,
       false
     );
 
-    std::cout << "Symmetry: " << Symmetry::name(symmetryName) << nl
+    std::cout << "Symmetry: " << Symmetry::name(shape) << nl
       << "Characters: " << chars << nl
       << "Links: " << temple::stringify(links) << nl << nl;
 
@@ -171,7 +171,7 @@ int main(int argc, char* argv[]) {
 
       for(const auto& linkPair : uniques.stereopermutations[i].links) {
         std::cout << (
-          180 * Symmetry::angleFunction(symmetryName)(linkPair.first, linkPair.second) / M_PI
+          180 * Symmetry::angleFunction(shape)(linkPair.first, linkPair.second) / M_PI
         ) << " ";
       }
       std::cout << nl;

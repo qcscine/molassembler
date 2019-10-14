@@ -15,24 +15,24 @@ std::vector<unsigned> siteToSymmetryPositionMap(
   const stereopermutation::Stereopermutation& stereopermutation,
   const RankingInformation::RankedSitesType& canonicalSites
 ) {
-  /* We are given an stereopermutation within some symmetry:
+  /* We are given an stereopermutation within some shape:
    *   Characters: ABADCB
    *   Links: (0, 1), (2, 5)
    * and canonical sites (ranked sets of site indices re-sorted by
    * decreasing set size): {{0, 4}, {2, 1}, {5}, {3}}
    *
    * We need to distribute the site indices (from the canonical sites) to
-   * the symmetry positions (defined by the stereopermutation) that they match (via
+   * the shape positions (defined by the stereopermutation) that they match (via
    * their ranking character).
    *
    * Additionally, we need to ensure that:
    * - AAAAAA {0, 1}, {2, 3}, {4, 5}
    * - AAAAAA {0, 1}, {2, 4}, {3, 5}
-   * have different symmetry position maps.
+   * have different shape position maps.
    *
-   * Link indices (from assignments) specify symmetry positions that are linked.
-   * Since symmetry positions are NOT exchangeable as two site indices are
-   * that rank equally, we need to distribute linked symmetry positions first,
+   * Link indices (from assignments) specify shape positions that are linked.
+   * Since shape positions are NOT exchangeable as two site indices are
+   * that rank equally, we need to distribute linked shape positions first,
    * and then distribute the remaining characters afterwards.
    */
 
@@ -53,7 +53,7 @@ std::vector<unsigned> siteToSymmetryPositionMap(
     }
   );
 
-  /* Additionally, for each canonical character, a limited set of symmetry
+  /* Additionally, for each canonical character, a limited set of shape
    * positions are available: Those where the passed stereopermutation's characters
    * match the character.
    */
@@ -66,7 +66,7 @@ std::vector<unsigned> siteToSymmetryPositionMap(
   for(char i = 'A'; i <= maxChar; ++i) {
     std::vector<unsigned> positions;
 
-    // Go through the symmetry positions
+    // Go through the shape positions
     for(unsigned s = 0; s < S; ++s) {
       if(stereopermutation.characters.at(s) == i) {
         positions.push_back(s);
@@ -78,7 +78,7 @@ std::vector<unsigned> siteToSymmetryPositionMap(
     );
   }
 
-  // For linked sites, we need to find a symmetry position to place them
+  // For linked sites, we need to find a shape position to place them
   auto placeAndMark = [&](const unsigned symmetryPosition) {
     char priority = stereopermutation.characters.at(symmetryPosition);
 
@@ -137,14 +137,14 @@ std::vector<unsigned> siteToSymmetryPositionMap(
     }
   }
 
-  // Ensure no symmetry positions are marked with placeholders
+  // Ensure no shape positions are marked with placeholders
   assert(
     temple::all_of(
       positionMap,
       [](const unsigned symmetryPosition) -> bool {
         return symmetryPosition != placeholder;
       }
-    ) && "A symmetry position is still marked with a placeholder!"
+    ) && "A shape position is still marked with a placeholder!"
   );
 
   return positionMap;

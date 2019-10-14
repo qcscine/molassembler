@@ -144,7 +144,7 @@ SpatialModel::SpatialModel(
   static_assert(
     0.0 < angleAbsoluteVariance && angleAbsoluteVariance < Symmetry::smallestAngle,
     "SpatialModel static constant angle absolute variance must fulfill"
-    "0 < x << (smallest angle any local symmetry returns)"
+    "0 < x << (smallest angle any local shape returns)"
   );
 
   // Add all information pertaining to fixed positions immediately
@@ -297,7 +297,7 @@ void SpatialModel::addAtomStereopermutatorInformation(
    *     (if there are multiple site-constituting atoms at all)
    * - For each pair of sites
    *   - The angle bounds between sites are initially set by the idealized
-   *     symmetry position angle modified by the upper cone angles
+   *     shape position angle modified by the upper cone angles
    *   - For each pair of atoms between both sites
    *     - The site angle bounds variance is modified by cycle multipliers
    *       and loosening
@@ -518,20 +518,20 @@ void SpatialModel::addBondStereopermutatorInformation(
   );
 
   /* Only dihedrals */
-  unsigned firstSymmetryPosition;
-  unsigned secondSymmetryPosition;
+  unsigned firstShapePosition;
+  unsigned secondShapePosition;
   double dihedralAngle;
 
   for(const auto& dihedralTuple : composite.dihedrals(permutation)) {
-    std::tie(firstSymmetryPosition, secondSymmetryPosition, dihedralAngle) = dihedralTuple;
+    std::tie(firstShapePosition, secondShapePosition, dihedralAngle) = dihedralTuple;
 
     unsigned siteIndexIAtFirst = SymmetryMapHelper::getSiteIndexAt(
-      firstSymmetryPosition,
-      firstStereopermutator.getSymmetryPositionMap()
+      firstShapePosition,
+      firstStereopermutator.getShapePositionMap()
     );
     unsigned siteIndexLAtSecond = SymmetryMapHelper::getSiteIndexAt(
-      secondSymmetryPosition,
-      secondStereopermutator.getSymmetryPositionMap()
+      secondShapePosition,
+      secondStereopermutator.getShapePositionMap()
     );
 
     const auto& coneAngleIOption = firstStereopermutator.getFeasible().coneAngles.at(siteIndexIAtFirst);
@@ -598,7 +598,7 @@ void SpatialModel::addBondStereopermutatorInformation(
      */
     if(
       composite.alignment() == stereopermutation::Composite::Alignment::Staggered
-      && std::get<0>(composite.dihedrals(permutation).front()) != firstSymmetryPosition
+      && std::get<0>(composite.dihedrals(permutation).front()) != firstShapePosition
     ) {
       continue;
     }
@@ -821,26 +821,26 @@ SpatialModel::BoundsMatrix SpatialModel::makePairwiseBounds(
 
 double SpatialModel::siteCentralAngle(
   const AtomIndex centralIndex,
-  const Symmetry::Name& symmetryName,
+  const Symmetry::Shape& shape,
   const RankingInformation& ranking,
   const std::vector<unsigned>& symmetryPositionMap,
   const std::pair<unsigned, unsigned>& sites,
   const InnerGraph& inner
 ) {
   /* We need to respect the graph as ground truth and distort an ideal
-   * symmetry angle towards lower angles for small cycles under specific
+   * shape angle towards lower angles for small cycles under specific
    * circumstances.
    */
-  const double idealAngle = Symmetry::angleFunction(symmetryName)(
+  const double idealAngle = Symmetry::angleFunction(shape)(
     symmetryPositionMap.at(sites.first),
     symmetryPositionMap.at(sites.second)
   );
 
-  /* The symmetry does not distort if:
+  /* The shape does not distort if:
    *
    * - Either site is haptic: Additional rotational degrees of freedom for the
    *   haptic sites ought to be sufficient to enable cycles.
-   * - The ideal angle between the two sites is not the symmetry's smallest
+   * - The ideal angle between the two sites is not the shape's smallest
    *   angle. Otherwise, heavily distorted trans-arrangements may be determined
    *   as feasible even though much more favorable cis-arrangements are
    *   possible.
@@ -848,12 +848,12 @@ double SpatialModel::siteCentralAngle(
   if(
     ranking.sites.at(sites.first).size() > 1
     || ranking.sites.at(sites.second).size() > 1
-    || idealAngle != Symmetry::minimumAngle(symmetryName)
+    || idealAngle != Symmetry::minimumAngle(shape)
   ) {
     return idealAngle;
   }
 
-  /* The symmetry also does not distort if the central index isn't part of a
+  /* The shape also does not distort if the central index isn't part of a
    * small cycle (i.e. size < 6). So we look for cycles that contain the central
    * index and the specified two monoatomic sites.
    */
@@ -949,9 +949,9 @@ double SpatialModel::siteCentralAngle(
 ) {
   return siteCentralAngle(
     permutator.centralIndex(),
-    permutator.getSymmetry(),
+    permutator.getShape(),
     permutator.getRanking(),
-    permutator.getSymmetryPositionMap(),
+    permutator.getShapePositionMap(),
     sites,
     inner
   );
@@ -967,7 +967,7 @@ ValueBounds SpatialModel::modelSiteAngle(
 
   const FeasibleStereopermutations& feasiblePermutations = permutator.getFeasible();
 
-  /* The idealized symmetry angles are modified by the upper (!) cone angles
+  /* The idealized shape angles are modified by the upper (!) cone angles
    * at each site, not split between lower and upper.
    */
   const ValueBounds angleBounds = makeBoundsFromCentralValue(
@@ -1191,7 +1191,7 @@ struct SpatialModel::ModelGraphWriter final : public MolGraphWriter {
     const AtomStereopermutator& permutator
   ) const final {
     std::vector<std::string> tooltips {{
-      Symmetry::name(permutator.getSymmetry()),
+      Symmetry::name(permutator.getShape()),
       permutator.info()
     }};
 
@@ -1624,7 +1624,7 @@ void SpatialModel::checkFixedPositionsPreconditions(
         }
       );
 
-      if(1 < numFixedSites && numFixedSites < Symmetry::size(stereopermutatorOption->getSymmetry())) {
+      if(1 < numFixedSites && numFixedSites < Symmetry::size(stereopermutatorOption->getShape())) {
         throw std::runtime_error(
           "DG preconditions for fixed atoms are not met: A non-terminal atom "
           "does not have 0, 1 or all binding sites fixed."
@@ -1712,7 +1712,7 @@ void SpatialModel::_instantiateMissingAtomStereopermutators(random::Engine& engi
       continue;
     }
 
-    Symmetry::Name localSymmetry = _molecule.inferSymmetry(i, localRanking).value_or_eval(
+    Symmetry::Shape localShape = _molecule.inferShape(i, localRanking).value_or_eval(
       [&]() {
         return LocalGeometry::firstOfSize(localRanking.sites.size());
       }
@@ -1720,7 +1720,7 @@ void SpatialModel::_instantiateMissingAtomStereopermutators(random::Engine& engi
 
     auto newStereopermutator = AtomStereopermutator {
       _molecule.graph(),
-      localSymmetry,
+      localShape,
       i,
       std::move(localRanking)
     };
@@ -1933,7 +1933,7 @@ void SpatialModel::_modelSpirocenters(
 
     // Skip any stereopermutators that do not match our conditions
     if(
-      stereopermutator.getSymmetry() != Symmetry::Name::Tetrahedral
+      stereopermutator.getShape() != Symmetry::Shape::Tetrahedron
       || cycleData.numCycleFamilies(i) != 2
     ) {
       continue;

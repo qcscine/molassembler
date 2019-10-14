@@ -43,10 +43,10 @@ std::ostream& operator << (std::ostream& os, const std::vector<T>& vector) {
 
 // create instances of all symmetries with monodentate ligands
 BOOST_AUTO_TEST_CASE( stereopermutationInstantiation ) {
-  for(const auto& symmetryName: Symmetry::allNames) {
+  for(const auto& shape: Symmetry::allShapes) {
     Stereopermutation testStereopermutation(
       std::vector<char>(
-        Symmetry::size(symmetryName),
+        Symmetry::size(shape),
         'A'
       )
     );
@@ -184,7 +184,7 @@ BOOST_AUTO_TEST_CASE( rotationCorrectness ) {
     );
   };
 
-  auto allRotations = testCase.generateAllRotations(Symmetry::Name::Octahedral);
+  auto allRotations = testCase.generateAllRotations(Symmetry::Shape::Octahedron);
   for(const auto& copy : allRotations) {
     BOOST_CHECK(testInstance(copy));
   }
@@ -196,14 +196,14 @@ BOOST_AUTO_TEST_CASE( octahedralSymmetryCorrectness ) {
   );
 
   BOOST_CHECK(
-    octahedralInstance.generateAllRotations(Symmetry::Name::Octahedral).size()
+    octahedralInstance.generateAllRotations(Symmetry::Shape::Octahedron).size()
     == 24 // 4 C4 cases on each of 6 A position selections
   );
 
 }
 
 void run_tests_with_counts(
-  const Symmetry::Name& symmetryName,
+  const Symmetry::Shape& shape,
   const std::vector<
     std::tuple<
       std::vector<char>, // characters
@@ -231,7 +231,7 @@ void run_tests_with_counts(
     // The count of uniques in the tests are all without trans-arranged pairs!
     auto unique = uniquesWithWeights(
       stereopermutation,
-      symmetryName,
+      shape,
       true // remove trans arranged pairs
     );
 
@@ -250,7 +250,7 @@ void run_tests_with_counts(
         std::cout << ", ";
       }
     }
-    std::cout << "} " << Symmetry::name(symmetryName) << std::endl;
+    std::cout << "} " << Symmetry::name(shape) << std::endl;
 
     for(unsigned i = 0; i < unique.stereopermutations.size(); i++) {
       std::cout << "Weight " << unique.weights[i] << ": "
@@ -282,8 +282,8 @@ BOOST_AUTO_TEST_CASE( individual_bugfixes ) {
   // one and only one of the following can be true for any Stereopermutations a and b
   BOOST_CHECK(temple::testLogicalOperators(a, b));
 
-  BOOST_CHECK(a.isRotationallySuperimposable(b, Symmetry::Name::Octahedral));
-  BOOST_CHECK(b.isRotationallySuperimposable(a, Symmetry::Name::Octahedral));
+  BOOST_CHECK(a.isRotationallySuperimposable(b, Symmetry::Shape::Octahedron));
+  BOOST_CHECK(b.isRotationallySuperimposable(a, Symmetry::Shape::Octahedron));
 
   /* Contrived example of two that have inconsistent logical operators, just
    * reordered op pairs. Will evaluate == but also < w/ current impl.
@@ -306,15 +306,15 @@ BOOST_AUTO_TEST_CASE( individual_bugfixes ) {
   };
 
   BOOST_CHECK(temple::testLogicalOperators(c, d));
-  BOOST_CHECK(c.isRotationallySuperimposable(d, Symmetry::Name::Octahedral));
-  BOOST_CHECK(d.isRotationallySuperimposable(c, Symmetry::Name::Octahedral));
+  BOOST_CHECK(c.isRotationallySuperimposable(d, Symmetry::Shape::Octahedron));
+  BOOST_CHECK(d.isRotationallySuperimposable(c, Symmetry::Shape::Octahedron));
 }
 
-/* Tetrahedral tests */
+/* Tetrahedron tests */
 /* These were thought up myself */
 BOOST_AUTO_TEST_CASE( tetrahedral_monodentate ) {
   run_tests_with_counts(
-    Symmetry::Name::Tetrahedral,
+    Symmetry::Shape::Tetrahedron,
     {
     // M_A
     std::make_tuple(
@@ -363,7 +363,7 @@ BOOST_AUTO_TEST_CASE( tetrahedral_monodentate ) {
 /* These were thought up myself */
 BOOST_AUTO_TEST_CASE( square_planar_monodentate ) {
   run_tests_with_counts(
-    Symmetry::Name::SquarePlanar,
+    Symmetry::Shape::Square,
     {
     // M_A
     std::make_tuple(
@@ -408,7 +408,7 @@ BOOST_AUTO_TEST_CASE( square_planar_monodentate ) {
   });
 }
 
-/* Octahedral tests */
+/* Octahedron tests */
 /* Expected values taken from
  * Miessler, Gary L., Tarr, Donald A.: Inorganic Chemistry, Third Edition.
  * Do not know whether these are correct! They are "all calculated using a
@@ -417,7 +417,7 @@ BOOST_AUTO_TEST_CASE( square_planar_monodentate ) {
  */
 BOOST_AUTO_TEST_CASE( octahedral_monodentate ) {
   run_tests_with_counts(
-    Symmetry::Name::Octahedral,
+    Symmetry::Shape::Octahedron,
     {
       // M_A
       std::make_tuple(
@@ -517,7 +517,7 @@ BOOST_AUTO_TEST_CASE( octahedral_monodentate ) {
 
 BOOST_AUTO_TEST_CASE( octahedral_multidentate ) {
   run_tests_with_counts(
-    Symmetry::Name::Octahedral,
+    Symmetry::Shape::Octahedron,
     {
       // M(A-A)_3
       std::make_tuple(
@@ -672,8 +672,8 @@ bool testOrientationState(const Composite::OrientationState& a) {
 
 // Ensure that transformation and reversion work the way they should
 BOOST_AUTO_TEST_CASE(orientationStateTests) {
-  for(const auto& symmetryName : Symmetry::allNames) {
-    const unsigned S = Symmetry::size(symmetryName);
+  for(const auto& shape : Symmetry::allShapes) {
+    const unsigned S = Symmetry::size(shape);
 
     std::vector<char> maximumAsymmetricCase (S);
     for(unsigned i = 0; i < S; ++i) {
@@ -684,14 +684,14 @@ BOOST_AUTO_TEST_CASE(orientationStateTests) {
       BOOST_CHECK_MESSAGE(
         testOrientationState(
           Composite::OrientationState {
-            symmetryName,
+            shape,
             i,
             maximumAsymmetricCase,
             0
           }
         ),
         "Transformation and reversion does not work for "
-        << Symmetry::name(symmetryName)
+        << Symmetry::name(shape)
         << " on position " << i << "."
       );
     }
@@ -704,13 +704,13 @@ BOOST_AUTO_TEST_CASE(compositesTests) {
 
   Composite a {
     Composite::OrientationState {
-      Symmetry::Name::Seesaw,
+      Symmetry::Shape::Disphenoid,
       0,
       {'A', 'B', 'C', 'D'},
       leftIdentifier
     },
     Composite::OrientationState {
-      Symmetry::Name::Tetrahedral,
+      Symmetry::Shape::Tetrahedron,
       0,
       {'A', 'B', 'C', 'D'},
       rightIdentifier
@@ -724,13 +724,13 @@ BOOST_AUTO_TEST_CASE(compositesTests) {
 
   Composite b {
     Composite::OrientationState {
-      Symmetry::Name::Octahedral,
+      Symmetry::Shape::Octahedron,
       4,
       {'A', 'B', 'C', 'D', 'E', 'F'},
       leftIdentifier
     },
     Composite::OrientationState {
-      Symmetry::Name::Octahedral,
+      Symmetry::Shape::Octahedron,
       2,
       {'A', 'B', 'C', 'D', 'E', 'F'},
       rightIdentifier
@@ -744,13 +744,13 @@ BOOST_AUTO_TEST_CASE(compositesTests) {
 
   Composite c {
     Composite::OrientationState {
-      Symmetry::Name::Bent,
+      Symmetry::Shape::Bent,
       0,
       {'A', 'B'},
       leftIdentifier
     },
     Composite::OrientationState {
-      Symmetry::Name::TrigonalPlanar,
+      Symmetry::Shape::EquilateralTriangle,
       0,
       {'A', 'B', 'C'},
       rightIdentifier
@@ -764,13 +764,13 @@ BOOST_AUTO_TEST_CASE(compositesTests) {
 
   Composite d {
     Composite::OrientationState {
-      Symmetry::Name::TrigonalPlanar,
+      Symmetry::Shape::EquilateralTriangle,
       0,
       {'A', 'B', 'C'},
       leftIdentifier
     },
     Composite::OrientationState {
-      Symmetry::Name::TrigonalPlanar,
+      Symmetry::Shape::EquilateralTriangle,
       0,
       {'A', 'B', 'C'},
       rightIdentifier
@@ -784,13 +784,13 @@ BOOST_AUTO_TEST_CASE(compositesTests) {
 
   Composite e {
     Composite::OrientationState {
-      Symmetry::Name::Bent,
+      Symmetry::Shape::Bent,
       0,
       {'A', 'B'},
       leftIdentifier
     },
     Composite::OrientationState {
-      Symmetry::Name::Bent,
+      Symmetry::Shape::Bent,
       0,
       {'A', 'B'},
       rightIdentifier
@@ -809,13 +809,13 @@ BOOST_AUTO_TEST_CASE(compositesAlignment) {
 
   Composite a {
     Composite::OrientationState {
-      Symmetry::Name::Tetrahedral,
+      Symmetry::Shape::Tetrahedron,
       0,
       {'A', 'B', 'C', 'D'},
       leftIdentifier
     },
     Composite::OrientationState {
-      Symmetry::Name::Tetrahedral,
+      Symmetry::Shape::Tetrahedron,
       0,
       {'A', 'B', 'C', 'D'},
       rightIdentifier
@@ -830,13 +830,13 @@ BOOST_AUTO_TEST_CASE(compositesAlignment) {
 
   Composite b {
     Composite::OrientationState {
-      Symmetry::Name::Bent,
+      Symmetry::Shape::Bent,
       0,
       {'A', 'B'},
       leftIdentifier
     },
     Composite::OrientationState {
-      Symmetry::Name::SquarePyramidal,
+      Symmetry::Shape::SquarePyramid,
       0,
       {'A', 'B', 'C', 'D', 'E'},
       rightIdentifier
@@ -851,13 +851,13 @@ BOOST_AUTO_TEST_CASE(compositesAlignment) {
 
   Composite c {
     Composite::OrientationState {
-      Symmetry::Name::Octahedral,
+      Symmetry::Shape::Octahedron,
       4,
       {'A', 'B', 'C', 'D', 'E', 'F'},
       leftIdentifier
     },
     Composite::OrientationState {
-      Symmetry::Name::Octahedral,
+      Symmetry::Shape::Octahedron,
       2,
       {'A', 'B', 'C', 'D', 'E', 'F'},
       rightIdentifier
@@ -872,9 +872,9 @@ BOOST_AUTO_TEST_CASE(compositesAlignment) {
 
 BOOST_AUTO_TEST_CASE(numUnlinkedStereopermutationsTest) {
   // Crosscheck number of unlinked stereopermutations with chemical_symmetries
-  for(const Symmetry::Name symmetryName : Symmetry::allNames) {
-    std::vector<char> characters (Symmetry::size(symmetryName));
-    for(unsigned nIdentical = 1; nIdentical < Symmetry::size(symmetryName); ++nIdentical) {
+  for(const Symmetry::Shape shape : Symmetry::allShapes) {
+    std::vector<char> characters (Symmetry::size(shape));
+    for(unsigned nIdentical = 1; nIdentical < Symmetry::size(shape); ++nIdentical) {
       // Populate characters for construction of a Stereopermutation
       for(unsigned i = 0; i < characters.size(); ++i) {
         characters.at(i) = 'A' + std::max(
@@ -893,18 +893,18 @@ BOOST_AUTO_TEST_CASE(numUnlinkedStereopermutationsTest) {
 
       const Stereopermutation initialStereopermutation {characters};
 
-      const unsigned uniquesCount = uniques(initialStereopermutation, symmetryName).size();
+      const unsigned uniquesCount = uniques(initialStereopermutation, shape).size();
 
       // chemical_symmetries prediction
       const unsigned chemicalSymmetriesCount = Symmetry::properties::numUnlinkedStereopermutations(
-        symmetryName,
+        shape,
         nIdentical
       );
 
       BOOST_CHECK_MESSAGE(
         uniquesCount == chemicalSymmetriesCount,
         "stereopermutation and chemical_symmetries differ in unique "
-        << "stereopermutation counts for " << Symmetry::name(symmetryName)
+        << "stereopermutation counts for " << Symmetry::name(shape)
         << " and " << nIdentical << " ligands: " << uniquesCount << " vs "
         << chemicalSymmetriesCount
       );

@@ -27,15 +27,15 @@ namespace data {
  *   to just use decltype(...).
  */
 
-constexpr decltype(Linear::name) Linear::name;
-constexpr decltype(Linear::size) Linear::size;
-constexpr decltype(Linear::coordinates) Linear::coordinates;
-constexpr decltype(Linear::rotations) Linear::rotations;
-constexpr decltype(Linear::tetrahedra) Linear::tetrahedra;
-constexpr decltype(Linear::stringName) Linear::stringName;
-constexpr decltype(Linear::mirror) Linear::mirror;
+constexpr decltype(Line::shape) Line::shape;
+constexpr decltype(Line::size) Line::size;
+constexpr decltype(Line::coordinates) Line::coordinates;
+constexpr decltype(Line::rotations) Line::rotations;
+constexpr decltype(Line::tetrahedra) Line::tetrahedra;
+constexpr decltype(Line::stringName) Line::stringName;
+constexpr decltype(Line::mirror) Line::mirror;
 
-constexpr decltype(Bent::name) Bent::name;
+constexpr decltype(Bent::shape) Bent::shape;
 constexpr decltype(Bent::size) Bent::size;
 constexpr decltype(Bent::coordinates) Bent::coordinates;
 constexpr decltype(Bent::rotations) Bent::rotations;
@@ -43,129 +43,128 @@ constexpr decltype(Bent::tetrahedra) Bent::tetrahedra;
 constexpr decltype(Bent::stringName) Bent::stringName;
 constexpr decltype(Bent::mirror) Bent::mirror;
 
-constexpr decltype(TrigonalPlanar::name) TrigonalPlanar::name;
-constexpr decltype(TrigonalPlanar::size) TrigonalPlanar::size;
-constexpr decltype(TrigonalPlanar::coordinates) TrigonalPlanar::coordinates;
-constexpr decltype(TrigonalPlanar::rotations) TrigonalPlanar::rotations;
-constexpr decltype(TrigonalPlanar::tetrahedra) TrigonalPlanar::tetrahedra;
-constexpr decltype(TrigonalPlanar::stringName) TrigonalPlanar::stringName;
-constexpr decltype(TrigonalPlanar::mirror) TrigonalPlanar::mirror;
+constexpr decltype(EquilateralTriangle::shape) EquilateralTriangle::shape;
+constexpr decltype(EquilateralTriangle::size) EquilateralTriangle::size;
+constexpr decltype(EquilateralTriangle::coordinates) EquilateralTriangle::coordinates;
+constexpr decltype(EquilateralTriangle::rotations) EquilateralTriangle::rotations;
+constexpr decltype(EquilateralTriangle::tetrahedra) EquilateralTriangle::tetrahedra;
+constexpr decltype(EquilateralTriangle::stringName) EquilateralTriangle::stringName;
+constexpr decltype(EquilateralTriangle::mirror) EquilateralTriangle::mirror;
 
-constexpr decltype(CutTetrahedral::name) CutTetrahedral::name;
-constexpr decltype(CutTetrahedral::size) CutTetrahedral::size;
-constexpr decltype(CutTetrahedral::coordinates) CutTetrahedral::coordinates;
-constexpr decltype(CutTetrahedral::rotations) CutTetrahedral::rotations;
-constexpr decltype(CutTetrahedral::tetrahedra) CutTetrahedral::tetrahedra;
-constexpr decltype(CutTetrahedral::stringName) CutTetrahedral::stringName;
-constexpr decltype(CutTetrahedral::mirror) CutTetrahedral::mirror;
+constexpr decltype(ApicalTrigonalPyramid::shape) ApicalTrigonalPyramid::shape;
+constexpr decltype(ApicalTrigonalPyramid::size) ApicalTrigonalPyramid::size;
+constexpr decltype(ApicalTrigonalPyramid::coordinates) ApicalTrigonalPyramid::coordinates;
+constexpr decltype(ApicalTrigonalPyramid::rotations) ApicalTrigonalPyramid::rotations;
+constexpr decltype(ApicalTrigonalPyramid::tetrahedra) ApicalTrigonalPyramid::tetrahedra;
+constexpr decltype(ApicalTrigonalPyramid::stringName) ApicalTrigonalPyramid::stringName;
+constexpr decltype(ApicalTrigonalPyramid::mirror) ApicalTrigonalPyramid::mirror;
 
-constexpr decltype(TShaped::name) TShaped::name;
-constexpr decltype(TShaped::size) TShaped::size;
-constexpr decltype(TShaped::coordinates) TShaped::coordinates;
-constexpr decltype(TShaped::rotations) TShaped::rotations;
-constexpr decltype(TShaped::tetrahedra) TShaped::tetrahedra;
-constexpr decltype(TShaped::stringName) TShaped::stringName;
-constexpr decltype(TShaped::mirror) TShaped::mirror;
+constexpr decltype(T::shape) T::shape;
+constexpr decltype(T::size) T::size;
+constexpr decltype(T::coordinates) T::coordinates;
+constexpr decltype(T::rotations) T::rotations;
+constexpr decltype(T::tetrahedra) T::tetrahedra;
+constexpr decltype(T::stringName) T::stringName;
+constexpr decltype(T::mirror) T::mirror;
 
-constexpr decltype(Tetrahedral::name) Tetrahedral::name;
-constexpr decltype(Tetrahedral::size) Tetrahedral::size;
-constexpr decltype(Tetrahedral::coordinates) Tetrahedral::coordinates;
-constexpr decltype(Tetrahedral::rotations) Tetrahedral::rotations;
-constexpr decltype(Tetrahedral::tetrahedra) Tetrahedral::tetrahedra;
-constexpr decltype(Tetrahedral::stringName) Tetrahedral::stringName;
-constexpr decltype(Tetrahedral::mirror) Tetrahedral::mirror;
+constexpr decltype(Tetrahedron::shape) Tetrahedron::shape;
+constexpr decltype(Tetrahedron::size) Tetrahedron::size;
+constexpr decltype(Tetrahedron::coordinates) Tetrahedron::coordinates;
+constexpr decltype(Tetrahedron::rotations) Tetrahedron::rotations;
+constexpr decltype(Tetrahedron::tetrahedra) Tetrahedron::tetrahedra;
+constexpr decltype(Tetrahedron::stringName) Tetrahedron::stringName;
+constexpr decltype(Tetrahedron::mirror) Tetrahedron::mirror;
 
-constexpr decltype(SquarePlanar::name) SquarePlanar::name;
-constexpr decltype(SquarePlanar::size) SquarePlanar::size;
-constexpr decltype(SquarePlanar::coordinates) SquarePlanar::coordinates;
-constexpr decltype(SquarePlanar::rotations) SquarePlanar::rotations;
-constexpr decltype(SquarePlanar::tetrahedra) SquarePlanar::tetrahedra;
-constexpr decltype(SquarePlanar::stringName) SquarePlanar::stringName;
-constexpr decltype(SquarePlanar::mirror) SquarePlanar::mirror;
+constexpr decltype(Square::shape) Square::shape;
+constexpr decltype(Square::size) Square::size;
+constexpr decltype(Square::coordinates) Square::coordinates;
+constexpr decltype(Square::rotations) Square::rotations;
+constexpr decltype(Square::tetrahedra) Square::tetrahedra;
+constexpr decltype(Square::stringName) Square::stringName;
+constexpr decltype(Square::mirror) Square::mirror;
 
-constexpr decltype(Seesaw::name) Seesaw::name;
-constexpr decltype(Seesaw::size) Seesaw::size;
-constexpr decltype(Seesaw::coordinates) Seesaw::coordinates;
-constexpr decltype(Seesaw::rotations) Seesaw::rotations;
-constexpr decltype(Seesaw::tetrahedra) Seesaw::tetrahedra;
-constexpr decltype(Seesaw::stringName) Seesaw::stringName;
-constexpr decltype(Seesaw::mirror) Seesaw::mirror;
+constexpr decltype(Disphenoid::shape) Disphenoid::shape;
+constexpr decltype(Disphenoid::size) Disphenoid::size;
+constexpr decltype(Disphenoid::coordinates) Disphenoid::coordinates;
+constexpr decltype(Disphenoid::rotations) Disphenoid::rotations;
+constexpr decltype(Disphenoid::tetrahedra) Disphenoid::tetrahedra;
+constexpr decltype(Disphenoid::stringName) Disphenoid::stringName;
+constexpr decltype(Disphenoid::mirror) Disphenoid::mirror;
 
-constexpr decltype(TrigonalPyramidal::name) TrigonalPyramidal::name;
-constexpr decltype(TrigonalPyramidal::size) TrigonalPyramidal::size;
-constexpr decltype(TrigonalPyramidal::coordinates) TrigonalPyramidal::coordinates;
-constexpr decltype(TrigonalPyramidal::rotations) TrigonalPyramidal::rotations;
-constexpr decltype(TrigonalPyramidal::tetrahedra) TrigonalPyramidal::tetrahedra;
-constexpr decltype(TrigonalPyramidal::stringName) TrigonalPyramidal::stringName;
-constexpr decltype(TrigonalPyramidal::mirror) TrigonalPyramidal::mirror;
+constexpr decltype(TrigonalPyramid::shape) TrigonalPyramid::shape;
+constexpr decltype(TrigonalPyramid::size) TrigonalPyramid::size;
+constexpr decltype(TrigonalPyramid::coordinates) TrigonalPyramid::coordinates;
+constexpr decltype(TrigonalPyramid::rotations) TrigonalPyramid::rotations;
+constexpr decltype(TrigonalPyramid::tetrahedra) TrigonalPyramid::tetrahedra;
+constexpr decltype(TrigonalPyramid::stringName) TrigonalPyramid::stringName;
+constexpr decltype(TrigonalPyramid::mirror) TrigonalPyramid::mirror;
 
-constexpr decltype(SquarePyramidal::name) SquarePyramidal::name;
-constexpr decltype(SquarePyramidal::size) SquarePyramidal::size;
-constexpr decltype(SquarePyramidal::coordinates) SquarePyramidal::coordinates;
-constexpr decltype(SquarePyramidal::rotations) SquarePyramidal::rotations;
-constexpr decltype(SquarePyramidal::tetrahedra) SquarePyramidal::tetrahedra;
-constexpr decltype(SquarePyramidal::stringName) SquarePyramidal::stringName;
-constexpr decltype(SquarePyramidal::mirror) SquarePyramidal::mirror;
+constexpr decltype(SquarePyramid::shape) SquarePyramid::shape;
+constexpr decltype(SquarePyramid::size) SquarePyramid::size;
+constexpr decltype(SquarePyramid::coordinates) SquarePyramid::coordinates;
+constexpr decltype(SquarePyramid::rotations) SquarePyramid::rotations;
+constexpr decltype(SquarePyramid::tetrahedra) SquarePyramid::tetrahedra;
+constexpr decltype(SquarePyramid::stringName) SquarePyramid::stringName;
+constexpr decltype(SquarePyramid::mirror) SquarePyramid::mirror;
 
-constexpr decltype(TrigonalBiPyramidal::name) TrigonalBiPyramidal::name;
-constexpr decltype(TrigonalBiPyramidal::size) TrigonalBiPyramidal::size;
-constexpr decltype(TrigonalBiPyramidal::coordinates) TrigonalBiPyramidal::coordinates;
-constexpr decltype(TrigonalBiPyramidal::rotations) TrigonalBiPyramidal::rotations;
-constexpr decltype(TrigonalBiPyramidal::tetrahedra) TrigonalBiPyramidal::tetrahedra;
-constexpr decltype(TrigonalBiPyramidal::stringName) TrigonalBiPyramidal::stringName;
-constexpr decltype(TrigonalBiPyramidal::mirror) TrigonalBiPyramidal::mirror;
+constexpr decltype(TrigonalBipyramid::shape) TrigonalBipyramid::shape;
+constexpr decltype(TrigonalBipyramid::size) TrigonalBipyramid::size;
+constexpr decltype(TrigonalBipyramid::coordinates) TrigonalBipyramid::coordinates;
+constexpr decltype(TrigonalBipyramid::rotations) TrigonalBipyramid::rotations;
+constexpr decltype(TrigonalBipyramid::tetrahedra) TrigonalBipyramid::tetrahedra;
+constexpr decltype(TrigonalBipyramid::stringName) TrigonalBipyramid::stringName;
+constexpr decltype(TrigonalBipyramid::mirror) TrigonalBipyramid::mirror;
 
-constexpr decltype(PentagonalPlanar::name) PentagonalPlanar::name;
-constexpr decltype(PentagonalPlanar::size) PentagonalPlanar::size;
-constexpr decltype(PentagonalPlanar::coordinates) PentagonalPlanar::coordinates;
-constexpr decltype(PentagonalPlanar::rotations) PentagonalPlanar::rotations;
-constexpr decltype(PentagonalPlanar::tetrahedra) PentagonalPlanar::tetrahedra;
-constexpr decltype(PentagonalPlanar::stringName) PentagonalPlanar::stringName;
-constexpr decltype(PentagonalPlanar::mirror) PentagonalPlanar::mirror;
+constexpr decltype(Pentagon::shape) Pentagon::shape;
+constexpr decltype(Pentagon::size) Pentagon::size;
+constexpr decltype(Pentagon::coordinates) Pentagon::coordinates;
+constexpr decltype(Pentagon::rotations) Pentagon::rotations;
+constexpr decltype(Pentagon::tetrahedra) Pentagon::tetrahedra;
+constexpr decltype(Pentagon::stringName) Pentagon::stringName;
+constexpr decltype(Pentagon::mirror) Pentagon::mirror;
 
-constexpr decltype(Octahedral::name) Octahedral::name;
-constexpr decltype(Octahedral::size) Octahedral::size;
-constexpr decltype(Octahedral::coordinates) Octahedral::coordinates;
-constexpr decltype(Octahedral::rotations) Octahedral::rotations;
-constexpr decltype(Octahedral::tetrahedra) Octahedral::tetrahedra;
-constexpr decltype(Octahedral::stringName) Octahedral::stringName;
-constexpr decltype(Octahedral::mirror) Octahedral::mirror;
+constexpr decltype(Octahedron::shape) Octahedron::shape;
+constexpr decltype(Octahedron::size) Octahedron::size;
+constexpr decltype(Octahedron::coordinates) Octahedron::coordinates;
+constexpr decltype(Octahedron::rotations) Octahedron::rotations;
+constexpr decltype(Octahedron::tetrahedra) Octahedron::tetrahedra;
+constexpr decltype(Octahedron::stringName) Octahedron::stringName;
+constexpr decltype(Octahedron::mirror) Octahedron::mirror;
 
-constexpr decltype(TrigonalPrismatic::name) TrigonalPrismatic::name;
-constexpr decltype(TrigonalPrismatic::size) TrigonalPrismatic::size;
-constexpr decltype(TrigonalPrismatic::coordinates) TrigonalPrismatic::coordinates;
-constexpr decltype(TrigonalPrismatic::rotations) TrigonalPrismatic::rotations;
-constexpr decltype(TrigonalPrismatic::tetrahedra) TrigonalPrismatic::tetrahedra;
-constexpr decltype(TrigonalPrismatic::stringName) TrigonalPrismatic::stringName;
-constexpr decltype(TrigonalPrismatic::mirror) TrigonalPrismatic::mirror;
+constexpr decltype(TrigonalPrism::shape) TrigonalPrism::shape;
+constexpr decltype(TrigonalPrism::size) TrigonalPrism::size;
+constexpr decltype(TrigonalPrism::coordinates) TrigonalPrism::coordinates;
+constexpr decltype(TrigonalPrism::rotations) TrigonalPrism::rotations;
+constexpr decltype(TrigonalPrism::tetrahedra) TrigonalPrism::tetrahedra;
+constexpr decltype(TrigonalPrism::stringName) TrigonalPrism::stringName;
+constexpr decltype(TrigonalPrism::mirror) TrigonalPrism::mirror;
 
-constexpr decltype(PentagonalPyramidal::name) PentagonalPyramidal::name;
-constexpr decltype(PentagonalPyramidal::size) PentagonalPyramidal::size;
-constexpr decltype(PentagonalPyramidal::coordinates) PentagonalPyramidal::coordinates;
-constexpr decltype(PentagonalPyramidal::rotations) PentagonalPyramidal::rotations;
-constexpr decltype(PentagonalPyramidal::tetrahedra) PentagonalPyramidal::tetrahedra;
-constexpr decltype(PentagonalPyramidal::stringName) PentagonalPyramidal::stringName;
-constexpr decltype(PentagonalPyramidal::mirror) PentagonalPyramidal::mirror;
+constexpr decltype(PentagonalPyramid::shape) PentagonalPyramid::shape;
+constexpr decltype(PentagonalPyramid::size) PentagonalPyramid::size;
+constexpr decltype(PentagonalPyramid::coordinates) PentagonalPyramid::coordinates;
+constexpr decltype(PentagonalPyramid::rotations) PentagonalPyramid::rotations;
+constexpr decltype(PentagonalPyramid::tetrahedra) PentagonalPyramid::tetrahedra;
+constexpr decltype(PentagonalPyramid::stringName) PentagonalPyramid::stringName;
+constexpr decltype(PentagonalPyramid::mirror) PentagonalPyramid::mirror;
 
-constexpr decltype(PentagonalBiPyramidal::name) PentagonalBiPyramidal::name;
-constexpr decltype(PentagonalBiPyramidal::size) PentagonalBiPyramidal::size;
-constexpr decltype(PentagonalBiPyramidal::coordinates) PentagonalBiPyramidal::coordinates;
-constexpr decltype(PentagonalBiPyramidal::rotations) PentagonalBiPyramidal::rotations;
-constexpr decltype(PentagonalBiPyramidal::tetrahedra) PentagonalBiPyramidal::tetrahedra;
-constexpr decltype(PentagonalBiPyramidal::stringName) PentagonalBiPyramidal::stringName;
-constexpr decltype(PentagonalBiPyramidal::mirror) PentagonalBiPyramidal::mirror;
+constexpr decltype(PentagonalBipyramid::shape) PentagonalBipyramid::shape;
+constexpr decltype(PentagonalBipyramid::size) PentagonalBipyramid::size;
+constexpr decltype(PentagonalBipyramid::coordinates) PentagonalBipyramid::coordinates;
+constexpr decltype(PentagonalBipyramid::rotations) PentagonalBipyramid::rotations;
+constexpr decltype(PentagonalBipyramid::tetrahedra) PentagonalBipyramid::tetrahedra;
+constexpr decltype(PentagonalBipyramid::stringName) PentagonalBipyramid::stringName;
+constexpr decltype(PentagonalBipyramid::mirror) PentagonalBipyramid::mirror;
 
-constexpr decltype(SquareAntiPrismatic::name) SquareAntiPrismatic::name;
-constexpr decltype(SquareAntiPrismatic::size) SquareAntiPrismatic::size;
-constexpr decltype(SquareAntiPrismatic::coordinates) SquareAntiPrismatic::coordinates;
-constexpr decltype(SquareAntiPrismatic::rotations) SquareAntiPrismatic::rotations;
-constexpr decltype(SquareAntiPrismatic::tetrahedra) SquareAntiPrismatic::tetrahedra;
-constexpr decltype(SquareAntiPrismatic::stringName) SquareAntiPrismatic::stringName;
-constexpr decltype(SquareAntiPrismatic::mirror) SquareAntiPrismatic::mirror;
-
+constexpr decltype(SquareAntiprism::shape) SquareAntiprism::shape;
+constexpr decltype(SquareAntiprism::size) SquareAntiprism::size;
+constexpr decltype(SquareAntiprism::coordinates) SquareAntiprism::coordinates;
+constexpr decltype(SquareAntiprism::rotations) SquareAntiprism::rotations;
+constexpr decltype(SquareAntiprism::tetrahedra) SquareAntiprism::tetrahedra;
+constexpr decltype(SquareAntiprism::stringName) SquareAntiprism::stringName;
+constexpr decltype(SquareAntiprism::mirror) SquareAntiprism::mirror;
 
 #ifdef USE_CONSTEXPR_SQUARE_ANTIPRISMATIC_LOOKUP_TABLE
-constexpr decltype(SquareAntiPrismatic::angleLookupTable) SquareAntiPrismatic::angleLookupTable;
+constexpr decltype(SquareAntiprism::angleLookupTable) SquareAntiprism::angleLookupTable;
 #endif
 
 } // namespace data

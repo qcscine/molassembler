@@ -60,10 +60,10 @@ void printPermissibleSymmetries() {
     << std::setw(symmetryColumns[2]) << "Name"
     << nl;
 
-  for(unsigned i = 0; i < Symmetry::allNames.size(); i++) {
+  for(unsigned i = 0; i < Symmetry::allShapes.size(); i++) {
     std::cout << std::setw(symmetryColumns[0]) << i
-      << std::setw(symmetryColumns[1]) << Symmetry::size(Symmetry::allNames.at(i))
-      << std::setw(symmetryColumns[2]) << Symmetry::name(Symmetry::allNames.at(i))
+      << std::setw(symmetryColumns[1]) << Symmetry::size(Symmetry::allShapes.at(i))
+      << std::setw(symmetryColumns[2]) << Symmetry::name(Symmetry::allShapes.at(i))
       << nl;
   }
 
@@ -129,13 +129,13 @@ double calculateAmbiguity(
 
 struct AmbiguityEntry {
   double ambiguity;
-  Symmetry::Name source, target;
+  Symmetry::Shape source, target;
   boost::optional<unsigned> deletedIndex;
 
   AmbiguityEntry(
     const double passAmbiguity,
-    const Symmetry::Name passSource,
-    const Symmetry::Name passTarget,
+    const Symmetry::Shape passSource,
+    const Symmetry::Shape passTarget,
     boost::optional<unsigned> passDeletedIndex = boost::none
   ) : ambiguity(passAmbiguity),
       source(passSource),
@@ -179,8 +179,8 @@ int main(int argc, char* argv[]) {
     unsigned targetSymmetryArg = options_variables_map["t"].as<unsigned>();
 
     if(
-      sourceSymmetryArg >= Symmetry::allNames.size()
-      || targetSymmetryArg >= Symmetry::allNames.size()
+      sourceSymmetryArg >= Symmetry::allShapes.size()
+      || targetSymmetryArg >= Symmetry::allShapes.size()
     ) {
       std::cout << "Specified symmetry out of bounds. Valid symmetries:" << nl << nl;
       printPermissibleSymmetries();
@@ -193,8 +193,8 @@ int main(int argc, char* argv[]) {
       return 1;
     }
 
-    Symmetry::Name sourceSymmetry(Symmetry::allNames.at(sourceSymmetryArg)),
-                   targetSymmetry(Symmetry::allNames.at(targetSymmetryArg));
+    Symmetry::Shape sourceSymmetry(Symmetry::allShapes.at(sourceSymmetryArg)),
+                   targetSymmetry(Symmetry::allShapes.at(targetSymmetryArg));
 
     int diff = (
       static_cast<int>(Symmetry::size(targetSymmetry))
@@ -233,8 +233,8 @@ int main(int argc, char* argv[]) {
   if(options_variables_map.count("a") > 0) {
     std::vector<AmbiguityEntry> ambiguities;
 
-    for(const auto& sourceSymmetry : Symmetry::allNames) {
-      for(const auto& targetSymmetry : Symmetry::allNames) {
+    for(const auto& sourceSymmetry : Symmetry::allShapes) {
+      for(const auto& targetSymmetry : Symmetry::allShapes) {
         if(sourceSymmetry == targetSymmetry) {
           // Skip identity mapping
           continue;

@@ -43,7 +43,7 @@ enum class DGError {
    *
    * The applied spatial model is not very smart and mostly applies simple
    * geometric considerations. One one hand, it may be that centers whose
-   * symmetries are heavily distorted due to e.g. multiple small cycles are not
+   * shapes are heavily distorted due to e.g. multiple small cycles are not
    * recognized correctly or modeled loosely enough in order for a conformer to
    * be possible. On the other hand, it is also possible to create graphs that
    * are not representable in three dimensions. In both circumstances, you will

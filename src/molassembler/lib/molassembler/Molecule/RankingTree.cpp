@@ -413,14 +413,14 @@ public:
       std::is_same<std::decay_t<T>, AtomStereopermutator>::value,
       boost::optional<bool>
     > permutatorSpecificComparison(const T& a, const T& b) const {
-      unsigned aSymmetryIndex = Symmetry::nameIndex(a.getSymmetry());
-      unsigned bSymmetryIndex = Symmetry::nameIndex(b.getSymmetry());
+      unsigned aShapeIndex = Symmetry::nameIndex(a.getShape());
+      unsigned bShapeIndex = Symmetry::nameIndex(b.getShape());
 
-      if(aSymmetryIndex < bSymmetryIndex) {
+      if(aShapeIndex < bShapeIndex) {
         return true;
       }
 
-      if(aSymmetryIndex > bSymmetryIndex) {
+      if(aShapeIndex > bShapeIndex) {
         return false;
       }
 
@@ -629,7 +629,7 @@ public:
  * This function ranks the direct substituents of the atom it is instantiated
  * upon by the sequential application of the 2013 IUPAC Blue Book sequence
  * rules. They are somewhat adapted since the priority of asymmetric centers
- * of higher (and also lower) symmetry must also be considered because
+ * of higher (and also lower) shape must also be considered because
  * transition metal chemistry is also included in this library.
  *
  * It returns a sorted vector of vectors, in which every sub-vector
@@ -823,21 +823,21 @@ void RankingTree::_applySequenceRules(
     // The ranking does not have/get links since this tree is acyclic
 
 
-    /* Figure out the symmetry the stereopermutator should have */
-    Symmetry::Name localSymmetry;
+    /* Figure out the shape the stereopermutator should have */
+    Symmetry::Shape localShape;
     if(
       existingStereopermutatorOption
       && Symmetry::size(
-        existingStereopermutatorOption->getSymmetry()
+        existingStereopermutatorOption->getShape()
       ) == centerRanking.sites.size()
     ) {
-      /* NOTE: The symmetry size check is necessary since duplicate tree
+      /* NOTE: The shape size check is necessary since duplicate tree
        * vertices may crop up for cycle closures. Those are kept in
        * _auxiliaryAdjacentsToRank, other duplicate vertices are discarded.
        */
-      localSymmetry = existingStereopermutatorOption->getSymmetry();
+      localShape = existingStereopermutatorOption->getShape();
     } else {
-      localSymmetry = LocalGeometry::inferSymmetry(
+      localShape = LocalGeometry::inferShape(
         _graphRef,
         molSourceIndex,
         centerRanking
@@ -851,15 +851,15 @@ void RankingTree::_applySequenceRules(
     // Instantiate a AtomStereopermutator here!
     auto newStereopermutator = AtomStereopermutator {
       _graphRef,
-      localSymmetry,
+      localShape,
       molSourceIndex,
       centerRanking
     };
 
-    /* Find an assignment (and maybe a better symmetry) */
+    /* Find an assignment (and maybe a better shape) */
     if(positionsOption) {
-      /* Fit has the side effect that the chosen symmetry is not necessarily
-       * kept but rather the best combination of symmetry and assignment is
+      /* Fit has the side effect that the chosen shape is not necessarily
+       * kept but rather the best combination of shape and assignment is
        * chosen. It is therefore not wise to default-assign newStereopermutator
        * if positions are available.
        */
@@ -879,11 +879,11 @@ void RankingTree::_applySequenceRules(
        */
       if(existingStereopermutatorOption->getRanking() == centerRanking) {
         /* If the ranking is identical, i.e. splitting the molecule into an
-         * acyclic graph does not change the ranking, we can copy symmetry
+         * acyclic graph does not change the ranking, we can copy shape
          * and assignment immediately.
          */
-        newStereopermutator.setSymmetry(
-          existingStereopermutatorOption->getSymmetry(),
+        newStereopermutator.setShape(
+          existingStereopermutatorOption->getShape(),
           _graphRef
         );
         newStereopermutator.assign(existingStereopermutatorOption->assigned());
@@ -893,10 +893,10 @@ void RankingTree::_applySequenceRules(
          */
         AtomStereopermutator permutatorCopy = *existingStereopermutatorOption;
         try {
-          permutatorCopy.propagate(_graphRef, centerRanking, localSymmetry);
+          permutatorCopy.propagate(_graphRef, centerRanking, localShape);
           if(permutatorCopy.assigned()) {
-            newStereopermutator.setSymmetry(
-              permutatorCopy.getSymmetry(),
+            newStereopermutator.setShape(
+              permutatorCopy.getShape(),
               _graphRef
             );
             newStereopermutator.assign(permutatorCopy.assigned());
@@ -1032,7 +1032,7 @@ void RankingTree::_applySequenceRules(
           ) {
             /* Need to get chiral information from the molecule (if present).
              * Have to be careful, any stereopermutators on the same atom may have
-             * different symmetries and different ranking for the same
+             * different shapes and different ranking for the same
              * substituents
              */
             newStereopermutator.assign(

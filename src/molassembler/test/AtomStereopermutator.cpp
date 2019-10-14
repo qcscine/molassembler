@@ -24,14 +24,14 @@ BOOST_AUTO_TEST_CASE(atomStereopermutatorUpDown) {
   Options::chiralStatePreservation = ChiralStatePreservation::EffortlessAndUnique;
 
   std::vector<
-    std::pair<Name, Name>
+    std::pair<Shape, Shape>
   > upPairs {
-    {Name::SquarePyramidal, Name::Octahedral},
-    {Name::PentagonalPyramidal, Name::PentagonalBiPyramidal},
-    {Name::Seesaw, Name::TrigonalBiPyramidal},
-    {Name::TShaped, Name::SquarePlanar},
-    {Name::CutTetrahedral, Name::Tetrahedral},
-    {Name::SquarePyramidal, Name::Octahedral}
+    {Shape::SquarePyramid, Shape::Octahedron},
+    {Shape::PentagonalPyramid, Shape::PentagonalBipyramid},
+    {Shape::Disphenoid, Shape::TrigonalBipyramid},
+    {Shape::T, Shape::Square},
+    {Shape::ApicalTrigonalPyramid, Shape::Tetrahedron},
+    {Shape::SquarePyramid, Shape::Octahedron}
   };
 
   for(const auto& pair: upPairs) {
@@ -43,10 +43,10 @@ BOOST_AUTO_TEST_CASE(atomStereopermutatorUpDown) {
   }
 
   std::vector<
-    std::tuple<Name, unsigned, Name>
+    std::tuple<Shape, unsigned, Shape>
   > downTuples {
-    {Name::SquarePyramidal, 4u, Name::SquarePlanar},
-    {Name::SquarePyramidal, 0u, Name::Tetrahedral},
+    {Shape::SquarePyramid, 4u, Shape::Square},
+    {Shape::SquarePyramid, 0u, Shape::Tetrahedron},
   };
 
   for(const auto& tuple: downTuples) {
@@ -60,8 +60,8 @@ BOOST_AUTO_TEST_CASE(atomStereopermutatorUpDown) {
   Options::chiralStatePreservation = ChiralStatePreservation::Unique;
 
   BOOST_CHECK_MESSAGE(
-    AtomStereopermutator::down(Name::TrigonalPrismatic, 0) == Name::PentagonalPlanar,
-    "Expected down(trig prism, 0) == pentagonal planar, got " << name(AtomStereopermutator::down(Name::TrigonalPrismatic, 0)) << " instead."
+    AtomStereopermutator::down(Shape::TrigonalPrism, 0) == Shape::Pentagon,
+    "Expected down(trig prism, 0) == pentagonal planar, got " << name(AtomStereopermutator::down(Shape::TrigonalPrism, 0)) << " instead."
   );
 
   // Restore prior state
@@ -74,8 +74,8 @@ BOOST_AUTO_TEST_CASE(ligandAdditionPropagatedStateSuperposable) {
    */
   BOOST_REQUIRE(Options::chiralStatePreservation == ChiralStatePreservation::EffortlessAndUnique);
 
-  auto trySymmetryPropagation = [](const Symmetry::Name source) -> bool {
-    assert(Symmetry::size(source) != Symmetry::constexprProperties::maxSymmetrySize);
+  auto trySymmetryPropagation = [](const Symmetry::Shape source) -> bool {
+    assert(Symmetry::size(source) != Symmetry::constexprProperties::maxShapeSize);
     assert(Symmetry::hasMultipleUnlinkedStereopermutations(source, 0));
 
     Molecule priorMol {Utils::ElementType::Ru, Utils::ElementType::H, BondType::Single};
@@ -89,17 +89,17 @@ BOOST_AUTO_TEST_CASE(ligandAdditionPropagatedStateSuperposable) {
     }
 
     // Set the source symmetry
-    priorMol.setGeometryAtAtom(0u, source);
+    priorMol.setShapeAtAtom(0u, source);
 
     // Check some preconditions
     auto stereopermutatorOption = priorMol.stereopermutators().option(0u);
     BOOST_REQUIRE(stereopermutatorOption);
-    BOOST_REQUIRE(stereopermutatorOption->getSymmetry() == source);
+    BOOST_REQUIRE(stereopermutatorOption->getShape() == source);
     BOOST_REQUIRE_MESSAGE(
       stereopermutatorOption->numStereopermutations() > 1
       && stereopermutatorOption->numAssignments() > 1,
       "There are not more than one stereopermutations and assignments for a "
-      "symmetry that was expected to have them per hasMultipleUnlinkedStereopermutations"
+      "shape that was expected to have them per hasMultipleUnlinkedStereopermutations"
     );
 
     // Assign the stereopermutator at random
@@ -107,27 +107,27 @@ BOOST_AUTO_TEST_CASE(ligandAdditionPropagatedStateSuperposable) {
 
     // More checks
     BOOST_REQUIRE(stereopermutatorOption->assigned());
-    BOOST_REQUIRE(stereopermutatorOption->getSymmetry() == source);
+    BOOST_REQUIRE(stereopermutatorOption->getShape() == source);
 
     auto postMol = priorMol;
-    // Transition to a larger symmetry
+    // Transition to a larger shape
     postMol.addAtom(
       static_cast<Utils::ElementType>(postMol.graph().N()),
       0u,
       BondType::Single
     );
 
-    // Ensure the transition to some larger symmetry has been made.
+    // Ensure the transition to some larger shape has been made.
     stereopermutatorOption = postMol.stereopermutators().option(0u);
     BOOST_REQUIRE(stereopermutatorOption);
     BOOST_REQUIRE(
-      Symmetry::size(stereopermutatorOption->getSymmetry())
+      Symmetry::size(stereopermutatorOption->getShape())
       == Symmetry::size(source) + 1
     );
 
     /* If the stereopermutator is unassigned, then no state was propagated.
      * This can be algorithmic failure or that there is no suitable mapping
-     * for this particular symmetry and the chosen target symmetry. We can't
+     * for this particular shape and the chosen target shape. We can't
      * really differentiate, so we let those cases go.
      */
     if(!stereopermutatorOption->assigned()) {
@@ -158,7 +158,7 @@ BOOST_AUTO_TEST_CASE(ligandAdditionPropagatedStateSuperposable) {
     BOOST_CHECK_MESSAGE(
       passRMSD,
       "RMSD fit from " << Symmetry::name(source)
-      << " to " << Symmetry::name(stereopermutatorOption->getSymmetry())
+      << " to " << Symmetry::name(stereopermutatorOption->getShape())
       << " not smaller than 0.5 bohr, is:" << fit.getRMSD()
     );
 
@@ -181,12 +181,12 @@ BOOST_AUTO_TEST_CASE(ligandAdditionPropagatedStateSuperposable) {
 
   unsigned skippedCount = 0;
   unsigned testedCount = 0;
-  for(const Symmetry::Name name : Symmetry::allNames) {
+  for(const Symmetry::Shape shape : Symmetry::allShapes) {
     if(
-      Symmetry::size(name) != Symmetry::constexprProperties::maxSymmetrySize
-      && Symmetry::hasMultipleUnlinkedStereopermutations(name, 0u)
+      Symmetry::size(shape) != Symmetry::constexprProperties::maxShapeSize
+      && Symmetry::hasMultipleUnlinkedStereopermutations(shape, 0u)
     ) {
-      if(trySymmetryPropagation(name)) {
+      if(trySymmetryPropagation(shape)) {
         ++testedCount;
       } else {
         ++skippedCount;
@@ -196,28 +196,28 @@ BOOST_AUTO_TEST_CASE(ligandAdditionPropagatedStateSuperposable) {
 
   BOOST_CHECK_MESSAGE(
     testedCount > 0,
-    "Ligand addition propagation test was unable to test any symmetry "
-    "propagations since no propagated symmetries were assigned"
+    "Ligand addition propagation test was unable to test any shape "
+    "propagations since no propagated shapes were assigned"
   );
 }
 
 BOOST_AUTO_TEST_CASE(atomStereopermutatorContinuity) {
-  /* The following symmetry pairs should be fully reversible starting from any
-   * stereopermutation in the first symmetry, adding a ligand and removing it
+  /* The following shape pairs should be fully reversible starting from any
+   * stereopermutation in the first shape, adding a ligand and removing it
    * again.
    *
-   * Part of the test is that the target symmetry is selected from the source
-   * symmetry and the source symmetry is selected from the source symmetry.
+   * Part of the test is that the target shape is selected from the source
+   * shape and the source shape is selected from the source shape.
    */
   std::vector<
-    std::pair<Symmetry::Name, Symmetry::Name>
-  > reversibleSymmetryPairs {
-    {Symmetry::Name::Seesaw, Symmetry::Name::TrigonalBiPyramidal},
-    {Symmetry::Name::SquarePyramidal, Symmetry::Name::Octahedral},
-    {Symmetry::Name::PentagonalPyramidal, Symmetry::Name::PentagonalBiPyramidal},
-    {Symmetry::Name::TShaped, Symmetry::Name::SquarePlanar},
-    {Symmetry::Name::CutTetrahedral, Symmetry::Name::Tetrahedral},
-    {Symmetry::Name::TrigonalPyramidal, Symmetry::Name::TrigonalBiPyramidal}
+    std::pair<Symmetry::Shape, Symmetry::Shape>
+  > reversibleSymmetryShapes {
+    {Symmetry::Shape::Disphenoid, Symmetry::Shape::TrigonalBipyramid},
+    {Symmetry::Shape::SquarePyramid, Symmetry::Shape::Octahedron},
+    {Symmetry::Shape::PentagonalPyramid, Symmetry::Shape::PentagonalBipyramid},
+    {Symmetry::Shape::T, Symmetry::Shape::Square},
+    {Symmetry::Shape::ApicalTrigonalPyramid, Symmetry::Shape::Tetrahedron},
+    {Symmetry::Shape::TrigonalPyramid, Symmetry::Shape::TrigonalBipyramid}
   };
 
   const std::array<Utils::ElementType, 7> substituentElements {
@@ -231,8 +231,8 @@ BOOST_AUTO_TEST_CASE(atomStereopermutatorContinuity) {
   };
 
   auto testSymmetryPair = [&substituentElements](
-    const Symmetry::Name source,
-    const Symmetry::Name target
+    const Symmetry::Shape source,
+    const Symmetry::Shape target
   ) {
     if(Symmetry::size(source) + 1 != Symmetry::size(target)) {
       throw std::logic_error("Test is not set up right, symmetries are not increment size apart");
@@ -246,13 +246,13 @@ BOOST_AUTO_TEST_CASE(atomStereopermutatorContinuity) {
       mol.addAtom(substituentElements.at(mol.graph().N() - 2), 0u, BondType::Single);
     }
 
-    // Set the starting symmetry
-    mol.setGeometryAtAtom(0u, source);
+    // Set the starting shape
+    mol.setShapeAtAtom(0u, source);
 
-    // Ensure there is a stereopermutator of the correct symmetry there now
+    // Ensure there is a stereopermutator of the correct shape there now
     auto stereopermutatorOption = mol.stereopermutators().option(0u);
     BOOST_REQUIRE(stereopermutatorOption);
-    BOOST_REQUIRE(stereopermutatorOption->getSymmetry() == source);
+    BOOST_REQUIRE(stereopermutatorOption->getShape() == source);
     BOOST_REQUIRE(stereopermutatorOption->numStereopermutations() > 1);
     BOOST_REQUIRE(stereopermutatorOption->numAssignments() > 1);
 
@@ -260,22 +260,22 @@ BOOST_AUTO_TEST_CASE(atomStereopermutatorContinuity) {
     mol.assignStereopermutatorRandomly(0u);
     BOOST_REQUIRE(stereopermutatorOption->assigned());
     const unsigned sourceAssignment = stereopermutatorOption->assigned().value();
-    BOOST_REQUIRE(stereopermutatorOption->getSymmetry() == source);
+    BOOST_REQUIRE(stereopermutatorOption->getShape() == source);
 
-    // Transition to the target symmetry
+    // Transition to the target shape
     const AtomIndex lastAddedIndex = mol.addAtom(
       substituentElements.at(mol.graph().N() - 2),
       0u,
       BondType::Single
     );
 
-    /* Ensure the transition to the target symmetry has been made and chiral
+    /* Ensure the transition to the target shape has been made and chiral
      * state was preserved in some form
      */
     stereopermutatorOption = mol.stereopermutators().option(0u);
     BOOST_REQUIRE(stereopermutatorOption);
     BOOST_REQUIRE(stereopermutatorOption->assigned());
-    BOOST_REQUIRE(stereopermutatorOption->getSymmetry() == target);
+    BOOST_REQUIRE(stereopermutatorOption->getShape() == target);
 
     // Revert the addition
     mol.removeAtom(lastAddedIndex);
@@ -283,12 +283,12 @@ BOOST_AUTO_TEST_CASE(atomStereopermutatorContinuity) {
     // We expect the same assignment from before
     stereopermutatorOption = mol.stereopermutators().option(0u);
     BOOST_REQUIRE(stereopermutatorOption);
-    BOOST_REQUIRE(stereopermutatorOption->getSymmetry() == source);
+    BOOST_REQUIRE(stereopermutatorOption->getShape() == source);
     BOOST_REQUIRE(stereopermutatorOption->assigned());
     BOOST_CHECK(stereopermutatorOption->assigned().value() == sourceAssignment);
   };
 
-  for(const auto& symmetryPair : reversibleSymmetryPairs) {
-    testSymmetryPair(symmetryPair.first, symmetryPair.second);
+  for(const auto& shapePair : reversibleSymmetryShapes) {
+    testSymmetryPair(shapePair.first, shapePair.second);
   }
 }

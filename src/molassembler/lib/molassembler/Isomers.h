@@ -30,7 +30,7 @@ class Molecule;
  * \code{.cpp}
  * constexpr auto componentsBitmask = AtomEnvironmentComponents::ElementTypes
  *   | AtomEnvironmentComponents::BondOrders
- *   | AtomEnvironmentComponents::Symmetries;
+ *   | AtomEnvironmentComponents::Shapes;
  *
  * Molecule a, b;
  * assert(a.canonicalComponents() == componentsBitmask);

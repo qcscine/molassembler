@@ -166,11 +166,11 @@ void Molecule::setElementType(
   _pImpl->setElementType(a, elementType);
 }
 
-void Molecule::setGeometryAtAtom(
+void Molecule::setShapeAtAtom(
   const AtomIndex a,
-  const Symmetry::Name symmetryName
+  const Symmetry::Shape shape
 ) {
-  _pImpl->setGeometryAtAtom(a, symmetryName);
+  _pImpl->setShapeAtAtom(a, shape);
 }
 
 
@@ -179,11 +179,11 @@ AtomEnvironmentComponents Molecule::canonicalComponents() const {
   return _pImpl->canonicalComponents();
 }
 
-boost::optional<Symmetry::Name> Molecule::inferSymmetry(
+boost::optional<Symmetry::Shape> Molecule::inferShape(
   const AtomIndex index,
   const RankingInformation& ranking
 ) const {
-  return _pImpl->inferSymmetry(index, ranking);
+  return _pImpl->inferShape(index, ranking);
 }
 
 std::string Molecule::dumpGraphviz() const {

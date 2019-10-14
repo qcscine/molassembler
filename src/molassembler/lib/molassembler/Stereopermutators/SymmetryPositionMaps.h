@@ -1,7 +1,7 @@
 /*!@file
  * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
  *   See LICENSE.txt
- * @brief Calculate symmetry position maps
+ * @brief Calculate shape position maps
  */
 
 #ifndef INCLUDE_MOLASSEMBLER_STEREOPERMUTATORS_SYMMETRY_POSITION_MAPS_H
@@ -12,17 +12,17 @@
 namespace Scine {
 
 namespace stereopermutation {
-struct Stereopermutation;
+class Stereopermutation;
 } // namespace stereopermutation
 
 namespace molassembler {
 
-/*! @brief Generates a flat mapping from site indices to symmetry positions
+/*! @brief Generates a flat mapping from site indices to shape positions
  *
- * Generates a mapping from site indices to symmetry positions according to
- * the ranking character distribution to symmetry positions of a
+ * Generates a mapping from site indices to shape positions according to
+ * the ranking character distribution to shape positions of a
  * stereopermutation (its characters member) and any defined links between
- * symmetry positions.
+ * shape positions.
  *
  * @code{.cpp}
  * auto mapping = generateSiteToSymmetryPosition(...);
@@ -36,7 +36,7 @@ std::vector<unsigned> siteToSymmetryPositionMap(
   const RankingInformation::RankedSitesType& canonicalSites
 );
 
-/*! @brief Generates a flat mapping from symmetry positions to site indices
+/*! @brief Generates a flat mapping from shape positions to site indices
  *
  * Generates exactly the inverse map to generateSiteToSymmetryPositionMap
  *

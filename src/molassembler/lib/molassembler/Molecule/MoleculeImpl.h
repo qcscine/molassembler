@@ -250,19 +250,19 @@ struct Molecule::Impl {
    * This sets the local geometry at a specific atom index. There are a number
    * of cases that this function treats differently, besides faulty arguments:
    * If there is already a AtomStereopermutator instantiated at this atom index, its
-   * underlying symmetry is altered. If there is no AtomStereopermutator at
+   * underlying shape is altered. If there is no AtomStereopermutator at
    * this index, one is instantiated. In all cases, new or modified
    * stereopermutators are default-assigned if there is only one possible
    * assignment.
    * \throws if
    *   - the supplied atomic index is invalid
    *   - there is an BondStereopermutator at that index
-   *   - or the provided symmetry is a different size than that of an existing
-   *     AtomStereopermutator or the expected symmetry
+   *   - or the provided shape is a different size than that of an existing
+   *     AtomStereopermutator or the expected shape
    */
-  void setGeometryAtAtom(
+  void setShapeAtAtom(
     AtomIndex a,
-    Symmetry::Name symmetryName
+    Symmetry::Shape shape
   );
 //!@}
 
@@ -272,10 +272,10 @@ struct Molecule::Impl {
   AtomEnvironmentComponents canonicalComponents() const;
   /*! Determines what the local geometry at a non-terminal atom ought to be
    *
-   * Returns the expected symmetry name at a non-terminal atom.
+   * Returns the expected shape name at a non-terminal atom.
    * \throws if the supplied atomic index is invalid
    */
-  boost::optional<Symmetry::Name> inferSymmetry(
+  boost::optional<Symmetry::Shape> inferShape(
     AtomIndex index,
     const RankingInformation& ranking
   ) const;

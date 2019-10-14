@@ -63,7 +63,7 @@ The representation of a \masm{Molecule} is composed of further types:
 Data type               | Description
 -----------------       | -----------
 \masm{OuterGraph,Graph} | Product type of element types and connectivity
-Symmetry                | Idealization of spatial arrangement of substituents around a central atom
+Shape                   | Idealization of spatial arrangement of substituents around a central atom
 Ligand site             | Contiguous atom set, all connected to the central atom
 Ranked ligand sites     | All ligand sites at an atom, sorted using IUPAC ranking rules
 Stereopermutation       | Abstract representation of an absolute configuration of (possibly bridged) ligand sites around an atom
@@ -71,7 +71,7 @@ Stereopermutator        | Object managing absolute configuration of ligand sites
 \masm{Molecule}         | Product type of a \masm{OuterGraph,Graph} and a \masm{StereopermutatorList,list of stereopermutators}
 
 @note Stereopermutators are not called stereocenters - which might seem the more
-natural choice - because these objects also manage symmetry and ranking
+natural choice - because these objects also manage shape and ranking
 combinations in which there is only one possible arrangement and its central
 atom therefore cannot be considered a stereocenter.
 
@@ -85,16 +85,16 @@ data conversions are the following:
 
 -# From positional data, atom-pairwise distances can be used to approximate fractional bond orders using e.g. UFF parameters
 -# Integer bonds are obtained from fractional bond orders by rounding to the nearest integer (see @ref manual-algorithms-discretization)
--# From a fully specified molecular graph, VSEPR or LFT may be applied to guess local symmetries (see @ref manual-algorithms-symmetry-det)
+-# From a fully specified molecular graph, VSEPR or LFT may be applied to guess local shapes (see @ref manual-algorithms-shape-det)
 -# Ligands are ranked using an algorithm implementing IUPAC sequence rules (see @ref manual-algorithms-ranking)
--# Symmetry and ranked ligands are combined in a symbolic permutation that determines which stereopermutations exist (see @ref manual-algorithms-symbolic-perm)
--# Positional data is used to fit idealized symmetries directly (see @ref manual-algorithms-symmetry-fit)
--# Positional data is used to find the realized permutation within the set of possible stereopermutations via fitting (see @ref manual-algorithms-symmetry-fit)
+-# Shape and ranked ligands are combined in a symbolic permutation that determines which stereopermutations exist (see @ref manual-algorithms-symbolic-perm)
+-# Positional data is used to fit idealized shapes directly (see @ref manual-algorithms-shape-fit)
+-# Positional data is used to find the realized permutation within the set of possible stereopermutations via fitting (see @ref manual-algorithms-shape-fit)
 
 Depending on the type of information you supply when constructing
 \masm{Molecule} instances, molecules will have varying levels of stored
 information. For correctness, it is preferable to supply positional
-information, since fitting idealized symmetries to positions is more accurate
+information, since fitting idealized shapes to positions is more accurate
 (in particular for transition metals, since LFT is not implemented) and does
 not require the graph to be absolutely correct. Additionally, only supplying
 positional information allows you to determine the currently realized index of
@@ -128,7 +128,7 @@ Molecule manipulation  | Description
 <code>\link Scine::molassembler::Molecule::removeBond() mol.removeBond(...)\endlink</code> | Removes a removable (!) bond
 <code>\link Scine::molassembler::Molecule::setBondType() mol.setBondType(...)\endlink</code> | Changes the bond type between two atoms
 <code>\link Scine::molassembler::Molecule::setElementType() mol.setElementType(...)\endlink</code> | Changes an atom element type
-<code>\link Scine::molassembler::Molecule::setGeometryAtAtom() mol.setGeometryAtAtom(...)\endlink</code> | Changes the local idealized symmetry at an atom
+<code>\link Scine::molassembler::Molecule::setGeometryAtAtom() mol.setShapeAtAtom(...)\endlink</code> | Changes the local idealized shape at an atom
 
 
 @section manual-sublibraries Sub-libraries
@@ -175,11 +175,11 @@ Temple is a data structure and algorithm library that consists of
   - get function return type
 - boost::optional composition syntactic sugar
 
-@subsection manual-sublibraries-symmetries Chemical symmetries
+@subsection manual-sublibraries-symmetries Local shapes
 
-Non-terminal atoms in molecules often adopt nearly ideal local symmetries when
+Non-terminal atoms in molecules often adopt nearly ideal local shapes when
 no strain is placed upon its substituents due to small cycles. The local
-symmetries currently provided by this library are:
+shapes currently provided by this library are:
 
 Size | Name
 ---- | ----
@@ -191,39 +191,39 @@ Size | Name
 7    | Pentagonal bipyramidal
 8    | Square antiprismatic
 
-Data provided per symmetry:
+Data provided per shape:
 - Number of binding sites
 - String representation
-- Angle function returning idealized angles between symmetry positions
+- Angle function returning idealized angles between shape positions
 - Idealized coordinates
 - A minimal set of rotations to allow the generation of all superimposable
   sequences of binding site mapping indices
 - A set of tetrahedra whose signed volumes permit the distinction of chiral
-  elements within the symmetry
+  elements within the shape
 
 In addition, this libraries can compute ligand addition and ligand loss
-transitions between symmetries at compile-time.
+transitions between shapes at compile-time.
 
 
 @subsection manual-sublibraries-stereopermutation Stereopermutation
 
 Figuring out all non-superimposable arrangements of substituents around the
-idealized symmetries is a permutational problem and is the core task of this
-library. It builds upon the definitions provided by the chemical symmetries
+idealized shapes is a permutational problem and is the core task of this
+library. It builds upon the definitions provided by the chemical shapes
 library to achieve its task.
 
 Most of organic chemistry, can be composed of linear, bent, trigonal planar and
-tetrahedral local symmetries. The most common source of chiral information in
+tetrahedral local shapes. The most common source of chiral information in
 organic chemistry is an asymmetric tetrahedral carbon, where its four
 subtituents are all different (i.e. have different ranking according to the
-IUPAC rules). From a local symmetry and the information that all substituents
+IUPAC rules). From a local shape and the information that all substituents
 are distinct ranking-wise, we know that there are two non-superimposable
 permutations of ligands. 
 
-Stereopermutations of any symmetry can be computed symbolically 
+Stereopermutations of any shape can be computed symbolically 
 @cite bennett1969computation , including cases in which substituents are
 mutually linked, such as in multidentate ligands. Special care is taken in
-order to reduce haptically bonded ligands to the correct local symmetries and
+order to reduce haptically bonded ligands to the correct local shapes and
 ranking. 
 
 
@@ -251,21 +251,21 @@ molecules E/Z stereocenters) are still interpreted from coordinate information
 despite the main bond type discretized to a single bond. This part of a
 `Molecule`'s interpretation is discussed elsewhere.
 
-@subsection manual-algorithms-symmetry-det Symmetry determination
+@subsection manual-algorithms-shape-det Shape determination
 
 If no coordinates are present when constructing a Molecule, the idealized
-symmetry on any non-terminal atom must be determined from its local
-substituents within the set of appropriately sized symmetries. For main-group
+shape on any non-terminal atom must be determined from its local
+substituents within the set of appropriately sized shapes. For main-group
 atoms, this is accomplished by application of a very basic valence shell
-electron pair repulsion (VSEPR) algorithm. No symmetry determination algorithms
-are currently implemented for non-main-group atoms, and the first symmetry of
+electron pair repulsion (VSEPR) algorithm. No shape determination algorithms
+are currently implemented for non-main-group atoms, and the first shape of
 appropriate size is chosen instead.
 
 @subsection manual-algorithms-ranking Ranking
 
 In order to establish the relative priority of an atom's substituents, a ranking
 algorithm is applied that follows the IUPAC recommendations laid out in the 2013
-Blue Book @cite IUPAC2013, generalized to larger symmetries. The IUPAC
+Blue Book @cite IUPAC2013, generalized to larger shapes. The IUPAC
 sequence rules are as follows, slightly reworded:
 
 Nr. | Sequence rule
@@ -283,12 +283,12 @@ Nr. | Sequence rule
 The following alterations arise due to the current implementation state:
 
 - Stereodescriptors are transformed into the index of permutation within the
-  symmetry's abstract ligand case set of stereopermutations. The descriptors R/S
+  shape's abstract ligand case set of stereopermutations. The descriptors R/S
   correspond to indices of permutation within the set of stereopermutations of
   the abstract tetrahedral ABCD ligand case. Z/E exist as indices of
   permutations within the set of stereopermutations of the bond-centric
   stereocenter. M and P stereocenters are not modelled.
-- For larger or smaller symmetries, sequence rule 5 is altered to give priority
+- For larger or smaller shapes, sequence rule 5 is altered to give priority
   according to the index of permutation: {R = 1, Z = 1} > {S = 0, E = 0}.
 - *Like* is altered to mean stereodescriptors with the same index of
   permutation. This is strictly equivalent, as indices of permutation are
@@ -326,7 +326,7 @@ Nr. | Sequence rule
 5   | An atom or group with \diffplus{higher index of permutation has priority} \diffminus{descriptors {R, M, Z} has priority over its enantiomorph {S, P, E}} 
 
 @subsection manual-algorithms-symbolic-perm Symbolic permutation
-@subsection manual-algorithms-symmetry-fit Symmetry fitting
+@subsection manual-algorithms-shape-fit Shape fitting
 @subsection manual-algorithms-cycle-detection Cycle detection
 
 Cycle detection and enumeration is handled by the excellent library
@@ -345,7 +345,7 @@ Conformer generation itself is based on four-dimensional Distance Geometry
 
 1. A spatial model generates atom-pairwise bounds on their distance in the final
    conformations and four-atom chiral constraints when distance bounds cannot
-   encompass chiral elements of complex symmetries. For large symmetries, chiral
+   encompass chiral elements of complex shapes. For large shapes, chiral
    information is captured by using multiple chiral constraints.
 2. The distance bounds are smoothed to conform to the triangle inequalities.
    After each successive choice of a fixed distance between the bounds, you can
@@ -359,7 +359,7 @@ Conformer generation itself is based on four-dimensional Distance Geometry
    permitting the chiral constraints to invert by expanding into four
    dimensions, and then compressing the fourth dimension back out.
 4. The refinement error function is modified to enable the placement of haptic
-   ligand's bonding atoms' average position at symmetries' idealized ligand
+   ligand's bonding atoms' average position at shapes' idealized ligand
    sites.
 
 @subsection manual-algorithms-canonicalization Canonicalization
@@ -449,23 +449,23 @@ implementation of the IUPAC sequence rules as laid out in the 2013 Blue Book.
 The rankings are transformed into an abstract substituent case (e.g. octahedral
 (A-A)BBCD) and a symbolic computation is carried out to determine the number of
 permutations that are not superimposable via spatial rotations within the
-idealized symmetry. The set of resulting permutations of the substituent symbols
+idealized shape. The set of resulting permutations of the substituent symbols
 is called the set of stereopermutations. If this set contains more than one
-stereopermutations, then the atom is an atom-centric stereocenter under that
-symmetry.
+stereopermutation, then the atom is an atom-centric stereocenter under that
+shape.
 
 If substituents are haptic or multidentate, an additional algorithm removes
 stereopermutations it deems clearly impossible. All bridge lengths between
 pairs of chelating atoms of a multidentate ligand are checked against the atom
-pair's bite angle within the idealized symmetry. Additionally, haptic ligands'
+pair's bite angle within the idealized shape. Additionally, haptic ligands'
 cones are checked to ensure they do not overlap. Indices within the set of not
 clearly impossible stereopermutations are called assignments.
 
 Bond-centric stereocenters model rotational configurations of arbitrary
-combinations of two symmetries and their respective fused symmetry positions.
-The fused symmetry positions of each side effect the overall permutations if the
-symmetry has multiple position groups. For instance, this is the case in square
-pyramidal symmetries, where there are axial and equatorial symmetry positions.
+combinations of two shapes and their respective fused shape positions.
+The fused shape positions of each side affect the overall permutations if the
+shape has multiple position groups. For instance, this is the case in square
+pyramidal shapes, where there are axial and equatorial shape positions.
 
 
 @subsection manual-molecules-construction Molecule construction
@@ -475,7 +475,7 @@ in many ways.
 
 Minimally, the atoms' element types and their connectivity are needed to
 constitute a molecule's graph. From a graph, the presence of stereocenters can
-be inferred by using algorithms to determine the local symmetry at an atom using
+be inferred by using algorithms to determine the local shape at an atom using
 information present in the graph about its substituents. Any inferred
 stereocenters are unassigned, i.e. generated conformers will be composed of
 all possible stereopermutations at those stereocenters.
@@ -484,7 +484,7 @@ Atom connectivity can also be discretized from a bond order matrix, which in
 turn can be very roughly approximated using pairwise atom distances from spatial
 information.
 
-Atom-centric symmetries and its stereocenter assignments can be gleaned from
+Atom-centric shapes and its stereocenter assignments can be gleaned from
 spatial information.
 
 Bond-centric stereocenters are interpreted at each bond where both ends have an
@@ -521,8 +521,8 @@ strain hinders inversion.
 
 While editing a molecule on the graph level, the library attempts to propagate
 existing chiral state in its list of stereocenters to the new graph. By default,
-state is propagated only if a singular mapping of indices to the new symmetry
-exists in which no symmetry angles are altered. Which propagations of chiral
+state is propagated only if a singular mapping of indices to the new shape
+exists in which no shape angles are altered. Which propagations of chiral
 state are acceptable can be altered.
 
 The pseudo-random number generator is centralized and can be re-seeded for
@@ -586,7 +586,7 @@ has upper limits on granted slack for particularly strained graphs.
 Furthermore, the conformer generation sequence will increase modeling tolerances
 for each progressive embedding failure across the entire molecule. Even if only
 one part of your molecule is strained and requires this additional effort, the
-spatial model for the entire molecule will slacken, reducing local symmetry
+spatial model for the entire molecule will slacken, reducing local shape
 idealization strictness even in clear-cut cases. Heavily loosened tolerances can
 lead to odd-looking spatial structures. In those cases, you may want to further
 refine these with force field or semiempirical quantum chemical methods before

@@ -267,7 +267,7 @@ bool StereopermutatorList::compare(
   const StereopermutatorList& other,
   const AtomEnvironmentComponents componentBitmask
 ) const {
-  if(componentBitmask & AtomEnvironmentComponents::Symmetries) {
+  if(componentBitmask & AtomEnvironmentComponents::Shapes) {
     // Check sizes
     if(
       _atomStereopermutators.size() != other._atomStereopermutators.size()
@@ -285,8 +285,8 @@ bool StereopermutatorList::compare(
         return false;
       }
 
-      // Ensure the symmetries match
-      if(stereopermutator.getSymmetry() != otherStereopermutatorOption->getSymmetry()) {
+      // Ensure the shapes match
+      if(stereopermutator.getShape() != otherStereopermutatorOption->getShape()) {
         return false;
       }
 

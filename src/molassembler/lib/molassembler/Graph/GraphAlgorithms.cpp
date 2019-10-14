@@ -378,7 +378,7 @@ std::vector<
         }
         /* If the central index is a main-group element and connected to a
          * non-main-group element via an eta bond, this adjacency is not
-         * recorded for the determination of ligand site groups. The symmetry
+         * recorded for the determination of ligand site groups. The shape
          * modelling at that center should not include individual eta bond
          * contributions.
          */

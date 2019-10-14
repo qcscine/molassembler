@@ -73,14 +73,14 @@ std::vector<unsigned> applyRotation(
 
 std::vector<unsigned> applyRotation(
   const std::vector<unsigned>& indices,
-  const Symmetry::Name symmetryName,
+  const Shape shape,
   unsigned rotationFunctionIndex
 ) {
   std::vector<unsigned> retv;
 
   for(
     const auto& index :
-    Symmetry::rotations(symmetryName).at(rotationFunctionIndex)
+    Symmetry::rotations(shape).at(rotationFunctionIndex)
   ) {
     retv.push_back(
       indices.at(index)
@@ -91,12 +91,12 @@ std::vector<unsigned> applyRotation(
 }
 
 unsigned rotationPeriodicity(
-  const Symmetry::Name symmetryName,
+  const Symmetry::Shape shape,
   const std::vector<unsigned>& rotation
 ) {
-  assert(rotation.size() == Symmetry::size(symmetryName));
+  assert(rotation.size() == Symmetry::size(shape));
 
-  const auto initialIndices = temple::iota<unsigned>(Symmetry::size(symmetryName));
+  const auto initialIndices = temple::iota<unsigned>(Symmetry::size(shape));
 
   std::vector<unsigned> modified = applyRotation(initialIndices, rotation);
 
@@ -111,8 +111,8 @@ unsigned rotationPeriodicity(
   return i;
 }
 
-std::vector<char> positionGroups(const Symmetry::Name symmetryName) {
-  const unsigned S = Symmetry::size(symmetryName);
+std::vector<char> positionGroups(const Symmetry::Shape shape) {
+  const unsigned S = Symmetry::size(shape);
 
   std::vector<
     std::vector<double>
@@ -122,7 +122,7 @@ std::vector<char> positionGroups(const Symmetry::Name symmetryName) {
   for(unsigned i = 0; i < S; ++i) {
     allAngles.at(i).resize(S);
     for(unsigned j = 0; j < S; ++j) {
-      allAngles.at(i).at(j) = Symmetry::angleFunction(symmetryName)(i, j);
+      allAngles.at(i).at(j) = Symmetry::angleFunction(shape)(i, j);
     }
 
     std::sort(
@@ -166,14 +166,14 @@ std::vector<unsigned> inverseRotation(const std::vector<unsigned>& rotation) {
 }
 
 Eigen::Vector3d getCoordinates(
-  const Symmetry::Name symmetryName,
-  const boost::optional<unsigned>& indexInSymmetryOption
+  const Symmetry::Shape shape,
+  const boost::optional<unsigned>& indexInShapeOption
 ) {
-  if(indexInSymmetryOption) {
-    assert(indexInSymmetryOption.value() < Symmetry::size(symmetryName));
+  if(indexInShapeOption) {
+    assert(indexInShapeOption.value() < Symmetry::size(shape));
 
-    return symmetryData().at(symmetryName).coordinates.col(
-      indexInSymmetryOption.value()
+    return symmetryData().at(shape).coordinates.col(
+      indexInShapeOption.value()
     );
   }
 
@@ -192,8 +192,8 @@ double getTetrahedronVolume(
 }
 
 double calculateAngleDistortion(
-  const Symmetry::Name from,
-  const Symmetry::Name to,
+  const Symmetry::Shape from,
+  const Symmetry::Shape to,
   const std::vector<unsigned>& indexMapping
 ) {
   const unsigned mappingIndexLimit = std::min(
@@ -239,8 +239,8 @@ boost::optional<unsigned> propagateIndexOptionalThroughMapping(
 
 
 double calculateChiralDistortion(
-  const Symmetry::Name from,
-  const Symmetry::Name to,
+  const Symmetry::Shape from,
+  const Symmetry::Shape to,
   const std::vector<unsigned>& indexMapping
 ) {
 
@@ -288,14 +288,14 @@ double calculateChiralDistortion(
 std::set<
   std::vector<unsigned>
 > generateAllRotations(
-  const Symmetry::Name symmetryName,
+  const Symmetry::Shape shape,
   const std::vector<unsigned>& indices
 ) {
   /* Replacing set here with unordered_set does not yield any speed
    * improvements. The hash function is comparatively too expensive for the
    * small number of elements in the set to set it apart from the tree.
    */
-  assert(Symmetry::size(symmetryName) == indices.size());
+  assert(Symmetry::size(shape) == indices.size());
 
   // Idea: Tree-like expansion of all possible combinations of rotations.
   using IndicesList = std::vector<unsigned>;
@@ -306,7 +306,7 @@ std::set<
    * sequence.  The upper limit for every link in the chain is the number of
    * rotations in the symmetry
    */
-  unsigned linkLimit = Symmetry::rotations(symmetryName).size();
+  unsigned linkLimit = Symmetry::rotations(shape).size();
 
   std::vector<unsigned> chain = {0};
   /* It's also necessary to keep the structures themselves since we may
@@ -323,7 +323,7 @@ std::set<
     // copy the last element in chainStructures
     auto generated = applyRotation(
       chainStructures.back(),
-      symmetryName,
+      shape,
       chain.back()
     );
 
@@ -354,7 +354,7 @@ std::set<
 }
 
 std::vector<unsigned> applyIndexMapping(
-  const Symmetry::Name to,
+  const Symmetry::Shape to,
   const std::vector<unsigned>& mapping
 ) {
   /* Creates the list of indices in the target symmetry. Why is this necessary?
@@ -365,9 +365,9 @@ std::vector<unsigned> applyIndexMapping(
    *  1  –▶  0
    *  |      |
    * (_)    (_) – 1 (new)
-   *  |      |                Linear pos. 0 to
+   *  |      |                Line pos. 0 to
    *  0  –▶  2                pos. 2 in Tshaped
-   *                                 |  ┌– Linear pos. 1 to pos. 0 in Tshaped
+   *                                 |  ┌– Line pos. 1 to pos. 0 in Tshaped
    *                                 |  |  ┌– This position is new
    * This mapping is represented as {2, 0, 1}.
    *
@@ -425,8 +425,8 @@ std::size_t hash_value(const std::vector<unsigned>& permutation) {
 }
 
 std::vector<DistortionInfo> symmetryTransitionMappings(
-  const Symmetry::Name symmetryFrom,
-  const Symmetry::Name symmetryTo
+  const Symmetry::Shape from,
+  const Symmetry::Shape to
 ) {
 
   /* Symmetries must be adjacent in size (0 = rearrangement,
@@ -435,8 +435,8 @@ std::vector<DistortionInfo> symmetryTransitionMappings(
    */
   assert(
     (std::set<int> {0, 1}).count(
-      static_cast<int>(Symmetry::size(symmetryTo))
-      - static_cast<int>(Symmetry::size(symmetryFrom))
+      static_cast<int>(Symmetry::size(to))
+      - static_cast<int>(Symmetry::size(from))
     ) == 1
   );
 
@@ -459,8 +459,8 @@ std::vector<DistortionInfo> symmetryTransitionMappings(
    */
 
   const unsigned largerSize = std::max(
-    Symmetry::size(symmetryFrom),
-    Symmetry::size(symmetryTo)
+    Symmetry::size(from),
+    Symmetry::size(to)
   );
 
   auto indexMapping = temple::iota<unsigned>(largerSize);
@@ -483,7 +483,7 @@ std::vector<DistortionInfo> symmetryTransitionMappings(
     if( // is the mapping new?
       encounteredSymmetryMappings.count(
         applyIndexMapping(
-          symmetryTo,
+          to,
           indexMapping
         )
       ) == 0
@@ -493,8 +493,8 @@ std::vector<DistortionInfo> symmetryTransitionMappings(
        */
       distortions.emplace_back(
         indexMapping,
-        calculateAngleDistortion(symmetryFrom, symmetryTo, indexMapping),
-        calculateChiralDistortion(symmetryFrom, symmetryTo, indexMapping)
+        calculateAngleDistortion(from, to, indexMapping),
+        calculateChiralDistortion(from, to, indexMapping)
       );
 
       /* Any rotations of the mapping in the target symmetry are equivalent, we
@@ -502,9 +502,9 @@ std::vector<DistortionInfo> symmetryTransitionMappings(
        * generate them and add them to the encountered mappings
        */
       auto allRotations = generateAllRotations(
-        symmetryTo,
+        to,
         applyIndexMapping(
-          symmetryTo,
+          to,
           indexMapping
         )
       );
@@ -520,13 +520,13 @@ std::vector<DistortionInfo> symmetryTransitionMappings(
 }
 
 std::vector<DistortionInfo> ligandLossTransitionMappings(
-  const Symmetry::Name symmetryFrom,
-  const Symmetry::Name symmetryTo,
-  const unsigned positionInSourceSymmetry
+  const Symmetry::Shape from,
+  const Symmetry::Shape to,
+  const unsigned positionInSourceShape
 ) {
   // Ensure we are dealing with ligand loss
-  assert(Symmetry::size(symmetryTo) + 1 == Symmetry::size(symmetryFrom));
-  assert(positionInSourceSymmetry < Symmetry::size(symmetryFrom));
+  assert(Symmetry::size(to) + 1 == Symmetry::size(from));
+  assert(positionInSourceShape < Symmetry::size(from));
 
   /* Generate the index mapping specific to this position loss in the target
    * symmetry.
@@ -540,12 +540,12 @@ std::vector<DistortionInfo> ligandLossTransitionMappings(
    * 1, 2, ..., (pos - 1), (pos + 1), ..., (from_size - 1), pos
    */
   std::vector<unsigned> indexMapping = temple::variadic::concatenate(
-    temple::iota<unsigned>(positionInSourceSymmetry),
-    detail::range(positionInSourceSymmetry + 1, Symmetry::size(symmetryFrom))
+    temple::iota<unsigned>(positionInSourceShape),
+    detail::range(positionInSourceShape + 1, Symmetry::size(from))
   );
 
   /* NOTE: From here the algorithm is identical to symmetryTransitionMappings
-   * save that symmetryTo and symmetryFrom are swapped in all occasions
+   * save that to and from are swapped in all occasions
    * and that std::next_permutation is only called on the subset excluding the
    * last position (the one that is added / deleted).
    */
@@ -560,11 +560,11 @@ std::vector<DistortionInfo> ligandLossTransitionMappings(
     if(encounteredSymmetryMappings.count(indexMapping) == 0) {
       distortions.emplace_back(
         indexMapping,
-        calculateAngleDistortion(symmetryTo, symmetryFrom, indexMapping),
-        calculateChiralDistortion(symmetryTo, symmetryFrom, indexMapping)
+        calculateAngleDistortion(to, from, indexMapping),
+        calculateChiralDistortion(to, from, indexMapping)
       );
 
-      auto allRotations = generateAllRotations(symmetryTo, indexMapping);
+      auto allRotations = generateAllRotations(to, indexMapping);
 
       encounteredSymmetryMappings.insert(
         allRotations.begin(),
@@ -651,7 +651,7 @@ SymmetryTransitionGroup selectBestTransitionMappings(
 }
 
 unsigned numUnlinkedStereopermutations(
-  const Symmetry::Name symmetry,
+  const Symmetry::Shape symmetry,
   const unsigned nIdenticalLigands
 ) {
   unsigned count = 1;
@@ -684,7 +684,7 @@ unsigned numUnlinkedStereopermutations(
 }
 
 bool hasMultipleUnlinkedStereopermutations(
-  const Symmetry::Name symmetry,
+  const Symmetry::Shape symmetry,
   const unsigned nIdenticalLigands
 ) {
   if(nIdenticalLigands == Symmetry::size(symmetry)) {
@@ -713,11 +713,11 @@ bool hasMultipleUnlinkedStereopermutations(
   return false;
 }
 
-Name mostSymmetric(std::vector<Name> selection) {
+Shape mostSymmetric(std::vector<Shape> selection) {
   std::sort(
     std::begin(selection),
     std::end(selection),
-    [](const Name a, const Name b) -> bool {
+    [](const Shape a, const Shape b) -> bool {
       return std::make_tuple(
         rotations(a).size(),
         nameIndex(b)
@@ -731,11 +731,11 @@ Name mostSymmetric(std::vector<Name> selection) {
   return selection.back();
 }
 
-Name mostSymmetric(const unsigned symmetrySize) {
-  std::vector<Name> propositions;
+Shape mostSymmetric(const unsigned symmetrySize) {
+  std::vector<Shape> propositions;
   propositions.reserve(8);
 
-  for(const Name proposition : allNames) {
+  for(const Shape proposition : allShapes) {
     if(size(proposition) == symmetrySize) {
       propositions.push_back(proposition);
     }

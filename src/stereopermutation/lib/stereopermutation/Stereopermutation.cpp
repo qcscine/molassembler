@@ -175,9 +175,9 @@ typename Stereopermutation::LinksSetType Stereopermutation::rotateLinks(
 }
 
 std::set<Stereopermutation> Stereopermutation::generateAllRotations(
-  const Symmetry::Name& symmetryName
+  const Symmetry::Shape& shape
 ) const {
-  assert(characters.size() == Symmetry::size(symmetryName));
+  assert(characters.size() == Symmetry::size(shape));
 
   return _generateAllRotations(
     [](
@@ -187,15 +187,15 @@ std::set<Stereopermutation> Stereopermutation::generateAllRotations(
       // Never interrupt
       return false;
     },
-    symmetryName
+    shape
   ).first;
 }
 
 boost::optional<bool> Stereopermutation::isEnantiomer(
   const Stereopermutation& other,
-  const Symmetry::Name& symmetryName
+  const Symmetry::Shape& shape
 ) const {
-  assert(characters.size() == Symmetry::size(symmetryName));
+  assert(characters.size() == Symmetry::size(shape));
 
   /* Generate the mirror image of *this and check whether it is rotationally
    * superimposable with other.
@@ -203,7 +203,7 @@ boost::optional<bool> Stereopermutation::isEnantiomer(
    * Although the mirror mapping isn't really a "rotation", it has the same
    * properties as one, so we just apply it to a copy of *this.
    */
-  const auto& mirrorPermutation = Symmetry::mirror(symmetryName);
+  const auto& mirrorPermutation = Symmetry::mirror(shape);
 
   /* If the mirror were to yield an identity permutation, it is represented
    * as an empty constexpr array (now a vector, so:)
@@ -214,12 +214,12 @@ boost::optional<bool> Stereopermutation::isEnantiomer(
 
   auto thisCopy = *this;
   thisCopy.applyRotation(mirrorPermutation);
-  return thisCopy.isRotationallySuperimposable(other, symmetryName);
+  return thisCopy.isRotationallySuperimposable(other, shape);
 }
 
 bool Stereopermutation::isRotationallySuperimposable(
   const Stereopermutation& other,
-  const Symmetry::Name& symmetryName
+  const Symmetry::Shape& shape
 ) const {
   return (
     *this == other
@@ -230,7 +230,7 @@ bool Stereopermutation::isRotationallySuperimposable(
       ) -> bool {
         return b == other;
       },
-      symmetryName
+      shape
     ).second
   );
 }
@@ -269,7 +269,7 @@ std::pair<
   const std::function<
     bool(const Stereopermutation&, const Stereopermutation&)
   >& interruptCallbackOnNewStereopermutation,
-  const Symmetry::Name symmetryName
+  const Symmetry::Shape shape
 ) const {
 
   // add the initial structure to a set of Stereopermutations
@@ -300,7 +300,7 @@ std::pair<
    * It does not assume that rotations are commutative.
    */
   // maximum element is the size of the rotation vector
-  const unsigned linkLimit = Symmetry::rotations(symmetryName).size();
+  const unsigned linkLimit = Symmetry::rotations(shape).size();
 
   // initialize
   std::vector<unsigned> chain = {0};
@@ -314,7 +314,7 @@ std::pair<
 
     // apply the rotation referenced by the last link in chain
     generated.applyRotation(
-      Symmetry::rotations(symmetryName).at(
+      Symmetry::rotations(shape).at(
         chain.back()
       )
     );

@@ -120,7 +120,7 @@ double dihedral(
 constexpr temple::floating::ExpandedAbsoluteEqualityComparator<double> Composite::fpComparator;
 
 Composite::OrientationState::OrientationState(
-  Symmetry::Name passSymmetry,
+  Symmetry::Shape passSymmetry,
   unsigned passFusedPosition,
   std::vector<char> passCharacters,
   std::size_t passIdentifier
@@ -383,16 +383,16 @@ double Composite::perpendicularSubstituentAngle(
 }
 
 std::vector<unsigned> Composite::generateRotation(
-  const Symmetry::Name symmetryName,
+  const Symmetry::Shape shape,
   const unsigned fixedSymmetryPosition,
   const std::vector<unsigned>& changedPositions
 ) {
   auto periodicities = temple::map(
-    temple::iota<unsigned>(Symmetry::rotations(symmetryName).size()),
-    [&symmetryName](const unsigned rotationFunctionIndex) -> unsigned {
+    temple::iota<unsigned>(Symmetry::rotations(shape).size()),
+    [&shape](const unsigned rotationFunctionIndex) -> unsigned {
       return Symmetry::properties::rotationPeriodicity(
-        symmetryName,
-        Symmetry::rotations(symmetryName).at(rotationFunctionIndex)
+        shape,
+        Symmetry::rotations(shape).at(rotationFunctionIndex)
       );
     }
   );
@@ -427,12 +427,12 @@ std::vector<unsigned> Composite::generateRotation(
 
     do {
       // Create the rotation using the index application sequence front-to-back
-      rotation = temple::iota<unsigned>(Symmetry::size(symmetryName));
+      rotation = temple::iota<unsigned>(Symmetry::size(shape));
 
       for(const auto r : rotationIndexApplicationSequence) {
         rotation = Symmetry::properties::applyRotation(
           rotation,
-          symmetryName,
+          shape,
           r
         );
       }
@@ -462,7 +462,7 @@ std::vector<unsigned> Composite::generateRotation(
 }
 
 std::vector<unsigned> Composite::rotation(
-  const Symmetry::Name symmetryName,
+  const Symmetry::Shape shape,
   const unsigned fixedSymmetryPosition,
   const std::vector<unsigned>& perpendicularPlanePositions
 ) {
@@ -475,7 +475,7 @@ std::vector<unsigned> Composite::rotation(
      * amount of symmetry positions involved.
      */
     auto candidateRotation = generateRotation(
-      symmetryName,
+      shape,
       fixedSymmetryPosition,
       perpendicularPlanePositions
     );
@@ -490,7 +490,7 @@ std::vector<unsigned> Composite::rotation(
      * generateRotation, but it's best to be sure.
      */
     assert(
-      Symmetry::properties::rotationPeriodicity(symmetryName, candidateRotation)
+      Symmetry::properties::rotationPeriodicity(shape, candidateRotation)
       == perpendicularPlanePositions.size()
     );
 
@@ -513,7 +513,7 @@ std::vector<unsigned> Composite::rotation(
 
 Composite::PerpendicularAngleGroups Composite::inGroupAngles(
   const AngleGroup& angleGroup,
-  const Symmetry::Name symmetryName
+  const Symmetry::Shape shape
 ) {
   PerpendicularAngleGroups groups;
 
@@ -526,7 +526,7 @@ Composite::PerpendicularAngleGroups Composite::inGroupAngles(
     [&](const unsigned a, const unsigned b) -> void {
       double perpendicularAngle = perpendicularSubstituentAngle(
         angleGroup.angle,
-        Symmetry::angleFunction(symmetryName)(a, b)
+        Symmetry::angleFunction(shape)(a, b)
       );
 
       auto findIter = std::find_if(

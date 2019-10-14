@@ -49,10 +49,10 @@ std::vector<unsigned> rotate(
   return rotated;
 }
 
-template<typename SymmetryClass>
+template<typename ShapeClass>
 struct LockstepTest {
   static bool value() {
-    return Symmetry::nameIndex(SymmetryClass::name) == underlying(SymmetryClass::name);
+    return Symmetry::nameIndex(ShapeClass::shape) == underlying(ShapeClass::shape);
   }
 };
 
@@ -60,22 +60,22 @@ BOOST_AUTO_TEST_CASE(symmetryTypeAndPositionInEnumLockstep) {
   BOOST_CHECK_MESSAGE(
     temple::all_of(
       temple::TupleType::map<
-        Symmetry::data::allSymmetryDataTypes,
+        Symmetry::data::allShapeDataTypes,
         LockstepTest
       >()
     ),
-    "Not all symmetries have the same order in Name and allSymmetryDataTypes"
+    "Not all symmetries have the same order in Name and allShapeDataTypes"
   );
 }
 
 BOOST_AUTO_TEST_CASE(symmetryDataConstructedCorrectly) {
-  BOOST_TEST_REQUIRE(Symmetry::symmetryData().size() == Symmetry::nSymmetries);
+  BOOST_TEST_REQUIRE(Symmetry::symmetryData().size() == Symmetry::nShapes);
 
   BOOST_REQUIRE(
     temple::all_of(
-      Symmetry::allNames,
-      [&](const auto& symmetryName) -> bool {
-        return Symmetry::symmetryData().count(symmetryName) == 1;
+      Symmetry::allShapes,
+      [&](const Symmetry::Shape& shape) -> bool {
+        return Symmetry::symmetryData().count(shape) == 1;
       }
     )
   );
@@ -87,23 +87,23 @@ BOOST_AUTO_TEST_CASE(angleFuntionsInSequence) {
       temple::adaptors::zip(
         Symmetry::data::angleFunctions,
         std::vector<Symmetry::data::AngleFunctionPtr> {{
-          &Symmetry::data::Linear::angleFunction,
+          &Symmetry::data::Line::angleFunction,
           &Symmetry::data::Bent::angleFunction,
-          &Symmetry::data::TrigonalPlanar::angleFunction, // 3
-          &Symmetry::data::CutTetrahedral::angleFunction,
-          &Symmetry::data::TShaped::angleFunction,
-          &Symmetry::data::Tetrahedral::angleFunction, // 4
-          &Symmetry::data::SquarePlanar::angleFunction,
-          &Symmetry::data::Seesaw::angleFunction,
-          &Symmetry::data::TrigonalPyramidal::angleFunction,
-          &Symmetry::data::SquarePyramidal::angleFunction, // 5
-          &Symmetry::data::TrigonalBiPyramidal::angleFunction,
-          &Symmetry::data::PentagonalPlanar::angleFunction,
-          &Symmetry::data::Octahedral::angleFunction, // 6
-          &Symmetry::data::TrigonalPrismatic::angleFunction,
-          &Symmetry::data::PentagonalPyramidal::angleFunction,
-          &Symmetry::data::PentagonalBiPyramidal::angleFunction, // 7
-          &Symmetry::data::SquareAntiPrismatic::angleFunction // 8
+          &Symmetry::data::EquilateralTriangle::angleFunction, // 3
+          &Symmetry::data::ApicalTrigonalPyramid::angleFunction,
+          &Symmetry::data::T::angleFunction,
+          &Symmetry::data::Tetrahedron::angleFunction, // 4
+          &Symmetry::data::Square::angleFunction,
+          &Symmetry::data::Disphenoid::angleFunction,
+          &Symmetry::data::TrigonalPyramid::angleFunction,
+          &Symmetry::data::SquarePyramid::angleFunction, // 5
+          &Symmetry::data::TrigonalBipyramid::angleFunction,
+          &Symmetry::data::Pentagon::angleFunction,
+          &Symmetry::data::Octahedron::angleFunction, // 6
+          &Symmetry::data::TrigonalPrism::angleFunction,
+          &Symmetry::data::PentagonalPyramid::angleFunction,
+          &Symmetry::data::PentagonalBipyramid::angleFunction, // 7
+          &Symmetry::data::SquareAntiprism::angleFunction // 8
         }}
       ),
       [](const auto& aPtr, const auto& bPtr) -> bool {
@@ -115,7 +115,7 @@ BOOST_AUTO_TEST_CASE(angleFuntionsInSequence) {
 
 BOOST_AUTO_TEST_CASE( correctRotationVectorSize ) {
   // every rotation vector size must equal size of symmetry
-  for(const auto& name : allNames) {
+  for(const auto& name : allShapes) {
     for(const auto& rotationVector : rotations(name)) {
       BOOST_CHECK(rotationVector.size() == size(name));
     }
@@ -125,7 +125,7 @@ BOOST_AUTO_TEST_CASE( correctRotationVectorSize ) {
 
 BOOST_AUTO_TEST_CASE( rotationVectorSanityTests ) {
   // every rotation may have every number 0 -> (size of symmetry - 1) only once
-  for(const auto& name : allNames) {
+  for(const auto& name : allShapes) {
     std::set<unsigned> members;
     for(unsigned i = 0; i < size(name); i++) {
       members.insert(members.end(), i);
@@ -156,7 +156,7 @@ BOOST_AUTO_TEST_CASE( rotationVectorSanityTests ) {
    * applications
    */
   unsigned maxIter = 100;
-  for(const auto& name : allNames) {
+  for(const auto& name : allShapes) {
     std::vector<unsigned> initialConfiguration (
       size(name),
       0
@@ -189,17 +189,17 @@ BOOST_AUTO_TEST_CASE( rotationVectorSanityTests ) {
 
 BOOST_AUTO_TEST_CASE( angleFunctionInputSymmetry ) {
   // every angle function must be symmetrical on input of valid unsigned indices
-  for(const auto& symmetryName: allNames) {
+  for(const Shape shape: allShapes) {
     bool passesAll = true;
 
-    for(unsigned i = 0; i < size(symmetryName) && passesAll; i++) {
-      for(unsigned j = i + 1; j < size(symmetryName); j++) {
-        if(angleFunction(symmetryName)(i, j) != angleFunction(symmetryName)(j, i)) {
+    for(unsigned i = 0; i < size(shape) && passesAll; i++) {
+      for(unsigned j = i + 1; j < size(shape); j++) {
+        if(angleFunction(shape)(i, j) != angleFunction(shape)(j, i)) {
           passesAll = false;
-          std::cout << name(symmetryName)
+          std::cout << name(shape)
             << " is not symmetrical w.r.t. input indices: falsified by ("
-            << i << ", " << j <<") -> (" << angleFunction(symmetryName)(i, j)
-            << ", " << angleFunction(symmetryName)(j, i) << ")." << std::endl;
+            << i << ", " << j <<") -> (" << angleFunction(shape)(i, j)
+            << ", " << angleFunction(shape)(j, i) << ")." << std::endl;
           break;
         }
       }
@@ -212,13 +212,13 @@ BOOST_AUTO_TEST_CASE( angleFunctionInputSymmetry ) {
 
 BOOST_AUTO_TEST_CASE( angleFunctionZeroForIdenticalInput) {
   // every angle function must return 0 for identical indices
-  for(const auto& symmetryName: allNames) {
+  for(const Shape shape: allShapes) {
     bool passesAll = true;
 
-    for(unsigned i = 0; i < size(symmetryName); i++) {
-      if(angleFunction(symmetryName)(i, i) != 0) {
+    for(unsigned i = 0; i < size(shape); i++) {
+      if(angleFunction(shape)(i, i) != 0) {
         passesAll = false;
-        std::cout << name(symmetryName)
+        std::cout << name(shape)
           << "'s angle function does not return zero for identical indices ("
           << i << ", " << i << ")." << std::endl;
         break;
@@ -230,22 +230,22 @@ BOOST_AUTO_TEST_CASE( angleFunctionZeroForIdenticalInput) {
 }
 
 BOOST_AUTO_TEST_CASE(anglesWithinRadiansBounds) {
-  for(const auto& symmetryName : allNames) {
+  for(const Shape shape : allShapes) {
     bool passesAll = true;
 
-    for(unsigned i = 0; i < size(symmetryName); i++) {
-      for(unsigned j = 0; j < size(symmetryName); j++) {
+    for(unsigned i = 0; i < size(shape); i++) {
+      for(unsigned j = 0; j < size(shape); j++) {
         if(
           !(
-            0 <= angleFunction(symmetryName)(i, j)
+            0 <= angleFunction(shape)(i, j)
           ) || !(
-            angleFunction(symmetryName)(i, j) <= M_PI
+            angleFunction(shape)(i, j) <= M_PI
           )
         ) {
           passesAll = false;
-          std::cout << name(symmetryName)
+          std::cout << name(shape)
             << "'s angle function is not within radians bounds for indices ("
-            << i << ", " << j << ") -> " << angleFunction(symmetryName)(i, j)
+            << i << ", " << j << ") -> " << angleFunction(shape)(i, j)
             << std::endl;
           break;
         }
@@ -258,19 +258,19 @@ BOOST_AUTO_TEST_CASE(anglesWithinRadiansBounds) {
 
 BOOST_AUTO_TEST_CASE( rightAmountOfCoordinates) {
   // every information must have the right amount of coordinates
-  for(const auto& symmetryName: allNames) {
+  for(const auto& shape: allShapes) {
     BOOST_CHECK(
-      symmetryData().at(symmetryName).coordinates.cols() ==
-      symmetryData().at(symmetryName).size
+      symmetryData().at(shape).coordinates.cols() ==
+      symmetryData().at(shape).size
     );
   }
 }
 
 BOOST_AUTO_TEST_CASE( allCoordinateVectorsLengthOne) {
-  for(const auto& symmetryName: allNames) {
+  for(const auto& shape: allShapes) {
     bool all_pass = true;
 
-    const Eigen::Matrix<double, 3, Eigen::Dynamic>& positions = symmetryData().at(symmetryName).coordinates;
+    const Eigen::Matrix<double, 3, Eigen::Dynamic>& positions = symmetryData().at(shape).coordinates;
 
     unsigned cols = positions.cols();
     for(unsigned i = 0; i < cols; ++i) {
@@ -290,15 +290,15 @@ BOOST_AUTO_TEST_CASE( anglesMatchCoordinates) {
    * by the coordinates
    */
 
-  for(const auto& symmetryName: allNames) {
+  for(const auto& shape: allShapes) {
     auto getCoordinates =  [&](const unsigned index) -> Eigen::Vector3d {
-      return symmetryData().at(symmetryName).coordinates.col(index);
+      return symmetryData().at(shape).coordinates.col(index);
     };
 
     bool all_pass = true;
 
-    for(unsigned i = 0; i < size(symmetryName); i++) {
-      for(unsigned j = i + 1; j < size(symmetryName); j++) {
+    for(unsigned i = 0; i < size(shape); i++) {
+      for(unsigned j = i + 1; j < size(shape); j++) {
         auto angleInCoordinates = std::acos(
           getCoordinates(i).dot(
             getCoordinates(j)
@@ -307,16 +307,16 @@ BOOST_AUTO_TEST_CASE( anglesMatchCoordinates) {
           )
         );
 
-        auto angleDifference = angleInCoordinates - angleFunction(symmetryName)(i, j);
+        auto angleDifference = angleInCoordinates - angleFunction(shape)(i, j);
 
         // Tolerate only one degree difference
         if(std::fabs(angleDifference) > 1) {
           all_pass = false;
 
-          std::cout << name(symmetryName)
+          std::cout << name(shape)
             << ": angleFunction != angles from coordinates ("
             << i << ", " << j << "): " << angleDifference
-            << ", angleFunction = " << angleFunction(symmetryName)(i, j)
+            << ", angleFunction = " << angleFunction(shape)(i, j)
             << ", angle from coordinates = " << angleInCoordinates << std::endl;
         }
       }
@@ -333,10 +333,10 @@ BOOST_AUTO_TEST_CASE( allTetrahedraPositive) {
    *  (1 - 4) dot [ (2 - 4) x (3 - 4) ]
    *
    */
-  for(const auto& symmetryName: allNames) {
+  for(const auto& shape: allShapes) {
     auto getCoordinates = [&](const boost::optional<unsigned>& indexOption) -> Eigen::Vector3d {
       if(indexOption) {
-        return symmetryData().at(symmetryName).coordinates.col(indexOption.value());
+        return symmetryData().at(shape).coordinates.col(indexOption.value());
       }
 
       return {0, 0, 0};
@@ -344,7 +344,7 @@ BOOST_AUTO_TEST_CASE( allTetrahedraPositive) {
 
     bool all_pass = true;
 
-    for(const auto& tetrahedron: tetrahedra(symmetryName)) {
+    for(const auto& tetrahedron: tetrahedra(shape)) {
 
       double tetrahedronVolume = (
         getCoordinates(tetrahedron[0]) - getCoordinates(tetrahedron[3])
@@ -358,7 +358,7 @@ BOOST_AUTO_TEST_CASE( allTetrahedraPositive) {
 
       if(tetrahedronVolume < 0) {
         all_pass = false;
-        std::cout << name(symmetryName) << ": Tetrahedron {";
+        std::cout << name(shape) << ": Tetrahedron {";
 
         for(unsigned i = 0; i < 4; i++) {
           if(tetrahedron[i]) {
@@ -382,8 +382,8 @@ BOOST_AUTO_TEST_CASE( allTetrahedraPositive) {
 }
 
 BOOST_AUTO_TEST_CASE( tetrahedraDefinitionIndicesUnique ) {
-  for(const auto& symmetryName : allNames) {
-    for(const auto& tetrahedron : tetrahedra(symmetryName)) {
+  for(const auto& shape : allShapes) {
+    for(const auto& tetrahedron : tetrahedra(shape)) {
       bool containsAnEmptyOption = false;
 
       for(const auto& edgeOption : tetrahedron) {
@@ -409,13 +409,13 @@ BOOST_AUTO_TEST_CASE( tetrahedraDefinitionIndicesUnique ) {
 BOOST_AUTO_TEST_CASE(smallestAngleValueCorrect) {
   const double comparisonSmallestAngle = temple::min(
     temple::map(
-      allNames,
-      [](const Name& symmetryName) -> double {
-        double symmetrySmallestAngle = angleFunction(symmetryName)(0, 1);
+      allShapes,
+      [](const Shape& shape) -> double {
+        double symmetrySmallestAngle = angleFunction(shape)(0, 1);
 
-        for(unsigned i = 0; i < size(symmetryName); i++) {
-          for(unsigned j = i + 1; j < size(symmetryName); j++) {
-            double angle = angleFunction(symmetryName)(i, j);
+        for(unsigned i = 0; i < size(shape); i++) {
+          for(unsigned j = i + 1; j < size(shape); j++) {
+            double angle = angleFunction(shape)(i, j);
             if(angle < symmetrySmallestAngle) {
               symmetrySmallestAngle = angle;
             }
@@ -443,11 +443,11 @@ BOOST_AUTO_TEST_CASE(smallestAngleValueCorrect) {
 /* NOTE: can refactor out doLigandGainTestIfAdjacent with a simple if-constexpr
  * in C++17
  */
-template<class SymmetryClassFrom, class SymmetryClassTo>
+template<class ShapeClassFrom, class ShapeClassTo>
 std::enable_if_t<
   (
-    SymmetryClassFrom::size + 1 == SymmetryClassTo::size
-    || SymmetryClassFrom::size == SymmetryClassTo::size
+    ShapeClassFrom::size + 1 == ShapeClassTo::size
+    || ShapeClassFrom::size == ShapeClassTo::size
   ),
   bool
 > doLigandGainTestIfAdjacent() {
@@ -456,8 +456,8 @@ std::enable_if_t<
    * .angularDistortion, .chiralDistortion - doubles
    */
   auto constexprMappings = allMappings.at(
-    static_cast<unsigned>(SymmetryClassFrom::name),
-    static_cast<unsigned>(SymmetryClassTo::name)
+    static_cast<unsigned>(ShapeClassFrom::shape),
+    static_cast<unsigned>(ShapeClassTo::shape)
   ).value();
   /* Vector of structs:
    * .indexMapping - vector containing the index mapping
@@ -465,8 +465,8 @@ std::enable_if_t<
    */
   auto dynamicMappings = properties::selectBestTransitionMappings(
     properties::symmetryTransitionMappings(
-      SymmetryClassFrom::name,
-      SymmetryClassTo::name
+      ShapeClassFrom::shape,
+      ShapeClassTo::shape
     )
   );
 
@@ -527,9 +527,9 @@ constexpr bool pairEqualityComparator(
   );
 }
 
-template<class SymmetryClassFrom, class SymmetryClassTo>
+template<class ShapeClassFrom, class ShapeClassTo>
 std::enable_if_t<
-  SymmetryClassFrom::size == SymmetryClassTo::size + 1,
+  ShapeClassFrom::size == ShapeClassTo::size + 1,
   bool
 > doLigandGainTestIfAdjacent() {
   // Ligand loss situation
@@ -540,15 +540,15 @@ std::enable_if_t<
       unsigned,
       Symmetry::constexprProperties::MappingsReturnType
     >,
-    SymmetryClassFrom::size
+    ShapeClassFrom::size
   > constexprMappings;
 
-  for(unsigned i = 0; i < SymmetryClassFrom::size; ++i) {
+  for(unsigned i = 0; i < ShapeClassFrom::size; ++i) {
     constexprMappings.at(i) = std::make_pair(
       i,
       Symmetry::constexprProperties::ligandLossMappings<
-        SymmetryClassFrom,
-        SymmetryClassTo
+        ShapeClassFrom,
+        ShapeClassTo
       >(i)
     );
   }
@@ -567,13 +567,13 @@ std::enable_if_t<
     >
   > dynamicMappings;
 
-  for(unsigned i = 0; i < SymmetryClassFrom::size; ++i) {
+  for(unsigned i = 0; i < ShapeClassFrom::size; ++i) {
     dynamicMappings.emplace_back(
       i,
       selectBestTransitionMappings(
         properties::ligandLossTransitionMappings(
-          SymmetryClassFrom::name,
-          SymmetryClassTo::name,
+          ShapeClassFrom::shape,
+          ShapeClassTo::shape,
           i
         )
       )
@@ -619,39 +619,39 @@ std::enable_if_t<
 }
 
 // Base case in which source and target symmetries are non-adjacent
-template<class SymmetryClassFrom, class SymmetryClassTo>
+template<class ShapeClassFrom, class ShapeClassTo>
 std::enable_if_t<
   (
-    SymmetryClassFrom::size != SymmetryClassTo::size + 1
-    && SymmetryClassFrom::size + 1 != SymmetryClassTo::size
-    && SymmetryClassFrom::size != SymmetryClassTo::size
+    ShapeClassFrom::size != ShapeClassTo::size + 1
+    && ShapeClassFrom::size + 1 != ShapeClassTo::size
+    && ShapeClassFrom::size != ShapeClassTo::size
   ),
   bool
 > doLigandGainTestIfAdjacent() {
   return true;
 }
 
-template<class SymmetryClassFrom, class SymmetryClassTo>
+template<class ShapeClassFrom, class ShapeClassTo>
 struct LigandGainTest {
   static bool value() {
-    return doLigandGainTestIfAdjacent<SymmetryClassFrom, SymmetryClassTo>();
+    return doLigandGainTestIfAdjacent<ShapeClassFrom, ShapeClassTo>();
   }
 };
 #endif
 
-template<class SymmetryClass>
+template<class ShapeClass>
 struct RotationGenerationTest {
   static bool value() {
 
-    // This is a DynamicSet of SymmetryClass-sized Arrays
-    auto constexprRotations = constexprProperties::generateAllRotations<SymmetryClass>(
-      constexprProperties::startingIndexSequence<SymmetryClass>()
+    // This is a DynamicSet of ShapeClass-sized Arrays
+    auto constexprRotations = constexprProperties::generateAllRotations<ShapeClass>(
+      constexprProperties::startingIndexSequence<ShapeClass>()
     );
 
-    // This is a std::set of SymmetryClass-sized std::vectors
+    // This is a std::set of ShapeClass-sized std::vectors
     auto dynamicRotations = properties::generateAllRotations(
-      SymmetryClass::name,
-      temple::iota<unsigned>(SymmetryClass::size)
+      ShapeClass::shape,
+      temple::iota<unsigned>(ShapeClass::size)
     );
 
     auto convertedRotations = temple::map_stl(
@@ -665,7 +665,7 @@ struct RotationGenerationTest {
     );
 
     if(convertedRotations.size() != constexprRotations.size()) {
-      std::cout << "In symmetry " << SymmetryClass::stringName << ", "
+      std::cout << "In symmetry " << ShapeClass::stringName << ", "
         << "constexpr rotations set reports " << constexprRotations.size()
         << " elements but the STL mapped variant has only "
         << convertedRotations.size() << " elements!" << std::endl;
@@ -687,11 +687,11 @@ struct RotationGenerationTest {
 
     if(!pass) {
       std::cout << "Rotation generation differs for "
-        << SymmetryClass::stringName
+        << ShapeClass::stringName
         << " symmetry: Sizes of generated sets are different. "
         << "constexpr - " << convertedRotations.size() << " != "
         << dynamicRotations.size() << " - dynamic" << std::endl;
-      std::cout << " Maximum #rotations: " << constexprProperties::maxRotations<SymmetryClass>()
+      std::cout << " Maximum #rotations: " << constexprProperties::maxRotations<ShapeClass>()
         << std::endl;
 
       std::cout << " Converted constexpr:" << std::endl;
@@ -731,8 +731,8 @@ struct RotationGenerationTest {
  */
 };
 
-std::string getGraphvizNodeName(const Symmetry::Name& symmetryName) {
-  auto stringName = Symmetry::name(symmetryName);
+std::string getGraphvizNodeName(const Symmetry::Shape shape) {
+  auto stringName = Symmetry::name(shape);
 
   stringName.erase(
     std::remove_if(
@@ -755,7 +755,7 @@ BOOST_AUTO_TEST_CASE(constexprPropertiesTests) {
   BOOST_CHECK_MESSAGE(
     temple::all_of(
       temple::TupleType::map<
-        Symmetry::data::allSymmetryDataTypes,
+        Symmetry::data::allShapeDataTypes,
         RotationGenerationTest
       >()
     ),
@@ -767,7 +767,7 @@ BOOST_AUTO_TEST_CASE(constexprPropertiesTests) {
   BOOST_CHECK_MESSAGE(
     temple::all_of(
       temple::TupleType::mapAllPairs<
-        Symmetry::data::allSymmetryDataTypes,
+        Symmetry::data::allShapeDataTypes,
         LigandGainTest
       >()
     ),
@@ -777,39 +777,39 @@ BOOST_AUTO_TEST_CASE(constexprPropertiesTests) {
 #endif
 }
 
-template<typename SymmetryClass>
+template<typename ShapeClass>
 struct NumUnlinkedTestFunctor {
   static bool value() {
-    for(unsigned i = 1; i < SymmetryClass::size; ++i) {
-      unsigned constexprResult = constexprProperties::numUnlinkedStereopermutations<SymmetryClass>(i);
+    for(unsigned i = 1; i < ShapeClass::size; ++i) {
+      unsigned constexprResult = constexprProperties::numUnlinkedStereopermutations<ShapeClass>(i);
 
       unsigned dynamicResult = properties::numUnlinkedStereopermutations(
-        SymmetryClass::name,
+        ShapeClass::shape,
         i
       );
 
       if(constexprResult != dynamicResult) {
-        std::cout << "Mismatch for " << Symmetry::name(SymmetryClass::name) << " and " << i << " identical ligands between constexpr and dynamic number of unlinked: " << constexprResult << " vs. " << dynamicResult << "\n";
+        std::cout << "Mismatch for " << Symmetry::name(ShapeClass::shape) << " and " << i << " identical ligands between constexpr and dynamic number of unlinked: " << constexprResult << " vs. " << dynamicResult << "\n";
         return false;
       }
 
       // Cross-check with constexpr hasMultiple
-      bool constexprHasMultiple = constexprProperties::hasMultipleUnlinkedStereopermutations<SymmetryClass>(i);
+      bool constexprHasMultiple = constexprProperties::hasMultipleUnlinkedStereopermutations<ShapeClass>(i);
       if((constexprResult > 1) != constexprHasMultiple) {
         std::cout << "Mismatch between constexpr count and constexpr "
           << "hasMultiple unlinked ligands for "
-          << Symmetry::name(SymmetryClass::name) << " and "
+          << Symmetry::name(ShapeClass::shape) << " and "
           << i << " identical ligands: " << constexprResult << " and "
           << std::boolalpha << constexprHasMultiple << "\n";
         return false;
       }
 
       // Cross-check with dynamic hasMultiple
-      bool dynamicHasMultiple = properties::hasMultipleUnlinkedStereopermutations(SymmetryClass::name, i);
+      bool dynamicHasMultiple = properties::hasMultipleUnlinkedStereopermutations(ShapeClass::shape, i);
       if((constexprResult > 1) != dynamicHasMultiple) {
         std::cout << "Mismatch between constexpr count and dynamic "
           << "hasMultiple unlinked ligands for "
-          << Symmetry::name(SymmetryClass::name) << " and "
+          << Symmetry::name(ShapeClass::shape) << " and "
           << i << " identical ligands: " << constexprResult << " and "
           << std::boolalpha << dynamicHasMultiple << "\n";
         return false;
@@ -824,7 +824,7 @@ BOOST_AUTO_TEST_CASE(numUnlinkedAlgorithms) {
   BOOST_CHECK_MESSAGE(
     temple::all_of(
       temple::TupleType::map<
-        Symmetry::data::allSymmetryDataTypes,
+        Symmetry::data::allShapeDataTypes,
         NumUnlinkedTestFunctor
       >()
     ),
@@ -832,17 +832,17 @@ BOOST_AUTO_TEST_CASE(numUnlinkedAlgorithms) {
     " algorithms"
   );
 
-  BOOST_CHECK(properties::numUnlinkedStereopermutations(Symmetry::Name::Linear, 0) == 1);
-  BOOST_CHECK(properties::numUnlinkedStereopermutations(Symmetry::Name::Bent, 0) == 1);
-  BOOST_CHECK(properties::numUnlinkedStereopermutations(Symmetry::Name::TrigonalPlanar, 0) == 1);
-  BOOST_CHECK(properties::numUnlinkedStereopermutations(Symmetry::Name::Tetrahedral, 0) == 2);
-  BOOST_CHECK(properties::numUnlinkedStereopermutations(Symmetry::Name::Octahedral, 0) == 30);
+  BOOST_CHECK(properties::numUnlinkedStereopermutations(Symmetry::Shape::Line, 0) == 1);
+  BOOST_CHECK(properties::numUnlinkedStereopermutations(Symmetry::Shape::Bent, 0) == 1);
+  BOOST_CHECK(properties::numUnlinkedStereopermutations(Symmetry::Shape::EquilateralTriangle, 0) == 1);
+  BOOST_CHECK(properties::numUnlinkedStereopermutations(Symmetry::Shape::Tetrahedron, 0) == 2);
+  BOOST_CHECK(properties::numUnlinkedStereopermutations(Symmetry::Shape::Octahedron, 0) == 30);
 }
 
 static_assert(
-  nSymmetries == std::tuple_size<data::allSymmetryDataTypes>::value,
-  "nSymmetries does not equal number of symmetry data class types in "
-  "allSymmetryDataTypes"
+  nShapes == std::tuple_size<data::allShapeDataTypes>::value,
+  "nShapes does not equal number of symmetry data class types in "
+  "allShapeDataTypes"
 );
 
 #ifdef USE_CONSTEXPR_TRANSITION_MAPPINGS
@@ -851,9 +851,9 @@ BOOST_AUTO_TEST_CASE(mappingsAreAvailable) {
    * a some optional
    */
   bool pass = true;
-  for(const auto& fromSymmetry : Symmetry::allNames) {
+  for(const auto& fromSymmetry : Symmetry::allShapes) {
     auto i = static_cast<unsigned>(fromSymmetry);
-    for(const auto& toSymmetry : Symmetry::allNames) {
+    for(const auto& toSymmetry : Symmetry::allShapes) {
       auto j = static_cast<unsigned>(toSymmetry);
       if(
         i < j
@@ -876,16 +876,16 @@ BOOST_AUTO_TEST_CASE(mappingsAreAvailable) {
 #endif
 
 BOOST_AUTO_TEST_CASE(angleBoundsTests) {
-  BOOST_CHECK(Symmetry::minimumAngle(Symmetry::Name::TShaped) == M_PI / 2);
-  BOOST_CHECK(Symmetry::maximumAngle(Symmetry::Name::TShaped) == M_PI);
+  BOOST_CHECK(Symmetry::minimumAngle(Symmetry::Shape::T) == M_PI / 2);
+  BOOST_CHECK(Symmetry::maximumAngle(Symmetry::Shape::T) == M_PI);
 
-  BOOST_CHECK(Symmetry::minimumAngle(Symmetry::Name::Octahedral) == M_PI / 2);
-  BOOST_CHECK(Symmetry::maximumAngle(Symmetry::Name::Octahedral) == M_PI);
+  BOOST_CHECK(Symmetry::minimumAngle(Symmetry::Shape::Octahedron) == M_PI / 2);
+  BOOST_CHECK(Symmetry::maximumAngle(Symmetry::Shape::Octahedron) == M_PI);
 
-  BOOST_CHECK(Symmetry::minimumAngle(Symmetry::Name::TrigonalBiPyramidal) == M_PI / 2);
-  BOOST_CHECK(Symmetry::maximumAngle(Symmetry::Name::TrigonalBiPyramidal) == M_PI);
+  BOOST_CHECK(Symmetry::minimumAngle(Symmetry::Shape::TrigonalBipyramid) == M_PI / 2);
+  BOOST_CHECK(Symmetry::maximumAngle(Symmetry::Shape::TrigonalBipyramid) == M_PI);
 
   BOOST_CHECK(
-    Symmetry::minimumAngle(Symmetry::Name::Tetrahedral) == Symmetry::maximumAngle(Symmetry::Name::Tetrahedral)
+    Symmetry::minimumAngle(Symmetry::Shape::Tetrahedron) == Symmetry::maximumAngle(Symmetry::Shape::Tetrahedron)
   );
 }

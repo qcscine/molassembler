@@ -83,12 +83,12 @@ void findSites(
  * A site is made up of all immediately group-internally-adjacent
  * substituents of a central index. The reverse subdivision starting from a
  * ligand may be more intuitive: A ligand may be multidentate and have varying
- * hapticity at any symmetry position. It consists of bonding atoms (those
+ * hapticity at any shape position. It consists of bonding atoms (those
  * connecting to the central metal) and non-bonding atoms (which may make up a
  * linker or other extraneous groups). Bonding atoms can be subdivided into
  * connected components that are separated by non-bonding atoms, each of which
  * make up a possibly haptic group. These are called sites because
- * they each take up a site of the central index's coordination symmetry.
+ * they each take up a site of the central index's coordination shape.
  *
  * @complexity{@math{\Theta(S)} where @math{S} is the number of substituents of
  * the central vertex}

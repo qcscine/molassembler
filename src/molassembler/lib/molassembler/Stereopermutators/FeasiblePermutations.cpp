@@ -25,7 +25,7 @@ bool FeasibleStereopermutations::isNotObviouslyImpossibleStereopermutation(
   const RankingInformation::RankedSitesType& canonicalSites,
   const ConeAngleType& coneAngles,
   const RankingInformation& ranking,
-  const Symmetry::Name symmetry,
+  const Symmetry::Shape shape,
   const OuterGraph& graph
 ) {
   auto symmetryPositionMap = siteToSymmetryPositionMap(
@@ -53,7 +53,7 @@ bool FeasibleStereopermutations::isNotObviouslyImpossibleStereopermutation(
       // siteCentralAngle yields undistorted symmetry angles for haptic sites
       double symmetryAngle = DistanceGeometry::SpatialModel::siteCentralAngle(
         centralIndex,
-        symmetry,
+        shape,
         ranking,
         symmetryPositionMap,
         {siteI, siteJ},
@@ -78,7 +78,7 @@ bool FeasibleStereopermutations::isNotObviouslyImpossibleStereopermutation(
 
   /* Idea: An stereopermutation is unfeasible if any link's cycle cannot be realized
    * as a flat cyclic polygon, in which the edges from the central atom are
-   * merged using the joint angle calculable from the stereopermutation and symmetry.
+   * merged using the joint angle calculable from the stereopermutation and shape.
    *
    * The algorithm below is explained in detail in
    * documents/denticity_feasibility/.
@@ -97,7 +97,7 @@ bool FeasibleStereopermutations::isNotObviouslyImpossibleStereopermutation(
 
     const double symmetryAngle = DistanceGeometry::SpatialModel::siteCentralAngle(
       centralIndex,
-      symmetry,
+      shape,
       ranking,
       symmetryPositionMap,
       link.indexPair,
@@ -115,7 +115,7 @@ bool FeasibleStereopermutations::isNotObviouslyImpossibleStereopermutation(
       assert(link.cycleSequence.front() == centralIndex);
 
       /* TODO maybe it might be better to ask in a very boolean way whether
-       * the symmetry is willing to distort for this particular link or not
+       * the shape is willing to distort for this particular link or not
        * instead of testing the angle in such a roundabout manner...
        */
 
@@ -147,15 +147,15 @@ bool FeasibleStereopermutations::isNotObviouslyImpossibleStereopermutation(
     );
 
     /* We need to respect the graph as ground truth. If a cycle is of size
-     * three, then angles of whatever symmetry is present will be distorted if
-     * there is only one group of symmetry positions (e.g. tetrahedral has
+     * three, then angles of whatever shape is present will be distorted if
+     * there is only one group of shape positions (e.g. tetrahedral has
      * only one group, but square pyramidal has two!) available.
      *
-     * For symmetries with multiple groups of symmetry positions, only that
-     * group of symmetry positions with lower cross-angles is viable for the
+     * For symmetries with multiple groups of shape positions, only that
+     * group of shape positions with lower cross-angles is viable for the
      * link, and will distort accordingly.
      */
-    auto symmetryGroups = Symmetry::properties::positionGroups(symmetry);
+    auto symmetryGroups = Symmetry::properties::positionGroups(shape);
 
 
     /* First we need to construct the cyclic polygon of the cycle sequence
@@ -210,7 +210,7 @@ bool FeasibleStereopermutations::isNotObviouslyImpossibleStereopermutation(
 
 FeasibleStereopermutations::FeasibleStereopermutations(
   const AbstractStereopermutations& abstractPermutations,
-  const Symmetry::Name symmetry,
+  const Symmetry::Shape shape,
   const AtomIndex centralIndex,
   const RankingInformation& ranking,
   const OuterGraph& graph
@@ -268,7 +268,7 @@ FeasibleStereopermutations::FeasibleStereopermutations(
           abstractPermutations.canonicalSites,
           coneAngles,
           ranking,
-          symmetry,
+          shape,
           graph
         )
       ) {

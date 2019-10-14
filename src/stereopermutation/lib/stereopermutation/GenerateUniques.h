@@ -23,7 +23,7 @@ namespace stereopermutation {
  */
 bool hasTransArrangedPairs(
   const Stereopermutation& stereopermutation,
-  Symmetry::Name symmetryName
+  Symmetry::Shape shape
 );
 
 /*!
@@ -49,7 +49,7 @@ bool hasTransArrangedPairs(
  */
 std::vector<Stereopermutation> uniques(
   const Stereopermutation& initial,
-  Symmetry::Name symmetryName,
+  Symmetry::Shape shape,
   bool removeTransSpanningGroups = false
 );
 
@@ -69,7 +69,7 @@ struct StereopermutationsWithWeights {
  */
 StereopermutationsWithWeights uniquesWithWeights(
   const Stereopermutation& initial,
-  Symmetry::Name symmetryName,
+  Symmetry::Shape shape,
   bool removeTransSpanningGroups = false
 );
 
