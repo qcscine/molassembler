@@ -10,31 +10,33 @@ set(HEADERS_All
   ${CMAKE_CURRENT_SOURCE_DIR}/chemical_symmetries/AngleLookup.h
   ${CMAKE_CURRENT_SOURCE_DIR}/chemical_symmetries/CompileTimeOptions.h
   ${CMAKE_CURRENT_SOURCE_DIR}/chemical_symmetries/ConstexprProperties.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/chemical_symmetries/ContinuousMeasures.h
   ${CMAKE_CURRENT_SOURCE_DIR}/chemical_symmetries/CoordinateSystemTransformation.h
   ${CMAKE_CURRENT_SOURCE_DIR}/chemical_symmetries/Diophantine.h
   ${CMAKE_CURRENT_SOURCE_DIR}/chemical_symmetries/DynamicProperties.h
   ${CMAKE_CURRENT_SOURCE_DIR}/chemical_symmetries/Flowchart.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/chemical_symmetries/Shapes.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/chemical_symmetries/InertialMoments.h
   ${CMAKE_CURRENT_SOURCE_DIR}/chemical_symmetries/Partitioner.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/chemical_symmetries/PointGroups.h
   ${CMAKE_CURRENT_SOURCE_DIR}/chemical_symmetries/PointGroupElements.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/chemical_symmetries/PointGroups.h
   ${CMAKE_CURRENT_SOURCE_DIR}/chemical_symmetries/Primitives.h
   ${CMAKE_CURRENT_SOURCE_DIR}/chemical_symmetries/Properties.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/chemical_symmetries/Recognition.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/chemical_symmetries/Shapes.h
   ${CMAKE_CURRENT_SOURCE_DIR}/chemical_symmetries/Symmetries.h
   ${CMAKE_CURRENT_SOURCE_DIR}/chemical_symmetries/TauCriteria.h
 )
 
 set(SOURCES_All
   ${CMAKE_CURRENT_SOURCE_DIR}/chemical_symmetries/CoordinateSystemTransformation.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/chemical_symmetries/ContinuousMeasures.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/chemical_symmetries/Diophantine.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/chemical_symmetries/DynamicProperties.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/chemical_symmetries/Flowchart.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/chemical_symmetries/InertialMoments.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/chemical_symmetries/Partitioner.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/chemical_symmetries/PointGroupElements.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/chemical_symmetries/Primitives.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/chemical_symmetries/Properties.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/chemical_symmetries/Recognition.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/chemical_symmetries/Symmetries.cpp
 )
 

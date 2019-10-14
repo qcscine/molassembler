@@ -9,7 +9,8 @@
 #include "boost/program_options.hpp"
 
 #include "chemical_symmetries/Symmetries.h"
-#include "chemical_symmetries/Recognition.h"
+#include "chemical_symmetries/ContinuousMeasures.h"
+#include "chemical_symmetries/InertialMoments.h"
 #include "chemical_symmetries/Diophantine.h"
 
 #include "temple/Adaptors/Iota.h"
@@ -89,7 +90,7 @@ std::vector<double> averageRandomCsm(const unsigned N, PRNG& prng, F&& f) {
   return temple::map(
     temple::adaptors::range(nExperiments),
     [&](unsigned /* i */) -> double {
-      auto normalized = detail::normalize(generateCoordinates(N, prng));
+      auto normalized = continuous::normalize(generateCoordinates(N, prng));
       Top top = standardizeTop(normalized);
       if(top == Top::Asymmetric) {
         reorientAsymmetricTop(normalized);
@@ -138,7 +139,7 @@ std::ostream& operator << (std::ostream& os, const std::vector<double>& values) 
  *     probe point are meta-parameters that need to be optimized too.
  */
 
-std::vector<PositionCollection> groupPoints(
+std::vector<continuous::PositionCollection> groupPoints(
   const elements::ElementsList elements,
   const elements::NPGroupingsMapType& npGroupings,
   const unsigned N
@@ -287,8 +288,8 @@ int main(int argc, char* argv[]) {
     /* Inversion */
     writer.addElementArray(
       "inversion",
-      [](const PositionCollection& positions) -> double {
-        return csm::element(positions, elements::Inversion {});
+      [](const continuous::PositionCollection& positions) -> double {
+        return continuous::element(positions, elements::Inversion {});
       },
       prng
     );
@@ -296,8 +297,8 @@ int main(int argc, char* argv[]) {
     /* Cinf */
     writer.addElementArray(
       "Cinf",
-      [](const PositionCollection& positions) -> double {
-        return csm::optimizeCinf(positions);
+      [](const continuous::PositionCollection& positions) -> double {
+        return continuous::Cinf(positions);
       },
       prng
     );
@@ -305,8 +306,8 @@ int main(int argc, char* argv[]) {
     /* Sigma */
     writer.addElementArray(
       "sigma",
-      [](const PositionCollection& positions) -> double {
-        return csm::optimize(positions, elements::Reflection {Eigen::Vector3d::UnitZ()}).first;
+      [](const continuous::PositionCollection& positions) -> double {
+        return continuous::element(positions, elements::Reflection {Eigen::Vector3d::UnitZ()}).first;
       },
       prng
     );
@@ -315,8 +316,8 @@ int main(int argc, char* argv[]) {
     for(unsigned order = 2; order <= 8; ++order) {
       writer.addElementArray(
         "C" + std::to_string(order),
-        [order](const PositionCollection& positions) -> double {
-          return csm::optimize(positions,
+        [order](const continuous::PositionCollection& positions) -> double {
+          return continuous::element(positions,
             elements::Rotation::Cn(Eigen::Vector3d::UnitZ(), order)
           ).first;
         },
@@ -328,8 +329,8 @@ int main(int argc, char* argv[]) {
     for(unsigned order = 4; order <= 8; order += 2) {
       writer.addElementArray(
         "S" + std::to_string(order),
-        [order](const PositionCollection& positions) -> double {
-          return csm::optimize(positions,
+        [order](const continuous::PositionCollection& positions) -> double {
+          return continuous::element(positions,
             elements::Rotation::Sn(Eigen::Vector3d::UnitZ(), order)
           ).first;
         },
@@ -359,7 +360,7 @@ int main(int argc, char* argv[]) {
       // Generate random point group symmetric structures
       auto structures = temple::map(
         temple::adaptors::range(100),
-        [&](unsigned /* i */) -> PositionCollection {
+        [&](unsigned /* i */) -> continuous::PositionCollection {
 
         }
       );
@@ -382,12 +383,12 @@ int main(int argc, char* argv[]) {
         const auto values = temple::map(
           temple::adaptors::range(nExperiments),
           [&](unsigned /* i */) -> double {
-            auto normalized = detail::normalize(generateCoordinates(N, prng));
+            auto normalized = continuous::normalize(generateCoordinates(N, prng));
             Top top = standardizeTop(normalized);
             if(top == Top::Asymmetric) {
               reorientAsymmetricTop(normalized);
             }
-            return csm::pointGroup(normalized, group);
+            return continuous::pointGroup(normalized, group);
           }
         );
         const double csmAverage = temple::average(values);

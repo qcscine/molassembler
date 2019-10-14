@@ -8,7 +8,8 @@
 #include "chemical_symmetries/CoordinateSystemTransformation.h"
 #include "chemical_symmetries/Shapes.h"
 #include "chemical_symmetries/Symmetries.h"
-#include "chemical_symmetries/Recognition.h"
+#include "chemical_symmetries/InertialMoments.h"
+#include "chemical_symmetries/ContinuousMeasures.h"
 
 #include "temple/Functional.h"
 
@@ -18,14 +19,17 @@
 using namespace Scine;
 using namespace Symmetry;
 
+// From InertialMoments.cpp
+extern const std::string& topName(Top top);
+
 template<typename EnumType>
 constexpr inline auto underlying(const EnumType e) {
   return static_cast<std::underlying_type_t<EnumType>>(e);
 }
 
-PositionCollection addOrigin(const PositionCollection& vs) {
+continuous::PositionCollection addOrigin(const continuous::PositionCollection& vs) {
   const unsigned N = vs.cols();
-  PositionCollection positions(3, N + 1);
+  continuous::PositionCollection positions(3, N + 1);
   for(unsigned i = 0; i < N; ++i) {
     positions.col(i) = vs.col(i);
   }
@@ -35,7 +39,7 @@ PositionCollection addOrigin(const PositionCollection& vs) {
   return positions;
 }
 
-void distort(Eigen::Ref<PositionCollection> positions, const double distortionNorm = 0.01) {
+void distort(Eigen::Ref<continuous::PositionCollection> positions, const double distortionNorm = 0.01) {
   const unsigned N = positions.cols();
   for(unsigned i = 0; i < N; ++i) {
     positions.col(i) += distortionNorm * Eigen::Vector3d::Random().normalized();
@@ -63,22 +67,6 @@ const std::string& pointGroupString(PointGroup group) {
   );
 }
 
-const std::vector<std::string>& topNames() {
-  static const std::vector<std::string> strings {
-    "Line",
-    "Asymmetric",
-    "Prolate",
-    "Oblate",
-    "Spherical"
-  };
-
-  return strings;
-}
-
-const std::string& topName(Top top) {
-  return topNames().at(underlying(top));
-}
-
 BOOST_AUTO_TEST_CASE(Recognition) {
   for(const Shape shape : allShapes) {
 #ifdef NDEBUG
@@ -90,7 +78,7 @@ BOOST_AUTO_TEST_CASE(Recognition) {
 
     auto positions = addOrigin(symmetryData().at(shape).coordinates);
     // distort(positions);
-    auto normalized = detail::normalize(positions);
+    auto normalized = continuous::normalize(positions);
 
     // Add a random coordinate transformation
     normalized = Eigen::Quaterniond::UnitRandom().toRotationMatrix() * normalized;
@@ -101,7 +89,7 @@ BOOST_AUTO_TEST_CASE(Recognition) {
       reorientAsymmetricTop(normalized);
     }
 
-    const double pgCSM = csm::pointGroup(
+    const double pgCSM = continuous::pointGroup(
       normalized,
       pointGroup(shape)
     );
@@ -240,8 +228,8 @@ BOOST_AUTO_TEST_CASE(PointGroupElementGroupings) {
 // }
 
 BOOST_AUTO_TEST_CASE(SquareC4D4PointGroups) {
-  const double pointGroupCSM = csm::pointGroup(
-    detail::normalize(symmetryData().at(Shape::Square).coordinates),
+  const double pointGroupCSM = continuous::pointGroup(
+    continuous::normalize(symmetryData().at(Shape::Square).coordinates),
     PointGroup::C4
   );
   BOOST_CHECK_MESSAGE(
@@ -249,8 +237,8 @@ BOOST_AUTO_TEST_CASE(SquareC4D4PointGroups) {
     "C4 point group CSM on square planar coordinates is not zero, but " << pointGroupCSM
   );
 
-  const double D4CSM = csm::pointGroup(
-    detail::normalize(symmetryData().at(Shape::Square).coordinates),
+  const double D4CSM = continuous::pointGroup(
+    continuous::normalize(symmetryData().at(Shape::Square).coordinates),
     PointGroup::D4
   );
 
@@ -258,42 +246,6 @@ BOOST_AUTO_TEST_CASE(SquareC4D4PointGroups) {
     0 < D4CSM && D4CSM < 1e-10,
     "D4 CSM on square planar coordinates is not zero, but " << D4CSM
   );
-}
-
-BOOST_AUTO_TEST_CASE(InertialStandardization) {
-  const std::vector<
-    std::pair<Shape, Top>
-  > tops {
-    {Shape::Line, Top::Line},
-    {Shape::Bent, Top::Asymmetric},
-    {Shape::Disphenoid, Top::Asymmetric},
-    {Shape::TrigonalBipyramid, Top::Prolate},
-    {Shape::PentagonalBipyramid, Top::Oblate},
-    {Shape::Square, Top::Oblate},
-    {Shape::Octahedron, Top::Spherical},
-    {Shape::Tetrahedron, Top::Spherical}
-  };
-
-  for(const auto nameTopPair : tops) {
-    auto positions = addOrigin(symmetryData().at(nameTopPair.first).coordinates);
-
-    // Apply a random coordinate transformation
-    const Eigen::Matrix3d R = rotationMatrix(CoordinateSystem {}, CoordinateSystem::random());
-    for(unsigned i = 0; i < positions.cols(); ++i) {
-      positions.col(i) = R * positions.col(i);
-    }
-
-    // Analyze it
-    auto normalizedPositions = detail::normalize(positions);
-    Top top = standardizeTop(normalizedPositions);
-    BOOST_CHECK_MESSAGE(
-      top == nameTopPair.second,
-      "Top standardization failed. Expected "
-      << topNames().at(static_cast<unsigned>(nameTopPair.second))
-      << " for symmetry " << Symmetry::name(nameTopPair.first)
-      << ", got " << topNames().at(static_cast<unsigned>(top)) << " instead."
-    );
-  }
 }
 
 BOOST_AUTO_TEST_CASE(FixedCnAxis) {
@@ -324,14 +276,14 @@ BOOST_AUTO_TEST_CASE(FixedCnAxis) {
     auto positions = addOrigin(symmetryData().at(nameOrderPair.first).coordinates);
     distort(positions);
 
-    auto normalizedPositions = detail::normalize(positions);
+    auto normalizedPositions = continuous::normalize(positions);
     standardizeTop(normalizedPositions);
 
     boost::optional<unsigned> highestFoundOrder;
     for(unsigned i = 0; i < 3; ++i) {
       Eigen::Vector3d axis = axes.col(i);
       for(unsigned n = 2; n < 6; ++n) {
-        const double cn = csm::element(normalizedPositions, elements::Rotation::Cn(axis, n));
+        const double cn = continuous::fixed::element(normalizedPositions, elements::Rotation::Cn(axis, n));
 
         if(cn < acceptanceThreshold) {
           highestFoundOrder = n;
@@ -354,31 +306,31 @@ BOOST_AUTO_TEST_CASE(FixedCnAxis) {
 }
 
 BOOST_AUTO_TEST_CASE(AlleneS4) {
-  PositionCollection allenePositions(3, 7);
+  continuous::PositionCollection allenePositions(3, 7);
   allenePositions << 0.0, 0.0, 0.0, 0.0, 0.0, 0.928334, -0.928334,
                      0.0, 0.0, 0.0, 0.928334, -0.928334, 0.0, 0.0,
                      0.0, 1.3102, -1.3102, 1.866201, 1.866201, -1.866201, -1.866201;
 
-  auto normalizedPositions = detail::normalize(allenePositions);
+  auto normalizedPositions = continuous::normalize(allenePositions);
   const Top top = standardizeTop(normalizedPositions);
   BOOST_CHECK_MESSAGE(
     top == Top::Prolate,
-    "Top isn't prolate, but " << topNames().at(underlying(top))
+    "Top isn't prolate, but " << topName(top)
   );
 
-  const double S4CSM = csm::element(normalizedPositions, elements::Rotation::Sn(Eigen::Vector3d::UnitZ(), 4));
+  const double S4CSM = continuous::fixed::element(normalizedPositions, elements::Rotation::Sn(Eigen::Vector3d::UnitZ(), 4));
   BOOST_CHECK_MESSAGE(
     S4CSM < 0.1,
     "CSM(S4) = " << S4CSM << " of allene is over recognition threshold (0.1)"
   );
 
-  const double D2dCSM = csm::pointGroup(normalizedPositions, PointGroup::D2d);
+  const double D2dCSM = continuous::pointGroup(normalizedPositions, PointGroup::D2d);
   BOOST_CHECK_MESSAGE(
     D2dCSM < 0.1,
     "CSM(D2d) = " << D2dCSM << " of allene is over recognition threshold (0.1)"
   );
 
-  const auto optimizedS4Result = csm::optimize(
+  const auto optimizedS4Result = continuous::element(
     normalizedPositions,
     elements::Rotation::Sn(
       Eigen::Vector3d::UnitZ() + 0.1 * Eigen::Vector3d::Random().normalized(),
@@ -396,23 +348,23 @@ BOOST_AUTO_TEST_CASE(AlleneS4) {
 
 BOOST_AUTO_TEST_CASE(ReflectionPlaneOptimization) {
   // Generate 8 points in the xy plane
-  PositionCollection planarPositions(3, 8);
+  continuous::PositionCollection planarPositions(3, 8);
   for(unsigned i = 0; i < 8; ++i) {
     Eigen::Vector3d v = 3 * Eigen::Vector3d::Random();
     v.z() = 0;
     planarPositions.col(i) = v;
   }
 
-  auto normalized = detail::normalize(planarPositions);
+  auto normalized = continuous::normalize(planarPositions);
 
-  const double zPlaneCSM = csm::element(
+  const double zPlaneCSM = continuous::fixed::element(
     normalized,
     elements::Reflection {Eigen::Vector3d::UnitZ()}
   );
 
   BOOST_CHECK_LT(zPlaneCSM, 0.1);
 
-  const auto optimizedSigma = csm::optimize(
+  const auto optimizedSigma = continuous::element(
     normalized,
     elements::Reflection {
       Eigen::Vector3d::UnitZ() + 0.1 * Eigen::Vector3d::Random().normalized()
@@ -436,19 +388,22 @@ BOOST_AUTO_TEST_CASE(AsymmetricTopStandardization) {
 
   for(const Shape shape : asymmetricTopsWithC2) {
     auto coordinates = addOrigin(symmetryData().at(shape).coordinates);
-    auto normalizedPositions = detail::normalize(coordinates);
+    auto normalizedPositions = continuous::normalize(coordinates);
     const Top top = standardizeTop(normalizedPositions);
     BOOST_CHECK_MESSAGE(
       top == Top::Asymmetric,
       "Expected asymmetric top for " << name(shape) << ", got "
-      << topNames().at(underlying(top)) << " instead"
+      << topName(top) << " instead"
     );
 
     const unsigned highestAxisOrder = reorientAsymmetricTop(normalizedPositions);
     BOOST_CHECK_EQUAL(highestAxisOrder, 2);
 
     // Ensure rotation of highest order axis to z worked
-    const double CnCSM = csm::element(normalizedPositions, elements::Rotation::Cn(Eigen::Vector3d::UnitZ(), 2));
+    const double CnCSM = continuous::fixed::element(
+      normalizedPositions,
+      elements::Rotation::Cn(Eigen::Vector3d::UnitZ(), 2)
+    );
     BOOST_CHECK_MESSAGE(
       CnCSM < 1e-10,
       "Expected Cn of order 2 along z < 1e-10, got " << CnCSM << " instead."

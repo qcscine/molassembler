@@ -7,7 +7,7 @@
 #ifndef INCLUDE_MOLASSEMBLER_CHEMICAL_SYMMETRIES_FLOWCHART_H
 #define INCLUDE_MOLASSEMBLER_CHEMICAL_SYMMETRIES_FLOWCHART_H
 
-#include "chemical_symmetries/Recognition.h"
+#include "chemical_symmetries/ContinuousMeasures.h"
 
 namespace Scine{
 namespace Symmetry {
@@ -22,7 +22,7 @@ namespace Symmetry {
  *
  * @return
  */
-std::pair<PointGroup, double> flowchart(const PositionCollection& normalizedPositions);
+std::pair<PointGroup, double> flowchart(const continuous::PositionCollection& normalizedPositions);
 
 } // namespace Symmetry
 } // namespace Scine

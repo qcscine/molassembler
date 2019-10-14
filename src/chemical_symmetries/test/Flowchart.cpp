@@ -6,6 +6,7 @@
 #include <boost/test/unit_test.hpp>
 
 #include "chemical_symmetries/Flowchart.h"
+#include "chemical_symmetries/InertialMoments.h"
 #include "chemical_symmetries/Symmetries.h"
 
 #include <iostream>
@@ -14,7 +15,7 @@ using namespace Scine;
 using namespace Symmetry;
 
 extern const std::string& pointGroupString(PointGroup group);
-extern PositionCollection addOrigin(const PositionCollection& vs);
+extern continuous::PositionCollection addOrigin(const continuous::PositionCollection& vs);
 
 BOOST_AUTO_TEST_CASE(Flowcharting) {
   for(const Shape shape : allShapes) {
@@ -22,7 +23,7 @@ BOOST_AUTO_TEST_CASE(Flowcharting) {
       break;
     }
 
-    auto normalizedCoordinates = detail::normalize(
+    auto normalizedCoordinates = continuous::normalize(
       addOrigin(symmetryData().at(shape).coordinates)
     );
     standardizeTop(normalizedCoordinates);

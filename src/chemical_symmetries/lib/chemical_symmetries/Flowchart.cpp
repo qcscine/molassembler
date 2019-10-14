@@ -1,5 +1,7 @@
 #include "chemical_symmetries/Flowchart.h"
 
+#include "chemical_symmetries/InertialMoments.h"
+
 #include "temple/constexpr/JSF.h"
 #include "temple/Adaptors/AllPairs.h"
 #include "temple/Adaptors/Iota.h"
@@ -147,7 +149,7 @@ double averageRandomCsm(const unsigned N, PRNG& prng, F&& f) {
     temple::map(
       temple::adaptors::range(nExperiments),
       [&](unsigned /* i */) -> double {
-        auto normalized = detail::normalize(generateRandomCoordinates(N - 1, prng));
+        auto normalized = continuous::normalize(generateRandomCoordinates(N - 1, prng));
         Top top = standardizeTop(normalized);
         if(top == Top::Asymmetric) {
           reorientAsymmetricTop(normalized);
@@ -184,12 +186,12 @@ Eigen::Vector3d perpendicular(const Eigen::Vector3d& v) {
 
 namespace predicates {
 
-double inversion(const PositionCollection& positions, temple::jsf::JSF64& prng) {
+double inversion(const continuous::PositionCollection& positions, temple::jsf::JSF64& prng) {
   const unsigned N = positions.cols();
-  const double inversionCsm = csm::element(positions, elements::Inversion {});
+  const double inversionCsm = continuous::element(positions, elements::Inversion {});
   const double randomInversionCsm = averageRandomCsm(N, prng,
-    [](const PositionCollection& positions) -> double {
-      return csm::element(positions, elements::Inversion {});
+    [](const continuous::PositionCollection& positions) -> double {
+      return continuous::element(positions, elements::Inversion {});
     }
   );
   const double iCertainty = std::max(randomInversionCsm - inversionCsm, 0.0) / randomInversionCsm;
@@ -204,19 +206,19 @@ struct SigmaResult {
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };
 SigmaResult sigma(
-  const PositionCollection& positions,
+  const continuous::PositionCollection& positions,
   const Eigen::Vector3d& normal,
   temple::jsf::JSF64& prng
 ) {
   const unsigned N = positions.cols();
-  const auto sigmaHResult = csm::optimize(
+  const auto sigmaHResult = continuous::element(
     positions,
     elements::Reflection {normal}
   );
 
   const double randomSigmaCsm = averageRandomCsm(N, prng,
-    [](const PositionCollection& positions) -> double {
-      return csm::optimize(
+    [](const continuous::PositionCollection& positions) -> double {
+      return continuous::element(
         positions,
         elements::Reflection {Eigen::Vector3d::UnitZ()}
       ).first;
@@ -243,7 +245,7 @@ PointGroup computePointGroup(
 }
 
 std::pair<PointGroup, double> linearPointGroups(
-  const PositionCollection& normalizedPositions,
+  const continuous::PositionCollection& normalizedPositions,
   temple::jsf::JSF64& prng,
   const double cumulativeCertainty
 ) {
@@ -258,7 +260,7 @@ std::pair<PointGroup, double> linearPointGroups(
 }
 
 std::pair<PointGroup, double> smallPointGroups(
-  const PositionCollection& normalizedPositions,
+  const continuous::PositionCollection& normalizedPositions,
   temple::jsf::JSF64& prng,
   double cumulativeCertainty
 ) {
@@ -283,7 +285,7 @@ std::pair<PointGroup, double> smallPointGroups(
 }
 
 std::pair<PointGroup, double> mediumPointGroups(
-  const PositionCollection& normalizedPositions,
+  const continuous::PositionCollection& normalizedPositions,
   const elements::Rotation& mainAxis,
   const unsigned N,
   temple::jsf::JSF64& prng,
@@ -291,13 +293,13 @@ std::pair<PointGroup, double> mediumPointGroups(
 ) {
   // Test for n C2s orthogonal to the main axis
   const Eigen::Vector3d axisPerpendicular = perpendicular(mainAxis.axis);
-  const auto firstC2Result = csm::optimize(
+  const auto firstC2Result = continuous::element(
     normalizedPositions,
     elements::Rotation::Cn(axisPerpendicular, 2)
   );
   const double randomC2Csm = averageRandomCsm(N, prng,
-    [](const PositionCollection& positions) -> double {
-      return csm::optimize(
+    [](const continuous::PositionCollection& positions) -> double {
+      return continuous::element(
         positions,
         elements::Rotation::Cn(Eigen::Vector3d::UnitZ(), 2)
       ).first;
@@ -343,13 +345,13 @@ std::pair<PointGroup, double> mediumPointGroups(
   cumulativeCertainty *= (1 - firstC2Certainty);
   // Look for S2n
   if(2 <= mainAxis.n && mainAxis.n <= 4) {
-    const auto S2nResult = csm::optimize(
+    const auto S2nResult = continuous::element(
       normalizedPositions,
       elements::Rotation::Sn(mainAxis.axis, 2 * mainAxis.n)
     );
     const double randomS2nCsm = averageRandomCsm(N, prng,
-      [&mainAxis](const PositionCollection& positions) -> double {
-        return csm::optimize(
+      [&mainAxis](const continuous::PositionCollection& positions) -> double {
+        return continuous::element(
           positions,
           elements::Rotation::Sn(Eigen::Vector3d::UnitZ(), 2 * mainAxis.n)
         ).first;
@@ -397,7 +399,7 @@ std::pair<PointGroup, double> mediumPointGroups(
   };
 }
 
-std::pair<PointGroup, double> flowchart(const PositionCollection& normalizedPositions) {
+std::pair<PointGroup, double> flowchart(const continuous::PositionCollection& normalizedPositions) {
   assert(
     temple::accumulate(
       temple::adaptors::range(normalizedPositions.cols()),
@@ -422,8 +424,8 @@ std::pair<PointGroup, double> flowchart(const PositionCollection& normalizedPosi
    * of a symmetry element is random or not between 0 and 1. If the measure is
    * > 0.5, continue with yes propagating that measure along.
    */
-  const double cinfCsm = csm::optimizeCinf(normalizedPositions);
-  const double randomCinfCsm = averageRandomCsm(N, prng, csm::optimizeCinf);
+  const double cinfCsm = continuous::Cinf(normalizedPositions);
+  const double randomCinfCsm = averageRandomCsm(N, prng, continuous::Cinf);
   const double cinfCertainty = std::max(randomCinfCsm - cinfCsm, 0.0) / randomCinfCsm;
 
   std::cout << "CSM(Cinf) = " << cinfCsm << ", random CSM for " << N << " points: " << randomCinfCsm << ". Certainty = " << cinfCertainty << "\n";
@@ -445,8 +447,8 @@ std::pair<PointGroup, double> flowchart(const PositionCollection& normalizedPosi
   > mainAxisPairOption;
   for(unsigned order = 8; order >= 2; --order) {
     const double randomOrderCn = averageRandomCsm(N, prng,
-      [order](const PositionCollection& positions) -> double {
-        return csm::optimize(
+      [order](const continuous::PositionCollection& positions) -> double {
+        return continuous::element(
           positions,
           elements::Rotation::Cn(Eigen::Vector3d::UnitZ(), order)
         ).first;
@@ -456,7 +458,7 @@ std::pair<PointGroup, double> flowchart(const PositionCollection& normalizedPosi
     const auto optimizedAxes = temple::map(
       temple::adaptors::range(3),
       [&](const unsigned col) -> std::pair<double, elements::Rotation> {
-        return csm::optimize(
+        return continuous::element(
           normalizedPositions,
           elements::Rotation::Cn(
             Eigen::Matrix3d::Identity().col(col),
@@ -503,11 +505,11 @@ std::pair<PointGroup, double> flowchart(const PositionCollection& normalizedPosi
     const Eigen::Vector3d axisPerpendicular = perpendicular(mainAxis.axis);
     const auto hypotheticalC5 = elements::Rotation::Cn(axisPerpendicular, 5);
     const double randomC5Csm = averageRandomCsm(N, prng,
-      [hypotheticalC5](const PositionCollection& positions) -> double {
-        return csm::optimize(positions, hypotheticalC5).first;
+      [hypotheticalC5](const continuous::PositionCollection& positions) -> double {
+        return continuous::element(positions, hypotheticalC5).first;
       }
     );
-    const auto C5Result = csm::optimize(normalizedPositions, hypotheticalC5);
+    const auto C5Result = continuous::element(normalizedPositions, hypotheticalC5);
     const double C5Certainty = std::max(randomC5Csm - C5Result.first, 0.0) / randomC5Csm;
 
     if(C5Certainty >= 0.5) {
@@ -541,11 +543,11 @@ std::pair<PointGroup, double> flowchart(const PositionCollection& normalizedPosi
     const Eigen::Vector3d axisPerpendicular = perpendicular(mainAxis.axis);
     const auto firstHypotheticalC4 = elements::Rotation::Cn(axisPerpendicular, 4);
     const double randomC4Csm = averageRandomCsm(N, prng,
-      [firstHypotheticalC4](const PositionCollection& positions) -> double {
-        return csm::optimize(positions, firstHypotheticalC4).first;
+      [firstHypotheticalC4](const continuous::PositionCollection& positions) -> double {
+        return continuous::element(positions, firstHypotheticalC4).first;
       }
     );
-    const auto firstC4Result = csm::optimize(normalizedPositions, firstHypotheticalC4);
+    const auto firstC4Result = continuous::element(normalizedPositions, firstHypotheticalC4);
     const double firstC4Certainty = std::max(randomC4Csm - firstC4Result.first, 0.0) / randomC4Csm;
 
     if(firstC4Certainty >= 0.5 && approximatelyOrthogonal(firstC4Result.second.axis, mainAxis.axis)) {
@@ -553,7 +555,7 @@ std::pair<PointGroup, double> flowchart(const PositionCollection& normalizedPosi
         Eigen::AngleAxisd(M_PI / 2, mainAxis.axis) * firstC4Result.second.axis,
         4
       );
-      const auto secondC4Result = csm::optimize(normalizedPositions, secondHypotheticalC4);
+      const auto secondC4Result = continuous::element(normalizedPositions, secondHypotheticalC4);
       const double secondC4Certainty = std::max(randomC4Csm - secondC4Result.first, 0.0) / randomC4Csm;
 
       if(
@@ -591,10 +593,10 @@ std::pair<PointGroup, double> flowchart(const PositionCollection& normalizedPosi
       Eigen::AngleAxisd(2 * M_PI / 3, axisPerpendicular).toRotationMatrix() * mainAxis.axis,
       3
     );
-    const auto firstC3Result = csm::optimize(normalizedPositions, firstHypotheticalC3);
+    const auto firstC3Result = continuous::element(normalizedPositions, firstHypotheticalC3);
     const double randomC3Csm = averageRandomCsm(N, prng,
-      [](const PositionCollection& positions) -> double {
-        return csm::optimize(
+      [](const continuous::PositionCollection& positions) -> double {
+        return continuous::element(
           positions,
           elements::Rotation::Cn(Eigen::Vector3d::UnitZ(), 3)
         ).first;
@@ -621,8 +623,8 @@ std::pair<PointGroup, double> flowchart(const PositionCollection& normalizedPosi
       C3Axes.col(2) = mainAxis.matrix() * C3Axes.col(1);
       C3Axes.col(3) = mainAxis.matrix() * C3Axes.col(2);
       const double randomSigmaCsm = averageRandomCsm(N, prng,
-        [](const PositionCollection& positions) -> double {
-          return csm::optimize(
+        [](const continuous::PositionCollection& positions) -> double {
+          return continuous::element(
             positions,
             elements::Reflection {Eigen::Vector3d::UnitZ()}
           ).first;
@@ -635,8 +637,8 @@ std::pair<PointGroup, double> flowchart(const PositionCollection& normalizedPosi
           ),
           [&](const unsigned i, const unsigned j) -> double {
             const Eigen::Vector3d planeNormal = C3Axes.col(i).cross(C3Axes.col(j));
-            // TODO element instead of optimize here to avoid the spatial checking mess after optimization?
-            const double sigmaCsm = csm::element(
+            // TODO fixed instead of optimizing here to avoid the spatial checking mess after optimization?
+            const double sigmaCsm = continuous::fixed::element(
               normalizedPositions,
               elements::Reflection {planeNormal}
             );
