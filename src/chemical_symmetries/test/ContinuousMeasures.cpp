@@ -12,6 +12,7 @@
 #include "chemical_symmetries/ContinuousMeasures.h"
 
 #include "temple/Functional.h"
+#include "temple/Adaptors/Iota.h"
 
 #include <iostream>
 #include "temple/Stringify.h"
@@ -21,6 +22,7 @@ using namespace Symmetry;
 
 // From InertialMoments.cpp
 extern const std::string& topName(Top top);
+extern void randomlyRotate(Eigen::Ref<continuous::PositionCollection> vs);
 
 template<typename EnumType>
 constexpr inline auto underlying(const EnumType e) {
@@ -407,6 +409,23 @@ BOOST_AUTO_TEST_CASE(AsymmetricTopStandardization) {
     BOOST_CHECK_MESSAGE(
       CnCSM < 1e-10,
       "Expected Cn of order 2 along z < 1e-10, got " << CnCSM << " instead."
+    );
+  }
+}
+
+BOOST_AUTO_TEST_CASE(ShapeMeasures) {
+  for(const Shape shape : allShapes) {
+    auto shapeCoordinates = symmetryData().at(shape).coordinates;
+    const double unrotated = continuous::shape(shapeCoordinates, shape);
+    BOOST_CHECK_MESSAGE(
+      unrotated < 1e-10,
+      "Expected CShM < 1e-10 for unrotated coordinates of " << name(shape) << ", but got " << unrotated
+    );
+    randomlyRotate(shapeCoordinates);
+    const double rotated = continuous::shape(shapeCoordinates, shape);
+    BOOST_CHECK_MESSAGE(
+      rotated < 0.1,
+      "Expected CShM < 1e-2 for rotated coordinates of " << name(shape) << ", but got " << rotated
     );
   }
 }

@@ -8,6 +8,7 @@
 #define INCLUDE_MOLASSEMBLER_CHEMICAL_SYMMETRIES_CONTINUOUS_MEASURES_H
 
 #include "chemical_symmetries/PointGroupElements.h"
+#include "chemical_symmetries/Shapes.h"
 
 namespace Scine {
 namespace Symmetry {
@@ -103,6 +104,59 @@ double Cinf(const PositionCollection& normalizedPositions);
 double pointGroup(
   const PositionCollection& normalizedPositions,
   const PointGroup pointGroup
+);
+
+/* Regarding CShapeM minimization, there is a bit of a conundrum: The paper says
+ * - For each index mapping
+ *   - Minimize over rotation
+ *   - Minimize over scaling
+ *
+ * But it's a lot faster to
+ * - Minimize over rotation (while minimizing CShapeM over all permutations)
+ * - Minimize over scaling (using best permutation from rotation step)
+ *
+ * And to me it's not immediately apparent why this should be worse, especially
+ * considering that minimizing over permutations while calculating CShapeM
+ * should be smooth. Maybe it has local minima that the paper procedure wouldn't?
+ *
+ * But it's odd. The paper suggests pre-pairing off vertices to reduce cost "in
+ * most cases". Not sure which is more dangerous (pre-pairing prior to any
+ * minimizations or reversing minimization order and reusing pairing).
+ *
+ * Furthermore, both variants get different results despite fitting looking
+ * veeery similar. Messing with minimization epsilons doesn't get me anywhere.
+ *
+ * Another way to do shape minimization without full permutational work might
+ * be by sequential alignment: Manage an unordered map keeping track of the
+ * emerging index permutation. Always add that mapping with the minimal cost to
+ * the map and realign by orientation minimization.
+ */
+
+/**
+ * @brief Calculates the continuous shape measure of a set of coordinates with
+ *   respect to a particular shape
+ *
+ * @param normalizedPositions
+ * @param shape
+ *
+ * @throws std::logic_error If the number of passed positions does not match
+ * the size of the shape
+ *
+ * @return The continuous shape measure
+ */
+double shape(
+  const PositionCollection& normalizedPositions,
+  const Shape shape
+);
+
+double shapeFaithfulPaperImplementation(
+  const PositionCollection& normalizedPositions,
+  const Shape shape
+);
+
+double shapeAlternateImplementation(
+  const PositionCollection& normalizedPositions,
+  const Shape shape
 );
 
 } // namespace continuous

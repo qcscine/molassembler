@@ -2,12 +2,20 @@
 
 #include "chemical_symmetries/Diophantine.h"
 #include "chemical_symmetries/Partitioner.h"
+#include "chemical_symmetries/Symmetries.h"
 
 #include "temple/Adaptors/Iota.h"
 #include "temple/Adaptors/Transform.h"
 #include "temple/Functional.h"
 #include "temple/Optimization/SO3NelderMead.h"
 #include "temple/constexpr/Numeric.h"
+
+#include "boost/math/tools/minima.hpp"
+
+/* TODO temp */
+#include "temple/Stringify.h"
+#include <iostream>
+#include <iomanip>
 
 namespace Scine {
 namespace Symmetry {
@@ -902,6 +910,195 @@ double pointGroup(
   );
 
   return minimizationResult.value;
+}
+
+double shapeFaithfulPaperImplementation(
+  const PositionCollection& normalizedPositions,
+  const Shape shape
+) {
+  assert(isNormalized(normalizedPositions));
+  const unsigned N = normalizedPositions.cols();
+  const double normalization = normalizedPositions.colwise().squaredNorm().sum();
+
+  if(N != size(shape)) {
+    throw std::logic_error("Mismatched number of positions between supplied coordinates and shape!");
+  }
+
+  using MinimizerType = temple::SO3NelderMead<>;
+
+  struct NelderMeadChecker {
+    bool shouldContinue(unsigned iteration, double lowestValue, double stddev) const {
+      return iteration < 1000 && lowestValue > 1e-5 && stddev > 1e-3;
+    }
+  };
+
+  MinimizerType::Parameters simplex;
+  std::vector<unsigned> permutation = temple::iota<unsigned>(N);
+  const auto& shapeCoordinates = symmetryData().at(shape).coordinates;
+  double minimalValue = std::numeric_limits<double>::max();
+  do {
+    simplex.at(0) = Eigen::Matrix3d::Identity();
+    simplex.at(1) = Eigen::AngleAxisd(M_PI / 2, Eigen::Vector3d::UnitX()).toRotationMatrix();
+    simplex.at(2) = Eigen::AngleAxisd(M_PI / 2, Eigen::Vector3d::UnitY()).toRotationMatrix();
+    simplex.at(3) = Eigen::AngleAxisd(M_PI / 2, Eigen::Vector3d::UnitZ()).toRotationMatrix();
+
+    auto rotationMinimization = MinimizerType::minimize(
+      simplex,
+      [&](const Eigen::Matrix3d& rotation) -> double {
+        const auto rotatedReference = rotation * shapeCoordinates;
+        return temple::accumulate(
+          temple::adaptors::range(N),
+          0.0,
+          [&](const double carry, unsigned i) -> double {
+            return carry + (
+              normalizedPositions.col(i) - rotatedReference.col(permutation.at(i))
+            ).squaredNorm();
+          }
+        );
+      },
+      NelderMeadChecker {}
+    );
+
+    auto rotatedReference = simplex.at(rotationMinimization.minimalIndex) * shapeCoordinates;
+
+    constexpr double scalingLowerBound = 0.75;
+    constexpr double scalingUpperBound = 1.25;
+
+    auto scalingMinimizationResult = boost::math::tools::brent_find_minima(
+      [&](const double scaling) -> double {
+        return temple::accumulate(
+          temple::adaptors::range(N),
+          0.0,
+          [&](const double carry, unsigned i) -> double {
+            return carry + (
+              normalizedPositions.col(i) - scaling * rotatedReference.col(permutation.at(i))
+            ).squaredNorm();
+          }
+        );
+      },
+      scalingLowerBound,
+      scalingUpperBound,
+      std::numeric_limits<double>::digits / 2
+    );
+
+    // .first is the x value yielding a minimal f(x)
+    assert(
+      scalingMinimizationResult.first != scalingLowerBound
+      && scalingMinimizationResult.first != scalingUpperBound
+    );
+
+    const double result = 100 * scalingMinimizationResult.second / normalization;
+
+    minimalValue = std::min(minimalValue, result);
+  } while(std::next_permutation(std::begin(permutation), std::end(permutation)));
+
+  return minimalValue;
+}
+
+double shapeAlternateImplementation(
+  const PositionCollection& normalizedPositions,
+  const Shape shape
+) {
+  assert(isNormalized(normalizedPositions));
+  const unsigned N = normalizedPositions.cols();
+
+  if(N != size(shape)) {
+    throw std::logic_error("Mismatched number of positions between supplied coordinates and shape!");
+  }
+
+  using MinimizerType = temple::SO3NelderMead<>;
+
+  struct NelderMeadChecker {
+    bool shouldContinue(unsigned iteration, double lowestValue, double stddev) const {
+      return iteration < 1000 && lowestValue > 1e-6 && stddev > 1e-3;
+    }
+  };
+
+  MinimizerType::Parameters simplex;
+  simplex.at(0) = Eigen::Matrix3d::Identity();
+  simplex.at(1) = Eigen::AngleAxisd(M_PI / 2, Eigen::Vector3d::UnitX()).toRotationMatrix();
+  simplex.at(2) = Eigen::AngleAxisd(M_PI / 2, Eigen::Vector3d::UnitY()).toRotationMatrix();
+  simplex.at(3) = Eigen::AngleAxisd(M_PI / 2, Eigen::Vector3d::UnitZ()).toRotationMatrix();
+
+  const auto& shapeCoordinates = symmetryData().at(shape).coordinates;
+  auto rotationMinimization = MinimizerType::minimize(
+    simplex,
+    [&](const Eigen::Matrix3d& rotation) -> double {
+      double minimalValue = std::numeric_limits<double>::max();
+      const auto rotatedReference = rotation * shapeCoordinates;
+      std::vector<unsigned> permutation = temple::iota<unsigned>(N);
+      do {
+        minimalValue = std::min(
+          minimalValue,
+          temple::accumulate(
+            temple::adaptors::range(N),
+            0.0,
+            [&](const double carry, unsigned i) -> double {
+              return carry + (
+                normalizedPositions.col(i) - rotatedReference.col(permutation.at(i))
+              ).squaredNorm();
+            }
+          )
+        );
+      } while(std::next_permutation(std::begin(permutation), std::end(permutation)));
+      return minimalValue;
+    },
+    NelderMeadChecker {}
+  );
+
+  auto rotatedReference = simplex.at(rotationMinimization.minimalIndex) * shapeCoordinates;
+
+  constexpr double scalingLowerBound = 0.75;
+  constexpr double scalingUpperBound = 1.25;
+
+  std::vector<unsigned> bestPermutation;
+  {
+    auto permutation = temple::iota<unsigned>(N);
+    double minimalValue = std::numeric_limits<double>::max();
+    do {
+      double value = temple::accumulate(
+        temple::adaptors::range(N),
+        0.0,
+        [&](const double carry, unsigned i) -> double {
+          return carry + (
+            normalizedPositions.col(i) - rotatedReference.col(permutation.at(i))
+          ).squaredNorm();
+        }
+      );
+      if(value < minimalValue) {
+        minimalValue = value;
+        bestPermutation = permutation;
+      }
+    } while(std::next_permutation(std::begin(permutation), std::end(permutation)));
+  }
+
+  auto scalingMinimizationResult = boost::math::tools::brent_find_minima(
+    [&](const double scaling) -> double {
+      return temple::accumulate(
+        temple::adaptors::range(N),
+        0.0,
+        [&](const double carry, unsigned i) -> double {
+          return carry + (
+            normalizedPositions.col(i) - scaling * rotatedReference.col(bestPermutation.at(i))
+          ).squaredNorm();
+        }
+      );
+    },
+    scalingLowerBound,
+    scalingUpperBound,
+    std::numeric_limits<double>::digits
+  );
+
+  const double normalization = normalizedPositions.colwise().squaredNorm().sum();
+
+  return 100 * scalingMinimizationResult.second / normalization;
+}
+
+double shape(
+  const PositionCollection& normalizedPositions,
+  const Shape shape
+) {
+  return shapeAlternateImplementation(normalizedPositions, shape);
 }
 
 } // namespace continuous

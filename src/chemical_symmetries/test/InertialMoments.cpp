@@ -17,6 +17,10 @@ using namespace Symmetry;
 // From ContinuousMeasures.cpp
 extern continuous::PositionCollection addOrigin(const continuous::PositionCollection& vs);
 
+void randomlyRotate(Eigen::Ref<continuous::PositionCollection> vs) {
+  vs = rotationMatrix(CoordinateSystem {}, CoordinateSystem::random()) * vs;
+}
+
 const std::vector<std::string>& topNames() {
   static const std::vector<std::string> strings {
     "Line",
@@ -53,10 +57,6 @@ BOOST_AUTO_TEST_CASE(InertialStandardization) {
     auto positions = addOrigin(symmetryData().at(nameTopPair.first).coordinates);
 
     // Apply a random coordinate transformation
-    const Eigen::Matrix3d R = rotationMatrix(CoordinateSystem {}, CoordinateSystem::random());
-    for(unsigned i = 0; i < positions.cols(); ++i) {
-      positions.col(i) = R * positions.col(i);
-    }
 
     // Analyze it
     auto normalizedPositions = continuous::normalize(positions);
