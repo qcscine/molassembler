@@ -3,18 +3,23 @@ import pytest
 import molassembler
 import os
 
+
 def test_LineNotation():
-  smiles = "CN1C=NC2=C1C(=O)N(C(=O)N2C)C"
-  inchi = "InChI=1S/C8H10N4O2/c1-10-4-9-6-5(10)7(13)12(3)8(14)11(6)2/h4H,1-3H3"
-  if molassembler.io.LineNotation.enabled:
-    caffeine_from_smiles = molassembler.io.LineNotation.from_isomeric_smiles(smiles)
+    if not molassembler.io.LineNotation.enabled:
+        return
+
+    smiles = "CN1C=NC2=C1C(=O)N(C(=O)N2C)C"
+    inchi = "InChI=1S/C8H10N4O2/c1-10-4-9-6-5(10)7(13)12(3)8(14)11(6)2/h4H,1-3H3"
+    caffeine_from_smiles = molassembler.io.LineNotation.from_isomeric_smiles(
+        smiles)
     assert caffeine_from_smiles.graph.N() == 24
 
     caffeine_from_inchi = molassembler.io.LineNotation.from_inchi(inchi)
     assert caffeine_from_inchi.graph.N() == 24
 
+
 def test_FileIO():
-  sample_MOL = """ 
+    sample_MOL = """
  OpenBabel02081817133D
 
  50 54  0  0  0  0  0  0  0  0999 V2000
@@ -124,16 +129,16 @@ def test_FileIO():
  49 42  1  0  0  0  0
 M  END"""
 
-  with open("sample.mol", "w") as mol_file:
-    mol_file.write(sample_MOL)
+    with open("sample.mol", "w") as mol_file:
+        mol_file.write(sample_MOL)
 
-  mol = molassembler.io.read("sample.mol")
+    mol = molassembler.io.read("sample.mol")
 
-  # Interpret multiple from mol, expecting only a single one
-  splat = molassembler.io.split("sample.mol")
-  assert len(splat) == 1
+    # Interpret multiple from mol, expecting only a single one
+    splat = molassembler.io.split("sample.mol")
+    assert len(splat) == 1
 
-  assert mol.graph.N() == 50
+    assert mol.graph.N() == 50
 
-  # Clean up
-  os.remove("sample.mol")
+    # Clean up
+    os.remove("sample.mol")
