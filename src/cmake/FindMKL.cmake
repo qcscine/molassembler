@@ -4,6 +4,8 @@ include(FindPackageHandleStandardArgs)
 set(INTEL_ROOT "/opt/intel" CACHE PATH "Folder contains intel libs")
 set(MKL_ROOT $ENV{MKLROOT} CACHE PATH "Folder contains MKL")
 
+set(MKL_FOUND TRUE)
+
 # Find include dir
 find_path(MKL_INCLUDE_DIRS mkl.h
           PATHS ${MKL_ROOT}/include)

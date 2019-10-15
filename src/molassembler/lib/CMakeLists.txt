@@ -9,19 +9,6 @@ endif()
 
 include(ScineUtils)
 
-# Some notes on BLAS / LAPACK:
-# Eigen can use BLAS / LAPACK routines.
-# - Eigen, as a header-only library, merely requires use to add the definitions
-#   and link against the library.
-# Although we enable the use of both types of libraries, currently only BLAS is
-# used by Eigen. We keep LAPACK use enabled in order to quickly add it as a
-# dependency if either library can make use of it in any way.
-#
-# Try to find suitable BLAS and LAPACK libraries
-find_package(BLAS QUIET)
-# Currently, molassembler does not use LAPACK routines, so this is commented out
-# find_package(LAPACK QUIET)
-
 # Add RingDecomposerLib include directory
 include_directories(SYSTEM ${RDL_INCLUDE_DIR} include)
 
