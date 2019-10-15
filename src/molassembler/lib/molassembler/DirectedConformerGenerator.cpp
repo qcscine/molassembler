@@ -82,8 +82,10 @@ const Molecule& DirectedConformerGenerator::conformationMolecule(const DecisionL
   return _pImpl->conformationMolecule(decisionList);
 }
 
-DirectedConformerGenerator::DecisionList DirectedConformerGenerator::getDecisionList(Utils::PositionCollection positions) const {
-  return _pImpl->getDecisionList(std::move(positions));
+DirectedConformerGenerator::DecisionList DirectedConformerGenerator::getDecisionList(
+  const Utils::PositionCollection& positions
+) const {
+  return _pImpl->getDecisionList(positions);
 }
 
 } // namespace molassembler

@@ -34,7 +34,7 @@ std::vector<VariantType> generateEnsemble(
       );
     } else {
       returnList.emplace_back(
-        std::move(positionResult.error().message())
+        positionResult.error().message()
       );
     }
   }
@@ -52,7 +52,7 @@ VariantType generateConformation(
   );
 
   if(conformerResult) {
-    return std::move(conformerResult.value());
+    return conformerResult.value();
   }
 
   return conformerResult.error().message();

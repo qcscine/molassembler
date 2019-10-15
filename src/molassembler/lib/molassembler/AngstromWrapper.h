@@ -29,7 +29,7 @@ public:
   AngstromWrapper() = default;
   explicit AngstromWrapper(unsigned N);
   explicit AngstromWrapper(
-    Scine::Utils::PositionCollection pos,
+    const Scine::Utils::PositionCollection& pos,
     LengthUnit lengthUnit = LengthUnit::Bohr
   );
 
@@ -40,11 +40,7 @@ public:
    * corresponding instance, as the underlying positions have been converted to
    * bohr.
    */
-  Scine::Utils::PositionCollection getBohr();
-
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-private:
-  bool _invalidated = false;
+  Scine::Utils::PositionCollection getBohr() const;
 };
 
 } // namespace molassmbler

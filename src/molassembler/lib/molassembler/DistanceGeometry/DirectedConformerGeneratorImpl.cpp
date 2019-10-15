@@ -338,8 +338,8 @@ DirectedConformerGenerator::Impl::generateConformation(
 }
 
 DirectedConformerGenerator::DecisionList
-DirectedConformerGenerator::Impl::getDecisionList(Utils::PositionCollection positions) const {
-  AngstromWrapper angstromPositions {std::move(positions)};
+DirectedConformerGenerator::Impl::getDecisionList(const Utils::PositionCollection& positions) const {
+  AngstromWrapper angstromPositions {positions};
 
   if(
     !temple::all_of(

@@ -339,7 +339,7 @@ public:
    * @throws std::logic_error If an assignment could not be recovered from
    *   positions
    */
-  DecisionList getDecisionList(Utils::PositionCollection positions) const;
+  DecisionList getDecisionList(const Utils::PositionCollection& positions) const;
 //!@}
 
 private:
