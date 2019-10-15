@@ -339,30 +339,41 @@ DirectedConformerGenerator::Impl::generateConformation(
 
 DirectedConformerGenerator::DecisionList
 DirectedConformerGenerator::Impl::getDecisionList(Utils::PositionCollection positions) const {
-  const unsigned U = _relevantBonds.size();
-
   AngstromWrapper angstromPositions {std::move(positions)};
 
-  assert(_relevantBonds.size() == U);
-
-  DecisionList list(U);
-
-  for(unsigned i = 0; i < U; ++i) {
-    const BondIndex& bondIndex = _relevantBonds.at(i);
-    auto firstAtom = _molecule._pImpl->_stereopermutators.option(bondIndex.first);
-    auto secondAtom = _molecule._pImpl->_stereopermutators.option(bondIndex.second);
-    auto stereoOption = _molecule._pImpl->_stereopermutators.option(bondIndex);
-    assert(firstAtom && secondAtom && stereoOption);
-    stereoOption->fit(angstromPositions, *firstAtom, *secondAtom);
-
-    if(!stereoOption->assigned()) {
-      throw std::logic_error("Assignment of a bond stereopermutator could not be recovered");
-    }
-
-    list.at(i) = *stereoOption->assigned();
+  if(
+    !temple::all_of(
+      _relevantBonds,
+      [&](const BondIndex& bondIndex) -> bool {
+        const auto& permutators = _molecule._pImpl->_stereopermutators;
+        return (
+          permutators.option(bondIndex.first)
+          && permutators.option(bondIndex.second)
+          && permutators.option(bondIndex)
+        );
+      }
+    )
+  ) {
+    throw std::logic_error("Underlying molecule preconditions unmet!");
   }
 
-  return list;
+  return temple::map(
+    _relevantBonds,
+    [&](const BondIndex& bondIndex) -> std::uint8_t {
+      auto firstAtom = _molecule._pImpl->_stereopermutators.option(bondIndex.first);
+      auto secondAtom = _molecule._pImpl->_stereopermutators.option(bondIndex.second);
+      auto stereoOption = _molecule._pImpl->_stereopermutators.option(bondIndex);
+
+      assert(firstAtom && secondAtom && stereoOption);
+      stereoOption->fit(angstromPositions, *firstAtom, *secondAtom);
+
+      if(!stereoOption->assigned()) {
+        throw std::logic_error("Assignment of a bond stereopermutator could not be recovered");
+      }
+
+      return *stereoOption->assigned();
+    }
+  );
 }
 
 } // namespace molassembler
