@@ -212,6 +212,32 @@ if(BLAS_FOUND)
     EIGEN_USE_BLAS
     EIGEN_USE_LAPACK
   )
+
+  # Try to detect if BLAS vendor is intel
+  foreach(X ${BLAS_LIBRARIES})
+    if("${X}" MATCHES "mkl_core" OR "${X}" MATCHES "intel")
+      set(BLAS_VENDOR_IS_INTEL TRUE)
+      break()
+    else()
+      message(STATUS "${X} does not match mkl_core")
+    endif()
+  endforeach()
+
+  if(BLAS_VENDOR_IS_INTEL)
+    target_compile_definitions(molassembler PUBLIC EIGEN_USE_MKL)
+
+    if(NOT "${SCINE_MARCH}" STREQUAL "" AND NOT MSVC)
+      # We are using march=native and probably need avx2
+      set(MKL_ROOT $ENV{MKLROOT})
+      find_library(MKL_AVX_LIBRARY mkl_avx2 PATHS ${MKL_ROOT}/lib/intel64/)
+
+      if("${MKL_AVX_LIBRARY}" STREQUAL "MKL_AVX_LIBRARY-NOTFOUND")
+        message(WARNING "AVX MKL library not found, but compiling with -march=native. Under these circumstances, use of molassembler can give odd errors at times when the MKL looks for the libmkl_avx2.so library.")
+      else()
+        target_link_libraries(molassembler PUBLIC ${MKL_AVX_LIBRARY})
+      endif()
+    endif()
+  endif()
   target_link_libraries(molassembler PUBLIC ${BLAS_LIBRARIES})
 endif()
 
