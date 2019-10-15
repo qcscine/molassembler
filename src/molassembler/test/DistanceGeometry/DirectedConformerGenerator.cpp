@@ -72,10 +72,12 @@ BOOST_AUTO_TEST_CASE(DirectedConformerGeneration) {
       auto newDecisionList = generator.generateNewDecisionList();
 
       bool pass = false;
+      boost::optional<DirectedConformerGenerator::DecisionList> generatedDecisionsOption;
       for(unsigned attempt = 0; attempt < maxTries; ++attempt) {
         auto positionResult = generator.generateConformation(newDecisionList, configuration);
 
         if(positionResult) {
+          generatedDecisionsOption = generator.getDecisionList(positionResult.value());
           pass = true;
           break;
         }
@@ -88,6 +90,16 @@ BOOST_AUTO_TEST_CASE(DirectedConformerGeneration) {
         "Could not generate " << filename << " conformer w/ decision list: "
           << temple::stringify(newDecisionList) << " in " << maxTries << " attempts"
       );
+
+      if(generatedDecisionsOption) {
+        BOOST_CHECK_MESSAGE(
+          newDecisionList == generatedDecisionsOption.value(),
+          "Supposedly generated and reinterpreted decision lists do not match:\n"
+          << temple::condense(newDecisionList) << " (supposedly generated)\n"
+          << temple::condense(generatedDecisionsOption.value())
+          << " (reinterpreted)\n"
+        );
+      }
     }
   };
 

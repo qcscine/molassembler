@@ -350,7 +350,7 @@ DirectedConformerGenerator::Impl::getDecisionList(Utils::PositionCollection posi
   for(unsigned i = 0; i < U; ++i) {
     const BondIndex& bondIndex = _relevantBonds.at(i);
     auto firstAtom = _molecule._pImpl->_stereopermutators.option(bondIndex.first);
-    auto secondAtom = _molecule._pImpl->_stereopermutators.option(bondIndex.first);
+    auto secondAtom = _molecule._pImpl->_stereopermutators.option(bondIndex.second);
     auto stereoOption = _molecule._pImpl->_stereopermutators.option(bondIndex);
     assert(firstAtom && secondAtom && stereoOption);
     stereoOption->fit(angstromPositions, *firstAtom, *secondAtom);

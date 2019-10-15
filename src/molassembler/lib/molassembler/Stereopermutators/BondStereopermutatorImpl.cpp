@@ -842,6 +842,8 @@ void BondStereopermutator::Impl::fit(
   const AtomStereopermutator& stereopermutatorA,
   const AtomStereopermutator& stereopermutatorB
 ) {
+  assert(stereopermutatorA.centralIndex() != stereopermutatorB.centralIndex());
+
   // Early exit
   if(_composite.permutations() == 0) {
     _assignment = boost::none;
