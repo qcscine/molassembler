@@ -22,45 +22,92 @@ namespace Symmetry {
  * List is in order of the number of symmetry positions
  */
 enum class Shape : unsigned {
+  /* 2 */
   //! See data::Line
   Line,
   //! See data::Bent
   Bent,
+
+  /* 3 */
   //! See data::EquilateralTriangle
-  EquilateralTriangle, // 3
+  EquilateralTriangle,
   //! See data::ApicalTrigonalPyramid
   ApicalTrigonalPyramid,
   //! See data::T
   T,
+
+  /* 4 */
   //! See data::Tetrahedron
-  Tetrahedron, // 4
+  Tetrahedron,
   //! See data::Square
   Square,
   //! See data::Disphenoid
   Disphenoid,
   //! See data::TrigonalPyramid
   TrigonalPyramid,
+
+  /* 5 */
   //! See data::SquarePyramid
-  SquarePyramid, // 5
+  SquarePyramid,
   //! See data::TrigonalBipyramid
   TrigonalBipyramid,
   //! See data::Pentagon
   Pentagon,
+
+  /* 6 */
   //! See data::Octahedron
   Octahedron, // 6
   //! See data::TrigonalPrism
   TrigonalPrism,
   //! See data::PentagonalPyramid
   PentagonalPyramid,
+  //! See data::Hexagon
+  Hexagon,
+
+  /* 7 */
   //! See data::PentagonalBipyramid
-  PentagonalBipyramid, // 7
+  PentagonalBipyramid,
+  //! See data::CappedOctahedron
+  CappedOctahedron,
+  //! See data::CappedTrigonalPrism
+  CappedTrigonalPrism,
+
+  /* 8 */
   //! See data::SquareAntiprism
-  SquareAntiprism // 8
+  SquareAntiprism,
+  //! See data::Cube
+  Cube,
+  //! See data::BicappedTrigonalPrism
+  BicappedTrigonalPrism,
+  //! See data::Dodecahedron
+  Dodecahedron,
+    //! Alternate name for Dodecahedron
+    SnubDisphenoid = Dodecahedron,
+  //! See data::HexagonalBipyramid
+  HexagonalBipyramid,
+
+  /* 9 */
+  //! See data::TricappedTrigonalPrism
+  TricappedTrigonalPrism,
+  //! See data::CappedSquareAntiPrism
+  CappedSquareAntiprism,
+  //! See data::HeptagonalBipyramid
+  HeptagonalBipyramid,
+
+  /* 10 */
+  //! See data::BicappedSquareAntiprism
+  BicappedSquareAntiprism,
+
+  /* 12 */
+  //! See data::Icosahedron
+  Icosahedron,
+  //! See data::Cuboctahedron
+  Cuboctahedron
 };
 
 //! Total number of shapes
-constexpr unsigned nShapes = 17;
-static_assert(nShapes == static_cast<unsigned>(Shape::SquareAntiprism) + 1, "Miscounted?");
+constexpr unsigned nShapes = 30;
+static_assert(nShapes == static_cast<unsigned>(Shape::Cuboctahedron) + 1, "Miscounted?");
 
 } // namespace Symmetry
 

@@ -679,7 +679,7 @@ struct TrigonalBipyramid {
 };
 
 /*!
- * @brief A pentagonal planar symmetry
+ * @brief A pentagonal planar shape
  *
  * @verbatim
  *
@@ -964,6 +964,44 @@ struct PentagonalPyramid {
   static constexpr std::array<unsigned, 6> mirror {{0, 4, 3, 2, 1, 5}};
 };
 
+/**
+ * @brief Hexagonal planar shape
+ */
+struct Hexagon {
+  static constexpr Shape shape = Shape::Hexagon;
+  static constexpr PointGroup pointGroup = PointGroup::D6h;
+  static constexpr unsigned size = 6;
+  static constexpr char stringName[] = "hexagon";
+  static constexpr double angleFunction(const unsigned a, const unsigned b) {
+    unsigned absDiff = std::min(a - b, b - a);
+    return std::min(
+      absDiff,
+      std::min(absDiff - 6, 6 - absDiff)
+    ) * temple::Math::toRadians<double>(60);
+  }
+  static constexpr std::array<temple::Vector, 6> coordinates {{
+    { 1.000000,  0.000000,  0.000000},
+    { 0.500000,  0.866025,  0.000000},
+    {-0.500000,  0.866025,  0.000000},
+    {-1.000000,  0.000000,  0.000000},
+    {-0.500000, -0.866025,  0.000000},
+    { 0.500000, -0.866025,  0.000000}
+  }};
+  static constexpr std::array<
+    std::array<unsigned, 6>,
+    2
+  > rotations {{
+    {{5, 0, 1, 2, 3, 4}}, // C6
+    {{0, 5, 4, 3, 2, 1}} // C2
+  }};
+
+  static constexpr std::array<
+    std::array<unsigned, 4>,
+    0
+  > tetrahedra {{}};
+  static constexpr std::array<unsigned, 0> mirror {};
+};
+
 /*!
  * @brief A pentagonal bipyramidal symmetry
  *
@@ -1108,12 +1146,12 @@ struct CappedOctahedron {
 };
 
 /*!
- * @brief A capped trigonal prisma shape
+ * @brief A capped trigonal prism shape
  */
-struct CappedTrigonalPrisma {
-  static constexpr Symmetry::Shape shape = Symmetry::Shape::CappedTrigonalPrisma;
+struct CappedTrigonalPrism {
+  static constexpr Symmetry::Shape shape = Symmetry::Shape::CappedTrigonalPrism;
   static constexpr unsigned size = 7;
-  static constexpr char stringName[] = "capped trigonal prisma";
+  static constexpr char stringName[] = "capped trigonal prism";
   //! [V(CO)7]+ in C2v, same as from CappedOctahedron
   static constexpr std::array<temple::Vector, 7> coordinates {{
     { 0.000000,  0.000000,  1.000000},
@@ -1326,12 +1364,12 @@ struct Cube {
 };
 
 /*!
- * @brief A bicapped trigonal prisma
+ * @brief A bicapped trigonal prism
  */
-struct BicappedTrigonalPrisma {
-  static constexpr Symmetry::Shape shape = Symmetry::Shape::BicappedTrigonalPrisma;
+struct BicappedTrigonalPrism {
+  static constexpr Symmetry::Shape shape = Symmetry::Shape::BicappedTrigonalPrism;
   static constexpr unsigned size = 8;
-  static constexpr char stringName[] = "bicapped trigonal prisma";
+  static constexpr char stringName[] = "bicapped trigonal prism";
   static constexpr std::array<temple::Vector, 8> coordinates {{
     {  0.577350,  0.577350,  0.577350},
     {  0.577350, -0.577350,  0.577350},
