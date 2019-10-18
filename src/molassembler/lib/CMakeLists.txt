@@ -12,10 +12,6 @@ include(ScineUtils)
 # Add RingDecomposerLib include directory
 include_directories(SYSTEM ${RDL_INCLUDE_DIR} include)
 
-set(molassembler_VERSION 0.1.0)
-
-# collect headers
-# if a big update happens, use $ find . -name "*.h" | sort
 set(HEADERS_all
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/AngstromWrapper.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/AtomStereopermutator.h
@@ -204,10 +200,10 @@ target_include_directories(molassembler SYSTEM PRIVATE
 )
 
 # Handle BLAS
-if(BLAS_FOUND)
-  target_include_directories(molassembler PUBLIC ${BLAS_INCLUDE_DIRS})
-  target_compile_definitions(molassembler PUBLIC ${BLAS_DEFINES})
-  target_link_libraries(molassembler PUBLIC ${BLAS_LIBRARIES})
+if(EXTERNAL_LINALG_FOUND)
+  target_compile_definitions(molassembler PUBLIC ${EIGEN_LINALG_DEFINES})
+  target_include_directories(molassembler PUBLIC ${EXTERNAL_LINALG_INCLUDE_DIRS})
+  target_link_libraries(molassembler PUBLIC ${EXTERNAL_LINALG_LIBRARIES})
 endif()
 
 # -- END Linking

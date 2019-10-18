@@ -69,6 +69,11 @@ target_include_directories(
 target_include_directories(
   temple SYSTEM INTERFACE $<INSTALL_INTERFACE:$<INSTALL_PREFIX>/include>
 )
+if(EXTERNAL_LINALG_FOUND)
+  target_compile_definitions(temple INTERFACE ${EIGEN_LINALG_DEFINES})
+  target_include_directories(temple INTERFACE ${EXTERNAL_LINALG_INCLUDE_DIRS})
+  target_link_libraries(temple INTERFACE ${EXTERNAL_LINALG_LIBRARIES})
+endif()
 
 # Make the interface an export-name
 install(
