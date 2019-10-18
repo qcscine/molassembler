@@ -1,10 +1,3 @@
-# declaration
-project(CyclicPolygons)
-
-set(cyclic_polygons_VERSION 0.1.0)
-
-enable_testing()
-
 set(HEADERS_ALL ${CMAKE_CURRENT_SOURCE_DIR}/CyclicPolygons.h)
 
 add_library(cyclic_polygons INTERFACE)

@@ -1,9 +1,11 @@
-# Documentation build
+if(NOT MOLASSEMBLER_BUILD_DOCUMENTATION)
+  return()
+endif()
 
 # Check for Doxygen, if not found, return
 find_package(Doxygen)
 if(NOT DOXYGEN_FOUND)
-  message(WARNING "Doxygen was not found. The target 'doc' will not be available")
+  message(WARNING "Doxygen was not found. The C++ documentation cannot be built.")
   return()
 endif()
 

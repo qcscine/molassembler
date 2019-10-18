@@ -34,9 +34,10 @@ endif()
 find_python_module(pip)
 if(PY_PIP)
 # Add the setup file in order to enable distribution and installation using pip
-  file(
-    COPY ${CMAKE_CURRENT_SOURCE_DIR}/setup.py
-    DESTINATION ${CMAKE_CURRENT_BINARY_DIR}
+  configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/setup.py.in
+    ${CMAKE_CURRENT_BINARY_DIR}/setup.py
+    @ONLY
   )
 
   file(
@@ -49,27 +50,29 @@ else()
   message(WARNING "Python will not be installed since the python module pip is unavailable.")
 endif()
 
-find_python_module(sphinx)
-if(PY_SPHINX)
-  file(
-    COPY ${CMAKE_CURRENT_SOURCE_DIR}/sphinx
-    DESTINATION ${CMAKE_CURRENT_BINARY_DIR}
-  )
+if(MOLASSEMBLER_BUILD_DOCUMENTATION)
+  find_python_module(sphinx)
+  if(PY_SPHINX)
+    file(
+      COPY ${CMAKE_CURRENT_SOURCE_DIR}/sphinx
+      DESTINATION ${CMAKE_CURRENT_BINARY_DIR}
+    )
 
-  file(GLOB_RECURSE MOLASSEMBLER_PYTHON_DOC_FILES ${CMAKE_CURRENT_SOURCE_DIR}/sphinx/*.rst)
+    file(GLOB_RECURSE MOLASSEMBLER_PYTHON_DOC_FILES ${CMAKE_CURRENT_SOURCE_DIR}/sphinx/*.rst)
 
-  add_custom_target(PythonDocumentation
-    ALL
-    COMMAND ${PYTHON_EXECUTABLE} -m sphinx -M html "sphinx" "doc"
-    DEPENDS molassembler_python
-    SOURCES ${MOLASSEMBLER_PYTHON_DOC_FILES} ${CMAKE_CURRENT_SOURCE_DIR}/sphinx/conf.py
-    COMMENT "Generate python documentation with sphinx"
-  )
+    add_custom_target(PythonDocumentation
+      ALL
+      COMMAND ${PYTHON_EXECUTABLE} -m sphinx -M html "sphinx" "doc"
+      DEPENDS molassembler_python
+      SOURCES ${MOLASSEMBLER_PYTHON_DOC_FILES} ${CMAKE_CURRENT_SOURCE_DIR}/sphinx/conf.py
+      COMMENT "Generate python documentation with sphinx"
+    )
 
-  install(
-    DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/doc/html/
-    DESTINATION share/molassembler/sphinx
-    MESSAGE_NEVER
-    OPTIONAL
-  )
+    install(
+      DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/doc/html/
+      DESTINATION share/molassembler/sphinx
+      MESSAGE_NEVER
+      OPTIONAL
+    )
+  endif()
 endif()

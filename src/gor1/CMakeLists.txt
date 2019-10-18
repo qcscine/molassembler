@@ -1,8 +1,3 @@
-# declaration
-project(GORProject)
-
-set(gor1_VERSION 0.1.0)
-
 # dependencies
 if(NOT TARGET Boost::unit_test_framework)
   find_package(Boost REQUIRED COMPONENTS unit_test_framework)

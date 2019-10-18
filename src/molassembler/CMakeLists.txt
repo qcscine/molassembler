@@ -1,8 +1,3 @@
-project(molassembler)
-
-# project declaration
-enable_testing()
-
 include(ImportUtilsOS)
 import_utils_os()
 add_subdirectory(lib)

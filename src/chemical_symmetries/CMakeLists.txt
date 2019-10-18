@@ -1,6 +1,3 @@
-# declaration
-project(chemicalsymmetries VERSION 0.1.0)
-
 if(
   NOT "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang"
   OR NOT "${CMAKE_CXX_COMPILER_ID}" STREQUAL "AppleClang"
@@ -13,8 +10,6 @@ if(
   )
   message(WARNING ${buildWarning})
 endif()
-
-enable_testing()
 
 add_subdirectory(lib)
 add_subdirectory(test)

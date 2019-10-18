@@ -80,7 +80,6 @@ set(HEADERS_all
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Stereopermutators/ShapeVertexMaps.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Subgraphs.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Types.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Version.h
 )
 
 # collect sources
@@ -140,11 +139,22 @@ set(SOURCES_all
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Types.cpp
 )
 
-# Shared variant
-add_library(molassembler SHARED ${SOURCES_all} ${HEADERS_all})
+configure_file(
+  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Version.h.in
+  ${CMAKE_CURRENT_BINARY_DIR}/molassembler/Version.h
+  @ONLY
+)
+
+# Shared library
+add_library(molassembler SHARED
+  ${SOURCES_all}
+  ${HEADERS_all}
+  ${CMAKE_CURRENT_BINARY_DIR}/molassembler/Version.h
+)
 target_include_directories(molassembler
   PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
     $<INSTALL_INTERFACE:$<INSTALL_PREFIX>/include>
 )
 
@@ -223,6 +233,11 @@ install(
     PATTERN "*.h"
     PATTERN "*.hpp"
     PATTERN "*.hxx"
+)
+install(
+  FILES ${CMAKE_CURRENT_BINARY_DIR}/molassembler/Version.h
+  DESTINATION ${INCLUDE_INSTALL_DIR}
+  COMPONENT molassembler
 )
 
 source_group("Headers" FILES ${HEADERS_All})

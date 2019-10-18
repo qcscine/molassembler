@@ -1,24 +1,20 @@
 cmake_minimum_required(VERSION 3.9)
 
-project(molassembler)
-
+project(molassembler
+  VERSION 0.1.0
+  DESCRIPTION "Graph-based molecular toolkit for possibly inorganic molecules"
+  LANGUAGES CXX
+)
 enable_testing()
-
-# Version information
-set(molassembler_VERSION_MAJOR 0)
-set(molassembler_VERSION_MINOR 1)
-set(molassembler_VERSION_PATCH 0)
-set(molassembler_VERSION ${molassembler_VERSION_MAJOR}.${molassembler_VERSION_MINOR}.${molassembler_VERSION_PATCH})
-set(molassembler_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 
 # Project-specific options
 option(MOLASSEMBLER_ANALYSIS_BINARIES "Compile analysis binaries" OFF)
 option(MOLASSEMBLER_VALIDATION_TESTS "Compile validation tests" OFF)
-option(MOLASSEMBLER_DOWNLOAD_DEPENDENCIES "Enable downloading dependencies (for CI-Only!)" OFF)
 option(MOLASSEMBLER_PARALLELIZE "Enables OpenMP parallelization" ON)
 option(MOLASSEMBLER_IPO "Try to enable interprocedural optimization" OFF)
 option(MOLASSEMBLER_NO_GNU_UNIQUE "Set --no-gnu-unique GCC flag" OFF)
 option(MOLASSEMBLER_ADDRESS_SANITIZE "Add address sanitizer" OFF)
+option(MOLASSEMBLER_BUILD_DOCUMENTATION "Builds and installs documentation" OFF)
 
 # Set a default build type
 set(default_build_type "Release")

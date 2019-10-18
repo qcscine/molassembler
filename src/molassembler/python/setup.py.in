@@ -16,7 +16,7 @@ generate non-superposable stereopermutations as output.
 # Define the setup
 setuptools.setup(
     name="molassembler",
-    version="0.1.0",
+    version="@molassembler_VERSION@",
     author="Jan-Grimo Sobez",
     author_email="jan-grimo.sobez@phys.chem.ethz.ch",
     description="Inorganic molecular graph interpretation, modification and conformer generation",

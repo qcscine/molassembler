@@ -18,7 +18,7 @@ build:gcc_debug:
     - mkdir -p build_gcc_debug
     - cd build_gcc_debug
     - pwd
-    - cmake -DMOLASSEMBLER_DOWNLOAD_DEPENDENCIES=ON -DSCINE_BUILD_PYTHON_BINDINGS=ON -DPYTHON_EXECUTABLE=$(which python) -DCMAKE_CXX_FLAGS="-g -O0 -coverage" -DCMAKE_EXE_LINKER_FLAGS="-coverage" ..
+    - cmake -DSCINE_BUILD_PYTHON_BINDINGS=ON -DPYTHON_EXECUTABLE=$(which python) -DCMAKE_CXX_FLAGS="-g -O0 -coverage" -DCMAKE_EXE_LINKER_FLAGS="-coverage" ..
     - make -j8
   artifacts:
     expire_in: 1 day
@@ -51,7 +51,7 @@ build:gcc_release:
     - mkdir -p build_gcc_release
     - cd build_gcc_release
     - pwd
-    - cmake -DCMAKE_BUILD_TYPE=Release -DSCINE_BUILD_PYTHON_BINDINGS=ON -DPYTHON_EXECUTABLE=$(which python) -DMOLASSEMBLER_DOWNLOAD_DEPENDENCIES=ON ..
+    - cmake -DCMAKE_BUILD_TYPE=Release -DSCINE_BUILD_PYTHON_BINDINGS=ON -DPYTHON_EXECUTABLE=$(which python) ..
     - make -j8
   artifacts:
     expire_in: 1 day
@@ -85,7 +85,7 @@ build:clang_release:
     - mkdir -p build_clang
     - cd build_clang
     - pwd
-    - cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DMOLASSEMBLER_DOWNLOAD_DEPENDENCIES=ON ..
+    - cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_EXPORT_COMPILE_COMMANDS=ON ..
     - make -j8
   artifacts:
     expire_in: 1 day
