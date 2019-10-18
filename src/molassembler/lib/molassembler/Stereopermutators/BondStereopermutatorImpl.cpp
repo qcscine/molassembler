@@ -29,7 +29,7 @@
 #include "molassembler/Stereopermutators/AbstractPermutations.h"
 #include "molassembler/Stereopermutators/CycleFeasibility.h"
 #include "molassembler/Stereopermutators/FeasiblePermutations.h"
-#include "molassembler/Stereopermutators/SymmetryPositionMaps.h"
+#include "molassembler/Stereopermutators/ShapeVertexMaps.h"
 
 #include <Eigen/Geometry>
 #include <algorithm>

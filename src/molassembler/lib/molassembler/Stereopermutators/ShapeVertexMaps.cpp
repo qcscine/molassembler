@@ -2,7 +2,7 @@
  * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
  *   See LICENSE.txt
  */
-#include "molassembler/Stereopermutators/SymmetryPositionMaps.h"
+#include "molassembler/Stereopermutators/ShapeVertexMaps.h"
 
 #include "stereopermutation/Stereopermutation.h"
 #include "temple/Functional.h"

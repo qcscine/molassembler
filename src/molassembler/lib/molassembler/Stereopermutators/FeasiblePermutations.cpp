@@ -6,7 +6,7 @@
 
 #include "molassembler/Stereopermutators/AbstractPermutations.h"
 #include "molassembler/Stereopermutators/CycleFeasibility.h"
-#include "molassembler/Stereopermutators/SymmetryPositionMaps.h"
+#include "molassembler/Stereopermutators/ShapeVertexMaps.h"
 #include "molassembler/Modeling/BondDistance.h"
 #include "molassembler/Modeling/CommonTrig.h"
 #include "molassembler/DistanceGeometry/SpatialModel.h"

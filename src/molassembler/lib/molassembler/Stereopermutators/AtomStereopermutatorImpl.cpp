@@ -30,7 +30,7 @@
 #include "molassembler/Graph/InnerGraph.h"
 #include "molassembler/Log.h"
 #include "molassembler/Modeling/CommonTrig.h"
-#include "molassembler/Stereopermutators/SymmetryPositionMaps.h"
+#include "molassembler/Stereopermutators/ShapeVertexMaps.h"
 
 namespace Scine {
 
