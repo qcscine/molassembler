@@ -120,17 +120,17 @@ double dihedral(
 constexpr temple::floating::ExpandedAbsoluteEqualityComparator<double> Composite::fpComparator;
 
 Composite::OrientationState::OrientationState(
-  Symmetry::Shape passSymmetry,
-  unsigned passFusedPosition,
+  Symmetry::Shape passShape,
+  unsigned passFusedVertex,
   std::vector<char> passCharacters,
   std::size_t passIdentifier
-) : symmetry(passSymmetry),
-    fusedPosition(passFusedPosition),
+) : shape(passShape),
+    fusedVertex(passFusedVertex),
     characters(std::move(passCharacters)),
     identifier(passIdentifier)
 {
-  assert(fusedPosition < Symmetry::size(symmetry));
-  assert(characters.size() == Symmetry::size(symmetry));
+  assert(fusedVertex < Symmetry::size(shape));
+  assert(characters.size() == Symmetry::size(shape));
 }
 
 void Composite::OrientationState::applyCharacterRotation(
@@ -151,17 +151,17 @@ void Composite::OrientationState::applyCharacterRotation(
 std::vector<unsigned> Composite::OrientationState::transformToCanonical() {
   /* For canonical comparisons, we must treat all fused positions within the
    * same position group equally. Although the final generated dihedrals must be
-   * different (since indexing is still based on the current symmetry positions
-   * within each partial symmetry, the sequence must be the same across any
+   * different (since indexing is still based on the current shape positions
+   * within each partial shape, the sequence must be the same across any
    * position group.
    */
-  unsigned reducedFusedPosition = lowestEqualPositionInSymmetry();
+  unsigned reducedFusedVertex = lowestEqualVertexInShape();
 
   // Find the mapping
-  auto toCanonicalMapping = findReductionMapping(reducedFusedPosition);
+  auto toCanonicalMapping = findReductionMapping(reducedFusedVertex);
 
   // Apply it to the data members of the instance
-  fusedPosition = reducedFusedPosition;
+  fusedVertex = reducedFusedVertex;
   applyCharacterRotation(toCanonicalMapping);
 
   // Return the inverse mapping to allow reversion to the original state
@@ -175,16 +175,16 @@ void Composite::OrientationState::revert(const std::vector<unsigned>& reversionM
   auto findIter = std::find(
     std::begin(reversionMapping),
     std::end(reversionMapping),
-    fusedPosition
+    fusedVertex
   );
 
   assert(findIter != std::end(reversionMapping));
 
-  fusedPosition = findIter - std::begin(reversionMapping);
+  fusedVertex = findIter - std::begin(reversionMapping);
 }
 
 std::vector<unsigned> Composite::OrientationState::findReductionMapping(
-  unsigned reducedFusedPosition
+  unsigned reducedFusedVertex
 ) const {
   /* NOTE: The implementation below is VERY similar to
    * Stereopermutation::_generateAllRotation's generation work.
@@ -199,22 +199,22 @@ std::vector<unsigned> Composite::OrientationState::findReductionMapping(
    * position is unchanged. It is the lowest permutation possible, and is hence
    * the solution to this search case.
    */
-  if(fusedPosition == reducedFusedPosition) {
-    return temple::iota<unsigned>(Symmetry::size(symmetry));
+  if(fusedVertex == reducedFusedVertex) {
+    return temple::iota<unsigned>(Symmetry::size(shape));
   }
 
-  /* Find a mapping that rotates fusedPosition to reducedFusedPosition. In many
+  /* Find a mapping that rotates fusedVertex to reducedFusedVertex. In many
    * cases, there are multiple of these. We can remove these degrees of freedom
    * by choosing that rotation whose resulting permutation has the lowest index
    * of permutation.
    */
-  const auto identitySequence = temple::iota<unsigned>(Symmetry::size(symmetry));
+  const auto identitySequence = temple::iota<unsigned>(Symmetry::size(shape));
 
   // Track the best rotation
   unsigned lowestIndexOfPermutation = std::numeric_limits<unsigned>::max();
   std::vector<unsigned> bestRotation;
 
-  const unsigned linkLimit = Symmetry::rotations(symmetry).size();
+  const unsigned linkLimit = Symmetry::rotations(shape).size();
   std::vector<unsigned> chain = {0};
   chain.reserve(32);
   std::vector<
@@ -225,7 +225,7 @@ std::vector<unsigned> Composite::OrientationState::findReductionMapping(
    * been discovered or not.
    */
   boost::dynamic_bitset<> discoveredIndicesOfPermutation {
-    temple::Math::factorial(Symmetry::size(symmetry))
+    temple::Math::factorial(Symmetry::size(shape))
   };
 
   /* The identity sequence has been discovered (initial element of
@@ -238,7 +238,7 @@ std::vector<unsigned> Composite::OrientationState::findReductionMapping(
     // Generate a new rotation
     auto generatedRotation = Symmetry::properties::applyRotation(
       chainRotations.back(),
-      Symmetry::rotations(symmetry).at(
+      Symmetry::rotations(shape).at(
         chain.back()
       )
     );
@@ -268,7 +268,7 @@ std::vector<unsigned> Composite::OrientationState::findReductionMapping(
     } else {
       // The rotation is new, determine if it should replace the tracked best
       if(
-        generatedRotation.at(reducedFusedPosition) == fusedPosition
+        generatedRotation.at(reducedFusedVertex) == fusedVertex
         && indexOfPermutation < lowestIndexOfPermutation
       ) {
         bestRotation = generatedRotation;
@@ -290,8 +290,8 @@ std::vector<unsigned> Composite::OrientationState::findReductionMapping(
   return bestRotation;
 }
 
-unsigned Composite::OrientationState::lowestEqualPositionInSymmetry() const {
-  const auto positionGroupCharacters = Symmetry::properties::positionGroups(symmetry);
+unsigned Composite::OrientationState::lowestEqualVertexInShape() const {
+  const auto positionGroupCharacters = Symmetry::properties::positionGroups(shape);
 
   /* Return the position of the first character that matches that of the fused
    * position
@@ -300,7 +300,7 @@ unsigned Composite::OrientationState::lowestEqualPositionInSymmetry() const {
     std::begin(positionGroupCharacters),
     std::end(positionGroupCharacters),
     [&](const char groupLabel) -> bool {
-      return groupLabel == positionGroupCharacters.at(fusedPosition);
+      return groupLabel == positionGroupCharacters.at(fusedVertex);
     }
   );
 
@@ -312,35 +312,35 @@ unsigned Composite::OrientationState::lowestEqualPositionInSymmetry() const {
 Composite::AngleGroup Composite::OrientationState::smallestAngleGroup() const {
   // Initialize the search state
   AngleGroup angleGroup;
-  angleGroup.symmetryPositions.reserve(Symmetry::size(symmetry));
+  angleGroup.shapeVertices.reserve(Symmetry::size(shape));
   angleGroup.angle = M_PI;
 
-  // Go through all symmetry positions excluding the fused symmetry position
-  for(unsigned i = 0; i < Symmetry::size(symmetry); ++i) {
-    if(i == fusedPosition) {
+  // Go through all symmetry positions excluding the fused shape position
+  for(unsigned i = 0; i < Symmetry::size(shape); ++i) {
+    if(i == fusedVertex) {
       continue;
     }
 
-    double angleToFusedPosition = Symmetry::angleFunction(symmetry)(fusedPosition, i);
+    double angleToFusedPosition = Symmetry::angleFunction(shape)(fusedVertex, i);
 
     // This naturally excludes M_PI angles from the smallest angle group
     if(fpComparator.isLessThan(angleToFusedPosition, angleGroup.angle)) {
-      angleGroup.symmetryPositions = {i};
+      angleGroup.shapeVertices = {i};
       angleGroup.angle = angleToFusedPosition;
     } else if(fpComparator.isEqual(angleToFusedPosition, angleGroup.angle)) {
-      angleGroup.symmetryPositions.push_back(i);
+      angleGroup.shapeVertices.push_back(i);
     }
   }
 
   /* In order to identify if a side is isotropic, check whether the rankings of
    * ligands at this angle group are all the same.
    */
-  if(angleGroup.symmetryPositions.size() == 1) {
+  if(angleGroup.shapeVertices.size() == 1) {
     // A single relevant symmetry position is not isotropic
     angleGroup.isotropic = false;
   } else {
     auto relevantCharacters = temple::map(
-      angleGroup.symmetryPositions,
+      angleGroup.shapeVertices,
       [&](const unsigned symmetryPosition) -> char {
         return characters.at(symmetryPosition);
       }
@@ -356,8 +356,8 @@ Composite::AngleGroup Composite::OrientationState::smallestAngleGroup() const {
 
   assert(
     std::is_sorted(
-      std::begin(angleGroup.symmetryPositions),
-      std::end(angleGroup.symmetryPositions)
+      std::begin(angleGroup.shapeVertices),
+      std::end(angleGroup.shapeVertices)
     )
   );
 
@@ -522,7 +522,7 @@ Composite::PerpendicularAngleGroups Composite::inGroupAngles(
   >;
 
   temple::forEach(
-    temple::adaptors::allPairs(angleGroup.symmetryPositions),
+    temple::adaptors::allPairs(angleGroup.shapeVertices),
     [&](const unsigned a, const unsigned b) -> void {
       double perpendicularAngle = perpendicularSubstituentAngle(
         angleGroup.angle,
@@ -592,11 +592,11 @@ Composite::Composite(
     }
   );
 
-  /* Reorder both AngleGroups' symmetryPositions by descending ranking and
+  /* Reorder both AngleGroups' shapeVertices by descending ranking and
    * index to get canonical initial combinations
    */
   temple::inplace::sort(
-    angleGroups.first.symmetryPositions,
+    angleGroups.first.shapeVertices,
     [&](const unsigned a, const unsigned b) -> bool {
       return (
         std::tie(_orientations.first.characters.at(a), a)
@@ -606,7 +606,7 @@ Composite::Composite(
   );
 
   temple::inplace::sort(
-    angleGroups.second.symmetryPositions,
+    angleGroups.second.shapeVertices,
     [&](const unsigned a, const unsigned b) -> bool {
       return (
         std::tie(_orientations.second.characters.at(a), a)
@@ -644,22 +644,22 @@ Composite::Composite(
    * in the coordinate definitions.
    */
   Symmetry::CoordinateList firstCoordinates = Symmetry::symmetryData().at(
-    _orientations.first.symmetry
+    _orientations.first.shape
   ).coordinates;
   // Rotate left fused position onto <1, 0, 0>
   detail::rotateCoordinates(
     firstCoordinates,
-    firstCoordinates.col(_orientations.first.fusedPosition).normalized(),
+    firstCoordinates.col(_orientations.first.fusedVertex).normalized(),
     Eigen::Vector3d::UnitX()
   );
 
   auto secondCoordinates = Symmetry::symmetryData().at(
-    _orientations.second.symmetry
+    _orientations.second.shape
   ).coordinates;
   // Rotate right fused position onto <-1, 0, 0>
   detail::rotateCoordinates(
     secondCoordinates,
-    secondCoordinates.col(_orientations.second.fusedPosition).normalized(),
+    secondCoordinates.col(_orientations.second.fusedVertex).normalized(),
     -Eigen::Vector3d::UnitX()
   );
 
@@ -688,8 +688,8 @@ Composite::Composite(
   // Generate all arrangements regardless of whether the Composite is isotropic
   temple::forEach(
     temple::adaptors::allPairs(
-      angleGroups.first.symmetryPositions,
-      angleGroups.second.symmetryPositions
+      angleGroups.first.shapeVertices,
+      angleGroups.second.shapeVertices
     ),
     [&](const unsigned f, const unsigned s) -> void {
       const double alignAngle = getDihedral(f, s);
@@ -714,7 +714,7 @@ Composite::Composite(
          */
 
         const auto dihedrals = temple::map(
-          angleGroups.second.symmetryPositions,
+          angleGroups.second.shapeVertices,
           [&](const unsigned secondSymmetryPosition) -> double {
             double dihedral = getDihedral(f, secondSymmetryPosition);
             if(dihedral >= -1e-10) {
@@ -729,7 +729,7 @@ Composite::Composite(
           std::end(dihedrals)
         ) - std::begin(dihedrals);
 
-        // std::cout << "Next symmetry position in rotor is " << angleGroups.second.symmetryPositions.at(maximumIndex) << " with dihedral of " << dihedrals.at(maximumIndex) << "\n";
+        // std::cout << "Next symmetry position in rotor is " << angleGroups.second.shapeVertices.at(maximumIndex) << " with dihedral of " << dihedrals.at(maximumIndex) << "\n";
 
         offsetAngle = dihedrals.at(maximumIndex) / 2;
       }
@@ -745,8 +745,8 @@ Composite::Composite(
 
       auto dihedralList = temple::map(
         temple::adaptors::allPairs(
-          angleGroups.first.symmetryPositions,
-          angleGroups.second.symmetryPositions
+          angleGroups.first.shapeVertices,
+          angleGroups.second.shapeVertices
         ),
         [&](const unsigned a, const unsigned b) -> DihedralTuple {
           return {a, b, getDihedral(a, b)};
@@ -787,15 +787,15 @@ Composite::Composite(
    * the trans dihedral possibility explicitly
    */
   if(
-    angleGroups.first.symmetryPositions.size() == 1
-    && angleGroups.second.symmetryPositions.size() == 1
+    angleGroups.first.shapeVertices.size() == 1
+    && angleGroups.second.shapeVertices.size() == 1
   ) {
     // Add trans dihedral possibility
     _stereopermutations.emplace_back(
       std::vector<DihedralTuple> {
         DihedralTuple {
-          angleGroups.first.symmetryPositions.front(),
-          angleGroups.second.symmetryPositions.front(),
+          angleGroups.first.shapeVertices.front(),
+          angleGroups.second.shapeVertices.front(),
           M_PI
         }
       }
@@ -818,7 +818,7 @@ Composite::Composite(
 
       std::get<0>(dihedralTuple) = findIter - std::begin(firstReversionMapping);
 
-      assert(std::get<0>(dihedralTuple) != _orientations.first.fusedPosition);
+      assert(std::get<0>(dihedralTuple) != _orientations.first.fusedVertex);
 
       findIter = std::find(
         std::begin(secondReversionMapping),
@@ -830,7 +830,7 @@ Composite::Composite(
 
       std::get<1>(dihedralTuple) = findIter - std::begin(secondReversionMapping);
 
-      assert(std::get<1>(dihedralTuple) != _orientations.second.fusedPosition);
+      assert(std::get<1>(dihedralTuple) != _orientations.second.fusedVertex);
     }
   }
 

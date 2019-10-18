@@ -635,8 +635,8 @@ BOOST_AUTO_TEST_CASE( octahedral_multidentate ) {
 
 void writeState(const Composite::OrientationState& a) {
   std::cout << "OrientationState {\n"
-    << "  symmetry: " << Symmetry::name(a.symmetry) << "\n"
-    << "  fusedPosition: " << a.fusedPosition << "\n"
+    << "  symmetry: " << Symmetry::name(a.shape) << "\n"
+    << "  fusedPosition: " << a.fusedVertex << "\n"
     << "  characters: " << temple::stringify(a.characters) << "\n}\n";
 }
 

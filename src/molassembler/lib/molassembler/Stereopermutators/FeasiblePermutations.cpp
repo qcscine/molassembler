@@ -28,7 +28,7 @@ bool FeasibleStereopermutations::isNotObviouslyImpossibleStereopermutation(
   const Symmetry::Shape shape,
   const OuterGraph& graph
 ) {
-  auto symmetryPositionMap = siteToSymmetryPositionMap(
+  auto shapeVertexMap = siteToShapeVertexMap(
     stereopermutation,
     canonicalSites
   );
@@ -55,7 +55,7 @@ bool FeasibleStereopermutations::isNotObviouslyImpossibleStereopermutation(
         centralIndex,
         shape,
         ranking,
-        symmetryPositionMap,
+        shapeVertexMap,
         {siteI, siteJ},
         graph.inner()
       );
@@ -99,7 +99,7 @@ bool FeasibleStereopermutations::isNotObviouslyImpossibleStereopermutation(
       centralIndex,
       shape,
       ranking,
-      symmetryPositionMap,
+      shapeVertexMap,
       link.indexPair,
       graph.inner()
     );

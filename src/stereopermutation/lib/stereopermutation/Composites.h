@@ -23,8 +23,8 @@ namespace Scine {
 namespace stereopermutation {
 
 /**
- * @brief Represents the composite of two symmetries joined by a bond at
- *   arbitrary symmetry positions
+ * @brief Represents the composite of two shapes joined by a bond at
+ *   arbitrary shape vertices
  *
  * Acts as a container-like type for the generated stereopermutations after
  * construction.
@@ -36,33 +36,33 @@ class Composite {
 public:
 //!@name Member types
 //!@{
-  //! A group of symmetry positions at an angle from the fused position
+  //! A group of shape vertices at an angle from the fused position
   struct AngleGroup {
     //! The angle this group is placed at from the fused position
     double angle;
-    //! The symmetry positions making up this group
-    std::vector<unsigned> symmetryPositions;
+    //! The shape vertices making up this group
+    std::vector<unsigned> shapeVertices;
     /*!
      * @brief Whether the ranking characters indicate that this group of
-     *   symmetry positions is isotropic
+     *   shape vertices is isotropic
      */
     bool isotropic;
   };
 
-  /*! @brief Encompasses the orientation of a symmetry along a fused bond
+  /*! @brief Encompasses the orientation of a shape along a fused bond
    *
    * Comparison is based upon lexicographic comparison of its struct members in
    * order of declaration.
    */
   struct OrientationState : public temple::crtp::LexicographicComparable<OrientationState> {
-    //! The symmetry of either positional symmetry
-    Symmetry::Shape symmetry;
-    //! The symmetry position of the local symmetry that the other is fused at
-    unsigned fusedPosition;
-    //! Abstract ranking-characters of the ligands at their symmetry positions
+    //! The shape of either positional shape
+    Symmetry::Shape shape;
+    //! The shape vertex of the local shape that the other is fused at
+    unsigned fusedVertex;
+    //! Abstract ranking-characters of the sites at their shape vertices
     std::vector<char> characters;
     /*!
-     * @brief An identifier to the symmetry source
+     * @brief An identifier to the shape source
      *
      * Since OrientationState is used internally in an ordered pair which may
      * swap elements on changes, an identifier can be useful in reassociating
@@ -72,8 +72,8 @@ public:
 
     //! Member initializing constructor
     OrientationState(
-      Symmetry::Shape passSymmetry,
-      unsigned passFusedPosition,
+      Symmetry::Shape passShape,
+      unsigned passFusedVertex,
       std::vector<char> passCharacters,
       std::size_t passIdentifier
     );
@@ -84,37 +84,37 @@ public:
      */
     void applyCharacterRotation(const std::vector<unsigned>& rotation);
 
-    /*! @brief Smallest symmetry position from the same group as the fused position
+    /*! @brief Smallest shape vertex from the same group as the fused position
      *
      * @complexity{@math{\Theta(S^2)}}
      */
-    unsigned lowestEqualPositionInSymmetry() const;
+    unsigned lowestEqualVertexInShape() const;
 
     /*! @brief Calculates the required reduction mapping to the canonical form
      *
-     * @complexity{@math{O(S!)} where @math{S} is the size of the symmetry.
+     * @complexity{@math{O(S!)} where @math{S} is the size of the shape.
      * More precisely, this function scales linearly with the number of
      * unlinked stereopermutations if all substituents are different, but that
-     * itself probably scales factorially in the size of the symmetry.}
+     * itself probably scales factorially in the size of the shape.}
      *
      * @todo Check what this code shares with generateAllRotations and consider
      *   refactoring
      */
-    std::vector<unsigned> findReductionMapping(unsigned reducedFusedPosition) const;
+    std::vector<unsigned> findReductionMapping(unsigned reducedFusedVertex) const;
 
     /* c++17 nodiscard */
     /*!
      * @brief Transforms the OrientationState to a canonical form
      *
      * Transforms the OrientationState by applying a reduction mapping to the
-     * smallest symmetry position from the same group as the fused position.
+     * smallest shape vertex from the same group as the fused position.
      * Returns the mapping needed to revert the OrientationState back to its
      * original data values.
      *
      * @note To transform back to the original state, keep the result of this
      * function and call revert() with it.
      *
-     * @complexity{@math{O(S!)} where @math{S} is the size of the symmetry (see
+     * @complexity{@math{O(S!)} where @math{S} is the size of the shape (see
      * findReductionMapping)}
      */
     std::vector<unsigned> transformToCanonical();
@@ -129,20 +129,20 @@ public:
 
     /*!
      * @brief Collects all coplanar indices that are closest to the fused
-     *   symmetry position
+     *   shape vertex
      *
      * @complexity{@math{\Theta(S)}}
-     * @post AngleGroup's symmetry positions are sorted
+     * @post AngleGroup's shape positions are sorted
      */
     AngleGroup smallestAngleGroup() const;
 
     //! Full tuple-like lexicographical comparison of members in order of declaration
     inline auto tie() const {
-      return std::tie(symmetry, fusedPosition, characters);
+      return std::tie(shape, fusedVertex, characters);
     }
   };
 
-  //! First symmetry position, second symmetry position, dihedral angle tuple
+  //! First shape vertex, second shape vertex, dihedral angle tuple
   using DihedralTuple = std::tuple<unsigned, unsigned, double>;
 
   //! List of lists of dihedral angles for distinct rotational configurations
@@ -172,7 +172,7 @@ public:
 //!@{
   /*! @brief Constructor calculating all permutations
    *
-   * @complexity{@math{O(S!)} where S is the size of the larger symmetry of the
+   * @complexity{@math{O(S!)} where S is the size of the larger shape of the
    * two OrientationState instances}
    *
    * @post Each permutations' dihedrals are sorted (lexicographically)
@@ -192,24 +192,23 @@ public:
   };
 
   /*!
-   * @brief Generates a symmetry rotation subject to constraints
+   * @brief Generates a shape rotation subject to constraints
    *
-   * @param shape The symmetry in which the rotation is sought
-   * @param fixedSymmetryPosition The symmetry position in shape that is
-   *   to be kept constant
-   * @param changedPositions The symmetry positions which must change in the
+   * @param shape The shape in which the rotation is sought
+   * @param fixedVertex The shape vertex in @p shape that is kept constant
+   * @param changedVertices The shape vertices which must change in the
    *   sought rotation
    */
   static std::vector<unsigned> generateRotation(
     Symmetry::Shape shape,
-    unsigned fixedSymmetryPosition,
-    const std::vector<unsigned>& changedPositions
+    unsigned fixedVertex,
+    const std::vector<unsigned>& changedVertices
   );
 
   static std::vector<unsigned> rotation(
     Symmetry::Shape shape,
-    unsigned fixedSymmetryPosition,
-    const std::vector<unsigned>& perpendicularPlanePositions
+    unsigned fixedVertex,
+    const std::vector<unsigned>& perpendicularPlaneVertices
   );
 
   //! Creates sets of within-group cross angles in the perpendicular plane
@@ -230,9 +229,9 @@ public:
    * @brief Returns a set of dihedrals for a particular permutation
    *
    * @complexity{@math{\Theta(1)}}
-   * @note The first two elements of each tuple specify the symmetry position
-   * within that side's symmetry. The first element is for the left symmetry,
-   * the second for the right symmetry.
+   * @note The first two elements of each tuple specify the shape position
+   * within that side's shape. The first element is for the left shape,
+   * the second for the right shape.
    */
   const std::vector<DihedralTuple>& dihedrals(unsigned permutationIndex) const;
 
@@ -242,8 +241,11 @@ public:
    */
   bool isIsotropic() const;
 
-  /*! @brief Returns the higher number of relevant substituent symmetry indices
+  /*! @brief Returns the higher number of relevant substituent shape vertices
    *   of both sides
+   *
+   * E.g. In a combination of EquilateralTriangle and Tetrahedron, the order is
+   * four.
    */
   unsigned order() const;
 
@@ -301,20 +303,20 @@ private:
 
   /*!
    * @brief Calculates the angle between two substituents that have the same
-   *   angle from the bound symmetry position in a plane perpendicular to their
+   *   angle from the bound shape vertices in a plane perpendicular to their
    *   shared axis.
    *
-   * The axis is defined by the bound symmetry position and the central point of
-   * the symmetry. Symmetry positions with identical angles from the bound
-   * symmetry position are situated together in a plane perpendicular to the
-   * axis. The angle between these symmetry positions via the intersection with
+   * The axis is defined by the bound shape position and the central point of
+   * the shape. shape positions with identical angles from the bound
+   * shape position are situated together in a plane perpendicular to the
+   * axis. The angle between these shape positions via the intersection with
    * the axis in that plane is calculated by this function.
    *
-   * @warning Do not call this with angleFromBoundSymmetryPosition == M_PI as
+   * @warning Do not call this with angleFromBoundShapeVertex == M_PI as
    *   the geometrical idea collapses.
    */
   static double perpendicularSubstituentAngle(
-    double angleFromBoundSymmetryPosition,
+    double angleFromBoundShapeVertex,
     double angleBetweenSubstituents
   );
 };

@@ -87,7 +87,7 @@ struct AbstractStereopermutations {
   static std::vector<char> makeStereopermutationCharacters(
     const RankingInformation::RankedSitesType& canonicalSites,
     const std::vector<char>& canonicalStereopermutationCharacters,
-    const std::vector<unsigned>& sitesAtSymmetryPositions
+    const std::vector<unsigned>& sitesAtShapeVertices
   );
 //!@}
 

@@ -11,7 +11,7 @@
 namespace Scine {
 namespace molassembler {
 
-std::vector<unsigned> siteToSymmetryPositionMap(
+std::vector<unsigned> siteToShapeVertexMap(
   const stereopermutation::Stereopermutation& stereopermutation,
   const RankingInformation::RankedSitesType& canonicalSites
 ) {
@@ -150,11 +150,11 @@ std::vector<unsigned> siteToSymmetryPositionMap(
   return positionMap;
 }
 
-std::vector<unsigned> symmetryPositionToSiteMap(
+std::vector<unsigned> shapeVertexToSiteIndexMap(
   const stereopermutation::Stereopermutation& stereopermutation,
   const RankingInformation::RankedSitesType& canonicalSites
 ) {
-  auto base = siteToSymmetryPositionMap(stereopermutation, canonicalSites);
+  auto base = siteToShapeVertexMap(stereopermutation, canonicalSites);
 
   std::vector<unsigned> inverseMap (base.size());
 

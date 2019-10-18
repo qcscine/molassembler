@@ -17,37 +17,36 @@ class Stereopermutation;
 
 namespace molassembler {
 
-/*! @brief Generates a flat mapping from site indices to shape positions
+/*! @brief Generates a flat mapping from site indices to shape vertices
  *
- * Generates a mapping from site indices to shape positions according to
- * the ranking character distribution to shape positions of a
- * stereopermutation (its characters member) and any defined links between
- * shape positions.
+ * Generates a mapping from site indices to shape vertices according to
+ * the ranking character distribution to shape vertex of a stereopermutation
+ * (its characters member) and any defined links between shape positions.
  *
  * @code{.cpp}
- * auto mapping = generateSiteToSymmetryPosition(...);
+ * auto mapping = siteToShapeVertexMap(...);
  * unsigned symmetryPositionOfSiteFour = mapping.at(4u);
  * @endcode
  *
  * @complexity{@math{\Theta(N)}}
  */
-std::vector<unsigned> siteToSymmetryPositionMap(
+std::vector<unsigned> siteToShapeVertexMap(
   const stereopermutation::Stereopermutation& stereopermutation,
   const RankingInformation::RankedSitesType& canonicalSites
 );
 
-/*! @brief Generates a flat mapping from shape positions to site indices
+/*! @brief Generates a flat mapping from shape vertices to site indices
  *
  * Generates exactly the inverse map to generateSiteToSymmetryPositionMap
  *
  * @code{cpp}
- * auto mapping = generateSymmetryPositionToSiteMap(...);
+ * auto mapping = shapeVertexToSiteIndexMap(...);
  * unsigned siteIndexAtSymmetryPositionFive = mapping.at(5u);
  * @endcode
  *
  * @complexity{@math{\Theta(N)}}
  */
-std::vector<unsigned> symmetryPositionToSiteMap(
+std::vector<unsigned> shapeVertexToSiteIndexMap(
   const stereopermutation::Stereopermutation& stereopermutation,
   const RankingInformation::RankedSitesType& canonicalSites
 );

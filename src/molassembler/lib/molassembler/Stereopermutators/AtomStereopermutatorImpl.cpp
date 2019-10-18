@@ -187,7 +187,7 @@ void AtomStereopermutator::Impl::assign(boost::optional<unsigned> assignment) {
    * assigning (AtomIndex -> unsigned).
    */
   if(_assignmentOption) {
-    _shapePositionMap = siteToSymmetryPositionMap(
+    _shapePositionMap = siteToShapeVertexMap(
       _abstract.permutations.stereopermutations.at(
         _feasible.indices.at(
           _assignmentOption.value()
@@ -645,7 +645,7 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
       );
 
       // Replace the characters by their corresponding indices from the old ranking
-      sitesAtNewSymmetryPositions = symmetryPositionToSiteMap(
+      sitesAtNewSymmetryPositions = shapeVertexToSiteIndexMap(
         currentStereopermutation,
         _abstract.canonicalSites
       );
@@ -1120,7 +1120,7 @@ AtomStereopermutator::Impl::minimalChiralConstraints(bool enforce) const {
     /* Invert _neighborSymmetryPositionMap, we need a mapping of
      *  (position in symmetry) -> atom index
      */
-    auto symmetryPositionToSiteIndexMap = symmetryPositionToSiteMap(
+    auto symmetryPositionToSiteIndexMap = shapeVertexToSiteIndexMap(
       _abstract.permutations.stereopermutations.at(
         _feasible.indices.at(
           _assignmentOption.value()

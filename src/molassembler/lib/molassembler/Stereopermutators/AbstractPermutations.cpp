@@ -81,7 +81,7 @@ AbstractStereopermutations::selfReferentialTransform(
 std::vector<char> AbstractStereopermutations::makeStereopermutationCharacters(
   const RankingInformation::RankedSitesType& canonicalSites,
   const std::vector<char>& canonicalStereopermutationCharacters,
-  const std::vector<unsigned>& sitesAtSymmetryPositions
+  const std::vector<unsigned>& sitesAtShapeVertices
 ) {
   // Replace the site indices by their new ranking characters
   std::vector<unsigned> flattenedIndices;
@@ -93,7 +93,7 @@ std::vector<char> AbstractStereopermutations::makeStereopermutationCharacters(
 
   std::vector<char> newStereopermutationCharacters;
 
-  for(const auto& index : sitesAtSymmetryPositions) {
+  for(const auto& index : sitesAtShapeVertices) {
     const auto findIter = std::find(
       flattenedIndices.begin(),
       flattenedIndices.end(),

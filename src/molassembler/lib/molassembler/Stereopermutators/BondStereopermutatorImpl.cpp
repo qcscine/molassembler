@@ -1109,7 +1109,7 @@ void BondStereopermutator::Impl::propagateGraphChange(
     _assignment.value()
   );
 
-  auto oldSymmetryPositionToSiteMap = symmetryPositionToSiteMap(
+  auto oldSymmetryPositionToSiteMap = shapeVertexToSiteIndexMap(
     oldAbstract.permutations.stereopermutations.at(
       oldFeasible.indices.at(
         oldAssignment.value()
