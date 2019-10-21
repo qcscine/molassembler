@@ -12,6 +12,7 @@
 #include "molassembler/StereopermutatorList.h"
 
 #include "Utils/Geometry/ElementTypes.h"
+#include "Utils/Geometry/AtomCollection.h"
 
 #include "boost/process/child.hpp"
 #include "boost/process/io.hpp"
