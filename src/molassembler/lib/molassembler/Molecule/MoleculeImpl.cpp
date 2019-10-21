@@ -10,7 +10,6 @@
 #include "boost/graph/graph_utility.hpp"
 #include "chemical_symmetries/ConstexprProperties.h"
 #include "Utils/Constants.h"
-#include "Utils/Geometry/AtomCollection.h"
 #include "Utils/Typenames.h"
 
 #include "molassembler/Cycles.h"

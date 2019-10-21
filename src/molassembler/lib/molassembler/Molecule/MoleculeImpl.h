@@ -12,6 +12,7 @@
 #include "molassembler/Graph/InnerGraph.h"
 #include "molassembler/RankingInformation.h"
 #include "molassembler/StereopermutatorList.h"
+#include "Utils/Geometry/AtomCollection.h"
 
 /* TODO
  * - Clean up function definition order
