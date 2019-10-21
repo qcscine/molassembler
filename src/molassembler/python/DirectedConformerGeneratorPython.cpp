@@ -135,19 +135,21 @@ void init_directed_conformer_generator(pybind11::module& m) {
 
   dirConfGen.def(
     "get_decision_list",
-    pybind11::overload_cast<const Scine::Utils::AtomCollection&>(
+    pybind11::overload_cast<const Scine::Utils::AtomCollection&, BondStereopermutator::FittingMode>(
       &DirectedConformerGenerator::getDecisionList
     ),
     pybind11::arg("atom_collection"),
+    pybind11::arg("fitting_mode") = BondStereopermutator::FittingMode::Thresholded,
     "Infer a decision list for relevant bonds from an atom collection."
   );
 
   dirConfGen.def(
     "get_decision_list",
-    pybind11::overload_cast<const Scine::Utils::PositionCollection&>(
+    pybind11::overload_cast<const Scine::Utils::PositionCollection&, BondStereopermutator::FittingMode>(
       &DirectedConformerGenerator::getDecisionList
     ),
     pybind11::arg("positions"),
+    pybind11::arg("fitting_mode") = BondStereopermutator::FittingMode::Thresholded,
     "Infer a decision list for relevant bonds from positions."
   );
 

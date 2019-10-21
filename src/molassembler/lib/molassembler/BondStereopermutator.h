@@ -78,6 +78,16 @@ public:
     Eclipsed,
     Staggered
   };
+
+  /**
+   * @brief Differentiates how viable assignments are chosen during fitting.
+   */
+  enum class FittingMode {
+    //! Positions must be close to the idealized assignment geometry
+    Thresholded,
+    //! Choose whichever assignment best represents the geometry directly
+    Nearest
+  };
 //!@}
 
 //!@name Static members
@@ -196,7 +206,8 @@ public:
   void fit(
     const AngstromWrapper& angstromWrapper,
     const AtomStereopermutator& stereopermutatorA,
-    const AtomStereopermutator& stereopermutatorB
+    const AtomStereopermutator& stereopermutatorB,
+    FittingMode mode = FittingMode::Thresholded
   );
 
   /*!

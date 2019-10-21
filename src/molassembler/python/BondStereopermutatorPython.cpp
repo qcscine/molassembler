@@ -19,6 +19,23 @@ void init_bond_stereopermutator(pybind11::module& m) {
     "joined by a bond"
   );
 
+  pybind11::enum_<BondStereopermutator::FittingMode> fittingMode(
+    bondStereopermutator,
+    "FittingMode",
+    "Differentiates how viable assignments are chosen during fitting"
+  );
+  fittingMode.value(
+    "Thresholded",
+    BondStereopermutator::FittingMode::Thresholded,
+    "Positions must be close to the idealized assignment geometry"
+  );
+  fittingMode.value(
+    "Nearest",
+    BondStereopermutator::FittingMode::Nearest,
+    "The assignment closest to the idealized geometry is chosen"
+  );
+
+
   bondStereopermutator.def(
     "assigned",
     &BondStereopermutator::assigned,

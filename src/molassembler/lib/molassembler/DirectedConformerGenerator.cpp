@@ -85,15 +85,17 @@ const Molecule& DirectedConformerGenerator::conformationMolecule(const DecisionL
 }
 
 DirectedConformerGenerator::DecisionList DirectedConformerGenerator::getDecisionList(
-  const Utils::AtomCollection& atomCollection
+  const Utils::AtomCollection& atomCollection,
+  const BondStereopermutator::FittingMode mode
 ) {
-  return _pImpl->getDecisionList(atomCollection);
+  return _pImpl->getDecisionList(atomCollection, mode);
 }
 
 DirectedConformerGenerator::DecisionList DirectedConformerGenerator::getDecisionList(
-  const Utils::PositionCollection& positions
+  const Utils::PositionCollection& positions,
+  const BondStereopermutator::FittingMode mode
 ) {
-  return _pImpl->getDecisionList(positions);
+  return _pImpl->getDecisionList(positions, mode);
 }
 
 } // namespace molassembler

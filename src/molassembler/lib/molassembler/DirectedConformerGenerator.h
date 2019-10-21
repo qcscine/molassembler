@@ -8,6 +8,7 @@
 #define INCLUDE_MOLASSEMBLER_DIRECTED_CONFORMER_GENERATOR_H
 
 #include "molassembler/Conformers.h"
+#include "molassembler/BondStereopermutator.h"
 
 #include "boost/optional/optional_fwd.hpp"
 #include "boost/variant/variant_fwd.hpp"
@@ -350,7 +351,10 @@ public:
    * @throws std::logic_error If the element type sequence of the atom
    * collection does not match the underlying molecule
    */
-  DecisionList getDecisionList(const Utils::AtomCollection& atomCollection);
+  DecisionList getDecisionList(
+    const Utils::AtomCollection& atomCollection,
+    BondStereopermutator::FittingMode mode = BondStereopermutator::FittingMode::Thresholded
+  );
 
   /*! @brief Infer a decision list for relevant bonds from positional information only
    *
@@ -368,7 +372,10 @@ public:
    *
    * @complexity{@math{\Theta(N)} bond stereopermutator fits}
    */
-  DecisionList getDecisionList(const Utils::PositionCollection& positions);
+  DecisionList getDecisionList(
+    const Utils::PositionCollection& positions,
+    BondStereopermutator::FittingMode mode = BondStereopermutator::FittingMode::Thresholded
+  );
 //!@}
 
 private:

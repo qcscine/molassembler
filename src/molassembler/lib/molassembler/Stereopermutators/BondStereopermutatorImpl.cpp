@@ -840,7 +840,8 @@ void BondStereopermutator::Impl::applyPermutation(const std::vector<AtomIndex>& 
 void BondStereopermutator::Impl::fit(
   const AngstromWrapper& angstromWrapper,
   const AtomStereopermutator& stereopermutatorA,
-  const AtomStereopermutator& stereopermutatorB
+  const AtomStereopermutator& stereopermutatorB,
+  const FittingMode mode
 ) {
   assert(stereopermutatorA.centralIndex() != stereopermutatorB.centralIndex());
 
@@ -937,7 +938,8 @@ void BondStereopermutator::Impl::fit(
       penalty += std::fabs(dihedralDifference);
     }
 
-    /* Check if this penalty is within acceptance threshold
+    /* Check if this penalty is within acceptance threshold if fitting mode
+     * encompasses this
      *
      * The logic here is that the acceptable deviation per dihedral should
      * depend on the order of the Composite (i.e. if there are three
@@ -945,8 +947,11 @@ void BondStereopermutator::Impl::fit(
      * than if there were only two).
      */
     if(
-      penalty / _composite.dihedrals(feasiblePermutationIndex).size()
-      > assignmentAcceptanceParameter * 2 * M_PI / _composite.order()
+      mode == FittingMode::Thresholded
+      && (
+        penalty / _composite.dihedrals(feasiblePermutationIndex).size()
+        > assignmentAcceptanceParameter * 2 * M_PI / _composite.order()
+      )
     ) {
       continue;
     }

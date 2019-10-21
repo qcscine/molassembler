@@ -340,7 +340,10 @@ DirectedConformerGenerator::Impl::generateConformation(
 }
 
 DirectedConformerGenerator::DecisionList
-DirectedConformerGenerator::Impl::getDecisionList(const Utils::AtomCollection& atomCollection) {
+DirectedConformerGenerator::Impl::getDecisionList(
+  const Utils::AtomCollection& atomCollection,
+  const BondStereopermutator::FittingMode mode
+) {
   if(
     !temple::all_of(
       boost::make_iterator_range(_molecule.graph().atoms()),
@@ -352,11 +355,14 @@ DirectedConformerGenerator::Impl::getDecisionList(const Utils::AtomCollection& a
     throw std::logic_error("Input AtomCollection elements do not match generator's underlying molecule. Misordered? Different molecule input?");
   }
 
-  return getDecisionList(atomCollection.getPositions());
+  return getDecisionList(atomCollection.getPositions(), mode);
 }
 
 DirectedConformerGenerator::DecisionList
-DirectedConformerGenerator::Impl::getDecisionList(const Utils::PositionCollection& positions) {
+DirectedConformerGenerator::Impl::getDecisionList(
+  const Utils::PositionCollection& positions,
+  const BondStereopermutator::FittingMode mode
+) {
   AngstromWrapper angstromPositions {positions};
 
   if(
@@ -383,7 +389,7 @@ DirectedConformerGenerator::Impl::getDecisionList(const Utils::PositionCollectio
       auto stereoOption = _molecule._pImpl->_stereopermutators.option(bondIndex);
 
       assert(firstAtom && secondAtom && stereoOption);
-      stereoOption->fit(angstromPositions, *firstAtom, *secondAtom);
+      stereoOption->fit(angstromPositions, *firstAtom, *secondAtom, mode);
 
       return stereoOption->assigned().value_or(unknownDecision);
     }

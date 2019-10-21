@@ -96,7 +96,8 @@ struct BondStereopermutator::Impl : public temple::crtp::LexicographicComparable
   void fit(
     const AngstromWrapper& angstromWrapper,
     const AtomStereopermutator& stereopermutatorA,
-    const AtomStereopermutator& stereopermutatorB
+    const AtomStereopermutator& stereopermutatorB,
+    FittingMode mode
   );
 
   void propagateGraphChange(
