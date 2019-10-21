@@ -12,6 +12,8 @@
 #include "stereopermutation/Composites.h"
 #include "temple/Functional.h"
 
+#include "Utils/Geometry/AtomCollection.h"
+
 #include "boost/variant.hpp"
 
 namespace Scine {
@@ -338,7 +340,23 @@ DirectedConformerGenerator::Impl::generateConformation(
 }
 
 DirectedConformerGenerator::DecisionList
-DirectedConformerGenerator::Impl::getDecisionList(const Utils::PositionCollection& positions) const {
+DirectedConformerGenerator::Impl::getDecisionList(const Utils::AtomCollection& atomCollection) {
+  if(
+    !temple::all_of(
+      boost::make_iterator_range(_molecule.graph().atoms()),
+      [&](const AtomIndex i) -> bool {
+        return atomCollection.getElement(i) == _molecule.graph().elementType(i);
+      }
+    )
+  ) {
+    throw std::logic_error("Input AtomCollection elements do not match generator's underlying molecule. Misordered? Different molecule input?");
+  }
+
+  return getDecisionList(atomCollection.getPositions());
+}
+
+DirectedConformerGenerator::DecisionList
+DirectedConformerGenerator::Impl::getDecisionList(const Utils::PositionCollection& positions) {
   AngstromWrapper angstromPositions {positions};
 
   if(
@@ -354,7 +372,7 @@ DirectedConformerGenerator::Impl::getDecisionList(const Utils::PositionCollectio
       }
     )
   ) {
-    throw std::logic_error("Underlying molecule preconditions unmet!");
+    throw std::logic_error("Underlying molecule permutator preconditions unmet!");
   }
 
   return temple::map(
@@ -367,11 +385,7 @@ DirectedConformerGenerator::Impl::getDecisionList(const Utils::PositionCollectio
       assert(firstAtom && secondAtom && stereoOption);
       stereoOption->fit(angstromPositions, *firstAtom, *secondAtom);
 
-      if(!stereoOption->assigned()) {
-        throw std::logic_error("Assignment of a bond stereopermutator could not be recovered");
-      }
-
-      return *stereoOption->assigned();
+      return stereoOption->assigned().value_or(unknownDecision);
     }
   );
 }

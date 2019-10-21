@@ -17,6 +17,11 @@
 #include <memory>
 
 namespace Scine {
+
+namespace Utils {
+class AtomCollection;
+} // namespace Utils
+
 namespace molassembler {
 
 namespace outcome = BOOST_OUTCOME_V2_NAMESPACE;
@@ -77,6 +82,8 @@ public:
    *   but still better than each position having its own character.
    */
   using DecisionList = std::vector<std::uint8_t>;
+
+  constexpr static std::uint8_t unknownDecision = std::numeric_limits<std::uint8_t>::max();
 
   //* @brief Reason why a bond is ignored
   enum class IgnoreReason {
@@ -323,10 +330,35 @@ public:
    */
   const Molecule& conformationMolecule(const DecisionList& decisionList);
 
-  /*! @brief Infer a decision list for relevant bonds from positional information
+  /*! @brief Infer a decision list for relevant bonds from an atom collection
    *
    * For all bonds considered relevant (i.e. all bonds in bondList()), fits
    * supplied positions to possible stereopermutations and returns the result.
+   * Entries have the value `DirectedConformer::unknownDecision` if no
+   * permutation could be recovered. The usual BondStereopermutator fitting
+   * tolerances apply.
+   *
+   * @warning This function assumes several things about your supplied positions
+   * - There have only been dihedral changes and no AtomStereopermutator
+   *   assignment changes
+   * - The molecule represented in @p positions has not constutitionally
+   *   rearranged (although a little check for matching element types does
+   *   exist here. This is not a full safeguard against index permutations.)
+   *
+   * @complexity{@math{\Theta(N)} bond stereopermutator fits}
+   *
+   * @throws std::logic_error If the element type sequence of the atom
+   * collection does not match the underlying molecule
+   */
+  DecisionList getDecisionList(const Utils::AtomCollection& atomCollection);
+
+  /*! @brief Infer a decision list for relevant bonds from positional information only
+   *
+   * For all bonds considered relevant (i.e. all bonds in bondList()), fits
+   * supplied positions to possible stereopermutations and returns the result.
+   * Entries have the value `DirectedConformer::unknownDecision` if no
+   * permutation could be recovered. The usual BondStereopermutator fitting
+   * tolerances apply.
    *
    * @warning This function assumes several things about your supplied positions
    * - There have only been dihedral changes and no AtomStereopermutator
@@ -335,11 +367,8 @@ public:
    *   rearranged
    *
    * @complexity{@math{\Theta(N)} bond stereopermutator fits}
-   *
-   * @throws std::logic_error If an assignment could not be recovered from
-   *   positions
    */
-  DecisionList getDecisionList(const Utils::PositionCollection& positions) const;
+  DecisionList getDecisionList(const Utils::PositionCollection& positions);
 //!@}
 
 private:

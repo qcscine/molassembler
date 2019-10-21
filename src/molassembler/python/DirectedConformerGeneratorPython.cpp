@@ -9,6 +9,8 @@
 #include "molassembler/DirectedConformerGenerator.h"
 #include "molassembler/BondStereopermutator.h"
 
+#include "Utils/Geometry/AtomCollection.h"
+
 void init_directed_conformer_generator(pybind11::module& m) {
   using namespace Scine::molassembler;
 
@@ -133,8 +135,26 @@ void init_directed_conformer_generator(pybind11::module& m) {
 
   dirConfGen.def(
     "get_decision_list",
-    &DirectedConformerGenerator::getDecisionList,
+    pybind11::overload_cast<const Scine::Utils::AtomCollection&>(
+      &DirectedConformerGenerator::getDecisionList
+    ),
+    pybind11::arg("atom_collection"),
+    "Infer a decision list for relevant bonds from an atom collection."
+  );
+
+  dirConfGen.def(
+    "get_decision_list",
+    pybind11::overload_cast<const Scine::Utils::PositionCollection&>(
+      &DirectedConformerGenerator::getDecisionList
+    ),
     pybind11::arg("positions"),
-    "Infer a decision list for relevant bonds from positions"
+    "Infer a decision list for relevant bonds from positions."
+  );
+
+  dirConfGen.def_property_readonly_static(
+    "UNKNOWN_DECISION",
+    [](pybind11::object /* self */) {
+      return DirectedConformerGenerator::unknownDecision;
+    }
   );
 }

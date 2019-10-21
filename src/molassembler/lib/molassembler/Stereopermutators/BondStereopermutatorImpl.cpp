@@ -893,11 +893,11 @@ void BondStereopermutator::Impl::fit(
       std::tie(firstSymmetryPosition, secondSymmetryPosition, dihedralAngle) = dihedralTuple;
 
       // Get site index of leftSymmetryPosition in left
-      unsigned firstSiteIndex = SymmetryMapHelper::getSiteIndexAt(
+      const unsigned firstSiteIndex = SymmetryMapHelper::getSiteIndexAt(
         firstSymmetryPosition,
         firstStereopermutator.getSymmetryPositionMap()
       );
-      unsigned secondSiteIndex = SymmetryMapHelper::getSiteIndexAt(
+      const unsigned secondSiteIndex = SymmetryMapHelper::getSiteIndexAt(
         secondSymmetryPosition,
         secondStereopermutator.getSymmetryPositionMap()
       );
@@ -915,12 +915,14 @@ void BondStereopermutator::Impl::fit(
        * zero.
        */
 
-      double dihedralDifference = cartesian::dihedral(
+      const double measuredDihedral = cartesian::dihedral(
         firstSitePositions.col(firstSiteIndex),
         angstromWrapper.positions.row(firstStereopermutator.centralIndex()),
         angstromWrapper.positions.row(secondStereopermutator.centralIndex()),
         secondSitePositions.col(secondSiteIndex)
-      ) - dihedralAngle;
+      );
+
+      double dihedralDifference = measuredDihedral - dihedralAngle;
 
       // + pi is part of the definition interval, so use greater than
       if(dihedralDifference > M_PI) {
@@ -969,6 +971,9 @@ void BondStereopermutator::Impl::fit(
       temple::find(_feasiblePermutations, stereopermutation)
       - std::begin(_feasiblePermutations)
     );
+  } else {
+    // On ambiguous matching, dis-assign the stereopermutator
+    _assignment = boost::none;
   }
 }
 

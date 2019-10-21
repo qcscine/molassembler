@@ -16,9 +16,6 @@
 
 #include <iostream>
 
-// TODO temp
-#include <cfenv>
-
 using namespace Scine;
 using BondIndex = molassembler::BondIndex;
 
@@ -228,10 +225,6 @@ BOOST_AUTO_TEST_CASE(BondStatePropagationTests) {
 }
 
 BOOST_AUTO_TEST_CASE(StereocentersInSmallCycles) {
-#ifndef NDEBUG
-  feenableexcept(FE_DIVBYZERO | FE_INVALID | FE_OVERFLOW);
-#endif
-
   // Flat map from cycle size to number of assignments
   const std::vector<unsigned> expectedAssignmentsMap {
   //0, 1, 2, 3, 4, 5, 6, 7, 8

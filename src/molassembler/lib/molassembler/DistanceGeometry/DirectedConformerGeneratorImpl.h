@@ -61,7 +61,8 @@ public:
     const DistanceGeometry::Configuration& configuration
   );
 
-  DecisionList getDecisionList(const Utils::PositionCollection& positions) const;
+  DecisionList getDecisionList(const Utils::AtomCollection& atomCollection);
+  DecisionList getDecisionList(const Utils::PositionCollection& positions);
 
   const Molecule& conformationMolecule(const DecisionList& decisionList);
 

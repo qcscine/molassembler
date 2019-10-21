@@ -14,6 +14,8 @@
 namespace Scine {
 namespace molassembler {
 
+constexpr std::uint8_t DirectedConformerGenerator::unknownDecision;
+
 /* Static functions */
 unsigned DirectedConformerGenerator::distance(
   const DecisionList& a,
@@ -83,8 +85,14 @@ const Molecule& DirectedConformerGenerator::conformationMolecule(const DecisionL
 }
 
 DirectedConformerGenerator::DecisionList DirectedConformerGenerator::getDecisionList(
+  const Utils::AtomCollection& atomCollection
+) {
+  return _pImpl->getDecisionList(atomCollection);
+}
+
+DirectedConformerGenerator::DecisionList DirectedConformerGenerator::getDecisionList(
   const Utils::PositionCollection& positions
-) const {
+) {
   return _pImpl->getDecisionList(positions);
 }
 
