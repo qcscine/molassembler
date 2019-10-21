@@ -415,7 +415,10 @@ BOOST_AUTO_TEST_CASE(AsymmetricTopStandardization) {
 
 BOOST_AUTO_TEST_CASE(ShapeMeasures) {
   for(const Shape shape : allShapes) {
-    auto shapeCoordinates = symmetryData().at(shape).coordinates;
+    std::cout << name(shape) << "\n";
+    auto shapeCoordinates = continuous::normalize(
+      addOrigin(symmetryData().at(shape).coordinates)
+    );
     const double unrotated = continuous::shape(shapeCoordinates, shape);
     BOOST_CHECK_MESSAGE(
       unrotated < 1e-10,

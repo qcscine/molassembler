@@ -11,15 +11,43 @@
 #include "temple/constexpr/Numeric.h"
 
 #include "boost/math/tools/minima.hpp"
-
-/* TODO temp */
-#include "temple/Stringify.h"
-#include <iostream>
-#include <iomanip>
+#include <Eigen/Eigenvalues>
 
 namespace Scine {
 namespace Symmetry {
 namespace continuous {
+
+using Matrix = Eigen::Matrix<double, 3, Eigen::Dynamic>;
+
+bool centroidIsZero(const Matrix& a) {
+  const Eigen::Vector3d centroid = (a.rowwise().sum() / a.cols());
+  return centroid.squaredNorm() < 1e-8;
+}
+
+Eigen::Matrix3d fitQuaternion(const Matrix& stator, const Matrix& rotor) {
+  assert(centroidIsZero(stator));
+  assert(centroidIsZero(rotor));
+
+  Eigen::Matrix4d b = Eigen::Matrix4d::Zero();
+  // generate decomposable matrix per atom and add them
+  for (int i = 0; i < rotor.cols(); i++) {
+    auto& rotorCol = rotor.col(i);
+    auto& statorCol = stator.col(i);
+
+    Eigen::Matrix4d a = Eigen::Matrix4d::Zero();
+    a.block<1, 3>(0, 1) = (rotorCol - statorCol).transpose();
+    a.block<3, 1>(1, 0) = statorCol - rotorCol;
+    a.block<3, 3>(1, 1) = Eigen::Matrix3d::Identity().rowwise().cross(statorCol + rotorCol);
+    b += a.transpose() * a;
+  }
+
+  // Decompose b
+  Eigen::SelfAdjointEigenSolver<Eigen::Matrix4d> eigensolver(b);
+
+  // Do not allow improper rotation
+  const Eigen::Vector4d& q = eigensolver.eigenvectors().col(0);
+  return Eigen::Quaterniond(q[0], q[1], q[2], q[3]).toRotationMatrix();
+}
 
 bool isNormalized(const PositionCollection& positions) {
   /* All vectors are shorter or equally long as a unit vector
@@ -48,8 +76,6 @@ PositionCollection normalize(const PositionCollection& positions) {
 
   // Rescale all distances so that the longest is a unit vector
   transformed /= std::sqrt(transformed.colwise().squaredNorm().maxCoeff());
-  // At least two points must remain
-  assert(transformed.cols() >= 2);
   assert(isNormalized(transformed));
   return transformed;
 }
@@ -1002,87 +1028,53 @@ double shapeAlternateImplementation(
   assert(isNormalized(normalizedPositions));
   const unsigned N = normalizedPositions.cols();
 
-  if(N != size(shape)) {
+  if(N != size(shape) + 1) {
     throw std::logic_error("Mismatched number of positions between supplied coordinates and shape!");
   }
 
-  using MinimizerType = temple::SO3NelderMead<>;
+  auto permutation = temple::iota<unsigned>(N);
 
-  struct NelderMeadChecker {
-    bool shouldContinue(unsigned iteration, double lowestValue, double stddev) const {
-      return iteration < 1000 && lowestValue > 1e-6 && stddev > 1e-3;
-    }
-  };
+  // Add the origin
+  Matrix shapeCoordinates(3, N);
+  shapeCoordinates.block(0, 0, 3, N - 1) = symmetryData().at(shape).coordinates;
+  shapeCoordinates.col(N - 1) = Eigen::Vector3d::Zero();
+  // Normalize the coordinates
+  shapeCoordinates = normalize(shapeCoordinates);
 
-  MinimizerType::Parameters simplex;
-  simplex.at(0) = Eigen::Matrix3d::Identity();
-  simplex.at(1) = Eigen::AngleAxisd(M_PI / 2, Eigen::Vector3d::UnitX()).toRotationMatrix();
-  simplex.at(2) = Eigen::AngleAxisd(M_PI / 2, Eigen::Vector3d::UnitY()).toRotationMatrix();
-  simplex.at(3) = Eigen::AngleAxisd(M_PI / 2, Eigen::Vector3d::UnitZ()).toRotationMatrix();
+  double permutationalMinimum = std::numeric_limits<double>::max();
 
-  const auto& shapeCoordinates = symmetryData().at(shape).coordinates;
-  auto rotationMinimization = MinimizerType::minimize(
-    simplex,
-    [&](const Eigen::Matrix3d& rotation) -> double {
-      double minimalValue = std::numeric_limits<double>::max();
-      const auto rotatedReference = rotation * shapeCoordinates;
-      std::vector<unsigned> permutation = temple::iota<unsigned>(N);
-      do {
-        minimalValue = std::min(
-          minimalValue,
-          temple::accumulate(
-            temple::adaptors::range(N),
-            0.0,
-            [&](const double carry, unsigned i) -> double {
-              return carry + (
-                normalizedPositions.col(i) - rotatedReference.col(permutation.at(i))
-              ).squaredNorm();
-            }
-          )
-        );
-      } while(std::next_permutation(std::begin(permutation), std::end(permutation)));
-      return minimalValue;
-    },
-    NelderMeadChecker {}
-  );
-
-  auto rotatedReference = simplex.at(rotationMinimization.minimalIndex) * shapeCoordinates;
-
-  constexpr double scalingLowerBound = 0.75;
-  constexpr double scalingUpperBound = 1.25;
-
+  Eigen::Matrix<double, 3, Eigen::Dynamic> permutedShape(3, N);
   std::vector<unsigned> bestPermutation;
-  {
-    auto permutation = temple::iota<unsigned>(N);
-    double minimalValue = std::numeric_limits<double>::max();
-    do {
-      double value = temple::accumulate(
-        temple::adaptors::range(N),
-        0.0,
-        [&](const double carry, unsigned i) -> double {
-          return carry + (
-            normalizedPositions.col(i) - rotatedReference.col(permutation.at(i))
-          ).squaredNorm();
-        }
-      );
-      if(value < minimalValue) {
-        minimalValue = value;
-        bestPermutation = permutation;
-      }
-    } while(std::next_permutation(std::begin(permutation), std::end(permutation)));
+  Eigen::Matrix3d bestRotationMatrix;
+  do {
+    // Construct a permuted shape positions matrix
+    for(unsigned i = 0; i < N; ++i) {
+      permutedShape.col(permutation.at(i)) = shapeCoordinates.col(i);
+    }
+
+    // Perform a quaternion fit
+    auto rotationMatrix = fitQuaternion(normalizedPositions, permutedShape);
+    permutedShape = rotationMatrix * permutedShape;
+
+    const double value = (normalizedPositions - permutedShape).colwise().squaredNorm().sum();
+    if(value < permutationalMinimum) {
+      bestPermutation = permutation;
+      permutationalMinimum = value;
+      bestRotationMatrix = rotationMatrix;
+    }
+  } while(std::next_permutation(std::begin(permutation), std::end(permutation)));
+
+  for(unsigned i = 0; i < N; ++i) {
+    permutedShape.col(bestPermutation.at(i)) = shapeCoordinates.col(i);
   }
+  permutedShape = bestRotationMatrix * permutedShape;
+
+  constexpr double scalingLowerBound = 0.5;
+  constexpr double scalingUpperBound = 1.1;
 
   auto scalingMinimizationResult = boost::math::tools::brent_find_minima(
     [&](const double scaling) -> double {
-      return temple::accumulate(
-        temple::adaptors::range(N),
-        0.0,
-        [&](const double carry, unsigned i) -> double {
-          return carry + (
-            normalizedPositions.col(i) - scaling * rotatedReference.col(bestPermutation.at(i))
-          ).squaredNorm();
-        }
-      );
+      return (normalizedPositions - scaling * permutedShape).colwise().squaredNorm().sum();
     },
     scalingLowerBound,
     scalingUpperBound,
