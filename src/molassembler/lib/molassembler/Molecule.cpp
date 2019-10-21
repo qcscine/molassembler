@@ -9,6 +9,16 @@ namespace Scine {
 
 namespace molassembler {
 
+Utils::AtomCollection Molecule::applyCanonicalizationMap(
+  const std::vector<AtomIndex>& canonicalizationIndexMap,
+  const Utils::AtomCollection& atomCollection
+) {
+  return Impl::applyCanonicalizationMap(
+    canonicalizationIndexMap,
+    atomCollection
+  );
+}
+
 /* Molecule interface to Impl call forwards */
 Molecule::Molecule() noexcept : _pImpl(
   std::make_unique<Impl>()

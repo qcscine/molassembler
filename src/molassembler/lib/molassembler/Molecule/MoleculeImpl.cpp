@@ -10,6 +10,7 @@
 #include "boost/graph/graph_utility.hpp"
 #include "chemical_symmetries/ConstexprProperties.h"
 #include "Utils/Constants.h"
+#include "Utils/Geometry/AtomCollection.h"
 #include "Utils/Typenames.h"
 
 #include "molassembler/Cycles.h"
@@ -27,6 +28,21 @@
 namespace Scine {
 
 namespace molassembler {
+
+Utils::AtomCollection Molecule::Impl::applyCanonicalizationMap(
+  const std::vector<AtomIndex>& canonicalizationIndexMap,
+  const Utils::AtomCollection& atomCollection
+) {
+  const unsigned N = atomCollection.size();
+  Utils::AtomCollection permuted(N);
+  for(unsigned i = 0; i < N; ++i) {
+    unsigned newIndex = canonicalizationIndexMap.at(i);
+    permuted.setElement(newIndex, atomCollection.getElement(i));
+    permuted.setPosition(newIndex, atomCollection.getPosition(i));
+  }
+
+  return permuted;
+}
 
 void Molecule::Impl::_tryAddAtomStereopermutator(
   AtomIndex candidateIndex,

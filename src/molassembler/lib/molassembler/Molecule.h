@@ -25,6 +25,7 @@
 namespace Scine {
 namespace Utils {
 using ElementTypeCollection = std::vector<ElementType>;
+class AtomCollection;
 } // namespace Utils
 } // namespace Scine
 
@@ -86,6 +87,24 @@ struct RankingInformation;
  */
 class Molecule {
 public:
+
+//!@name Static functions
+//!@{
+  /**
+   * @brief Applies a canonicalization index mapping to an atom collection
+   *
+   * @param canonicalizationIndexMap Index mapping received from a molecule
+   *   canonicalization operation
+   * @param atomCollection the atom collection to permute
+   *
+   * @return A permuted atom collection
+   */
+  static Utils::AtomCollection applyCanonicalizationMap(
+    const std::vector<AtomIndex>& canonicalizationIndexMap,
+    const Utils::AtomCollection& atomCollection
+  );
+//!@}
+
 //!@name Special member functions
 //!@{
   /* Rule of five members */

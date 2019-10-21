@@ -254,6 +254,38 @@ InterpretResult interpret(
   );
 }
 
+std::vector<Utils::AtomCollection> applyInterpretationMap(
+  const InterpretResult& interpretResult,
+  const Utils::AtomCollection& atomCollection
+) {
+  /* Allocate the collections */
+  std::vector<Utils::AtomCollection> collections;
+  collections.reserve(interpretResult.molecules.size());
+  for(const auto& mol : interpretResult.molecules) {
+    collections.emplace_back(
+      mol.graph().N()
+    );
+  }
+  std::vector<unsigned> collectionSizes(interpretResult.molecules.size(), 0);
+
+  for(unsigned i = 0; i < interpretResult.componentMap.size(); ++i) {
+    unsigned moleculeIndex = interpretResult.componentMap.at(i);
+    Utils::AtomCollection& collection = collections.at(moleculeIndex);
+    unsigned& collectionSize = collectionSizes.at(moleculeIndex);
+    collection.setElement(
+      collectionSize,
+      atomCollection.getElement(i)
+    );
+    collection.setPosition(
+      collectionSize,
+      atomCollection.getPosition(i)
+    );
+    ++collectionSize;
+  }
+
+  return collections;
+}
+
 } // namespace molassembler
 
 } // namespace Scine

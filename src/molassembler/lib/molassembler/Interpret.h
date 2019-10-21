@@ -157,6 +157,20 @@ InterpretResult interpret(
   const boost::optional<double>& stereopermutatorBondOrderThresholdOptional = 1.4
 );
 
+/**
+ * @brief Splits an AtomCollection just like the interpret split the positions
+ *   into multiple molecules
+ *
+ * @param interpretResult Result from interpreting the supplied atomCollection
+ * @param atomCollection AtomCollection to split
+ *
+ * @return As many atom collections as molecules from interpretation
+ */
+std::vector<Utils::AtomCollection> applyInterpretationMap(
+  const InterpretResult& interpretResult,
+  const Utils::AtomCollection& atomCollection
+);
+
 } // namespace molassembler
 
 } // namespace Scine

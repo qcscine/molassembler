@@ -96,6 +96,14 @@ void init_molecule(pybind11::module& m) {
     "stereopermutators from the graph"
   );
 
+  molecule.def_static(
+    "apply_canonicalization_map",
+    &Molecule::applyCanonicalizationMap,
+    pybind11::arg("canonicalization_index_map"),
+    pybind11::arg("atom_collection"),
+    "Reorders an atom collection according to an index mapping from canonicalization"
+  );
+
   /* Modifiers */
   molecule.def(
     "add_atom",

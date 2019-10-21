@@ -69,4 +69,12 @@ void init_interpret(pybind11::module& m) {
     "Interpret molecules from element types and positional information. Bond "
     "orders are then interpreted using UFF parameters."
   );
+
+  m.def(
+    "apply_interpretation_map",
+    &applyInterpretationMap,
+    pybind11::arg("interpret_result"),
+    pybind11::arg("atom_collection"),
+    "Splits an atom collection just like the interpret split the positions into multiple molecules"
+  );
 }

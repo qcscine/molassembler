@@ -13,11 +13,20 @@
 #include "molassembler/RankingInformation.h"
 #include "molassembler/StereopermutatorList.h"
 
+/* TODO
+ * - Clean up function definition order
+ */
+
 namespace Scine {
 
 namespace molassembler {
 
 struct Molecule::Impl {
+  static Utils::AtomCollection applyCanonicalizationMap(
+    const std::vector<AtomIndex>& canonicalizationIndexMap,
+    const Utils::AtomCollection& atomCollection
+  );
+
   OuterGraph _adjacencies;
   StereopermutatorList _stereopermutators;
   AtomEnvironmentComponents _canonicalComponents = AtomEnvironmentComponents::None;
