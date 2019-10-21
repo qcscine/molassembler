@@ -75,17 +75,7 @@ void writeDistortions(
 ) {
   std::cout << std::fixed << std::setprecision(2);
 
-  auto sortedView = temple::view_sort(
-    distortions,
-    [](const auto& a, const auto& b) -> bool {
-      return (
-        std::tie(b.angularDistortion, b.chiralDistortion)
-        < std::tie(a.angularDistortion, a.chiralDistortion)
-      );
-    }
-  );
-
-  for(const auto& distortion : sortedView) {
+  for(const auto& distortion : distortions) {
     std::cout << distortion << nl;
   }
 }
@@ -97,7 +87,7 @@ double calculateAmbiguity(
    * lowest mapping is.
    */
 
-  auto sortByTotalView = temple::view_sort(
+  auto sortByTotalView = temple::sort(
     distortions,
     [](const auto& a, const auto& b) -> bool {
       return (
@@ -207,20 +197,33 @@ int main(int argc, char* argv[]) {
       return 1;
     }
 
+    const auto distortionComparator = [](const auto& a, const auto& b) -> bool {
+      return (
+        std::tie(a.angularDistortion, a.chiralDistortion)
+        > std::tie(b.angularDistortion, b.chiralDistortion)
+      );
+    };
+
     if(diff == 1 || diff == 0) {
-      auto distortions = Symmetry::properties::symmetryTransitionMappings(
-        sourceSymmetry,
-        targetSymmetry
+      const auto distortions = temple::sort(
+        Symmetry::properties::symmetryTransitionMappings(
+          sourceSymmetry,
+          targetSymmetry
+        ),
+        distortionComparator
       );
 
       printMappingsHeader();
       writeDistortions(distortions);
     } else {
       for(unsigned i = 0; i < Symmetry::size(sourceSymmetry); ++i) {
-        auto distortions = Symmetry::properties::ligandLossTransitionMappings(
-          sourceSymmetry,
-          targetSymmetry,
-          i
+        const auto distortions = temple::sort(
+            Symmetry::properties::ligandLossTransitionMappings(
+            sourceSymmetry,
+            targetSymmetry,
+            i
+          ),
+          distortionComparator
         );
 
         printMappingsHeader();
@@ -283,7 +286,7 @@ int main(int argc, char* argv[]) {
       }
     }
 
-    auto sortedView = temple::view_sort(
+    temple::inplace::sort(
       ambiguities,
       [](const auto& a, const auto& b) -> bool {
         return a.ambiguity < b.ambiguity;
@@ -305,7 +308,7 @@ int main(int argc, char* argv[]) {
       << std::setw(ambiguityColumns[2]) << "Target"
       << std::setw(ambiguityColumns[3]) << "Idx" << nl;
 
-    for(const auto& entry : sortedView) {
+    for(const auto& entry : ambiguities) {
       std::cout << std::setw(ambiguityColumns[0]) << entry.ambiguity
         << std::setw(ambiguityColumns[1]) << Symmetry::name(entry.source)
         << std::setw(ambiguityColumns[2]) << Symmetry::name(entry.target)

@@ -13,7 +13,6 @@
 #include "temple/Optionals.h"
 #include "temple/Permutations.h"
 #include "temple/Variadic.h"
-#include "temple/VectorView.h"
 #include "temple/constexpr/Numeric.h"
 
 #include "chemical_symmetries/Symmetries.h"
@@ -595,56 +594,41 @@ SymmetryTransitionGroup selectBestTransitionMappings(
    * so we sub-select within the generated set
    */
 
-  double lowestAngularDistortion = temple::min(
-    temple::adaptors::transform(
-      distortions,
-      [](const auto& distortion) -> double {
-        return distortion.angularDistortion;
-      }
-    )
-  );
-
-  auto distortionsView = temple::view_filter(
-    distortions,
-    [&lowestAngularDistortion](const auto& distortion) -> bool {
-      return (
-        distortion.angularDistortion > (
-          lowestAngularDistortion + floatingPointEqualityThreshold
-        )
-      );
+  const double lowestAngularDistortion = std::min_element(
+    std::begin(distortions),
+    std::end(distortions),
+    [](const auto& a, const auto& b) -> bool {
+      return a.angularDistortion < b.angularDistortion;
     }
-  );
+  )->angularDistortion;
 
-  // And now sub-set further on the lowest chiral distortion
-  double lowestChiralDistortion = temple::min(
-    temple::adaptors::transform(
-      distortionsView,
-      [](const auto& distortion) -> double {
-        return distortion.chiralDistortion;
-      }
-    )
-  );
-
-  distortionsView.filter(
-    [&lowestChiralDistortion](const auto& distortion) -> bool {
-      return (
-        distortion.chiralDistortion > (
-          lowestChiralDistortion + floatingPointEqualityThreshold
-        )
-      );
+  std::vector<unsigned> viableDistortions;
+  for(unsigned i = 0; i < distortions.size(); ++i) {
+    if(distortions.at(i).angularDistortion > lowestAngularDistortion + floatingPointEqualityThreshold) {
+      viableDistortions.push_back(i);
     }
-  );
-
-  std::vector<
-    std::vector<unsigned>
-  > mappings;
-
-  for(const auto& distortionInfo : distortionsView) {
-    mappings.push_back(distortionInfo.indexMapping);
   }
 
+  // And now sub-set further on the lowest chiral distortion
+  const double lowestChiralDistortion = distortions.at(
+    *std::min_element(
+      std::begin(viableDistortions),
+      std::end(viableDistortions),
+      [&](const unsigned a, const unsigned b) -> bool {
+        return distortions.at(a).chiralDistortion < distortions.at(b).chiralDistortion;
+      }
+    )
+  ).chiralDistortion;
+
+  temple::inplace::remove_if(
+    viableDistortions,
+    [&](const unsigned a) -> bool {
+      return distortions.at(a).chiralDistortion > lowestChiralDistortion + floatingPointEqualityThreshold;
+    }
+  );
+
   return SymmetryTransitionGroup(
-    mappings,
+    temple::map(viableDistortions, [&](auto i) { return distortions.at(i).indexMapping; }),
     lowestAngularDistortion,
     lowestChiralDistortion
   );

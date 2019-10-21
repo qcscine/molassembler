@@ -139,40 +139,6 @@ std::ostream& operator << (std::ostream& os, const std::vector<double>& values) 
  *     probe point are meta-parameters that need to be optimized too.
  */
 
-std::vector<continuous::PositionCollection> groupPoints(
-  const elements::ElementsList elements,
-  const elements::NPGroupingsMapType& npGroupings,
-  const unsigned N
-) {
-  std::vector<unsigned> usableGroupSizes;
-  for(const auto& iterPair : npGroupings) {
-    if(
-      iterPair.first <= N
-      && !temple::all_of(
-        iterPair.second,
-        [](const auto& elementGrouping) {
-          return elementGrouping.probePoint.isApprox(Eigen::Vector3d::Zero(), 1e-5);
-        }
-      )
-    ) {
-      usableGroupSizes.push_back(iterPair.first);
-    }
-  }
-
-  std::vector<unsigned> groupSizeMultipliers;
-  if(!diophantine::has_solution(usableGroupSizes, N)) {
-    throw std::logic_error("No P = N groupings for this point group");
-  }
-
-  if(!diophantine::first_solution(groupSizeMultipliers, usableGroupSizes, N)) {
-    throw std::logic_error("Diophantine failed");
-  }
-
-  do {
-
-  } while(diophantine::next_solution(groupSizeMultipliers, usableGroupSizes, N));
-}
-
 struct RScriptWriter {
   std::ofstream file;
 
@@ -228,7 +194,6 @@ struct RScriptWriter {
 
 int main(int argc, char* argv[]) {
   bool showElements = false;
-  bool fuzzPointGroups = false;
   /* Set up program options */
   boost::program_options::options_description options_description("Recognized options");
   options_description.add_options()
@@ -242,11 +207,6 @@ int main(int argc, char* argv[]) {
       "elements,e",
       boost::program_options::bool_switch(&showElements),
       "Show element CSM statistics instead of point groups"
-    )
-    (
-      "fuzz,f",
-      boost::program_options::bool_switch(&fuzzPointGroups),
-      "Fuzz point groups"
     )
   ;
 
@@ -339,40 +299,7 @@ int main(int argc, char* argv[]) {
     }
   }
 
-  if(fuzzPointGroups) {
-    const unsigned N = 6;
-    const unsigned nStructures = 100;
-    const double fuzzDelta = 0.05;
-    const double maxFuzz = 1.00;
-    const std::vector<PointGroup> groups {
-      PointGroup::Oh,
-      PointGroup::D3h
-    };
-
-    for(const PointGroup group : groups) {
-      /* Need to use diophantine of all groupings smaller or equal in size to N
-       * to generate all types of structure compatible with the point group
-       */
-      auto elements = elements::symmetryElements(group);
-      auto npGroupings = elements::npGroupings(elements);
-
-
-      // Generate random point group symmetric structures
-      auto structures = temple::map(
-        temple::adaptors::range(100),
-        [&](unsigned /* i */) -> continuous::PositionCollection {
-
-        }
-      );
-
-
-      for(double fuzz = 0; fuzz <= maxFuzz; fuzz += fuzzDelta) {
-
-      }
-    }
-  }
-
-  if(!fuzzPointGroups && !showElements) {
+  if(!showElements) {
     std::cout << "Average CSM for uniform coordinates in sphere:\n";
     for(const Shape shape : allShapes) {
       const PointGroup group = pointGroup(shape);

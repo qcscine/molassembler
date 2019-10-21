@@ -58,7 +58,6 @@ set(HEADERS_All
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/Traits.h
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/UnorderedSetAlgorithms.h
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/Variadic.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/temple/VectorView.h
 )
 
 add_library(temple INTERFACE)
