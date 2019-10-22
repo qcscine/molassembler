@@ -430,5 +430,15 @@ BOOST_AUTO_TEST_CASE(ShapeMeasures) {
       rotated < 0.1,
       "Expected CShM < 1e-2 for rotated coordinates of " << name(shape) << ", but got " << rotated
     );
+
+    // And now distort and compare implementations
+    distort(shapeCoordinates);
+    shapeCoordinates = continuous::normalize(shapeCoordinates);
+    const double faithful = continuous::shapeFaithfulPaperImplementation(
+      shapeCoordinates,
+      shape
+    );
+    const double alternate = continuous::shape(shapeCoordinates, shape);
+    BOOST_CHECK_CLOSE(faithful, alternate, 1);
   }
 }

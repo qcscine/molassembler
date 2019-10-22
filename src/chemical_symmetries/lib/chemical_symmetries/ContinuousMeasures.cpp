@@ -944,87 +944,64 @@ double shapeFaithfulPaperImplementation(
 ) {
   assert(isNormalized(normalizedPositions));
   const unsigned N = normalizedPositions.cols();
-  const double normalization = normalizedPositions.colwise().squaredNorm().sum();
 
-  if(N != size(shape)) {
+  if(N != size(shape) + 1) {
     throw std::logic_error("Mismatched number of positions between supplied coordinates and shape!");
   }
 
-  using MinimizerType = temple::SO3NelderMead<>;
+  auto permutation = temple::iota<unsigned>(N);
 
-  struct NelderMeadChecker {
-    bool shouldContinue(unsigned iteration, double lowestValue, double stddev) const {
-      return iteration < 1000 && lowestValue > 1e-5 && stddev > 1e-3;
-    }
-  };
+  // Add the origin
+  Matrix shapeCoordinates(3, N);
+  shapeCoordinates.block(0, 0, 3, N - 1) = symmetryData().at(shape).coordinates;
+  shapeCoordinates.col(N - 1) = Eigen::Vector3d::Zero();
+  // Normalize the coordinates
+  shapeCoordinates = normalize(shapeCoordinates);
 
-  MinimizerType::Parameters simplex;
-  std::vector<unsigned> permutation = temple::iota<unsigned>(N);
-  const auto& shapeCoordinates = symmetryData().at(shape).coordinates;
-  double minimalValue = std::numeric_limits<double>::max();
+  constexpr double scalingLowerBound = 0.5;
+  constexpr double scalingUpperBound = 1.1;
+
+  double permutationalMinimum = std::numeric_limits<double>::max();
+
+  Eigen::Matrix<double, 3, Eigen::Dynamic> permutedShape(3, N);
+  std::vector<unsigned> bestPermutation;
+  Eigen::Matrix3d bestRotationMatrix;
   do {
-    simplex.at(0) = Eigen::Matrix3d::Identity();
-    simplex.at(1) = Eigen::AngleAxisd(M_PI / 2, Eigen::Vector3d::UnitX()).toRotationMatrix();
-    simplex.at(2) = Eigen::AngleAxisd(M_PI / 2, Eigen::Vector3d::UnitY()).toRotationMatrix();
-    simplex.at(3) = Eigen::AngleAxisd(M_PI / 2, Eigen::Vector3d::UnitZ()).toRotationMatrix();
+    // Construct a permuted shape positions matrix
+    for(unsigned i = 0; i < N; ++i) {
+      permutedShape.col(permutation.at(i)) = shapeCoordinates.col(i);
+    }
 
-    auto rotationMinimization = MinimizerType::minimize(
-      simplex,
-      [&](const Eigen::Matrix3d& rotation) -> double {
-        const auto rotatedReference = rotation * shapeCoordinates;
-        return temple::accumulate(
-          temple::adaptors::range(N),
-          0.0,
-          [&](const double carry, unsigned i) -> double {
-            return carry + (
-              normalizedPositions.col(i) - rotatedReference.col(permutation.at(i))
-            ).squaredNorm();
-          }
-        );
-      },
-      NelderMeadChecker {}
-    );
+    // Perform a quaternion fit to minimize square norm difference over rotation
+    auto rotationMatrix = fitQuaternion(normalizedPositions, permutedShape);
+    permutedShape = rotationMatrix * permutedShape;
 
-    auto rotatedReference = simplex.at(rotationMinimization.minimalIndex) * shapeCoordinates;
-
-    constexpr double scalingLowerBound = 0.75;
-    constexpr double scalingUpperBound = 1.25;
-
+    // Minimize over isotropic scaling factor
     auto scalingMinimizationResult = boost::math::tools::brent_find_minima(
       [&](const double scaling) -> double {
-        return temple::accumulate(
-          temple::adaptors::range(N),
-          0.0,
-          [&](const double carry, unsigned i) -> double {
-            return carry + (
-              normalizedPositions.col(i) - scaling * rotatedReference.col(permutation.at(i))
-            ).squaredNorm();
-          }
-        );
+        return (normalizedPositions - scaling * permutedShape).colwise().squaredNorm().sum();
       },
       scalingLowerBound,
       scalingUpperBound,
-      std::numeric_limits<double>::digits / 2
+      std::numeric_limits<double>::digits
     );
 
-    // .first is the x value yielding a minimal f(x)
-    assert(
-      scalingMinimizationResult.first != scalingLowerBound
-      && scalingMinimizationResult.first != scalingUpperBound
-    );
-
-    const double result = 100 * scalingMinimizationResult.second / normalization;
-
-    minimalValue = std::min(minimalValue, result);
+    permutationalMinimum = std::min(permutationalMinimum, scalingMinimizationResult.second);
   } while(std::next_permutation(std::begin(permutation), std::end(permutation)));
 
-  return minimalValue;
+  const double normalization = normalizedPositions.colwise().squaredNorm().sum();
+  return  100 * permutationalMinimum / normalization;
 }
 
 double shapeAlternateImplementation(
   const PositionCollection& normalizedPositions,
   const Shape shape
 ) {
+  /* Speed up the faithful implementation by minimizing over rotation,
+   * remembering the best rotation matrix and minimizing over scaling outside
+   * of the permutational loop
+   */
+
   assert(isNormalized(normalizedPositions));
   const unsigned N = normalizedPositions.cols();
 
