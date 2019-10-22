@@ -415,6 +415,12 @@ BOOST_AUTO_TEST_CASE(AsymmetricTopStandardization) {
 
 BOOST_AUTO_TEST_CASE(ShapeMeasures) {
   for(const Shape shape : allShapes) {
+#ifndef NDEBUG
+    if(size(shape) > 6) {
+      continue;
+    }
+#endif
+
     std::cout << name(shape) << "\n";
     auto shapeCoordinates = continuous::normalize(
       addOrigin(symmetryData().at(shape).coordinates)
@@ -431,14 +437,103 @@ BOOST_AUTO_TEST_CASE(ShapeMeasures) {
       "Expected CShM < 1e-2 for rotated coordinates of " << name(shape) << ", but got " << rotated
     );
 
-    // And now distort and compare implementations
-    distort(shapeCoordinates);
-    shapeCoordinates = continuous::normalize(shapeCoordinates);
-    const double faithful = continuous::shapeFaithfulPaperImplementation(
-      shapeCoordinates,
-      shape
-    );
-    const double alternate = continuous::shape(shapeCoordinates, shape);
-    BOOST_CHECK_CLOSE(faithful, alternate, 1);
+    for(unsigned i = 1; i < 6; ++i) {
+      const double distortion = 0.1 * i;
+      auto distorted = shapeCoordinates;
+      distort(distorted, distortion);
+      distorted = continuous::normalize(distorted);
+
+      const double faithful = continuous::shapeFaithfulPaperImplementation(
+        distorted,
+        shape
+      );
+      const double alternate = continuous::shape(distorted, shape);
+      BOOST_CHECK_CLOSE(faithful, alternate, 1);
+    }
   }
+}
+
+BOOST_AUTO_TEST_CASE(MinimumDistortionConstants) {
+  /* NOTES
+   * - These constants are from https://pubs.acs.org/doi/10.1021/ja036479n
+   *
+   *   k_XY = sqrt( CShM_X(Y) ) = sqrt( CShM_Y(X) )
+   *
+   *   where CShM_X(Y) is the shape measure regarding shape X of coordinates of
+   *   the ideal shape Y
+   *
+   * - VOC-5 is our square pyramid, their square pyramid has 105° base-apex angles
+   */
+
+  const std::vector<
+    std::tuple<Shape, Shape, double>
+  > minimumDistortionConstants {
+    {Shape::Tetrahedron, Shape::Square, 5.774}, // T-4, SP-4
+
+    /* NOTE: Disphenoid / Sawhorse angle of "equatorial" vertices can vary,
+     * unclear here from the paper and close, but mismatching with our
+     * definition (120°, essentially a single-vacant trigonal bipyramid)
+     */
+//    {Shape::Tetrahedron, Shape::Disphenoid, 3.129}, // T-4, SW-4 [sic, is SS-4]
+//    {Shape::Disphenoid, Shape::Square, 4.365}, // SW-4, SP-4
+
+    {Shape::SquarePyramid, Shape::TrigonalBipyramid, 2.710}, // VOC-5, TBPY-5
+    {Shape::SquarePyramid, Shape::Pentagon, 5.677}, // VOC-5, PP-5
+    {Shape::TrigonalBipyramid, Shape::Pentagon, 6.088}, // TBPY-5, PP-5
+
+    // NOTE: All of the below that are commented out are missing the required shapes
+
+    {Shape::Octahedron, Shape::TrigonalPrism, 4.091}, // OC-6, TPR-6
+    {Shape::Octahedron, Shape::PentagonalPyramid, 5.517}, // OC-6, PPY-6
+//    {Shape::Octahedron, Shape::Hexagon, 5.774}, // OC-6, HP-6
+    {Shape::TrigonalPrism, Shape::PentagonalPyramid, 4.125}, // TPR-6, PPY-6
+//    {Shape::TrigonalPrism, Shape::Hexagon, 5.803}, // TPR-6, HP-6
+//    {Shape::PentagonalPyramid, Shape::Hexagon, 5.352}, // PPY-6, HP-6
+
+
+//    {Shape::CappedOctahedron, Shape::CappedTrigonalPrism, 1.236},
+//    {Shape::CappedOctahedron, Shape::PentagonalBipyramid, 2.899},
+//    {Shape::CappedOctahedron, Shape::HexagonalPyramid, 4.130},
+//    {Shape::CappedOctahedron, Shape::Heptagon, 6.146},
+//    {Shape::CappedTrigonalPrism, Shape::PentagonalBipyramid, 2.577},
+//    {Shape::CappedTrigonalPrism, Shape::HexagonalPyramid, 4.467},
+//    {Shape::CappedTrigonalPrism, Shape::Heptagon, 5.989},
+//    {Shape::PentagonalBipyramid, Shape::HexagonalPyramid, 5.166},
+//    {Shape::PentagonalBipyramid, Shape::Heptagon, 5.934},
+//    {Shape::HexagonalPyramid, Shape::Heptagon, 5.047},
+
+//    {Shape::Cube, Shape::Dodecahedron, 2.820},
+//    {Shape::Cube, Shape::SquareAntiprism, 3.315},
+//    {Shape::Cube, Shape::HexagonalBipyramid, 2.897},
+//    {Shape::Cube, Shape::HeptagonalPyramid, 5.533},
+//    {Shape::Dodecahedron, Shape::SquareAntiprism, 1.688},
+//    {Shape::Dodecahedron, Shape::HexagonalBipyramid, 3.960},
+//    {Shape::Dodecahedron, Shape::HeptagonalPyramid, 4.989},
+//    {Shape::SquareAntiprism, Shape::HexagonalBipyramid, 4.296},
+//    {Shape::SquareAntiprism, Shape::HeptagonalPyramid, 4.953},
+//    {Shape::HexagonalBipyramid, Shape::HeptagonalPyramid, 4.865},
+  };
+
+  auto testF = [](const Shape a, const Shape b, const double expectedMinimumDistortion) {
+    auto makeShapeCoordinates = [](const Shape shape) {
+      return continuous::normalize(
+        addOrigin(symmetryData().at(shape).coordinates)
+      );
+    };
+
+    const double ab = continuous::shape(makeShapeCoordinates(a), b);
+    const double ba = continuous::shape(makeShapeCoordinates(b), a);
+
+    BOOST_CHECK_CLOSE(ab, ba, 0.1);
+
+    const double calculatedMinimumDistortion = std::sqrt((ab + ba) / 2);
+    BOOST_CHECK_CLOSE(calculatedMinimumDistortion, expectedMinimumDistortion, 2);
+
+    std::cout << "For shapes " << name(a) << " - " << name(b)
+      << ": ab = " << ab << ", ba = " << ba
+      << ", expected " << std::pow(expectedMinimumDistortion, 2)
+      << "\n";
+  };
+
+  temple::forEach(minimumDistortionConstants, testF);
 }

@@ -19,12 +19,14 @@ namespace continuous {
 
 using Matrix = Eigen::Matrix<double, 3, Eigen::Dynamic>;
 
-bool centroidIsZero(const Matrix& a) {
-  const Eigen::Vector3d centroid = (a.rowwise().sum() / a.cols());
-  return centroid.squaredNorm() < 1e-8;
+template<typename Derived>
+bool centroidIsZero(const Eigen::MatrixBase<Derived>& a) {
+  assert(a.rows() == 3);
+  return (a.rowwise().sum() / a.cols()).squaredNorm() < 1e-8;
 }
 
-Eigen::Matrix3d fitQuaternion(const Matrix& stator, const Matrix& rotor) {
+template<typename DerivedA, typename DerivedB>
+Eigen::Matrix3d fitQuaternion(const Eigen::MatrixBase<DerivedA>& stator, const Eigen::MatrixBase<DerivedB>& rotor) {
   assert(centroidIsZero(stator));
   assert(centroidIsZero(rotor));
 
@@ -1000,6 +1002,9 @@ double shapeAlternateImplementation(
   /* Speed up the faithful implementation by minimizing over rotation,
    * remembering the best rotation matrix and minimizing over scaling outside
    * of the permutational loop
+   *
+   * NOTE: A greedy variation proposing all possible two-pair swaps does not
+   * pass the tests.
    */
 
   assert(isNormalized(normalizedPositions));
