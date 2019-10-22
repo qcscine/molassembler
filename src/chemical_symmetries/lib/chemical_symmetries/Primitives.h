@@ -1500,9 +1500,10 @@ struct HexagonalBipyramid {
 /**
  * @brief Tricapped trigonal prism, spherized J51 solid in D3h
  *
- * Square-face tricapped.
+ * Square-face tricapped. The coordinates are the solution to the Thomson
+ * problem with 9 particles.
  *
- * @todo Missing coordinates
+ * @todo rotations, tetrahedra, mirror
  */
 struct TricappedTrigonalPrism {
   static constexpr Shape shape = Shape::TricappedTrigonalPrism;
@@ -1510,6 +1511,15 @@ struct TricappedTrigonalPrism {
   static constexpr unsigned size = 9;
   static constexpr char stringName[] = "tricapped trigonal prism";
   static constexpr std::array<temple::Vector, 9> coordinates {{
+    { 0.914109572223, -0.182781178690, -0.361931942064},
+    { 0.293329304506,  0.734642489361, -0.611766566546},
+    {-0.480176899428, -0.046026929940,  0.875963279468},
+    {-0.705684904851,  0.704780196051, -0.072757750931},
+    { 0.370605109670,  0.769162968265,  0.520615194684},
+    {-0.904030464226, -0.412626217894, -0.111662545460},
+    {-0.162180419233, -0.247163999394, -0.955304908927},
+    { 0.063327560246, -0.997971078243, -0.006583851785},
+    { 0.610701141906, -0.322016246902,  0.723429092590}
   }};
   static constexpr auto angleLookupTable = temple::makeUpperTriangularMatrix(
     detail::makeArray<size>(coordinates)
@@ -1631,14 +1641,26 @@ struct HeptagonalBipyramid {
 /**
  * @brief Bicapped square antiprism shape, spherized J17 shape in D4h
  *
- * @todo Missing coordinates
+ * This is the solution to the Thomson problem with 10 particles.
+ *
+ * @todo rotations, tetrahedra, mirror
  */
 struct BicappedSquareAntiprism {
   static constexpr Shape shape = Shape::BicappedSquareAntiprism;
   static constexpr PointGroup pointGroup = PointGroup::D4h;
   static constexpr unsigned size = 10;
-  static constexpr char stringName[] = "capped square antiprism";
+  static constexpr char stringName[] = "bicapped square antiprism";
   static constexpr std::array<temple::Vector, 10> coordinates {{
+    { 0.978696890330,  0.074682616274,  0.191245663177},
+    { 0.537258145625,  0.448413180814, -0.714338368164},
+    {-0.227939324473, -0.303819959434, -0.925060590777},
+    { 0.274577116268,  0.833436432027,  0.479573895237},
+    {-0.599426405232,  0.240685139624,  0.763386303437},
+    {-0.424664555168,  0.830194107787, -0.361161679833},
+    {-0.402701180119, -0.893328907767,  0.199487398294},
+    { 0.552788606831, -0.770301636525, -0.317899583084},
+    { 0.290107593166, -0.385278374104,  0.876012647646},
+    {-0.978696887344, -0.074682599351, -0.191245685067}
   }};
   static constexpr auto angleLookupTable = temple::makeUpperTriangularMatrix(
     detail::makeArray<size>(coordinates)
@@ -1665,6 +1687,59 @@ struct BicappedSquareAntiprism {
   > tetrahedra {{
   }};
   static constexpr std::array<unsigned, 10> mirror {{}};
+};
+
+/**
+ * @brief Edge contracted icosahedron shape
+ *
+ * This is the solution for 11 particles in the Thomson problem in C2v point
+ * group symmetry.
+ *
+ * @todo rotations, tetrahedra, mirror
+ */
+struct EdgeContractedIcosahedron {
+  static constexpr Shape shape = Shape::EdgeContractedIcosahedron;
+  static constexpr PointGroup pointGroup = PointGroup::C2v;
+  static constexpr unsigned size = 11;
+  static constexpr char stringName[] = "edge-contracted icosahedron";
+  static constexpr std::array<temple::Vector, 11> coordinates {{
+    { 0.153486836562, -0.831354332797,  0.534127105044},
+    { 0.092812115769,  0.691598091278, -0.716294626049},
+    { 0.686120068086,  0.724987503180,  0.060269166267},
+    { 0.101393837471,  0.257848797505,  0.960850293931},
+    {-0.143059218646, -0.243142754178, -0.959382958495},
+    {-0.909929380017,  0.200934944687, -0.362841110384},
+    {-0.405338453688,  0.872713317547,  0.272162090194},
+    { 0.896918545883, -0.184616420020,  0.401813264476},
+    { 0.731466092268, -0.415052523977, -0.541007170195},
+    {-0.439821168531, -0.864743799130, -0.242436592901},
+    {-0.773718984882, -0.203685975092,  0.599892453681}
+  }};
+  static constexpr auto angleLookupTable = temple::makeUpperTriangularMatrix(
+    detail::makeArray<size>(coordinates)
+  );
+  static constexpr double angleFunction(const unsigned a, const unsigned b) {
+    if(a == b) {
+      return 0;
+    }
+
+    return angleLookupTable.at(
+      std::min(a, b),
+      std::max(a, b)
+    );
+  }
+  static constexpr std::array<
+    std::array<unsigned, 11>,
+    3
+  > rotations {{
+  }};
+
+  static constexpr std::array<
+    std::array<unsigned, 4>,
+    4
+  > tetrahedra {{
+  }};
+  static constexpr std::array<unsigned, 11> mirror {{}};
 };
 
 /**
@@ -1811,6 +1886,7 @@ using allShapeDataTypes = std::tuple<
   CappedSquareAntiprism,
   HeptagonalBipyramid,
   BicappedSquareAntiprism, // 10
+  EdgeContractedIcosahedron, // 11
   Icosahedron, // 12,
   Cuboctahedron
 >;

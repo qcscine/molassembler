@@ -96,6 +96,10 @@ enum class Shape : unsigned {
   //! See data::BicappedSquareAntiprism
   BicappedSquareAntiprism,
 
+  /* 11 */
+  //! See data::EdgeContractedIcosahedron
+  EdgeContractedIcosahedron,
+
   /* 12 */
   //! See data::Icosahedron
   Icosahedron,
@@ -104,7 +108,7 @@ enum class Shape : unsigned {
 };
 
 //! Total number of shapes
-constexpr unsigned nShapes = 30;
+constexpr unsigned nShapes = 31;
 static_assert(nShapes == static_cast<unsigned>(Shape::Cuboctahedron) + 1, "Miscounted?");
 
 } // namespace Symmetry
