@@ -268,7 +268,7 @@ BOOST_AUTO_TEST_CASE( VSEPRTests ) {
   );
 
   testVSEPR( // AX3E1
-    Symmetry::Shape::ApicalTrigonalPyramid,
+    Symmetry::Shape::VacantTetrahedron,
     {
       TestCaseType {
         "NH3",
@@ -322,7 +322,7 @@ BOOST_AUTO_TEST_CASE( VSEPRTests ) {
   );
 
   testVSEPR(
-    Symmetry::Shape::Disphenoid,
+    Symmetry::Shape::Seesaw,
     {
       TestCaseType {
         "SF4",

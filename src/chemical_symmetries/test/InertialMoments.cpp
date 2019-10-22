@@ -45,7 +45,7 @@ BOOST_AUTO_TEST_CASE(InertialStandardization) {
   > tops {
     {Shape::Line, Top::Line},
     {Shape::Bent, Top::Asymmetric},
-    {Shape::Disphenoid, Top::Asymmetric},
+    {Shape::Seesaw, Top::Asymmetric},
     {Shape::TrigonalBipyramid, Top::Prolate},
     {Shape::PentagonalBipyramid, Top::Oblate},
     {Shape::Square, Top::Oblate},

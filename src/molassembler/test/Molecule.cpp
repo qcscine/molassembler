@@ -515,7 +515,7 @@ BOOST_AUTO_TEST_CASE(PropagateGraphChangeTests) {
       && complex.stereopermutators().option(i)
       && Symmetry::size(complex.stereopermutators().option(i)->getShape()) == 3
     ) {
-      complex.setShapeAtAtom(i, Symmetry::Shape::ApicalTrigonalPyramid);
+      complex.setShapeAtAtom(i, Symmetry::Shape::VacantTetrahedron);
     }
   }
 
@@ -599,7 +599,7 @@ BOOST_AUTO_TEST_CASE(MoleculeGeometryChoices) {
   BOOST_REQUIRE(stereocenterOption);
 
   if(auto suggestedShapeOption = testMol.inferShape(1u, stereocenterOption->getRanking())) {
-    BOOST_CHECK(suggestedShapeOption.value() == Symmetry::Shape::ApicalTrigonalPyramid);
+    BOOST_CHECK(suggestedShapeOption.value() == Symmetry::Shape::VacantTetrahedron);
     testMol.setShapeAtAtom(1u, suggestedShapeOption.value());
   }
 

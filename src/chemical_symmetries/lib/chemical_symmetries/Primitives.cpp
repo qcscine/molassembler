@@ -51,13 +51,13 @@ constexpr decltype(EquilateralTriangle::tetrahedra) EquilateralTriangle::tetrahe
 constexpr decltype(EquilateralTriangle::stringName) EquilateralTriangle::stringName;
 constexpr decltype(EquilateralTriangle::mirror) EquilateralTriangle::mirror;
 
-constexpr decltype(ApicalTrigonalPyramid::shape) ApicalTrigonalPyramid::shape;
-constexpr decltype(ApicalTrigonalPyramid::size) ApicalTrigonalPyramid::size;
-constexpr decltype(ApicalTrigonalPyramid::coordinates) ApicalTrigonalPyramid::coordinates;
-constexpr decltype(ApicalTrigonalPyramid::rotations) ApicalTrigonalPyramid::rotations;
-constexpr decltype(ApicalTrigonalPyramid::tetrahedra) ApicalTrigonalPyramid::tetrahedra;
-constexpr decltype(ApicalTrigonalPyramid::stringName) ApicalTrigonalPyramid::stringName;
-constexpr decltype(ApicalTrigonalPyramid::mirror) ApicalTrigonalPyramid::mirror;
+constexpr decltype(VacantTetrahedron::shape) ApicalTrigonalPyramid::shape;
+constexpr decltype(VacantTetrahedron::size) ApicalTrigonalPyramid::size;
+constexpr decltype(VacantTetrahedron::coordinates) ApicalTrigonalPyramid::coordinates;
+constexpr decltype(VacantTetrahedron::rotations) ApicalTrigonalPyramid::rotations;
+constexpr decltype(VacantTetrahedron::tetrahedra) ApicalTrigonalPyramid::tetrahedra;
+constexpr decltype(VacantTetrahedron::stringName) ApicalTrigonalPyramid::stringName;
+constexpr decltype(VacantTetrahedron::mirror) ApicalTrigonalPyramid::mirror;
 
 constexpr decltype(T::shape) T::shape;
 constexpr decltype(T::size) T::size;
@@ -83,13 +83,13 @@ constexpr decltype(Square::tetrahedra) Square::tetrahedra;
 constexpr decltype(Square::stringName) Square::stringName;
 constexpr decltype(Square::mirror) Square::mirror;
 
-constexpr decltype(Disphenoid::shape) Disphenoid::shape;
-constexpr decltype(Disphenoid::size) Disphenoid::size;
-constexpr decltype(Disphenoid::coordinates) Disphenoid::coordinates;
-constexpr decltype(Disphenoid::rotations) Disphenoid::rotations;
-constexpr decltype(Disphenoid::tetrahedra) Disphenoid::tetrahedra;
-constexpr decltype(Disphenoid::stringName) Disphenoid::stringName;
-constexpr decltype(Disphenoid::mirror) Disphenoid::mirror;
+constexpr decltype(Seesaw::shape) Disphenoid::shape;
+constexpr decltype(Seesaw::size) Disphenoid::size;
+constexpr decltype(Seesaw::coordinates) Disphenoid::coordinates;
+constexpr decltype(Seesaw::rotations) Disphenoid::rotations;
+constexpr decltype(Seesaw::tetrahedra) Disphenoid::tetrahedra;
+constexpr decltype(Seesaw::stringName) Disphenoid::stringName;
+constexpr decltype(Seesaw::mirror) Disphenoid::mirror;
 
 constexpr decltype(TrigonalPyramid::shape) TrigonalPyramid::shape;
 constexpr decltype(TrigonalPyramid::size) TrigonalPyramid::size;

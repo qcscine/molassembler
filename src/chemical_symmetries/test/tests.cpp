@@ -90,11 +90,11 @@ BOOST_AUTO_TEST_CASE(angleFuntionsInSequence) {
           &Symmetry::data::Line::angleFunction,
           &Symmetry::data::Bent::angleFunction,
           &Symmetry::data::EquilateralTriangle::angleFunction, // 3
-          &Symmetry::data::ApicalTrigonalPyramid::angleFunction,
+          &Symmetry::data::VacantTetrahedron::angleFunction,
           &Symmetry::data::T::angleFunction,
           &Symmetry::data::Tetrahedron::angleFunction, // 4
           &Symmetry::data::Square::angleFunction,
-          &Symmetry::data::Disphenoid::angleFunction,
+          &Symmetry::data::Seesaw::angleFunction,
           &Symmetry::data::TrigonalPyramid::angleFunction,
           &Symmetry::data::SquarePyramid::angleFunction, // 5
           &Symmetry::data::TrigonalBipyramid::angleFunction,

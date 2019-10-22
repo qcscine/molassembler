@@ -121,7 +121,7 @@ boost::optional<Symmetry::Shape> vsepr(
       /* In VSEPR naming, this is Trigonal pyramidal, but that shape exists
        * too, which is trigonal bipyramidal minus an apical ligand.
        */
-      return Shape::ApicalTrigonalPyramid;
+      return Shape::VacantTetrahedron;
     }
 
     return Shape::Bent;
@@ -133,7 +133,7 @@ boost::optional<Symmetry::Shape> vsepr(
     }
 
     if(X == 4) {
-      return Shape::Disphenoid;
+      return Shape::Seesaw;
     }
 
     if(X == 3) {

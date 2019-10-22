@@ -122,7 +122,7 @@ struct Line {
 };
 
 /*!
- * @brief Bent symmetry
+ * @brief Bent symmetry at 107°
  *
  * @verbatim
  *
@@ -166,7 +166,7 @@ struct Bent {
 };
 
 /*!
- * @brief Trigonal planar symmetry
+ * @brief Equilateral triangle shape (planar)
  *
  * @verbatim
  *
@@ -179,7 +179,7 @@ struct Bent {
  * @endverbatim
  *
  * This character art is not quite ideal since the angles are thoroughly
- * misrepresented, but all positions including the central atom are in one
+ * misrepresented, but all positions including the central vertex are in one
  * plane. The angles are idealized as 120°.
  */
 struct EquilateralTriangle {
@@ -214,11 +214,11 @@ struct EquilateralTriangle {
 };
 
 /*!
- * @brief A Tetrahedron symmetry missing a ligand
+ * @brief Mono-vacant tetrahedron shape
  *
- * This symmetry is widely called trigonal pyramidal, but this is clearly a
- * misnomer. Trigonal pyramidal should denote the symmetry that is trigonal
- * planar plus an axial ligand, one short of trigonal bipyramidal.
+ * This symmetry is widely called trigonal pyramidal, but that name risks being
+ * confused with a face-centered trigonal pyramid. This name should be preferred
+ * for this geometry.
  *
  * @verbatim
  *
@@ -230,11 +230,11 @@ struct EquilateralTriangle {
  *
  * @endverbatim
  */
-struct ApicalTrigonalPyramid {
-  static constexpr Shape shape = Shape::ApicalTrigonalPyramid;
+struct VacantTetrahedron {
+  static constexpr Shape shape = Shape::VacantTetrahedron;
   static constexpr PointGroup pointGroup = PointGroup::C3v;
   static constexpr unsigned size = 3;
-  static constexpr char stringName[] = "apical trigonal pyramid";
+  static constexpr char stringName[] = "vacant tetrahedron";
   static constexpr double angleFunction(const unsigned a, const unsigned b) {
     if(a == b) {
       return 0;
@@ -308,7 +308,7 @@ struct T {
 };
 
 /*!
- * @brief A tetrahedral symmetry
+ * @brief A regular tetrahedron shape
  *
  * @verbatim
  *
@@ -332,7 +332,7 @@ struct Tetrahedron {
       return 0;
     }
 
-    return temple::Math::toRadians<double>(109.5);
+    return 2 * temple::Math::atan(std::sqrt(2));
   }
   static constexpr std::array<temple::Vector, 4> coordinates {{
     {0, 1, 0},
@@ -365,11 +365,13 @@ struct Tetrahedron {
  *
  *   3   2
  *    \_/
- *    (_) <- central atom
+ *    (_) <- central vertex
  *    / \
  *   0   1
  *
  * @endverbatim
+ *
+ * Once again, angles are misrepresented, this is really a square.
  */
 struct Square {
   static constexpr Shape shape = Shape::Square;
@@ -411,7 +413,12 @@ struct Square {
 };
 
 /*!
- * @brief A disphenoid edge-centered / seesaw shape
+ * @brief A seesaw shape
+ *
+ * More precisely, this has an angle of 120° between substituents 1 and 2. That
+ * makes this shape both an equatorially mono-vacant trigonal bipyramid and an
+ * edge-centered tetragonal disphenoid, if either of those help you imagine the
+ * shape better.
  *
  * @verbatim
  *
@@ -421,11 +428,11 @@ struct Square {
  *
  * @endverbatim
  */
-struct Disphenoid {
-  static constexpr Shape shape = Shape::Disphenoid;
+struct Seesaw {
+  static constexpr Shape shape = Shape::Seesaw;
   static constexpr PointGroup pointGroup = PointGroup::C2v;
   static constexpr unsigned size = 4;
-  static constexpr char stringName[] = "disphenoid";
+  static constexpr char stringName[] = "seesaw";
   static constexpr double angleFunction(const unsigned a, const unsigned b) {
     if(a == b) {
       return 0;
@@ -477,13 +484,15 @@ struct Disphenoid {
 };
 
 /*!
- * @brief A trigonal pyramidal symmetry = trig. pl. + an axial ligand
+ * @brief A face-centered trigonal pyramid shape = trig. pl. + an axial ligand
  *
- * A trigonal planar symmetry + an axial ligand.
+ * A trigonal planar shape + an axial ligand, or alternatively an axially
+ * mono-vacant trigonal bipyramid.
  *
  * @verbatim
  *
- * Viewed from the top of the pyramid. The central atom is ( ), 3 is apical
+ * Viewed diagonally. The central vertex is ( ), 3 is apical, 0, 1, 2 and the
+ * central vertex are in a plane.
  *
  *       3
  *       |  2
@@ -534,7 +543,7 @@ struct TrigonalPyramid {
 };
 
 /*!
- * @brief A square pyramidal symmetry
+ * @brief A square pyramid shape, the J1 solid (central position is square-face centered)
  *
  * @verbatim
  *
@@ -606,11 +615,11 @@ struct SquarePyramid {
 };
 
 /*!
- * @brief A trigonal bipyramidal symmetry
+ * @brief A trigonal bipyramid shape, the J12 solid
  *
  * @verbatim
  *
- * Viewed from the top of the pyramid. The central atom is ( ), 3 and 4
+ * Viewed from the top of the pyramid. The central vertex is ( ), 3 and 4
  * are axial.
  *
  *       3
@@ -679,7 +688,7 @@ struct TrigonalBipyramid {
 };
 
 /*!
- * @brief A pentagonal planar shape
+ * @brief A pentagon shape (planar)
  *
  * @verbatim
  *
@@ -727,11 +736,11 @@ struct Pentagon {
 };
 
 /*!
- * @brief An octahedral symmetry.
+ * @brief A regular octahedron
  *
  * @verbatim
  *
- * The central atom is ( ), 4 and 5 are axial, the rest equatorial.
+ * The central vertex is ( ), 4 and 5 are axial, the rest equatorial.
  *
  *       4
  *    3  |  2
@@ -813,68 +822,55 @@ struct Octahedron {
 };
 
 /*!
- * @brief A trigonal prismatic symmetry
+ * @brief A regular trigonal prism shape
+ *
+ * Squares and equilateral triangles as faces.
  *
  * @verbatim
  *
- *   3  4  5
+ *   2  0  1
  *    : | :
  *     (_)
  *    : | :
- *   0  1  2
+ *   5  3  3
  *
  * Where /, \ denote bonds in front of the view plane, : denotes bonds
  * behind the view plane.
  *
  * @endverbatim
- *
- * Angles
- *  0-1, 0-2 -> 86°
- *  0-3 -> 76°
- *  0-4, 0-5 -> 134°
- *
- * From [W(CH3)6], Haaland, Hammel, Rypdal, Volden, J. Am. Chem. Soc. 1990
  */
 struct TrigonalPrism {
   static constexpr Shape shape = Shape::TrigonalPrism;
   static constexpr PointGroup pointGroup = PointGroup::D3h;
   static constexpr unsigned size = 6;
   static constexpr char stringName[] = "trigonal prism";
+  static constexpr std::array<temple::Vector, 6> coordinates {{
+    { 0.755929,  0.000000,  0.654654},
+    {-0.377964,  0.654654,  0.654654},
+    {-0.377964, -0.654654,  0.654654},
+    { 0.755929,  0.000000, -0.654654},
+    {-0.377964,  0.654654, -0.654654},
+    {-0.377964, -0.654654, -0.654654}
+  }};
+  static constexpr auto angleLookupTable = temple::makeUpperTriangularMatrix(
+    detail::makeArray<size>(coordinates)
+  );
   static constexpr double angleFunction(const unsigned a, const unsigned b) {
     if(a == b) {
       return 0;
     }
 
-    // Between plane symmetric
-    if(std::min(a - b, b - a) == 3) {
-      return temple::Math::toRadians<double>(76);
-    }
-
-    // In plane triangle
-    if(
-      (a < 3 && b < 3)
-      || (a >= 3 && b >= 3)
-    ) {
-      return temple::Math::toRadians<double>(86);
-    }
-
-    // Between plane asymmetric
-    return temple::Math::toRadians<double>(134);
+    return angleLookupTable.at(
+      std::min(a, b),
+      std::max(a, b)
+    );
   }
-  static constexpr std::array<temple::Vector, 6> coordinates {{
-    {0.788011, 0, -0.615661},
-    {-0.394005, 0.682437, -0.615661},
-    {-0.394005, -0.682437, -0.615661},
-    {0.788011, 0, 0.615661},
-    {-0.394005, 0.682437, 0.615661},
-    {-0.394005, -0.682437, 0.615661}
-  }};
   static constexpr std::array<
     std::array<unsigned, 6>,
     2
   > rotations {{
     {{2, 0, 1, 5, 3, 4}}, // C3 axial
-    {{5, 4, 3, 2, 1, 0}} // C2 betw. 1, 4
+    {{3, 5, 4, 0, 2, 1}} // C2 betw. 0, 3
   }};
 
   static constexpr std::array<
@@ -884,11 +880,11 @@ struct TrigonalPrism {
     {{ORIGIN_PLACEHOLDER, 0, 1, 2}},
     {{3, ORIGIN_PLACEHOLDER, 4, 5}}
   }};
-  static constexpr std::array<unsigned, 6> mirror {{2, 1, 0, 5, 4, 3}};
+  static constexpr std::array<unsigned, 6> mirror {{0, 2, 1, 3, 5, 4}};
 };
 
 /*!
- * @brief A pentagonal pyramidal symmetry
+ * @brief A pentagonal pyramid shape, the J2 solid
  *
  * @verbatim
  *
@@ -900,7 +896,7 @@ struct TrigonalPrism {
  *
  * 0-4 are in plane,
  * 5 is above plane,
- * ( ) signifies the central atom beneath it
+ * ( ) signifies the central vertex beneath it
  *
  * @endverbatim
  */
@@ -965,7 +961,7 @@ struct PentagonalPyramid {
 };
 
 /**
- * @brief Hexagonal planar shape
+ * @brief Hexagon shape (planar)
  */
 struct Hexagon {
   static constexpr Shape shape = Shape::Hexagon;
@@ -1003,7 +999,7 @@ struct Hexagon {
 };
 
 /*!
- * @brief A pentagonal bipyramidal symmetry
+ * @brief A pentagonal bipyramid shape, the J13 solid
  *
  * @verbatim
  *
@@ -1095,9 +1091,15 @@ struct PentagonalBipyramid {
 
 /*!
  * @brief A capped octahedron shape
+ *
+ * This is a gyroelongated triangular pyramid, or alternatively a "capped
+ * triangular antiprism", depending on whatever helps you visualize it.
+ *
+ * @todo Regularize!
  */
 struct CappedOctahedron {
-  static constexpr Symmetry::Shape shape = Symmetry::Shape::CappedOctahedron;
+  static constexpr Shape shape = Shape::CappedOctahedron;
+  static constexpr PointGroup pointGroup = PointGroup::C3v;
   static constexpr unsigned size = 7;
   static constexpr char stringName[] = "capped octahedron";
   /*! [V(CO)7]+ in C3v
@@ -1146,10 +1148,15 @@ struct CappedOctahedron {
 };
 
 /*!
- * @brief A capped trigonal prism shape
+ * @brief A capped trigonal prism shape, spherized J49 solid in C2v
+ *
+ * Square-face capped.
+ *
+ * @todo regularize
  */
 struct CappedTrigonalPrism {
-  static constexpr Symmetry::Shape shape = Symmetry::Shape::CappedTrigonalPrism;
+  static constexpr Shape shape = Shape::CappedTrigonalPrism;
+  static constexpr PointGroup pointGroup = PointGroup::C2v;
   static constexpr unsigned size = 7;
   static constexpr char stringName[] = "capped trigonal prism";
   //! [V(CO)7]+ in C2v, same as from CappedOctahedron
@@ -1193,7 +1200,7 @@ struct CappedTrigonalPrism {
 };
 
 /*!
- * @brief A square antiprismatic symmetry
+ * @brief Regular square antiprism shape
  *
  * @verbatim
  *
@@ -1218,13 +1225,6 @@ struct CappedTrigonalPrism {
  *   1   5   2
  *
  * @endverbatim
- *
- * Reference coodrinates:
- * - [W(CN)8]2-, (Alcock, M. W.; Samotus, A.; Szklarzewicz, J. J. Chem. Soc.,
- *   Dalton Trans. 1993, 885. DOI: 10.1039/dt9930000885, CSD: PECMOZ), took
- *   idealized geometry from http://symmetry.otterbein.edu/gallery/ instead
- *   of distorted crystallographic coordinates, normalized lengths
- *
  */
 struct SquareAntiprism {
   static constexpr Shape shape = Shape::SquareAntiprism;
@@ -1232,15 +1232,14 @@ struct SquareAntiprism {
   static constexpr unsigned size = 8;
   static constexpr char stringName[] = "square antiprism";
   static constexpr std::array<temple::Vector, 8> coordinates {{
-    // [W(CN)8]2-, idealized to square antiprism
-    {-0.23838567,  0.50141283,  0.83171957},
-    {-0.7568846,   0.61167543, -0.2301714 },
-    { 0.3080136,   0.58106771, -0.75331795},
-    { 0.82651172,  0.47080587,  0.30857773},
-    {-0.79018301, -0.51909014,  0.32581627},
-    {-0.39653401, -0.46341671, -0.79246813},
-    { 0.72055552, -0.56338997, -0.40421711},
-    { 0.32690564, -0.61906403,  0.71406753}
+    { 0.607781,  0.607781,  0.511081},
+    {-0.607781,  0.607781,  0.511081},
+    {-0.607781, -0.607781,  0.511081},
+    { 0.607781, -0.607781,  0.511081},
+    { 0.859533,  0.000000, -0.511081},
+    { 0.000000,  0.859533, -0.511081},
+    {-0.859533,  0.000000, -0.511081},
+    {-0.000000, -0.859533, -0.511081}
   }};
 
 /*!
@@ -1315,10 +1314,11 @@ struct SquareAntiprism {
 };
 
 /*!
- * @brief A cube shape
+ * @brief A regular cube
  */
 struct Cube {
-  static constexpr Symmetry::Shape shape = Symmetry::Shape::Cube;
+  static constexpr Shape shape = Shape::Cube;
+  static constexpr PointGroup pointGroup = PointGroup::Oh;
   static constexpr unsigned size = 8;
   static constexpr char stringName[] = "cube";
   //! [V(CO)7]+ in C2v
@@ -1364,21 +1364,18 @@ struct Cube {
 };
 
 /*!
- * @brief A bicapped trigonal prism
+ * @brief A bicapped trigonal prism, spherized J50 solid in D4h
+ *
+ * Square face-bicapped.
+ *
+ * @todo Missing coordinates
  */
 struct BicappedTrigonalPrism {
-  static constexpr Symmetry::Shape shape = Symmetry::Shape::BicappedTrigonalPrism;
+  static constexpr Shape shape = Shape::BicappedTrigonalPrism;
+  static constexpr PointGroup pointGroup = PointGroup::C2v;
   static constexpr unsigned size = 8;
   static constexpr char stringName[] = "bicapped trigonal prism";
   static constexpr std::array<temple::Vector, 8> coordinates {{
-    {  0.577350,  0.577350,  0.577350},
-    {  0.577350, -0.577350,  0.577350},
-    {  0.577350, -0.577350, -0.577350},
-    {  0.577350,  0.577350, -0.577350},
-    { -0.577350,  0.577350,  0.577350},
-    { -0.577350, -0.577350,  0.577350},
-    { -0.577350, -0.577350, -0.577350},
-    { -0.577350,  0.577350, -0.577350}
   }};
   static constexpr auto angleLookupTable = temple::makeUpperTriangularMatrix(
     detail::makeArray<size>(coordinates)
@@ -1411,16 +1408,389 @@ struct BicappedTrigonalPrism {
   static constexpr std::array<unsigned, 8> mirror {{1, 0, 3, 2, 5, 4, 7, 6}};
 };
 
+/**
+ * @brief Trigonal dodecahedron, snub disphenoid shape, spherized J84 solid in D2d
+ */
+struct TrigonalDodecahedron {
+  static constexpr Shape shape = Shape::TrigonalDodecahedron;
+  static constexpr PointGroup pointGroup = PointGroup::D2d;
+  static constexpr unsigned size = 8;
+  static constexpr char stringName[] = "trigonal dodecahedron";
+  static constexpr std::array<temple::Vector, 8> coordinates {{
+  }};
+  static constexpr auto angleLookupTable = temple::makeUpperTriangularMatrix(
+    detail::makeArray<size>(coordinates)
+  );
+  static constexpr double angleFunction(const unsigned a, const unsigned b) {
+    if(a == b) {
+      return 0;
+    }
+
+    return angleLookupTable.at(
+      std::min(a, b),
+      std::max(a, b)
+    );
+  }
+  static constexpr std::array<
+    std::array<unsigned, 8>,
+    2
+  > rotations {{
+  }};
+
+  static constexpr std::array<
+    std::array<unsigned, 4>,
+    2
+  > tetrahedra {{
+  }};
+  static constexpr std::array<unsigned, 8> mirror {{}};
+};
+
+/**
+ * @brief Hexagonal bipyramid shape
+ *
+ * Indices 0-5 ccw in the equatorial plane, 6 above, 7 below
+ */
+struct HexagonalBipyramid {
+  static constexpr Shape shape = Shape::HexagonalBipyramid;
+  static constexpr PointGroup pointGroup = PointGroup::D6h;
+  static constexpr unsigned size = 8;
+  static constexpr char stringName[] = "hexagonal bipyramid";
+  static constexpr std::array<temple::Vector, 8> coordinates {{
+    { 1.000000,  0.000000,  0.000000},
+    { 0.500000,  0.866025,  0.000000},
+    {-0.500000,  0.866025,  0.000000},
+    {-1.000000,  0.000000,  0.000000},
+    {-0.500000, -0.866025,  0.000000},
+    { 0.500000, -0.866025,  0.000000},
+    { 0.000000,  0.000000,  1.000000},
+    { 0.000000,  0.000000, -1.000000}
+  }};
+  static constexpr auto angleLookupTable = temple::makeUpperTriangularMatrix(
+    detail::makeArray<size>(coordinates)
+  );
+  static constexpr double angleFunction(const unsigned a, const unsigned b) {
+    if(a == b) {
+      return 0;
+    }
+
+    return angleLookupTable.at(
+      std::min(a, b),
+      std::max(a, b)
+    );
+  }
+  static constexpr std::array<
+    std::array<unsigned, 8>,
+    2
+  > rotations {{
+    {5, 0, 1, 2, 3, 4, 6, 7}, // axial C6
+    {1, 6, 5, 4, 3, 2, 7, 6} // C2 around 1-4
+  }};
+
+  static constexpr std::array<
+    std::array<unsigned, 4>,
+    3
+  > tetrahedra {{
+    {6, 0, 7, 1},
+    {6, 4, 7, 5},
+    {6, 2, 7, 3}
+  }};
+  static constexpr std::array<unsigned, 8> mirror {{0, 5, 4, 3, 2, 1, 6, 7}};
+};
+
+/**
+ * @brief Tricapped trigonal prism, spherized J51 solid in D3h
+ *
+ * Square-face tricapped.
+ *
+ * @todo Missing coordinates
+ */
+struct TricappedTrigonalPrism {
+  static constexpr Shape shape = Shape::TricappedTrigonalPrism;
+  static constexpr PointGroup pointGroup = PointGroup::D3h;
+  static constexpr unsigned size = 9;
+  static constexpr char stringName[] = "tricapped trigonal prism";
+  static constexpr std::array<temple::Vector, 9> coordinates {{
+  }};
+  static constexpr auto angleLookupTable = temple::makeUpperTriangularMatrix(
+    detail::makeArray<size>(coordinates)
+  );
+  static constexpr double angleFunction(const unsigned a, const unsigned b) {
+    if(a == b) {
+      return 0;
+    }
+
+    return angleLookupTable.at(
+      std::min(a, b),
+      std::max(a, b)
+    );
+  }
+  static constexpr std::array<
+    std::array<unsigned, 9>,
+    2
+  > rotations {{
+  }};
+
+  static constexpr std::array<
+    std::array<unsigned, 4>,
+    2
+  > tetrahedra {{
+  }};
+  static constexpr std::array<unsigned, 9> mirror {{}};
+};
+
+/**
+ * @brief Capped square antiprism shape, spherized J10 solid in C4v
+ *
+ * @todo Missing coordinates
+ */
+struct CappedSquareAntiprism {
+  static constexpr Shape shape = Shape::CappedSquareAntiprism;
+  static constexpr PointGroup pointGroup = PointGroup::C4v;
+  static constexpr unsigned size = 9;
+  static constexpr char stringName[] = "capped square antiprism";
+  static constexpr std::array<temple::Vector, 9> coordinates {{
+  }};
+  static constexpr auto angleLookupTable = temple::makeUpperTriangularMatrix(
+    detail::makeArray<size>(coordinates)
+  );
+  static constexpr double angleFunction(const unsigned a, const unsigned b) {
+    if(a == b) {
+      return 0;
+    }
+
+    return angleLookupTable.at(
+      std::min(a, b),
+      std::max(a, b)
+    );
+  }
+  static constexpr std::array<
+    std::array<unsigned, 9>,
+    2
+  > rotations {{
+  }};
+
+  static constexpr std::array<
+    std::array<unsigned, 4>,
+    2
+  > tetrahedra {{
+  }};
+  static constexpr std::array<unsigned, 9> mirror {{}};
+};
+
+/**
+ * @brief Capped square antiprism shape, spherized J10 solid in C4v
+ */
+struct HeptagonalBipyramid {
+  static constexpr Shape shape = Shape::HeptagonalBipyramid;
+  static constexpr PointGroup pointGroup = PointGroup::D7h;
+  static constexpr unsigned size = 9;
+  static constexpr char stringName[] = "heptagonal bipyramid";
+  static constexpr std::array<temple::Vector, 9> coordinates {{
+    { 1.000000,  0.000000,  0.000000},
+    { 0.623490,  0.781831,  0.000000},
+    {-0.222521,  0.974928,  0.000000},
+    {-0.900969,  0.433884,  0.000000},
+    {-0.900969, -0.433884,  0.000000},
+    {-0.222521, -0.974928,  0.000000},
+    { 0.623490, -0.781831,  0.000000},
+    { 0.000000,  0.000000,  1.000000},
+    { 0.000000,  0.000000, -1.000000}
+  }};
+  static constexpr auto angleLookupTable = temple::makeUpperTriangularMatrix(
+    detail::makeArray<size>(coordinates)
+  );
+  static constexpr double angleFunction(const unsigned a, const unsigned b) {
+    if(a == b) {
+      return 0;
+    }
+
+    return angleLookupTable.at(
+      std::min(a, b),
+      std::max(a, b)
+    );
+  }
+  static constexpr std::array<
+    std::array<unsigned, 9>,
+    2
+  > rotations {{
+    {6, 0, 1, 2, 3, 4, 5, 7, 8}, // axial C7
+    {0, 6, 5, 4, 3, 2, 1, 8, 7} // C2 around 1 and between 4 and 5
+  }};
+
+  static constexpr std::array<
+    std::array<unsigned, 4>,
+    3
+  > tetrahedra {{
+    {8, 1, 7, 0},
+    {8, 3, 7, 2},
+    {8, 5, 7, 4}
+  }};
+  static constexpr std::array<unsigned, 9> mirror {{0, 6, 5, 4, 3, 2, 1, 7, 8}};
+};
+
+/**
+ * @brief Bicapped square antiprism shape, spherized J17 shape in D4h
+ *
+ * @todo Missing coordinates
+ */
+struct BicappedSquareAntiprism {
+  static constexpr Shape shape = Shape::BicappedSquareAntiprism;
+  static constexpr PointGroup pointGroup = PointGroup::D4h;
+  static constexpr unsigned size = 10;
+  static constexpr char stringName[] = "capped square antiprism";
+  static constexpr std::array<temple::Vector, 10> coordinates {{
+  }};
+  static constexpr auto angleLookupTable = temple::makeUpperTriangularMatrix(
+    detail::makeArray<size>(coordinates)
+  );
+  static constexpr double angleFunction(const unsigned a, const unsigned b) {
+    if(a == b) {
+      return 0;
+    }
+
+    return angleLookupTable.at(
+      std::min(a, b),
+      std::max(a, b)
+    );
+  }
+  static constexpr std::array<
+    std::array<unsigned, 10>,
+    2
+  > rotations {{
+  }};
+
+  static constexpr std::array<
+    std::array<unsigned, 4>,
+    2
+  > tetrahedra {{
+  }};
+  static constexpr std::array<unsigned, 10> mirror {{}};
+};
+
+/**
+ * @brief Regular icosahedron shape
+ */
+struct Icosahedron {
+  static constexpr Shape shape = Shape::Icosahedron;
+  static constexpr PointGroup pointGroup = PointGroup::Ih;
+  static constexpr unsigned size = 12;
+  static constexpr char stringName[] = "icosahedron";
+  static constexpr std::array<temple::Vector, 12> coordinates {{
+    { 0.525731,  0.000000,  0.850651},
+    { 0.525731,  0.000000, -0.850651},
+    {-0.525731,  0.000000,  0.850651},
+    {-0.525731,  0.000000, -0.850651},
+    { 0.850651,  0.525731,  0.000000},
+    { 0.850651, -0.525731,  0.000000},
+    {-0.850651,  0.525731,  0.000000},
+    {-0.850651, -0.525731,  0.000000},
+    { 0.000000,  0.850651,  0.525731},
+    { 0.000000,  0.850651, -0.525731},
+    { 0.000000, -0.850651,  0.525731},
+    { 0.000000, -0.850651, -0.525731}
+  }};
+  static constexpr auto angleLookupTable = temple::makeUpperTriangularMatrix(
+    detail::makeArray<size>(coordinates)
+  );
+  static constexpr double angleFunction(const unsigned a, const unsigned b) {
+    if(a == b) {
+      return 0;
+    }
+
+    return angleLookupTable.at(
+      std::min(a, b),
+      std::max(a, b)
+    );
+  }
+  static constexpr std::array<
+    std::array<unsigned, 12>,
+    3
+  > rotations {{
+    {0, 11, 8, 3, 5, 10, 9, 6, 4, 1, 2, 7}, // C5 around 0-3
+    {8, 5, 6, 11, 4, 0, 3, 7, 9, 1, 2, 10}, // C5 around 4-7
+    {2, 3, 0, 1, 7, 6, 5, 4, 10, 11, 8, 9} // C2 between 0-2 / 1-3
+  }};
+
+  static constexpr std::array<
+    std::array<unsigned, 4>,
+    4
+  > tetrahedra {{
+    {0, 2, 8, 10},
+    {1, 3, 9, 11},
+    {1, 4, 0, 5},
+    {3, 7, 2, 6}
+  }};
+  static constexpr std::array<unsigned, 12> mirror {{0, 1, 2, 3, 5, 4, 7, 6, 10, 11, 8, 9}};
+};
+
+/**
+ * @brief Regular cuboctahedron shape with Oh symmetry
+ *
+ * @todo Missing coordinates
+ */
+struct Cuboctahedron {
+  static constexpr Shape shape = Shape::Cuboctahedron;
+  static constexpr PointGroup pointGroup = PointGroup::Oh;
+  static constexpr unsigned size = 12;
+  static constexpr char stringName[] = "cuboctahedron";
+  static constexpr std::array<temple::Vector, 12> coordinates {{
+    { 0.707107,  0.000000,  0.707107},
+    { 0.707107,  0.000000, -0.707107},
+    {-0.707107,  0.000000,  0.707107},
+    {-0.707107,  0.000000, -0.707107},
+    { 0.707107,  0.707107,  0.000000},
+    { 0.707107, -0.707107,  0.000000},
+    {-0.707107,  0.707107,  0.000000},
+    {-0.707107, -0.707107,  0.000000},
+    { 0.000000,  0.707107,  0.707107},
+    { 0.000000,  0.707107, -0.707107},
+    { 0.000000, -0.707107,  0.707107},
+    { 0.000000, -0.707107, -0.707107}
+  }};
+  static constexpr auto angleLookupTable = temple::makeUpperTriangularMatrix(
+    detail::makeArray<size>(coordinates)
+  );
+  static constexpr double angleFunction(const unsigned a, const unsigned b) {
+    if(a == b) {
+      return 0;
+    }
+
+    return angleLookupTable.at(
+      std::min(a, b),
+      std::max(a, b)
+    );
+  }
+  static constexpr std::array<
+    std::array<unsigned, 12>,
+    3
+  > rotations {{
+    {10, 11, 8, 9, 5, 7, 4, 6, 0, 1, 2, 3}, // C4 ccw 0-8-2-10
+    {2, 0, 3, 1, 8, 10, 9, 11, 6, 4, 7, 5}, // C4 ccw 4-9-6-8
+    {7, 6, 5, 4, 3, 2, 1, 0, 11, 9, 10, 8}, // C2 along 9-10
+  }};
+
+  static constexpr std::array<
+    std::array<unsigned, 4>,
+    4
+  > tetrahedra {{
+    {ORIGIN_PLACEHOLDER, 6, 8, 9},
+    {ORIGIN_PLACEHOLDER, 4, 0, 1},
+    {ORIGIN_PLACEHOLDER, 5, 10, 11},
+    {ORIGIN_PLACEHOLDER, 7, 2, 3}
+  }};
+  static constexpr std::array<unsigned, 12> mirror {{8, 9, 10, 11, 4, 6, 5, 7, 0, 1, 2, 3}};
+};
+
 //! Type collecting all types of the Symmetry classes.
 using allShapeDataTypes = std::tuple<
   Line,
   Bent,
   EquilateralTriangle, // 3
-  ApicalTrigonalPyramid,
+  VacantTetrahedron,
   T,
   Tetrahedron, // 4
   Square,
-  Disphenoid,
+  Seesaw,
   TrigonalPyramid,
   SquarePyramid, // 5
   TrigonalBipyramid,
@@ -1428,13 +1798,31 @@ using allShapeDataTypes = std::tuple<
   Octahedron, // 6
   TrigonalPrism,
   PentagonalPyramid,
+  Hexagon,
   PentagonalBipyramid, // 7
-  SquareAntiprism // 8
+  CappedOctahedron,
+  CappedTrigonalPrism,
+  SquareAntiprism, // 8
+  Cube,
+  BicappedTrigonalPrism,
+  TrigonalDodecahedron,
+  HexagonalBipyramid,
+  TricappedTrigonalPrism, // 9
+  CappedSquareAntiprism,
+  HeptagonalBipyramid,
+  BicappedSquareAntiprism, // 10
+  Icosahedron, // 12,
+  Cuboctahedron
 >;
 
 static_assert(
   temple::TupleType::allOf<allShapeDataTypes, concepts::ShapeClass>(),
   "Not all shape data types fulfill the ShapeClass concept"
+);
+
+static_assert(
+  std::tuple_size<allShapeDataTypes>::value == nShapes,
+  "Not all shape names have a shape type"
 );
 
 } // namespace data

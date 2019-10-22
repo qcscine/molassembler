@@ -28,9 +28,9 @@ BOOST_AUTO_TEST_CASE(atomStereopermutatorUpDown) {
   > upPairs {
     {Shape::SquarePyramid, Shape::Octahedron},
     {Shape::PentagonalPyramid, Shape::PentagonalBipyramid},
-    {Shape::Disphenoid, Shape::TrigonalBipyramid},
+    {Shape::Seesaw, Shape::TrigonalBipyramid},
     {Shape::T, Shape::Square},
-    {Shape::ApicalTrigonalPyramid, Shape::Tetrahedron},
+    {Shape::VacantTetrahedron, Shape::Tetrahedron},
     {Shape::SquarePyramid, Shape::Octahedron}
   };
 
@@ -212,11 +212,11 @@ BOOST_AUTO_TEST_CASE(atomStereopermutatorContinuity) {
   std::vector<
     std::pair<Symmetry::Shape, Symmetry::Shape>
   > reversibleSymmetryShapes {
-    {Symmetry::Shape::Disphenoid, Symmetry::Shape::TrigonalBipyramid},
+    {Symmetry::Shape::Seesaw, Symmetry::Shape::TrigonalBipyramid},
     {Symmetry::Shape::SquarePyramid, Symmetry::Shape::Octahedron},
     {Symmetry::Shape::PentagonalPyramid, Symmetry::Shape::PentagonalBipyramid},
     {Symmetry::Shape::T, Symmetry::Shape::Square},
-    {Symmetry::Shape::ApicalTrigonalPyramid, Symmetry::Shape::Tetrahedron},
+    {Symmetry::Shape::VacantTetrahedron, Symmetry::Shape::Tetrahedron},
     {Symmetry::Shape::TrigonalPyramid, Symmetry::Shape::TrigonalBipyramid}
   };
 

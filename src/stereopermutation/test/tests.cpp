@@ -704,7 +704,7 @@ BOOST_AUTO_TEST_CASE(compositesTests) {
 
   Composite a {
     Composite::OrientationState {
-      Symmetry::Shape::Disphenoid,
+      Symmetry::Shape::Seesaw,
       0,
       {'A', 'B', 'C', 'D'},
       leftIdentifier

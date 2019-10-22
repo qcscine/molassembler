@@ -253,11 +253,11 @@ BOOST_AUTO_TEST_CASE(FixedCnAxis) {
   const std::vector<std::pair<Shape, unsigned>> highestOrderAxis {
     {Shape::Bent, 2},
     {Shape::EquilateralTriangle, 3},
-    {Shape::ApicalTrigonalPyramid, 3},
+    {Shape::VacantTetrahedron, 3},
     {Shape::T, 2},
     {Shape::Tetrahedron, 3},
     {Shape::Square, 4},
-    {Shape::Disphenoid, 2},
+    {Shape::Seesaw, 2},
     {Shape::TrigonalPyramid, 3},
     {Shape::SquarePyramid, 4},
     {Shape::TrigonalBipyramid, 3},
@@ -384,7 +384,7 @@ BOOST_AUTO_TEST_CASE(AsymmetricTopStandardization) {
   std::vector<Shape> asymmetricTopsWithC2 {
     Shape::Bent,
     Shape::T,
-    Shape::Disphenoid
+    Shape::Seesaw
   };
 
   for(const Shape shape : asymmetricTopsWithC2) {
@@ -469,12 +469,12 @@ BOOST_AUTO_TEST_CASE(MinimumDistortionConstants) {
   > minimumDistortionConstants {
     {Shape::Tetrahedron, Shape::Square, 5.774}, // T-4, SP-4
 
-    /* NOTE: Disphenoid / Sawhorse angle of "equatorial" vertices can vary,
+    /* NOTE: Seesaw / Sawhorse angle of "equatorial" vertices can vary,
      * unclear here from the paper and close, but mismatching with our
      * definition (120°, essentially a single-vacant trigonal bipyramid)
      */
-//    {Shape::Tetrahedron, Shape::Disphenoid, 3.129}, // T-4, SW-4 [sic, is SS-4]
-//    {Shape::Disphenoid, Shape::Square, 4.365}, // SW-4, SP-4
+//    {Shape::Tetrahedron, Shape::Seesaw, 3.129}, // T-4, SW-4 [sic, is SS-4]
+//    {Shape::Seesaw, Shape::Square, 4.365}, // SW-4, SP-4
 
     {Shape::SquarePyramid, Shape::TrigonalBipyramid, 2.710}, // VOC-5, TBPY-5
     {Shape::SquarePyramid, Shape::Pentagon, 5.677}, // VOC-5, PP-5
@@ -501,13 +501,13 @@ BOOST_AUTO_TEST_CASE(MinimumDistortionConstants) {
 //    {Shape::PentagonalBipyramid, Shape::Heptagon, 5.934},
 //    {Shape::HexagonalPyramid, Shape::Heptagon, 5.047},
 
-//    {Shape::Cube, Shape::Dodecahedron, 2.820},
+//    {Shape::Cube, Shape::TrigonalDodecahedron, 2.820},
 //    {Shape::Cube, Shape::SquareAntiprism, 3.315},
 //    {Shape::Cube, Shape::HexagonalBipyramid, 2.897},
 //    {Shape::Cube, Shape::HeptagonalPyramid, 5.533},
-//    {Shape::Dodecahedron, Shape::SquareAntiprism, 1.688},
-//    {Shape::Dodecahedron, Shape::HexagonalBipyramid, 3.960},
-//    {Shape::Dodecahedron, Shape::HeptagonalPyramid, 4.989},
+//    {Shape::TrigonalDodecahedron, Shape::SquareAntiprism, 1.688},
+//    {Shape::TrigonalDodecahedron, Shape::HexagonalBipyramid, 3.960},
+//    {Shape::TrigonalDodecahedron, Shape::HeptagonalPyramid, 4.989},
 //    {Shape::SquareAntiprism, Shape::HexagonalBipyramid, 4.296},
 //    {Shape::SquareAntiprism, Shape::HeptagonalPyramid, 4.953},
 //    {Shape::HexagonalBipyramid, Shape::HeptagonalPyramid, 4.865},

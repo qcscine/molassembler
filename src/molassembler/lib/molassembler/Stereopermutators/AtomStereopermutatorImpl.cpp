@@ -844,7 +844,7 @@ void AtomStereopermutator::Impl::fit(
        */
       if(tau < 0.12) {
         // Symmetry is square planar
-        excludeShapes.push_back(Symmetry::Shape::Disphenoid);
+        excludeShapes.push_back(Symmetry::Shape::Seesaw);
         excludeShapes.push_back(Symmetry::Shape::Tetrahedron);
       } else if(0.12 <= tau && tau < 0.62) {
         excludeShapes.push_back(Symmetry::Shape::Square);
@@ -852,7 +852,7 @@ void AtomStereopermutator::Impl::fit(
         excludeShapes.push_back(Symmetry::Shape::Tetrahedron);
       } else if(0.62 <= tau) {
         excludeShapes.push_back(Symmetry::Shape::Square);
-        excludeShapes.push_back(Symmetry::Shape::Disphenoid);
+        excludeShapes.push_back(Symmetry::Shape::Seesaw);
         // Symmetry is tetrahedral
       }
     } else if(S == 5) {

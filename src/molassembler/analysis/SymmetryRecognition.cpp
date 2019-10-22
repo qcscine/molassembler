@@ -182,7 +182,7 @@ struct AngularDeviationGeometryIndexHybrid final : public Recognizer {
          */
         if(tau < 0.12) {
           // Symmetry is square planar
-          excludedSymmetries.push_back(Symmetry::Shape::Disphenoid);
+          excludedSymmetries.push_back(Symmetry::Shape::Seesaw);
           excludedSymmetries.push_back(Symmetry::Shape::Tetrahedron);
         } else if(0.12 <= tau && tau < 0.62) {
           excludedSymmetries.push_back(Symmetry::Shape::Square);
@@ -190,7 +190,7 @@ struct AngularDeviationGeometryIndexHybrid final : public Recognizer {
           excludedSymmetries.push_back(Symmetry::Shape::Tetrahedron);
         } else if(0.62 <= tau) {
           excludedSymmetries.push_back(Symmetry::Shape::Square);
-          excludedSymmetries.push_back(Symmetry::Shape::Disphenoid);
+          excludedSymmetries.push_back(Symmetry::Shape::Seesaw);
           // Symmetry is tetrahedral
         }
       } else if(S == 5) {
@@ -263,11 +263,11 @@ const std::map<Symmetry::Shape, Symmetry::PointGroup> pointGroupMapping {
   {Symmetry::Shape::Line, Symmetry::PointGroup::Dinfh},
   {Symmetry::Shape::Bent, Symmetry::PointGroup::C2v},
   {Symmetry::Shape::EquilateralTriangle, Symmetry::PointGroup::D3h},
-  {Symmetry::Shape::ApicalTrigonalPyramid, Symmetry::PointGroup::C3v},
+  {Symmetry::Shape::VacantTetrahedron, Symmetry::PointGroup::C3v},
   {Symmetry::Shape::T, Symmetry::PointGroup::C2v},
   {Symmetry::Shape::Tetrahedron, Symmetry::PointGroup::Td},
   {Symmetry::Shape::Square, Symmetry::PointGroup::D4h},
-  {Symmetry::Shape::Disphenoid, Symmetry::PointGroup::C2v},
+  {Symmetry::Shape::Seesaw, Symmetry::PointGroup::C2v},
   {Symmetry::Shape::TrigonalPyramid, Symmetry::PointGroup::C3v},
   {Symmetry::Shape::SquarePyramid, Symmetry::PointGroup::C4v},
   {Symmetry::Shape::TrigonalBipyramid, Symmetry::PointGroup::D3h},

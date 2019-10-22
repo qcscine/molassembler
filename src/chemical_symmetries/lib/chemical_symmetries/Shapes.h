@@ -31,8 +31,8 @@ enum class Shape : unsigned {
   /* 3 */
   //! See data::EquilateralTriangle
   EquilateralTriangle,
-  //! See data::ApicalTrigonalPyramid
-  ApicalTrigonalPyramid,
+  //! See data::VacantTetrahedron
+  VacantTetrahedron,
   //! See data::T
   T,
 
@@ -41,8 +41,8 @@ enum class Shape : unsigned {
   Tetrahedron,
   //! See data::Square
   Square,
-  //! See data::Disphenoid
-  Disphenoid,
+  //! See data::Seesaw
+  Seesaw,
   //! See data::TrigonalPyramid
   TrigonalPyramid,
 
@@ -79,10 +79,8 @@ enum class Shape : unsigned {
   Cube,
   //! See data::BicappedTrigonalPrism
   BicappedTrigonalPrism,
-  //! See data::Dodecahedron
-  Dodecahedron,
-    //! Alternate name for Dodecahedron
-    SnubDisphenoid = Dodecahedron,
+  //! See data::TrigonalDodecahedron
+  TrigonalDodecahedron,
   //! See data::HexagonalBipyramid
   HexagonalBipyramid,
 
