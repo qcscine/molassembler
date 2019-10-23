@@ -117,6 +117,14 @@ const boost::optional<const properties::SymmetryTransitionGroup&> getMapping(
         cacheKey,
         STLResult
       );
+    } else {
+      // Calculate dynamically (relevant for targets of size 9 and higher)
+      mappingsCache.add(
+        cacheKey,
+        properties::selectBestTransitionMappings(
+          properties::symmetryTransitionMappings(a, b)
+        )
+      );
     }
 #else
     mappingsCache.add(

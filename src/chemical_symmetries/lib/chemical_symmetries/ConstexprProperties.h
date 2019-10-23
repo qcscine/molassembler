@@ -840,8 +840,11 @@ template<typename SymmetrySource, typename SymmetryTarget>
 constexpr
 std::enable_if_t<
   (
-    SymmetrySource::size == SymmetryTarget::size
-    || SymmetrySource::size + 1 == SymmetryTarget::size
+    SymmetryTarget::size <= 7
+    && (
+      SymmetrySource::size == SymmetryTarget::size
+      || SymmetrySource::size + 1 == SymmetryTarget::size
+    )
   ),
   temple::Optional<MappingsReturnType>
 > calculateMapping() {
@@ -855,8 +858,11 @@ template<typename SymmetrySource, typename SymmetryTarget>
 constexpr
 std::enable_if_t<
   !(
-    SymmetrySource::size == SymmetryTarget::size
-    || SymmetrySource::size + 1 == SymmetryTarget::size
+    SymmetryTarget::size <= 7
+    && (
+      SymmetrySource::size == SymmetryTarget::size
+      || SymmetrySource::size + 1 == SymmetryTarget::size
+    )
   ),
   temple::Optional<MappingsReturnType>
 > calculateMapping() {

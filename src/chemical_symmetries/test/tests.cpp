@@ -56,7 +56,7 @@ struct LockstepTest {
   }
 };
 
-BOOST_AUTO_TEST_CASE(symmetryTypeAndPositionInEnumLockstep) {
+BOOST_AUTO_TEST_CASE(SymmetryTypeAndPositionInEnumLockstep) {
   BOOST_CHECK_MESSAGE(
     temple::all_of(
       temple::TupleType::map<
@@ -68,7 +68,7 @@ BOOST_AUTO_TEST_CASE(symmetryTypeAndPositionInEnumLockstep) {
   );
 }
 
-BOOST_AUTO_TEST_CASE(symmetryDataConstructedCorrectly) {
+BOOST_AUTO_TEST_CASE(SymmetryDataConstructedCorrectly) {
   BOOST_TEST_REQUIRE(Symmetry::symmetryData().size() == Symmetry::nShapes);
 
   BOOST_REQUIRE(
@@ -81,113 +81,7 @@ BOOST_AUTO_TEST_CASE(symmetryDataConstructedCorrectly) {
   );
 }
 
-BOOST_AUTO_TEST_CASE(angleFuntionsInSequence) {
-  BOOST_CHECK(
-    temple::all_of(
-      temple::adaptors::zip(
-        Symmetry::data::angleFunctions,
-        std::vector<Symmetry::data::AngleFunctionPtr> {{
-          &Symmetry::data::Line::angleFunction,
-          &Symmetry::data::Bent::angleFunction,
-          &Symmetry::data::EquilateralTriangle::angleFunction, // 3
-          &Symmetry::data::VacantTetrahedron::angleFunction,
-          &Symmetry::data::T::angleFunction,
-          &Symmetry::data::Tetrahedron::angleFunction, // 4
-          &Symmetry::data::Square::angleFunction,
-          &Symmetry::data::Seesaw::angleFunction,
-          &Symmetry::data::TrigonalPyramid::angleFunction,
-          &Symmetry::data::SquarePyramid::angleFunction, // 5
-          &Symmetry::data::TrigonalBipyramid::angleFunction,
-          &Symmetry::data::Pentagon::angleFunction,
-          &Symmetry::data::Octahedron::angleFunction, // 6
-          &Symmetry::data::TrigonalPrism::angleFunction,
-          &Symmetry::data::PentagonalPyramid::angleFunction,
-          &Symmetry::data::PentagonalBipyramid::angleFunction, // 7
-          &Symmetry::data::SquareAntiprism::angleFunction // 8
-        }}
-      ),
-      [](const auto& aPtr, const auto& bPtr) -> bool {
-        return aPtr == bPtr;
-      }
-    )
-  );
-}
-
-BOOST_AUTO_TEST_CASE( correctRotationVectorSize ) {
-  // every rotation vector size must equal size of symmetry
-  for(const auto& name : allShapes) {
-    for(const auto& rotationVector : rotations(name)) {
-      BOOST_CHECK(rotationVector.size() == size(name));
-    }
-  }
-
-}
-
-BOOST_AUTO_TEST_CASE( rotationVectorSanityTests ) {
-  // every rotation may have every number 0 -> (size of symmetry - 1) only once
-  for(const auto& name : allShapes) {
-    std::set<unsigned> members;
-    for(unsigned i = 0; i < size(name); i++) {
-      members.insert(members.end(), i);
-    }
-
-    for(const auto& rotationVector : rotations(name)) {
-      std::set<unsigned> converted {
-        rotationVector.begin(),
-        rotationVector.end()
-      };
-
-      BOOST_CHECK(converted.size() == size(name)); // no duplicates
-
-      BOOST_CHECK(
-        std::accumulate(
-          rotationVector.begin(),
-          rotationVector.end(),
-          true,
-          [&members](const bool carry, const unsigned rotationElement) {
-            return carry && (members.count(rotationElement) == 1);
-          }
-        )
-      );
-    }
-  }
-
-  /* every rotation must return to the original after a finite number of
-   * applications
-   */
-  unsigned maxIter = 100;
-  for(const auto& name : allShapes) {
-    std::vector<unsigned> initialConfiguration (
-      size(name),
-      0
-    );
-
-    std::iota(
-      initialConfiguration.begin(),
-      initialConfiguration.end(),
-      0
-    );
-
-    for(const auto& rotationVector : rotations(name)) {
-      // copy in from initial
-      auto configuration = initialConfiguration;
-
-      bool pass = false;
-      for(unsigned N = 0; N < maxIter; N++) {
-        configuration = rotate(configuration, rotationVector);
-        if(configuration == initialConfiguration) {
-          pass = true;
-          break;
-        }
-      }
-
-      BOOST_CHECK(pass);
-    }
-  }
-
-}
-
-BOOST_AUTO_TEST_CASE( angleFunctionInputSymmetry ) {
+BOOST_AUTO_TEST_CASE(AngleFunctionInputSymmetry) {
   // every angle function must be symmetrical on input of valid unsigned indices
   for(const Shape shape: allShapes) {
     bool passesAll = true;
@@ -210,7 +104,7 @@ BOOST_AUTO_TEST_CASE( angleFunctionInputSymmetry ) {
 
 }
 
-BOOST_AUTO_TEST_CASE( angleFunctionZeroForIdenticalInput) {
+BOOST_AUTO_TEST_CASE(AngleFunctionZeroForIdenticalInput) {
   // every angle function must return 0 for identical indices
   for(const Shape shape: allShapes) {
     bool passesAll = true;
@@ -229,7 +123,7 @@ BOOST_AUTO_TEST_CASE( angleFunctionZeroForIdenticalInput) {
   }
 }
 
-BOOST_AUTO_TEST_CASE(anglesWithinRadiansBounds) {
+BOOST_AUTO_TEST_CASE(AnglesWithinRadiansBounds) {
   for(const Shape shape : allShapes) {
     bool passesAll = true;
 
@@ -256,35 +150,7 @@ BOOST_AUTO_TEST_CASE(anglesWithinRadiansBounds) {
   }
 }
 
-BOOST_AUTO_TEST_CASE( rightAmountOfCoordinates) {
-  // every information must have the right amount of coordinates
-  for(const auto& shape: allShapes) {
-    BOOST_CHECK(
-      symmetryData().at(shape).coordinates.cols() ==
-      symmetryData().at(shape).size
-    );
-  }
-}
-
-BOOST_AUTO_TEST_CASE( allCoordinateVectorsLengthOne) {
-  for(const auto& shape: allShapes) {
-    bool all_pass = true;
-
-    const Eigen::Matrix<double, 3, Eigen::Dynamic>& positions = symmetryData().at(shape).coordinates;
-
-    unsigned cols = positions.cols();
-    for(unsigned i = 0; i < cols; ++i) {
-      if(positions.col(i).norm() - 1 > 1e10) {
-        all_pass = false;
-        break;
-      }
-    }
-
-    BOOST_CHECK(all_pass);
-  }
-}
-
-BOOST_AUTO_TEST_CASE( anglesMatchCoordinates) {
+BOOST_AUTO_TEST_CASE(AnglesMatchCoordinates) {
 
   /* The results of the angle functions ought to match the geometries specified
    * by the coordinates
@@ -326,7 +192,7 @@ BOOST_AUTO_TEST_CASE( anglesMatchCoordinates) {
   }
 }
 
-BOOST_AUTO_TEST_CASE( allTetrahedraPositive) {
+BOOST_AUTO_TEST_CASE(AllTetrahedraPositive) {
   /* Checks if sequence that tetrahedra are defined in leads to a positive
    * volume when calculated via
    *
@@ -381,7 +247,7 @@ BOOST_AUTO_TEST_CASE( allTetrahedraPositive) {
   }
 }
 
-BOOST_AUTO_TEST_CASE( tetrahedraDefinitionIndicesUnique ) {
+BOOST_AUTO_TEST_CASE(TetrahedraDefinitionIndicesUnique) {
   for(const auto& shape : allShapes) {
     for(const auto& tetrahedron : tetrahedra(shape)) {
       bool containsAnEmptyOption = false;
@@ -406,7 +272,7 @@ BOOST_AUTO_TEST_CASE( tetrahedraDefinitionIndicesUnique ) {
   }
 }
 
-BOOST_AUTO_TEST_CASE(smallestAngleValueCorrect) {
+BOOST_AUTO_TEST_CASE(SmallestAngleValueCorrect) {
   const double comparisonSmallestAngle = temple::min(
     temple::map(
       allShapes,

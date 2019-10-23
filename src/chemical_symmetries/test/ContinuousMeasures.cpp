@@ -69,11 +69,11 @@ const std::string& pointGroupString(PointGroup group) {
   );
 }
 
-BOOST_AUTO_TEST_CASE(Recognition) {
+BOOST_AUTO_TEST_CASE(PointGroupMeasures) {
   for(const Shape shape : allShapes) {
 #ifdef NDEBUG
-    // Skip sizes greater 8 in debug builds
-    if(size(shape) >= 8) {
+    // Skip sizes greater 7 in debug builds
+    if(size(shape) > 7) {
       continue;
     }
 #endif
@@ -421,7 +421,6 @@ BOOST_AUTO_TEST_CASE(ShapeMeasures) {
     }
 #endif
 
-    std::cout << name(shape) << "\n";
     auto shapeCoordinates = continuous::normalize(
       addOrigin(symmetryData().at(shape).coordinates)
     );

@@ -94,5 +94,5 @@
  * data at a cost of O(1), or from DynamicProperties at a cost of O(S * S!),
  * where S is the size of the symmetry.
  */
-#define USE_CONSTEXPR_HAS_MULTIPLE_UNLINKED_STEREOPERMUTATIONS
+//#define USE_CONSTEXPR_HAS_MULTIPLE_UNLINKED_STEREOPERMUTATIONS
 #endif

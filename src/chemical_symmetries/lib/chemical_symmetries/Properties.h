@@ -47,7 +47,7 @@ constexpr double smallestAngle [[gnu::unused]]
 >();
 
 #ifdef USE_CONSTEXPR_TRANSITION_MAPPINGS
-/*! @brief All 0, +1 symmetry transition mappings calculated at compile-time
+/*! @brief 0, +1 symmetry transition mappings calculated at compile-time
  *
  * A strictly upper triangular matrix of mapping optionals. Only transitions
  * between symmetries of equivalent or increasing sizes are populated, all

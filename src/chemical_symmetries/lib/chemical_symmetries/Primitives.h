@@ -19,67 +19,13 @@ namespace Scine {
 
 namespace Symmetry {
 
-namespace concepts {
-
-/**
- * @brief Concept checking class for symmetry classes
- *
- * @tparam T Class to check the concept for
- *
- * All members must be `static constexpr` (`const` is then implicit)
- *
- * @par Member requirements (Type and name)
- * - `Shape shape`: Enum member specifying the symmetry name
- * - `unsigned size`: Number of symmetry positions in the symmetry
- * - `char* stringName`: Human readable string of the name
- * - `double(const unsigned, const unsigned) angleFunction`: Angle in radians
- *   between symmetry position indices
- * - `std::array<temple::Vector, size> coordinate`: Origin-centered normalized
- *   position vectors of the symmetry positions
- * - `std::array< std::array<unsigned, size>, ?> rotations`: Spatial rotations
- *   represented as index permutations between symmetry positions. A minimal
- *   set that combined can generate all rotations.
- * - `std::array< std::array<unsigned, 4>, ?> tetrahedra`: A list of tetrahedra
- *   definitions whose signed volumes can uniquely identify a maximally
- *   asymmetric set of ligands
- * - `std::array<unsigned, 0 or size> mirror`: A mirroring symmetry element or
- *   an empty array if the symmetry cannot be chiral.
- */
-template<typename T>
-struct ShapeClass : std::integral_constant<bool,
-  (
-    std::is_same<Shape, std::decay_t<decltype(T::shape)>>::value
-    && std::is_same<PointGroup, std::decay_t<decltype(T::pointGroup)>>::value
-    && std::is_same<unsigned, std::decay_t<decltype(T::size)>>::value
-    && std::is_same<const char*, std::decay_t<decltype(T::stringName)>>::value
-    && std::is_same<double, decltype(T::angleFunction(0u, 1u))>::value
-    && std::is_same<
-      temple::Vector,
-      temple::getValueType<decltype(T::coordinates)>
-    >::value
-    && T::coordinates.size() == T::size
-    && std::is_same<
-      std::array<unsigned, T::size>,
-      temple::getValueType<decltype(T::rotations)>
-    >::value
-    && std::is_same<
-      std::array<unsigned, 4>,
-      temple::getValueType<decltype(T::tetrahedra)>
-    >::value
-    && std::is_same<unsigned, temple::getValueType<decltype(T::mirror)>>::value
-    && (T::mirror.size() == 0 || T::mirror.size() == T::size)
-  )
-> {};
-
-} // namespace concepts
-
 //! A placeholder value for constexpr tetrahedra specification of origin
 constexpr unsigned ORIGIN_PLACEHOLDER = std::numeric_limits<unsigned>::max();
 
 /*!
  * @brief All symmetry data classes and some minor helper functions
  *
- * Each symmetry data class must fulfill concepts::ShapeClass
+ * Each symmetry data class follows a concept seen in the .cpp file
  */
 namespace data {
 
@@ -332,7 +278,7 @@ struct Tetrahedron {
       return 0;
     }
 
-    return 2 * temple::Math::atan(std::sqrt(2));
+    return 2 * temple::Math::atan(M_SQRT2);
   }
   static constexpr std::array<temple::Vector, 4> coordinates {{
     {0, 1, 0},
@@ -1872,16 +1818,6 @@ using allShapeDataTypes = std::tuple<
   Icosahedron, // 12,
   Cuboctahedron
 >;
-
-static_assert(
-  temple::TupleType::allOf<allShapeDataTypes, concepts::ShapeClass>(),
-  "Not all shape data types fulfill the ShapeClass concept"
-);
-
-static_assert(
-  std::tuple_size<allShapeDataTypes>::value == nShapes,
-  "Not all shape names have a shape type"
-);
 
 } // namespace data
 

@@ -22,7 +22,155 @@ namespace Scine {
 
 namespace Symmetry {
 
+namespace concepts {
+
+/**
+ * @brief Concept checking class for symmetry classes
+ *
+ * @tparam T Class to check the concept for
+ *
+ * All members must be `static constexpr` (`const` is then implicit)
+ *
+ * @par Member requirements (Type and name)
+ * - `Shape shape`: Enum member specifying the symmetry name
+ * - `unsigned size`: Number of symmetry positions in the symmetry
+ * - `char* stringName`: Human readable string of the name
+ * - `double(const unsigned, const unsigned) angleFunction`: Angle in radians
+ *   between symmetry position indices
+ * - `std::array<temple::Vector, size> coordinate`: Origin-centered normalized
+ *   position vectors of the symmetry positions
+ * - `std::array< std::array<unsigned, size>, ?> rotations`: Spatial rotations
+ *   represented as index permutations between symmetry positions. A minimal
+ *   set that combined can generate all rotations.
+ * - `std::array< std::array<unsigned, 4>, ?> tetrahedra`: A list of tetrahedra
+ *   definitions whose signed volumes can uniquely identify a maximally
+ *   asymmetric set of ligands
+ * - `std::array<unsigned, 0 or size> mirror`: A mirroring symmetry element or
+ *   an empty array if the symmetry cannot be chiral.
+ */
+template<typename T>
+struct ShapeClass : std::integral_constant<bool,
+  (
+    std::is_same<Shape, std::decay_t<decltype(T::shape)>>::value
+    && std::is_same<PointGroup, std::decay_t<decltype(T::pointGroup)>>::value
+    && std::is_same<unsigned, std::decay_t<decltype(T::size)>>::value
+    && std::is_same<const char*, std::decay_t<decltype(T::stringName)>>::value
+    && std::is_same<double, decltype(T::angleFunction(0u, 1u))>::value
+    && std::is_same<
+      temple::Vector,
+      temple::getValueType<decltype(T::coordinates)>
+    >::value
+    && T::coordinates.size() == T::size
+    && std::is_same<
+      std::array<unsigned, T::size>,
+      temple::getValueType<decltype(T::rotations)>
+    >::value
+    && std::is_same<
+      std::array<unsigned, 4>,
+      temple::getValueType<decltype(T::tetrahedra)>
+    >::value
+    && std::is_same<unsigned, temple::getValueType<decltype(T::mirror)>>::value
+    && (T::mirror.size() == 0 || T::mirror.size() == T::size)
+  )
+> {};
+
+template<typename T>
+constexpr bool isIotaPermutation(const T& indices) {
+  const unsigned size = indices.size();
+
+  for(unsigned i = 0; i < size; ++i) {
+    bool foundI = false;
+
+    for(unsigned j = 0; j < size; ++j) {
+      if(indices[j] == i) {
+        foundI = true;
+        break;
+      }
+    }
+
+    if(!foundI) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+template<typename T>
+constexpr bool all_of(const T& t) {
+  for(unsigned i = 0; i < t.size(); ++i) {
+    if(!t[i]) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+template<typename T, std::size_t ... Inds>
+constexpr bool allRotationsValid(std::index_sequence<Inds ...> /* inds */) {
+  constexpr unsigned numRotations = sizeof...(Inds);
+  temple::Array<bool, numRotations> valid {
+    isIotaPermutation(T::rotations[Inds])...
+  };
+  return all_of(valid);
+}
+
+template<typename T>
+struct ValidRotations : std::integral_constant<bool,
+  allRotationsValid<T>(
+    std::make_index_sequence<T::rotations.size()> {}
+  )
+> {};
+
+template<typename T>
+struct ValidMirror : std::integral_constant<bool,
+  isIotaPermutation(T::mirror)
+> {};
+
+template<typename T, std::size_t ... Inds>
+constexpr bool allVectorsNormalized(std::index_sequence<Inds ...> /* inds */) {
+  temple::Array<bool, T::size> valid {
+    (temple::Math::abs(T::coordinates[Inds].norm() - 1) < 1e-6)...
+  };
+  return all_of(valid);
+}
+
+template<typename T>
+struct ValidCoordinates : std::integral_constant<bool,
+  allVectorsNormalized<T>(std::make_index_sequence<T::size> {})
+> {};
+
+} // namespace concepts
+
 namespace data {
+
+/* Static property correctness checking */
+
+static_assert(
+  temple::TupleType::allOf<allShapeDataTypes, concepts::ShapeClass>(),
+  "Not all shape data types fulfill the ShapeClass concept"
+);
+
+static_assert(
+  std::tuple_size<allShapeDataTypes>::value == nShapes,
+  "Not all shape names have a shape type"
+);
+
+static_assert(
+  temple::TupleType::allOf<allShapeDataTypes, concepts::ValidRotations>(),
+  "Not all shape data types' rotations are valid"
+);
+
+static_assert(
+  temple::TupleType::allOf<allShapeDataTypes, concepts::ValidMirror>(),
+  "Not all shape data types' mirrors are valid"
+);
+
+static_assert(
+  temple::TupleType::allOf<allShapeDataTypes, concepts::ValidCoordinates>(),
+  "Not all shape data types' coordinates are valid"
+);
 
 /* This looks quite heavily as if it still violates DRY, but no idea how to
  * refactor further with the preprocessor
