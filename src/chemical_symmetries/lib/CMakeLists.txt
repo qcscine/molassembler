@@ -14,7 +14,6 @@ set(HEADERS_All
   ${CMAKE_CURRENT_SOURCE_DIR}/chemical_symmetries/CoordinateSystemTransformation.h
   ${CMAKE_CURRENT_SOURCE_DIR}/chemical_symmetries/Diophantine.h
   ${CMAKE_CURRENT_SOURCE_DIR}/chemical_symmetries/DynamicProperties.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/chemical_symmetries/Flowchart.h
   ${CMAKE_CURRENT_SOURCE_DIR}/chemical_symmetries/InertialMoments.h
   ${CMAKE_CURRENT_SOURCE_DIR}/chemical_symmetries/Partitioner.h
   ${CMAKE_CURRENT_SOURCE_DIR}/chemical_symmetries/PointGroupElements.h
@@ -31,7 +30,6 @@ set(SOURCES_All
   ${CMAKE_CURRENT_SOURCE_DIR}/chemical_symmetries/ContinuousMeasures.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/chemical_symmetries/Diophantine.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/chemical_symmetries/DynamicProperties.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/chemical_symmetries/Flowchart.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/chemical_symmetries/InertialMoments.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/chemical_symmetries/Partitioner.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/chemical_symmetries/PointGroupElements.cpp

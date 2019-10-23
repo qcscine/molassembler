@@ -8,7 +8,6 @@ set(TestFiles
   ${CMAKE_CURRENT_SOURCE_DIR}/ContinuousMeasures.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/CoordinateSystemTransformation.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/Diophantine.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/Flowchart.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/InertialMoments.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/Partitioner.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/tests.cpp
