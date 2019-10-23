@@ -485,7 +485,7 @@ constexpr ArrayType<unsigned, size> symPosMapping(
 }
 
 /*!
- * Calculate an upper bound on non-superimposable rotations a symmetry
+ * Calculate a lower bound on non-superimposable rotations a symmetry
  * class can produce for entirely unequal indices
  *
  * @complexity{@math{\Theta(R M S)} where @math{R} is the number of rotations
@@ -496,16 +496,7 @@ constexpr ArrayType<unsigned, size> symPosMapping(
  */
 template<typename ShapeClass>
 constexpr unsigned maxRotations() {
-  /* For each rotation in the symmetry class, figure out the multiplicity, i.e.
-   * how often a rotation has to be applied to return to identity
-   */
-  constexpr auto symmetryRotationPeriodicities = rotationPeriodicities<ShapeClass>();
-
-  return temple::reduce(
-    symmetryRotationPeriodicities,
-    1u,
-    std::multiplies<>()
-  );
+  return temple::reduce(rotationPeriodicity<ShapeClass>(), 1u, std::multiplies<>());
 }
 
 // Some helper types for use in generateAllRotations
@@ -517,7 +508,7 @@ using IndexListStorageType = unsigned;
 template<typename ShapeClass>
 using RotationsSetType = temple::DynamicSet<
   IndicesList<ShapeClass>,
-  maxRotations<ShapeClass>()
+  maxRotations<ShapeClass>() * 2
 >;
 
 template<typename ShapeClass>
@@ -549,10 +540,7 @@ constexpr auto generateAllRotations(const IndicesList<ShapeClass>& indices) {
 
   ChainArrayType<ShapeClass> chain {0u};
 
-  while(
-    chain.front() < ShapeClass::rotations.size()
-    && rotations.size() < maxRotations<ShapeClass>()
-  ) {
+  while(chain.front() < ShapeClass::rotations.size()) {
 
     auto generated = applyRotation<ShapeClass>(
       chainStructures.back(),
