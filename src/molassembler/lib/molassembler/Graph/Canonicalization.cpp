@@ -127,7 +127,7 @@ struct NautySparseGraph {
 
     const AtomIndex N = inner.N();
     // std::size_t can exceed int
-    if(N > std::numeric_limits<int>::max()) {
+    if(N > static_cast<AtomIndex>(std::numeric_limits<int>::max())) {
       throw std::domain_error("Graph size exceeds canonical labeling algorithm size limits");
     }
 

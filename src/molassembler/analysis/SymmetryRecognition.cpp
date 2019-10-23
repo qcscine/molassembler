@@ -14,7 +14,8 @@
 #include "molassembler/Detail/Cartesian.h"
 
 #include "chemical_symmetries/Symmetries.h"
-#include "chemical_symmetries/Recognition.h"
+#include "chemical_symmetries/ContinuousMeasures.h"
+#include "chemical_symmetries/InertialMoments.h"
 #include "chemical_symmetries/DynamicProperties.h"
 #include "chemical_symmetries/TauCriteria.h"
 
@@ -32,18 +33,9 @@
 #include <random>
 
 /* TODO
- * - CSM based does not understand subsets of symmetries and has no threshold
- *   for it. Any marginally bent three-particle arrangement will not be
- *   classified as linear.
- *
  * - Ideas
- *   - Find maximum value of CSM for each point group and rescale CSMs accordingly
- *   - Find average value of CSM for random point cloud and rescale CSMs accordingly
+ *   - CShM classification
  *   - Add the geometry index hybrid with angular deviation
- *   - Jan: Flowchart point groups instead of using CSM value comparisons,
- *     assign probabilities to decisions instead of using thresholds to follow
- *     single paths. Evaluate trees for all relevant point groups and then
- *     compare cumulative (multiplicative) probabilities.
  */
 
 using namespace std::string_literals;
@@ -279,12 +271,12 @@ const std::map<Symmetry::Shape, Symmetry::PointGroup> pointGroupMapping {
   {Symmetry::Shape::SquareAntiprism, Symmetry::PointGroup::D4d}
 };
 
-struct PureCSM final : public Recognizer {
+struct ShapeClassifier final : public Recognizer {
   Symmetry::Shape identify(const Positions& positions) const final {
     const unsigned S = positions.cols() - 1;
     using CarryType = std::pair<double, Symmetry::Shape>;
 
-    Positions normalized = Symmetry::detail::normalize(positions);
+    Positions normalized = Symmetry::continuous::normalize(positions);
     const Symmetry::Top top = Symmetry::standardizeTop(normalized);
     if(top == Symmetry::Top::Asymmetric) {
       Symmetry::reorientAsymmetricTop(normalized);
@@ -298,7 +290,7 @@ struct PureCSM final : public Recognizer {
           return bestPair;
         }
 
-        const double csm = Symmetry::csm::pointGroup(
+        const double csm = Symmetry::continuous::pointGroup(
           normalized,
           pointGroupMapping.at(name)
         );
@@ -314,91 +306,6 @@ struct PureCSM final : public Recognizer {
 
   std::string name() const final {
     return "Pure CSM";
-  }
-};
-
-struct OrderRespectingCSM final : public Recognizer {
-  Symmetry::Shape identify(const Positions& positions) const final {
-    const unsigned S = positions.cols() - 1;
-    using CarryType = std::pair<double, Symmetry::Shape>;
-
-    Positions normalized = Symmetry::detail::normalize(positions);
-    const Symmetry::Top top = Symmetry::standardizeTop(normalized);
-    if(top == Symmetry::Top::Asymmetric) {
-      Symmetry::reorientAsymmetricTop(normalized);
-    }
-
-    return temple::accumulate(
-      Symmetry::allShapes,
-      CarryType {std::numeric_limits<double>::max(), Symmetry::Shape::Line},
-      [&](const CarryType& bestPair, const Symmetry::Shape name) -> CarryType {
-        if(Symmetry::size(name) != S) {
-          return bestPair;
-        }
-
-        const double csm = Symmetry::csm::pointGroup(
-          normalized,
-          pointGroupMapping.at(name)
-        );
-
-        const unsigned thisPointGroupOrder = Symmetry::elements::order(pointGroupMapping.at(name));
-        const unsigned carryPointGroupOrder = Symmetry::elements::order(pointGroupMapping.at(bestPair.second));
-
-        if(csm / thisPointGroupOrder < bestPair.first / carryPointGroupOrder) {
-          return {csm, name};
-        }
-
-        return bestPair;
-      }
-    ).second;
-  }
-
-  std::string name() const final {
-    return "Order respecting CSM";
-  }
-};
-
-struct PositionManipulatingCSM final : public Recognizer {
-  Symmetry::Shape identify(const Positions& positions) const final {
-    const unsigned S = positions.cols() - 1;
-    using CarryType = std::pair<double, Symmetry::Shape>;
-
-    Positions manipulated = positions;
-    // Normalize all positions to norm 1 from the central atom
-    for(unsigned i = 1; i < positions.cols(); ++i) {
-      manipulated.col(i) = manipulated.col(0) + (manipulated.col(i) - manipulated.col(0)).normalized();
-    }
-
-    Positions normalized = Symmetry::detail::normalize(manipulated);
-    const Symmetry::Top top = Symmetry::standardizeTop(normalized);
-    if(top == Symmetry::Top::Asymmetric) {
-      Symmetry::reorientAsymmetricTop(normalized);
-    }
-
-    return temple::accumulate(
-      Symmetry::allShapes,
-      CarryType {std::numeric_limits<double>::max(), Symmetry::Shape::Line},
-      [&](const CarryType& bestPair, const Symmetry::Shape name) -> CarryType {
-        if(Symmetry::size(name) != S) {
-          return bestPair;
-        }
-
-        const double csm = Symmetry::csm::pointGroup(
-          normalized,
-          pointGroupMapping.at(name)
-        );
-
-        if(csm < bestPair.first) {
-          return {csm, name};
-        }
-
-        return bestPair;
-      }
-    ).second;
-  }
-
-  std::string name() const final {
-    return "Position manipulating CSM";
   }
 };
 
@@ -446,7 +353,7 @@ void distort(Eigen::Ref<Positions> positions, const double distortionNorm, PRNG&
   }
 }
 
-using RecognizersTuple = boost::mpl::list<PureAngularDeviationSquare, AngularDeviationGeometryIndexHybrid, PureCSM, OrderRespectingCSM>;
+using RecognizersTuple = boost::mpl::list<PureAngularDeviationSquare, AngularDeviationGeometryIndexHybrid, ShapeClassifier>;
 constexpr std::size_t nRecognizers = boost::mpl::size<RecognizersTuple>::value;
 
 std::vector<std::string> recognizerNames() {
