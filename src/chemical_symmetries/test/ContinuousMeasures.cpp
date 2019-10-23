@@ -70,6 +70,7 @@ const std::string& pointGroupString(PointGroup group) {
 }
 
 BOOST_AUTO_TEST_CASE(Recognition) {
+  for(const Shape shape : allShapes) {
 #ifdef NDEBUG
     // Skip sizes greater 8 in debug builds
     if(size(shape) >= 8) {

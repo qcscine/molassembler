@@ -12,6 +12,7 @@
 #define INCLUDE_MOLASSEMBLER_TEMPLE_CONSTEXPR_VECTOR_H
 
 #include "temple/constexpr/Math.h"
+#include "temple/STL17.h"
 
 #include <array>
 
@@ -138,8 +139,12 @@ struct Vector {
  */
 PURITY_WEAK constexpr double angle(const Vector& a, const Vector& b) {
   return Math::acos(
-    a.dot(b) / (
-      a.norm() * b.norm()
+    stl17::clamp(
+      a.dot(b) / (
+        a.norm() * b.norm()
+      ),
+      -1.0,
+      1.0
     )
   );
 }

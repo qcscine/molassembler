@@ -1094,28 +1094,26 @@ struct PentagonalBipyramid {
  *
  * This is a gyroelongated triangular pyramid, or alternatively a "capped
  * triangular antiprism", depending on whatever helps you visualize it.
- *
- * @todo Regularize!
  */
 struct CappedOctahedron {
   static constexpr Shape shape = Shape::CappedOctahedron;
   static constexpr PointGroup pointGroup = PointGroup::C3v;
   static constexpr unsigned size = 7;
   static constexpr char stringName[] = "capped octahedron";
-  /*! [V(CO)7]+ in C3v
+  /*! Spherized [V(CO)7]+ in C3v (find local minimium of Thomson potential)
    *
-   * Jay W. Dicke, Nathan J. Stibrich, Henry F. Schaefer,
+   * from Jay W. Dicke, Nathan J. Stibrich, Henry F. Schaefer,
    * V(CO)7+: A capped octahedral structure completes the 18-electron rule,
    * Chemical Physics Letters, Volume 456, Issues 1–3, 2008.
    */
   static constexpr std::array<temple::Vector, 7> coordinates {{
     { 0.000000,  0.000000,  1.000000},
-    { 0.956305,  0.000000,  0.292372},
-    {-0.478152,  0.828184,  0.292372},
-    {-0.478152, -0.828184,  0.292372},
-    { 0.400888,  0.694358, -0.597625},
-    {-0.801776,  0.000000, -0.597625},
-    { 0.400888, -0.694358, -0.597625}
+    { 0.957729,  0.000000,  0.287673},
+    {-0.478864,  0.829418,  0.287673},
+    {-0.478864, -0.829418,  0.287673},
+    { 0.389831,  0.675207, -0.626200},
+    {-0.779662,  0.000000, -0.626200},
+    { 0.389831, -0.675207, -0.626200}
   }};
   static constexpr auto angleLookupTable = temple::makeUpperTriangularMatrix(
     detail::makeArray<size>(coordinates)
@@ -1151,23 +1149,24 @@ struct CappedOctahedron {
  * @brief A capped trigonal prism shape, spherized J49 solid in C2v
  *
  * Square-face capped.
- *
- * @todo regularize
  */
 struct CappedTrigonalPrism {
   static constexpr Shape shape = Shape::CappedTrigonalPrism;
   static constexpr PointGroup pointGroup = PointGroup::C2v;
   static constexpr unsigned size = 7;
   static constexpr char stringName[] = "capped trigonal prism";
-  //! [V(CO)7]+ in C2v, same as from CappedOctahedron
+  /*! [V(CO)7]+ in C2v, from same source as CappedOctahedron
+   *
+   * Minimized to local minimum in Thomson potential
+   */
   static constexpr std::array<temple::Vector, 7> coordinates {{
-    { 0.000000,  0.000000,  1.000000},
-    { 0.990268,  0.000000,  0.139173},
-    { 0.000000,  0.990268,  0.139173},
-    {-0.990268,  0.000000,  0.139173},
-    {-0.000000, -0.990268,  0.139173},
-    { 0.414628,  0.414628, -0.810042},
-    {-0.414628, -0.414628, -0.810042}
+    { -0.000000, -0.000000,  1.000000},
+    {  0.984798, -0.069552,  0.159173},
+    { -0.069552,  0.984798,  0.159173},
+    { -0.984798,  0.069552,  0.159173},
+    {  0.069552, -0.984798,  0.159173},
+    {  0.413726,  0.413726, -0.810964},
+    { -0.413726, -0.413726, -0.810964}
   }};
   static constexpr auto angleLookupTable = temple::makeUpperTriangularMatrix(
     detail::makeArray<size>(coordinates)
@@ -1363,51 +1362,6 @@ struct Cube {
   static constexpr std::array<unsigned, 8> mirror {{1, 0, 3, 2, 5, 4, 7, 6}};
 };
 
-/*!
- * @brief A bicapped trigonal prism, spherized J50 solid in D4h
- *
- * Square face-bicapped.
- *
- * @todo Missing coordinates
- */
-struct BicappedTrigonalPrism {
-  static constexpr Shape shape = Shape::BicappedTrigonalPrism;
-  static constexpr PointGroup pointGroup = PointGroup::C2v;
-  static constexpr unsigned size = 8;
-  static constexpr char stringName[] = "bicapped trigonal prism";
-  static constexpr std::array<temple::Vector, 8> coordinates {{
-  }};
-  static constexpr auto angleLookupTable = temple::makeUpperTriangularMatrix(
-    detail::makeArray<size>(coordinates)
-  );
-  static constexpr double angleFunction(const unsigned a, const unsigned b) {
-    if(a == b) {
-      return 0;
-    }
-
-    return angleLookupTable.at(
-      std::min(a, b),
-      std::max(a, b)
-    );
-  }
-  static constexpr std::array<
-    std::array<unsigned, 8>,
-    2
-  > rotations {{
-    {{3, 0, 1, 2, 7, 4, 5, 6}}, // C4
-    {{0, 4, 5, 1, 3, 7, 6, 2}} // C3
-  }};
-
-  static constexpr std::array<
-    std::array<unsigned, 4>,
-    2
-  > tetrahedra {{
-    {{0, 1, 3, 5}},
-    {{2, 4, 6, 7}}
-  }};
-  static constexpr std::array<unsigned, 8> mirror {{1, 0, 3, 2, 5, 4, 7, 6}};
-};
-
 /**
  * @brief Trigonal dodecahedron, snub disphenoid shape, spherized J84 solid in D2d
  */
@@ -1417,6 +1371,14 @@ struct TrigonalDodecahedron {
   static constexpr unsigned size = 8;
   static constexpr char stringName[] = "trigonal dodecahedron";
   static constexpr std::array<temple::Vector, 8> coordinates {{
+    {  0.620913,  0.000000, -0.783880},
+    { -0.620913,  0.000000, -0.783880},
+    {  0.000000,  0.620913,  0.783880},
+    { -0.000000, -0.620913,  0.783880},
+    {  0.950273,  0.000000,  0.311417},
+    { -0.950273,  0.000000,  0.311417},
+    {  0.000000,  0.950273, -0.311417},
+    {  0.000000, -0.950273, -0.311417}
   }};
   static constexpr auto angleLookupTable = temple::makeUpperTriangularMatrix(
     detail::makeArray<size>(coordinates)
@@ -1435,14 +1397,18 @@ struct TrigonalDodecahedron {
     std::array<unsigned, 8>,
     2
   > rotations {{
+    {1, 0, 3, 2, 5, 4, 7, 6}, // C2z between 01
+    {2, 3, 0, 1, 6, 7, 4, 5} // C2x + C4z
   }};
 
   static constexpr std::array<
     std::array<unsigned, 4>,
     2
   > tetrahedra {{
+    {4, 2, 5, 3},
+    {0, 6, 1, 7}
   }};
-  static constexpr std::array<unsigned, 8> mirror {{}};
+  static constexpr std::array<unsigned, 8> mirror {{0, 1, 3, 2, 4, 5, 7, 6}};
 };
 
 /**
@@ -1483,7 +1449,7 @@ struct HexagonalBipyramid {
     2
   > rotations {{
     {5, 0, 1, 2, 3, 4, 6, 7}, // axial C6
-    {1, 6, 5, 4, 3, 2, 7, 6} // C2 around 1-4
+    {0, 5, 4, 3, 2, 1, 7, 6} // C2 around 0-3
   }};
 
   static constexpr std::array<
@@ -1502,8 +1468,6 @@ struct HexagonalBipyramid {
  *
  * Square-face tricapped. The coordinates are the solution to the Thomson
  * problem with 9 particles.
- *
- * @todo rotations, tetrahedra, mirror
  */
 struct TricappedTrigonalPrism {
   static constexpr Shape shape = Shape::TricappedTrigonalPrism;
@@ -1538,20 +1502,24 @@ struct TricappedTrigonalPrism {
     std::array<unsigned, 9>,
     2
   > rotations {{
+    {7, 8, 3, 4, 2, 1, 0, 6, 5}, // C3 ccw between 2-4-3
+    {2, 5, 0, 6, 7, 1, 3, 4, 8} // C2 at 8
   }};
 
   static constexpr std::array<
     std::array<unsigned, 4>,
     2
   > tetrahedra {{
+    {1, 0, 7, 6},
+    {5, 2, 4, 3}
   }};
-  static constexpr std::array<unsigned, 9> mirror {{}};
+  static constexpr std::array<unsigned, 9> mirror {{7, 5, 4, 3, 2, 1, 6, 0, 8}};
 };
 
 /**
  * @brief Capped square antiprism shape, spherized J10 solid in C4v
  *
- * @todo Missing coordinates
+ * Coordinates minimized to C4v local minimum of Thomson potential
  */
 struct CappedSquareAntiprism {
   static constexpr Shape shape = Shape::CappedSquareAntiprism;
@@ -1559,6 +1527,15 @@ struct CappedSquareAntiprism {
   static constexpr unsigned size = 9;
   static constexpr char stringName[] = "capped square antiprism";
   static constexpr std::array<temple::Vector, 9> coordinates {{
+    { -0.000000,  0.932111,  0.362172},
+    { -0.000000, -0.932111,  0.362172},
+    {  0.932111, -0.000000,  0.362172},
+    { -0.932111,  0.000000,  0.362172},
+    {  0.559626,  0.559626, -0.611258},
+    {  0.559626, -0.559626, -0.611258},
+    { -0.559626,  0.559626, -0.611258},
+    { -0.559626, -0.559626, -0.611258},
+    {  0.000000,  0.000000,  1.000000}
   }};
   static constexpr auto angleLookupTable = temple::makeUpperTriangularMatrix(
     detail::makeArray<size>(coordinates)
@@ -1575,16 +1552,19 @@ struct CappedSquareAntiprism {
   }
   static constexpr std::array<
     std::array<unsigned, 9>,
-    2
+    1
   > rotations {{
+    {2, 3, 1, 0, 5, 7, 4, 6, 8}
   }};
 
   static constexpr std::array<
     std::array<unsigned, 4>,
     2
   > tetrahedra {{
+    {6, 3, 4, 0},
+    {7, 5, 2, 1}
   }};
-  static constexpr std::array<unsigned, 9> mirror {{}};
+  static constexpr std::array<unsigned, 9> mirror {{0, 1, 3, 2, 6, 7, 4, 5, 8}};
 };
 
 /**
@@ -1642,8 +1622,6 @@ struct HeptagonalBipyramid {
  * @brief Bicapped square antiprism shape, spherized J17 shape in D4h
  *
  * This is the solution to the Thomson problem with 10 particles.
- *
- * @todo rotations, tetrahedra, mirror
  */
 struct BicappedSquareAntiprism {
   static constexpr Shape shape = Shape::BicappedSquareAntiprism;
@@ -1679,14 +1657,19 @@ struct BicappedSquareAntiprism {
     std::array<unsigned, 10>,
     2
   > rotations {{
+    {0, 7, 6, 1, 5, 2, 4, 8, 3, 9}, // C4z (0-9)
+    {9, 5, 3, 2, 7, 1, 8, 4, 6, 0} // C2x + C8z
   }};
 
   static constexpr std::array<
     std::array<unsigned, 4>,
-    2
+    3
   > tetrahedra {{
+    {0, 6, 7, 8},
+    {9, 3, 4, 5},
+    {9, 2, 1, 5}
   }};
-  static constexpr std::array<unsigned, 10> mirror {{}};
+  static constexpr std::array<unsigned, 10> mirror {{0, 1, 5, 7, 6, 2, 4, 3, 8, 9}};
 };
 
 /**
@@ -1694,8 +1677,6 @@ struct BicappedSquareAntiprism {
  *
  * This is the solution for 11 particles in the Thomson problem in C2v point
  * group symmetry.
- *
- * @todo rotations, tetrahedra, mirror
  */
 struct EdgeContractedIcosahedron {
   static constexpr Shape shape = Shape::EdgeContractedIcosahedron;
@@ -1730,16 +1711,20 @@ struct EdgeContractedIcosahedron {
   }
   static constexpr std::array<
     std::array<unsigned, 11>,
-    3
+    1
   > rotations {{
+    {1, 0, 9, 5, 7, 3, 10, 4, 8, 2, 6} // C2
   }};
 
   static constexpr std::array<
     std::array<unsigned, 4>,
-    4
+    3
   > tetrahedra {{
+    {6, 1, 4, 5},
+    {3, 10, 9, 0},
+    {1, 2, 7, 8}
   }};
-  static constexpr std::array<unsigned, 11> mirror {{}};
+  static constexpr std::array<unsigned, 11> mirror {{2, 9, 0, 3, 4, 5, 10, 7, 8, 1, 6}};
 };
 
 /**
@@ -1800,8 +1785,6 @@ struct Icosahedron {
 
 /**
  * @brief Regular cuboctahedron shape with Oh symmetry
- *
- * @todo Missing coordinates
  */
 struct Cuboctahedron {
   static constexpr Shape shape = Shape::Cuboctahedron;
@@ -1879,7 +1862,6 @@ using allShapeDataTypes = std::tuple<
   CappedTrigonalPrism,
   SquareAntiprism, // 8
   Cube,
-  BicappedTrigonalPrism,
   TrigonalDodecahedron,
   HexagonalBipyramid,
   TricappedTrigonalPrism, // 9

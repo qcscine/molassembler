@@ -9,7 +9,6 @@
 #include "boost/program_options.hpp"
 
 #include "temple/Functional.h"
-#include "temple/VectorView.h"
 #include "temple/Stringify.h"
 
 #include "chemical_symmetries/Symmetries.h"
