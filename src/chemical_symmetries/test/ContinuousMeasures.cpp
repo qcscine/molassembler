@@ -71,12 +71,17 @@ const std::string& pointGroupString(PointGroup group) {
 
 BOOST_AUTO_TEST_CASE(PointGroupMeasures) {
   for(const Shape shape : allShapes) {
-#ifdef NDEBUG
-    // Skip sizes greater 7 in debug builds
-    if(size(shape) > 7) {
+#ifndef NDEBUG
+    // Skip sizes greater 4 in debug builds
+    if(size(shape) > 4) {
       continue;
     }
 #endif
+
+    // Even release builds bow out here
+    if(size(shape) > 8) {
+      continue;
+    }
 
     auto positions = addOrigin(symmetryData().at(shape).coordinates);
     // distort(positions);
@@ -416,10 +421,15 @@ BOOST_AUTO_TEST_CASE(AsymmetricTopStandardization) {
 BOOST_AUTO_TEST_CASE(ShapeMeasures) {
   for(const Shape shape : allShapes) {
 #ifndef NDEBUG
-    if(size(shape) > 6) {
+    if(size(shape) > 4) {
       continue;
     }
 #endif
+
+    // Even release builds bow out here. Better algorithms are needed.
+    if(size(shape) > 8) {
+      continue;
+    }
 
     auto shapeCoordinates = continuous::normalize(
       addOrigin(symmetryData().at(shape).coordinates)
@@ -527,11 +537,6 @@ BOOST_AUTO_TEST_CASE(MinimumDistortionConstants) {
 
     const double calculatedMinimumDistortion = std::sqrt((ab + ba) / 2);
     BOOST_CHECK_CLOSE(calculatedMinimumDistortion, expectedMinimumDistortion, 2);
-
-    std::cout << "For shapes " << name(a) << " - " << name(b)
-      << ": ab = " << ab << ", ba = " << ba
-      << ", expected " << std::pow(expectedMinimumDistortion, 2)
-      << "\n";
   };
 
   temple::forEach(minimumDistortionConstants, testF);

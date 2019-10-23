@@ -823,8 +823,8 @@ struct TrigonalPrism {
     std::array<unsigned, 4>,
     2
   > tetrahedra {{
-    {{ORIGIN_PLACEHOLDER, 0, 1, 2}},
-    {{3, ORIGIN_PLACEHOLDER, 4, 5}}
+    {{ORIGIN_PLACEHOLDER, 0, 2, 1}},
+    {{3, ORIGIN_PLACEHOLDER, 5, 4}}
   }};
   static constexpr std::array<unsigned, 6> mirror {{0, 2, 1, 3, 5, 4}};
 };
@@ -1230,7 +1230,6 @@ struct SquareAntiprism {
     {{5, 4, 7, 6, 1, 0, 3, 2}},
   }};
 
-#ifdef USE_ALTERNATE_TETRAHEDRA
   static constexpr std::array<
     std::array<unsigned, 4>,
     4
@@ -1240,21 +1239,6 @@ struct SquareAntiprism {
       {{2, 3, 6, 4}},
       {{3, 0, 7, 5}},
   }};
-#else // Regular
-  static constexpr std::array<
-    std::array<unsigned, 4>,
-    8
-  > tetrahedra {{
-    {{7, 0, 4, ORIGIN_PLACEHOLDER}},
-    {{0, 4, ORIGIN_PLACEHOLDER, 1}},
-    {{4, 1, 5, ORIGIN_PLACEHOLDER}},
-    {{1, 5, ORIGIN_PLACEHOLDER, 2}},
-    {{5, 2, 6, ORIGIN_PLACEHOLDER}},
-    {{2, 6, ORIGIN_PLACEHOLDER, 3}},
-    {{6, 3, 7, ORIGIN_PLACEHOLDER}},
-    {{3, 7, ORIGIN_PLACEHOLDER, 0}}
-  }};
-#endif
   static constexpr std::array<unsigned, 8> mirror {{2, 1, 0, 3, 5, 4, 7, 6}};
 };
 
@@ -1295,7 +1279,7 @@ struct Cube {
     2
   > rotations {{
     {{3, 0, 1, 2, 7, 4, 5, 6}}, // C4
-    {{0, 4, 5, 1, 3, 7, 6, 2}} // C3
+    {{4, 5, 1, 0, 7, 6, 2, 3}} // C4'
   }};
 
   static constexpr std::array<
@@ -1351,8 +1335,8 @@ struct TrigonalDodecahedron {
     std::array<unsigned, 4>,
     2
   > tetrahedra {{
-    {4, 2, 5, 3},
-    {0, 6, 1, 7}
+    {4, 2, 3, 5},
+    {0, 6, 7, 1}
   }};
   static constexpr std::array<unsigned, 8> mirror {{0, 1, 3, 2, 4, 5, 7, 6}};
 };
@@ -1402,9 +1386,9 @@ struct HexagonalBipyramid {
     std::array<unsigned, 4>,
     3
   > tetrahedra {{
-    {6, 0, 7, 1},
-    {6, 4, 7, 5},
-    {6, 2, 7, 3}
+    {6, 0, 1, 7},
+    {6, 4, 5, 7},
+    {6, 2, 3, 7}
   }};
   static constexpr std::array<unsigned, 8> mirror {{0, 5, 4, 3, 2, 1, 6, 7}};
 };
@@ -1456,8 +1440,8 @@ struct TricappedTrigonalPrism {
     std::array<unsigned, 4>,
     2
   > tetrahedra {{
-    {1, 0, 7, 6},
-    {5, 2, 4, 3}
+    {1, 0, 6, 7},
+    {5, 2, 3, 4}
   }};
   static constexpr std::array<unsigned, 9> mirror {{7, 5, 4, 3, 2, 1, 6, 0, 8}};
 };
@@ -1507,8 +1491,8 @@ struct CappedSquareAntiprism {
     std::array<unsigned, 4>,
     2
   > tetrahedra {{
-    {6, 3, 4, 0},
-    {7, 5, 2, 1}
+    {6, 3, 0, 4},
+    {7, 5, 1, 2}
   }};
   static constexpr std::array<unsigned, 9> mirror {{0, 1, 3, 2, 6, 7, 4, 5, 8}};
 };
@@ -1557,9 +1541,9 @@ struct HeptagonalBipyramid {
     std::array<unsigned, 4>,
     3
   > tetrahedra {{
-    {8, 1, 7, 0},
-    {8, 3, 7, 2},
-    {8, 5, 7, 4}
+    {8, 1, 0, 7},
+    {8, 3, 2, 7},
+    {8, 5, 4, 7}
   }};
   static constexpr std::array<unsigned, 9> mirror {{0, 6, 5, 4, 3, 2, 1, 7, 8}};
 };
@@ -1611,7 +1595,7 @@ struct BicappedSquareAntiprism {
     std::array<unsigned, 4>,
     3
   > tetrahedra {{
-    {0, 6, 7, 8},
+    {0, 6, 8, 7},
     {9, 3, 4, 5},
     {9, 2, 1, 5}
   }};
@@ -1666,9 +1650,9 @@ struct EdgeContractedIcosahedron {
     std::array<unsigned, 4>,
     3
   > tetrahedra {{
-    {6, 1, 4, 5},
-    {3, 10, 9, 0},
-    {1, 2, 7, 8}
+    {6,  1, 5, 4},
+    {3, 10, 0, 9},
+    {1,  2, 8, 7}
   }};
   static constexpr std::array<unsigned, 11> mirror {{2, 9, 0, 3, 4, 5, 10, 7, 8, 1, 6}};
 };
@@ -1721,10 +1705,10 @@ struct Icosahedron {
     std::array<unsigned, 4>,
     4
   > tetrahedra {{
-    {0, 2, 8, 10},
+    {0, 2, 10, 8},
     {1, 3, 9, 11},
-    {1, 4, 0, 5},
-    {3, 7, 2, 6}
+    {1, 4, 5, 0},
+    {3, 7, 6, 2}
   }};
   static constexpr std::array<unsigned, 12> mirror {{0, 1, 2, 3, 5, 4, 7, 6, 10, 11, 8, 9}};
 };
@@ -1777,10 +1761,10 @@ struct Cuboctahedron {
     std::array<unsigned, 4>,
     4
   > tetrahedra {{
-    {ORIGIN_PLACEHOLDER, 6, 8, 9},
-    {ORIGIN_PLACEHOLDER, 4, 0, 1},
-    {ORIGIN_PLACEHOLDER, 5, 10, 11},
-    {ORIGIN_PLACEHOLDER, 7, 2, 3}
+    {ORIGIN_PLACEHOLDER, 6,  9,  8},
+    {ORIGIN_PLACEHOLDER, 4,  1,  0},
+    {ORIGIN_PLACEHOLDER, 5, 11, 10},
+    {ORIGIN_PLACEHOLDER, 7,  3,  2}
   }};
   static constexpr std::array<unsigned, 12> mirror {{8, 9, 10, 11, 4, 6, 5, 7, 0, 1, 2, 3}};
 };

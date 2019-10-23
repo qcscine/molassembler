@@ -68,19 +68,6 @@ BOOST_AUTO_TEST_CASE(SymmetryTypeAndPositionInEnumLockstep) {
   );
 }
 
-BOOST_AUTO_TEST_CASE(SymmetryDataConstructedCorrectly) {
-  BOOST_TEST_REQUIRE(Symmetry::symmetryData().size() == Symmetry::nShapes);
-
-  BOOST_REQUIRE(
-    temple::all_of(
-      Symmetry::allShapes,
-      [&](const Symmetry::Shape& shape) -> bool {
-        return Symmetry::symmetryData().count(shape) == 1;
-      }
-    )
-  );
-}
-
 BOOST_AUTO_TEST_CASE(AngleFunctionInputSymmetry) {
   // every angle function must be symmetrical on input of valid unsigned indices
   for(const Shape shape: allShapes) {
@@ -554,7 +541,7 @@ struct RotationGenerationTest {
     if(!pass) {
       std::cout << "Rotation generation differs for "
         << ShapeClass::stringName
-        << " symmetry: Sizes of generated sets are different. "
+        << " shape: Sizes of generated sets are different. "
         << "constexpr - " << convertedRotations.size() << " != "
         << dynamicRotations.size() << " - dynamic" << std::endl;
       std::cout << " Maximum #rotations: " << constexprProperties::maxRotations<ShapeClass>()
@@ -649,10 +636,7 @@ struct NumUnlinkedTestFunctor {
     for(unsigned i = 1; i < ShapeClass::size; ++i) {
       unsigned constexprResult = constexprProperties::numUnlinkedStereopermutations<ShapeClass>(i);
 
-      unsigned dynamicResult = properties::numUnlinkedStereopermutations(
-        ShapeClass::shape,
-        i
-      );
+      unsigned dynamicResult = properties::numUnlinkedStereopermutations(ShapeClass::shape, i);
 
       if(constexprResult != dynamicResult) {
         std::cout << "Mismatch for " << Symmetry::name(ShapeClass::shape) << " and " << i << " identical ligands between constexpr and dynamic number of unlinked: " << constexprResult << " vs. " << dynamicResult << "\n";
@@ -687,15 +671,31 @@ struct NumUnlinkedTestFunctor {
 };
 
 BOOST_AUTO_TEST_CASE(numUnlinkedAlgorithms) {
+  using TestTypes = std::tuple<
+    data::Line,
+    data::Bent,
+    data::EquilateralTriangle, // 3
+    data::VacantTetrahedron,
+    data::T,
+    data::Tetrahedron, // 4
+    data::Square,
+    data::Seesaw,
+    data::TrigonalPyramid,
+    data::SquarePyramid, // 5
+    data::TrigonalBipyramid,
+    data::Pentagon,
+    data::Octahedron, // 6
+    data::TrigonalPrism,
+    data::PentagonalPyramid,
+    data::Hexagon
+  >;
+
   BOOST_CHECK_MESSAGE(
     temple::all_of(
-      temple::TupleType::map<
-        Symmetry::data::allShapeDataTypes,
-        NumUnlinkedTestFunctor
-      >()
+      temple::TupleType::map<TestTypes, NumUnlinkedTestFunctor>()
     ),
-    "Not all numbers of unlinked stereopermutations match across constexpr and dynamic"
-    " algorithms"
+    "Not all numbers of unlinked stereopermutations match across constexpr "
+    " and dynamic algorithms"
   );
 
   BOOST_CHECK(properties::numUnlinkedStereopermutations(Symmetry::Shape::Line, 0) == 1);
@@ -707,7 +707,7 @@ BOOST_AUTO_TEST_CASE(numUnlinkedAlgorithms) {
 
 static_assert(
   nShapes == std::tuple_size<data::allShapeDataTypes>::value,
-  "nShapes does not equal number of symmetry data class types in "
+  "nShapes does not equal number of shape data class types in "
   "allShapeDataTypes"
 );
 
@@ -717,15 +717,15 @@ BOOST_AUTO_TEST_CASE(mappingsAreAvailable) {
    * a some optional
    */
   bool pass = true;
-  for(const auto& fromSymmetry : Symmetry::allShapes) {
-    auto i = static_cast<unsigned>(fromSymmetry);
-    for(const auto& toSymmetry : Symmetry::allShapes) {
-      auto j = static_cast<unsigned>(toSymmetry);
+  for(const auto& fromShape : Symmetry::allShapes) {
+    auto i = static_cast<unsigned>(fromShape);
+    for(const auto& toShape : Symmetry::allShapes) {
+      auto j = static_cast<unsigned>(toShape);
       if(
         i < j
         && allMappings.at(i, j).hasValue()
           != static_cast<bool>(
-            Symmetry::getMapping(fromSymmetry, toSymmetry)
+            Symmetry::getMapping(fromShape, toShape)
           )
       ) {
         pass = false;
