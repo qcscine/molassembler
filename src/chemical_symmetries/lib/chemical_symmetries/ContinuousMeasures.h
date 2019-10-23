@@ -159,6 +159,24 @@ double shapeAlternateImplementation(
   const Shape shape
 );
 
+/*! @brief Calculates minimum distortion angle in radians for shapes A and B
+ *
+ * Calculates @math{\theta_AB} in:
+ *
+ * @math{k_XY = \sqrt{\textrm{CShM}_A(B)} = \sqrt{\textrm{CShM}_B(A)} = 10 \sin(\theta_AB)}
+ */
+double minimumDistortionAngle(Shape a, Shape b);
+
+/*! @brief Calculates deviation of positions from minimal distortion path between two shapes
+ *
+ * Calculates
+ * @math{\Delta_AB = \frac{1}{\delta_AB}\left[
+ *   \arcsin\frac{\sqrt{\textrm{CShM}_A(X)}}{10}
+ *   + \arcsin\frac{\sqrt{\textrm{CShM}_B(X)}}{10}
+ * \right] - 1}
+ */
+double minimalDistortionPathDeviation(const PositionCollection& positions, Shape a, Shape b);
+
 } // namespace continuous
 } // namespace Symmetry
 } // namespace Scine

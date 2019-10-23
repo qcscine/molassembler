@@ -1075,6 +1075,34 @@ double shape(
   return shapeAlternateImplementation(normalizedPositions, shape);
 }
 
+double minimumDistortionAngle(const Shape a, const Shape b) {
+  if(size(a) != size(b)) {
+    throw std::logic_error("Shapes are not of identical size!");
+  }
+
+  // Add origin to shape b's coordinates
+  const unsigned S = size(b);
+  PositionCollection p (3, S + 1);
+  p.block(0, 0, 3, S) = symmetryData().at(b).coordinates;
+  p.col(S) = Eigen::Vector3d::Zero();
+
+  return std::asin(
+    std::sqrt(shape(normalize(p), a)) / 10
+  );
+}
+
+double minimalDistortionPathDeviation(
+  const PositionCollection& positions,
+  const Shape a,
+  const Shape b
+) {
+  const auto normalized = normalize(positions);
+  return (
+    std::asin(std::sqrt(shape(normalized, a)) / 10)
+    + std::asin(std::sqrt(shape(normalized, b)) / 10)
+  ) / minimumDistortionAngle(a, b) - 1;
+}
+
 } // namespace continuous
 } // namespace Symmetry
 } // namespace Scine
