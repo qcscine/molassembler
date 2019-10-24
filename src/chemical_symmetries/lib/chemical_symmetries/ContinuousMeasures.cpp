@@ -1093,14 +1093,28 @@ double minimumDistortionAngle(const Shape a, const Shape b) {
 
 double minimalDistortionPathDeviation(
   const PositionCollection& positions,
-  const Shape a,
-  const Shape b
+  Shape a,
+  Shape b,
+  const double minimumDistortionAngle
 ) {
   const auto normalized = normalize(positions);
   return (
     std::asin(std::sqrt(shape(normalized, a)) / 10)
     + std::asin(std::sqrt(shape(normalized, b)) / 10)
-  ) / minimumDistortionAngle(a, b) - 1;
+  ) / minimumDistortionAngle - 1;
+}
+
+double minimalDistortionPathDeviation(
+  const PositionCollection& positions,
+  const Shape a,
+  const Shape b
+) {
+  return minimalDistortionPathDeviation(
+    positions,
+    a,
+    b,
+    minimumDistortionAngle(a, b)
+  );
 }
 
 } // namespace continuous

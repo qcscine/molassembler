@@ -164,18 +164,39 @@ double shapeAlternateImplementation(
  * Calculates @math{\theta_AB} in:
  *
  * @math{k_XY = \sqrt{\textrm{CShM}_A(B)} = \sqrt{\textrm{CShM}_B(A)} = 10 \sin(\theta_AB)}
+ *
+ * @complexity{One continuous shape calculation.}
  */
 double minimumDistortionAngle(Shape a, Shape b);
 
 /*! @brief Calculates deviation of positions from minimal distortion path between two shapes
  *
  * Calculates
- * @math{\Delta_AB = \frac{1}{\delta_AB}\left[
+ * @math{\Delta_AB = \frac{1}{\theta_AB}\left[
  *   \arcsin\frac{\sqrt{\textrm{CShM}_A(X)}}{10}
  *   + \arcsin\frac{\sqrt{\textrm{CShM}_B(X)}}{10}
- * \right] - 1}
+ * \right] - 1} where @math{\theta_AB} is the minimum distortion angle for the
+ * shape pair and @math{\textrm{CShM}_i(x)} is the continuous shape measure of
+ * the positions @math{x} with regards to the shape @math{i}.
+ *
+ * This function form avoids two shape calculations if the minimum distortion
+ * angle between a and b is known.
+ *
+ * @complexity{Two continuous shape calculations.}
+ */
+double minimalDistortionPathDeviation(
+  const PositionCollection& positions,
+  Shape a,
+  Shape b,
+  const double minimumDistortionAngle
+);
+
+/*! @overload
+ *
+ * @complexity{Three continuous shape calculations.}
  */
 double minimalDistortionPathDeviation(const PositionCollection& positions, Shape a, Shape b);
+
 
 } // namespace continuous
 } // namespace Symmetry

@@ -35,7 +35,6 @@
 /* TODO
  * - Ideas
  *   - CShM classification
- *   - Add the geometry index hybrid with angular deviation
  */
 
 using namespace std::string_literals;
@@ -271,7 +270,7 @@ const std::map<Symmetry::Shape, Symmetry::PointGroup> pointGroupMapping {
   {Symmetry::Shape::SquareAntiprism, Symmetry::PointGroup::D4d}
 };
 
-struct ShapeClassifier final : public Recognizer {
+struct PureCSM final : public Recognizer {
   Symmetry::Shape identify(const Positions& positions) const final {
     const unsigned S = positions.cols() - 1;
     using CarryType = std::pair<double, Symmetry::Shape>;
@@ -306,6 +305,120 @@ struct ShapeClassifier final : public Recognizer {
 
   std::string name() const final {
     return "Pure CSM";
+  }
+};
+
+constexpr unsigned maxShapeSize = 6;
+
+struct CShMPathDev final : public Recognizer {
+  std::vector<Symmetry::Shape> validShapes;
+  Eigen::MatrixXd minimumDistortionAngles;
+
+  CShMPathDev() {
+    for(const Symmetry::Shape shape : Symmetry::allShapes) {
+      if(Symmetry::size(shape) <= maxShapeSize) {
+        validShapes.push_back(shape);
+      }
+    }
+
+    const unsigned N = validShapes.size();
+    minimumDistortionAngles.resize(N, N);
+    minimumDistortionAngles.setZero();
+    for(unsigned i = 0; i < N; ++i) {
+      Symmetry::Shape iShape = validShapes.at(i);
+
+      for(unsigned j = i + 1; j < N; ++j) {
+        Symmetry::Shape jShape = validShapes.at(j);
+
+        if(Symmetry::size(iShape) == Symmetry::size(jShape)) {
+          minimumDistortionAngles(i, j) = Symmetry::continuous::minimumDistortionAngle(
+            iShape,
+            jShape
+          );
+        }
+      }
+    }
+
+    std::cout << "valid shapes:" << temple::stringify(
+      temple::map(validShapes, [](auto x) { return Symmetry::name(x); })
+    ) << "\n";
+    std::cout << "minimum distortion angles:\n" << minimumDistortionAngles << "\n";
+  }
+
+  double minimumDistortionAngle(const Symmetry::Shape a, const Symmetry::Shape b) const {
+    auto indexOfShape = [&](const Symmetry::Shape shape) -> unsigned {
+      auto findIter = temple::find(validShapes, shape);
+      if(findIter == std::end(validShapes)) {
+        throw "Shape not found in valid shapes";
+      }
+      return findIter - std::begin(validShapes);
+    };
+    unsigned i, j;
+    std::tie(i, j) = std::minmax(
+      indexOfShape(a),
+      indexOfShape(b)
+    );
+
+    return minimumDistortionAngles(i, j);
+  }
+
+  Symmetry::Shape identify(const Positions& positions) const final {
+    const unsigned S = positions.cols() - 1;
+    // Select shapes of matching size
+    std::vector<Symmetry::Shape> matchingSizeShapes;
+    for(const auto shape : Symmetry::allShapes) {
+      if(Symmetry::size(shape) == S) {
+        matchingSizeShapes.push_back(shape);
+      }
+    }
+
+    // Calculate continuous shape measures for all selected shapes
+    Positions normalized = Symmetry::continuous::normalize(positions);
+    auto shapeMeasures = temple::map(
+      matchingSizeShapes,
+      [&](const Symmetry::Shape shape) -> double {
+        return Symmetry::continuous::shape(normalized, shape);
+      }
+    );
+
+    /* Calculate minimum distortion path deviations for all pairs, selecting
+     * that pair for which the minimum distortion path deviation is minimal
+     */
+    using CarryType = std::tuple<unsigned, unsigned, double>;
+    auto closestTuple = temple::accumulate(
+      temple::adaptors::allPairs(temple::adaptors::range(matchingSizeShapes.size())),
+      CarryType {0, 0, std::numeric_limits<double>::max()},
+      [&](const CarryType& carry, const std::pair<unsigned, unsigned>& p) -> CarryType {
+        const double cshm_a = shapeMeasures.at(p.first);
+        const double cshm_b = shapeMeasures.at(p.second);
+
+        const double deviation = (
+          std::asin(std::sqrt(cshm_a) / 10) + std::asin(std::sqrt(cshm_b) / 10)
+        ) / minimumDistortionAngle(
+          matchingSizeShapes.at(p.first),
+          matchingSizeShapes.at(p.second)
+        ) - 1;
+
+        if(deviation < std::get<2>(carry)) {
+          return CarryType {p.first, p.second, deviation};
+        }
+
+        return carry;
+      }
+    );
+
+    // Choose that shape from the best pair with minimal shape measure
+    const unsigned a = std::get<0>(closestTuple);
+    const unsigned b = std::get<1>(closestTuple);
+    if(shapeMeasures.at(a) < shapeMeasures.at(b)) {
+      return matchingSizeShapes.at(a);
+    }
+
+    return matchingSizeShapes.at(b);
+  }
+
+  std::string name() const final {
+    return "CShM min dist path dev";
   }
 };
 
@@ -353,14 +466,9 @@ void distort(Eigen::Ref<Positions> positions, const double distortionNorm, PRNG&
   }
 }
 
-using RecognizersTuple = boost::mpl::list<PureAngularDeviationSquare, AngularDeviationGeometryIndexHybrid, ShapeClassifier>;
+using RecognizersTuple = boost::mpl::list<PureAngularDeviationSquare, AngularDeviationGeometryIndexHybrid, CShMPathDev>;
 constexpr std::size_t nRecognizers = boost::mpl::size<RecognizersTuple>::value;
-
-std::vector<std::string> recognizerNames() {
-  std::vector<std::string> names;
-  boost::mpl::for_each<RecognizersTuple>([&](auto x) { names.push_back(x.name()); });
-  return names;
-}
+using RecognizersList = std::vector<std::unique_ptr<Recognizer>>;
 
 constexpr unsigned nDistortionValues = 11;
 constexpr unsigned nRepeats = 100;
@@ -369,22 +477,20 @@ constexpr double maxDistortion = 1.0;
 struct RScriptWriter {
   std::ofstream file;
 
-  RScriptWriter() : file("recognition_data.R") {
-    writeHeader();
-  }
+  RScriptWriter() : file("recognition_data.R") {}
 
-  void writeHeader() {
+  void writeHeader(const RecognizersList& recognizers) {
     file << "nDistortionValues <- " << nDistortionValues << "\n";
     file << "maxDistortion <- " << maxDistortion << "\n";
     file << "nRepeats <- " << nRepeats << "\n";
-    file << "shapes <- c(\"" << temple::condense(
+    file << "shapeNames <- c(\"" << temple::condense(
       temple::map(Symmetry::allShapes, [](auto name) { return Symmetry::name(name); }),
       "\",\""
     ) << "\")\n";
     file << "symmetrySizes <- c(" << temple::condense(
       temple::map(Symmetry::allShapes, [](auto name) { return Symmetry::size(name); })
     ) << ")\n";
-    file << "recognizers <- c(\"" << temple::condense(recognizerNames(), "\",\"") << "\")\n";
+    file << "recognizers <- c(\"" << temple::condense(temple::map(recognizers, [](const auto& f) {return f->name();}), "\",\"") << "\")\n";
     file << "x.values <- c(0:" << (nDistortionValues - 1) << ") * " << maxDistortion << " / " << (nDistortionValues - 1) << "\n";
     file << "results <- array(numeric(), c(" << nRepeats << ", " << nDistortionValues << ", " << nRecognizers << ", " << Symmetry::allShapes.size() << "))\n";
   }
@@ -453,6 +559,18 @@ int main(int argc, char* argv[]) {
   /* Manage parse results */
   RScriptWriter scriptFile {};
 
+  std::vector<std::unique_ptr<Recognizer>> recognizerPtrs;
+  boost::mpl::for_each<RecognizersTuple, boost::mpl::make_identity<boost::mpl::_1>>(
+    [&recognizerPtrs](auto x) {
+      using T = typename decltype(x)::type;
+      recognizerPtrs.emplace_back(std::make_unique<T>());
+    }
+  );
+
+  const unsigned R = recognizerPtrs.size();
+
+  scriptFile.writeHeader(recognizerPtrs);
+
   temple::jsf::JSF64 prng;
   if(options_variables_map.count("seed")) {
     const int seed = options_variables_map["seed"].as<int>();
@@ -467,18 +585,13 @@ int main(int argc, char* argv[]) {
     scriptFile.writeSeed(seed);
   }
 
-  std::vector<std::unique_ptr<Recognizer>> recognizerPtrs;
-  boost::mpl::for_each<RecognizersTuple>(
-    [&recognizerPtrs](auto x) {
-      using T = decltype(x);
-      recognizerPtrs.push_back(std::make_unique<T>());
-    }
-  );
-
-  const unsigned R = recognizerPtrs.size();
-
   for(const Symmetry::Shape name : Symmetry::allShapes) {
     const unsigned S = Symmetry::size(name);
+    if(S > maxShapeSize) {
+      // Skip anything bigger than maximum shape size for now
+      break;
+    }
+
     unsigned symmetriesOfSameSize = temple::accumulate(
       Symmetry::allShapes,
       0u,

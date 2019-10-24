@@ -33,11 +33,11 @@ HeptagonalBipyramid -> Not a Johnson solid, but a bipyramid continuation
 
 # non-spherical Johnson-derived shapes
 CappedSquareAntiprism -> s-J10, C4v
-BicappedSquareAntiprism -> s-J17, D4h
+BicappedSquareAntiprism -> s-J17, D4h (global minimum for 10 particles)
 TrigonalDodecahedron -> s-J84, D2d
 CappedTrigonalPrism -> s-J49, C2v
 BicappedTrigonalPrism -> s-J50, C2v (drop, too close to square antiprism)
-TricappedTrigonalPrism -> s-J51, D3h
+TricappedTrigonalPrism -> s-J51, D3h (global minimum for 9 particles)
 
 To get to a spherical shape, minimize the sum of inverse distances between all
 pairs of vertices. Just numerically minimizing that gets you a local minimum of
