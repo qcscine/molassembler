@@ -8,15 +8,17 @@
 #include "boost/range/join.hpp"
 #include "chemical_symmetries/DynamicProperties.h"
 #include "chemical_symmetries/Properties.h"
-#include "chemical_symmetries/TauCriteria.h"
+#include "chemical_symmetries/ContinuousMeasures.h"
 #include "CyclicPolygons.h"
 #include <Eigen/Dense>
+#include <Eigen/SparseCore>
 #include "stereopermutation/GenerateUniques.h"
 #include "temple/Adaptors/AllPairs.h"
 #include "temple/Adaptors/Iota.h"
 #include "temple/Adaptors/Transform.h"
 #include "temple/Functional.h"
 #include "temple/Optionals.h"
+#include "temple/OrderedPair.h"
 #include "temple/Random.h"
 #include "temple/TinySet.h"
 #include "temple/constexpr/Math.h"
@@ -108,6 +110,60 @@ Symmetry::Shape pickTransition(
   }
 
   return Symmetry::properties::mostSymmetric(std::move(propositions));
+}
+
+//! Thread-safe caching access to continuous shape measure minimum distortion angles
+double minimumDistortionAngle(const Symmetry::Shape a, const Symmetry::Shape b) {
+  double value;
+
+  /* Since all of the below is not thread-safe due to Eigen, mark the whole
+   * thing critical.
+   */
+#pragma omp critical
+  {
+    static Eigen::SparseMatrix<double> cache {Symmetry::nShapes, Symmetry::nShapes};
+
+    unsigned i, j;
+    std::tie(i, j) = std::minmax(Symmetry::nameIndex(a), Symmetry::nameIndex(b));
+
+    double storedAngle = cache.coeff(i, j);
+    if(storedAngle != 0.0) {
+      value = storedAngle;
+    } else {
+      const double angle = Symmetry::continuous::minimumDistortionAngle(a, b);
+      cache.coeffRef(i, j) = angle;
+      value = angle;
+    }
+  }
+
+  return value;
+}
+
+Symmetry::Shape classifyShape(const Eigen::Matrix<double, 3, Eigen::Dynamic>& sitePositions) {
+  const unsigned S = sitePositions.cols() - 1;
+  auto normalized = Symmetry::continuous::normalize(sitePositions);
+  using CarryType = std::pair<double, Symmetry::Shape>;
+  return temple::accumulate(
+    Symmetry::allShapes,
+    CarryType {std::numeric_limits<double>::max(), Symmetry::Shape::Line},
+    [&](const CarryType& carry, const Symmetry::Shape shape) {
+      if(Symmetry::size(shape) != S) {
+        return carry;
+      }
+
+      double shapeMeasure = Symmetry::continuous::shape(normalized, shape);
+      /* Disadvantage trigonal pyramid to avoid tetrahedral misclassifications */
+      if(shape == Symmetry::Shape::TrigonalPyramid) {
+        shapeMeasure *= 4;
+      }
+
+      if(shapeMeasure < carry.first) {
+        return CarryType {shapeMeasure, shape};
+      }
+
+      return carry;
+    }
+  ).second;
 }
 
 } // namespace detail
@@ -804,103 +860,31 @@ void AtomStereopermutator::Impl::fit(
   const unsigned S = Symmetry::size(_shape);
   assert(S == _ranking.sites.size());
 
-  // For all atoms making up a site, decide on the spatial average position
-  Eigen::Matrix<double, 3, Eigen::Dynamic> sitePositions(3, S);
-  for(unsigned i = 0; i < S; ++i) {
-    sitePositions.col(i) = cartesian::averagePosition(angstromWrapper.positions, _ranking.sites.at(i));
-  }
-
-  std::vector<Symmetry::Shape> excludeShapes;
-
-  /* Special case for trigonal bipyramidal and square pyramidal: tau-calculation
-   */
-  if(
-    Options::tauCriterion == TauCriterion::Enable
-    && (S == 4 || S == 5)
-  ) {
-    // Find the two largest angles
-    std::vector<double> angles;
-    for(unsigned i = 0; i < S; ++i) {
-      for(unsigned j = i + 1; j < S; ++j) {
-        angles.push_back(
-          cartesian::angle(
-            sitePositions.col(i),
-            angstromWrapper.positions.row(_centerAtom),
-            sitePositions.col(j)
-          )
-        );
-      }
-    }
-
-    std::sort(std::begin(angles), std::end(angles));
-
-    const double tau = Symmetry::tau(angles);
-
-    if(S == 4) {
-      /* Thresholds
-       * - τ₄' = 0 -> Symmetry is square planar
-       * - τ₄' = 0.24 -> Symmetry is seesaw
-       * - τ₄' = 1 -> Symmetry is tetrahedral
-       */
-      if(tau < 0.12) {
-        // Symmetry is square planar
-        excludeShapes.push_back(Symmetry::Shape::Seesaw);
-        excludeShapes.push_back(Symmetry::Shape::Tetrahedron);
-      } else if(0.12 <= tau && tau < 0.62) {
-        excludeShapes.push_back(Symmetry::Shape::Square);
-        // Symmetry is seesaw
-        excludeShapes.push_back(Symmetry::Shape::Tetrahedron);
-      } else if(0.62 <= tau) {
-        excludeShapes.push_back(Symmetry::Shape::Square);
-        excludeShapes.push_back(Symmetry::Shape::Seesaw);
-        // Symmetry is tetrahedral
-      }
-    } else if(S == 5) {
-      /* Thresholds:
-       * - τ₅ = 0 -> Symmetry is square pyramidal
-       * - τ₅ = 1 -> Symmetry is trigonal bipyramidal
-       */
-
-      if(tau < 0.5) {
-        excludeShapes.push_back(Symmetry::Shape::TrigonalBipyramid);
-      } else if(tau > 0.5) {
-        excludeShapes.push_back(Symmetry::Shape::SquarePyramid);
-      }
-    }
-  }
-
   // Save stereopermutator state to return to if no fit is viable
   const Symmetry::Shape priorShape = _shape;
   const boost::optional<unsigned> priorStereopermutation  = _assignmentOption;
 
-  const Symmetry::Shape initialShape {Symmetry::Shape::Line};
-  const unsigned initialStereopermutation = 0;
-  const double initialPenalty = 100;
+  // For all atoms making up a site, decide on the spatial average position
+  Eigen::Matrix<double, 3, Eigen::Dynamic> sitePositions(3, S + 1);
+  for(unsigned i = 0; i < S; ++i) {
+    sitePositions.col(i) = cartesian::averagePosition(angstromWrapper.positions, _ranking.sites.at(i));
+  }
+  // Add the putative center
+  sitePositions.col(S) = angstromWrapper.positions.row(_centerAtom);
 
-  Symmetry::Shape bestShape = initialShape;
-  unsigned bestStereopermutation = initialStereopermutation;
-  double bestPenalty = initialPenalty;
-  unsigned bestStereopermutationMultiplicity = 1;
+  // Classify the shape and set it
+  const Symmetry::Shape fittedShape = detail::classifyShape(sitePositions);
+  setShape(fittedShape, graph);
 
-  auto excludesContains = temple::makeContainsPredicate(excludeShapes);
-
-  // Cycle through all symmetries
-  for(const auto& shape : Symmetry::allShapes) {
-    // Skip any shapes of different size
-    if(Symmetry::size(shape) != S || excludesContains(shape)) {
-      continue;
-    }
-
-    // Change the shape of the AtomStereopermutator
-    setShape(shape, graph);
-
-    const unsigned assignmentCount = numAssignments();
-
-    for(unsigned assignment = 0; assignment < assignmentCount; ++assignment) {
-      // Assign the stereopermutator
+  // Find a feasible permutation with lowest chiral penalty
+  using CarryType = std::pair<unsigned, double>;
+  auto bestPermutation = temple::accumulate(
+    temple::adaptors::range(numAssignments()),
+    CarryType {0, std::numeric_limits<double>::max()},
+    [&](const CarryType& carry, const unsigned assignment) {
       assign(assignment);
-
-      const double angleDeviations = temple::sum(
+      // Angle deviations
+      double deviations = temple::sum(
         temple::adaptors::transform(
           temple::adaptors::allPairs(
             temple::adaptors::range(Symmetry::size(_shape))
@@ -917,52 +901,12 @@ void AtomStereopermutator::Impl::fit(
         )
       );
 
-      // We can stop immediately if this is worse
-      if(angleDeviations > bestPenalty) {
-        continue;
+      if(deviations > carry.second) {
+        return carry;
       }
 
-      /*! @todo should this be kept at all? Just a follow-up error from the angle
-       * What value does it bring?
-       */
-      const double oneThreeDistanceDeviations = temple::sum(
-        temple::adaptors::transform(
-          temple::adaptors::allPairs(
-            temple::adaptors::range(Symmetry::size(_shape))
-          ),
-          [&](const unsigned siteI, const unsigned siteJ) -> double {
-            return std::fabs(
-              // siteI - siteJ 1-3 distance from positions
-              cartesian::distance(
-                sitePositions.col(siteI),
-                sitePositions.col(siteJ)
-              )
-              // idealized 1-3 distance from
-              - CommonTrig::lawOfCosines(
-                // i-j 1-2 distance from positions
-                cartesian::distance(
-                  sitePositions.col(siteI),
-                  angstromWrapper.positions.row(_centerAtom)
-                ),
-                // j-k 1-2 distance from positions
-                cartesian::distance(
-                  angstromWrapper.positions.row(_centerAtom),
-                  sitePositions.col(siteJ)
-                ),
-                // idealized Stereopermutator angle
-                angle(siteI, siteJ)
-              )
-            );
-          }
-        )
-      );
-
-      // Another early continue
-      if(angleDeviations + oneThreeDistanceDeviations > bestPenalty) {
-        continue;
-      }
-
-      const double chiralityDeviations = temple::sum(
+      // Chiral deviations
+      deviations += temple::sum(
         temple::adaptors::transform(
           minimalChiralConstraints(),
           [&](const auto& minimalPrototype) -> double {
@@ -991,36 +935,13 @@ void AtomStereopermutator::Impl::fit(
         )
       );
 
-      double fitPenalty = (
-        angleDeviations
-        + oneThreeDistanceDeviations
-        + chiralityDeviations
-      );
-
-
-#ifndef NDEBUG
-      Log::log(Log::Particulars::AtomStereopermutatorFit)
-        << Symmetry::nameIndex(shape)
-        << ", " << assignment
-        << ", " << std::setprecision(4) << std::fixed
-        << angleDeviations << ", "
-        << oneThreeDistanceDeviations << ", "
-        << chiralityDeviations
-        << std::endl;
-#endif
-
-      if(fitPenalty < bestPenalty) {
-        bestShape = shape;
-        bestStereopermutation = assignment;
-        bestPenalty = fitPenalty;
-        bestStereopermutationMultiplicity = 1;
-      } else if(fitPenalty == bestPenalty) {
-        // Assume that IF we have multiplicity, it's from the same symmetry
-        assert(bestShape == shape);
-        bestStereopermutationMultiplicity += 1;
+      if(deviations > carry.second) {
+        return carry;
       }
+
+      return CarryType {assignment, deviations};
     }
-  }
+  );
 
   /* In case NO assignments could be tested, return to the prior state.
    * This guards against situations in which predicates in
@@ -1032,26 +953,11 @@ void AtomStereopermutator::Impl::fit(
    * At the moment, this predicate is disabled, so no such issues should arise.
    * Just being safe.
    */
-  if(
-    bestShape == initialShape
-    && bestStereopermutation == initialStereopermutation
-    && bestPenalty == initialPenalty
-  ) {
-    // Return to prior
+  if(bestPermutation.second == std::numeric_limits<double>::max()) {
     setShape(priorShape, graph);
     assign(priorStereopermutation);
   } else {
-    // Set to best fit
-    setShape(bestShape, graph);
-
-    /* How to handle multiplicity?
-     * Current policy: If there is multiplicity, do not assign
-     */
-    if(bestStereopermutationMultiplicity > 1) {
-      assign(boost::none);
-    } else {
-      assign(bestStereopermutation);
-    }
+    assign(bestPermutation.first);
   }
 }
 

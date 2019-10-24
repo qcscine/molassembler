@@ -99,10 +99,6 @@ void readAndDecompose(const boost::filesystem::path& filePath) {
         << filePath.stem().string()
     );
   }
-
-  std::cout << "'" << filePath.stem().string() << "' -> "
-    << temple::condense(cycleSizes)
-    << std::endl;
 }
 
 BOOST_AUTO_TEST_CASE(ringDecomposition) {

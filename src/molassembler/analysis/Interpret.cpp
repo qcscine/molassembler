@@ -152,6 +152,7 @@ int main(int argc, char* argv[]) {
     }
 
     auto interpretation = interpret(atomCollection, bondOrders, BondDiscretizationOption::RoundToNearest, defaultThreshold);
+    auto positions = applyInterpretationMap(interpretation, atomCollection);
 
     if(interpretation.molecules.size() == 1) {
       std::ofstream graphFile("interpreted.dot");
@@ -159,6 +160,7 @@ int main(int argc, char* argv[]) {
       graphFile.close();
 
       IO::write("interpreted.json", interpretation.molecules.front());
+      IO::write("interpreted.mol", interpretation.molecules.front(), positions.front().getPositions());
     } else {
       for(unsigned i = 0; i < interpretation.molecules.size(); ++i) {
         const auto& mol = interpretation.molecules[i];
@@ -169,6 +171,7 @@ int main(int argc, char* argv[]) {
         graphFile.close();
 
         IO::write(filebase + ".json", mol);
+        IO::write(filebase + ".mol", mol, positions.at(i).getPositions());
       }
     }
 

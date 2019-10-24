@@ -33,7 +33,7 @@ std::map<
   {"Toluol", 3}
 };
 
-BOOST_AUTO_TEST_CASE( cppoptlibGradientCorrectnessCheck ) {
+BOOST_AUTO_TEST_CASE(RotatableBondsDescriptorsExamples) {
   for(
     const boost::filesystem::path& currentFilePath :
     boost::filesystem::recursive_directory_iterator("descriptor_test_set")

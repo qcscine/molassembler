@@ -90,8 +90,6 @@ void checkExpectations(const boost::filesystem::path& filePath) {
 
   std::string moleculeName = filePath.stem().string();
 
-  std::cout << "Processing " << moleculeName << std::endl;
-
   // Read the file
   auto mol = IO::read(filePath.string());
 

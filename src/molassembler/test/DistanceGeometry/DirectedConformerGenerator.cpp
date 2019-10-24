@@ -77,7 +77,10 @@ BOOST_AUTO_TEST_CASE(DirectedConformerGeneration) {
         auto positionResult = generator.generateConformation(newDecisionList, configuration);
 
         if(positionResult) {
-          generatedDecisionsOption = generator.getDecisionList(positionResult.value());
+          generatedDecisionsOption = generator.getDecisionList(
+            positionResult.value(),
+            BondStereopermutator::FittingMode::Nearest
+          );
           pass = true;
           break;
         }

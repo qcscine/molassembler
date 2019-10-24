@@ -18,6 +18,7 @@
 #include "temple/Random.h"
 #include "temple/Invoke.h"
 #include "temple/Stringify.h"
+#include "temple/Optionals.h"
 
 #include "molassembler/Graph/InnerGraph.h"
 #include "molassembler/IO.h"
@@ -659,4 +660,41 @@ BOOST_AUTO_TEST_CASE(EtaBondDynamism) {
   mol.removeBond(ironSecondCarbonBond);
 
   BOOST_CHECK(mol.graph().bondType(BondIndex {0, 1}) == BondType::Single);
+}
+
+void checkAtomStereopermutator(
+  const Molecule& m,
+  const AtomIndex i,
+  const Symmetry::Shape shape
+) {
+  BOOST_CHECK_MESSAGE(
+    temple::optionals::map(
+      m.stereopermutators().option(i),
+      [&](const AtomStereopermutator& permutator) {
+        return permutator.getShape() == shape;
+      }
+    ).value_or(false),
+    temple::optionals::map(
+      m.stereopermutators().option(i),
+      [&](const AtomStereopermutator& permutator) {
+        return Symmetry::name(permutator.getShape());
+      }
+    ).value_or("No") << " atom stereopermutator on " << i << ", expected a(n) " << Symmetry::name(shape) << " stereopermutator"
+  );
+}
+
+BOOST_AUTO_TEST_CASE(ShapeClassification) {
+  // Particular cases from issues that reveal shape classification needs.
+
+  // This is a huge system with octahedral iron centers (#90)
+  auto interconnected = IO::read("shape_classification/interconnected.mol");
+  for(const AtomIndex i : boost::make_iterator_range(interconnected.graph().atoms())) {
+    if(interconnected.graph().elementType(i) == Utils::ElementType::Fe) {
+      checkAtomStereopermutator(interconnected, i, Symmetry::Shape::Octahedron);
+    }
+  }
+
+  // Trigonal bipyramidal transition metal center (#99)
+  auto trigbipy = IO::read("shape_classification/trig_bipy.mol");
+  checkAtomStereopermutator(trigbipy, 0, Symmetry::Shape::TrigonalBipyramid);
 }

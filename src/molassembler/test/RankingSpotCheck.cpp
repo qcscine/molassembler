@@ -9,9 +9,12 @@
 #include "boost/graph/isomorphism.hpp"
 #include "boost/test/unit_test.hpp"
 
+#include "chemical_symmetries/Symmetries.h"
+
 #include "temple/constexpr/Bitmask.h"
 #include "temple/Functional.h"
 #include "temple/Stringify.h"
+#include "temple/Optionals.h"
 
 #include "molassembler/Cycles.h"
 #include "molassembler/Graph/GraphAlgorithms.h"
@@ -81,6 +84,13 @@ bool isAtomStereocenter(
     return false;
   }
 
+  if(stereopermutatorOption->getShape() != Symmetry::Shape::Tetrahedron) {
+    std::cout << "Atom stereopermutator on " << i << " has "
+      << Symmetry::name(stereopermutatorOption->getShape())
+      << " shape, not tetrahedron\n";
+    return false;
+  }
+
   if(stereopermutatorOption->numStereopermutations() != numPermutations) {
     std::cout << "Atom stereopermutator on " << i << " has "
       << stereopermutatorOption->numStereopermutations() << " stereopermutations, not "
@@ -126,12 +136,37 @@ std::string getPathString(const std::string& fileName) {
   return filePath.string();
 }
 
+bool noCarbonsAreTrigonalPyramidal(const Molecule& molecule) {
+  bool pass = true;
+  for(AtomIndex i : boost::make_iterator_range(molecule.graph().atoms())) {
+    if(
+      molecule.graph().elementType(i) == Utils::ElementType::C
+      && temple::optionals::map(
+        molecule.stereopermutators().option(i),
+        [](const AtomStereopermutator& a) -> bool {
+          return a.getShape() == Symmetry::Shape::TrigonalPyramid;
+        }
+      ).value_or(false)
+    ) {
+      pass = false;
+      std::cout << "Carbon atom with index " << i << " is trigonal pyramidal!\n";
+    }
+  }
+
+  return pass;
+}
+
 BOOST_AUTO_TEST_CASE(sequenceRuleOneTests) {
   using namespace std::string_literals;
   // P. 92.2.2 Sequence subrule 1b: Priority due to duplicate atoms
   // Cycle and multiple-bond splitting
   auto exampleThree = IO::read(
     getPathString("1S5R-bicyclo-3-1-0-hex-2-ene.mol")
+  );
+
+  BOOST_CHECK_MESSAGE(
+    noCarbonsAreTrigonalPyramidal(exampleThree),
+    "1S5R-bicyclo-3-1-0-hex-2-ene has carbons that were interpreted as trigonal pyramids!\n"
   );
 
   auto exampleThreeExpanded = RankingTree(
@@ -178,6 +213,11 @@ BOOST_AUTO_TEST_CASE(sequenceRuleThreeTests) {
   );
 
   BOOST_CHECK_MESSAGE(
+    noCarbonsAreTrigonalPyramidal(ZEDifference),
+    "2Z5S7E-nona-2,7-dien-5-ol has carbons that were interpreted as trigonal pyramids!\n"
+  );
+
+  BOOST_CHECK_MESSAGE(
     isAtomStereocenter(ZEDifference, 0, 2, 0),
     "Stereopermutator at C0 in 2Z5S7E-nona-2,7-dien-5-ol is not S"
   );
@@ -185,6 +225,11 @@ BOOST_AUTO_TEST_CASE(sequenceRuleThreeTests) {
   // P-92.4.2.2 Example 1 (Z before E in aux. stereopermutators, splitting)
   auto EECyclobutane = IO::read(
     getPathString("1E3E-1,3-difluoromethylidenecyclobutane.mol")
+  );
+
+  BOOST_CHECK_MESSAGE(
+    noCarbonsAreTrigonalPyramidal(EECyclobutane),
+    "1E3E-1,3-difluoromethylidenecyclobutane has carbons that were interpreted as trigonal pyramids!\n"
   );
 
   BOOST_CHECK_MESSAGE(
@@ -199,6 +244,11 @@ BOOST_AUTO_TEST_CASE(sequenceRuleThreeTests) {
   );
 
   BOOST_CHECK_MESSAGE(
+    noCarbonsAreTrigonalPyramidal(inTreeNstgDB),
+    "(2Z5ZR8Z11Z)-9... has carbons that were interpreted as trigonal pyramids!\n"
+  );
+
+  BOOST_CHECK_MESSAGE(
     isAtomStereocenter(inTreeNstgDB, 0, 2, 1u),
     "(2Z5Z7R8Z11Z)-9-(2Z-but-2-en-1-yl)-5-(2E-but-2-en-1-yl)trideca-2,5,8,11-tetraen-7-ol "
     "difference between non-stereogenic auxiliary stereopermutator and assigned "
@@ -210,6 +260,11 @@ BOOST_AUTO_TEST_CASE(sequenceRuleFourTests) {
   // (4A) P-92.5.1 Example (stereogenic before non-stereogenic)
   auto pseudoOverNonstg = IO::read(
     getPathString("(2R,3s,4S,6R)-2,6-dichloro-5-(1R-1-chloroethyl)-3-(1S-1-chloroethyl)heptan-4-ol.mol"s)
+  );
+
+  BOOST_CHECK_MESSAGE(
+    noCarbonsAreTrigonalPyramidal(pseudoOverNonstg),
+    "(2R,3s,4S,6R)-.... has carbons that were interpreted as trigonal pyramids!\n"
   );
 
   BOOST_CHECK_MESSAGE(
@@ -236,6 +291,11 @@ BOOST_AUTO_TEST_CASE(sequenceRuleFourTests) {
   );
 
   BOOST_CHECK_MESSAGE(
+    noCarbonsAreTrigonalPyramidal(simpleLikeUnlike),
+    "(2R,3R,4R,5S,6R)-... has carbons that were interpreted as trigonal pyramids!\n"
+  );
+
+  BOOST_CHECK_MESSAGE(
     isAtomStereocenter(simpleLikeUnlike, 10, 2, 1u),
     "(2R,3R,4R,5S,6R)-2,3,4,5,6-pentachloroheptanedioic-acid central carbon does "
     " not register as a stereopermutator and/or isn't assigned as R"
@@ -244,6 +304,11 @@ BOOST_AUTO_TEST_CASE(sequenceRuleFourTests) {
   // (4B) P-92.5.2.2 Example 3 (single-chain pairing, cycle splitting)
   auto lAlphaLindane = IO::read(
     getPathString("l-alpha-lindane.mol"s)
+  );
+
+  BOOST_CHECK_MESSAGE(
+    noCarbonsAreTrigonalPyramidal(lAlphaLindane),
+    "l-alpha-lindane has carbons that were interpreted as trigonal pyramids!\n"
   );
 
   BOOST_CHECK_MESSAGE(
@@ -264,6 +329,11 @@ BOOST_AUTO_TEST_CASE(sequenceRuleFourTests) {
   );
 
   BOOST_CHECK_MESSAGE(
+    noCarbonsAreTrigonalPyramidal(oxyNitroDiffBranches),
+    "(2R,3S,6R,9R,10S)-... has carbons that were interpreted as trigonal pyramids!\n"
+  );
+
+  BOOST_CHECK_MESSAGE(
     isAtomStereocenter(oxyNitroDiffBranches, 0, 2, 1u),
     "(2R,3S,6R,9R,10S)-6-chloro-5-(1R,2S)-1,2-dihydroxypropoxy-7-(1S,2S)-1,2-dihydroxypropoxy-4,8-dioxa-5,7-diazaundecande-2,3,9,10-tetrol central carbon not recognized as R"
   );
@@ -274,6 +344,11 @@ BOOST_AUTO_TEST_CASE(sequenceRuleFourTests) {
   );
 
   BOOST_CHECK_MESSAGE(
+    noCarbonsAreTrigonalPyramidal(groupingDifferences),
+    "(2R,3R,5R,7R,8R)-... has carbons that were interpreted as trigonal pyramids!\n"
+  );
+
+  BOOST_CHECK_MESSAGE(
     isAtomStereocenter(groupingDifferences, 0, 2, 1u),
     "The central carbon in (2R,3R,5R,7R,8R)-4.4-bis(2S,3R-3-chlorobutan-2-yl)-6,6-bis(2S,4S-3-chlorobutan-2-yl)-2,8-dichloro-3,7-dimethylnonan-5-ol is not recognized as R"
   );
@@ -281,6 +356,11 @@ BOOST_AUTO_TEST_CASE(sequenceRuleFourTests) {
   // (4B) P-92.5.2.2 Example 6 (number of reference descriptors)
   auto numReferenceDescriptors = IO::read(
     getPathString("2R-2-bis(1R)-1-hydroxyethylamino-2-(1R)-1-hydroxyethyl(1S)-1-hydroxyethylaminoacetic-acid.mol")
+  );
+
+  BOOST_CHECK_MESSAGE(
+    noCarbonsAreTrigonalPyramidal(numReferenceDescriptors),
+    "2R-2-bis(1R)-... has carbons that were interpreted as trigonal pyramids!\n"
   );
 
   BOOST_CHECK_MESSAGE(
@@ -296,6 +376,11 @@ BOOST_AUTO_TEST_CASE(sequenceRuleFiveTests) {
   );
 
   BOOST_CHECK_MESSAGE(
+    noCarbonsAreTrigonalPyramidal(rsDifference),
+    "(2R,3r,4R,5s,6R)-... has carbons that were interpreted as trigonal pyramids!\n"
+  );
+
+  BOOST_CHECK_MESSAGE(
     isAtomStereocenter(rsDifference, 0, 2, 1u),
     "The central carbon in (2R,3r,4R,5s,6R)-2,6-dichloro-3,5-bis(1S-1-chloroethyl)heptan-4-ol is not recognized as R"
   );
@@ -306,6 +391,11 @@ BOOST_AUTO_TEST_CASE(sequenceRuleFiveTests) {
   );
 
   BOOST_CHECK_MESSAGE(
+    noCarbonsAreTrigonalPyramidal(pseudo),
+    "(2R,3r,4S)-pentane-... has carbons that were interpreted as trigonal pyramids!\n"
+  );
+
+  BOOST_CHECK_MESSAGE(
     isAtomStereocenter(pseudo, 0, 2, 1u),
     "The central carbon in (2R,3r,4S)-pentane-2,3,4-trithiol is not recognized as R"
   );
@@ -313,6 +403,11 @@ BOOST_AUTO_TEST_CASE(sequenceRuleFiveTests) {
   // (5) P-92.6 Example 2 cyclobutane splitting
   auto cyclobutane = IO::read(
     getPathString("(1r,3r)-cyclobutane-1,3-diol.mol")
+  );
+
+  BOOST_CHECK_MESSAGE(
+    noCarbonsAreTrigonalPyramidal(cyclobutane),
+    "(1r,3r)-cyclobutane-1,3-diol has carbons that were interpreted as trigonal pyramids!\n"
   );
 
   BOOST_CHECK_MESSAGE(
@@ -327,6 +422,11 @@ BOOST_AUTO_TEST_CASE(sequenceRuleFiveTests) {
   );
 
   BOOST_CHECK_MESSAGE(
+    noCarbonsAreTrigonalPyramidal(pseudoDB),
+    "(2E,4R)-4-chloro-3-(1S-1-chloroethyl)pent-2-ene has carbons that were interpreted as trigonal pyramids!\n"
+  );
+
+  BOOST_CHECK_MESSAGE(
     isBondStereopermutator(pseudoDB, BondIndex {0, 3}, 2, 0u),
     "Double bond in (2E,4R)-4-chloro-3-(1S-1-chloroethyl)pent-2-ene isn't E"
   );
@@ -334,6 +434,11 @@ BOOST_AUTO_TEST_CASE(sequenceRuleFiveTests) {
   // (5) P-92.6 Example 6
   auto fourDoesNothing = IO::read(
     getPathString("1s-1-(1R,2R-1,2-dichloropropyl-1S,2R-1,2-dichloropropylamino)1-(1R,2S-1,2-dichloropropyl-1S,2S-1,2-dichloropropylamino)methan-1-ol.mol")
+  );
+
+  BOOST_CHECK_MESSAGE(
+    noCarbonsAreTrigonalPyramidal(fourDoesNothing),
+    "1s-1-(1R,2R-1,2-dichloropropyl-... has carbons that were interpreted as trigonal pyramids!\n"
   );
 
   BOOST_CHECK_MESSAGE(
