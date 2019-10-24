@@ -55,6 +55,10 @@ BOOST_AUTO_TEST_CASE(CGReinterpretYieldsSameShapes) {
   };
 
   for(const auto& shape: Symmetry::allShapes) {
+    if(Symmetry::size(shape) > 6) {
+      continue;
+    }
+
     // Build an abstract asymmetric molecule (all ligands different) for the current molecule
     Molecule molecule(
       Utils::ElementType::Ru,

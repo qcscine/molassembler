@@ -604,7 +604,7 @@ SymmetryTransitionGroup selectBestTransitionMappings(
 
   std::vector<unsigned> viableDistortions;
   for(unsigned i = 0; i < distortions.size(); ++i) {
-    if(distortions.at(i).angularDistortion > lowestAngularDistortion + floatingPointEqualityThreshold) {
+    if(distortions.at(i).angularDistortion < lowestAngularDistortion + floatingPointEqualityThreshold) {
       viableDistortions.push_back(i);
     }
   }

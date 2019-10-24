@@ -182,6 +182,10 @@ BOOST_AUTO_TEST_CASE(ligandAdditionPropagatedStateSuperposable) {
   unsigned skippedCount = 0;
   unsigned testedCount = 0;
   for(const Symmetry::Shape shape : Symmetry::allShapes) {
+    if(Symmetry::size(shape) > 6) {
+      continue;
+    }
+
     if(
       Symmetry::size(shape) != Symmetry::constexprProperties::maxShapeSize
       && Symmetry::hasMultipleUnlinkedStereopermutations(shape, 0u)
