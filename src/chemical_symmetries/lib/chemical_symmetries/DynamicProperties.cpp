@@ -110,32 +110,141 @@ unsigned rotationPeriodicity(
   return i;
 }
 
+bool isRotation(const std::vector<unsigned>& rotation) {
+  return temple::sort(rotation) == temple::iota<unsigned>(rotation.size());
+}
+
 std::vector<char> positionGroups(const Symmetry::Shape shape) {
   const unsigned S = Symmetry::size(shape);
 
-  std::vector<
-    std::vector<double>
-  > allAngles (S);
+  using IndexGroups = std::vector<
+    std::vector<unsigned>
+  >;
 
-  // Generate sorted lists of all cross-angles for each starting index
-  for(unsigned i = 0; i < S; ++i) {
-    allAngles.at(i).resize(S);
-    for(unsigned j = 0; j < S; ++j) {
-      allAngles.at(i).at(j) = Symmetry::angleFunction(shape)(i, j);
-    }
-
-    std::sort(
-      std::begin(allAngles.at(i)),
-      std::end(allAngles.at(i))
+  auto nestedFind = [](const IndexGroups& a, unsigned i) {
+    return temple::find_if(
+      a,
+      [&](const auto& group) -> bool {
+        return temple::find(group, i) != std::end(group);
+      }
     );
-  }
+  };
 
-  // Group the individual symmetry indices by identical cross-angle sets
-  auto groups = temple::groupByEquality(
-    temple::iota<unsigned>(S),
-    [&allAngles](const unsigned i, const unsigned j) -> bool {
-      return allAngles.at(i) == allAngles.at(j);
+  auto loopVertices = [](const std::vector<unsigned>& rotation, const unsigned i) -> std::vector<unsigned> {
+    assert(isRotation(rotation));
+    std::vector<unsigned> vertices {i};
+    unsigned j = rotation.at(i);
+    while(j != i) {
+      vertices.push_back(j);
+      j = rotation.at(j);
     }
+    return vertices;
+  };
+
+  auto merge = [&loopVertices](std::vector<unsigned> a, const std::vector<unsigned>& b) -> std::vector<unsigned> {
+    assert(isRotation(a) && isRotation(b));
+    const unsigned R = a.size();
+    assert(b.size() == R);
+    for(unsigned i = 0; i < R; ++i) {
+      // Self-reference is uninteresting
+      if(b.at(i) == i) {
+        continue;
+      }
+
+      // So now i is definitely part of a loop of more than one vertex.
+      // If the permutation matches, we can already continue
+      if(b.at(i) == a.at(i)) {
+        continue;
+      }
+
+      // Now we have to establish which vertices are in the loop in a
+      auto aLoopVertices = loopVertices(a, i);
+
+      // If it's already a full loop, we cannot possibly merge anything else
+      if(aLoopVertices.size() == R) {
+        return a;
+      }
+
+      // If b.at(i) is already in that loop, we can continue.
+      if(temple::find(aLoopVertices, b.at(i)) != std::end(aLoopVertices)) {
+        continue;
+      }
+
+      // Now we have to figure out which vertices from b's loop aren't yet in a
+      auto bLoopVertices = temple::sort(loopVertices(b, i));
+      temple::inplace::sort(aLoopVertices);
+      std::vector<unsigned> bVerticesNotInA;
+      std::set_difference(
+        std::begin(bLoopVertices),
+        std::end(bLoopVertices),
+        std::begin(aLoopVertices),
+        std::end(aLoopVertices),
+        std::back_inserter(bVerticesNotInA)
+      );
+
+      // And now we have to add in any vertices from loops in a that bVerticesNotInA have
+      const unsigned t = bVerticesNotInA.size();
+      for(unsigned j = 0; j < t; ++j) {
+        for(unsigned k : loopVertices(a, bVerticesNotInA.at(j))) {
+          if(temple::find(bVerticesNotInA, k) == std::end(bVerticesNotInA)) {
+            bVerticesNotInA.push_back(k);
+          }
+        }
+      }
+
+      // Found full set
+      if(bVerticesNotInA.size() == R - 1) {
+        a = {R - 1};
+        for(unsigned k = 0; k < R - 1; ++k) {
+          a.push_back(k);
+        }
+        return a;
+      }
+
+      // And insert them between i -> a.at(i)
+      const unsigned hook = a.at(i);
+      unsigned previous = i;
+      for(unsigned j : bVerticesNotInA) {
+        a.at(previous) = j;
+        previous = j;
+      }
+      a.at(previous) = hook;
+
+      assert(isRotation(a));
+    }
+
+    return a;
+  };
+
+  auto connectedComponents = [&nestedFind](const std::vector<unsigned>& rotation) -> IndexGroups {
+    const unsigned R = rotation.size();
+
+    IndexGroups groups;
+    for(unsigned i = 0; i < R; ++i) {
+      if(nestedFind(groups, i) != std::end(groups)) {
+        // Already found i
+        continue;
+      }
+
+      std::vector<unsigned> group {i};
+      unsigned j = rotation.at(i);
+      while(j != i) {
+        group.push_back(j);
+        j = rotation.at(j);
+      }
+
+      groups.push_back(group);
+    }
+
+    return groups;
+  };
+
+  auto groups = connectedComponents(
+    temple::accumulate(
+      rotations(shape),
+      temple::iota<unsigned>(S),
+      merge
+    )
   );
 
   // Transpose to a simple symbolic representation

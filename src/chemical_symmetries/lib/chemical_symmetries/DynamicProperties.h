@@ -56,9 +56,9 @@ unsigned rotationPeriodicity(
 
 /*! @brief Generate a character representation of a shape's position groups
  *
- * Groups shape positions according to matching sets of angles towards all
- * other shape positions. Then transforms the shape positions themselves
- * to character representations of the groups they belong to.
+ * Groups shape vertices according to whether they can be interconverted. Then
+ * transforms the shape positions themselves to character representations of
+ * the groups they belong to.
  *
  * @complexity{@math{\Theta(S^2)}}
  *

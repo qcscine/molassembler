@@ -42,18 +42,18 @@ std::ostream& operator << (std::ostream& os, const std::vector<T>& vector) {
 }
 
 // create instances of all symmetries with monodentate ligands
-BOOST_AUTO_TEST_CASE( stereopermutationInstantiation ) {
+BOOST_AUTO_TEST_CASE(StereopermutationInstantiation) {
   for(const auto& shape: Symmetry::allShapes) {
-    Stereopermutation testStereopermutation(
-      std::vector<char>(
-        Symmetry::size(shape),
-        'A'
-      )
-    );
+    const unsigned S = Symmetry::size(shape);
+    if(S > 8) {
+      continue;
+    }
+
+    Stereopermutation testStereopermutation(std::vector<char>(S, 'A'));
   }
 }
 
-BOOST_AUTO_TEST_CASE( stereopermutation_basics ) {
+BOOST_AUTO_TEST_CASE(StereopermutationBasics) {
   // Constructors
   Stereopermutation instanceWithBondedLigands(
     {'A', 'B', 'C', 'D', 'E', 'F'},
@@ -112,7 +112,7 @@ BOOST_AUTO_TEST_CASE( stereopermutation_basics ) {
   }
 }
 
-BOOST_AUTO_TEST_CASE( columnSmallerConsistency ) {
+BOOST_AUTO_TEST_CASE(ColumnComparisonConsistency) {
   Stereopermutation single {
     {'A', 'A', 'A', 'A', 'A', 'A'},
     {
@@ -190,7 +190,7 @@ BOOST_AUTO_TEST_CASE( rotationCorrectness ) {
   }
 }
 
-BOOST_AUTO_TEST_CASE( octahedralSymmetryCorrectness ) {
+BOOST_AUTO_TEST_CASE(OctahedralSymmetryCorrectness) {
   Stereopermutation octahedralInstance(
     {'A', 'B', 'C', 'D', 'E', 'F'}
   );
@@ -242,26 +242,10 @@ void run_tests_with_counts(
         << " stereopermutations for: \n" << stereopermutation << ", got "
         << unique.stereopermutations.size() << " stereopermutations:" << std::endl;
     }
-
-    std::cout << "{";
-    for(unsigned i = 0; i < characters.size(); i++) {
-      std::cout << characters[i];
-      if(i != characters.size() - 1) {
-        std::cout << ", ";
-      }
-    }
-    std::cout << "} " << Symmetry::name(shape) << std::endl;
-
-    for(unsigned i = 0; i < unique.stereopermutations.size(); i++) {
-      std::cout << "Weight " << unique.weights[i] << ": "
-        << unique.stereopermutations[i] << std::endl;
-    }
-
-    std::cout << "----------------------------------------" << std::endl;
   }
 }
 
-BOOST_AUTO_TEST_CASE( individual_bugfixes ) {
+BOOST_AUTO_TEST_CASE(BugfixTests) {
   Stereopermutation a {
     {'A', 'A', 'A', 'B', 'B', 'B'},
     {
@@ -311,8 +295,7 @@ BOOST_AUTO_TEST_CASE( individual_bugfixes ) {
 }
 
 /* Tetrahedron tests */
-/* These were thought up myself */
-BOOST_AUTO_TEST_CASE( tetrahedral_monodentate ) {
+BOOST_AUTO_TEST_CASE(MonodentateTetrahedral) {
   run_tests_with_counts(
     Symmetry::Shape::Tetrahedron,
     {
@@ -360,8 +343,7 @@ BOOST_AUTO_TEST_CASE( tetrahedral_monodentate ) {
 }
 
 /* Square Planar tests */
-/* These were thought up myself */
-BOOST_AUTO_TEST_CASE( square_planar_monodentate ) {
+BOOST_AUTO_TEST_CASE(MonodentateSquarePlanar) {
   run_tests_with_counts(
     Symmetry::Shape::Square,
     {
@@ -415,7 +397,7 @@ BOOST_AUTO_TEST_CASE( square_planar_monodentate ) {
  * computer program [...]."
  * The reference however is useful: WE Bennett, Inorg. Chem. 1969
  */
-BOOST_AUTO_TEST_CASE( octahedral_monodentate ) {
+BOOST_AUTO_TEST_CASE(MonodentateOctahedron) {
   run_tests_with_counts(
     Symmetry::Shape::Octahedron,
     {
@@ -515,7 +497,7 @@ BOOST_AUTO_TEST_CASE( octahedral_monodentate ) {
   );
 }
 
-BOOST_AUTO_TEST_CASE( octahedral_multidentate ) {
+BOOST_AUTO_TEST_CASE(MultidentateOctahedron) {
   run_tests_with_counts(
     Symmetry::Shape::Octahedron,
     {
@@ -644,36 +626,20 @@ bool testOrientationState(const Composite::OrientationState& a) {
   // Make a copy and modify that
   auto aCopy = a;
 
-  // Show your work
-  /*unsigned reducedFusedPosition = a.lowestEqualPositionInSymmetry();
-  auto transformation = a.findReductionMapping(reducedFusedPosition);
-
-  std::cout << "Initially: ";
-  writeState(aCopy);
-
-  std::cout << "Mapping to " << reducedFusedPosition << ": "
-    << temple::stringify(transformation)
-    << "\n";*/
-
   // Transform and revert the OrientationState
   auto reversionMapping = aCopy.transformToCanonical();
-
-  //std::cout << "Mapped: ";
-  //writeState(aCopy);
-
-  //std::cout << "Inverse mapping: " << temple::stringify(reversionMapping) << "\n";
   aCopy.revert(reversionMapping);
-
-  //std::cout << "Reverted: ";
-  //writeState(aCopy);
 
   return aCopy == a;
 }
 
 // Ensure that transformation and reversion work the way they should
-BOOST_AUTO_TEST_CASE(orientationStateTests) {
+BOOST_AUTO_TEST_CASE(OrientationStateTests) {
   for(const auto& shape : Symmetry::allShapes) {
     const unsigned S = Symmetry::size(shape);
+    if(S > 8) {
+      continue;
+    }
 
     std::vector<char> maximumAsymmetricCase (S);
     for(unsigned i = 0; i < S; ++i) {
@@ -873,8 +839,13 @@ BOOST_AUTO_TEST_CASE(compositesAlignment) {
 BOOST_AUTO_TEST_CASE(numUnlinkedStereopermutationsTest) {
   // Crosscheck number of unlinked stereopermutations with chemical_symmetries
   for(const Symmetry::Shape shape : Symmetry::allShapes) {
-    std::vector<char> characters (Symmetry::size(shape));
-    for(unsigned nIdentical = 1; nIdentical < Symmetry::size(shape); ++nIdentical) {
+    const unsigned S = Symmetry::size(shape);
+    if(S > 8) {
+      continue;
+    }
+
+    std::vector<char> characters (S);
+    for(unsigned nIdentical = 1; nIdentical < S; ++nIdentical) {
       // Populate characters for construction of a Stereopermutation
       for(unsigned i = 0; i < characters.size(); ++i) {
         characters.at(i) = 'A' + std::max(
