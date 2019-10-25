@@ -35,6 +35,8 @@ enum class BondType : unsigned {
   Eta
 };
 
+constexpr unsigned nBondTypes = 7;
+
 enum class LengthUnit {
   Bohr,
   Angstrom

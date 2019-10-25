@@ -30,6 +30,18 @@ BondInformation::BondInformation(
     assignmentOptional(std::move(passAssignmentOptional))
 {}
 
+static_assert(
+  BondInformation::bondTypeBits == temple::Math::ceil(
+    temple::Math::log(nBondTypes + 1.0, 2.0)
+  ),
+  "Number of bond types requires a change in bond type bits!"
+);
+
+static_assert(
+  BondInformation::hashWidth == BondInformation::bondTypeBits + BondInformation::assignmentBits,
+  "BondInformation::hashWidth is no longer the sum of bond type bits and assignment bits"
+);
+
 WideHashType BondInformation::hash() const {
   // Initialize with the bond type
   WideHashType hash (
@@ -43,7 +55,7 @@ WideHashType BondInformation::hash() const {
       static_cast<
         std::underlying_type_t<BondType>
       >(bondType) + 1
-    ) << 3
+    ) << bondTypeBits
   );
 
   /* In the other three bits of given width, we have to store the following
@@ -67,8 +79,7 @@ WideHashType BondInformation::hash() const {
     }
   }
 
-  // The remaining case, no stereopermutator on bond, is just hash += 0
-
+  // The remaining case, no stereopermutator on bond, is just hash = 0
   return hash;
 }
 
@@ -93,19 +104,23 @@ WideHashType hash(
   const boost::optional<Symmetry::Shape>& shapeOptional,
   const boost::optional<unsigned>& assignedOptional
 ) {
+  // 2^7 = 128 will fit all element types
+  constexpr unsigned elementTypeBits = 7;
+  constexpr unsigned shapeNameBits = temple::Math::ceil(
+    temple::Math::log(Symmetry::nShapes + 1.0, 2.0)
+  );
+
   static_assert(
     // Sum of information in bits we want to pack in the 128 bit hash
     (
       // Element type (fixed as this cannot possibly increase)
-      7
+      elementTypeBits
       // Bond information: exactly as many as the largest possible shape
       + Symmetry::constexprProperties::maxShapeSize * (
         BondInformation::hashWidth
       )
       // The bits needed to store the shape name (plus none)
-      + temple::Math::ceil(
-        temple::Math::log(Symmetry::nShapes + 1.0, 2.0)
-      )
+      + shapeNameBits
       // Roughly 5040 possible assignment values (maximally asymmetric square antiprismatic)
       + 13
     ) <= 128,
@@ -135,16 +150,18 @@ WideHashType hash(
    * So, left shift by 7 bits (so there are 7 zeros on the right in the bit
    * representation, where the element type is stored) plus the current bond
    * number multiplied by the width of a BondInformation hash to place a
-   * maximum of 8 bond types (maximum shape size currently)
+   * maximum of 12 bond types (maximum shape size currently)
    *
-   * This occupies 6 * 8 = 48 bits.
+   * This occupies 6 * 12 = 72 bits.
    */
+  constexpr unsigned bondsHashSectionWidth = BondInformation::hashWidth * Symmetry::constexprProperties::maxShapeSize;
+
   if(bitmask & AtomEnvironmentComponents::BondOrders) {
     unsigned bondNumber = 0;
     for(const auto& bond : sortedBonds) {
       value += (
         bond.hash()
-      ) << (7 + BondInformation::hashWidth * bondNumber);
+      ) << (elementTypeBits + BondInformation::hashWidth * bondNumber);
 
       ++bondNumber;
     }
@@ -152,15 +169,13 @@ WideHashType hash(
 
   if((bitmask & AtomEnvironmentComponents::Shapes) && shapeOptional) {
     /* We add shape information on non-terminal atoms. There are currently
-     * 16 shapes, plus None is 17, which fits into 5 bits (2^5 = 32)
+     * 30 shapes, plus None is 31, which fits into 5 bits (2^5 = 32)
      */
-    value += (WideHashType(shapeOptional.value()) + 1) << (7 + 48);
+    value += (WideHashType(shapeOptional.value()) + 1) << (elementTypeBits + bondsHashSectionWidth);
 
     if(bitmask & AtomEnvironmentComponents::Stereopermutations) {
-      /* The remaining space 128 - (7 + 48 + 5) = 68 bits is used for the current
-       * permutation. Maximally asymmetric square antiprismatic has around 6k
-       * permutations, which fits into 13 bits. We don't have to worry about
-       * that, then.
+      /* The remaining space (128 - (7 + 72 + 5) = 44 bits) is used for the
+       * current permutation. Log_2(12!) ~= 29, so we're good.
        */
       WideHashType permutationValue;
       if(assignedOptional) {
@@ -168,7 +183,7 @@ WideHashType hash(
       } else {
         permutationValue = 1;
       }
-      value += permutationValue << (7 + 48 + 5);
+      value += permutationValue << (elementTypeBits + bondsHashSectionWidth + shapeNameBits);
     }
   }
 

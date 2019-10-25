@@ -13,6 +13,11 @@ namespace Scine {
 
 namespace molassembler {
 
+static_assert(
+  static_cast<std::underlying_type<BondType>::type>(BondType::Eta) == nBondTypes - 1,
+  "Did you add a bond type and not alter nBondTypes?"
+);
+
 BondIndex::BondIndex() = default;
 
 BondIndex::BondIndex(AtomIndex a, AtomIndex b) noexcept : first(a), second(b) {

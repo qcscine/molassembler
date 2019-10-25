@@ -37,6 +37,8 @@ using HashType = std::uint64_t;
  * @brief Information pertinent to a singular bond hash
  */
 struct BondInformation {
+  static constexpr unsigned bondTypeBits = 3;
+  static constexpr unsigned assignmentBits = 3;
   /* - 3 bits for bondtype + none
    * - 3 bits for the assignment (none, unassigned, values)
    */
