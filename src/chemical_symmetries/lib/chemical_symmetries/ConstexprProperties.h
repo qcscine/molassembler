@@ -496,7 +496,7 @@ constexpr ArrayType<unsigned, size> symPosMapping(
  */
 template<typename ShapeClass>
 constexpr unsigned maxRotations() {
-  return temple::reduce(rotationPeriodicity<ShapeClass>(), 1u, std::multiplies<>());
+  return temple::reduce(rotationPeriodicities<ShapeClass>(), 1u, std::multiplies<>());
 }
 
 // Some helper types for use in generateAllRotations
