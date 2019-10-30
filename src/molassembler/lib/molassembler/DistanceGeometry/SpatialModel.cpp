@@ -1244,7 +1244,7 @@ struct SpatialModel::ModelGraphWriter final : public MolGraphWriter {
           + std::to_string(
             std::round(temple::Math::toDegrees(dihedralBounds.lower))
           ) + ", "s + std::to_string(
-            std:round(temple::Math::toDegrees(dihedralBounds.upper))
+            std::round(temple::Math::toDegrees(dihedralBounds.upper))
           ) + "]"s
         );
       }
