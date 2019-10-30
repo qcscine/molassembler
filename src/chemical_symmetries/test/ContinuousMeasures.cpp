@@ -421,13 +421,13 @@ BOOST_AUTO_TEST_CASE(AsymmetricTopStandardization) {
 BOOST_AUTO_TEST_CASE(ShapeMeasures) {
   for(const Shape shape : allShapes) {
 #ifndef NDEBUG
-    if(size(shape) > 4) {
+    if(size(shape) > 6) {
       continue;
     }
 #endif
 
     // Even release builds bow out here. Better algorithms are needed.
-    if(size(shape) > 8) {
+    if(size(shape) > 9) {
       continue;
     }
 
@@ -446,10 +446,10 @@ BOOST_AUTO_TEST_CASE(ShapeMeasures) {
       "Expected CShM < 1e-2 for rotated coordinates of " << name(shape) << ", but got " << rotated
     );
 
-    for(unsigned i = 1; i < 6; ++i) {
-      const double distortion = 0.1 * i;
+    for(unsigned i = 1; i < 5; ++i) {
+      const double distortionNorm = 0.1 * i;
       auto distorted = shapeCoordinates;
-      distort(distorted, distortion);
+      distort(distorted, distortionNorm);
       distorted = continuous::normalize(distorted);
 
       const double faithful = continuous::shapeFaithfulPaperImplementation(
@@ -530,8 +530,8 @@ BOOST_AUTO_TEST_CASE(MinimumDistortionConstants) {
       );
     };
 
-    const double ab = continuous::shape(makeShapeCoordinates(a), b);
-    const double ba = continuous::shape(makeShapeCoordinates(b), a);
+    const double ab = continuous::shapeAlternateImplementation(makeShapeCoordinates(a), b);
+    const double ba = continuous::shapeAlternateImplementation(makeShapeCoordinates(b), a);
 
     BOOST_CHECK_CLOSE(ab, ba, 0.1);
 

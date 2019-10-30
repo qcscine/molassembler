@@ -51,6 +51,35 @@ Eigen::Matrix3d fitQuaternion(const Eigen::MatrixBase<DerivedA>& stator, const E
   return Eigen::Quaterniond(q[0], q[1], q[2], q[3]).toRotationMatrix();
 }
 
+Eigen::Matrix3d fitQuaternion(
+  const PositionCollection& stator,
+  const PositionCollection& rotor,
+  const std::unordered_map<unsigned, unsigned>& p
+) {
+  assert(centroidIsZero(stator));
+  assert(centroidIsZero(rotor));
+
+  Eigen::Matrix4d b = Eigen::Matrix4d::Zero();
+  // generate decomposable matrix per atom and add them
+  for(auto& iterPair : p) {
+    auto& statorCol = stator.col(iterPair.first);
+    auto& rotorCol = rotor.col(iterPair.second);
+
+    Eigen::Matrix4d a = Eigen::Matrix4d::Zero();
+    a.block<1, 3>(0, 1) = (rotorCol - statorCol).transpose();
+    a.block<3, 1>(1, 0) = statorCol - rotorCol;
+    a.block<3, 3>(1, 1) = Eigen::Matrix3d::Identity().rowwise().cross(statorCol + rotorCol);
+    b += a.transpose() * a;
+  }
+
+  // Decompose b
+  Eigen::SelfAdjointEigenSolver<Eigen::Matrix4d> eigensolver(b);
+
+  // Do not allow improper rotation
+  const Eigen::Vector4d& q = eigensolver.eigenvectors().col(0);
+  return Eigen::Quaterniond(q[0], q[1], q[2], q[3]).toRotationMatrix();
+}
+
 bool isNormalized(const PositionCollection& positions) {
   /* All vectors are shorter or equally long as a unit vector
    * and at least one vector is as long as a unit vector
@@ -999,12 +1028,26 @@ double shapeAlternateImplementation(
   const PositionCollection& normalizedPositions,
   const Shape shape
 ) {
-  /* Speed up the faithful implementation by minimizing over rotation,
+  /* There is a bit of a conundrum: The paper says
+   * - For each index mapping
+   *   - Minimize over rotation
+   *   - Minimize over scaling
+   *
+   * But it's a lot faster to
+   * - Minimize over rotation (while minimizing CShapeM over all permutations)
+   * - Minimize over scaling (using best permutation from rotation step)
+   *
+   * And to me it's not immediately apparent why this should be worse, especially
+   * considering that minimizing over permutations while calculating CShapeM
+   * should be smooth. Maybe it has local minima that the paper procedure wouldn't?
+   *
+   * But it's odd. The paper suggests pre-pairing off vertices to reduce cost "in
+   * most cases". Not sure which is more dangerous (pre-pairing prior to any
+   * minimizations or reversing minimization order and reusing pairing).
+   *
+   * So here we speed up the faithful implementation by minimizing over rotation,
    * remembering the best rotation matrix and minimizing over scaling outside
    * of the permutational loop
-   *
-   * NOTE: A greedy variation proposing all possible two-pair swaps does not
-   * pass the tests.
    */
 
   assert(isNormalized(normalizedPositions));
@@ -1068,10 +1111,236 @@ double shapeAlternateImplementation(
   return 100 * scalingMinimizationResult.second / normalization;
 }
 
+using NarrowType = std::pair<double, std::unordered_map<unsigned, unsigned>>;
+
+NarrowType shapeHeuristicsNarrow(
+  const PositionCollection& stator,
+  const PositionCollection& rotor,
+  std::unordered_map<unsigned, unsigned> permutation,
+  std::vector<unsigned> freeLeftVertices,
+  std::vector<unsigned> freeRightVertices
+) {
+  const unsigned N = stator.cols();
+
+  struct Entry {
+    unsigned left;
+    unsigned right;
+    double squaredNorm;
+
+    bool operator < (const Entry& other) const {
+      return squaredNorm < other.squaredNorm;
+    }
+  };
+
+  auto entries = temple::sort(
+    temple::map(
+      temple::adaptors::allPairs(freeLeftVertices, freeRightVertices),
+      [&](const unsigned left, unsigned right) -> Entry {
+        return {
+          left,
+          right,
+          (stator.col(left) - rotor.col(right)).squaredNorm()
+        };
+      }
+    )
+  );
+
+  while(!freeLeftVertices.empty()) {
+    Entry minimalEntry = entries.front();
+
+    // Maybe a linear search is better?
+    auto rangeToConsiderEnd = std::find_if(
+      std::begin(entries),
+      std::end(entries),
+      [&minimalEntry](const Entry& e) {
+        return e.squaredNorm > 1.2 * minimalEntry.squaredNorm;
+      }
+    );
+
+    const unsigned branches = rangeToConsiderEnd - std::begin(entries);
+    if(branches > 1) {
+      std::vector<NarrowType> narrows;
+      for(auto it = std::begin(entries); it != rangeToConsiderEnd; ++it) {
+        auto permutationCopy = permutation;
+        permutationCopy.emplace(it->left, it->right);
+        auto left = freeLeftVertices;
+        temple::inplace::remove(left, it->left);
+        auto right = freeRightVertices;
+        temple::inplace::remove(right, it->right);
+        // auto R = fitQuaternion(stator, rotor, permutationCopy);
+        // auto rotated = R * rotor;
+        narrows.push_back(
+          shapeHeuristicsNarrow(
+            stator,
+            rotor,
+            std::move(permutationCopy),
+            std::move(left),
+            std::move(right)
+          )
+        );
+      }
+
+      return *std::min_element(
+        std::begin(narrows),
+        std::end(narrows),
+        [](const NarrowType& a, const NarrowType& b) {
+          return a.first < b.first;
+        }
+      );
+    }
+
+    permutation.emplace(minimalEntry.left, minimalEntry.right);
+    temple::inplace::remove_if(
+      entries,
+      [&](const Entry& e) -> bool {
+        return (
+          e.left == minimalEntry.left
+          || e.right == minimalEntry.right
+        );
+      }
+    );
+    temple::inplace::remove(freeLeftVertices, minimalEntry.left);
+    temple::inplace::remove(freeRightVertices, minimalEntry.right);
+  }
+
+  auto R = fitQuaternion(stator, rotor, permutation);
+  auto rotated = R * rotor;
+  double penalty = temple::accumulate(
+    temple::adaptors::range(N),
+    0.0,
+    [&](const double carry, const unsigned i) -> double {
+      return carry + (
+        stator.col(i) - rotated.col(permutation.at(i))
+      ).squaredNorm();
+    }
+  );
+
+  return {penalty, permutation};
+}
+
+double shapeHeuristics(
+  const PositionCollection& normalizedPositions,
+  const Shape shape
+) {
+  /* Heuristics employed:
+   *
+   * - Minimize over the rotation first, then take that solution and minimize
+   *   over the scaling factor.
+   * - For each tuple of four positions, align the positions, then greedily
+   *   choose the best next sequence alignment until all positions are matched.
+   *   If there are close seconds in choosing the best next sequence alignment,
+   *   branch and explore all of those too.
+   *
+   * Overall, this works really well for small distortions. It has low deviations
+   * from the true error for large deviations, where it suffers from its
+   * greediness and not realigning after choosing a sequence alignment.
+   *
+   * This might also be improved by some pruning criteria (i.e. track the
+   * accumulating penalty and the best value found so far and prune if the
+   * penalty is significantly higher than the best found).
+   */
+
+  const unsigned N = normalizedPositions.cols();
+  // Add origin to shape coordinates and renormalize
+  PositionCollection shapeCoords (3, N);
+  shapeCoords.leftCols(N - 1) = symmetryData().at(shape).coordinates;
+  shapeCoords.col(N - 1) = Eigen::Vector3d::Zero();
+  shapeCoords = normalize(shapeCoords);
+
+  NarrowType minimalNarrow {std::numeric_limits<double>::max(), {}};
+
+  std::unordered_map<unsigned, unsigned> permutation;
+  for(unsigned i = 0; i < N; ++i) {
+    permutation[0] = i;
+    for(unsigned j = 0; j < N; ++j) {
+      if(j == i) {
+        continue;
+      }
+
+      permutation[1] = j;
+      for(unsigned k = 0; k < N; ++k) {
+        if(k == i || k == j) {
+          continue;
+        }
+
+        permutation[2] = k;
+        for(unsigned l = 0; l < N; ++l) {
+          if(l == i || l == k || l == j) {
+            continue;
+          }
+
+          permutation[3] = l;
+
+          Eigen::Matrix3d R = fitQuaternion(normalizedPositions, shapeCoords, permutation);
+          auto rotatedShape = R * shapeCoords;
+
+          std::vector<unsigned> freeLeftVertices;
+          freeLeftVertices.reserve(N - 4);
+          for(unsigned a = 4; a < N; ++a) {
+            freeLeftVertices.push_back(a);
+          }
+          std::vector<unsigned> freeRightVertices;
+          freeRightVertices.reserve(N - 4);
+          for(unsigned a = 0; a < N; ++a) {
+            if(a != i && a != j && a != k && a != l) {
+              freeRightVertices.push_back(a);
+            }
+          }
+
+          NarrowType narrowed = shapeHeuristicsNarrow(
+            normalizedPositions,
+            rotatedShape,
+            permutation,
+            std::move(freeLeftVertices),
+            std::move(freeRightVertices)
+          );
+
+          if(narrowed.first < minimalNarrow.first) {
+            minimalNarrow = std::move(narrowed);
+          }
+        }
+      }
+    }
+  }
+
+  const auto& bestPermutation = minimalNarrow.second;
+  PositionCollection permutedShape(3, N);
+  for(unsigned i = 0; i < N; ++i) {
+    permutedShape.col(bestPermutation.at(i)) = shapeCoords.col(i);
+  }
+  auto R = fitQuaternion(normalizedPositions, permutedShape);
+  permutedShape = R * permutedShape;
+
+  constexpr double scalingLowerBound = 0.5;
+  constexpr double scalingUpperBound = 1.1;
+
+  auto scalingMinimizationResult = boost::math::tools::brent_find_minima(
+    [&](double scaling) { return (normalizedPositions - scaling * permutedShape).colwise().squaredNorm().sum(); },
+    scalingLowerBound,
+    scalingUpperBound,
+    std::numeric_limits<double>::digits
+  );
+
+  const double normalization = normalizedPositions.colwise().squaredNorm().sum();
+
+  return 100 * scalingMinimizationResult.second / normalization;
+}
+
 double shape(
   const PositionCollection& normalizedPositions,
   const Shape shape
 ) {
+#ifdef NDEBUG
+  // In release builds, use heuristics starting from size 9
+  constexpr unsigned minSizeForHeuristics = 9;
+#else
+  // In debug builds, use heuristics starting from size 6
+  constexpr unsigned minSizeForHeuristics = 6;
+#endif
+  if(size(shape) >= minSizeForHeuristics) {
+    return shapeHeuristics(normalizedPositions, shape);
+  }
+
   return shapeAlternateImplementation(normalizedPositions, shape);
 }
 

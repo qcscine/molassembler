@@ -154,8 +154,7 @@ Eigen::VectorXd transformToAngles(M m) {
   const unsigned N = m.cols();
   Eigen::VectorXd angles(2 * N);
   for(unsigned i = 0; i < N; ++i) {
-    const double r = m.col(i).norm();
-    assert(std::fabs(r - 1) < 1e-10);
+    assert(std::fabs(m.col(i).norm() - 1) < 1e-10);
     angles(2 * i) = std::acos(m.col(i).z());
     angles(2 * i + 1) = std::atan2(m.col(i).y(), m.col(i).x());
   }

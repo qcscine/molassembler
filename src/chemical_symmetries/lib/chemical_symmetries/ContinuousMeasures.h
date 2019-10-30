@@ -103,60 +103,96 @@ double Cinf(const PositionCollection& normalizedPositions);
  */
 double pointGroup(
   const PositionCollection& normalizedPositions,
-  const PointGroup pointGroup
+  PointGroup pointGroup
 );
 
-/* Regarding CShapeM minimization, there is a bit of a conundrum: The paper says
- * - For each index mapping
- *   - Minimize over rotation
- *   - Minimize over scaling
- *
- * But it's a lot faster to
- * - Minimize over rotation (while minimizing CShapeM over all permutations)
- * - Minimize over scaling (using best permutation from rotation step)
- *
- * And to me it's not immediately apparent why this should be worse, especially
- * considering that minimizing over permutations while calculating CShapeM
- * should be smooth. Maybe it has local minima that the paper procedure wouldn't?
- *
- * But it's odd. The paper suggests pre-pairing off vertices to reduce cost "in
- * most cases". Not sure which is more dangerous (pre-pairing prior to any
- * minimizations or reversing minimization order and reusing pairing).
- *
- * Furthermore, both variants get different results despite fitting looking
- * veeery similar. Messing with minimization epsilons doesn't get me anywhere.
- *
- * Another way to do shape minimization without full permutational work might
- * be by sequential alignment: Manage an unordered map keeping track of the
- * emerging index permutation. Always add that mapping with the minimal cost to
- * the map and realign by orientation minimization.
- */
-
 /**
- * @brief Calculates the continuous shape measure of a set of coordinates with
- *   respect to a particular shape
+ * @brief Faithful implementation of the continuous shape measure calculation
+ *   algorithm from the paper
  *
  * @param normalizedPositions
  * @param shape
  *
- * @throws std::logic_error If the number of passed positions does not match
- * the size of the shape
+ * @complexity{@math{\Theta(N!)}. Note that @math{N} is the size of the shape
+ * plus one since a centroid is involved as well.}
  *
- * @return The continuous shape measure
+ * @return
+ */
+double shapeFaithfulPaperImplementation(
+  const PositionCollection& normalizedPositions,
+  Shape shape
+);
+
+/**
+ * @brief Slightly optimized implmentation of the continuous shape measure
+ *   calculation algorithm
+ *
+ * Paper says:
+ * - For each index mapping
+ *   - Minimize over rotation
+ *   - Minimize over isotropic scaling factor.
+ *
+ * This does:
+ * - For each index mapping
+ *   - Minimize over rotation
+ * - For the best index mapping, minimize over isotropic scaling factor
+ *
+ * and is hence faster. Gives the same results.
+ *
+ * @param normalizedPositions
+ * @param shape
+ *
+ * @return
+ */
+double shapeAlternateImplementation(
+  const PositionCollection& normalizedPositions,
+  Shape shape
+);
+
+/**
+ * @brief Calculates the continuous shape measure of a set of coordinates with
+ *   respect to a particular shape using heuristics
+ *
+ * Since shapeFaithfulPaperImplementation() scales as @math{\Theta(N!)} and we
+ * have shapes with 12 vertices plus the centroid, we need heuristics to speed
+ * up the shape calculation while not sacrificing too much accuracy.
+ *
+ * Heuristic used here: For all tuples of four positions, align the positions,
+ * then greedily choose the best next sequence alignments until all positions
+ * are matched.
+ *
+ * Judgement of accuracy / speed tradeoff is that this is worth using from size
+ * 6 onwards in debug builds and from size 9 onwards in release builds.
+ *
+ * @param normalizedPositions set of coordinates to compare with the shape
+ * @param shape Reference shape to compare against
+ *
+ * @complexity{@math{\Omega(\frac{N!}{(N-4)!})} where @math{N} is the number of
+ * positions being matched. Note that @math{N} is typically the size of the shape plus
+ * one since a centroid is commonly involved as well.}
+ *
+ * @note Works well for positions deviating little from the ideal shape. For
+ * large deviations, exhibits small relative errors. To explore the
+ * characteristics of this function, you can try out the shape analysis binary.
+ *
+ * @return The continuous shape measure determined by heuristics
+ */
+double shapeHeuristics(
+  const PositionCollection& normalizedPositions,
+  Shape shape
+);
+
+/**
+ * @brief Forwarding function to calculate the continuous shape measure
+ *
+ * Forwards its call to shapeAlternateImplementation() by default. In debug
+ * builds, forwards its call to shapeHeuristics() from shape size 6 onwards. In
+ * release builds, forwards its call to shapeHeuristics() from shape size 9
+ * onwards.
  */
 double shape(
   const PositionCollection& normalizedPositions,
-  const Shape shape
-);
-
-double shapeFaithfulPaperImplementation(
-  const PositionCollection& normalizedPositions,
-  const Shape shape
-);
-
-double shapeAlternateImplementation(
-  const PositionCollection& normalizedPositions,
-  const Shape shape
+  Shape shape
 );
 
 /*! @brief Calculates minimum distortion angle in radians for shapes A and B
@@ -164,6 +200,9 @@ double shapeAlternateImplementation(
  * Calculates @math{\theta_AB} in:
  *
  * @math{k_XY = \sqrt{\textrm{CShM}_A(B)} = \sqrt{\textrm{CShM}_B(A)} = 10 \sin(\theta_AB)}
+ *
+ * @warning This function calls shape(), where heuristics are used for
+ * particular shape sizes.
  *
  * @complexity{One continuous shape calculation.}
  */
@@ -181,6 +220,9 @@ double minimumDistortionAngle(Shape a, Shape b);
  *
  * This function form avoids two shape calculations if the minimum distortion
  * angle between a and b is known.
+ *
+ * @warning This function calls shape(), where heuristics are used for
+ * particular shape sizes.
  *
  * @complexity{Two continuous shape calculations.}
  */
