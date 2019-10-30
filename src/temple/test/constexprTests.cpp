@@ -276,19 +276,6 @@ BOOST_AUTO_TEST_CASE( mathApproxEqual ) {
 
   BOOST_CHECK(
     temple::all_of(
-      temple::random::getN<double>(-100, 100, numTests, generator.engine),
-      [](const double x) -> bool {
-        const double rounded = temple::Math::round(x);
-        return(
-          rounded == temple::Math::floor(x)
-          || rounded == temple::Math::ceil(x)
-        );
-      }
-    )
-  );
-
-  BOOST_CHECK(
-    temple::all_of(
       temple::random::getN<double>(-M_PI / 2, M_PI / 2, numTests, generator.engine),
       [&](const double x) -> bool {
         return temple::floating::isCloseRelative(

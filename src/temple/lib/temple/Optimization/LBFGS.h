@@ -709,7 +709,7 @@ private:
       );
 
       /* Backtracking condition */
-      bool backtrack = (step.values.proposed > step.values.current);
+      bool backtrack = (step.values.proposed >= step.values.current);
 
       // Decide whether to shorten or extend the step length
       constexpr FloatType shortenFactor = 0.5;

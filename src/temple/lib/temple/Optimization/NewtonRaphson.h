@@ -20,7 +20,7 @@ namespace temple {
  *
  * No hessian adjustments, no line searches, no trust region safeties, etc.
  * If this minimizes or just approaches saddle points or maxima is
- * unsure.
+ * uncertain.
  *
  * @tparam FloatType Floating point type of the objective function
  */

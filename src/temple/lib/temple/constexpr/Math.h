@@ -92,17 +92,6 @@ constexpr traits::enableIfFloatingWithReturn<T, int> ceil(T value) noexcept;
 template<typename T>
 constexpr traits::enableIfFloatingWithReturn<T, int> floor(T value) noexcept;
 
-//! Round a number
-template<typename T>
-constexpr traits::enableIfFloatingWithReturn<T, int> round(T value) noexcept;
-
-//! Round a number to a specific number of digits
-template<typename T>
-constexpr traits::enableIfFloatingWithReturn<T, T> round(
-  T value,
-  unsigned nDigits
-);
-
 //! Power of a number
 template<typename T>
 constexpr traits::enableIfArithmeticWithReturn<T, T> pow(T base, unsigned exponent) noexcept;
@@ -160,15 +149,6 @@ constexpr unsigned TPPSum() {
 template<typename T1, typename... T>
 constexpr unsigned TPPSum(T1 a, T ... pack) {
   return a + TPPSum(pack ...);
-}
-
-template<typename T>
-PURITY_STRONG constexpr traits::enableIfFloatingWithReturn<T, int> roundImpl(const T value) {
-  if(value * 10 - floor(value) * 10 >= 5) {
-    return ceil(value);
-  }
-
-  return floor(value);
 }
 
 /* Based on series expansion of ln x:
@@ -298,32 +278,6 @@ PURITY_STRONG constexpr traits::enableIfFloatingWithReturn<T, int> floor(const T
   }
 
   return truncated;
-}
-
-template<typename T>
-PURITY_STRONG constexpr traits::enableIfFloatingWithReturn<T, int> round(const T value) noexcept {
-  if(value < 0) {
-    return -detail::roundImpl(-value);
-  }
-
-  return detail::roundImpl(value);
-}
-
-template<typename T>
-PURITY_STRONG constexpr traits::enableIfFloatingWithReturn<T, T> round(
-  const T value,
-  const unsigned nDigits
-) {
-  if(value == 0) {
-    return 0;
-  }
-
-  const T d = ceil(log10(abs(value)));
-  const int power = nDigits - static_cast<int>(d);
-  const T magnitude = pow(10, power);
-
-  // This isn't an integer division since magnitude is a floating-point type
-  return round(value * magnitude) / magnitude;
 }
 
 // Really weak first implementation

@@ -238,10 +238,7 @@ void writeSymmetryTransitionDotFile(
           }
 
           dotFile << ", label=\""
-            << temple::Math::round(
-              mappingData.angularDistortion + mappingData.chiralDistortion,
-              2
-            );
+            << std::round(mappingData.angularDistortion + mappingData.chiralDistortion);
 
 
           if(multiplicity > 3) {
@@ -413,10 +410,7 @@ void writeLigandLossDotFile(
             }
 
             dotFile << ", label=\""
-              << temple::Math::round(
-                mappingData.angularDistortion + mappingData.chiralDistortion,
-                2
-              );
+              << std::round(mappingData.angularDistortion + mappingData.chiralDistortion);
 
 
             if(multiplicity > 3) {

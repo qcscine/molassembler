@@ -1204,13 +1204,9 @@ struct SpatialModel::ModelGraphWriter final : public MolGraphWriter {
           "["s + std::to_string(indexSequence.at(0)) + ","s
           + std::to_string(indexSequence.at(2)) +"] -> ["s
           + std::to_string(
-            temple::Math::round(
-              temple::Math::toDegrees(angleBounds.lower)
-            )
+            std::round(temple::Math::toDegrees(angleBounds.lower))
           ) + ", "s + std::to_string(
-            temple::Math::round(
-              temple::Math::toDegrees(angleBounds.upper)
-            )
+            std::round(temple::Math::toDegrees(angleBounds.upper))
           ) + "]"s
         );
       }
@@ -1246,13 +1242,9 @@ struct SpatialModel::ModelGraphWriter final : public MolGraphWriter {
           "["s + std::to_string(indexSequence.at(0)) + ","s
           + std::to_string(indexSequence.at(3)) + "] -> ["s
           + std::to_string(
-            temple::Math::round(
-              temple::Math::toDegrees(dihedralBounds.lower)
-            )
+            std::round(temple::Math::toDegrees(dihedralBounds.lower))
           ) + ", "s + std::to_string(
-            temple::Math::round(
-              temple::Math::toDegrees(dihedralBounds.upper)
-            )
+            std:round(temple::Math::toDegrees(dihedralBounds.upper))
           ) + "]"s
         );
       }
