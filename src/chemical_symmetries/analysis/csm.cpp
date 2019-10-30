@@ -223,6 +223,11 @@ int main(int argc, char* argv[]) {
   );
   boost::program_options::notify(options_variables_map);
 
+  if(options_variables_map.count("help") > 0) {
+    std::cout << options_description << "\n";
+    return 0;
+  }
+
   RScriptWriter writer {
     showElements ? "elements.R" : "point_groups_data.R"
   };

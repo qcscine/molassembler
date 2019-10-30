@@ -14,6 +14,7 @@ if(MOLASSEMBLER_PARALLELIZE AND NOT TARGET OpenMP::OpenMP_CXX)
 endif()
 
 set(analysisFiles
+  ${CMAKE_CURRENT_SOURCE_DIR}/shape.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/thomson.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/csm.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/writeMappings.cpp
