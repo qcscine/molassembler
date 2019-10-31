@@ -927,11 +927,14 @@ struct SteepestDescent final : OldShapeAlgorithm {
  *
  * Complexity: Theta(N! / (N - 4)!)
  */
-struct AlignFour final : ShapeAlgorithm {
+struct AlignFive final : ShapeAlgorithm {
+  using M = Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>;
+  using IncrementalPermutation = std::unordered_map<unsigned, unsigned>;
+
   static Eigen::Matrix3d fitQuaternion(
     const PositionCollection& stator,
     const PositionCollection& rotor,
-    const std::unordered_map<unsigned, unsigned>& p
+    const IncrementalPermutation& p
   ) {
     assert(centroidIsZero(stator));
     assert(centroidIsZero(rotor));
@@ -957,9 +960,9 @@ struct AlignFour final : ShapeAlgorithm {
     return Eigen::Quaterniond(q[0], q[1], q[2], q[3]).toRotationMatrix();
   }
 
-  static std::vector<unsigned> flatten(const std::unordered_map<unsigned, unsigned>& p) {
+  static Permutation flatten(const IncrementalPermutation& p) {
     const unsigned P = p.size();
-    std::vector<unsigned> flat(P);
+    Permutation flat(P);
     for(unsigned i = 0; i < P; ++i) {
       flat.at(i) = p.at(i);
     }
@@ -977,140 +980,77 @@ struct AlignFour final : ShapeAlgorithm {
   ) {
     const unsigned N = stator.cols();
 
-    PositionCollection rotated = rotor;
-
-    struct Entry {
-      unsigned left;
-      unsigned right;
-      double squaredNorm;
-
-      bool operator < (const Entry& other) const {
-        return squaredNorm < other.squaredNorm;
+    const unsigned V = freeLeftVertices.size();
+    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> costs (V, V);
+    for(unsigned i = 0; i < V; ++i) {
+      for(unsigned j = 0; j < V; ++j) {
+        costs(i, j) = (
+          stator.col(freeLeftVertices.at(i))
+          - rotor.col(freeRightVertices.at(j))
+        ).squaredNorm();
       }
+    }
+
+    // Maps freeLeftVertices onto freeRightVertices
+    auto subPermutation = temple::iota<unsigned>(V);
+
+    auto isCorrectBranch = [&](const auto& s) {
+      return temple::any_of(
+        correctRotations,
+        [&](const auto& rot) -> bool {
+          // Rotation has to match the current permutation
+          if(!temple::all_of(
+            permutation,
+            [&](const unsigned left, const unsigned right) -> bool {
+              return rot.at(left) == right;
+            }
+          )) {
+            return false;
+          }
+
+          // Rotation has to match the sub-permutation too
+          for(unsigned i = 0; i < V; ++i) {
+            unsigned left = freeLeftVertices.at(i);
+            unsigned right = freeRightVertices.at(s.at(i));
+            if(rot.at(left) != right) {
+              return false;
+            }
+          }
+
+          return true;
+        }
+      );
     };
 
-    auto entries = temple::sort(
-      temple::map(
-        temple::adaptors::allPairs(freeLeftVertices, freeRightVertices),
-        [&](const unsigned left, unsigned right) -> Entry {
-          return {
-            left,
-            right,
-            (stator.col(left) - rotor.col(right)).squaredNorm()
-          };
-        }
-      )
-    );
-
-    while(!freeLeftVertices.empty()) {
-      Entry minimalEntry = entries.front();
-
-      auto rangeToConsiderEnd = std::lower_bound(
-        std::begin(entries),
-        std::end(entries),
-        1.2 * minimalEntry.squaredNorm,
-        [](const Entry& e, double value) {
-          return e.squaredNorm < value;
-        }
-      );
-
-      auto anyRotationMatchesExistingPlusMapping = [&](unsigned l, unsigned r) {
-        return temple::any_of(
-          correctRotations,
-          [&](const auto& rot) {
-            return temple::all_of(
-              permutation,
-              [&](unsigned left, unsigned right) {
-                return rot.at(left) == right;
-              }
-            ) && rot.at(l) == r;
-          }
-        );
-      };
-
-      if(inCorrectBranch) {
-        bool correctBranchSelected = false;
-
-        for(auto it = std::begin(entries); it != rangeToConsiderEnd; ++it) {
-          correctBranchSelected or_eq anyRotationMatchesExistingPlusMapping(it->left, it->right);
-        }
-
-        if(!correctBranchSelected) {
-          // Find earliest correct branch
-          auto earliestCorrectBranchIter = std::find_if(
-            std::begin(entries),
-            std::end(entries),
-            [&](const Entry& e) {
-              return anyRotationMatchesExistingPlusMapping(e.left, e.right);
-            }
-          );
-
-          std::cerr << "Permutation: " << temple::condense(
-            temple::map(
-              permutation,
-              [](unsigned left, unsigned right) -> std::string {
-                return std::to_string(left) + " -> " + std::to_string(right);
-              }
-            )
-          ) << "\n";
-
-          if(earliestCorrectBranchIter == std::end(entries)) {
-            std::cerr << "Correct branch is not present here anymore although we thought it was\n";
-          } else {
-            double earliestFactor = earliestCorrectBranchIter->squaredNorm / minimalEntry.squaredNorm;
-            std::cerr << "Excluded correct branch! Earliest correct branch is at factor " << earliestFactor << " from the minimal choice\n";
-          }
-        }
+    decltype(subPermutation) bestPermutation;
+    double minimalCost = std::numeric_limits<double>::max();
+    do {
+      double cost = 0.0;
+      for(unsigned i = 0; i < V; ++i) {
+        cost += costs(i, subPermutation.at(i));
       }
 
-      const unsigned branches = rangeToConsiderEnd - std::begin(entries);
-      if(branches > 1) {
-        std::vector<ResultPair> narrows;
-        for(auto it = std::begin(entries); it != rangeToConsiderEnd; ++it) {
-          auto permutationCopy = permutation;
-          permutationCopy.emplace(it->left, it->right);
-          auto left = freeLeftVertices;
-          temple::inplace::remove(left, it->left);
-          auto right = freeRightVertices;
-          temple::inplace::remove(right, it->right);
-
-          bool inCorrectSubbranch = inCorrectBranch && anyRotationMatchesExistingPlusMapping(it->left, it->right);
-
-          auto R = fitQuaternion(stator, rotated, permutationCopy);
-          auto rotatedCopy = R * rotated;
-          narrows.push_back(
-            narrow(
-              stator,
-              rotatedCopy,
-              correctRotations,
-              inCorrectSubbranch,
-              std::move(permutationCopy),
-              std::move(left),
-              std::move(right)
-            )
-          );
+      if(cost < minimalCost) {
+        if(inCorrectBranch && !bestPermutation.empty() && isCorrectBranch(bestPermutation) && !isCorrectBranch(subPermutation)) {
+          std::cerr << "Excluding correct branch, decreasing cost from " << minimalCost << " to " << cost << " with non-optimum sub-permutation\n";
         }
 
-        return *std::min_element(std::begin(narrows), std::end(narrows));
+        minimalCost = cost;
+        bestPermutation = subPermutation;
+      } else if(inCorrectBranch && isCorrectBranch(subPermutation)) {
+        std::cerr << "Excluding correct branch due to cost " << cost << " > " << minimalCost << "\n";
       }
+    } while(temple::inplace::next_permutation(subPermutation));
 
-      permutation.emplace(minimalEntry.left, minimalEntry.right);
-      temple::inplace::remove_if(
-        entries,
-        [&](const Entry& e) -> bool {
-          return (
-            e.left == minimalEntry.left
-            || e.right == minimalEntry.right
-          );
-        }
-      );
-      temple::inplace::remove(freeLeftVertices, minimalEntry.left);
-      temple::inplace::remove(freeRightVertices, minimalEntry.right);
-
-      inCorrectBranch and_eq anyRotationMatchesExistingPlusMapping(minimalEntry.left, minimalEntry.right);
-      auto R = fitQuaternion(stator, rotated, permutation);
-      rotated = R * rotated;
+    // Fuse permutation and subpermutation
+    for(unsigned i = 0; i < V; ++i) {
+      permutation.emplace(freeLeftVertices.at(i), freeRightVertices.at(bestPermutation.at(i)));
     }
+
+    assert(permutation.size() == N);
+
+    auto R = fitQuaternion(stator, rotor, permutation);
+    auto rotated = R * rotor;
 
     const double energy = temple::accumulate(
       temple::adaptors::range(N),
@@ -1131,6 +1071,10 @@ struct AlignFour final : ShapeAlgorithm {
     const Permutation& correctPermutation
   ) final {
     const unsigned N = positions.cols();
+    if(N <= 4) {
+      return AllPermutations {}.shape(positions, shape);
+    }
+
     const auto shapeCoords = shapeCoordinates(shape);
 
     ResultPair minimal {std::numeric_limits<double>::max(), {}};
@@ -1159,59 +1103,63 @@ struct AlignFour final : ShapeAlgorithm {
 
             permutation[3] = l;
 
-            Eigen::Matrix3d R = fitQuaternion(positions, shapeCoords, permutation);
-            auto rotatedShape = R * shapeCoords;
-
-            double penalty = (
-              (positions.col(0) - rotatedShape.col(i)).squaredNorm()
-              + (positions.col(1) - rotatedShape.col(j)).squaredNorm()
-              + (positions.col(2) - rotatedShape.col(k)).squaredNorm()
-              + (positions.col(3) - rotatedShape.col(l)).squaredNorm()
-            );
-
-            bool inCorrectBranch = temple::any_of(
-              correctRotations,
-              [&](const auto& rot) {
-                return rot[0] == i && rot[1] == j && rot[2] == k && rot[3] == l;
+            for(unsigned m = 0; m < N; ++m) {
+              if(m == i || m == j || m == k || m == l) {
+                continue;
               }
-            );
-            if(inCorrectBranch) {
-              std::cerr << "At correct permutation quadruple!\n";
+
+              permutation[4] = m;
+              Eigen::Matrix3d R = fitQuaternion(positions, shapeCoords, permutation);
+              auto rotatedShape = R * shapeCoords;
+
+              double penalty = (
+                (positions.col(0) - rotatedShape.col(i)).squaredNorm()
+                + (positions.col(1) - rotatedShape.col(j)).squaredNorm()
+                + (positions.col(2) - rotatedShape.col(k)).squaredNorm()
+                + (positions.col(3) - rotatedShape.col(l)).squaredNorm()
+                + (positions.col(4) - rotatedShape.col(m)).squaredNorm()
+              );
+
+              bool inCorrectBranch = temple::any_of(
+                correctRotations,
+                [&](const auto& rot) {
+                  return rot[0] == i && rot[1] == j && rot[2] == k && rot[3] == l && rot[4] == m;
+                }
+              );
+              if(inCorrectBranch) {
+                std::cerr << "At correct permutation quintuple!\n";
+              }
 
               if(penalty > minimal.first) {
-                std::cerr << "Correct branch was excluded by penalty > minimal criterion\n";
+                continue;
               }
-            }
 
-            if(penalty > minimal.first) {
-              continue;
-            }
-
-            std::vector<unsigned> freeLeftVertices;
-            freeLeftVertices.reserve(N - 4);
-            for(unsigned a = 4; a < N; ++a) {
-              freeLeftVertices.push_back(a);
-            }
-            std::vector<unsigned> freeRightVertices;
-            freeRightVertices.reserve(N - 4);
-            for(unsigned a = 0; a < N; ++a) {
-              if(a != i && a != j && a != k && a != l) {
-                freeRightVertices.push_back(a);
+              std::vector<unsigned> freeLeftVertices;
+              freeLeftVertices.reserve(N - 5);
+              for(unsigned a = 5; a < N; ++a) {
+                freeLeftVertices.push_back(a);
               }
-            }
+              std::vector<unsigned> freeRightVertices;
+              freeRightVertices.reserve(N - 5);
+              for(unsigned a = 0; a < N; ++a) {
+                if(a != i && a != j && a != k && a != l && a != m) {
+                  freeRightVertices.push_back(a);
+                }
+              }
 
-            auto narrowed = narrow(
-              positions,
-              rotatedShape,
-              correctRotations,
-              inCorrectBranch,
-              permutation,
-              std::move(freeLeftVertices),
-              std::move(freeRightVertices)
-            );
+              auto narrowed = narrow(
+                positions,
+                rotatedShape,
+                correctRotations,
+                inCorrectBranch,
+                permutation,
+                std::move(freeLeftVertices),
+                std::move(freeRightVertices)
+              );
 
-            if(narrowed.first < minimal.first) {
-              minimal = narrowed;
+              if(narrowed.first < minimal.first) {
+                minimal = narrowed;
+              }
             }
           }
         }
@@ -1222,7 +1170,7 @@ struct AlignFour final : ShapeAlgorithm {
   }
 
   std::string name() const final {
-    return "AlignFour";
+    return "AlignFive";
   }
 };
 
@@ -1369,7 +1317,7 @@ int main(int argc, char* argv[]) {
   // algorithmPtrs.emplace_back(std::make_unique<Greedy>());
   // algorithmPtrs.emplace_back(std::make_unique<SteepestDescent>());
   // algorithmPtrs.emplace_back(std::make_unique<CentroidElimination>());
-  algorithmPtrs.emplace_back(std::make_unique<AlignFour>());
+  algorithmPtrs.emplace_back(std::make_unique<AlignFive>());
 
   const unsigned nameColWidth = 12;
   const unsigned timeColWidth = 6;

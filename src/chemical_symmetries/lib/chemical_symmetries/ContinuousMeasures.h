@@ -157,7 +157,7 @@ double shapeAlternateImplementation(
  * have shapes with 12 vertices plus the centroid, we need heuristics to speed
  * up the shape calculation while not sacrificing too much accuracy.
  *
- * Heuristic used here: For all tuples of four positions, align the positions,
+ * Heuristic used here: For all tuples of five positions, align the positions,
  * then greedily choose the best next sequence alignments until all positions
  * are matched.
  *
@@ -167,7 +167,7 @@ double shapeAlternateImplementation(
  * @param normalizedPositions set of coordinates to compare with the shape
  * @param shape Reference shape to compare against
  *
- * @complexity{@math{\Omega(\frac{N!}{(N-4)!})} where @math{N} is the number of
+ * @complexity{@math{\Omega(\frac{N!}{(N-5)!})} where @math{N} is the number of
  * positions being matched. Note that @math{N} is typically the size of the shape plus
  * one since a centroid is commonly involved as well.}
  *

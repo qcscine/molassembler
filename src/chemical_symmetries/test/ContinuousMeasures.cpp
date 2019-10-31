@@ -418,29 +418,28 @@ BOOST_AUTO_TEST_CASE(AsymmetricTopStandardization) {
   }
 }
 
-BOOST_AUTO_TEST_CASE(ShapeMeasures) {
-  for(const Shape shape : allShapes) {
-#ifndef NDEBUG
-    if(size(shape) > 6) {
-      continue;
-    }
+BOOST_AUTO_TEST_CASE(ShapeMeasuresAlternateAlgorithm) {
+#ifdef NDEBUG
+  constexpr unsigned testingShapeSizeLimit = 7;
+#else
+  constexpr unsigned testingShapeSizeLimit = 5;
 #endif
 
-    // Even release builds bow out here. Better algorithms are needed.
-    if(size(shape) > 9) {
+  for(const Shape shape : allShapes) {
+    if(size(shape) > testingShapeSizeLimit) {
       continue;
     }
 
     auto shapeCoordinates = continuous::normalize(
       addOrigin(symmetryData().at(shape).coordinates)
     );
-    const double unrotated = continuous::shape(shapeCoordinates, shape);
+    const double unrotated = continuous::shapeAlternateImplementation(shapeCoordinates, shape);
     BOOST_CHECK_MESSAGE(
       unrotated < 1e-10,
       "Expected CShM < 1e-10 for unrotated coordinates of " << name(shape) << ", but got " << unrotated
     );
     randomlyRotate(shapeCoordinates);
-    const double rotated = continuous::shape(shapeCoordinates, shape);
+    const double rotated = continuous::shapeAlternateImplementation(shapeCoordinates, shape);
     BOOST_CHECK_MESSAGE(
       rotated < 0.1,
       "Expected CShM < 1e-2 for rotated coordinates of " << name(shape) << ", but got " << rotated
@@ -456,8 +455,64 @@ BOOST_AUTO_TEST_CASE(ShapeMeasures) {
         distorted,
         shape
       );
-      const double alternate = continuous::shape(distorted, shape);
+      const double alternate = continuous::shapeAlternateImplementation(distorted, shape);
       BOOST_CHECK_CLOSE(faithful, alternate, 1);
+    }
+  }
+}
+
+BOOST_AUTO_TEST_CASE(ShapeMeasuresHeuristics) {
+#ifdef NDEBUG
+  constexpr unsigned testingShapeSizeLimit = 7;
+#else
+  constexpr unsigned testingShapeSizeLimit = 5;
+#endif
+
+  constexpr unsigned repeats = 5;
+
+  for(const Shape shape : allShapes) {
+    // Cannot use heuristics on fewer than five vertices
+    if(size(shape) < 4) {
+      continue;
+    }
+
+    if(size(shape) > testingShapeSizeLimit) {
+      continue;
+    }
+
+    auto shapeCoordinates = continuous::normalize(
+      addOrigin(symmetryData().at(shape).coordinates)
+    );
+
+    for(unsigned i = 1; i < 6; ++i) {
+      const double distortionNorm = 0.1 * i;
+
+      std::vector<double> referenceValues;
+      std::vector<double> errors;
+      for(unsigned j = 0; j < repeats; ++j) {
+        auto distorted = shapeCoordinates;
+        distort(distorted, distortionNorm);
+        distorted = continuous::normalize(distorted);
+
+        const double alternate = continuous::shapeAlternateImplementation(distorted, shape);
+        referenceValues.push_back(alternate);
+        const double heuristic = continuous::shapeHeuristics(distorted, shape);
+        const double error = std::fabs(alternate - heuristic);
+
+        if(error > 1e-2) {
+          std::cout << "Error " << error << " for shape " << name(shape) << " and distortion " << distortionNorm << "\n";
+        }
+        errors.push_back(std::fabs(alternate - heuristic));
+      }
+
+      const double referenceAverage = temple::accumulate(referenceValues, 0.0, std::plus<>()) / repeats;
+      const double errorAverage = temple::accumulate(errors, 0.0, std::plus<>()) / repeats;
+      BOOST_CHECK_MESSAGE(
+        errorAverage < 0.01 * referenceAverage,
+        "Expected error average below 1% of reference value average, but mu(error) = "
+        << errorAverage << " >= 0.01 * " << referenceAverage << " = "
+        << (0.01 * referenceAverage) << " for shape " << name(shape) << " and distortion norm " << distortionNorm
+      );
     }
   }
 }

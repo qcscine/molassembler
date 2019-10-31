@@ -1122,90 +1122,44 @@ NarrowType shapeHeuristicsNarrow(
 ) {
   const unsigned N = stator.cols();
 
-  struct Entry {
-    unsigned left;
-    unsigned right;
-    double squaredNorm;
-
-    bool operator < (const Entry& other) const {
-      return squaredNorm < other.squaredNorm;
+  const unsigned V = freeLeftVertices.size();
+  Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> costs (V, V);
+  for(unsigned i = 0; i < V; ++i) {
+    for(unsigned j = 0; j < V; ++j) {
+      costs(i, j) = (
+        stator.col(freeLeftVertices.at(i))
+        - rotor.col(freeRightVertices.at(j))
+      ).squaredNorm();
     }
-  };
-
-  auto entries = temple::sort(
-    temple::map(
-      temple::adaptors::allPairs(freeLeftVertices, freeRightVertices),
-      [&](const unsigned left, unsigned right) -> Entry {
-        return {
-          left,
-          right,
-          (stator.col(left) - rotor.col(right)).squaredNorm()
-        };
-      }
-    )
-  );
-
-  while(!freeLeftVertices.empty()) {
-    Entry minimalEntry = entries.front();
-
-    // Maybe a linear search is better?
-    auto rangeToConsiderEnd = std::find_if(
-      std::begin(entries),
-      std::end(entries),
-      [&minimalEntry](const Entry& e) {
-        return e.squaredNorm > 1.2 * minimalEntry.squaredNorm;
-      }
-    );
-
-    const unsigned branches = rangeToConsiderEnd - std::begin(entries);
-    if(branches > 1) {
-      std::vector<NarrowType> narrows;
-      for(auto it = std::begin(entries); it != rangeToConsiderEnd; ++it) {
-        auto permutationCopy = permutation;
-        permutationCopy.emplace(it->left, it->right);
-        auto left = freeLeftVertices;
-        temple::inplace::remove(left, it->left);
-        auto right = freeRightVertices;
-        temple::inplace::remove(right, it->right);
-        // auto R = fitQuaternion(stator, rotor, permutationCopy);
-        // auto rotated = R * rotor;
-        narrows.push_back(
-          shapeHeuristicsNarrow(
-            stator,
-            rotor,
-            std::move(permutationCopy),
-            std::move(left),
-            std::move(right)
-          )
-        );
-      }
-
-      return *std::min_element(
-        std::begin(narrows),
-        std::end(narrows),
-        [](const NarrowType& a, const NarrowType& b) {
-          return a.first < b.first;
-        }
-      );
-    }
-
-    permutation.emplace(minimalEntry.left, minimalEntry.right);
-    temple::inplace::remove_if(
-      entries,
-      [&](const Entry& e) -> bool {
-        return (
-          e.left == minimalEntry.left
-          || e.right == minimalEntry.right
-        );
-      }
-    );
-    temple::inplace::remove(freeLeftVertices, minimalEntry.left);
-    temple::inplace::remove(freeRightVertices, minimalEntry.right);
   }
+
+  // Maps freeLeftVertices onto freeRightVertices
+  auto subPermutation = temple::iota<unsigned>(V);
+  decltype(subPermutation) bestPermutation;
+  double minimalCost = std::numeric_limits<double>::max();
+  do {
+    double cost = 0.0;
+    for(unsigned i = 0; i < V; ++i) {
+      cost += costs(i, subPermutation.at(i));
+    }
+
+    if(cost < minimalCost) {
+      minimalCost = cost;
+      bestPermutation = subPermutation;
+    }
+  } while(std::next_permutation(std::begin(subPermutation), std::end(subPermutation)));
+
+  // Fuse permutation and best subpermutation
+  for(unsigned i = 0; i < V; ++i) {
+    permutation.emplace(freeLeftVertices.at(i), freeRightVertices.at(bestPermutation.at(i)));
+  }
+
+  assert(permutation.size() == N);
 
   auto R = fitQuaternion(stator, rotor, permutation);
   auto rotated = R * rotor;
-  double penalty = temple::accumulate(
+
+  const double energy = temple::accumulate(
     temple::adaptors::range(N),
     0.0,
     [&](const double carry, const unsigned i) -> double {
@@ -1215,7 +1169,7 @@ NarrowType shapeHeuristicsNarrow(
     }
   );
 
-  return {penalty, permutation};
+  return {energy, permutation};
 }
 
 double shapeHeuristics(
@@ -1226,7 +1180,7 @@ double shapeHeuristics(
    *
    * - Minimize over the rotation first, then take that solution and minimize
    *   over the scaling factor.
-   * - For each tuple of four positions, align the positions, then greedily
+   * - For each tuple of five positions, align the positions, then greedily
    *   choose the best next sequence alignment until all positions are matched.
    *   If there are close seconds in choosing the best next sequence alignment,
    *   branch and explore all of those too.
@@ -1241,6 +1195,11 @@ double shapeHeuristics(
    */
 
   const unsigned N = normalizedPositions.cols();
+
+  if(N < 5) {
+    throw std::logic_error("Do not call this heuristics function for less than 5 vertices");
+  }
+
   // Add origin to shape coordinates and renormalize
   PositionCollection shapeCoords (3, N);
   shapeCoords.leftCols(N - 1) = symmetryData().at(shape).coordinates;
@@ -1271,32 +1230,51 @@ double shapeHeuristics(
 
           permutation[3] = l;
 
-          Eigen::Matrix3d R = fitQuaternion(normalizedPositions, shapeCoords, permutation);
-          auto rotatedShape = R * shapeCoords;
-
-          std::vector<unsigned> freeLeftVertices;
-          freeLeftVertices.reserve(N - 4);
-          for(unsigned a = 4; a < N; ++a) {
-            freeLeftVertices.push_back(a);
-          }
-          std::vector<unsigned> freeRightVertices;
-          freeRightVertices.reserve(N - 4);
-          for(unsigned a = 0; a < N; ++a) {
-            if(a != i && a != j && a != k && a != l) {
-              freeRightVertices.push_back(a);
+          for(unsigned m = 0; m < N; ++m) {
+            if(m == i || m == j || m == k || m == l) {
+              continue;
             }
-          }
 
-          NarrowType narrowed = shapeHeuristicsNarrow(
-            normalizedPositions,
-            rotatedShape,
-            permutation,
-            std::move(freeLeftVertices),
-            std::move(freeRightVertices)
-          );
+            permutation[4] = m;
+            Eigen::Matrix3d R = fitQuaternion(normalizedPositions, shapeCoords, permutation);
+            auto rotatedShape = R * shapeCoords;
 
-          if(narrowed.first < minimalNarrow.first) {
-            minimalNarrow = std::move(narrowed);
+            double penalty = (
+              (normalizedPositions.col(0) - rotatedShape.col(i)).squaredNorm()
+              + (normalizedPositions.col(1) - rotatedShape.col(j)).squaredNorm()
+              + (normalizedPositions.col(2) - rotatedShape.col(k)).squaredNorm()
+              + (normalizedPositions.col(3) - rotatedShape.col(l)).squaredNorm()
+              + (normalizedPositions.col(4) - rotatedShape.col(m)).squaredNorm()
+            );
+
+            if(penalty > minimalNarrow.first) {
+              continue;
+            }
+
+            std::vector<unsigned> freeLeftVertices;
+            freeLeftVertices.reserve(N - 5);
+            for(unsigned a = 5; a < N; ++a) {
+              freeLeftVertices.push_back(a);
+            }
+            std::vector<unsigned> freeRightVertices;
+            freeRightVertices.reserve(N - 5);
+            for(unsigned a = 0; a < N; ++a) {
+              if(a != i && a != j && a != k && a != l && a != m) {
+                freeRightVertices.push_back(a);
+              }
+            }
+
+            auto narrowed = shapeHeuristicsNarrow(
+              normalizedPositions,
+              rotatedShape,
+              permutation,
+              std::move(freeLeftVertices),
+              std::move(freeRightVertices)
+            );
+
+            if(narrowed.first < minimalNarrow.first) {
+              minimalNarrow = narrowed;
+            }
           }
         }
       }
@@ -1306,7 +1284,7 @@ double shapeHeuristics(
   const auto& bestPermutation = minimalNarrow.second;
   PositionCollection permutedShape(3, N);
   for(unsigned i = 0; i < N; ++i) {
-    permutedShape.col(bestPermutation.at(i)) = shapeCoords.col(i);
+    permutedShape.col(i) = shapeCoords.col(bestPermutation.at(i));
   }
   auto R = fitQuaternion(normalizedPositions, permutedShape);
   permutedShape = R * permutedShape;
