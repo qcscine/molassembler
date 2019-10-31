@@ -8,6 +8,7 @@
 #include "chemical_symmetries/ContinuousMeasures.h"
 
 #include "chemical_symmetries/Symmetries.h"
+#include "chemical_symmetries/DynamicProperties.h"
 
 #include "boost/math/tools/minima.hpp"
 #include "temple/constexpr/Numeric.h"
@@ -31,6 +32,10 @@
  *
  * This file contains a number of methods trying to cheapen finding the correct
  * vertex mapping to evaluate the continuous shape measure.
+ *
+ * Note that the problem does have some rotational redundancy depending on the
+ * number of rotations that the shape has. But exploiting that gets you maybe
+ * (N - 1)!. Crasser solutions are necessary.
  */
 
 using namespace Scine;
@@ -113,9 +118,10 @@ struct Energy {
 
   double operator() (const Parameters& p) const {
     const unsigned N = shapePositions.cols();
+
     static PositionCollection permuted(3, N);
     for(unsigned i = 0; i < N; ++i) {
-      permuted.col(p[i]) = shapePositions.col(i);
+      permuted.col(i) = shapePositions.col(p[i]);
     }
 
     auto rotationMatrix = fitQuaternion(referencePositions, permuted);
@@ -137,11 +143,8 @@ struct Energy {
   }
 };
 
-/**
- * @brief Abstract base class for algorithms to conform to
- */
-struct ShapeAlgorithm {
-  virtual ~ShapeAlgorithm() = default;
+struct OldShapeAlgorithm {
+  virtual ~OldShapeAlgorithm() = default;
 
   static PositionCollection shapeCoordinates(const Shape shape) {
     return normalize(addOrigin(symmetryData().at(shape).coordinates));
@@ -152,24 +155,82 @@ struct ShapeAlgorithm {
 };
 
 /**
+ * @brief Abstract base class for algorithms to conform to
+ */
+struct ShapeAlgorithm {
+  virtual ~ShapeAlgorithm() = default;
+
+  using Permutation = std::vector<unsigned>;
+  using ResultPair = std::pair<double, Permutation>;
+
+  static Permutation invert(const Permutation& p) {
+    const unsigned P = p.size();
+    Permutation inverse(P);
+    for(unsigned i = 0; i < P; ++i) {
+      inverse.at(p.at(i)) = i;
+    }
+    return inverse;
+  }
+
+  /* A forwards permutation maps from positions to shape indices,
+   * a backwards permutation maps from shape indices to positions
+   *
+   * Only backwards permutations have the (added) centroid at the back, and
+   * hence their [O, S] = [0, N - 1] = [0, N) ranges can be rotated.
+   */
+  static std::set<ShapeAlgorithm::Permutation> generateRotations(
+    const std::vector<unsigned> forwardsPermutation,
+    const Shape shape
+  ) {
+    auto backwards = ShapeAlgorithm::invert(forwardsPermutation);
+    unsigned centroid = backwards.back();
+    backwards.pop_back();
+    auto rotations = properties::generateAllRotations(shape, backwards);
+
+    std::set<ShapeAlgorithm::Permutation> forwardsPermutationRotations;
+    for(auto rotation : rotations) {
+      rotation.push_back(centroid);
+      forwardsPermutationRotations.emplace(
+        ShapeAlgorithm::invert(rotation)
+      );
+    }
+    return forwardsPermutationRotations;
+  }
+
+  static PositionCollection shapeCoordinates(const Shape shape) {
+    return normalize(addOrigin(symmetryData().at(shape).coordinates));
+  }
+
+  virtual ResultPair shape(
+    const PositionCollection& positions,
+    Shape shape,
+    const Permutation& correctPermutation
+  ) = 0;
+  virtual std::string name() const = 0;
+};
+
+/**
  * @brief Reference continuous shape measure calculation method
  *
  * Complexity: Theta(N!)
  */
-struct AllPermutations final : ShapeAlgorithm {
-  double shape(const PositionCollection& positions, Shape shape) final {
-    Energy energy {positions, shapeCoordinates(shape)};
-
-    auto permutation = temple::iota<unsigned>(positions.cols());
-    double minimal = std::numeric_limits<double>::max();
+struct AllPermutations {
+  ShapeAlgorithm::ResultPair shape(const PositionCollection& positions, Shape shape) {
+    Energy energy {positions, ShapeAlgorithm::shapeCoordinates(shape)};
+    ShapeAlgorithm::Permutation permutation = temple::iota<unsigned>(positions.cols());
+    ShapeAlgorithm::ResultPair minimal {std::numeric_limits<double>::max(), {}};
     do {
-      minimal = std::min(minimal, energy(permutation));
+      double permutationEnergy = energy(permutation);
+
+      if(permutationEnergy < minimal.first) {
+        minimal = {permutationEnergy, permutation};
+      }
     } while(temple::inplace::next_permutation(permutation));
 
     return minimal;
   }
 
-  std::string name() const final {
+  std::string name() const {
     return "Reference";
   }
 };
@@ -200,7 +261,7 @@ struct Cooling {
  * Complexity: Needs at least O((N - 2)!) steps to explore enough state space
  * to encounter the minimum.
  */
-struct Anneal final : ShapeAlgorithm {
+struct Anneal final : OldShapeAlgorithm {
   using Permutation = std::vector<unsigned>;
 
   temple::jsf::JSF64 prng;
@@ -303,7 +364,7 @@ struct Anneal final : ShapeAlgorithm {
  * Complexity: Needs at least O((N - 2)!) steps to explore enough state space
  * to encounter the minimum.
  */
-struct Tunnel final : ShapeAlgorithm {
+struct Tunnel final : OldShapeAlgorithm {
   using Permutation = std::vector<unsigned>;
 
   temple::jsf::JSF64 prng;
@@ -457,7 +518,7 @@ struct CircularBuffer {
  *
  * Complexity: ???
  */
-struct ThermodynamicAnneal final : ShapeAlgorithm {
+struct ThermodynamicAnneal final : OldShapeAlgorithm {
   temple::jsf::JSF64 prng;
   using Permutation = std::vector<unsigned>;
 
@@ -706,7 +767,7 @@ struct ThermodynamicAnneal final : ShapeAlgorithm {
  * Complexity: Needs at least Theta(N - 2)! steps to discover enough state
  * space that it might find the minimum.
  */
-struct Greedy final : ShapeAlgorithm {
+struct Greedy final : OldShapeAlgorithm {
   temple::jsf::JSF64 prng;
 
   double shape(const PositionCollection& positions, Shape shape) final {
@@ -793,7 +854,7 @@ struct Greedy final : ShapeAlgorithm {
  * Complexity: Needs at least Theta(N - 2)! steps to discover enough state
  * space that it might find the minimum.
  */
-struct SteepestDescent final : ShapeAlgorithm {
+struct SteepestDescent final : OldShapeAlgorithm {
   temple::jsf::JSF64 prng;
 
   double shape(const PositionCollection& positions, Shape shape) final {
@@ -896,14 +957,27 @@ struct AlignFour final : ShapeAlgorithm {
     return Eigen::Quaterniond(q[0], q[1], q[2], q[3]).toRotationMatrix();
   }
 
-  double narrow(
+  static std::vector<unsigned> flatten(const std::unordered_map<unsigned, unsigned>& p) {
+    const unsigned P = p.size();
+    std::vector<unsigned> flat(P);
+    for(unsigned i = 0; i < P; ++i) {
+      flat.at(i) = p.at(i);
+    }
+    return flat;
+  }
+
+  ResultPair narrow(
     const PositionCollection& stator,
     const PositionCollection& rotor,
+    const std::set<Permutation>& correctRotations,
+    bool inCorrectBranch,
     std::unordered_map<unsigned, unsigned> permutation,
     std::vector<unsigned> freeLeftVertices,
     std::vector<unsigned> freeRightVertices
   ) {
     const unsigned N = stator.cols();
+
+    PositionCollection rotated = rotor;
 
     struct Entry {
       unsigned left;
@@ -940,9 +1014,58 @@ struct AlignFour final : ShapeAlgorithm {
         }
       );
 
+      auto anyRotationMatchesExistingPlusMapping = [&](unsigned l, unsigned r) {
+        return temple::any_of(
+          correctRotations,
+          [&](const auto& rot) {
+            return temple::all_of(
+              permutation,
+              [&](unsigned left, unsigned right) {
+                return rot.at(left) == right;
+              }
+            ) && rot.at(l) == r;
+          }
+        );
+      };
+
+      if(inCorrectBranch) {
+        bool correctBranchSelected = false;
+
+        for(auto it = std::begin(entries); it != rangeToConsiderEnd; ++it) {
+          correctBranchSelected or_eq anyRotationMatchesExistingPlusMapping(it->left, it->right);
+        }
+
+        if(!correctBranchSelected) {
+          // Find earliest correct branch
+          auto earliestCorrectBranchIter = std::find_if(
+            std::begin(entries),
+            std::end(entries),
+            [&](const Entry& e) {
+              return anyRotationMatchesExistingPlusMapping(e.left, e.right);
+            }
+          );
+
+          std::cerr << "Permutation: " << temple::condense(
+            temple::map(
+              permutation,
+              [](unsigned left, unsigned right) -> std::string {
+                return std::to_string(left) + " -> " + std::to_string(right);
+              }
+            )
+          ) << "\n";
+
+          if(earliestCorrectBranchIter == std::end(entries)) {
+            std::cerr << "Correct branch is not present here anymore although we thought it was\n";
+          } else {
+            double earliestFactor = earliestCorrectBranchIter->squaredNorm / minimalEntry.squaredNorm;
+            std::cerr << "Excluded correct branch! Earliest correct branch is at factor " << earliestFactor << " from the minimal choice\n";
+          }
+        }
+      }
+
       const unsigned branches = rangeToConsiderEnd - std::begin(entries);
       if(branches > 1) {
-        std::vector<double> narrows;
+        std::vector<ResultPair> narrows;
         for(auto it = std::begin(entries); it != rangeToConsiderEnd; ++it) {
           auto permutationCopy = permutation;
           permutationCopy.emplace(it->left, it->right);
@@ -950,12 +1073,17 @@ struct AlignFour final : ShapeAlgorithm {
           temple::inplace::remove(left, it->left);
           auto right = freeRightVertices;
           temple::inplace::remove(right, it->right);
-          // auto R = fitQuaternion(stator, rotor, permutationCopy);
-          // auto rotated = R * rotor;
+
+          bool inCorrectSubbranch = inCorrectBranch && anyRotationMatchesExistingPlusMapping(it->left, it->right);
+
+          auto R = fitQuaternion(stator, rotated, permutationCopy);
+          auto rotatedCopy = R * rotated;
           narrows.push_back(
             narrow(
               stator,
-              rotor,
+              rotatedCopy,
+              correctRotations,
+              inCorrectSubbranch,
               std::move(permutationCopy),
               std::move(left),
               std::move(right)
@@ -978,11 +1106,13 @@ struct AlignFour final : ShapeAlgorithm {
       );
       temple::inplace::remove(freeLeftVertices, minimalEntry.left);
       temple::inplace::remove(freeRightVertices, minimalEntry.right);
+
+      inCorrectBranch and_eq anyRotationMatchesExistingPlusMapping(minimalEntry.left, minimalEntry.right);
+      auto R = fitQuaternion(stator, rotated, permutation);
+      rotated = R * rotated;
     }
 
-    auto R = fitQuaternion(stator, rotor, permutation);
-    auto rotated = R * rotor;
-    return temple::accumulate(
+    const double energy = temple::accumulate(
       temple::adaptors::range(N),
       0.0,
       [&](const double carry, const unsigned i) -> double {
@@ -991,37 +1121,71 @@ struct AlignFour final : ShapeAlgorithm {
         ).squaredNorm();
       }
     );
+
+    return ResultPair {energy, flatten(permutation)};
   }
 
-  double shape(const PositionCollection& positions, Shape shape) final {
+  ResultPair shape(
+    const PositionCollection& positions,
+    Shape shape,
+    const Permutation& correctPermutation
+  ) final {
     const unsigned N = positions.cols();
     const auto shapeCoords = shapeCoordinates(shape);
-    double minimalEnergy = std::numeric_limits<double>::max();
 
+    ResultPair minimal {std::numeric_limits<double>::max(), {}};
     std::unordered_map<unsigned, unsigned> permutation;
+
+    const auto correctRotations = generateRotations(correctPermutation, shape);
+
     for(unsigned i = 0; i < N; ++i) {
-      permutation.emplace(0, i);
+      permutation[0] = i;
       for(unsigned j = 0; j < N; ++j) {
         if(j == i) {
           continue;
         }
 
-        permutation.emplace(1, j);
+        permutation[1] = j;
         for(unsigned k = 0; k < N; ++k) {
           if(k == i || k == j) {
             continue;
           }
 
-          permutation.emplace(2, k);
+          permutation[2] = k;
           for(unsigned l = 0; l < N; ++l) {
             if(l == i || l == k || l == j) {
               continue;
             }
 
-            permutation.emplace(3, l);
+            permutation[3] = l;
 
             Eigen::Matrix3d R = fitQuaternion(positions, shapeCoords, permutation);
             auto rotatedShape = R * shapeCoords;
+
+            double penalty = (
+              (positions.col(0) - rotatedShape.col(i)).squaredNorm()
+              + (positions.col(1) - rotatedShape.col(j)).squaredNorm()
+              + (positions.col(2) - rotatedShape.col(k)).squaredNorm()
+              + (positions.col(3) - rotatedShape.col(l)).squaredNorm()
+            );
+
+            bool inCorrectBranch = temple::any_of(
+              correctRotations,
+              [&](const auto& rot) {
+                return rot[0] == i && rot[1] == j && rot[2] == k && rot[3] == l;
+              }
+            );
+            if(inCorrectBranch) {
+              std::cerr << "At correct permutation quadruple!\n";
+
+              if(penalty > minimal.first) {
+                std::cerr << "Correct branch was excluded by penalty > minimal criterion\n";
+              }
+            }
+
+            if(penalty > minimal.first) {
+              continue;
+            }
 
             std::vector<unsigned> freeLeftVertices;
             freeLeftVertices.reserve(N - 4);
@@ -1036,89 +1200,29 @@ struct AlignFour final : ShapeAlgorithm {
               }
             }
 
-            double narrowed = narrow(
+            auto narrowed = narrow(
               positions,
               rotatedShape,
+              correctRotations,
+              inCorrectBranch,
               permutation,
               std::move(freeLeftVertices),
               std::move(freeRightVertices)
             );
 
-            minimalEnergy = std::min(minimalEnergy, narrowed);
-            permutation.erase(3);
+            if(narrowed.first < minimal.first) {
+              minimal = narrowed;
+            }
           }
-          permutation.erase(2);
         }
-        permutation.erase(1);
       }
-      permutation.erase(0);
     }
 
-    return minimalEnergy;
+    return minimal;
   }
 
   std::string name() const final {
     return "AlignFour";
-  }
-};
-
-/**
- * @brief Eliminates the centroid, then treats the rest permutationally
- *
- * Eliminates the centroid by assuming that it is closest to the origin.
- * Then treats the rest permutationally.
- *
- * Complexity: Theta((N - 1)!)
- */
-struct CentroidElimination final : ShapeAlgorithm {
-  using Permutation = std::vector<unsigned>;
-
-  double shape(const PositionCollection& positions, Shape shape) final {
-    const unsigned N = positions.cols();
-    const auto shapeCoords = shapeCoordinates(shape);
-    Energy energy {positions, shapeCoords};
-    double minimalEnergy = std::numeric_limits<double>::max();
-
-    // Eliminate the centroid and fully treat the rest
-    auto minimalVectorIndex = [](const PositionCollection& M) -> unsigned {
-      Eigen::Index minimalColumn;
-      M.colwise().squaredNorm().array().minCoeff(&minimalColumn);
-      return minimalColumn;
-    };
-
-    const unsigned positionsCentroid = minimalVectorIndex(positions);
-    const unsigned shapeCentroid = minimalVectorIndex(shapeCoords);
-
-    Permutation partial;
-    partial.reserve(N - 1);
-    for(unsigned i = 0; i < positionsCentroid; ++i) {
-      partial.push_back(i);
-    }
-    for(unsigned i = positionsCentroid + 1; i < N; ++i) {
-      partial.push_back(i);
-    }
-
-    Permutation permutation;
-    permutation.resize(N);
-
-    do {
-      // Construct permutation from partial
-      for(unsigned i = 0; i < shapeCentroid; ++i) {
-        permutation.at(i) = partial.at(i);
-      }
-      permutation.at(shapeCentroid) = positionsCentroid;
-      for(unsigned i = shapeCentroid; i < N - 1; ++i) {
-        permutation.at(i + 1) = partial.at(i);
-      }
-
-      minimalEnergy = std::min(minimalEnergy, energy(permutation));
-    } while(temple::inplace::next_permutation(partial));
-
-    return minimalEnergy;
-  }
-
-  std::string name() const final {
-    return "Centroid";
   }
 };
 
@@ -1259,12 +1363,12 @@ int main(int argc, char* argv[]) {
   }
 
   std::vector<std::unique_ptr<ShapeAlgorithm>> algorithmPtrs;
-  algorithmPtrs.emplace_back(std::make_unique<Anneal>());
-  algorithmPtrs.emplace_back(std::make_unique<Tunnel>());
+  // algorithmPtrs.emplace_back(std::make_unique<Anneal>());
+  // algorithmPtrs.emplace_back(std::make_unique<Tunnel>());
   // algorithmPtrs.emplace_back(std::make_unique<ThermodynamicAnneal>());
-  algorithmPtrs.emplace_back(std::make_unique<Greedy>());
-  algorithmPtrs.emplace_back(std::make_unique<SteepestDescent>());
-  algorithmPtrs.emplace_back(std::make_unique<CentroidElimination>());
+  // algorithmPtrs.emplace_back(std::make_unique<Greedy>());
+  // algorithmPtrs.emplace_back(std::make_unique<SteepestDescent>());
+  // algorithmPtrs.emplace_back(std::make_unique<CentroidElimination>());
   algorithmPtrs.emplace_back(std::make_unique<AlignFour>());
 
   const unsigned nameColWidth = 12;
@@ -1285,8 +1389,8 @@ int main(int argc, char* argv[]) {
 
   std::cout << "For shape " << name(shape) << " (size " << size(shape) << ") with distortion norm " << distortionNorm << "\n\n";
 
-  auto referenceAlgorithmPtr = std::make_unique<AllPermutations>();
-  std::cout << std::setw(nameColWidth) << referenceAlgorithmPtr->name() << std::setw(timeColWidth) << "msec";
+  AllPermutations referenceAlgorithm;
+  std::cout << std::setw(nameColWidth) << referenceAlgorithm.name() << std::setw(timeColWidth) << "msec";
 
   for(auto& algorithmPtr : algorithmPtrs) {
     std::cout << std::setw(nameColWidth) << algorithmPtr->name() << std::setw(timeColWidth) << "msec" << std::setw(timeColWidth) << "S";
@@ -1313,25 +1417,39 @@ int main(int argc, char* argv[]) {
 
     time_point<steady_clock> start, end;
     start = steady_clock::now();
-    const double referenceValue = referenceAlgorithmPtr->shape(coordinates, shape);
+    const auto referencePair = referenceAlgorithm.shape(coordinates, shape);
     end = steady_clock::now();
     const unsigned referenceLatency = duration_cast<microseconds>(end - start).count();
-    std::cout << std::setw(nameColWidth) << referenceValue << std::setw(timeColWidth) << (referenceLatency / 1000);
+    std::cout << std::setw(nameColWidth) << referencePair.first << std::setw(timeColWidth) << (referenceLatency / 1000);
+    auto rotations = ShapeAlgorithm::generateRotations(referencePair.second, shape);
 
     for(unsigned j = 0; j < A; ++j) {
       auto& algorithmPtr = algorithmPtrs.at(j);
       start = steady_clock::now();
-      const double value = algorithmPtr->shape(coordinates, shape);
+      const auto valuePair = algorithmPtr->shape(coordinates, shape, referencePair.second);
       end = steady_clock::now();
 
-      if(value < referenceValue - 1e-5) {
-        std::cout << color::boldMagenta << std::setw(nameColWidth) << value << color::reset;
-      } else if(std::fabs(value - referenceValue) < 1e-5) {
-        std::cout << color::green << std::setw(nameColWidth) << value << color::reset;
-      } else {
-        std::cout << color::red << std::setw(nameColWidth) << value << color::reset;
+      if(valuePair.second != referencePair.second) {
+        std::cerr << "\n" << std::setw(25) << "Reference permutation" << " " << temple::condense(referencePair.second) << "\n"
+          << std::setw(25) << algorithmPtr->name() << " " << temple::condense(valuePair.second) << "\n";
+        if(rotations.count(valuePair.second) == 1) {
+          std::cerr << "Algorithm result is a shape rotation of the reference permutation\n";
+        } else {
+          std::cerr << "Algorithm result is not a shape rotation of the reference permutation:\n";
+          for(const auto& rotation : rotations) {
+            std::cerr << "Rotation " << temple::condense(rotation) << "\n";
+          }
+        }
       }
-      errors.at(j).push_back(std::fabs(referenceValue - value));
+
+      if(valuePair.first < referencePair.first - 1e-5) {
+        std::cout << color::boldMagenta << std::setw(nameColWidth) << valuePair.first << color::reset;
+      } else if(std::fabs(valuePair.first - referencePair.first) < 1e-5) {
+        std::cout << color::green << std::setw(nameColWidth) << valuePair.first << color::reset;
+      } else {
+        std::cout << color::red << std::setw(nameColWidth) << valuePair.first << color::reset;
+      }
+      errors.at(j).push_back(std::fabs(referencePair.first - valuePair.first));
 
       unsigned latency = duration_cast<microseconds>(end - start).count();
       std::cout << std::setw(timeColWidth) << (latency / 1000);
