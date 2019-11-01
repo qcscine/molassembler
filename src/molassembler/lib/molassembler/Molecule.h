@@ -162,6 +162,9 @@ public:
    * @complexity{@math{O(V + B)} where @math{B} is the number of candidate
    * bonds for bond stereopermutators}
    *
+   * @param graph The graph from which to construct the molecule
+   * @param positions Atom positions to use for the classification of shapes
+   *   and interpretation of stereopermutators
    * @param bondStereopermutatorCandidatesOptional If boost::none, all bonds are
    *   candidates for BondStereopermutator. Otherwise, only the specified bonds are
    *   checked for BondStereopermutators.
@@ -338,6 +341,8 @@ public:
    *
    * @param a The atom index at which the atom stereopermutator is to be assigned
    *   randomly
+   * @param engine The PRNG engine to use for random assignment. Defaults to
+   *   the library-global random number generator engine
    *
    * @throws std::out_of_range If the atom index is invalid (i.e. is >= N()) or
    *   there is no atom stereopermutator at this bond index.
@@ -354,6 +359,10 @@ public:
 
   /*!
    * @brief Assigns a bond stereopermutator to a random assignment
+   *
+   * @param e The bond index at which to randomly assign a bond stereopermutator
+   * @param engine The PRNG engine to use for random assignment. Defaults to
+   *   the library-global random number generator engine
    *
    * @complexity{@math{O(N)} re-rankings and state propagations}
    *
@@ -708,6 +717,7 @@ public:
    *
    * @complexity{@math{O(V_1 \cdot V_2)}}
    *
+   * @param other The other molecule to compare against
    * @param componentBitmask Components of an atom's environment to include
    * in isomorphism tests. May not be None.
    *

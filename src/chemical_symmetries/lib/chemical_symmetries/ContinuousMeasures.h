@@ -70,11 +70,19 @@ double Cinf(
 
 } // namespace fixed
 
+/**
+ * @brief Optimizes the axis of a rotational symmetry element and calculates the
+ *   continuous symmetry measure
+ */
 std::pair<double, elements::Rotation> element(
   const PositionCollection& normalizedPositions,
   elements::Rotation rotation
 );
 
+/**
+ * @brief Optimizes the norm of a reflection symmetry element and calculates the
+ *   continuous symmetry measure
+ */
 std::pair<double, elements::Reflection> element(
   const PositionCollection& normalizedPositions,
   elements::Reflection reflection
@@ -167,9 +175,11 @@ double shapeAlternateImplementation(
  * @param normalizedPositions set of coordinates to compare with the shape
  * @param shape Reference shape to compare against
  *
- * @complexity{@math{\Omega(\frac{N!}{(N-5)!})} where @math{N} is the number of
- * positions being matched. Note that @math{N} is typically the size of the shape plus
- * one since a centroid is commonly involved as well.}
+ * @complexity{Approximately @math{\Omega(\frac{N!}{(N-5)!})} quaternion fits,
+ * where @math{N} is the number of positions being matched. Note that @math{N}
+ * is typically the size of the shape plus one since a centroid is involved as
+ * well. For N > 12, other terms may dominate complexity, but this is yet
+ * untested.}
  *
  * @note Works well for positions deviating little from the ideal shape. For
  * large deviations, exhibits small relative errors. To explore the

@@ -162,6 +162,7 @@ std::set<
  *
  * @complexity{@math{\Theta(S)}}
  *
+ * @param to The shape whose index mapping is to be applied
  * @param mapping An index mapping that specifies how indices are mapped
  *   from a source shape to a target shape
  */

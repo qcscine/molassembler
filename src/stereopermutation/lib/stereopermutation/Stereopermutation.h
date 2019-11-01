@@ -1,10 +1,10 @@
 /*!@file
  * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
  *   See LICENSE.txt
- * @brief Base class to describe substituent arrangements in symmetries
+ * @brief Base class to describe substituent arrangements in shapes
  *
  * Contains the base class employed for describing the particular manner in
- * which substituents are arranged in various symmetries.
+ * which substituents are arranged in various shapes.
  */
 
 #ifndef INCLUDE_MOLASSEMBLER_STEREOPERMUTATIONS_STEREOPERMUTATION_H
@@ -25,7 +25,7 @@ namespace Scine {
 
 /**
  * @brief Permutations of possibly linked substituents around atom-centric
- *   symmetries and combinations of two symmetries
+ *   shapes and combinations of two shapes
  */
 namespace stereopermutation {
 
@@ -35,13 +35,13 @@ namespace stereopermutation {
  * of a set of ligands to a stereocenter. It exists to uniquely identify the
  * steric configuration at this stereocenter, and provides methods to assist
  * a systematic generation of all possible configurations. It is generalized
- * over a number of symmetries which are encoded in a separate library.
+ * over a number of shapes which are encoded in a separate library.
  */
 class Stereopermutation : public temple::crtp::LexicographicComparable<Stereopermutation> {
 public:
 //!@name Member types
 //!@{
-  //! Type used to represent links between symmetry positions
+  //! Type used to represent links between shape vertices
   using LinksSetType = std::set<
     std::pair<unsigned, unsigned>
   >;
@@ -60,7 +60,7 @@ public:
 
   /*! @brief Rotate links
    *
-   * @complexity{@math{\Theta(L)}, not linear in symmetry size since it is small and constant}
+   * @complexity{@math{\Theta(L)}, not linear in shape size since it is small and constant}
    */
   static LinksSetType rotateLinks(
     const LinksSetType& links,
@@ -90,9 +90,8 @@ public:
    * @brief Construct an Stereopermutation from a list of ligand characters and
    *   a list of bonded indices referencing the ligand characters.
    *
-   * \param passSymmetryName The name of the employed symmetry.
-   * \param passCharacters A vector of chars signifying abstract ligands.
-   * \param passLinks A vector of pairs. Describes which ligand characters
+   * @param passCharacters A vector of chars signifying abstract ligands.
+   * @param passLinks A vector of pairs. Describes which ligand characters
    *  are bonded to one another.
    */
   Stereopermutation(
@@ -103,7 +102,7 @@ public:
 
 //!@name Modifiers
 //!@{
-  /*! @brief Applies a Symmetry rotation.
+  /*! @brief Applies a shape vertex rotation.
    *
    * @complexity{@math{O(N + L)}}
    */
@@ -157,7 +156,7 @@ public:
   /*! @brief Generate all superimposable rotations of a stereopermutation
    *
    * Generates a set of all rotational equivalents of this Stereopermutation as
-   * defined by its symmetry template parameter.
+   * defined by its shape template parameter.
    *
    * @complexity{@math{O(\prod_i^Rm_i)} where @math{R} is the set of rotations and
    * @math{m_i} is the multiplicity of rotation @math{i}}
@@ -166,7 +165,7 @@ public:
 
   /*!
    * Gets a map of ligand symbol character to position(s) in the permutational
-   * symmetry.
+   * shape.
    */
   std::map<
     char,
@@ -181,14 +180,14 @@ public:
 
   /*!
    * @brief Checks whether a stereopermutation is a mirror image of another
-   *   within a particular symmetry
+   *   within a particular shape
    *
    * @complexity{As generateAllRotations}
    *
-   * @returns boost::none If the symmetry does not generate enantiomers
-   * @returns true If the symmetry has enantiomers, and this is the enantiomeric
+   * @returns boost::none If the shape does not generate enantiomers
+   * @returns true If the shape has enantiomers, and this is the enantiomeric
    *   stereopermutation to @p other
-   * @return false If the symmetry has enantiomers, and this is not the
+   * @return false If the shape has enantiomers, and this is not the
    *   enantiomeric to @p other
    */
   boost::optional<bool> isEnantiomer(
@@ -232,7 +231,7 @@ private:
 /* Private member functions */
   /*!
    * Implementation of the generation of a set of all rotational equivalents of
-   * this Stereopermutation as defined by its symmetry template parameter. Takes an
+   * this Stereopermutation as defined by its shape template parameter. Takes an
    * interrupt callback as an argument to which it passes *this and a new
    * rotational structure every time one is found. If the callback returns
    * true, the generation of assignments is terminated and a pair containing

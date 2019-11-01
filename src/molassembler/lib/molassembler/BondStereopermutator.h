@@ -202,6 +202,8 @@ public:
    *   from
    * @param stereopermutatorA One constituting atom stereopermutator
    * @param stereopermutatorB The other constituting atom stereopermutator
+   * @param mode Mode altering the assignment of stereopermutations depending
+   *   on geometric closeness to the idealized minimum
    */
   void fit(
     const AngstromWrapper& angstromWrapper,
@@ -219,6 +221,8 @@ public:
    *   substituent ranking
    * @param newPermutator The AtomStereopermutator that is changing after its
    *   internal state has been propagated through a ranking change
+   * @param inner Inner graph for context
+   * @param permutators Stereopermutator list for context
    *
    * @complexity{@math{O(S!)} where @math{S} is the size of the larger involved
    * shape}
@@ -259,8 +263,8 @@ public:
    *
    * @param stereopermutatorA One constituting stereopermutator
    * @param siteIndexA A site index of @p stereopermutatorA
-   * @param stereopermutatorA The other constituting stereopermutator
-   * @param siteIndexA A site index of @p stereopermutatorB
+   * @param stereopermutatorB The other constituting stereopermutator
+   * @param siteIndexB A site index of @p stereopermutatorB
    *
    * @throws std::logic_error If the stereopermutator is unassigned or if no
    *   dihedral is found for the passed sites

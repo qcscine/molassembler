@@ -76,9 +76,9 @@ extern temple::MinimalCache<
  * @complexity{@math{\Theta(S!)} where @math{S} is the size of the symmetry if
  * the transition is not cached, @math{\Theta(1)} otherwise.}
  *
- * @param a Symmetry source
- * @param b Symmetry target
- * @removedIndexOption The symmetry position removed from @p source if the
+ * @param a Source shape
+ * @param b Target shape
+ * @param removedIndexOption The symmetry position removed from @p source if the
  *   transition is to be a symmetry position loss. Necessary if the size of the
  *   target is one less than that of the source. Defaults to None.
  *

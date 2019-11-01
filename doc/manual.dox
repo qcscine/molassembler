@@ -128,7 +128,7 @@ Molecule manipulation  | Description
 <code>\link Scine::molassembler::Molecule::removeBond() mol.removeBond(...)\endlink</code> | Removes a removable (!) bond
 <code>\link Scine::molassembler::Molecule::setBondType() mol.setBondType(...)\endlink</code> | Changes the bond type between two atoms
 <code>\link Scine::molassembler::Molecule::setElementType() mol.setElementType(...)\endlink</code> | Changes an atom element type
-<code>\link Scine::molassembler::Molecule::setGeometryAtAtom() mol.setShapeAtAtom(...)\endlink</code> | Changes the local idealized shape at an atom
+<code>\link Scine::molassembler::Molecule::setShapeAtAtom() mol.setShapeAtAtom(...)\endlink</code> | Changes the local idealized shape at an atom
 
 
 @section manual-sublibraries Sub-libraries
@@ -157,7 +157,6 @@ Temple is a data structure and algorithm library that consists of
 - <code>\link temple::TinySet TinySet\endlink</code>, <code>\link temple::TinyUnorderedSet TinyUnorderedSet\endlink</code>: Set-like use of linear memory for very few
   elements
 - CRTP base classes that supply comparison operators
-- <code>\link temple::VectorView VectorView\endlink</code>: Dynamically filtering and re-sorting view of a vector's contents
 - A collection of pseudo-functional-style composable range manipulation
   functions
   - map (= transform)

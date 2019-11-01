@@ -269,7 +269,9 @@ public:
 
   /*!
    * @brief Calculates the error value and gradient for all contributions
-   * @param parameters The linearized positions of all particles
+   * @param[in] parameters The linearized positions of all particles
+   * @param[out] value The error function value for the given positional parameters
+   * @param[out] gradient The gradient for the given positional parameters
    * @pre @p parameters must be evenly divisible by the dimensionality
    * @post Error is stored in @p value and gradient in @p gradient
    */

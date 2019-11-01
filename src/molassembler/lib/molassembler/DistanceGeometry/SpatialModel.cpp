@@ -823,7 +823,7 @@ double SpatialModel::siteCentralAngle(
   const AtomIndex centralIndex,
   const Symmetry::Shape& shape,
   const RankingInformation& ranking,
-  const std::vector<unsigned>& symmetryPositionMap,
+  const std::vector<unsigned>& shapeVertexMap,
   const std::pair<unsigned, unsigned>& sites,
   const InnerGraph& inner
 ) {
@@ -832,8 +832,8 @@ double SpatialModel::siteCentralAngle(
    * circumstances.
    */
   const double idealAngle = Symmetry::angleFunction(shape)(
-    symmetryPositionMap.at(sites.first),
-    symmetryPositionMap.at(sites.second)
+    shapeVertexMap.at(sites.first),
+    shapeVertexMap.at(sites.second)
   );
 
   /* The shape does not distort if:

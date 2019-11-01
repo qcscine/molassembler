@@ -27,9 +27,8 @@ namespace DistanceGeometry {
  *
  * @complexity{@math{\Theta(N^2)} due to atom-pairwise distance bounds}
  *
+ * @param refinement The refinement functor
  * @param bounds The distance bounds
- * @param chiralConstraints All chiral constraints
- * @param dihedralConstraints All dihedral constraints
  * @param positions The final positions from a refinement
  *
  * @return Whether the final structure is acceptable
@@ -79,9 +78,8 @@ bool finalStructureAcceptable(
  *
  * @complexity{@math{\Theta(N)}}
  *
+ * @param refinement The refinement functor
  * @param bounds The distance bounds
- * @param chiralConstraints All chiral constraints
- * @param dihedralConstraints All dihedral constraints
  * @param positions The final positions from a refinement
  */
 template<class RefinementType, typename PositionType>
@@ -132,9 +130,8 @@ void explainAcceptanceFailure(
  *
  * @complexity{@math{\Theta(N)}}
  *
+ * @param refinement The refinement functor
  * @param bounds The distance bounds
- * @param chiralConstraints All chiral constraints
- * @param dihedralConstraints All dihedral constraints
  * @param positions The final positions from a refinement
  */
 template<class RefinementType, typename PositionType>

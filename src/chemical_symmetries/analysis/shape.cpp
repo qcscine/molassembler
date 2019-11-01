@@ -925,7 +925,13 @@ struct SteepestDescent final : OldShapeAlgorithm {
  * Really good for small distortions (<= 0.5). Suffers from its greediness
  * afterwards. Some branching might do it good.
  *
- * Complexity: Theta(N! / (N - 4)!)
+ * Complexity: Theta(N! / (N - 5)!) quaternion fits
+ *
+ * Potentially there is another optimization possible that could reduce the
+ * scaling but there is a tradeoff involved that might counteract the formal
+ * complexity decrease: Principally, spatial rotations of index mappings from
+ * the underlying shape mappings need not be repeated. However, the question is
+ * how to store them efficiently.
  */
 struct AlignFive final : ShapeAlgorithm {
   using M = Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>;

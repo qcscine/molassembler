@@ -56,6 +56,8 @@ struct FeasibleStereopermutations {
    *   three dimensions
    *
    * @param abstractPermutations The set of abstract stereopermutations
+   * @param shape The underlying shape of the stereopermutator
+   * @param centralIndex the atom index of the stereopermutator
    * @param ranking Ranking object indicating chemical differences between
    *   sites and substituents
    * @param graph The graph being modeled

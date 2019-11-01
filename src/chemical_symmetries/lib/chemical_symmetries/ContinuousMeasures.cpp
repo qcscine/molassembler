@@ -1122,6 +1122,9 @@ NarrowType shapeHeuristicsNarrow(
 ) {
   const unsigned N = stator.cols();
 
+  /* For each left-right mapping, calculate the estimated increased square norm
+   * penalty to the rotational fit.
+   */
   const unsigned V = freeLeftVertices.size();
   Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> costs (V, V);
   for(unsigned i = 0; i < V; ++i) {
@@ -1133,7 +1136,11 @@ NarrowType shapeHeuristicsNarrow(
     }
   }
 
-  // Maps freeLeftVertices onto freeRightVertices
+  /* Generate a mapping that maps free "left" vertices onto the free
+   * "right" vertices. Every permutation  of this mapping represents a
+   * particular mapping choice whose expected rotational fit penalty we can sum
+   * up from the previous matrix.
+   */
   auto subPermutation = temple::iota<unsigned>(V);
   decltype(subPermutation) bestPermutation;
   double minimalCost = std::numeric_limits<double>::max();
@@ -1156,6 +1163,9 @@ NarrowType shapeHeuristicsNarrow(
 
   assert(permutation.size() == N);
 
+  /* Perform a final fit using all determined pairs and calculate the exact
+   * rotational fit penalty
+   */
   auto R = fitQuaternion(stator, rotor, permutation);
   auto rotated = R * rotor;
 
@@ -1192,6 +1202,10 @@ double shapeHeuristics(
    * This might also be improved by some pruning criteria (i.e. track the
    * accumulating penalty and the best value found so far and prune if the
    * penalty is significantly higher than the best found).
+   *
+   * Four positions works reasonably well, but the costs matrix calculated
+   * later is not well-converged and the minimal solution is not the shortest
+   * cost path through the graph.
    */
 
   const unsigned N = normalizedPositions.cols();
@@ -1239,6 +1253,10 @@ double shapeHeuristics(
             Eigen::Matrix3d R = fitQuaternion(normalizedPositions, shapeCoords, permutation);
             auto rotatedShape = R * shapeCoords;
 
+            /* If the total penalty of a five positions fit is already larger
+             * than the tracked minimal penalty, we can discard it already
+             * as it can only increase
+             */
             double penalty = (
               (normalizedPositions.col(0) - rotatedShape.col(i)).squaredNorm()
               + (normalizedPositions.col(1) - rotatedShape.col(j)).squaredNorm()
@@ -1251,6 +1269,9 @@ double shapeHeuristics(
               continue;
             }
 
+            /* Solve the permutational (N-5)! subproblem without realigning all
+             * positions.
+             */
             std::vector<unsigned> freeLeftVertices;
             freeLeftVertices.reserve(N - 5);
             for(unsigned a = 5; a < N; ++a) {
@@ -1280,6 +1301,12 @@ double shapeHeuristics(
       }
     }
   }
+
+  /* Given the best permutation for the rotational fit, we still have to
+   * minimize over the isotropic scaling factor. It is cheaper to reorder the
+   * positions once here for the minimization so that memory access is in-order
+   * during the repeated scaling minimization function call.
+   */
 
   const auto& bestPermutation = minimalNarrow.second;
   PositionCollection permutedShape(3, N);

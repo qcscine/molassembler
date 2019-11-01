@@ -239,6 +239,7 @@ public:
      * @param function objective function generating values and gradients from parameters
      * @param initialParameters Parameters passed to optimization method
      * @param multiplier Initial step length
+     * @param boxes Bounds on the parameter values (optional parameter)
      *
      * @return First direction vector
      */
@@ -292,6 +293,7 @@ public:
      * @param function objective function generating values and gradients from parameters
      * @param multiplier Step length
      * @param direction Direction to advance parameters
+     * @param boxes Bounds on the parameter values (optional parameter)
      */
     template<typename UpdateFunction, typename ... Boxes>
     void propagate(

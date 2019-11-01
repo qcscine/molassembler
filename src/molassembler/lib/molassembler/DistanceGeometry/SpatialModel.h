@@ -101,6 +101,7 @@ public:
    * molecule}
    *
    * @param atoms The exact set of atoms that constitute the cycle.
+   * @param graph The graph context
    *
    * @returns A vector of bond indices of exactly the matching cycle if found.
    * An empty vector is returned otherwise.
@@ -214,7 +215,10 @@ public:
    *
    * @complexity{Varies. For most cases, @math{\Omega(1)}}
    *
-   * @param permutator The permutator to model
+   * @param centralIndex The atom index of the central index of the angle
+   * @param shape The local shape at @p centralIndex
+   * @param ranking The ranking of substituents at @p centralIndex
+   * @param shapeVertexMap The mapping from site indices to shape vertices
    * @param sites The two sites between which the angle is to be determined
    * @param inner Graph instance being modeled
    *
@@ -224,7 +228,7 @@ public:
     AtomIndex centralIndex,
     const Symmetry::Shape& shape,
     const RankingInformation& ranking,
-    const std::vector<unsigned>& symmetryPositionMap,
+    const std::vector<unsigned>& shapeVertexMap,
     const std::pair<unsigned, unsigned>& sites,
     const InnerGraph& inner
   );
@@ -322,6 +326,7 @@ public:
    * @param configuration The Distance Geometry configuration object. Relevant
    *   for this stage of the process are the loosening multiplier and fixed
    *   positions, if set.
+   * @param engine The PRNG engine used for randomness
    */
   SpatialModel(
     const Molecule& molecule,
@@ -381,12 +386,13 @@ public:
    * shape}
    *
    * @param permutator The AtomStereopermutator to collect information from
-   * @param cycleMultiplierForIndex A function yielding factors with which to
-   *   multiply angular variances depending on the smalles cycle an atom is a
-   *   member of
+   * @param graph The graph context
    * @param looseningMultiplier A loosening factor for the overall model
    * @param fixedAngstromPositions A mapping between atom indices and fixed
    *   spatial positions
+   * @param forceChiralConstraintEmission If set, the stereopermutator
+   *   emits chiral constraints even if the stereopermutator does not have chiral
+   *   state, i.e. numAssignments() <= 1, as long as it is assigned.
    */
   void addAtomStereopermutatorInformation(
     const AtomStereopermutator& permutator,
