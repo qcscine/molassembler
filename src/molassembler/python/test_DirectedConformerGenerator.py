@@ -13,13 +13,14 @@ def test_DirectedConformerGenerator():
 
     # Create the generator, a decision list, and a conformer
     generator = masm.DirectedConformerGenerator(arginine)
+    mode_nearest = masm.BondStereopermutator.FittingMode.Nearest
     decision = generator.generate_decision_list()
     conf = None
     while not isinstance(conf, numpy.ndarray):
         conf = generator.generate_conformation(decision)
 
     # Reinterpret the conformer and make sure it matches
-    reinterpreted_decisions = generator.get_decision_list(conf)
+    reinterpreted_decisions = generator.get_decision_list(conf, mode_nearest)
     assert reinterpreted_decisions == decision
 
     # Repeat once
@@ -30,6 +31,6 @@ def test_DirectedConformerGenerator():
         conf = generator.generate_conformation(another_decision)
 
     # Reinterpret and make sure it matches
-    another_reinterpreted_decision = generator.get_decision_list(conf)
-    assert another_reinterpreted_decision == another_decision
-    assert another_reinterpreted_decision != decision
+    another_reinterpreted = generator.get_decision_list(conf, mode_nearest)
+    assert another_reinterpreted == another_decision
+    assert another_reinterpreted != decision
