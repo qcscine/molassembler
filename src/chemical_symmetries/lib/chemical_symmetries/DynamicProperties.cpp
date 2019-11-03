@@ -115,12 +115,21 @@ bool isRotation(const std::vector<unsigned>& rotation) {
 }
 
 std::vector<char> positionGroups(const Symmetry::Shape shape) {
+  /* The idea behind this algorithm is that an individual rotation (which is
+   * really just an index permutation) could be interpreted as a directed graph
+   * whose connected components represent sets of indices that can be
+   * interchanged through multiple applications of the rotation.
+   *
+   * Then all that is necessary is to somehow combine multiple rotations into
+   * another rotation in which overlapping connected components are merged.
+   */
   const unsigned S = Symmetry::size(shape);
 
   using IndexGroups = std::vector<
     std::vector<unsigned>
   >;
 
+  // Helper function to find an index in an IndexGroup
   auto nestedFind = [](const IndexGroups& a, unsigned i) {
     return temple::find_if(
       a,
@@ -130,7 +139,11 @@ std::vector<char> positionGroups(const Symmetry::Shape shape) {
     );
   };
 
-  auto loopVertices = [](const std::vector<unsigned>& rotation, const unsigned i) -> std::vector<unsigned> {
+  // Fetches all indices that are part of a permutation's index loop starting at i
+  auto loopVertices = [](
+    const std::vector<unsigned>& rotation,
+    const unsigned i
+  ) -> std::vector<unsigned> {
     assert(isRotation(rotation));
     std::vector<unsigned> vertices {i};
     unsigned j = rotation.at(i);
@@ -141,7 +154,11 @@ std::vector<char> positionGroups(const Symmetry::Shape shape) {
     return vertices;
   };
 
-  auto merge = [&loopVertices](std::vector<unsigned> a, const std::vector<unsigned>& b) -> std::vector<unsigned> {
+  // Combine two rotations into one where overlapping connected components are merged
+  auto merge = [&loopVertices](
+    std::vector<unsigned> a,
+    const std::vector<unsigned>& b
+  ) -> std::vector<unsigned> {
     assert(isRotation(a) && isRotation(b));
     const unsigned R = a.size();
     assert(b.size() == R);
@@ -216,6 +233,7 @@ std::vector<char> positionGroups(const Symmetry::Shape shape) {
     return a;
   };
 
+  // Extract all loop groups from a rotation
   auto connectedComponents = [&nestedFind](const std::vector<unsigned>& rotation) -> IndexGroups {
     const unsigned R = rotation.size();
 
@@ -239,15 +257,16 @@ std::vector<char> positionGroups(const Symmetry::Shape shape) {
     return groups;
   };
 
+  // Merge all rotations and then calculate the connected components
   auto groups = connectedComponents(
     temple::accumulate(
       rotations(shape),
-      temple::iota<unsigned>(S),
+      temple::iota<unsigned>(S), // Identity permutation
       merge
     )
   );
 
-  // Transpose to a simple symbolic representation
+  // Transpose to a character-based symbolic representation
   std::vector<char> characterRepresentation (S);
   char currentChar = 'A';
   for(const auto& equalSet : groups) {
