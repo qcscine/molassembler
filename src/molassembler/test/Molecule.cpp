@@ -345,6 +345,39 @@ BOOST_AUTO_TEST_CASE(MoleculeCanonicalization) {
   }
 }
 
+BOOST_AUTO_TEST_CASE(MoleculeHashes) {
+  boost::filesystem::path directoryBase("isomorphisms");
+
+  using C = AtomEnvironmentComponents;
+  std::vector<C> testComponents {
+    C::Connectivity,
+    C::Connectivity | C::BondOrders,
+    C::Connectivity | C::BondOrders | C::Shapes,
+    C::All
+  };
+
+  for(
+    const boost::filesystem::path& currentFilePath :
+    boost::filesystem::recursive_directory_iterator(directoryBase)
+  ) {
+    if(currentFilePath.extension() != ".mol") {
+      continue;
+    }
+
+    Molecule a, b;
+    std::tie(a, b, std::ignore) = readIsomorphism(currentFilePath);
+
+    for(C components : testComponents) {
+      Molecule c = a;
+      c.canonicalize(components);
+      Molecule d = b;
+      d.canonicalize(components);
+
+      BOOST_CHECK_EQUAL(c.hash(), d.hash());
+    }
+  }
+}
+
 // Isomorphic molecules are recognized as such by modularCompare
 BOOST_AUTO_TEST_CASE(MoleculeIsomorphism) {
   using namespace std::string_literals;

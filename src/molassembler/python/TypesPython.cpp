@@ -104,7 +104,7 @@ void init_types(pybind11::module& m) {
     m,
     "AtomEnvironmentComponents",
     pybind11::arithmetic()
-  ).value("NoComponents", AtomEnvironmentComponents::None, "Consider only the graph")
+  ).value("Connectivity", AtomEnvironmentComponents::Connectivity, "Consider only the graph")
    .value("ElementTypes", AtomEnvironmentComponents::ElementTypes, "Element types")
    .value("BondOrders", AtomEnvironmentComponents::BondOrders, "Bond orders")
    .value("Shapes", AtomEnvironmentComponents::Shapes, "Shapes")

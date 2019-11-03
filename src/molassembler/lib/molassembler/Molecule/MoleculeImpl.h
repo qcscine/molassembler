@@ -30,7 +30,7 @@ struct Molecule::Impl {
 
   OuterGraph _adjacencies;
   StereopermutatorList _stereopermutators;
-  AtomEnvironmentComponents _canonicalComponents = AtomEnvironmentComponents::None;
+  boost::optional<AtomEnvironmentComponents> _canonicalComponentsOption;
 
 /* "Private" helpers */
   void _tryAddAtomStereopermutator(
@@ -90,7 +90,7 @@ struct Molecule::Impl {
   Impl(
     OuterGraph graph,
     StereopermutatorList stereopermutators,
-    AtomEnvironmentComponents canonicalComponents
+    boost::optional<AtomEnvironmentComponents> canonicalComponentsOption
   );
 //!@}
 
@@ -182,7 +182,7 @@ struct Molecule::Impl {
   /**
    * @brief Canonicalizes the graph, invalidating all atom and bond indices.
    *
-   * @param components The components of the molecular graph to include in the
+   * @param componentBitmask The components of the molecular graph to include in the
    *   canonicalization procedure.
    *
    * @warning Any comparisons made on canonical graphs must be made with a less
@@ -269,7 +269,7 @@ struct Molecule::Impl {
 //!@name Information
 //!@{
   //! Yield which components were used in canonicalization
-  AtomEnvironmentComponents canonicalComponents() const;
+  boost::optional<AtomEnvironmentComponents> canonicalComponents() const;
   /*! Determines what the local geometry at a non-terminal atom ought to be
    *
    * Returns the expected shape name at a non-terminal atom.
@@ -285,6 +285,9 @@ struct Molecule::Impl {
 
   //! Provides read-only access to the graph member
   const OuterGraph& graph() const;
+
+  //! Convolutional hash
+  std::size_t hash() const;
 
   //! Provides read-only access to the list of stereopermutators
   const StereopermutatorList& stereopermutators() const;

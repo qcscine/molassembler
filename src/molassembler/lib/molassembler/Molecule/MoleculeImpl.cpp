@@ -5,6 +5,7 @@
 
 #include "molassembler/Molecule/MoleculeImpl.h"
 
+#include "boost/functional/hash.hpp"
 #include "boost/graph/graphviz.hpp"
 #include "boost/graph/isomorphism.hpp"
 #include "boost/graph/graph_utility.hpp"
@@ -373,10 +374,10 @@ Molecule::Impl::Impl(
 Molecule::Impl::Impl(
   OuterGraph graph,
   StereopermutatorList stereopermutators,
-  const AtomEnvironmentComponents canonicalComponents
+  boost::optional<AtomEnvironmentComponents> canonicalComponentsOption
 ) : _adjacencies(std::move(graph)),
     _stereopermutators(std::move(stereopermutators)),
-    _canonicalComponents(canonicalComponents)
+    _canonicalComponentsOption(std::move(canonicalComponentsOption))
 {
   // Initialization
   _ensureModelInvariants();
@@ -434,7 +435,7 @@ BondIndex Molecule::Impl::addBond(
   notifySubstituentAddition(b);
 
   _propagateGraphChange();
-  _canonicalComponents = AtomEnvironmentComponents::None;
+  _canonicalComponentsOption = boost::none;
 
   return BondIndex {a, b};
 }
@@ -442,7 +443,7 @@ BondIndex Molecule::Impl::addBond(
 void Molecule::Impl::applyPermutation(const std::vector<AtomIndex>& permutation) {
   _adjacencies.inner().applyPermutation(permutation);
   _stereopermutators.applyPermutation(permutation);
-  _canonicalComponents = AtomEnvironmentComponents::None;
+  _canonicalComponentsOption = boost::none;
 }
 
 void Molecule::Impl::assignStereopermutator(
@@ -472,7 +473,7 @@ void Molecule::Impl::assignStereopermutator(
 
     // A reassignment can change ranking! See the RankingTree tests
     _propagateGraphChange();
-    _canonicalComponents = AtomEnvironmentComponents::None;
+    _canonicalComponentsOption = boost::none;
   }
 }
 
@@ -503,7 +504,7 @@ void Molecule::Impl::assignStereopermutator(
 
     // A reassignment can change ranking! See the RankingTree tests
     _propagateGraphChange();
-    _canonicalComponents = AtomEnvironmentComponents::None;
+    _canonicalComponentsOption = boost::none;
   }
 }
 
@@ -522,7 +523,7 @@ void Molecule::Impl::assignStereopermutatorRandomly(const AtomIndex a, random::E
 
   // A reassignment can change ranking! See the RankingTree tests
   _propagateGraphChange();
-  _canonicalComponents = AtomEnvironmentComponents::None;
+  _canonicalComponentsOption = boost::none;
 }
 
 void Molecule::Impl::assignStereopermutatorRandomly(const BondIndex& e, random::Engine& engine) {
@@ -536,7 +537,7 @@ void Molecule::Impl::assignStereopermutatorRandomly(const BondIndex& e, random::
 
   // A reassignment can change ranking! See the RankingTree tests
   _propagateGraphChange();
-  _canonicalComponents = AtomEnvironmentComponents::None;
+  _canonicalComponentsOption = boost::none;
 }
 
 std::vector<AtomIndex> Molecule::Impl::canonicalize(
@@ -574,7 +575,7 @@ std::vector<AtomIndex> Molecule::Impl::canonicalize(
   applyPermutation(inverse.permutation);
 
   // Set the underlying canonical components
-  _canonicalComponents = componentBitmask;
+  _canonicalComponentsOption = componentBitmask;
 
   return inverse.permutation;
 }
@@ -664,7 +665,7 @@ void Molecule::Impl::removeAtom(const AtomIndex a) {
   }
 
   _propagateGraphChange();
-  _canonicalComponents = AtomEnvironmentComponents::None;
+  _canonicalComponentsOption = boost::none;
 }
 
 void Molecule::Impl::removeBond(
@@ -743,7 +744,7 @@ void Molecule::Impl::removeBond(
    */
 
   _propagateGraphChange();
-  _canonicalComponents = AtomEnvironmentComponents::None;
+  _canonicalComponentsOption = boost::none;
 }
 
 bool Molecule::Impl::setBondType(
@@ -771,7 +772,7 @@ bool Molecule::Impl::setBondType(
 
   inner.bondType(edgeOption.value()) = bondType;
   _propagateGraphChange();
-  _canonicalComponents = AtomEnvironmentComponents::None;
+  _canonicalComponentsOption = boost::none;
   return true;
 }
 
@@ -785,7 +786,7 @@ void Molecule::Impl::setElementType(
 
   _adjacencies.inner().elementType(a) = elementType;
   _propagateGraphChange();
-  _canonicalComponents = AtomEnvironmentComponents::None;
+  _canonicalComponentsOption = boost::none;
 }
 
 void Molecule::Impl::setShapeAtAtom(
@@ -825,7 +826,7 @@ void Molecule::Impl::setShapeAtAtom(
     _stereopermutators.add(std::move(newStereopermutator));
 
     _propagateGraphChange();
-    _canonicalComponents = AtomEnvironmentComponents::None;
+    _canonicalComponentsOption = boost::none;
     return;
   }
 
@@ -855,12 +856,12 @@ void Molecule::Impl::setShapeAtAtom(
   }
 
   _propagateGraphChange();
-  _canonicalComponents = AtomEnvironmentComponents::None;
+  _canonicalComponentsOption = boost::none;
 }
 
 /* Information */
-AtomEnvironmentComponents Molecule::Impl::canonicalComponents() const {
-  return _canonicalComponents;
+boost::optional<AtomEnvironmentComponents> Molecule::Impl::canonicalComponents() const {
+  return _canonicalComponentsOption;
 }
 
 boost::optional<Symmetry::Shape> Molecule::Impl::inferShape(
@@ -902,6 +903,38 @@ std::string Molecule::Impl::dumpGraphviz() const {
 
 const OuterGraph& Molecule::Impl::graph() const {
   return _adjacencies;
+}
+
+std::size_t Molecule::Impl::hash() const {
+  if(_canonicalComponentsOption == boost::none) {
+    throw std::logic_error("Trying to hash an uncanonical molecule.");
+  }
+
+  auto hashes = hashes::generate(
+    graph().inner(),
+    _stereopermutators,
+    _canonicalComponentsOption.value()
+  );
+
+  // Convolute all of the wide hashes into a size_t hash
+  static_assert(
+    std::is_same<hashes::WideHashType, boost::multiprecision::uint128_t>::value,
+    "WideHash is no longer the boost multiprecision 128 uint"
+  );
+  constexpr unsigned wideHashBytes = 128 / 8;
+  std::vector<std::size_t> wideHashParts (wideHashBytes / sizeof(std::size_t));
+  std::size_t hash = 0;
+  for(const auto& wideHash : hashes) {
+    boost::multiprecision::export_bits(
+      wideHash,
+      std::begin(wideHashParts),
+      8 * sizeof(std::size_t)
+    );
+    for(const std::size_t& v : wideHashParts) {
+      boost::hash_combine(hash, v);
+    }
+  }
+  return hash;
 }
 
 const StereopermutatorList& Molecule::Impl::stereopermutators() const {
@@ -1008,7 +1041,14 @@ bool Molecule::Impl::canonicalCompare(
   /* Make sure that the components used to canonicalize each molecule instance
    * are enough to compare them canonically, too
    */
-  if(_canonicalComponents < componentBitmask || other._canonicalComponents < componentBitmask) {
+  if(
+    _canonicalComponentsOption
+    && other._canonicalComponentsOption
+    && (
+      _canonicalComponentsOption.value() < componentBitmask
+      || other._canonicalComponentsOption.value() < componentBitmask
+    )
+  ) {
     throw std::logic_error("Fewer components were used in canonicalizing a Molecule than are being compared!");
   }
 
@@ -1017,8 +1057,13 @@ bool Molecule::Impl::canonicalCompare(
   }
 
   return (
-    hashes::identityCompare(graph().inner(), stereopermutators(), other.graph().inner(), other.stereopermutators(), componentBitmask)
-    && graph().inner().identicalGraph(other.graph().inner())
+    hashes::identityCompare(
+      graph().inner(),
+      stereopermutators(),
+      other.graph().inner(),
+      other.stereopermutators(),
+      componentBitmask
+    ) && graph().inner().identicalGraph(other.graph().inner())
   );
 }
 
@@ -1135,8 +1180,8 @@ RankingInformation Molecule::Impl::rankPriority(
 
 bool Molecule::Impl::operator == (const Impl& other) const {
   if(
-    _canonicalComponents == AtomEnvironmentComponents::All
-    && other._canonicalComponents == AtomEnvironmentComponents::All
+    _canonicalComponentsOption == AtomEnvironmentComponents::All
+    && other._canonicalComponentsOption == AtomEnvironmentComponents::All
   ) {
     return canonicalCompare(other, AtomEnvironmentComponents::All);
   }

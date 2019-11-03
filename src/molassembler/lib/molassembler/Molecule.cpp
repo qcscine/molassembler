@@ -70,12 +70,12 @@ Molecule::Molecule(
 Molecule::Molecule(
   OuterGraph graph,
   StereopermutatorList stereopermutators,
-  const AtomEnvironmentComponents canonicalComponents
+  boost::optional<AtomEnvironmentComponents> canonicalComponentsOption
 ) : _pImpl(
   std::make_unique<Impl>(
     std::move(graph),
     std::move(stereopermutators),
-    canonicalComponents
+    std::move(canonicalComponentsOption)
   )
 ) {}
 
@@ -175,7 +175,7 @@ void Molecule::setShapeAtAtom(
 
 
 /* Information */
-AtomEnvironmentComponents Molecule::canonicalComponents() const {
+boost::optional<AtomEnvironmentComponents> Molecule::canonicalComponents() const {
   return _pImpl->canonicalComponents();
 }
 
@@ -192,6 +192,10 @@ std::string Molecule::dumpGraphviz() const {
 
 const OuterGraph& Molecule::graph() const {
   return _pImpl->graph();
+}
+
+std::size_t Molecule::hash() const {
+  return _pImpl->hash();
 }
 
 const StereopermutatorList& Molecule::stereopermutators() const {

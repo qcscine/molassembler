@@ -215,13 +215,11 @@ std::pair<Molecule, Molecule> Editing::cleave(const Molecule& a, const BondIndex
   auto molecules = std::make_pair<Molecule, Molecule>(
     Molecule(
       OuterGraph(std::move(graphs.first)),
-      std::move(stereopermutatorLists.first),
-      AtomEnvironmentComponents::None
+      std::move(stereopermutatorLists.first)
     ),
     Molecule(
       OuterGraph(std::move(graphs.second)),
-      std::move(stereopermutatorLists.second),
-      AtomEnvironmentComponents::None
+      std::move(stereopermutatorLists.second)
     )
   );
 
@@ -620,8 +618,7 @@ Molecule Editing::substitute(
   // Make a molecule out of the components
   Molecule compound {
     OuterGraph(std::move(innerGraph)),
-    std::move(stereopermutators),
-    AtomEnvironmentComponents::None
+    std::move(stereopermutators)
   };
 
   // Rerank everywhere and return

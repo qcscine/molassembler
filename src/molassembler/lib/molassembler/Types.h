@@ -93,7 +93,7 @@ std::size_t hash_value(const BondIndex& bond);
  * @warning Setting Stereopermutations without setting Shapes does nothing.
  */
 enum class AtomEnvironmentComponents : unsigned {
-  None = 0,
+  Connectivity = 0,
   ElementTypes = (1 << 0),
   BondOrders = (1 << 1),
   Shapes = (1 << 2),

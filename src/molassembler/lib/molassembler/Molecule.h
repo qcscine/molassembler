@@ -193,7 +193,7 @@ public:
   Molecule(
     OuterGraph graph,
     StereopermutatorList stereopermutators,
-    AtomEnvironmentComponents canonicalComponents
+    boost::optional<AtomEnvironmentComponents> canonicalComponentsOption = boost::none
   );
 //!@}
 
@@ -557,7 +557,7 @@ public:
    *
    * @complexity{@math{\Theta(1)}}
    */
-  AtomEnvironmentComponents canonicalComponents() const;
+  boost::optional<AtomEnvironmentComponents> canonicalComponents() const;
 
   /*! @brief Determines what the local shape at a non-terminal atom ought to
    *   be based on the underlying graph
@@ -610,6 +610,30 @@ public:
    * @complexity{@math{\Theta(1)}}
    */
   const OuterGraph& graph() const;
+
+  /**
+   * @brief Hash function for the molecule
+   *
+   * Convolutional hash including only the currently canonical components.
+   *
+   * @parblock
+   * @warning Remember that comparing hashes is not a viable alternative for
+   * comparing molecules. If molecules have different hashes, they are
+   * certainly different, but even if their hashes match, they are not
+   * definitively the same due to the reduction of information.
+   * @endparblock
+   *
+   * @parblock
+   * @warning Do not compare hashes between molecules with different values of
+   *   canonicalComponents().
+   * @endparblock
+   *
+   * @throws std::logic_error If the molecule is acanonical, i.e.
+   * canonicalComponents() is None
+   *
+   * @return A convolutional hash of the currently canonical components.
+   */
+  std::size_t hash() const;
 
   /*! @brief Provides read-only access to the list of stereopermutators
    *

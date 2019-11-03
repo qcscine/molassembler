@@ -97,6 +97,17 @@ void init_molecule(pybind11::module& m) {
     "stereopermutators from the graph"
   );
 
+  molecule.def(
+    "hash",
+    &Molecule::hash,
+    "Calculates a convoluted hash of a molecule. The molecule must be at least partially canonical. Hashes between molecules of different canonicity are not comparable."
+  );
+
+  molecule.def(
+    "__hash__",
+    &Molecule::hash
+  );
+
   molecule.def_static(
     "apply_canonicalization_map",
     &Molecule::applyCanonicalizationMap,

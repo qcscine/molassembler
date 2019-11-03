@@ -208,8 +208,7 @@ Molecule enantiomer(const Molecule& a) {
    */
   return {
     a.graph(),
-    std::move(stereopermutators),
-    AtomEnvironmentComponents::None
+    std::move(stereopermutators)
   };
 }
 

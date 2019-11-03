@@ -357,7 +357,7 @@ void standardizeAtomStereopermutatorRepresentation(nlohmann::json& permutator) {
 void sortBondStereopermutatorsByEdge(nlohmann::json& m) {
   temple::inplace::sort(
     m.at(bondStereopermutatorKey),
-    [&](const json& lhs, const json& rhs) -> bool {
+    [&](const nlohmann::json& lhs, const nlohmann::json& rhs) -> bool {
       assert(lhs.count("e") > 0 && rhs.count("e") > 0);
       assert(lhs["e"].is_array() && rhs["e"].is_array());
       assert(lhs["e"].size() == 2 && rhs["e"].size() == 2);
@@ -456,8 +456,8 @@ nlohmann::json serialize(const Molecule& molecule) {
     }
   }
 
-  if(molecule.canonicalComponents() != AtomEnvironmentComponents::None) {
-    m[canonicalKey] = molecule.canonicalComponents();
+  if(auto canonicalComponentsOption = molecule.canonicalComponents()) {
+    m[canonicalKey] = canonicalComponentsOption.value();
   }
 
   return m;
@@ -541,12 +541,12 @@ Molecule deserialize(const nlohmann::json& m) {
     }
   }
 
-  auto canonicalComponents = AtomEnvironmentComponents::None;
+  boost::optional<AtomEnvironmentComponents> canonicalComponentsOption;
   if(m.count(canonicalKey) > 0) {
-    canonicalComponents = m[canonicalKey];
+    canonicalComponentsOption = m[canonicalKey];
   }
 
-  return Molecule {graph, stereopermutators, canonicalComponents};
+  return Molecule {graph, stereopermutators, canonicalComponentsOption};
 }
 
 } // namespace detail
