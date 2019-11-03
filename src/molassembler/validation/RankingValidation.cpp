@@ -380,6 +380,85 @@ enum class TestFlags : unsigned {
   MissingExpected
 };
 
+std::pair<bool, temple::Bitmask<TestFlags>> descriptorSetsMatch(
+  const std::set<Stereodescriptor>& expectedDescriptors,
+  const std::set<Stereodescriptor>& foundDescriptors,
+  const std::string& fileStem
+) {
+  bool pass = true;
+  std::ostringstream failureMessages;
+
+  std::set<Stereodescriptor> discrepancies;
+
+  std::set_difference(
+    std::begin(expectedDescriptors),
+    std::end(expectedDescriptors),
+    std::begin(foundDescriptors),
+    std::end(foundDescriptors),
+    std::inserter(discrepancies, discrepancies.end())
+  );
+
+  auto summary = temple::Bitmask<TestFlags> {};
+
+  if(!discrepancies.empty()) {
+    pass = false;
+    summary |= TestFlags::MissingExpected;
+
+    failureMessages << fileStem << " does not match validation set:\n";
+    failureMessages << "- Expected but not found: ";
+    for(const auto& discrepancy : discrepancies) {
+      failureMessages << discrepancy << ", ";
+    }
+    failureMessages << "\n";
+  }
+
+  discrepancies.clear();
+
+  std::set_difference(
+    std::begin(foundDescriptors),
+    std::end(foundDescriptors),
+    std::begin(expectedDescriptors),
+    std::end(expectedDescriptors),
+    std::inserter(discrepancies, discrepancies.end())
+  );
+
+  if(!discrepancies.empty()) {
+    summary |= TestFlags::Unexpected;
+
+    if(pass) {
+      failureMessages << fileStem << " does not match validation set:\n";
+    }
+    // Do not fail it for adding unexpected ones as long as the expected ones are unchanged and not missing
+    //pass = false;
+    failureMessages << "- Found but not expected: ";
+    for(const auto& discrepancy : discrepancies) {
+      failureMessages << discrepancy << ", ";
+    }
+    failureMessages << "\n";
+  }
+
+  if(!pass) {
+    discrepancies.clear();
+    std::set_intersection(
+      std::begin(foundDescriptors),
+      std::end(foundDescriptors),
+      std::begin(expectedDescriptors),
+      std::end(expectedDescriptors),
+      std::inserter(discrepancies, discrepancies.end())
+    );
+
+    failureMessages << "- Correct: ";
+    for(const auto& discrepancy : discrepancies) {
+      failureMessages << discrepancy << ", ";
+    }
+    failureMessages << "\n";
+
+    std::cout << failureMessages.str();
+  }
+
+  return {pass, summary};
+}
+
 BOOST_AUTO_TEST_CASE(CIPValidationSuiteTests) {
   /* Test against a validation suite of organic molecules
    *
@@ -477,81 +556,14 @@ BOOST_AUTO_TEST_CASE(CIPValidationSuiteTests) {
       continue;
     }
 
-    auto foundDescriptors = makeDescriptorSet(molecule);
-
-    bool pass = true;
-    std::ostringstream failureMessages;
-
-    std::set<Stereodescriptor> discrepancies;
-
-    std::set_difference(
-      std::begin(expectedDescriptors),
-      std::end(expectedDescriptors),
-      std::begin(foundDescriptors),
-      std::end(foundDescriptors),
-      std::inserter(discrepancies, discrepancies.end())
+    auto matchingResult = descriptorSetsMatch(
+      expectedDescriptors,
+      makeDescriptorSet(molecule),
+      stem
     );
 
-    auto summary = temple::Bitmask<TestFlags> {};
-
-    if(!discrepancies.empty()) {
-      pass = false;
-      summary |= TestFlags::MissingExpected;
-
-      failureMessages << stem << " does not match validation set:\n";
-      failureMessages << "- Expected but not found: ";
-      for(const auto& discrepancy : discrepancies) {
-        failureMessages << discrepancy << ", ";
-      }
-      failureMessages << "\n";
-    }
-
-    discrepancies.clear();
-
-    std::set_difference(
-      std::begin(foundDescriptors),
-      std::end(foundDescriptors),
-      std::begin(expectedDescriptors),
-      std::end(expectedDescriptors),
-      std::inserter(discrepancies, discrepancies.end())
-    );
-
-    if(!discrepancies.empty()) {
-      summary |= TestFlags::Unexpected;
-
-      if(pass) {
-        failureMessages << stem << " does not match validation set:\n";
-      }
-      // Do not fail it for adding unexpected ones as long as the expected ones are unchanged and not missing
-      //pass = false;
-      failureMessages << "- Found but not expected: ";
-      for(const auto& discrepancy : discrepancies) {
-        failureMessages << discrepancy << ", ";
-      }
-      failureMessages << "\n";
-    }
-
-    if(!pass) {
-      discrepancies.clear();
-      std::set_intersection(
-        std::begin(foundDescriptors),
-        std::end(foundDescriptors),
-        std::begin(expectedDescriptors),
-        std::end(expectedDescriptors),
-        std::inserter(discrepancies, discrepancies.end())
-      );
-
-      failureMessages << "- Correct: ";
-      for(const auto& discrepancy : discrepancies) {
-        failureMessages << discrepancy << ", ";
-      }
-      failureMessages << "\n";
-
-      std::cout << failureMessages.str();
-    }
-
-    summaries.push_back(summary);
-    BOOST_CHECK(pass);
+    summaries.push_back(matchingResult.second);
+    BOOST_CHECK(matchingResult.first);
   }
 
   // Summarize the results

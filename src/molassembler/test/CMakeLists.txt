@@ -50,6 +50,7 @@ target_link_libraries(MolassemblerTests
 )
 target_compile_definitions(MolassemblerTests PRIVATE BOOST_ALL_DYN_LINK)
 target_compile_options(MolassemblerTests PRIVATE ${MOLASSEMBLER_CXX_FLAGS})
+target_include_directories(MolassemblerTests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 add_test(
   NAME MASMMainTests
   COMMAND MolassemblerTests
@@ -69,6 +70,7 @@ target_link_libraries(DistanceGeometryTests
 )
 target_compile_options(DistanceGeometryTests PRIVATE ${MOLASSEMBLER_CXX_FLAGS})
 target_compile_definitions(DistanceGeometryTests PRIVATE BOOST_ALL_DYN_LINK)
+target_include_directories(DistanceGeometryTests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 add_test(
   NAME MASMDistanceGeometryTests
   COMMAND DistanceGeometryTests

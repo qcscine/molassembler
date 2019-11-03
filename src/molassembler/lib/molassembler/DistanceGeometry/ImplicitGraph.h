@@ -148,16 +148,6 @@ public:
   using VertexDescriptor = unsigned long;
   using EdgeDescriptor = std::pair<VertexDescriptor, VertexDescriptor>;
 
-private:
-  //! Pointer to molecule from which the bounds come from
-  const InnerGraph* _innerGraphPtr;
-
-  //! Stores the two heaviest element types
-  std::array<Scine::Utils::ElementType, 2> _heaviestAtoms;
-
-  //! Dense adjacency matrix for O(1) access to fixed distances
-  Eigen::MatrixXd _distances;
-
   /* To outer indexing */
   [[gnu::const]] inline static VertexDescriptor left(const VertexDescriptor a) noexcept {
     return 2 * a;
@@ -171,6 +161,16 @@ private:
     // Integer division rounds down, which is perfect
     return i / 2;
   }
+
+private:
+  //! Pointer to molecule from which the bounds come from
+  const InnerGraph* _innerGraphPtr;
+
+  //! Stores the two heaviest element types
+  std::array<Scine::Utils::ElementType, 2> _heaviestAtoms;
+
+  //! Dense adjacency matrix for O(1) access to fixed distances
+  Eigen::MatrixXd _distances;
 
   static void _explainContradictionPaths(
     VertexDescriptor a,
@@ -228,6 +228,10 @@ public:
    */
   [[gnu::const]] inline static bool isLeft(const VertexDescriptor i) noexcept {
     return i % 2 == 0;
+  }
+
+  [[gnu::const]] inline static bool sameSide(const VertexDescriptor i, const VertexDescriptor j) noexcept {
+    return i % 2 == j % 2;
   }
 
   /*! @brief Generates a bare distance bounds matrix by repeated shortest-paths calculations

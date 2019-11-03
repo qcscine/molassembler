@@ -117,6 +117,10 @@ public:
     return i % 2 == 0;
   }
 
+  [[gnu::const]] static inline bool sameSide(const VertexDescriptor i, const VertexDescriptor j) noexcept {
+    return i % 2 == j % 2;
+  }
+
   /*! @brief Get the left subgraph vertex descriptor corresponding to an outer index
    *
    * @complexity{@math{\Theta(1)}}
@@ -187,7 +191,7 @@ public:
    */
   double maximalImplicitLowerBound(VertexDescriptor i) const;
 
-  /*! Nonmodifiable access to underlying graph
+  /*! @brief Nonmodifiable access to underlying graph
    *
    * @complexity{@math{\Theta(1)}}
    */
@@ -217,7 +221,6 @@ private:
     VertexDescriptor b,
     double fixedDistance
   );
-
 };
 
 } // namespace DistanceGeometry

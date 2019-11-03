@@ -13,6 +13,7 @@
 
 #include "boost/graph/graph_concepts.hpp"
 #include "molassembler/IO.h"
+#include "ShortestPathsGraphTests.h"
 
 #include <iostream>
 #include <iomanip>
@@ -22,7 +23,7 @@ inline std::ostream& nl(std::ostream& os) {
   return os;
 }
 
-BOOST_AUTO_TEST_CASE(graphConcepts) {
+BOOST_AUTO_TEST_CASE(ImplicitGraphConcepts) {
   using namespace Scine;
   using namespace molassembler;
 
@@ -49,17 +50,7 @@ BOOST_AUTO_TEST_CASE(graphConcepts) {
   BOOST_CONCEPT_ASSERT(( boost::IncidenceGraphConcept<GraphType> ));
 }
 
-template<typename UnsignedType>
-UnsignedType left(UnsignedType a) {
-  return 2 * a;
-}
-
-template<typename UnsignedType>
-UnsignedType right(UnsignedType a) {
-  return 2 * a + 1;
-}
-
-BOOST_AUTO_TEST_CASE(implicitNonVisualTests) {
+BOOST_AUTO_TEST_CASE(ImplicitGraphStructure) {
   using namespace Scine;
   using namespace molassembler;
 
@@ -146,67 +137,7 @@ BOOST_AUTO_TEST_CASE(implicitNonVisualTests) {
       }
     }
 
-    for(IG::VertexDescriptor a = 0; a < N / 2; ++a) {
-      BOOST_CHECK_MESSAGE(
-        !boost::edge(2 * a, 2 * a + 1, ig).second,
-        "Same-a edge exists for a = " << a
-      );
-
-      for(IG::VertexDescriptor b = 0; b < N / 2; ++b) {
-        if(a == b) {
-          continue;
-        }
-
-        // No right-to-left edges
-        BOOST_CHECK_MESSAGE(
-          !boost::edge(right(a), left(b), ig).second,
-          "r(a) -> l(b) for a = " << a << ", b = " << b
-        );
-
-        BOOST_CHECK_MESSAGE(
-          !boost::edge(right(b), left(a), ig).second,
-          "r(b) -> l(a) for a = " << a << ", b = " << b
-        );
-
-        // If there is an edge from la to lb
-        auto lalb = boost::edge(2 * a, 2 * b, ig);
-        if(lalb.second) {
-          auto lalbWeight = boost::get(boost::edge_weight, ig, lalb.first);
-
-          auto lbra = boost::edge(2 * b, 2 * a + 1, ig);
-
-          BOOST_CHECK_MESSAGE(
-            lbra.second,
-            "matching l(b) -> r(a) edge does not exist for a = " << a
-              << ", b = " << b
-          );
-
-          auto lbraWeight = boost::get(boost::edge_weight, ig, lbra.first);
-
-          auto larb = boost::edge(2 * a, 2 * b + 1, ig);
-
-          BOOST_CHECK_MESSAGE(
-            larb.second,
-            "matching l(a) -> r(b) edge does not exist for a = " << a
-              << ", b = " << b
-          );
-
-          auto larbWeight = boost::get(boost::edge_weight, ig, larb.first);
-
-          BOOST_CHECK_MESSAGE(
-            larbWeight == lbraWeight,
-            "l(a) -> r(b) and l(b) -> r(a) edges do not have same weight for a = "
-              << a << ", b = " << b << ": " << larbWeight << ", " << lbraWeight
-          );
-
-          BOOST_CHECK_MESSAGE(
-            lalbWeight > std::fabs(larbWeight),
-            "l(a) -> l(b) weight isn't greater than abs of l(a) -> r(b) weight for a = "
-              << a << ", b = " << b
-          );
-        }
-      }
-    }
+    ShortestPathsGraphConcept::checkEdgeStructure(ig, IG::left, IG::right);
 
     BOOST_CHECK_MESSAGE(
       static_cast<IG::VertexDescriptor>(
@@ -221,55 +152,7 @@ BOOST_AUTO_TEST_CASE(implicitNonVisualTests) {
     auto iter = ig.ebegin();
     auto end = ig.eend();
 
-    while(iter != end) {
-      auto edgeDescriptor = *iter;
-
-      auto boostSource = boost::source(edgeDescriptor, ig);
-      auto boostTarget = boost::target(edgeDescriptor, ig);
-
-      // Boost and iter target fetch match
-      BOOST_CHECK_MESSAGE(
-        boostTarget == iter.target(),
-        "edge_iter boost-target and iter-member-target do not match for {"
-        << edgeDescriptor.first << ", " << edgeDescriptor.second << "}"
-      );
-
-      // No right-to-left edges
-      BOOST_CHECK_MESSAGE(
-        !(!IG::isLeft(boostSource) && IG::isLeft(boostTarget)),
-        "Edge points from right to left! " << boostSource << " -> " << boostTarget
-      );
-
-      auto boostEdgeWeight = boost::get(boost::edge_weight, ig, edgeDescriptor);
-
-      // Boost and iter weight fetch match
-      BOOST_CHECK_MESSAGE(
-        boostEdgeWeight == iter.weight(),
-        "edge_iter boost-get-weight and iter-member-weight do not match for {"
-        << edgeDescriptor.first << ", " << edgeDescriptor.second << "}"
-      );
-
-      if(boostSource % 2 == boostTarget % 2) {
-        // In-group edge
-
-        // Reverse exists
-        auto reverseEdge = boost::edge(boostTarget, boostSource, ig);
-        BOOST_CHECK_MESSAGE(
-          reverseEdge.second,
-          "Reverse edge does not exist for in-group edge "
-            << boostSource << " -> " << boostTarget
-        );
-
-        // Reverse has same edge weight
-        BOOST_CHECK_MESSAGE(
-          boost::get(boost::edge_weight, ig, reverseEdge.first) == boostEdgeWeight,
-          "Reverse edge for " << boostSource << " -> " << boostTarget
-            << " does not have same edge weight"
-        );
-      }
-
-      ++iter;
-    }
+    ShortestPathsGraphConcept::checkEdgeIteration(iter, end, ig, IG::isLeft, IG::sameSide);
 
     // Generated distances matrix must satisfy triangle inequalities
     auto distancesMatrixResult = ig.makeDistanceMatrix(randomnessEngine());
