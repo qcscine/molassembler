@@ -3,8 +3,8 @@
  *   See LICENSE.txt
  */
 
-#include "shapes/Symmetries.h"
-#include "shapes/DynamicProperties.h"
+#include "shapes/Data.h"
+#include "shapes/PropertyCaching.h"
 
 #include <iostream>
 #include <iomanip>

@@ -18,8 +18,8 @@
 #include "temple/constexpr/ToSTL.h"
 #include "temple/constexpr/TupleTypePairs.h"
 
-#include "shapes/Properties.h"
-#include "shapes/Symmetries.h"
+#include "shapes/PropertyCaching.h"
+#include "shapes/Data.h"
 
 #include <set>
 #include <numeric>

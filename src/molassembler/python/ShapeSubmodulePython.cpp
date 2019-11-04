@@ -3,13 +3,13 @@
  *   See LICENSE.txt
  */
 #include "pybind11/pybind11.h"
-#include "shapes/Symmetries.h"
+#include "shapes/Data.h"
 
-void init_symmetry_submodule(pybind11::module& m) {
+void init_shape_submodule(pybind11::module& m) {
   using namespace Scine;
 
-  auto symmetrySubmodule = m.def_submodule("symmetry");
-  symmetrySubmodule.doc() = R"(Symmetry submodule)";
+  auto symmetrySubmodule = m.def_submodule("shape");
+  symmetrySubmodule.doc() = R"(Shape submodule)";
 
   pybind11::enum_<Symmetry::Shape> shape(symmetrySubmodule, "Shape", "Shape enum");
 

@@ -7,7 +7,7 @@
 
 #include "shapes/CoordinateSystemTransformation.h"
 #include "shapes/Shapes.h"
-#include "shapes/Symmetries.h"
+#include "shapes/Data.h"
 #include "shapes/InertialMoments.h"
 #include "shapes/ContinuousMeasures.h"
 

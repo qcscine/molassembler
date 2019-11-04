@@ -10,7 +10,7 @@
 #include "boost/optional.hpp"
 #include "Utils/Geometry/ElementInfo.h"
 
-#include "shapes/Symmetries.h"
+#include "shapes/Data.h"
 #include "temple/Functional.h"
 
 #include "molassembler/Modeling/AtomInfo.h"

@@ -6,7 +6,7 @@
 #include "molassembler/Options.h"
 
 #include "boost/range/iterator_range_core.hpp"
-#include "shapes/Symmetries.h"
+#include "shapes/Data.h"
 
 #include "molassembler/AtomStereopermutator.h"
 #include "molassembler/Cycles.h"

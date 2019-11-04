@@ -7,7 +7,7 @@
 
 #include "boost/range/iterator_range_core.hpp"
 #include "boost/range/join.hpp"
-#include "shapes/Properties.h"
+#include "shapes/PropertyCaching.h"
 
 #include "molassembler/StereopermutatorList.h"
 #include "molassembler/Graph/InnerGraph.h"

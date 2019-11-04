@@ -3,7 +3,7 @@
  *   See LICENSE.txt
  */
 
-#include "shapes/Primitives.h"
+#include "shapes/constexpr/Data.h"
 
 #define DECLARE_CONSTEXPR_SHAPE_CLASS_MEMBERS(ShapeClass) \
   constexpr decltype(ShapeClass::shape) ShapeClass::shape; \

@@ -9,7 +9,7 @@
 #include "boost/graph/graphviz.hpp"
 #include "boost/graph/isomorphism.hpp"
 #include "boost/graph/graph_utility.hpp"
-#include "shapes/ConstexprProperties.h"
+#include "shapes/constexpr/Properties.h"
 #include "Utils/Constants.h"
 #include "Utils/Typenames.h"
 

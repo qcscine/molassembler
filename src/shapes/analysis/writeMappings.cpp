@@ -11,8 +11,8 @@
 #include "temple/Functional.h"
 #include "temple/Stringify.h"
 
-#include "shapes/Symmetries.h"
-#include "shapes/DynamicProperties.h"
+#include "shapes/Data.h"
+#include "shapes/PropertyCaching.h"
 
 #include <fstream>
 #include <iomanip>

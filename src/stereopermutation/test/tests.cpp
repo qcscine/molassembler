@@ -15,8 +15,8 @@
 #include <functional>
 #include <numeric>
 
-#include "shapes/Symmetries.h"
-#include "shapes/DynamicProperties.h"
+#include "shapes/Data.h"
+#include "shapes/Properties.h"
 
 #include "stereopermutation/GenerateUniques.h"
 #include "stereopermutation/Composites.h"

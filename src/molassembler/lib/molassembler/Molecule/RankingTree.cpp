@@ -10,7 +10,7 @@
 #include "boost/range/iterator_range_core.hpp"
 #include "Utils/Geometry/ElementInfo.h"
 
-#include "shapes/Properties.h"
+#include "shapes/PropertyCaching.h"
 #include "stereopermutation/Composites.h"
 #include "temple/Adaptors/AllPairs.h"
 #include "temple/GroupBy.h"

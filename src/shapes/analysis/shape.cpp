@@ -7,8 +7,8 @@
 
 #include "shapes/ContinuousMeasures.h"
 
-#include "shapes/Symmetries.h"
-#include "shapes/DynamicProperties.h"
+#include "shapes/Data.h"
+#include "shapes/PropertyCaching.h"
 
 #include "boost/math/tools/minima.hpp"
 #include "temple/constexpr/Numeric.h"

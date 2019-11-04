@@ -8,7 +8,7 @@
 #include "boost/filesystem.hpp"
 #include "boost/program_options.hpp"
 
-#include "shapes/Symmetries.h"
+#include "shapes/Data.h"
 #include "shapes/ContinuousMeasures.h"
 #include "shapes/InertialMoments.h"
 #include "shapes/Diophantine.h"

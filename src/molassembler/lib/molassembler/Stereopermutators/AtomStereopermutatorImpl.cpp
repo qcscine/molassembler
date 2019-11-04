@@ -6,8 +6,8 @@
 #include "molassembler/Stereopermutators/AtomStereopermutatorImpl.h"
 
 #include "boost/range/join.hpp"
-#include "shapes/DynamicProperties.h"
 #include "shapes/Properties.h"
+#include "shapes/PropertyCaching.h"
 #include "shapes/ContinuousMeasures.h"
 #include "CyclicPolygons.h"
 #include <Eigen/Dense>

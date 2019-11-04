@@ -19,7 +19,7 @@ void init_random_engine(pybind11::module& m);
 void init_ranking_information(pybind11::module& m);
 void init_serialization(pybind11::module& m);
 void init_stereopermutator_list(pybind11::module& m);
-void init_symmetry_submodule(pybind11::module& m);
+void init_shape_submodule(pybind11::module& m);
 void init_types(pybind11::module& m);
 void init_version(pybind11::module& m);
 
@@ -38,7 +38,7 @@ PYBIND11_MODULE(molassembler, m) {
   init_types(m);
   init_random_engine(m);
   init_options(m);
-  init_symmetry_submodule(m);
+  init_shape_submodule(m);
   init_cycles(m);
   init_outer_graph(m);
   init_ranking_information(m);

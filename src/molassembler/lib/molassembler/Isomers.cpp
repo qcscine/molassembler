@@ -11,7 +11,7 @@
 #include "molassembler/StereopermutatorList.h"
 #include "molassembler/Stereopermutators/AbstractPermutations.h"
 #include "molassembler/Stereopermutators/FeasiblePermutations.h"
-#include "shapes/Symmetries.h"
+#include "shapes/Data.h"
 
 namespace Scine {
 

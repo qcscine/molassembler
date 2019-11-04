@@ -13,7 +13,7 @@
 #include "Utils/Constants.h"
 #include "CyclicPolygons.h"
 
-#include "shapes/Properties.h"
+#include "shapes/PropertyCaching.h"
 #include "stereopermutation/Composites.h"
 #include "temple/Adaptors/AllPairs.h"
 #include "temple/Adaptors/SequentialPairs.h"

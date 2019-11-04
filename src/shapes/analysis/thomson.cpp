@@ -7,7 +7,7 @@
 #define BOOST_FILESYSTEM_NO_DEPRECATED
 #include "boost/filesystem.hpp"
 
-#include "shapes/Symmetries.h"
+#include "shapes/Data.h"
 #include "shapes/ContinuousMeasures.h"
 
 #include "temple/Optimization/LBFGS.h"

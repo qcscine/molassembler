@@ -4,16 +4,16 @@
  * @brief Central symmetry data class definitions
  */
 
-#ifndef INCLUDE_MOLASSEMBLER_SHAPES_PRIMITIVES_H
-#define INCLUDE_MOLASSEMBLER_SHAPES_PRIMITIVES_H
+#ifndef INCLUDE_MOLASSEMBLER_SHAPES_CONSTEXPR_DATA_H
+#define INCLUDE_MOLASSEMBLER_SHAPES_CONSTEXPR_DATA_H
 
 #include "temple/constexpr/Vector.h"
 #include "temple/constexpr/TupleType.h"
 
 #include "shapes/Shapes.h"
 #include "shapes/PointGroups.h"
-#include "shapes/CompileTimeOptions.h"
-#include "shapes/AngleLookup.h"
+#include "shapes/constexpr/CompileTimeOptions.h"
+#include "shapes/constexpr/AngleLookup.h"
 
 namespace Scine {
 

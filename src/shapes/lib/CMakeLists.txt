@@ -5,35 +5,35 @@ if(NOT TARGET Boost::boost)
 endif()
 
 set(HEADERS_All
-  ${CMAKE_CURRENT_SOURCE_DIR}/shapes/AngleLookup.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/shapes/CompileTimeOptions.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/shapes/ConstexprProperties.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/shapes/constexpr/AngleLookup.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/shapes/constexpr/CompileTimeOptions.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/shapes/constexpr/Data.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/shapes/constexpr/Properties.h
   ${CMAKE_CURRENT_SOURCE_DIR}/shapes/ContinuousMeasures.h
   ${CMAKE_CURRENT_SOURCE_DIR}/shapes/CoordinateSystemTransformation.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/shapes/Data.h
   ${CMAKE_CURRENT_SOURCE_DIR}/shapes/Diophantine.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/shapes/DynamicProperties.h
   ${CMAKE_CURRENT_SOURCE_DIR}/shapes/InertialMoments.h
   ${CMAKE_CURRENT_SOURCE_DIR}/shapes/Partitioner.h
   ${CMAKE_CURRENT_SOURCE_DIR}/shapes/PointGroupElements.h
   ${CMAKE_CURRENT_SOURCE_DIR}/shapes/PointGroups.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/shapes/Primitives.h
   ${CMAKE_CURRENT_SOURCE_DIR}/shapes/Properties.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/shapes/PropertyCaching.h
   ${CMAKE_CURRENT_SOURCE_DIR}/shapes/Shapes.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/shapes/Symmetries.h
   ${CMAKE_CURRENT_SOURCE_DIR}/shapes/TauCriteria.h
 )
 
 set(SOURCES_All
-  ${CMAKE_CURRENT_SOURCE_DIR}/shapes/CoordinateSystemTransformation.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/shapes/constexpr/Data.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/shapes/ContinuousMeasures.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/shapes/CoordinateSystemTransformation.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/shapes/Data.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/shapes/Diophantine.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/shapes/DynamicProperties.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/shapes/InertialMoments.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/shapes/Partitioner.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/shapes/PointGroupElements.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/shapes/Primitives.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/shapes/Properties.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/shapes/Symmetries.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/shapes/PropertyCaching.cpp
 )
 
 add_library(shapes STATIC ${SOURCES_All} ${HEADERS_all})

@@ -9,14 +9,14 @@
  * computation and universal accessibility at run-time.
  */
 
-#ifndef INCLUDE_MOLASSEMBLER_SHAPES_SYMMETRIES_H
-#define INCLUDE_MOLASSEMBLER_SHAPES_SYMMETRIES_H
+#ifndef INCLUDE_MOLASSEMBLER_SHAPES_DATA_H
+#define INCLUDE_MOLASSEMBLER_SHAPES_DATA_H
 
 #include "boost/optional.hpp"
 #include "Eigen/Core"
 #include "temple/constexpr/TupleType.h"
 
-#include "shapes/Primitives.h"
+#include "shapes/constexpr/Data.h"
 
 #include <vector>
 #include <map>

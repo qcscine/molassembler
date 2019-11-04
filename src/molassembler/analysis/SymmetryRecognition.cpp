@@ -13,10 +13,10 @@
 
 #include "molassembler/Detail/Cartesian.h"
 
-#include "shapes/Symmetries.h"
+#include "shapes/Data.h"
 #include "shapes/ContinuousMeasures.h"
 #include "shapes/InertialMoments.h"
-#include "shapes/DynamicProperties.h"
+#include "shapes/Properties.h"
 #include "shapes/TauCriteria.h"
 
 #include "temple/Adaptors/AllPairs.h"

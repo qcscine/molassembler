@@ -9,7 +9,7 @@
 #include "shapes/InertialMoments.h"
 #include "shapes/ContinuousMeasures.h"
 #include "shapes/Shapes.h"
-#include "shapes/Symmetries.h"
+#include "shapes/Data.h"
 
 using namespace Scine;
 using namespace Symmetry;

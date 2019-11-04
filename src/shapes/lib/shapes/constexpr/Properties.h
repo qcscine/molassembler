@@ -12,10 +12,10 @@
  * tested ANYWHERE
  */
 
-#ifndef INCLUDE_SYMMETRY_INFORMATION_CONSTEXPR_PROPERTIES_H
-#define INCLUDE_SYMMETRY_INFORMATION_CONSTEXPR_PROPERTIES_H
+#ifndef INCLUDE_SHAPE_CONSTEXPR_PROPERTIES_H
+#define INCLUDE_SHAPE_CONSTEXPR_PROPERTIES_H
 
-#include "shapes/Symmetries.h"
+#include "shapes/Data.h"
 
 #include "temple/constexpr/Bitset.h"
 #include "temple/constexpr/DynamicSet.h"

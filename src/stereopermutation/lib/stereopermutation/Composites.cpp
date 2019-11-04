@@ -8,8 +8,8 @@
 #include "boost/dynamic_bitset.hpp"
 #include "Eigen/Geometry"
 
-#include "shapes/DynamicProperties.h"
-#include "shapes/Symmetries.h"
+#include "shapes/Properties.h"
+#include "shapes/Data.h"
 #include "temple/Adaptors/AllPairs.h"
 #include "temple/Functor.h"
 #include "temple/Functional.h"

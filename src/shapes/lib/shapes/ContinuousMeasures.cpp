@@ -2,7 +2,7 @@
 
 #include "shapes/Diophantine.h"
 #include "shapes/Partitioner.h"
-#include "shapes/Symmetries.h"
+#include "shapes/Data.h"
 
 #include "temple/Adaptors/Iota.h"
 #include "temple/Adaptors/Transform.h"

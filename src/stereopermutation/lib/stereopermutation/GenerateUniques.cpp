@@ -7,7 +7,7 @@
 
 #include "boost/functional/hash.hpp"
 
-#include "shapes/Symmetries.h"
+#include "shapes/Data.h"
 
 #include <algorithm>
 #include <cassert>

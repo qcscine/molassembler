@@ -11,7 +11,7 @@
 
 #include "boost/program_options.hpp"
 #include "temple/Stringify.h"
-#include "shapes/Symmetries.h"
+#include "shapes/Data.h"
 
 #include "stereopermutation/GenerateUniques.h"
 

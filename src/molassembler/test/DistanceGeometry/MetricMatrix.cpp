@@ -7,7 +7,7 @@
 
 #include "boost/filesystem.hpp"
 #include "boost/test/unit_test.hpp"
-#include "shapes/Symmetries.h"
+#include "shapes/Data.h"
 #include "Eigen/Eigenvalues"
 #include "temple/Random.h"
 #include "temple/Stringify.h"

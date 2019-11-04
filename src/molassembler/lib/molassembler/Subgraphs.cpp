@@ -7,7 +7,7 @@
 
 #include "boost/graph/mcgregor_common_subgraphs.hpp"
 
-#include "shapes/Properties.h"
+#include "shapes/PropertyCaching.h"
 
 #include "shapes/Shapes.h"
 #include "temple/constexpr/UpperTriangularMatrix.h"

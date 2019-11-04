@@ -3,7 +3,7 @@
  *   See LICENSE.txt
  */
 
-#include "shapes/Symmetries.h"
+#include "shapes/Data.h"
 
 namespace Scine {
 
