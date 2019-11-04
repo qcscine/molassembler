@@ -35,7 +35,7 @@ bool disregardStereopermutator(
 ) {
   if(
     temperatureRegimeSetting == TemperatureRegime::High
-    && stereopermutator.getShape() == Symmetry::Shape::VacantTetrahedron
+    && stereopermutator.getShape() == Shapes::Shape::VacantTetrahedron
     && centralType == Scine::Utils::ElementType::N
   ) {
     // Figure out if the nitrogen is in a cycle of size 4 or smaller

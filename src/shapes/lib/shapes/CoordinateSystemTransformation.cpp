@@ -6,7 +6,7 @@
 #include "CoordinateSystemTransformation.h"
 
 namespace Scine {
-namespace Symmetry {
+namespace Shapes {
 
 namespace detail {
 
@@ -98,5 +98,5 @@ Eigen::Matrix3d rotationMatrix(const CoordinateSystem& a, const CoordinateSystem
   return R;
 }
 
-} // namespace Symmetry
+} // namespace Shapes
 } // namespace Scine

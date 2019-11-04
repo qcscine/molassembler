@@ -39,7 +39,7 @@
  */
 
 using namespace Scine;
-using namespace Symmetry;
+using namespace Shapes;
 using namespace continuous;
 
 constexpr unsigned factorial(unsigned x) {

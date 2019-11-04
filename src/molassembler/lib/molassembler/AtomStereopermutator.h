@@ -109,7 +109,7 @@ public:
    */
   AtomStereopermutator(
     const OuterGraph& graph,
-    Symmetry::Shape shape,
+    Shapes::Shape shape,
     AtomIndex centerAtom,
     RankingInformation ranking
   );
@@ -123,7 +123,7 @@ public:
    * @complexity{@math{O(S!)} if uncached, @math{\Theta(1)} otherwise}
    * @throws std::logic_error If there are no larger shapes
    */
-  static Symmetry::Shape up(Symmetry::Shape shape);
+  static Shapes::Shape up(Shapes::Shape shape);
 
   /*!
    * @brief Picks a shape retaining as much chiral state as possible on a
@@ -132,7 +132,7 @@ public:
    * @complexity{@math{O(S!)} if uncached, @math{\Theta(1)} otherwise}
    * @throws std::logic_error If there are no smaller shapes
    */
-  static Symmetry::Shape down(Symmetry::Shape shape, unsigned removedShapePosition);
+  static Shapes::Shape down(Shapes::Shape shape, unsigned removedShapePosition);
 //!@}
 
 //!@name Modifiers
@@ -201,7 +201,7 @@ public:
   boost::optional<PropagatedState> propagate(
     const OuterGraph& graph,
     RankingInformation newRanking,
-    boost::optional<Symmetry::Shape> shapeOption
+    boost::optional<Shapes::Shape> shapeOption
   );
 
   /*! @brief Adapts atom indices in the internal state to the removal of an atom
@@ -222,7 +222,7 @@ public:
    * @post The permutator is unassigned (chiral state is discarded)
    */
   void setShape(
-    Symmetry::Shape shape,
+    Shapes::Shape shape,
     const OuterGraph& graph
   );
 //!@}
@@ -322,7 +322,7 @@ public:
    *
    * @complexity{@math{\Theta(1)}}
    */
-  Symmetry::Shape getShape() const;
+  Shapes::Shape getShape() const;
 
   /*! @brief Yields the mapping from site indices to shape positions
    *

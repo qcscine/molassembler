@@ -19,7 +19,7 @@
 
 namespace Scine {
 
-namespace Symmetry {
+namespace Shapes {
 
 namespace properties {
 
@@ -198,7 +198,7 @@ struct DistortionInfo {
  * @param from Transition source shape
  * @param to Transition target shape
  *
- * @pre Symmetry::size(from) + {0, 1} == Symmetry::size(to)
+ * @pre Shapes::size(from) + {0, 1} == Shapes::size(to)
  */
 std::vector<DistortionInfo> symmetryTransitionMappings(
   Shape from,
@@ -216,7 +216,7 @@ std::vector<DistortionInfo> symmetryTransitionMappings(
  * @param to Transition target shape
  * @param positionInSourceShape position lost in source shape
  *
- * @pre Symmetry::size(from) == Symmetry::size(to) + 1
+ * @pre Shapes::size(from) == Shapes::size(to) + 1
  */
 std::vector<DistortionInfo> ligandLossTransitionMappings(
   Shape from,
@@ -295,7 +295,7 @@ Shape mostSymmetric(unsigned symmetrySize);
 
 } // namespace properties
 
-} // namespace Symmetry
+} // namespace Shapes
 
 } // namespace Scine
 

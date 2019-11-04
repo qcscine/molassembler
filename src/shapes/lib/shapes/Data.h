@@ -23,7 +23,7 @@
 
 namespace Scine {
 
-namespace Symmetry {
+namespace Shapes {
 
 /* Typedefs */
 //! The type to store symmetry rotations
@@ -343,7 +343,7 @@ inline const TetrahedronList& tetrahedra(const Shape shape) {
   return symmetryData().at(shape).tetrahedra;
 }
 
-} // namespace Symmetry
+} // namespace Shapes
 
 } // namespace Scine
 

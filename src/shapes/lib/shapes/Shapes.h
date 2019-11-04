@@ -15,7 +15,7 @@ namespace Scine {
 /**
  * @brief Symmetry definitions and properties
  */
-namespace Symmetry {
+namespace Shapes {
 
 /*! @brief Enumeration of all contained symmetry names
  *
@@ -109,7 +109,7 @@ enum class Shape : unsigned {
 constexpr unsigned nShapes = 30;
 static_assert(nShapes == static_cast<unsigned>(Shape::Cuboctahedron) + 1, "Miscounted?");
 
-} // namespace Symmetry
+} // namespace Shapes
 
 } // namespace Scine
 

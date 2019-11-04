@@ -25,7 +25,7 @@
 #include <iomanip>
 
 using namespace Scine;
-using namespace Symmetry;
+using namespace Shapes;
 
 template<typename PRNG>
 Eigen::Vector3d randomVectorOnSphere(const double radius, PRNG& prng) {
@@ -148,20 +148,20 @@ struct RScriptWriter {
 
   void writeHeader() {
     file << "symmetryNames <- c(\"" << temple::condense(
-      temple::map(Symmetry::allShapes, [](auto name) { return Symmetry::name(name); }),
+      temple::map(Shapes::allShapes, [](auto name) { return Shapes::name(name); }),
       "\",\""
     ) << "\")\n";
     file << "symmetrySizes <- c(" << temple::condense(
-      temple::map(Symmetry::allShapes, [](auto name) { return Symmetry::size(name); })
+      temple::map(Shapes::allShapes, [](auto name) { return Shapes::size(name); })
     ) << ")\n";
-    file << "results <- array(numeric(), c(" << Symmetry::allShapes.size() << ", " << nExperiments << "))\n";
+    file << "results <- array(numeric(), c(" << Shapes::allShapes.size() << ", " << nExperiments << "))\n";
   }
 
   void writeSeed(int seed) {
     file << "seed <- " << seed << "\n";
   }
 
-  void addResults(const Symmetry::Shape name, const std::vector<double>& results) {
+  void addResults(const Shapes::Shape name, const std::vector<double>& results) {
     const unsigned symmetryIndex = nameIndex(name) + 1;
     file << "results[" << symmetryIndex << ",] <- c(" << results << ")\n";
   }

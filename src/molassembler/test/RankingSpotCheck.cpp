@@ -84,9 +84,9 @@ bool isAtomStereocenter(
     return false;
   }
 
-  if(stereopermutatorOption->getShape() != Symmetry::Shape::Tetrahedron) {
+  if(stereopermutatorOption->getShape() != Shapes::Shape::Tetrahedron) {
     std::cout << "Atom stereopermutator on " << i << " has "
-      << Symmetry::name(stereopermutatorOption->getShape())
+      << Shapes::name(stereopermutatorOption->getShape())
       << " shape, not tetrahedron\n";
     return false;
   }
@@ -144,7 +144,7 @@ bool noCarbonsAreTrigonalPyramidal(const Molecule& molecule) {
       && temple::optionals::map(
         molecule.stereopermutators().option(i),
         [](const AtomStereopermutator& a) -> bool {
-          return a.getShape() == Symmetry::Shape::TrigonalPyramid;
+          return a.getShape() == Shapes::Shape::TrigonalPyramid;
         }
       ).value_or(false)
     ) {

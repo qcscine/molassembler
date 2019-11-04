@@ -161,7 +161,7 @@ public:
    * @complexity{@math{O(\prod_i^Rm_i)} where @math{R} is the set of rotations and
    * @math{m_i} is the multiplicity of rotation @math{i}}
    */
-  std::set<Stereopermutation> generateAllRotations(const Symmetry::Shape& shape) const;
+  std::set<Stereopermutation> generateAllRotations(const Shapes::Shape& shape) const;
 
   /*!
    * Gets a map of ligand symbol character to position(s) in the permutational
@@ -192,7 +192,7 @@ public:
    */
   boost::optional<bool> isEnantiomer(
     const Stereopermutation& other,
-    const Symmetry::Shape& shape
+    const Shapes::Shape& shape
   ) const;
 
   /*!
@@ -203,7 +203,7 @@ public:
    */
   bool isRotationallySuperimposable(
     const Stereopermutation& other,
-    const Symmetry::Shape& shape
+    const Shapes::Shape& shape
   ) const;
 
   /*!
@@ -243,7 +243,7 @@ private:
     const std::function<
       bool(const Stereopermutation&, const Stereopermutation&)
     >& interruptCallbackOnNewStereopermutation,
-    const Symmetry::Shape shape
+    const Shapes::Shape shape
   ) const;
 };
 

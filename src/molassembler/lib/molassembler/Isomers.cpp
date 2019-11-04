@@ -150,7 +150,7 @@ Molecule enantiomer(const Molecule& a) {
     }
 
     // If there are no enantiomers for this shape, we skip the permutator
-    const auto& mirrorPermutation = Symmetry::mirror(permutator.getShape());
+    const auto& mirrorPermutation = Shapes::mirror(permutator.getShape());
     if(mirrorPermutation.empty()) {
       continue;
     }

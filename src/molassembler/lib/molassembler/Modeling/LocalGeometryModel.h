@@ -94,7 +94,7 @@ int formalCharge(
  *
  * @complexity{@math{\Theta(1)}}
  */
-boost::optional<Symmetry::Shape> vsepr(
+boost::optional<Shapes::Shape> vsepr(
   Scine::Utils::ElementType centerAtomType,
   const std::vector<BindingSiteInformation>& sites,
   int formalCharge
@@ -105,7 +105,7 @@ boost::optional<Symmetry::Shape> vsepr(
  * @complexity{@math{\Theta(1)}}
  * @throws std::logic_error If no shapes of @p size exist
  */
-Symmetry::Shape firstOfSize(unsigned size);
+Shapes::Shape firstOfSize(unsigned size);
 
 
 /* Tiered geometry determination function */
@@ -115,7 +115,7 @@ std::vector<LocalGeometry::BindingSiteInformation> reduceToSiteInformation(
   const RankingInformation& ranking
 );
 
-boost::optional<Symmetry::Shape> inferShape(
+boost::optional<Shapes::Shape> inferShape(
   const OuterGraph& graph,
   AtomIndex index,
   const RankingInformation& ranking

@@ -19,11 +19,11 @@
 
 namespace Scine {
 
-namespace Symmetry {
+namespace Shapes {
 namespace properties {
 struct SymmetryTransitionGroup;
 } // namespace properties
-} // namespace Symmetry
+} // namespace Shapes
 
 namespace molassembler {
 
@@ -40,7 +40,7 @@ public:
    * @throws std::logic_error If there are no larger shapes
    * @note Behavior is dependent on ChiralStatePreservation option
    */
-  static Symmetry::Shape up(Symmetry::Shape shape);
+  static Shapes::Shape up(Shapes::Shape shape);
 
   /*!
    * @brief Picks a shape retaining as much chiral state as possible on a
@@ -48,14 +48,14 @@ public:
    * @throws std::logic_error If there are no smaller shapes
    * @note Behavior is dependent on ChiralStatePreservation option
    */
-  static Symmetry::Shape down(Symmetry::Shape shape, unsigned removedShapePosition);
+  static Shapes::Shape down(Shapes::Shape shape, unsigned removedShapePosition);
 
   /*!
    * @brief Generates an shape position index mapping from a shape
    *   transition group
    */
   boost::optional<std::vector<unsigned>> getIndexMapping(
-    const Symmetry::properties::SymmetryTransitionGroup& mappingsGroup,
+    const Shapes::properties::SymmetryTransitionGroup& mappingsGroup,
     const ChiralStatePreservation& preservationOption
   );
 //!@}
@@ -65,7 +65,7 @@ public:
     // The base graph
     const OuterGraph& graph,
     // The shape of this Stereopermutator
-    Symmetry::Shape shape,
+    Shapes::Shape shape,
     // The atom this Stereopermutator is centered on
     AtomIndex centerAtom,
     // Ranking information of substituents
@@ -104,7 +104,7 @@ public:
   boost::optional<PropagatedState> propagate(
     const OuterGraph& graph,
     RankingInformation newRanking,
-    boost::optional<Symmetry::Shape> shapeOption
+    boost::optional<Shapes::Shape> shapeOption
   );
 
   /*!
@@ -115,7 +115,7 @@ public:
 
   //! If the shape is changed, we must adapt
   void setShape(
-    Symmetry::Shape shape,
+    Shapes::Shape shape,
     const OuterGraph& graph
   );
 
@@ -181,7 +181,7 @@ public:
   const RankingInformation& getRanking() const;
 
   //! Returns the underlying shape
-  Symmetry::Shape getShape() const;
+  Shapes::Shape getShape() const;
 
   /*!
    * @brief Yields the mapping from site indices to shape positions
@@ -218,7 +218,7 @@ private:
   AtomIndex _centerAtom;
 
   //! The shape the stereopermutator represents
-  Symmetry::Shape _shape;
+  Shapes::Shape _shape;
 
   //! Ranking information of substituents
   RankingInformation _ranking;

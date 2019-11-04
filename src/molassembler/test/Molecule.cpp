@@ -112,7 +112,7 @@ BOOST_AUTO_TEST_CASE(MoleculeRuleOfFiveTrivial) {
 using HashArgumentsType = std::tuple<
   Utils::ElementType,
   std::vector<molassembler::hashes::BondInformation>,
-  boost::optional<Symmetry::Shape>,
+  boost::optional<Shapes::Shape>,
   boost::optional<unsigned>
 >;
 
@@ -136,10 +136,10 @@ HashArgumentsType randomArguments() {
     };
   };
 
-  boost::optional<Symmetry::Shape> shapeOptional;
+  boost::optional<Shapes::Shape> shapeOptional;
   boost::optional<unsigned> assignmentOptional;
   if(temple::random::getSingle<bool>(randomnessEngine())) {
-    shapeOptional = static_cast<Symmetry::Shape>(
+    shapeOptional = static_cast<Shapes::Shape>(
       temple::random::getSingle<unsigned>(0, 15, randomnessEngine())
     );
 
@@ -151,7 +151,7 @@ HashArgumentsType randomArguments() {
   std::vector<molassembler::hashes::BondInformation> bonds;
   unsigned S;
   if(shapeOptional) {
-    S = Symmetry::size(*shapeOptional);
+    S = Shapes::size(*shapeOptional);
   } else {
     S = temple::random::getSingle<unsigned>(1, 8, randomnessEngine());
   }
@@ -441,7 +441,7 @@ BOOST_AUTO_TEST_CASE(MoleculeBasicRSInequivalency) {
   a.addAtom(Utils::ElementType::F, 0, BondType::Single);
   a.addAtom(Utils::ElementType::Cl, 0, BondType::Single);
   a.addAtom(Utils::ElementType::Br, 0, BondType::Single);
-  a.setShapeAtAtom(0, Symmetry::Shape::Tetrahedron);
+  a.setShapeAtAtom(0, Shapes::Shape::Tetrahedron);
 
   // Make sure it's recognized as asymmetric
   auto centralStereopermutatorOption = a.stereopermutators().option(0);
@@ -468,8 +468,8 @@ BOOST_AUTO_TEST_CASE(MoleculeBasicEZInequivalency) {
   a.addAtom(Utils::ElementType::F, 1, BondType::Single);
 
   // Set the shapes
-  a.setShapeAtAtom(0, Symmetry::Shape::EquilateralTriangle);
-  a.setShapeAtAtom(1, Symmetry::Shape::EquilateralTriangle);
+  a.setShapeAtAtom(0, Shapes::Shape::EquilateralTriangle);
+  a.setShapeAtAtom(1, Shapes::Shape::EquilateralTriangle);
 
   // Progression must recognize the new stereopermutator
   auto stereopermutatorOption = a.stereopermutators().option(
@@ -547,9 +547,9 @@ BOOST_AUTO_TEST_CASE(PropagateGraphChangeTests) {
     if(
       complex.graph().elementType(i) == Utils::ElementType::N
       && complex.stereopermutators().option(i)
-      && Symmetry::size(complex.stereopermutators().option(i)->getShape()) == 3
+      && Shapes::size(complex.stereopermutators().option(i)->getShape()) == 3
     ) {
-      complex.setShapeAtAtom(i, Symmetry::Shape::VacantTetrahedron);
+      complex.setShapeAtAtom(i, Shapes::Shape::VacantTetrahedron);
     }
   }
 
@@ -575,7 +575,7 @@ BOOST_AUTO_TEST_CASE(MoleculeSplitRecognition) {
   Molecule water {Utils::ElementType::O};
   water.addAtom(Utils::ElementType::H, 0, BondType::Single);
   water.addAtom(Utils::ElementType::H, 0, BondType::Single);
-  water.setShapeAtAtom(0, Symmetry::Shape::Bent);
+  water.setShapeAtAtom(0, Shapes::Shape::Bent);
 
   Molecule ethane {Utils::ElementType::C};
   ethane.addAtom(Utils::ElementType::H, 0, BondType::Single);
@@ -585,8 +585,8 @@ BOOST_AUTO_TEST_CASE(MoleculeSplitRecognition) {
   ethane.addAtom(Utils::ElementType::H, otherCarbon, BondType::Single);
   ethane.addAtom(Utils::ElementType::H, otherCarbon, BondType::Single);
   ethane.addAtom(Utils::ElementType::H, otherCarbon, BondType::Single);
-  ethane.setShapeAtAtom(0, Symmetry::Shape::Tetrahedron);
-  ethane.setShapeAtAtom(otherCarbon, Symmetry::Shape::Tetrahedron);
+  ethane.setShapeAtAtom(0, Shapes::Shape::Tetrahedron);
+  ethane.setShapeAtAtom(otherCarbon, Shapes::Shape::Tetrahedron);
 
   Molecule potassium {Utils::ElementType::K};
 
@@ -633,7 +633,7 @@ BOOST_AUTO_TEST_CASE(MoleculeGeometryChoices) {
   BOOST_REQUIRE(stereocenterOption);
 
   if(auto suggestedShapeOption = testMol.inferShape(1u, stereocenterOption->getRanking())) {
-    BOOST_CHECK(suggestedShapeOption.value() == Symmetry::Shape::VacantTetrahedron);
+    BOOST_CHECK(suggestedShapeOption.value() == Shapes::Shape::VacantTetrahedron);
     testMol.setShapeAtAtom(1u, suggestedShapeOption.value());
   }
 
@@ -641,7 +641,7 @@ BOOST_AUTO_TEST_CASE(MoleculeGeometryChoices) {
 
   BOOST_CHECK(
     testMol.stereopermutators().option(1u)
-    && testMol.stereopermutators().option(1u)->getShape() == Symmetry::Shape::Tetrahedron
+    && testMol.stereopermutators().option(1u)->getShape() == Shapes::Shape::Tetrahedron
   );
 }
 
@@ -698,7 +698,7 @@ BOOST_AUTO_TEST_CASE(EtaBondDynamism) {
 void checkAtomStereopermutator(
   const Molecule& m,
   const AtomIndex i,
-  const Symmetry::Shape shape
+  const Shapes::Shape shape
 ) {
   BOOST_CHECK_MESSAGE(
     temple::optionals::map(
@@ -710,9 +710,9 @@ void checkAtomStereopermutator(
     temple::optionals::map(
       m.stereopermutators().option(i),
       [&](const AtomStereopermutator& permutator) {
-        return Symmetry::name(permutator.getShape());
+        return Shapes::name(permutator.getShape());
       }
-    ).value_or("No") << " atom stereopermutator on " << i << ", expected a(n) " << Symmetry::name(shape) << " stereopermutator"
+    ).value_or("No") << " atom stereopermutator on " << i << ", expected a(n) " << Shapes::name(shape) << " stereopermutator"
   );
 }
 
@@ -723,11 +723,11 @@ BOOST_AUTO_TEST_CASE(ShapeClassification) {
   auto interconnected = IO::read("shape_classification/interconnected.mol");
   for(const AtomIndex i : boost::make_iterator_range(interconnected.graph().atoms())) {
     if(interconnected.graph().elementType(i) == Utils::ElementType::Fe) {
-      checkAtomStereopermutator(interconnected, i, Symmetry::Shape::Octahedron);
+      checkAtomStereopermutator(interconnected, i, Shapes::Shape::Octahedron);
     }
   }
 
   // Trigonal bipyramidal transition metal center (#99)
   auto trigbipy = IO::read("shape_classification/trig_bipy.mol");
-  checkAtomStereopermutator(trigbipy, 0, Symmetry::Shape::TrigonalBipyramid);
+  checkAtomStereopermutator(trigbipy, 0, Shapes::Shape::TrigonalBipyramid);
 }

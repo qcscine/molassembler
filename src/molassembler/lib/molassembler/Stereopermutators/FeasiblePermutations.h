@@ -41,7 +41,7 @@ struct FeasibleStereopermutations {
     const RankingInformation::RankedSitesType& canonicalSites,
     const ConeAngleType& coneAngles,
     const RankingInformation& ranking,
-    Symmetry::Shape shape,
+    Shapes::Shape shape,
     const OuterGraph& graph
   );
 //!@}
@@ -67,7 +67,7 @@ struct FeasibleStereopermutations {
    */
   FeasibleStereopermutations(
     const AbstractStereopermutations& abstractPermutations,
-    Symmetry::Shape shape,
+    Shapes::Shape shape,
     AtomIndex centralIndex,
     const RankingInformation& ranking,
     const OuterGraph& graph

@@ -175,9 +175,9 @@ typename Stereopermutation::LinksSetType Stereopermutation::rotateLinks(
 }
 
 std::set<Stereopermutation> Stereopermutation::generateAllRotations(
-  const Symmetry::Shape& shape
+  const Shapes::Shape& shape
 ) const {
-  assert(characters.size() == Symmetry::size(shape));
+  assert(characters.size() == Shapes::size(shape));
 
   return _generateAllRotations(
     [](
@@ -193,9 +193,9 @@ std::set<Stereopermutation> Stereopermutation::generateAllRotations(
 
 boost::optional<bool> Stereopermutation::isEnantiomer(
   const Stereopermutation& other,
-  const Symmetry::Shape& shape
+  const Shapes::Shape& shape
 ) const {
-  assert(characters.size() == Symmetry::size(shape));
+  assert(characters.size() == Shapes::size(shape));
 
   /* Generate the mirror image of *this and check whether it is rotationally
    * superimposable with other.
@@ -203,7 +203,7 @@ boost::optional<bool> Stereopermutation::isEnantiomer(
    * Although the mirror mapping isn't really a "rotation", it has the same
    * properties as one, so we just apply it to a copy of *this.
    */
-  const auto& mirrorPermutation = Symmetry::mirror(shape);
+  const auto& mirrorPermutation = Shapes::mirror(shape);
 
   /* If the mirror were to yield an identity permutation, it is represented
    * as an empty constexpr array (now a vector, so:)
@@ -219,7 +219,7 @@ boost::optional<bool> Stereopermutation::isEnantiomer(
 
 bool Stereopermutation::isRotationallySuperimposable(
   const Stereopermutation& other,
-  const Symmetry::Shape& shape
+  const Shapes::Shape& shape
 ) const {
   return (
     *this == other
@@ -269,7 +269,7 @@ std::pair<
   const std::function<
     bool(const Stereopermutation&, const Stereopermutation&)
   >& interruptCallbackOnNewStereopermutation,
-  const Symmetry::Shape shape
+  const Shapes::Shape shape
 ) const {
 
   // add the initial structure to a set of Stereopermutations
@@ -300,7 +300,7 @@ std::pair<
    * It does not assume that rotations are commutative.
    */
   // maximum element is the size of the rotation vector
-  const unsigned linkLimit = Symmetry::rotations(shape).size();
+  const unsigned linkLimit = Shapes::rotations(shape).size();
 
   // initialize
   std::vector<unsigned> chain = {0};
@@ -314,7 +314,7 @@ std::pair<
 
     // apply the rotation referenced by the last link in chain
     generated.applyRotation(
-      Symmetry::rotations(shape).at(
+      Shapes::rotations(shape).at(
         chain.back()
       )
     );

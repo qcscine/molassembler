@@ -11,7 +11,7 @@
 #include "shapes/Shapes.h"
 
 namespace Scine {
-namespace Symmetry {
+namespace Shapes {
 namespace continuous {
 
 using PositionCollection = Eigen::Matrix<double, 3, Eigen::Dynamic>;
@@ -251,7 +251,7 @@ double minimalDistortionPathDeviation(const PositionCollection& positions, Shape
 
 
 } // namespace continuous
-} // namespace Symmetry
+} // namespace Shapes
 } // namespace Scine
 
 #endif

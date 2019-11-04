@@ -8,7 +8,7 @@
 #include "temple/Adaptors/Iota.h"
 
 namespace Scine {
-namespace Symmetry {
+namespace Shapes {
 namespace detail {
 //! Determine degeneracy of intertial moments
 unsigned degeneracy(const Eigen::Vector3d& inertialMoments) {
@@ -243,5 +243,5 @@ unsigned reorientAsymmetricTop(Eigen::Ref<InertialPositionsType> normalizedPosit
   return orderedAxisBest.front().order;
 }
 
-} // namespace Symmetry
+} // namespace Shapes
 } // namespace Scine

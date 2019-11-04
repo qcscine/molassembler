@@ -36,7 +36,7 @@ std::string condense(const std::vector<unsigned>& indexVector) {
 
 std::ostream& operator << (
   std::ostream& out,
-  const Symmetry::properties::DistortionInfo& distortion
+  const Shapes::properties::DistortionInfo& distortion
 ) {
   out << std::setw(distortionColumns[0]) << distortion.angularDistortion
     << std::setw(distortionColumns[1]) << distortion.chiralDistortion
@@ -59,10 +59,10 @@ void printPermissibleSymmetries() {
     << std::setw(symmetryColumns[2]) << "Name"
     << nl;
 
-  for(unsigned i = 0; i < Symmetry::allShapes.size(); i++) {
+  for(unsigned i = 0; i < Shapes::allShapes.size(); i++) {
     std::cout << std::setw(symmetryColumns[0]) << i
-      << std::setw(symmetryColumns[1]) << Symmetry::size(Symmetry::allShapes.at(i))
-      << std::setw(symmetryColumns[2]) << Symmetry::name(Symmetry::allShapes.at(i))
+      << std::setw(symmetryColumns[1]) << Shapes::size(Shapes::allShapes.at(i))
+      << std::setw(symmetryColumns[2]) << Shapes::name(Shapes::allShapes.at(i))
       << nl;
   }
 
@@ -70,7 +70,7 @@ void printPermissibleSymmetries() {
 }
 
 void writeDistortions(
-  const std::vector<Symmetry::properties::DistortionInfo>& distortions
+  const std::vector<Shapes::properties::DistortionInfo>& distortions
 ) {
   std::cout << std::fixed << std::setprecision(2);
 
@@ -80,7 +80,7 @@ void writeDistortions(
 }
 
 double calculateAmbiguity(
-  const std::vector<Symmetry::properties::DistortionInfo>& distortions
+  const std::vector<Shapes::properties::DistortionInfo>& distortions
 ) {
   /* Some measure between 0 and 1 that indicates how ambiguous choosing the
    * lowest mapping is.
@@ -118,13 +118,13 @@ double calculateAmbiguity(
 
 struct AmbiguityEntry {
   double ambiguity;
-  Symmetry::Shape source, target;
+  Shapes::Shape source, target;
   boost::optional<unsigned> deletedIndex;
 
   AmbiguityEntry(
     const double passAmbiguity,
-    const Symmetry::Shape passSource,
-    const Symmetry::Shape passTarget,
+    const Shapes::Shape passSource,
+    const Shapes::Shape passTarget,
     boost::optional<unsigned> passDeletedIndex = boost::none
   ) : ambiguity(passAmbiguity),
       source(passSource),
@@ -168,8 +168,8 @@ int main(int argc, char* argv[]) {
     unsigned targetSymmetryArg = options_variables_map["t"].as<unsigned>();
 
     if(
-      sourceSymmetryArg >= Symmetry::allShapes.size()
-      || targetSymmetryArg >= Symmetry::allShapes.size()
+      sourceSymmetryArg >= Shapes::allShapes.size()
+      || targetSymmetryArg >= Shapes::allShapes.size()
     ) {
       std::cout << "Specified symmetry out of bounds. Valid symmetries:" << nl << nl;
       printPermissibleSymmetries();
@@ -182,12 +182,12 @@ int main(int argc, char* argv[]) {
       return 1;
     }
 
-    Symmetry::Shape sourceSymmetry(Symmetry::allShapes.at(sourceSymmetryArg)),
-                   targetSymmetry(Symmetry::allShapes.at(targetSymmetryArg));
+    Shapes::Shape sourceSymmetry(Shapes::allShapes.at(sourceSymmetryArg)),
+                   targetSymmetry(Shapes::allShapes.at(targetSymmetryArg));
 
     int diff = (
-      static_cast<int>(Symmetry::size(targetSymmetry))
-      - static_cast<int>(Symmetry::size(sourceSymmetry))
+      static_cast<int>(Shapes::size(targetSymmetry))
+      - static_cast<int>(Shapes::size(sourceSymmetry))
     );
 
     if(std::abs(diff) > 1) {
@@ -205,7 +205,7 @@ int main(int argc, char* argv[]) {
 
     if(diff == 1 || diff == 0) {
       const auto distortions = temple::sort(
-        Symmetry::properties::symmetryTransitionMappings(
+        Shapes::properties::symmetryTransitionMappings(
           sourceSymmetry,
           targetSymmetry
         ),
@@ -215,9 +215,9 @@ int main(int argc, char* argv[]) {
       printMappingsHeader();
       writeDistortions(distortions);
     } else {
-      for(unsigned i = 0; i < Symmetry::size(sourceSymmetry); ++i) {
+      for(unsigned i = 0; i < Shapes::size(sourceSymmetry); ++i) {
         const auto distortions = temple::sort(
-            Symmetry::properties::ligandLossTransitionMappings(
+            Shapes::properties::ligandLossTransitionMappings(
             sourceSymmetry,
             targetSymmetry,
             i
@@ -235,20 +235,20 @@ int main(int argc, char* argv[]) {
   if(options_variables_map.count("a") > 0) {
     std::vector<AmbiguityEntry> ambiguities;
 
-    for(const auto& sourceSymmetry : Symmetry::allShapes) {
-      for(const auto& targetSymmetry : Symmetry::allShapes) {
+    for(const auto& sourceSymmetry : Shapes::allShapes) {
+      for(const auto& targetSymmetry : Shapes::allShapes) {
         if(sourceSymmetry == targetSymmetry) {
           // Skip identity mapping
           continue;
         }
 
         int diff = (
-          static_cast<int>(Symmetry::size(targetSymmetry))
-          - static_cast<int>(Symmetry::size(sourceSymmetry))
+          static_cast<int>(Shapes::size(targetSymmetry))
+          - static_cast<int>(Shapes::size(sourceSymmetry))
         );
 
         if(diff == 1 || diff == 0) {
-          auto distortions = Symmetry::properties::symmetryTransitionMappings(
+          auto distortions = Shapes::properties::symmetryTransitionMappings(
             sourceSymmetry,
             targetSymmetry
           );
@@ -263,8 +263,8 @@ int main(int argc, char* argv[]) {
             );
           }
         } else if(diff == -1) {
-          for(unsigned i = 0; i < Symmetry::size(sourceSymmetry); ++i) {
-            auto distortions = Symmetry::properties::ligandLossTransitionMappings(
+          for(unsigned i = 0; i < Shapes::size(sourceSymmetry); ++i) {
+            auto distortions = Shapes::properties::ligandLossTransitionMappings(
               sourceSymmetry,
               targetSymmetry,
               i
@@ -309,8 +309,8 @@ int main(int argc, char* argv[]) {
 
     for(const auto& entry : ambiguities) {
       std::cout << std::setw(ambiguityColumns[0]) << entry.ambiguity
-        << std::setw(ambiguityColumns[1]) << Symmetry::name(entry.source)
-        << std::setw(ambiguityColumns[2]) << Symmetry::name(entry.target)
+        << std::setw(ambiguityColumns[1]) << Shapes::name(entry.source)
+        << std::setw(ambiguityColumns[2]) << Shapes::name(entry.target)
         << std::setw(ambiguityColumns[3]);
 
       if(entry.deletedIndex) {

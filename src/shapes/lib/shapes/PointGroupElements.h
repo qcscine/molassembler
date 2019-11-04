@@ -18,7 +18,7 @@
 #include <memory>
 
 namespace Scine {
-namespace Symmetry {
+namespace Shapes {
 namespace elements {
 
 //! Base class for symmetry elements
@@ -152,7 +152,7 @@ using NPGroupingsMapType = std::unordered_map<
 NPGroupingsMapType npGroupings(const ElementsList& elements);
 
 } // namespace elements
-} // namespace Symmetry
+} // namespace Shapes
 } // namespace Scine
 
 #endif

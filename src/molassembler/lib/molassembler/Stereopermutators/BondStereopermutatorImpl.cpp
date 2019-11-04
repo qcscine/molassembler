@@ -551,7 +551,7 @@ bool BondStereopermutator::Impl::cycleObviouslyInfeasible(
 //     [&](const AtomIndex i, const AtomIndex j, const AtomIndex k) {
 //       // Is there an AtomStereopermutator here?
 //       DistanceGeometry::ValueBounds angleValueBounds {
-//         Symmetry::smallestAngle,
+//         Shapes::smallestAngle,
 //         M_PI
 //       };
 //
@@ -573,8 +573,8 @@ bool BondStereopermutator::Impl::cycleObviouslyInfeasible(
 //             );
 //           } else {
 //             angleValueBounds = {
-//               Symmetry::minimumAngle(permutatorOption->getShape()),
-//               Symmetry::maximumAngle(permutatorOption->getShape())
+//               Shapes::minimumAngle(permutatorOption->getShape()),
+//               Shapes::maximumAngle(permutatorOption->getShape())
 //             };
 //           }
 //         }
@@ -866,7 +866,7 @@ void BondStereopermutator::Impl::fit(
 
   auto makeSitePositions = [&angstromWrapper](const AtomStereopermutator& permutator) -> Eigen::Matrix<double, 3, Eigen::Dynamic> {
     const unsigned S = permutator.getRanking().sites.size();
-    assert(S == Symmetry::size(permutator.getShape()));
+    assert(S == Shapes::size(permutator.getShape()));
     Eigen::Matrix<double, 3, Eigen::Dynamic> sitePositions(3, S);
     for(unsigned i = 0; i < S; ++i) {
       sitePositions.col(i) = cartesian::averagePosition(

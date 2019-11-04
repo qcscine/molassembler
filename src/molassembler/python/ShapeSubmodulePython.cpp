@@ -11,38 +11,38 @@ void init_shape_submodule(pybind11::module& m) {
   auto symmetrySubmodule = m.def_submodule("shape");
   symmetrySubmodule.doc() = R"(Shape submodule)";
 
-  pybind11::enum_<Symmetry::Shape> shape(symmetrySubmodule, "Shape", "Shape enum");
+  pybind11::enum_<Shapes::Shape> shape(symmetrySubmodule, "Shape", "Shape enum");
 
-  shape.value("Line", Symmetry::Shape::Line)
-    .value("Bent", Symmetry::Shape::Bent)
-    .value("EquilateralTriangle", Symmetry::Shape::EquilateralTriangle)
-    .value("VacantTetrahedron", Symmetry::Shape::VacantTetrahedron)
-    .value("T", Symmetry::Shape::T)
-    .value("Tetrahedron", Symmetry::Shape::Tetrahedron)
-    .value("Square", Symmetry::Shape::Square)
-    .value("Seesaw", Symmetry::Shape::Seesaw)
-    .value("TrigonalPyramid", Symmetry::Shape::TrigonalPyramid)
-    .value("SquarePyramid", Symmetry::Shape::SquarePyramid)
-    .value("TrigonalBipyramid", Symmetry::Shape::TrigonalBipyramid)
-    .value("Pentagon", Symmetry::Shape::Pentagon)
-    .value("Octahedron", Symmetry::Shape::Octahedron)
-    .value("TrigonalPrism", Symmetry::Shape::TrigonalPrism)
-    .value("PentagonalPyramid", Symmetry::Shape::PentagonalPyramid)
-    .value("PentagonalBipyramid", Symmetry::Shape::PentagonalBipyramid)
-    .value("SquareAntiprism", Symmetry::Shape::SquareAntiprism);
+  shape.value("Line", Shapes::Shape::Line)
+    .value("Bent", Shapes::Shape::Bent)
+    .value("EquilateralTriangle", Shapes::Shape::EquilateralTriangle)
+    .value("VacantTetrahedron", Shapes::Shape::VacantTetrahedron)
+    .value("T", Shapes::Shape::T)
+    .value("Tetrahedron", Shapes::Shape::Tetrahedron)
+    .value("Square", Shapes::Shape::Square)
+    .value("Seesaw", Shapes::Shape::Seesaw)
+    .value("TrigonalPyramid", Shapes::Shape::TrigonalPyramid)
+    .value("SquarePyramid", Shapes::Shape::SquarePyramid)
+    .value("TrigonalBipyramid", Shapes::Shape::TrigonalBipyramid)
+    .value("Pentagon", Shapes::Shape::Pentagon)
+    .value("Octahedron", Shapes::Shape::Octahedron)
+    .value("TrigonalPrism", Shapes::Shape::TrigonalPrism)
+    .value("PentagonalPyramid", Shapes::Shape::PentagonalPyramid)
+    .value("PentagonalBipyramid", Shapes::Shape::PentagonalBipyramid)
+    .value("SquareAntiprism", Shapes::Shape::SquareAntiprism);
 
-  shape.def("__str__", &Symmetry::name);
+  shape.def("__str__", &Shapes::name);
 
   symmetrySubmodule.def(
     "name_from_str",
-    &Symmetry::nameFromString,
+    &Shapes::nameFromString,
     pybind11::arg("name_str"),
     "Fetch a shape name from its string representation"
   );
 
   symmetrySubmodule.def(
     "size",
-    &Symmetry::size,
+    &Shapes::size,
     pybind11::arg("shape"),
     "Number of substituent positions in a shape"
   );

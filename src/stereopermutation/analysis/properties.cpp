@@ -64,25 +64,25 @@ int main(int argc, char* argv[]) {
   ) {
     // Validate symmetry argument
     unsigned argSymmetry = options_variables_map["s"].as<unsigned>();
-    if(argSymmetry >= Symmetry::allShapes.size()) {
+    if(argSymmetry >= Shapes::allShapes.size()) {
       std::cout << "Specified symmetry out of bounds. Valid symmetries are 0-"
-        << (Symmetry::allShapes.size() - 1) << ":\n\n";
-      for(unsigned i = 0; i < Symmetry::allShapes.size(); i++) {
-        std::cout << "  " << i << " - " << Symmetry::name(Symmetry::allShapes.at(i)) << "\n";
+        << (Shapes::allShapes.size() - 1) << ":\n\n";
+      for(unsigned i = 0; i < Shapes::allShapes.size(); i++) {
+        std::cout << "  " << i << " - " << Shapes::name(Shapes::allShapes.at(i)) << "\n";
       }
       std::cout << std::endl;
       return 0;
     }
 
-    Symmetry::Shape shape = Symmetry::allShapes[argSymmetry];
+    Shapes::Shape shape = Shapes::allShapes[argSymmetry];
 
     // Validate characters
     std::string chars = options_variables_map["c"].as<std::string>();
 
-    if(chars.size() != Symmetry::size(shape)) {
+    if(chars.size() != Shapes::size(shape)) {
       std::cout << "Number of characters does not fit specified symmetry size: "
         << chars.size() << " characters specified, symmetry size is "
-        << Symmetry::size(shape) << nl;
+        << Shapes::size(shape) << nl;
 
       return 0;
     }
@@ -160,7 +160,7 @@ int main(int argc, char* argv[]) {
       false
     );
 
-    std::cout << "Symmetry: " << Symmetry::name(shape) << nl
+    std::cout << "Symmetry: " << Shapes::name(shape) << nl
       << "Characters: " << chars << nl
       << "Links: " << temple::stringify(links) << nl << nl;
 
@@ -171,7 +171,7 @@ int main(int argc, char* argv[]) {
 
       for(const auto& linkPair : uniques.stereopermutations[i].links) {
         std::cout << (
-          180 * Symmetry::angleFunction(shape)(linkPair.first, linkPair.second) / M_PI
+          180 * Shapes::angleFunction(shape)(linkPair.first, linkPair.second) / M_PI
         ) << " ";
       }
       std::cout << nl;

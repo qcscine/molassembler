@@ -7,7 +7,7 @@
 
 namespace Scine {
 
-namespace Symmetry {
+namespace Shapes {
 
 namespace data {
 
@@ -62,6 +62,6 @@ unsigned nameIndex(const Shape shape) {
   ) - allShapes.begin();
 }
 
-} // namespace Symmetry
+} // namespace Shapes
 
 } // namespace Scine

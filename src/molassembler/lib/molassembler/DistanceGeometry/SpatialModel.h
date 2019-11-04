@@ -226,7 +226,7 @@ public:
    */
   static double siteCentralAngle(
     AtomIndex centralIndex,
-    const Symmetry::Shape& shape,
+    const Shapes::Shape& shape,
     const RankingInformation& ranking,
     const std::vector<unsigned>& shapeVertexMap,
     const std::pair<unsigned, unsigned>& sites,

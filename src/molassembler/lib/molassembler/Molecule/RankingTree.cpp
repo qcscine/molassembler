@@ -413,8 +413,8 @@ public:
       std::is_same<std::decay_t<T>, AtomStereopermutator>::value,
       boost::optional<bool>
     > permutatorSpecificComparison(const T& a, const T& b) const {
-      unsigned aShapeIndex = Symmetry::nameIndex(a.getShape());
-      unsigned bShapeIndex = Symmetry::nameIndex(b.getShape());
+      unsigned aShapeIndex = Shapes::nameIndex(a.getShape());
+      unsigned bShapeIndex = Shapes::nameIndex(b.getShape());
 
       if(aShapeIndex < bShapeIndex) {
         return true;
@@ -824,10 +824,10 @@ void RankingTree::_applySequenceRules(
 
 
     /* Figure out the shape the stereopermutator should have */
-    Symmetry::Shape localShape;
+    Shapes::Shape localShape;
     if(
       existingStereopermutatorOption
-      && Symmetry::size(
+      && Shapes::size(
         existingStereopermutatorOption->getShape()
       ) == centerRanking.sites.size()
     ) {

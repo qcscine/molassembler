@@ -21,7 +21,7 @@
 
 namespace Scine {
 
-namespace Symmetry {
+namespace Shapes {
 
 namespace detail {
 
@@ -87,7 +87,7 @@ constexpr std::array<double, size * (size - 1) / 2> makeArray(
 
 } // namespace detail
 
-} // namespace Symmetry
+} // namespace Shapes
 
 } // namespace Scine
 

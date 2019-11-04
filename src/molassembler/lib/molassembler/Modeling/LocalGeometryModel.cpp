@@ -32,7 +32,7 @@ const std::map<BondType, double> bondWeights {
   {BondType::Eta, 0.0}
 };
 
-boost::optional<Symmetry::Shape> vsepr(
+boost::optional<Shapes::Shape> vsepr(
   const Scine::Utils::ElementType centerAtomType,
   const std::vector<BindingSiteInformation>& sites,
   const int formalCharge
@@ -96,7 +96,7 @@ boost::optional<Symmetry::Shape> vsepr(
     return boost::none;
   }
 
-  using Symmetry::Shape;
+  using Shapes::Shape;
 
   const auto XESum = X + E;
 
@@ -179,17 +179,17 @@ boost::optional<Symmetry::Shape> vsepr(
   return boost::none;
 }
 
-Symmetry::Shape firstOfSize(const unsigned size) {
+Shapes::Shape firstOfSize(const unsigned size) {
   // Pick the first shape of fitting size
   auto findIter = std::find_if(
-    std::begin(Symmetry::allShapes),
-    std::end(Symmetry::allShapes),
+    std::begin(Shapes::allShapes),
+    std::end(Shapes::allShapes),
     [&size](const auto shape) -> bool {
-      return Symmetry::size(shape) == size;
+      return Shapes::size(shape) == size;
     }
   );
 
-  if(findIter == std::end(Symmetry::allShapes)) {
+  if(findIter == std::end(Shapes::allShapes)) {
     throw std::logic_error("No shapes of that size!");
   }
 
@@ -270,7 +270,7 @@ int formalCharge(
   return formalCharge;
 }
 
-boost::optional<Symmetry::Shape> inferShape(
+boost::optional<Shapes::Shape> inferShape(
   const OuterGraph& graph,
   const AtomIndex index,
   const RankingInformation& ranking

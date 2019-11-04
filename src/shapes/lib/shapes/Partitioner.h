@@ -10,7 +10,7 @@
 #include <vector>
 
 namespace Scine {
-namespace Symmetry {
+namespace Shapes {
 
 /**
  * @brief Given S * E distinguishable objects, this class helps enumerate all
@@ -88,5 +88,5 @@ private:
 
 };
 
-} // namespace Symmetry
+} // namespace Shapes
 } // namespace Scine

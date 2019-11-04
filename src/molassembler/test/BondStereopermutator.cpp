@@ -251,7 +251,7 @@ BOOST_AUTO_TEST_CASE(StereocentersInSmallCycles) {
 
     // Set geometries
     for(unsigned i = 0; i < cycleSize; ++i) {
-      mol.setShapeAtAtom(i, Symmetry::Shape::Bent);
+      mol.setShapeAtAtom(i, Shapes::Shape::Bent);
     }
 
     auto bondStereopermutatorOption = mol.stereopermutators().option(BondIndex {0, 1});

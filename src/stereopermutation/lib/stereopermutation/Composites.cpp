@@ -37,7 +37,7 @@ std::pair<T, T> makeOrderedPair(T a, T b) {
 }
 
 void rotateCoordinates(
-  Eigen::Ref<Symmetry::CoordinateList> positions,
+  Eigen::Ref<Shapes::CoordinateList> positions,
   const Eigen::Vector3d& unitSource,
   const Eigen::Vector3d& unitTarget
 ) {
@@ -77,7 +77,7 @@ void rotateCoordinates(
 }
 
 void translateCoordinates(
-  Eigen::Ref<Symmetry::CoordinateList> positions,
+  Eigen::Ref<Shapes::CoordinateList> positions,
   const Eigen::Vector3d& translation
 ) {
   for(unsigned i = 0; i < positions.cols(); ++i) {
@@ -120,7 +120,7 @@ double dihedral(
 constexpr temple::floating::ExpandedAbsoluteEqualityComparator<double> Composite::fpComparator;
 
 Composite::OrientationState::OrientationState(
-  Symmetry::Shape passShape,
+  Shapes::Shape passShape,
   unsigned passFusedVertex,
   std::vector<char> passCharacters,
   std::size_t passIdentifier
@@ -129,8 +129,8 @@ Composite::OrientationState::OrientationState(
     characters(std::move(passCharacters)),
     identifier(passIdentifier)
 {
-  assert(fusedVertex < Symmetry::size(shape));
-  assert(characters.size() == Symmetry::size(shape));
+  assert(fusedVertex < Shapes::size(shape));
+  assert(characters.size() == Shapes::size(shape));
 }
 
 void Composite::OrientationState::applyCharacterRotation(
@@ -165,7 +165,7 @@ std::vector<unsigned> Composite::OrientationState::transformToCanonical() {
   applyCharacterRotation(toCanonicalMapping);
 
   // Return the inverse mapping to allow reversion to the original state
-  return Symmetry::properties::inverseRotation(toCanonicalMapping);
+  return Shapes::properties::inverseRotation(toCanonicalMapping);
 }
 
 void Composite::OrientationState::revert(const std::vector<unsigned>& reversionMapping) {
@@ -200,7 +200,7 @@ std::vector<unsigned> Composite::OrientationState::findReductionMapping(
    * the solution to this search case.
    */
   if(fusedVertex == reducedFusedVertex) {
-    return temple::iota<unsigned>(Symmetry::size(shape));
+    return temple::iota<unsigned>(Shapes::size(shape));
   }
 
   /* Find a mapping that rotates fusedVertex to reducedFusedVertex. In many
@@ -208,13 +208,13 @@ std::vector<unsigned> Composite::OrientationState::findReductionMapping(
    * by choosing that rotation whose resulting permutation has the lowest index
    * of permutation.
    */
-  const auto identitySequence = temple::iota<unsigned>(Symmetry::size(shape));
+  const auto identitySequence = temple::iota<unsigned>(Shapes::size(shape));
 
   // Track the best rotation
   unsigned lowestIndexOfPermutation = std::numeric_limits<unsigned>::max();
   std::vector<unsigned> bestRotation;
 
-  const unsigned linkLimit = Symmetry::rotations(shape).size();
+  const unsigned linkLimit = Shapes::rotations(shape).size();
   std::vector<unsigned> chain = {0};
   chain.reserve(32);
   std::vector<
@@ -225,7 +225,7 @@ std::vector<unsigned> Composite::OrientationState::findReductionMapping(
    * been discovered or not.
    */
   boost::dynamic_bitset<> discoveredIndicesOfPermutation {
-    temple::Math::factorial(Symmetry::size(shape))
+    temple::Math::factorial(Shapes::size(shape))
   };
 
   /* The identity sequence has been discovered (initial element of
@@ -236,9 +236,9 @@ std::vector<unsigned> Composite::OrientationState::findReductionMapping(
 
   while(chain.front() < linkLimit) {
     // Generate a new rotation
-    auto generatedRotation = Symmetry::properties::applyRotation(
+    auto generatedRotation = Shapes::properties::applyRotation(
       chainRotations.back(),
-      Symmetry::rotations(shape).at(
+      Shapes::rotations(shape).at(
         chain.back()
       )
     );
@@ -291,7 +291,7 @@ std::vector<unsigned> Composite::OrientationState::findReductionMapping(
 }
 
 unsigned Composite::OrientationState::lowestEqualVertexInShape() const {
-  const auto positionGroupCharacters = Symmetry::properties::positionGroups(shape);
+  const auto positionGroupCharacters = Shapes::properties::positionGroups(shape);
 
   /* Return the position of the first character that matches that of the fused
    * position
@@ -312,16 +312,16 @@ unsigned Composite::OrientationState::lowestEqualVertexInShape() const {
 Composite::AngleGroup Composite::OrientationState::smallestAngleGroup() const {
   // Initialize the search state
   AngleGroup angleGroup;
-  angleGroup.shapeVertices.reserve(Symmetry::size(shape));
+  angleGroup.shapeVertices.reserve(Shapes::size(shape));
   angleGroup.angle = M_PI;
 
   // Go through all symmetry positions excluding the fused shape position
-  for(unsigned i = 0; i < Symmetry::size(shape); ++i) {
+  for(unsigned i = 0; i < Shapes::size(shape); ++i) {
     if(i == fusedVertex) {
       continue;
     }
 
-    double angleToFusedPosition = Symmetry::angleFunction(shape)(fusedVertex, i);
+    double angleToFusedPosition = Shapes::angleFunction(shape)(fusedVertex, i);
 
     // This naturally excludes M_PI angles from the smallest angle group
     if(fpComparator.isLessThan(angleToFusedPosition, angleGroup.angle)) {
@@ -383,16 +383,16 @@ double Composite::perpendicularSubstituentAngle(
 }
 
 std::vector<unsigned> Composite::generateRotation(
-  const Symmetry::Shape shape,
+  const Shapes::Shape shape,
   const unsigned fixedSymmetryPosition,
   const std::vector<unsigned>& changedPositions
 ) {
   auto periodicities = temple::map(
-    temple::iota<unsigned>(Symmetry::rotations(shape).size()),
+    temple::iota<unsigned>(Shapes::rotations(shape).size()),
     [&shape](const unsigned rotationFunctionIndex) -> unsigned {
-      return Symmetry::properties::rotationPeriodicity(
+      return Shapes::properties::rotationPeriodicity(
         shape,
-        Symmetry::rotations(shape).at(rotationFunctionIndex)
+        Shapes::rotations(shape).at(rotationFunctionIndex)
       );
     }
   );
@@ -427,10 +427,10 @@ std::vector<unsigned> Composite::generateRotation(
 
     do {
       // Create the rotation using the index application sequence front-to-back
-      rotation = temple::iota<unsigned>(Symmetry::size(shape));
+      rotation = temple::iota<unsigned>(Shapes::size(shape));
 
       for(const auto r : rotationIndexApplicationSequence) {
-        rotation = Symmetry::properties::applyRotation(
+        rotation = Shapes::properties::applyRotation(
           rotation,
           shape,
           r
@@ -462,7 +462,7 @@ std::vector<unsigned> Composite::generateRotation(
 }
 
 std::vector<unsigned> Composite::rotation(
-  const Symmetry::Shape shape,
+  const Shapes::Shape shape,
   const unsigned fixedSymmetryPosition,
   const std::vector<unsigned>& perpendicularPlanePositions
 ) {
@@ -490,7 +490,7 @@ std::vector<unsigned> Composite::rotation(
      * generateRotation, but it's best to be sure.
      */
     assert(
-      Symmetry::properties::rotationPeriodicity(shape, candidateRotation)
+      Shapes::properties::rotationPeriodicity(shape, candidateRotation)
       == perpendicularPlanePositions.size()
     );
 
@@ -513,7 +513,7 @@ std::vector<unsigned> Composite::rotation(
 
 Composite::PerpendicularAngleGroups Composite::inGroupAngles(
   const AngleGroup& angleGroup,
-  const Symmetry::Shape shape
+  const Shapes::Shape shape
 ) {
   PerpendicularAngleGroups groups;
 
@@ -526,7 +526,7 @@ Composite::PerpendicularAngleGroups Composite::inGroupAngles(
     [&](const unsigned a, const unsigned b) -> void {
       double perpendicularAngle = perpendicularSubstituentAngle(
         angleGroup.angle,
-        Symmetry::angleFunction(shape)(a, b)
+        Shapes::angleFunction(shape)(a, b)
       );
 
       auto findIter = std::find_if(
@@ -643,7 +643,7 @@ Composite::Composite(
    * NOTE: The central atom of both symmetries is always placed at the origin
    * in the coordinate definitions.
    */
-  Symmetry::CoordinateList firstCoordinates = Symmetry::symmetryData().at(
+  Shapes::CoordinateList firstCoordinates = Shapes::symmetryData().at(
     _orientations.first.shape
   ).coordinates;
   // Rotate left fused position onto <1, 0, 0>
@@ -653,7 +653,7 @@ Composite::Composite(
     Eigen::Vector3d::UnitX()
   );
 
-  auto secondCoordinates = Symmetry::symmetryData().at(
+  auto secondCoordinates = Shapes::symmetryData().at(
     _orientations.second.shape
   ).coordinates;
   // Rotate right fused position onto <-1, 0, 0>

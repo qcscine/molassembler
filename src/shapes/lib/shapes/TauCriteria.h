@@ -15,7 +15,7 @@
 
 namespace Scine {
 
-namespace Symmetry {
+namespace Shapes {
 
 namespace detail {
 
@@ -77,7 +77,7 @@ double tau(const std::vector<double>& angles) {
   );
 }
 
-} // namespace Symmetry
+} // namespace Shapes
 
 } // namespace Scine
 

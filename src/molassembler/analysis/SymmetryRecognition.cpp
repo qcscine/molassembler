@@ -51,30 +51,30 @@ struct Recognizer {
    * @param positions Positions of all particles of the symmetry. The first
    * column is the central particle of the symmetry.
    */
-  virtual Symmetry::Shape identify(const Positions& positions) const = 0;
+  virtual Shapes::Shape identify(const Positions& positions) const = 0;
   virtual std::string name() const = 0;
 };
 
 struct AngularDeviation {
   template<typename F>
-  static Symmetry::Shape identify(const Positions& positions, F&& f) {
+  static Shapes::Shape identify(const Positions& positions, F&& f) {
     const unsigned S = positions.cols() - 1;
-    using CarryType = std::pair<double, Symmetry::Shape>;
+    using CarryType = std::pair<double, Shapes::Shape>;
 
     return temple::accumulate(
-      Symmetry::allShapes,
-      CarryType {std::numeric_limits<double>::max(), Symmetry::Shape::Line},
-      [&](const CarryType& carry, const Symmetry::Shape name) -> CarryType {
-        if(Symmetry::size(name) != S) {
+      Shapes::allShapes,
+      CarryType {std::numeric_limits<double>::max(), Shapes::Shape::Line},
+      [&](const CarryType& carry, const Shapes::Shape name) -> CarryType {
+        if(Shapes::size(name) != S) {
           return carry;
         }
-        const auto angleFunction = Symmetry::angleFunction(name);
+        const auto angleFunction = Shapes::angleFunction(name);
 
         /* Minimize angular deviations over all rotations of maximally
          * asymmetric symmetry case
          */
         const double penalty = temple::accumulate(
-          Symmetry::properties::generateAllRotations(name, temple::iota<unsigned>(S)),
+          Shapes::properties::generateAllRotations(name, temple::iota<unsigned>(S)),
           std::numeric_limits<double>::max(),
           [&](const double minAngularDeviation, const auto& rotation) -> double {
             const double angleDeviation = temple::sum(
@@ -116,7 +116,7 @@ struct PureAngularDeviationAbs final : public Recognizer {
     }
   };
 
-  Symmetry::Shape identify(const Positions& positions) const final {
+  Shapes::Shape identify(const Positions& positions) const final {
     return AngularDeviation::identify(positions, FabsFunctor {});
   }
 
@@ -133,7 +133,7 @@ struct PureAngularDeviationSquare final : public Recognizer {
     }
   };
 
-  Symmetry::Shape identify(const Positions& positions) const final {
+  Shapes::Shape identify(const Positions& positions) const final {
     return AngularDeviation::identify(positions, SquareFunctor {});
   }
 
@@ -143,14 +143,14 @@ struct PureAngularDeviationSquare final : public Recognizer {
 };
 
 struct AngularDeviationGeometryIndexHybrid final : public Recognizer {
-  Symmetry::Shape identify(const Positions& positions) const final {
+  Shapes::Shape identify(const Positions& positions) const final {
     const unsigned S = positions.cols() - 1;
-    using CarryType = std::pair<double, Symmetry::Shape>;
+    using CarryType = std::pair<double, Shapes::Shape>;
 
     /* Exclude symmetries using geometry indices if a relevant size */
-    std::vector<Symmetry::Shape> excludedSymmetries;
+    std::vector<Shapes::Shape> excludedSymmetries;
     if(S == 4 || S == 5) {
-      const double tau = Symmetry::tau(
+      const double tau = Shapes::tau(
         temple::sort(
           temple::map(
             temple::adaptors::allPairs(temple::adaptors::range(S)),
@@ -173,15 +173,15 @@ struct AngularDeviationGeometryIndexHybrid final : public Recognizer {
          */
         if(tau < 0.12) {
           // Symmetry is square planar
-          excludedSymmetries.push_back(Symmetry::Shape::Seesaw);
-          excludedSymmetries.push_back(Symmetry::Shape::Tetrahedron);
+          excludedSymmetries.push_back(Shapes::Shape::Seesaw);
+          excludedSymmetries.push_back(Shapes::Shape::Tetrahedron);
         } else if(0.12 <= tau && tau < 0.62) {
-          excludedSymmetries.push_back(Symmetry::Shape::Square);
+          excludedSymmetries.push_back(Shapes::Shape::Square);
           // Symmetry is seesaw
-          excludedSymmetries.push_back(Symmetry::Shape::Tetrahedron);
+          excludedSymmetries.push_back(Shapes::Shape::Tetrahedron);
         } else if(0.62 <= tau) {
-          excludedSymmetries.push_back(Symmetry::Shape::Square);
-          excludedSymmetries.push_back(Symmetry::Shape::Seesaw);
+          excludedSymmetries.push_back(Shapes::Shape::Square);
+          excludedSymmetries.push_back(Shapes::Shape::Seesaw);
           // Symmetry is tetrahedral
         }
       } else if(S == 5) {
@@ -191,27 +191,27 @@ struct AngularDeviationGeometryIndexHybrid final : public Recognizer {
          */
 
         if(tau < 0.5) {
-          excludedSymmetries.push_back(Symmetry::Shape::TrigonalBipyramid);
+          excludedSymmetries.push_back(Shapes::Shape::TrigonalBipyramid);
         } else if(tau > 0.5) {
-          excludedSymmetries.push_back(Symmetry::Shape::SquarePyramid);
+          excludedSymmetries.push_back(Shapes::Shape::SquarePyramid);
         }
       }
     }
 
     return temple::accumulate(
-      Symmetry::allShapes,
-      CarryType {std::numeric_limits<double>::max(), Symmetry::Shape::Line},
-      [&](const CarryType& carry, const Symmetry::Shape name) -> CarryType {
-        if(Symmetry::size(name) != S || temple::makeContainsPredicate(excludedSymmetries)(name)) {
+      Shapes::allShapes,
+      CarryType {std::numeric_limits<double>::max(), Shapes::Shape::Line},
+      [&](const CarryType& carry, const Shapes::Shape name) -> CarryType {
+        if(Shapes::size(name) != S || temple::makeContainsPredicate(excludedSymmetries)(name)) {
           return carry;
         }
-        const auto angleFunction = Symmetry::angleFunction(name);
+        const auto angleFunction = Shapes::angleFunction(name);
 
         /* Minimize angular deviations over all rotations of maximally
          * asymmetric symmetry case
          */
         const double penalty = temple::accumulate(
-          Symmetry::properties::generateAllRotations(name, temple::iota<unsigned>(S)),
+          Shapes::properties::generateAllRotations(name, temple::iota<unsigned>(S)),
           std::numeric_limits<double>::max(),
           [&](const double minAngularDeviation, const auto& rotation) -> double {
             const double angleDeviation = temple::sum(
@@ -250,46 +250,46 @@ struct AngularDeviationGeometryIndexHybrid final : public Recognizer {
   }
 };
 
-const std::map<Symmetry::Shape, Symmetry::PointGroup> pointGroupMapping {
-  {Symmetry::Shape::Line, Symmetry::PointGroup::Dinfh},
-  {Symmetry::Shape::Bent, Symmetry::PointGroup::C2v},
-  {Symmetry::Shape::EquilateralTriangle, Symmetry::PointGroup::D3h},
-  {Symmetry::Shape::VacantTetrahedron, Symmetry::PointGroup::C3v},
-  {Symmetry::Shape::T, Symmetry::PointGroup::C2v},
-  {Symmetry::Shape::Tetrahedron, Symmetry::PointGroup::Td},
-  {Symmetry::Shape::Square, Symmetry::PointGroup::D4h},
-  {Symmetry::Shape::Seesaw, Symmetry::PointGroup::C2v},
-  {Symmetry::Shape::TrigonalPyramid, Symmetry::PointGroup::C3v},
-  {Symmetry::Shape::SquarePyramid, Symmetry::PointGroup::C4v},
-  {Symmetry::Shape::TrigonalBipyramid, Symmetry::PointGroup::D3h},
-  {Symmetry::Shape::Pentagon, Symmetry::PointGroup::D5h},
-  {Symmetry::Shape::Octahedron, Symmetry::PointGroup::Oh},
-  {Symmetry::Shape::TrigonalPrism, Symmetry::PointGroup::D3h},
-  {Symmetry::Shape::PentagonalPyramid, Symmetry::PointGroup::C5v},
-  {Symmetry::Shape::PentagonalBipyramid, Symmetry::PointGroup::D5h},
-  {Symmetry::Shape::SquareAntiprism, Symmetry::PointGroup::D4d}
+const std::map<Shapes::Shape, Shapes::PointGroup> pointGroupMapping {
+  {Shapes::Shape::Line, Shapes::PointGroup::Dinfh},
+  {Shapes::Shape::Bent, Shapes::PointGroup::C2v},
+  {Shapes::Shape::EquilateralTriangle, Shapes::PointGroup::D3h},
+  {Shapes::Shape::VacantTetrahedron, Shapes::PointGroup::C3v},
+  {Shapes::Shape::T, Shapes::PointGroup::C2v},
+  {Shapes::Shape::Tetrahedron, Shapes::PointGroup::Td},
+  {Shapes::Shape::Square, Shapes::PointGroup::D4h},
+  {Shapes::Shape::Seesaw, Shapes::PointGroup::C2v},
+  {Shapes::Shape::TrigonalPyramid, Shapes::PointGroup::C3v},
+  {Shapes::Shape::SquarePyramid, Shapes::PointGroup::C4v},
+  {Shapes::Shape::TrigonalBipyramid, Shapes::PointGroup::D3h},
+  {Shapes::Shape::Pentagon, Shapes::PointGroup::D5h},
+  {Shapes::Shape::Octahedron, Shapes::PointGroup::Oh},
+  {Shapes::Shape::TrigonalPrism, Shapes::PointGroup::D3h},
+  {Shapes::Shape::PentagonalPyramid, Shapes::PointGroup::C5v},
+  {Shapes::Shape::PentagonalBipyramid, Shapes::PointGroup::D5h},
+  {Shapes::Shape::SquareAntiprism, Shapes::PointGroup::D4d}
 };
 
 struct PureCSM final : public Recognizer {
-  Symmetry::Shape identify(const Positions& positions) const final {
+  Shapes::Shape identify(const Positions& positions) const final {
     const unsigned S = positions.cols() - 1;
-    using CarryType = std::pair<double, Symmetry::Shape>;
+    using CarryType = std::pair<double, Shapes::Shape>;
 
-    Positions normalized = Symmetry::continuous::normalize(positions);
-    const Symmetry::Top top = Symmetry::standardizeTop(normalized);
-    if(top == Symmetry::Top::Asymmetric) {
-      Symmetry::reorientAsymmetricTop(normalized);
+    Positions normalized = Shapes::continuous::normalize(positions);
+    const Shapes::Top top = Shapes::standardizeTop(normalized);
+    if(top == Shapes::Top::Asymmetric) {
+      Shapes::reorientAsymmetricTop(normalized);
     }
 
     return temple::accumulate(
-      Symmetry::allShapes,
-      CarryType {std::numeric_limits<double>::max(), Symmetry::Shape::Line},
-      [&](const CarryType& bestPair, const Symmetry::Shape name) -> CarryType {
-        if(Symmetry::size(name) != S) {
+      Shapes::allShapes,
+      CarryType {std::numeric_limits<double>::max(), Shapes::Shape::Line},
+      [&](const CarryType& bestPair, const Shapes::Shape name) -> CarryType {
+        if(Shapes::size(name) != S) {
           return bestPair;
         }
 
-        const double csm = Symmetry::continuous::pointGroup(
+        const double csm = Shapes::continuous::pointGroup(
           normalized,
           pointGroupMapping.at(name)
         );
@@ -311,21 +311,21 @@ struct PureCSM final : public Recognizer {
 constexpr unsigned maxShapeSize = 6;
 
 struct CShM final : public Recognizer {
-  Symmetry::Shape identify(const Positions& positions) const final {
+  Shapes::Shape identify(const Positions& positions) const final {
     const unsigned S = positions.cols() - 1;
 
-    Positions normalized = Symmetry::continuous::normalize(positions);
-    using CarryType = std::pair<double, Symmetry::Shape>;
+    Positions normalized = Shapes::continuous::normalize(positions);
+    using CarryType = std::pair<double, Shapes::Shape>;
     return temple::accumulate(
-      Symmetry::allShapes,
-      CarryType {std::numeric_limits<double>::max(), Symmetry::Shape::Line},
-      [&](const CarryType& carry, const Symmetry::Shape shape) {
-        if(Symmetry::size(shape) != S) {
+      Shapes::allShapes,
+      CarryType {std::numeric_limits<double>::max(), Shapes::Shape::Line},
+      [&](const CarryType& carry, const Shapes::Shape shape) {
+        if(Shapes::size(shape) != S) {
           return carry;
         }
 
-        double shapeMeasure = Symmetry::continuous::shape(normalized, shape);
-        if(shape == Symmetry::Shape::TrigonalPyramid) {
+        double shapeMeasure = Shapes::continuous::shape(normalized, shape);
+        if(shape == Shapes::Shape::TrigonalPyramid) {
           shapeMeasure *= 4;
         }
 
@@ -344,12 +344,12 @@ struct CShM final : public Recognizer {
 };
 
 struct CShMPathDev final : public Recognizer {
-  std::vector<Symmetry::Shape> validShapes;
+  std::vector<Shapes::Shape> validShapes;
   Eigen::MatrixXd minimumDistortionAngles;
 
   CShMPathDev() {
-    for(const Symmetry::Shape shape : Symmetry::allShapes) {
-      if(Symmetry::size(shape) <= maxShapeSize) {
+    for(const Shapes::Shape shape : Shapes::allShapes) {
+      if(Shapes::size(shape) <= maxShapeSize) {
         validShapes.push_back(shape);
       }
     }
@@ -358,13 +358,13 @@ struct CShMPathDev final : public Recognizer {
     minimumDistortionAngles.resize(N, N);
     minimumDistortionAngles.setZero();
     for(unsigned i = 0; i < N; ++i) {
-      Symmetry::Shape iShape = validShapes.at(i);
+      Shapes::Shape iShape = validShapes.at(i);
 
       for(unsigned j = i + 1; j < N; ++j) {
-        Symmetry::Shape jShape = validShapes.at(j);
+        Shapes::Shape jShape = validShapes.at(j);
 
-        if(Symmetry::size(iShape) == Symmetry::size(jShape)) {
-          minimumDistortionAngles(i, j) = Symmetry::continuous::minimumDistortionAngle(
+        if(Shapes::size(iShape) == Shapes::size(jShape)) {
+          minimumDistortionAngles(i, j) = Shapes::continuous::minimumDistortionAngle(
             iShape,
             jShape
           );
@@ -373,13 +373,13 @@ struct CShMPathDev final : public Recognizer {
     }
 
     std::cout << "valid shapes:" << temple::stringify(
-      temple::map(validShapes, [](auto x) { return Symmetry::name(x); })
+      temple::map(validShapes, [](auto x) { return Shapes::name(x); })
     ) << "\n";
     std::cout << "minimum distortion angles:\n" << minimumDistortionAngles << "\n";
   }
 
-  double minimumDistortionAngle(const Symmetry::Shape a, const Symmetry::Shape b) const {
-    auto indexOfShape = [&](const Symmetry::Shape shape) -> unsigned {
+  double minimumDistortionAngle(const Shapes::Shape a, const Shapes::Shape b) const {
+    auto indexOfShape = [&](const Shapes::Shape shape) -> unsigned {
       auto findIter = temple::find(validShapes, shape);
       if(findIter == std::end(validShapes)) {
         throw "Shape not found in valid shapes";
@@ -395,22 +395,22 @@ struct CShMPathDev final : public Recognizer {
     return minimumDistortionAngles(i, j);
   }
 
-  Symmetry::Shape identify(const Positions& positions) const final {
+  Shapes::Shape identify(const Positions& positions) const final {
     const unsigned S = positions.cols() - 1;
     // Select shapes of matching size
-    std::vector<Symmetry::Shape> matchingSizeShapes;
-    for(const auto shape : Symmetry::allShapes) {
-      if(Symmetry::size(shape) == S) {
+    std::vector<Shapes::Shape> matchingSizeShapes;
+    for(const auto shape : Shapes::allShapes) {
+      if(Shapes::size(shape) == S) {
         matchingSizeShapes.push_back(shape);
       }
     }
 
     // Calculate continuous shape measures for all selected shapes
-    Positions normalized = Symmetry::continuous::normalize(positions);
+    Positions normalized = Shapes::continuous::normalize(positions);
     auto shapeMeasures = temple::map(
       matchingSizeShapes,
-      [&](const Symmetry::Shape shape) -> double {
-        return Symmetry::continuous::shape(normalized, shape);
+      [&](const Shapes::Shape shape) -> double {
+        return Shapes::continuous::shape(normalized, shape);
       }
     );
 
@@ -456,12 +456,12 @@ struct CShMPathDev final : public Recognizer {
 };
 
 struct CShMPathDevBiased final : public Recognizer {
-  std::vector<Symmetry::Shape> validShapes;
+  std::vector<Shapes::Shape> validShapes;
   Eigen::MatrixXd minimumDistortionAngles;
 
   CShMPathDevBiased() {
-    for(const Symmetry::Shape shape : Symmetry::allShapes) {
-      if(Symmetry::size(shape) <= maxShapeSize) {
+    for(const Shapes::Shape shape : Shapes::allShapes) {
+      if(Shapes::size(shape) <= maxShapeSize) {
         validShapes.push_back(shape);
       }
     }
@@ -470,13 +470,13 @@ struct CShMPathDevBiased final : public Recognizer {
     minimumDistortionAngles.resize(N, N);
     minimumDistortionAngles.setZero();
     for(unsigned i = 0; i < N; ++i) {
-      Symmetry::Shape iShape = validShapes.at(i);
+      Shapes::Shape iShape = validShapes.at(i);
 
       for(unsigned j = i + 1; j < N; ++j) {
-        Symmetry::Shape jShape = validShapes.at(j);
+        Shapes::Shape jShape = validShapes.at(j);
 
-        if(Symmetry::size(iShape) == Symmetry::size(jShape)) {
-          minimumDistortionAngles(i, j) = Symmetry::continuous::minimumDistortionAngle(
+        if(Shapes::size(iShape) == Shapes::size(jShape)) {
+          minimumDistortionAngles(i, j) = Shapes::continuous::minimumDistortionAngle(
             iShape,
             jShape
           );
@@ -485,13 +485,13 @@ struct CShMPathDevBiased final : public Recognizer {
     }
 
     std::cout << "valid shapes:" << temple::stringify(
-      temple::map(validShapes, [](auto x) { return Symmetry::name(x); })
+      temple::map(validShapes, [](auto x) { return Shapes::name(x); })
     ) << "\n";
     std::cout << "minimum distortion angles:\n" << minimumDistortionAngles << "\n";
   }
 
-  double minimumDistortionAngle(const Symmetry::Shape a, const Symmetry::Shape b) const {
-    auto indexOfShape = [&](const Symmetry::Shape shape) -> unsigned {
+  double minimumDistortionAngle(const Shapes::Shape a, const Shapes::Shape b) const {
+    auto indexOfShape = [&](const Shapes::Shape shape) -> unsigned {
       auto findIter = temple::find(validShapes, shape);
       if(findIter == std::end(validShapes)) {
         throw "Shape not found in valid shapes";
@@ -507,22 +507,22 @@ struct CShMPathDevBiased final : public Recognizer {
     return minimumDistortionAngles(i, j);
   }
 
-  Symmetry::Shape identify(const Positions& positions) const final {
+  Shapes::Shape identify(const Positions& positions) const final {
     const unsigned S = positions.cols() - 1;
     // Select shapes of matching size
-    std::vector<Symmetry::Shape> matchingSizeShapes;
-    for(const auto shape : Symmetry::allShapes) {
-      if(Symmetry::size(shape) == S) {
+    std::vector<Shapes::Shape> matchingSizeShapes;
+    for(const auto shape : Shapes::allShapes) {
+      if(Shapes::size(shape) == S) {
         matchingSizeShapes.push_back(shape);
       }
     }
 
     // Calculate continuous shape measures for all selected shapes
-    Positions normalized = Symmetry::continuous::normalize(positions);
+    Positions normalized = Shapes::continuous::normalize(positions);
     auto shapeMeasures = temple::map(
       matchingSizeShapes,
-      [&](const Symmetry::Shape shape) -> double {
-        return Symmetry::continuous::shape(normalized, shape);
+      [&](const Shapes::Shape shape) -> double {
+        return Shapes::continuous::shape(normalized, shape);
       }
     );
 
@@ -556,22 +556,22 @@ struct CShMPathDevBiased final : public Recognizer {
     const unsigned a = std::get<0>(closestTuple);
     const unsigned b = std::get<1>(closestTuple);
 
-    const Symmetry::Shape aShape = matchingSizeShapes.at(a);
-    const Symmetry::Shape bShape = matchingSizeShapes.at(b);
+    const Shapes::Shape aShape = matchingSizeShapes.at(a);
+    const Shapes::Shape bShape = matchingSizeShapes.at(b);
 
     /* Bias tetrahedral - trigonal pyramid towards tetrahedral 80:20 */
-    if(std::minmax(aShape, bShape) == std::minmax(Symmetry::Shape::Tetrahedron, Symmetry::Shape::TrigonalPyramid)) {
+    if(std::minmax(aShape, bShape) == std::minmax(Shapes::Shape::Tetrahedron, Shapes::Shape::TrigonalPyramid)) {
       double tetrahedronShapeMeasure, trigonalPyramidShapeMeasure;
-      std::tie(tetrahedronShapeMeasure, trigonalPyramidShapeMeasure) = (aShape == Symmetry::Shape::Tetrahedron)
+      std::tie(tetrahedronShapeMeasure, trigonalPyramidShapeMeasure) = (aShape == Shapes::Shape::Tetrahedron)
         ? std::tie(shapeMeasures.at(a), shapeMeasures.at(b))
         : std::tie(shapeMeasures.at(b), shapeMeasures.at(a));
 
       const double angle = std::atan2(trigonalPyramidShapeMeasure, tetrahedronShapeMeasure);
       if(angle < 2.0 * M_PI / 5) {
-        return Symmetry::Shape::Tetrahedron;
+        return Shapes::Shape::Tetrahedron;
       }
 
-      return Symmetry::Shape::TrigonalPyramid;
+      return Shapes::Shape::TrigonalPyramid;
     }
 
     /* All other cases */
@@ -592,11 +592,11 @@ struct Random final : public Recognizer {
 
   Random(PRNG& globalPRNG) : prngRef(globalPRNG) {}
 
-  Symmetry::Shape identify(const Positions& positions) const final {
+  Shapes::Shape identify(const Positions& positions) const final {
     const unsigned S = positions.cols() - 1;
-    std::vector<Symmetry::Shape> viableSymmetries;
-    for(const auto& name : Symmetry::allShapes) {
-      if(Symmetry::size(name) == S) {
+    std::vector<Shapes::Shape> viableSymmetries;
+    for(const auto& name : Shapes::allShapes) {
+      if(Shapes::size(name) == S) {
         viableSymmetries.push_back(name);
       }
     }
@@ -649,23 +649,23 @@ struct RScriptWriter {
     file << "maxDistortion <- " << maxDistortion << "\n";
     file << "nRepeats <- " << nRepeats << "\n";
     file << "shapeNames <- c(\"" << temple::condense(
-      temple::map(Symmetry::allShapes, [](auto name) { return Symmetry::name(name); }),
+      temple::map(Shapes::allShapes, [](auto name) { return Shapes::name(name); }),
       "\",\""
     ) << "\")\n";
     file << "symmetrySizes <- c(" << temple::condense(
-      temple::map(Symmetry::allShapes, [](auto name) { return Symmetry::size(name); })
+      temple::map(Shapes::allShapes, [](auto name) { return Shapes::size(name); })
     ) << ")\n";
     file << "recognizers <- c(\"" << temple::condense(temple::map(recognizers, [](const auto& f) {return f->name();}), "\",\"") << "\")\n";
     file << "x.values <- c(0:" << (nDistortionValues - 1) << ") * " << maxDistortion << " / " << (nDistortionValues - 1) << "\n";
-    file << "results <- array(numeric(), c(" << nRepeats << ", " << nDistortionValues << ", " << nRecognizers << ", " << Symmetry::allShapes.size() << "))\n";
+    file << "results <- array(numeric(), c(" << nRepeats << ", " << nDistortionValues << ", " << nRecognizers << ", " << Shapes::allShapes.size() << "))\n";
   }
 
   void writeSeed(int seed) {
     file << "seed <- " << seed << "\n";
   }
 
-  void addResults(const Symmetry::Shape name, const std::vector<std::vector<std::vector<Symmetry::Shape>>>& results) {
-    const unsigned symmetryIndex = Symmetry::nameIndex(name);
+  void addResults(const Shapes::Shape name, const std::vector<std::vector<std::vector<Shapes::Shape>>>& results) {
+    const unsigned symmetryIndex = Shapes::nameIndex(name);
     for(unsigned recognizerIndex = 0; recognizerIndex < nRecognizers; ++recognizerIndex) {
       const std::string array = (
         "array(c("
@@ -676,8 +676,8 @@ struct RScriptWriter {
               return temple::condense(
                 temple::map(
                   distortionResult,
-                  [](Symmetry::Shape n) -> unsigned {
-                    return static_cast<std::underlying_type<Symmetry::Shape>::type>(n);
+                  [](Shapes::Shape n) -> unsigned {
+                    return static_cast<std::underlying_type<Shapes::Shape>::type>(n);
                   }
                 )
               );
@@ -750,18 +750,18 @@ int main(int argc, char* argv[]) {
     scriptFile.writeSeed(seed);
   }
 
-  for(const Symmetry::Shape name : Symmetry::allShapes) {
-    const unsigned S = Symmetry::size(name);
+  for(const Shapes::Shape name : Shapes::allShapes) {
+    const unsigned S = Shapes::size(name);
     if(S > maxShapeSize) {
       // Skip anything bigger than maximum shape size for now
       break;
     }
 
     unsigned symmetriesOfSameSize = temple::accumulate(
-      Symmetry::allShapes,
+      Shapes::allShapes,
       0u,
-      [&S](const unsigned carry, Symmetry::Shape n) -> unsigned {
-        if(Symmetry::size(n) == S) {
+      [&S](const unsigned carry, Shapes::Shape n) -> unsigned {
+        if(Shapes::size(n) == S) {
           return carry + 1;
         }
 
@@ -775,17 +775,17 @@ int main(int argc, char* argv[]) {
 
     Positions basePositions (3, S + 1);
     basePositions.col(0) = Eigen::Vector3d::Zero();
-    basePositions.rightCols(S) = Symmetry::symmetryData().at(name).coordinates;
+    basePositions.rightCols(S) = Shapes::symmetryData().at(name).coordinates;
 
     std::vector< // each recognizer has its own vector
       std::vector< // each distortion value
-        std::vector<Symmetry::Shape>
+        std::vector<Shapes::Shape>
       >
     > recognizerCounts(R);
 
     for(unsigned i = 0; i < nDistortionValues; ++i) {
       for(unsigned r = 0; r < R; ++r) {
-        recognizerCounts.at(r).push_back(std::vector<Symmetry::Shape> {});
+        recognizerCounts.at(r).push_back(std::vector<Shapes::Shape> {});
       }
 
       const double distortion = i * maxDistortion / (nDistortionValues - 1);
@@ -803,6 +803,6 @@ int main(int argc, char* argv[]) {
 
     scriptFile.addResults(name, recognizerCounts);
 
-    std::cout << "Symmetry: " << Symmetry::name(name) << "\n";
+    std::cout << "Symmetry: " << Shapes::name(name) << "\n";
   }
 }

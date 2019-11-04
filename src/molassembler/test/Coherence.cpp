@@ -54,8 +54,8 @@ BOOST_AUTO_TEST_CASE(CGReinterpretYieldsSameShapes) {
     Utils::ElementType::P
   };
 
-  for(const auto& shape: Symmetry::allShapes) {
-    if(Symmetry::size(shape) > 6) {
+  for(const auto& shape: Shapes::allShapes) {
+    if(Shapes::size(shape) > 6) {
       continue;
     }
 
@@ -66,7 +66,7 @@ BOOST_AUTO_TEST_CASE(CGReinterpretYieldsSameShapes) {
       BondType::Single
     );
 
-    for(unsigned i = 0; molecule.graph().N() - 1 < Symmetry::size(shape); ++i) {
+    for(unsigned i = 0; molecule.graph().N() - 1 < Shapes::size(shape); ++i) {
       molecule.addAtom(
         elements.at(i),
         0,

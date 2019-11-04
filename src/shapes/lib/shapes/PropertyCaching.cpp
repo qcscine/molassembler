@@ -11,7 +11,7 @@
 
 namespace Scine {
 
-namespace Symmetry {
+namespace Shapes {
 
 constexpr temple::Array<std::pair<double, double>, nShapes> symmetryAngleBounds = temple::TupleType::map<
   data::allShapeDataTypes,
@@ -74,7 +74,7 @@ const boost::optional<const properties::SymmetryTransitionGroup&> getMapping(
     return mappingsCache.getOption(cacheKey);
   }
 
-  int sizeDiff = static_cast<int>(Symmetry::size(b)) - static_cast<int>(Symmetry::size(a));
+  int sizeDiff = static_cast<int>(Shapes::size(b)) - static_cast<int>(Shapes::size(a));
 
   if(sizeDiff == 1 || sizeDiff == 0) {
 #ifdef USE_CONSTEXPR_TRANSITION_MAPPINGS
@@ -157,7 +157,7 @@ struct makeAllHasUnlinkedStereopermutationsFunctor {
      * are equal, there is obviously only one stereopermutation, so there is no
      * need to calculate.
      */
-    for(unsigned i = 0; i < Symmetry::size - 1; ++i) {
+    for(unsigned i = 0; i < Shapes::size - 1; ++i) {
       nums.push_back(
         constexprProperties::hasMultipleUnlinkedStereopermutations<Symmetry>(i + 1)
       );
@@ -185,7 +185,7 @@ bool hasMultipleUnlinkedStereopermutations(
   const Shape shape,
   unsigned nIdenticalLigands
 ) {
-  if(nIdenticalLigands == Symmetry::size(shape)) {
+  if(nIdenticalLigands == Shapes::size(shape)) {
     return false;
   }
 
@@ -215,7 +215,7 @@ bool hasMultipleUnlinkedStereopermutations(
 #else
   // Generate the cache element using dynamic properties
   std::vector<bool> unlinkedStereopermutations;
-  for(unsigned i = 0; i < Symmetry::size(shape) - 1; ++i) {
+  for(unsigned i = 0; i < Shapes::size(shape) - 1; ++i) {
     unlinkedStereopermutations.push_back(
       properties::hasMultipleUnlinkedStereopermutations(
         shape,
@@ -233,6 +233,6 @@ bool hasMultipleUnlinkedStereopermutations(
 #endif
 }
 
-} // namespace Symmetry
+} // namespace Shapes
 
 } // namespace Scine

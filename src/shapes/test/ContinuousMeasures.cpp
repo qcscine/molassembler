@@ -18,7 +18,7 @@
 #include "temple/Stringify.h"
 
 using namespace Scine;
-using namespace Symmetry;
+using namespace Shapes;
 
 // From InertialMoments.cpp
 extern const std::string& topName(Top top);
@@ -104,13 +104,13 @@ BOOST_AUTO_TEST_CASE(PointGroupMeasures) {
       pgCSM != 1000,
       "Could not calculate "
       << pointGroupString(pointGroup(shape))
-      << " CSM for " << Symmetry::name(shape)
+      << " CSM for " << Shapes::name(shape)
     );
 
     BOOST_CHECK_MESSAGE(
       pgCSM < 0.01,
       "Expected CSM(" << pointGroupString(pointGroup(shape))
-      << ") < 0.01 for " << Symmetry::name(shape)
+      << ") < 0.01 for " << Shapes::name(shape)
       << ", got " << pgCSM << " (top is " << topName(top) << ")"
     );
   }
@@ -301,7 +301,7 @@ BOOST_AUTO_TEST_CASE(FixedCnAxis) {
     BOOST_CHECK_MESSAGE(
       highestFoundOrder,
       "No Cn axis found along any principal moment axis for "
-      << Symmetry::name(nameOrderPair.first)
+      << Shapes::name(nameOrderPair.first)
     );
     if(highestFoundOrder) {
       BOOST_CHECK_MESSAGE(

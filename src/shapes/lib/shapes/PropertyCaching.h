@@ -12,7 +12,7 @@
 
 namespace Scine {
 
-namespace Symmetry {
+namespace Shapes {
 
 //! Precomputed min and max angle values in radians for all symmetries
 extern const temple::Array<std::pair<double, double>, nShapes> symmetryAngleBounds;
@@ -130,7 +130,7 @@ bool hasMultipleUnlinkedStereopermutations(
   unsigned nIdenticalLigands
 );
 
-} // namespace Symmetry
+} // namespace Shapes
 
 } // namespace Scine
 

@@ -25,7 +25,7 @@ bool FeasibleStereopermutations::isNotObviouslyImpossibleStereopermutation(
   const RankingInformation::RankedSitesType& canonicalSites,
   const ConeAngleType& coneAngles,
   const RankingInformation& ranking,
-  const Symmetry::Shape shape,
+  const Shapes::Shape shape,
   const OuterGraph& graph
 ) {
   auto shapeVertexMap = siteToShapeVertexMap(
@@ -155,7 +155,7 @@ bool FeasibleStereopermutations::isNotObviouslyImpossibleStereopermutation(
      * group of shape positions with lower cross-angles is viable for the
      * link, and will distort accordingly.
      */
-    auto symmetryGroups = Symmetry::properties::positionGroups(shape);
+    auto symmetryGroups = Shapes::properties::positionGroups(shape);
 
 
     /* First we need to construct the cyclic polygon of the cycle sequence
@@ -210,7 +210,7 @@ bool FeasibleStereopermutations::isNotObviouslyImpossibleStereopermutation(
 
 FeasibleStereopermutations::FeasibleStereopermutations(
   const AbstractStereopermutations& abstractPermutations,
-  const Symmetry::Shape shape,
+  const Shapes::Shape shape,
   const AtomIndex centralIndex,
   const RankingInformation& ranking,
   const OuterGraph& graph

@@ -25,7 +25,7 @@
 
 namespace Scine {
 
-namespace Symmetry {
+namespace Shapes {
 
 /**
  * @brief Compile-time amenable calculation of symmetry classes' properties
@@ -271,7 +271,7 @@ struct maxShapeSizeFunctor {
 
 //! The largest symmetry size defined in the library
 constexpr unsigned maxShapeSize = temple::TupleType::unpackToFunction<
-  Symmetry::data::allShapeDataTypes,
+  Shapes::data::allShapeDataTypes,
   maxShapeSizeFunctor
 >();
 
@@ -939,7 +939,7 @@ constexpr bool hasMultipleUnlinkedStereopermutations(const unsigned nIdenticalLi
 
 } // namespace constexprProperties
 
-} // namespace Symmetry
+} // namespace Shapes
 
 } // namespace Scine
 

@@ -74,7 +74,7 @@ WideHashType hash(
   AtomEnvironmentComponents bitmask,
   Scine::Utils::ElementType elementType,
   const std::vector<BondInformation>& sortedBonds,
-  const boost::optional<Symmetry::Shape>& shapeOptional,
+  const boost::optional<Shapes::Shape>& shapeOptional,
   const boost::optional<unsigned>& assignedOptional
 );
 

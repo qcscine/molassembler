@@ -20,7 +20,7 @@
 
 namespace Scine {
 
-namespace Symmetry {
+namespace Shapes {
 
 namespace concepts {
 
@@ -236,6 +236,6 @@ DECLARE_CONSTEXPR_ANGLE_LOOKUP(Cuboctahedron)
 
 } // namespace data
 
-} // namespace Symmetry
+} // namespace Shapes
 
 } // namespace Scine

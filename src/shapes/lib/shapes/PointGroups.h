@@ -8,7 +8,7 @@
 #define INCLUDE_MOLASSEMBLER_SHAPES_POINT_GROUPS_H
 
 namespace Scine {
-namespace Symmetry {
+namespace Shapes {
 
 /**
  * @brief Point groups
@@ -28,7 +28,7 @@ enum class PointGroup : unsigned {
   Cinfv, Dinfh
 };
 
-} // namespace Symmetry
+} // namespace Shapes
 } // namespace Scine
 
 #endif

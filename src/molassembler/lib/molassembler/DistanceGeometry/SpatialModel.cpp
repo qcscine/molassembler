@@ -142,7 +142,7 @@ SpatialModel::SpatialModel(
     "0 < x << 1"
   );
   static_assert(
-    0.0 < angleAbsoluteVariance && angleAbsoluteVariance < Symmetry::smallestAngle,
+    0.0 < angleAbsoluteVariance && angleAbsoluteVariance < Shapes::smallestAngle,
     "SpatialModel static constant angle absolute variance must fulfill"
     "0 < x << (smallest angle any local shape returns)"
   );
@@ -821,7 +821,7 @@ SpatialModel::BoundsMatrix SpatialModel::makePairwiseBounds(
 
 double SpatialModel::siteCentralAngle(
   const AtomIndex centralIndex,
-  const Symmetry::Shape& shape,
+  const Shapes::Shape& shape,
   const RankingInformation& ranking,
   const std::vector<unsigned>& shapeVertexMap,
   const std::pair<unsigned, unsigned>& sites,
@@ -831,7 +831,7 @@ double SpatialModel::siteCentralAngle(
    * shape angle towards lower angles for small cycles under specific
    * circumstances.
    */
-  const double idealAngle = Symmetry::angleFunction(shape)(
+  const double idealAngle = Shapes::angleFunction(shape)(
     shapeVertexMap.at(sites.first),
     shapeVertexMap.at(sites.second)
   );
@@ -848,7 +848,7 @@ double SpatialModel::siteCentralAngle(
   if(
     ranking.sites.at(sites.first).size() > 1
     || ranking.sites.at(sites.second).size() > 1
-    || idealAngle != Symmetry::minimumAngle(shape)
+    || idealAngle != Shapes::minimumAngle(shape)
   ) {
     return idealAngle;
   }
@@ -1191,7 +1191,7 @@ struct SpatialModel::ModelGraphWriter final : public MolGraphWriter {
     const AtomStereopermutator& permutator
   ) const final {
     std::vector<std::string> tooltips {{
-      Symmetry::name(permutator.getShape()),
+      Shapes::name(permutator.getShape()),
       permutator.info()
     }};
 
@@ -1616,7 +1616,7 @@ void SpatialModel::checkFixedPositionsPreconditions(
         }
       );
 
-      if(1 < numFixedSites && numFixedSites < Symmetry::size(stereopermutatorOption->getShape())) {
+      if(1 < numFixedSites && numFixedSites < Shapes::size(stereopermutatorOption->getShape())) {
         throw std::runtime_error(
           "DG preconditions for fixed atoms are not met: A non-terminal atom "
           "does not have 0, 1 or all binding sites fixed."
@@ -1704,7 +1704,7 @@ void SpatialModel::_instantiateMissingAtomStereopermutators(random::Engine& engi
       continue;
     }
 
-    Symmetry::Shape localShape = _molecule.inferShape(i, localRanking).value_or_eval(
+    Shapes::Shape localShape = _molecule.inferShape(i, localRanking).value_or_eval(
       [&]() {
         return LocalGeometry::firstOfSize(localRanking.sites.size());
       }
@@ -1925,7 +1925,7 @@ void SpatialModel::_modelSpirocenters(
 
     // Skip any stereopermutators that do not match our conditions
     if(
-      stereopermutator.getShape() != Symmetry::Shape::Tetrahedron
+      stereopermutator.getShape() != Shapes::Shape::Tetrahedron
       || cycleData.numCycleFamilies(i) != 2
     ) {
       continue;

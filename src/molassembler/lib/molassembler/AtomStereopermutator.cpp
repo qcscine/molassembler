@@ -12,7 +12,7 @@ namespace molassembler {
 /* AtomStereopermutator implementations */
 AtomStereopermutator::AtomStereopermutator(
   const OuterGraph& graph,
-  const Symmetry::Shape shape,
+  const Shapes::Shape shape,
   const AtomIndex centerAtom,
   RankingInformation ranking
 ) : _pImpl(
@@ -37,11 +37,11 @@ AtomStereopermutator& AtomStereopermutator::operator = (const AtomStereopermutat
 
 AtomStereopermutator::~AtomStereopermutator() = default;
 
-Symmetry::Shape AtomStereopermutator::up(const Symmetry::Shape shape) {
+Shapes::Shape AtomStereopermutator::up(const Shapes::Shape shape) {
   return Impl::up(shape);
 }
 
-Symmetry::Shape AtomStereopermutator::down(const Symmetry::Shape shape, const unsigned removedShapePosition) {
+Shapes::Shape AtomStereopermutator::down(const Shapes::Shape shape, const unsigned removedShapePosition) {
   return Impl::down(shape, removedShapePosition);
 }
 
@@ -67,7 +67,7 @@ void AtomStereopermutator::fit(
 boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::propagate(
   const OuterGraph& graph,
   RankingInformation newRanking,
-  boost::optional<Symmetry::Shape> shapeOption
+  boost::optional<Shapes::Shape> shapeOption
 ) {
   return _pImpl->propagate(
     graph,
@@ -81,7 +81,7 @@ void AtomStereopermutator::propagateVertexRemoval(const AtomIndex removedIndex) 
 }
 
 void AtomStereopermutator::setShape(
-  const Symmetry::Shape shape,
+  const Shapes::Shape shape,
   const OuterGraph& graph
 ) {
   _pImpl->setShape(shape, graph);
@@ -132,7 +132,7 @@ const RankingInformation& AtomStereopermutator::getRanking() const {
   return _pImpl->getRanking();
 }
 
-Symmetry::Shape AtomStereopermutator::getShape() const {
+Shapes::Shape AtomStereopermutator::getShape() const {
   return _pImpl->getShape();
 }
 

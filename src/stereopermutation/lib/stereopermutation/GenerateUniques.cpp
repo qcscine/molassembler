@@ -21,12 +21,12 @@ namespace stereopermutation {
 
 bool hasTransArrangedPairs(
   const Stereopermutation& stereopermutation,
-  const Symmetry::Shape shape
+  const Shapes::Shape shape
 ) {
   // for every pair in links
   for(const auto& indexPair : stereopermutation.links) {
     if(
-      Symmetry::angleFunction(shape)(
+      Shapes::angleFunction(shape)(
         indexPair.first,
         indexPair.second
       ) == M_PI
@@ -41,7 +41,7 @@ bool hasTransArrangedPairs(
 
 std::vector<Stereopermutation> uniques(
   const Stereopermutation& initial,
-  const Symmetry::Shape shape,
+  const Shapes::Shape shape,
   const bool removeTransSpanningGroups
 ) {
   /* NOTE: This algorithm may seem wasteful in terms of memory (after all, one
@@ -116,7 +116,7 @@ std::vector<Stereopermutation> uniques(
 
 StereopermutationsWithWeights uniquesWithWeights(
   const Stereopermutation& initial,
-  const Symmetry::Shape shape,
+  const Shapes::Shape shape,
   const bool removeTransSpanningGroups
 ) {
   /* NOTE: This algorithm may seem wasteful in terms of memory (after all, one

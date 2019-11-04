@@ -108,7 +108,7 @@ struct AbstractStereopermutations {
    */
   AbstractStereopermutations(
     const RankingInformation& ranking,
-    Symmetry::Shape shape
+    Shapes::Shape shape
   );
 //!@}
 

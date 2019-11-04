@@ -17,7 +17,7 @@
 
 namespace Scine {
 
-namespace Symmetry {
+namespace Shapes {
 
 //! A placeholder value for constexpr tetrahedra specification of origin
 constexpr unsigned ORIGIN_PLACEHOLDER = std::numeric_limits<unsigned>::max();
@@ -1805,7 +1805,7 @@ using allShapeDataTypes = std::tuple<
 
 } // namespace data
 
-} // namespace Symmetry
+} // namespace Shapes
 
 } // namespace Scine
 

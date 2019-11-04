@@ -60,7 +60,7 @@ void Molecule::Impl::_tryAddAtomStereopermutator(
     return;
   }
 
-  Symmetry::Shape shape = inferShape(candidateIndex, localRanking).value_or_eval(
+  Shapes::Shape shape = inferShape(candidateIndex, localRanking).value_or_eval(
     [&]() {return LocalGeometry::firstOfSize(localRanking.sites.size());}
   );
 
@@ -237,7 +237,7 @@ void Molecule::Impl::_propagateGraphChange() {
       }
 
       // Suggest a shape if desired
-      boost::optional<Symmetry::Shape> newShapeOption;
+      boost::optional<Shapes::Shape> newShapeOption;
       if(Options::shapeTransition == ShapeTransition::PrioritizeInferenceFromGraph) {
         newShapeOption = inferShape(vertex, localRanking);
       }
@@ -638,7 +638,7 @@ void Molecule::Impl::removeAtom(const AtomIndex a) {
         continue;
       }
 
-      boost::optional<Symmetry::Shape> newShapeOption;
+      boost::optional<Shapes::Shape> newShapeOption;
       if(Options::shapeTransition == ShapeTransition::PrioritizeInferenceFromGraph) {
         newShapeOption = inferShape(indexToUpdate, localRanking);
       }
@@ -710,7 +710,7 @@ void Molecule::Impl::removeBond(
         return;
       }
 
-      boost::optional<Symmetry::Shape> newShapeOption;
+      boost::optional<Shapes::Shape> newShapeOption;
       if(Options::shapeTransition == ShapeTransition::PrioritizeInferenceFromGraph) {
         newShapeOption = inferShape(indexToUpdate, localRanking);
       }
@@ -791,7 +791,7 @@ void Molecule::Impl::setElementType(
 
 void Molecule::Impl::setShapeAtAtom(
   const AtomIndex a,
-  const Symmetry::Shape shape
+  const Shapes::Shape shape
 ) {
   if(!_isValidIndex(a)) {
     throw std::out_of_range("Molecule::setShapeAtAtom: Supplied atom index is invalid");
@@ -803,7 +803,7 @@ void Molecule::Impl::setShapeAtAtom(
   if(!stereopermutatorOption) {
     RankingInformation localRanking = rankPriority(a);
 
-    if(localRanking.sites.size() != Symmetry::size(shape)) {
+    if(localRanking.sites.size() != Shapes::size(shape)) {
       throw std::logic_error(
         "Molecule::setShapeAtAtom: The size of the supplied shape is not "
         " the same as the number of determined sites"
@@ -831,8 +831,8 @@ void Molecule::Impl::setShapeAtAtom(
   }
 
   if(
-    Symmetry::size(stereopermutatorOption->getShape())
-    != Symmetry::size(shape)
+    Shapes::size(stereopermutatorOption->getShape())
+    != Shapes::size(shape)
   ) {
     throw std::logic_error(
       "Molecule::setShapeAtAtom: The size of the supplied shape is "
@@ -864,7 +864,7 @@ boost::optional<AtomEnvironmentComponents> Molecule::Impl::canonicalComponents()
   return _canonicalComponentsOption;
 }
 
-boost::optional<Symmetry::Shape> Molecule::Impl::inferShape(
+boost::optional<Shapes::Shape> Molecule::Impl::inferShape(
   const AtomIndex index,
   const RankingInformation& ranking
 ) const {
@@ -959,7 +959,7 @@ StereopermutatorList Molecule::Impl::inferStereopermutatorsFromPositions(
       continue;
     }
 
-    Symmetry::Shape dummyShape = LocalGeometry::firstOfSize(localRanking.sites.size());
+    Shapes::Shape dummyShape = LocalGeometry::firstOfSize(localRanking.sites.size());
 
     // Construct it
     auto stereopermutator = AtomStereopermutator {

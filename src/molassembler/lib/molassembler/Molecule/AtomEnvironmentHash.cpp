@@ -101,13 +101,13 @@ WideHashType hash(
   const AtomEnvironmentComponents bitmask,
   const Scine::Utils::ElementType elementType,
   const std::vector<BondInformation>& sortedBonds,
-  const boost::optional<Symmetry::Shape>& shapeOptional,
+  const boost::optional<Shapes::Shape>& shapeOptional,
   const boost::optional<unsigned>& assignedOptional
 ) {
   // 2^7 = 128 will fit all element types
   constexpr unsigned elementTypeBits = 7;
   constexpr unsigned shapeNameBits = temple::Math::ceil(
-    temple::Math::log(Symmetry::nShapes + 1.0, 2.0)
+    temple::Math::log(Shapes::nShapes + 1.0, 2.0)
   );
 
   static_assert(
@@ -116,7 +116,7 @@ WideHashType hash(
       // Element type (fixed as this cannot possibly increase)
       elementTypeBits
       // Bond information: exactly as many as the largest possible shape
-      + Symmetry::constexprProperties::maxShapeSize * (
+      + Shapes::constexprProperties::maxShapeSize * (
         BondInformation::hashWidth
       )
       // The bits needed to store the shape name (plus none)
@@ -154,7 +154,7 @@ WideHashType hash(
    *
    * This occupies 6 * 12 = 72 bits.
    */
-  constexpr unsigned bondsHashSectionWidth = BondInformation::hashWidth * Symmetry::constexprProperties::maxShapeSize;
+  constexpr unsigned bondsHashSectionWidth = BondInformation::hashWidth * Shapes::constexprProperties::maxShapeSize;
 
   if(bitmask & AtomEnvironmentComponents::BondOrders) {
     unsigned bondNumber = 0;
@@ -197,7 +197,7 @@ std::vector<BondInformation> gatherBonds(
   const AtomIndex i
 ) {
   std::vector<BondInformation> bonds;
-  bonds.reserve(Symmetry::constexprProperties::maxShapeSize);
+  bonds.reserve(Shapes::constexprProperties::maxShapeSize);
 
   if(componentsBitmask & AtomEnvironmentComponents::Stereopermutations) {
     for(
@@ -260,7 +260,7 @@ WideHashType atomEnvironment(
   AtomIndex i
 ) {
   std::vector<BondInformation> bonds;
-  boost::optional<Symmetry::Shape> shapeOption;
+  boost::optional<Shapes::Shape> shapeOption;
   boost::optional<unsigned> assignmentOption;
 
   if(bitmask & AtomEnvironmentComponents::BondOrders) {
