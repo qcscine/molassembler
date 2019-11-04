@@ -54,8 +54,14 @@ BOOST_AUTO_TEST_CASE(CGReinterpretYieldsSameShapes) {
     Utils::ElementType::P
   };
 
+#ifdef NDEBUG
+  constexpr unsigned shapeSizeLimit = 8;
+#else
+  constexpr unsigned shapeSizeLimit = 4;
+#endif
+
   for(const auto& shape: Shapes::allShapes) {
-    if(Shapes::size(shape) > 6) {
+    if(Shapes::size(shape) > shapeSizeLimit) {
       continue;
     }
 
