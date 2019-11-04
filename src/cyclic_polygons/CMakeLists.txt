@@ -29,6 +29,10 @@ target_link_libraries(cyclicPolygonTests
     temple
 )
 
+if("${EIGEN_LINALG_DEFINES}" STREQUAL "EIGEN_USE_MKL_ALL")
+  target_link_libraries(cyclicPolygonTests PRIVATE OpenMP::OpenMP_CXX)
+endif()
+
 add_test(NAME MASMCyclicPolygonTests COMMAND cyclicPolygonTests)
 
 install(

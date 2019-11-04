@@ -31,5 +31,10 @@ target_link_libraries(templeTests
 target_compile_definitions(templeTests PRIVATE BOOST_ALL_DYN_LINK)
 target_compile_options(templeTests PRIVATE ${MOLASSEMBLER_CXX_FLAGS})
 
+# MKL use implies openmp everywhere
+if("${EIGEN_LINALG_DEFINES}" STREQUAL "EIGEN_USE_MKL_ALL")
+  target_link_libraries(templeTests PRIVATE OpenMP::OpenMP_CXX)
+endif()
+
 add_test(NAME MASMTempleTests COMMAND templeTests)
 set_property(TARGET templeTests PROPERTY FOLDER "Tests")

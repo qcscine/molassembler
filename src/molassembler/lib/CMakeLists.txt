@@ -204,6 +204,11 @@ if(EXTERNAL_LINALG_FOUND)
   target_compile_definitions(molassembler PUBLIC ${EIGEN_LINALG_DEFINES})
   target_include_directories(molassembler PUBLIC ${EXTERNAL_LINALG_INCLUDE_DIRS})
   target_link_libraries(molassembler PUBLIC ${EXTERNAL_LINALG_LIBRARIES})
+
+  # MKL use implies openmp
+  if("${EIGEN_LINALG_DEFINES}" STREQUAL "EIGEN_USE_MKL_ALL")
+    target_link_libraries(molassembler PRIVATE OpenMP::OpenMP_CXX)
+  endif()
 endif()
 
 # -- END Linking

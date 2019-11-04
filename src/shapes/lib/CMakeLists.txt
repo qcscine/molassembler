@@ -52,9 +52,11 @@ target_link_libraries(shapes
 
 target_compile_options(shapes PRIVATE ${MOLASSEMBLER_CXX_FLAGS})
 if(${SHAPES_TRY_CONSTEXPR})
-  target_compile_definitions(shapes
-    PUBLIC SHAPES_TRY_CONSTEXPR
-  )
+  target_compile_definitions(shapes PUBLIC SHAPES_TRY_CONSTEXPR)
+endif()
+
+if("${EIGEN_LINALG_DEFINES}" STREQUAL "EIGEN_USE_MKL_ALL")
+  target_link_libraries(shapes PUBLIC OpenMP::OpenMP_CXX)
 endif()
 
 # NOTE: The entirety of the generator expression below is provided purely for
