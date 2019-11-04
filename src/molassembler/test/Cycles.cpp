@@ -73,23 +73,23 @@ void readAndDecompose(const boost::filesystem::path& filePath) {
   using namespace Scine;
   using namespace molassembler;
 
-  // Read the file
-  auto mol = IO::read(filePath.string());
-
-  const Cycles& cycles = mol.graph().cycles();
-
-  auto cycleSizes = temple::map(
-    cycles,
-    [](const auto& cycleEdges) -> unsigned {
-      return cycleEdges.size();
-    }
-  );
-
-  BOOST_CHECK(!cycleSizes.empty());
-
   auto findIter = decompositionData.find(filePath.stem().string());
 
   if(findIter != decompositionData.end()) {
+    // Read the file
+    auto mol = IO::read(filePath.string());
+
+    const Cycles& cycles = mol.graph().cycles();
+
+    auto cycleSizes = temple::map(
+      cycles,
+      [](const auto& cycleEdges) -> unsigned {
+        return cycleEdges.size();
+      }
+    );
+
+    BOOST_CHECK(!cycleSizes.empty());
+
     temple::inplace::sort(cycleSizes);
 
     BOOST_CHECK_MESSAGE(

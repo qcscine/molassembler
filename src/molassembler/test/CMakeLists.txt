@@ -8,7 +8,6 @@ endif()
 set(MainTestFiles
   ${CMAKE_CURRENT_SOURCE_DIR}/AtomStereopermutator.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/BondStereopermutator.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/Canonicalization.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/Cartesian.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/Coherence.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/CommonTrig.cpp

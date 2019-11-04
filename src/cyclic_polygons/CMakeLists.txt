@@ -17,7 +17,6 @@ target_link_libraries(cyclic_polygons INTERFACE temple)
 if(NOT TARGET Boost::unit_test_framework)
   find_package(Boost REQUIRED COMPONENTS unit_test_framework)
 endif()
-find_package(Eigen3 3.1.1 REQUIRED)
 
 add_executable(cyclicPolygonTests tests.cpp)
 target_compile_definitions(cyclicPolygonTests PRIVATE BOOST_ALL_DYN_LINK)
@@ -28,10 +27,7 @@ target_link_libraries(cyclicPolygonTests
     Boost::unit_test_framework
     temple
 )
-
-if("${EIGEN_LINALG_DEFINES}" STREQUAL "EIGEN_USE_MKL_ALL")
-  target_link_libraries(cyclicPolygonTests PRIVATE OpenMP::OpenMP_CXX)
-endif()
+add_eigen(cyclicPolygonTests)
 
 add_test(NAME MASMCyclicPolygonTests COMMAND cyclicPolygonTests)
 

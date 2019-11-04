@@ -1,7 +1,6 @@
 set(stereopermutation_VERSION 0.1.0)
 
 # dependencies
-find_package(Eigen3 3.1.1 REQUIRED)
 find_package(shapes REQUIRED)
 
 set(HEADERS_All
@@ -25,7 +24,7 @@ target_include_directories(stereopermutation
 
 target_include_directories(stereopermutation SYSTEM PUBLIC ${EIGEN3_INCLUDE_DIRS})
 
-target_link_libraries(stereopermutation PUBLIC shapes)
+target_link_libraries(stereopermutation PUBLIC shapes Eigen3::Eigen)
 
 target_compile_options(stereopermutation PRIVATE ${MOLASSEMBLER_CXX_FLAGS})
 

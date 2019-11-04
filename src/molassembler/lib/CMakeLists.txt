@@ -183,6 +183,7 @@ target_link_libraries(
     nautyStatic
     $<$<BOOL:${OpenMP_CXX_FOUND}>:OpenMP::OpenMP_CXX>
 )
+add_eigen(molassembler)
 
 # Compiler flags and definitions
 target_compile_options(molassembler PRIVATE ${MOLASSEMBLER_CXX_FLAGS})
@@ -190,24 +191,12 @@ target_compile_definitions(molassembler PRIVATE BOOST_ALL_DYN_LINK)
 
 # Suppress warnings coming from various external libraries
 target_include_directories(molassembler SYSTEM PRIVATE
-  ${EIGEN3_INCLUDE_DIRS}
   ${Boost_INCLUDE_DIR}
+  $<TARGET_PROPERTY:Eigen3::Eigen,INTERFACE_INCLUDE_DIRECTORIES>
   $<TARGET_PROPERTY:json,INTERFACE_INCLUDE_DIRECTORIES>
   $<TARGET_PROPERTY:spectra,INTERFACE_INCLUDE_DIRECTORIES>
   $<TARGET_PROPERTY:nautyStatic,INTERFACE_INCLUDE_DIRECTORIES>
 )
-
-# Handle BLAS
-if(EXTERNAL_LINALG_FOUND)
-  target_compile_definitions(molassembler PUBLIC ${EIGEN_LINALG_DEFINES})
-  target_include_directories(molassembler PUBLIC ${EXTERNAL_LINALG_INCLUDE_DIRS})
-  target_link_libraries(molassembler PUBLIC ${EXTERNAL_LINALG_LIBRARIES})
-
-  # MKL use implies openmp
-  if("${EIGEN_LINALG_DEFINES}" STREQUAL "EIGEN_USE_MKL_ALL")
-    target_link_libraries(molassembler PRIVATE OpenMP::OpenMP_CXX)
-  endif()
-endif()
 
 # -- END Linking
 

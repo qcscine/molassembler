@@ -29,6 +29,7 @@
 #include "molassembler/Options.h"
 #include "molassembler/StereopermutatorList.h"
 
+#include "Utils/Geometry/ElementInfo.h"
 #include "Utils/Geometry/AtomCollection.h"
 #include "Utils/Bonds/BondOrderCollection.h"
 #include "Utils/IO/ChemicalFileFormats/ChemicalFileHandler.h"
@@ -116,6 +117,44 @@ using HashArgumentsType = std::tuple<
   boost::optional<unsigned>
 >;
 
+std::string repr(const HashArgumentsType& hashArgs) {
+  std::string representation;
+  representation += Utils::ElementInfo::symbol(std::get<0>(hashArgs));
+  representation += ", ";
+  representation += temple::condense(
+    temple::map(
+      std::get<1>(hashArgs),
+      [](const hashes::BondInformation& b) -> std::string {
+        return (
+          "bty " + std::to_string(static_cast<unsigned>(b.bondType))
+          + ", s = " + std::to_string(b.stereopermutatorOnBond)
+          + ", a = " + temple::optionals::map(
+            b.assignmentOptional,
+            [](const unsigned i) -> std::string {
+              return std::to_string(i);
+            }
+          ).value_or("N")
+        );
+      }
+    )
+  );
+  representation += ", s = ";
+  representation += temple::optionals::map(
+    std::get<2>(hashArgs),
+    [](const Shapes::Shape s) -> std::string {
+      return Shapes::name(s);
+    }
+  ).value_or("N");
+  representation += ", a = ";
+  representation += temple::optionals::map(
+    std::get<3>(hashArgs),
+    [](const unsigned p) -> std::string {
+      return std::to_string(p);
+    }
+  ).value_or("N");
+  return representation;
+}
+
 HashArgumentsType randomArguments() {
   auto genBondInformation = []() -> molassembler::hashes::BondInformation {
     auto bty = static_cast<BondType>(
@@ -188,17 +227,16 @@ BOOST_AUTO_TEST_CASE(AtomEnvironmentHashesDoNotCollide) {
       std::make_index_sequence<5> {}
     );
 
-    if(
-      resultsMap.count(result) > 0
-      && arguments != resultsMap.at(result)
-    ) {
+    auto findIter = resultsMap.find(result);
+    if(findIter != std::end(resultsMap)) {
       BOOST_REQUIRE_MESSAGE(
-        false,
-        "Found overlapping result for different arguments to hashAtomEnvironment!\n"
+        arguments == findIter->second,
+        "Found overlapping result for different arguments to hashAtomEnvironment!"
+        << "\nA: " << repr(arguments) << "\nB: " << repr(findIter->second)
       );
+    } else {
+      resultsMap.emplace(result, std::move(arguments));
     }
-
-    resultsMap.emplace(result, std::move(arguments));
   }
 }
 
@@ -479,8 +517,6 @@ BOOST_AUTO_TEST_CASE(MoleculeBasicEZInequivalency) {
     stereopermutatorOption
     && stereopermutatorOption->numStereopermutations() == 2
   );
-
-  std::cout << a << "\n";
 
   a.assignStereopermutator(
     BondIndex {0, 1},

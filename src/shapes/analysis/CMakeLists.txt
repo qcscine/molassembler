@@ -7,7 +7,6 @@ if(NOT TARGET Boost::unit_test_framework OR NOT TARGET Boost::program_options OR
     COMPONENTS unit_test_framework program_options system
   )
 endif()
-find_package(Eigen3 3.1.1 REQUIRED)
 
 if(MOLASSEMBLER_PARALLELIZE AND NOT TARGET OpenMP::OpenMP_CXX)
   find_package(OpenMP)

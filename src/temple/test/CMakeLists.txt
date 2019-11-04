@@ -1,7 +1,6 @@
 if(NOT TARGET Boost::unit_test_framework)
   find_package(Boost REQUIRED COMPONENTS unit_test_framework)
 endif()
-find_package(Eigen3 3.1.1 REQUIRED)
 
 add_executable(templeTests
   ${CMAKE_CURRENT_SOURCE_DIR}/Adaptors.cpp
@@ -22,19 +21,14 @@ add_executable(templeTests
 
 target_link_libraries(templeTests
   PRIVATE
-    Eigen3::Eigen
     Boost::boost
     Boost::unit_test_framework
     temple
 )
+add_eigen(templeTests)
 
 target_compile_definitions(templeTests PRIVATE BOOST_ALL_DYN_LINK)
 target_compile_options(templeTests PRIVATE ${MOLASSEMBLER_CXX_FLAGS})
-
-# MKL use implies openmp everywhere
-if("${EIGEN_LINALG_DEFINES}" STREQUAL "EIGEN_USE_MKL_ALL")
-  target_link_libraries(templeTests PRIVATE OpenMP::OpenMP_CXX)
-endif()
 
 add_test(NAME MASMTempleTests COMMAND templeTests)
 set_property(TARGET templeTests PROPERTY FOLDER "Tests")

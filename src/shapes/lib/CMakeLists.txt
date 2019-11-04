@@ -1,5 +1,4 @@
 # dependencies
-find_package(Eigen3 3.1.1 REQUIRED)
 if(NOT TARGET Boost::boost)
   find_package(Boost REQUIRED)
 endif()
@@ -45,14 +44,11 @@ target_include_directories(shapes
 )
 target_include_directories(shapes SYSTEM PUBLIC ${EIGEN3_INCLUDE_DIRS})
 target_link_libraries(shapes PUBLIC Boost::boost temple)
+add_eigen(shapes)
 
 target_compile_options(shapes PRIVATE ${MOLASSEMBLER_CXX_FLAGS})
 if(${SHAPES_TRY_CONSTEXPR})
   target_compile_definitions(shapes PUBLIC SHAPES_TRY_CONSTEXPR)
-endif()
-
-if("${EIGEN_LINALG_DEFINES}" STREQUAL "EIGEN_USE_MKL_ALL")
-  target_link_libraries(shapes PUBLIC OpenMP::OpenMP_CXX)
 endif()
 
 # NOTE: The entirety of the generator expression below is provided purely for

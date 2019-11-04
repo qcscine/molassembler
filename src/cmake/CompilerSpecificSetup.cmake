@@ -32,7 +32,6 @@ endif()
 
 # Handle opportunity for architecture-specific instruction sets
 if(NOT "${SCINE_MARCH}" STREQUAL "" AND NOT MSVC)
-  message(STATUS "Appending march=native")
   list(APPEND MOLASSEMBLER_CXX_FLAGS -march=${SCINE_MARCH})
 endif()
 

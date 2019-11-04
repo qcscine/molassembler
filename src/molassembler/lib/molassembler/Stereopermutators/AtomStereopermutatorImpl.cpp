@@ -157,6 +157,10 @@ Shapes::Shape classifyShape(const Eigen::Matrix<double, 3, Eigen::Dynamic>& site
         shapeMeasure *= 4;
       }
 
+      if(shape == Shapes::Shape::Seesaw) {
+        shapeMeasure *= 2;
+      }
+
       if(shapeMeasure < carry.first) {
         return CarryType {shapeMeasure, shape};
       }
