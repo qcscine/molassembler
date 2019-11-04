@@ -11,7 +11,7 @@
 #include "molassembler/Modeling/CommonTrig.h"
 #include "molassembler/DistanceGeometry/SpatialModel.h"
 
-#include "chemical_symmetries/Properties.h"
+#include "shapes/Properties.h"
 #include "temple/Adaptors/CyclicFrame.h"
 #include "temple/Adaptors/Transform.h"
 #include "temple/Functional.h"

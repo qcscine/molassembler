@@ -7,7 +7,7 @@
 
 #include "boost/functional/hash.hpp"
 
-#include "chemical_symmetries/Symmetries.h"
+#include "shapes/Symmetries.h"
 
 #include <algorithm>
 #include <cassert>

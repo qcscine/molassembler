@@ -41,7 +41,7 @@ foreach(filename ${analysisFiles})
       Boost::system
       Boost::filesystem
       molassembler
-      chemical_symmetries
+      shapes
       gor1
   )
 

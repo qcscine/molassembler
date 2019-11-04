@@ -7,7 +7,7 @@
 
 #include "boost/functional/hash.hpp"
 #include "boost/optional.hpp"
-#include "chemical_symmetries/Symmetries.h"
+#include "shapes/Symmetries.h"
 
 #include "temple/Adaptors/Iota.h"
 

@@ -15,8 +15,8 @@
 #include <functional>
 #include <numeric>
 
-#include "chemical_symmetries/Symmetries.h"
-#include "chemical_symmetries/DynamicProperties.h"
+#include "shapes/Symmetries.h"
+#include "shapes/DynamicProperties.h"
 
 #include "stereopermutation/GenerateUniques.h"
 #include "stereopermutation/Composites.h"
@@ -837,7 +837,7 @@ BOOST_AUTO_TEST_CASE(compositesAlignment) {
 }
 
 BOOST_AUTO_TEST_CASE(numUnlinkedStereopermutationsTest) {
-  // Crosscheck number of unlinked stereopermutations with chemical_symmetries
+  // Crosscheck number of unlinked stereopermutations with shapes
   for(const Symmetry::Shape shape : Symmetry::allShapes) {
     const unsigned S = Symmetry::size(shape);
     if(S > 8) {
@@ -866,7 +866,7 @@ BOOST_AUTO_TEST_CASE(numUnlinkedStereopermutationsTest) {
 
       const unsigned uniquesCount = uniques(initialStereopermutation, shape).size();
 
-      // chemical_symmetries prediction
+      // shapes prediction
       const unsigned chemicalSymmetriesCount = Symmetry::properties::numUnlinkedStereopermutations(
         shape,
         nIdentical
@@ -874,7 +874,7 @@ BOOST_AUTO_TEST_CASE(numUnlinkedStereopermutationsTest) {
 
       BOOST_CHECK_MESSAGE(
         uniquesCount == chemicalSymmetriesCount,
-        "stereopermutation and chemical_symmetries differ in unique "
+        "stereopermutation and shapes differ in unique "
         << "stereopermutation counts for " << Symmetry::name(shape)
         << " and " << nIdentical << " ligands: " << uniquesCount << " vs "
         << chemicalSymmetriesCount

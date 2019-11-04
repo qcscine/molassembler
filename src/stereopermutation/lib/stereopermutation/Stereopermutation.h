@@ -10,7 +10,7 @@
 #ifndef INCLUDE_MOLASSEMBLER_STEREOPERMUTATIONS_STEREOPERMUTATION_H
 #define INCLUDE_MOLASSEMBLER_STEREOPERMUTATIONS_STEREOPERMUTATION_H
 
-#include "chemical_symmetries/Shapes.h"
+#include "shapes/Shapes.h"
 #include "temple/Preprocessor.h"
 #include "temple/OperatorSuppliers.h"
 

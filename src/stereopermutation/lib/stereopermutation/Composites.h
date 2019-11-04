@@ -11,7 +11,7 @@
 #ifndef INCLUDE_MOLASSEMBLER_STEREOPERMUTATION_COMPOSITES_H
 #define INCLUDE_MOLASSEMBLER_STEREOPERMUTATION_COMPOSITES_H
 
-#include "chemical_symmetries/Shapes.h"
+#include "shapes/Shapes.h"
 #include "temple/OrderedPair.h"
 #include "temple/constexpr/FloatingPointComparison.h"
 #include "temple/OperatorSuppliers.h"

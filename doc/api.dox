@@ -11,8 +11,8 @@ The auxiliary library headers that are by inclusion also part of the public
 interface are currently:
 
 @verbatim
-- chemical symmetries/
-  - Names
+- shapes/
+  - Shapes
 @endverbatim
 
 @warning It is inadvisable to include the listed files directly and make use of

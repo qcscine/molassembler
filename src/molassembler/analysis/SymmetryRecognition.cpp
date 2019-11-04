@@ -13,11 +13,11 @@
 
 #include "molassembler/Detail/Cartesian.h"
 
-#include "chemical_symmetries/Symmetries.h"
-#include "chemical_symmetries/ContinuousMeasures.h"
-#include "chemical_symmetries/InertialMoments.h"
-#include "chemical_symmetries/DynamicProperties.h"
-#include "chemical_symmetries/TauCriteria.h"
+#include "shapes/Symmetries.h"
+#include "shapes/ContinuousMeasures.h"
+#include "shapes/InertialMoments.h"
+#include "shapes/DynamicProperties.h"
+#include "shapes/TauCriteria.h"
 
 #include "temple/Adaptors/AllPairs.h"
 #include "temple/Adaptors/Iota.h"

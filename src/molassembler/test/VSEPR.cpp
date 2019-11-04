@@ -8,7 +8,7 @@
 #include <iostream>
 
 #include "molassembler/Modeling/LocalGeometryModel.h"
-#include "chemical_symmetries/Symmetries.h"
+#include "shapes/Symmetries.h"
 
 using namespace Scine;
 using namespace molassembler;

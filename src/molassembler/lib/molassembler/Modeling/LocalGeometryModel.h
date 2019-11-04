@@ -14,7 +14,7 @@
 #include "boost/optional/optional_fwd.hpp"
 
 #include "Utils/Geometry/ElementTypes.h"
-#include "chemical_symmetries/Shapes.h"
+#include "shapes/Shapes.h"
 
 #include "molassembler/RankingInformation.h"
 

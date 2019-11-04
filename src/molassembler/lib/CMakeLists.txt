@@ -172,7 +172,7 @@ target_link_libraries(
     Scine::UtilsOS
     boost_outcome
     RingDecomposerLibStatic
-    chemical_symmetries
+    shapes
   PRIVATE
     temple
     stereopermutation

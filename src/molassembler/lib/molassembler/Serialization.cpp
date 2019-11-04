@@ -5,7 +5,7 @@
 
 #include "molassembler/Serialization.h"
 
-#include "chemical_symmetries/Symmetries.h"
+#include "shapes/Symmetries.h"
 #include "boost/range/adaptor/map.hpp"
 #include "Utils/Typenames.h"
 #include "json/json.hpp"

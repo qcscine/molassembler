@@ -7,9 +7,9 @@
 
 #include "boost/graph/mcgregor_common_subgraphs.hpp"
 
-#include "chemical_symmetries/Properties.h"
+#include "shapes/Properties.h"
 
-#include "chemical_symmetries/Shapes.h"
+#include "shapes/Shapes.h"
 #include "temple/constexpr/UpperTriangularMatrix.h"
 
 

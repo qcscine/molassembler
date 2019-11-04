@@ -7,7 +7,7 @@
 #include "molassembler/DistanceGeometry/ConformerGeneration.h"
 
 #include "Utils/Geometry/ElementTypes.h"
-#include "chemical_symmetries/Symmetries.h"
+#include "shapes/Symmetries.h"
 
 #include "temple/Functional.h"
 #include "temple/Random.h"

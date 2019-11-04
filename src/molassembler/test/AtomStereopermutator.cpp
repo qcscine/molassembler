@@ -9,8 +9,8 @@
 #include "molassembler/StereopermutatorList.h"
 #include "molassembler/Conformers.h"
 #include "molassembler/IO.h"
-#include "chemical_symmetries/Symmetries.h"
-#include "chemical_symmetries/Properties.h"
+#include "shapes/Symmetries.h"
+#include "shapes/Properties.h"
 #include "Utils/Math/QuaternionFit.h"
 
 using namespace Scine;

@@ -275,7 +275,7 @@ public:
    *
    * The minimal representation assumes that all shape tetrahedra are
    * defined as Positive targets, which is checked in the
-   * chemical_symmetries tests.
+   * shapes tests.
    *
    * @complexity{@math{\Theta(T)} where @math{T} is the number of tetrahedra
    * defined for the modeled shape}

@@ -7,7 +7,7 @@
 #ifndef INCLUDE_MOLASSEMBLER_OPTIONS_H
 #define INCLUDE_MOLASSEMBLER_OPTIONS_H
 
-#include "chemical_symmetries/Shapes.h"
+#include "shapes/Shapes.h"
 #include "molassembler/PRNG.h"
 
 #include "Utils/Geometry/ElementTypes.h"

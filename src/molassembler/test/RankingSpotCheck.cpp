@@ -9,7 +9,7 @@
 #include "boost/graph/isomorphism.hpp"
 #include "boost/test/unit_test.hpp"
 
-#include "chemical_symmetries/Symmetries.h"
+#include "shapes/Symmetries.h"
 
 #include "temple/constexpr/Bitmask.h"
 #include "temple/Functional.h"

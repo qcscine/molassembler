@@ -10,7 +10,7 @@
 #include "boost/regex.hpp"
 #include "boost/test/unit_test.hpp"
 
-#include "chemical_symmetries/Symmetries.h"
+#include "shapes/Symmetries.h"
 
 #include "temple/Adaptors/AllPairs.h"
 #include "temple/Adaptors/Iota.h"

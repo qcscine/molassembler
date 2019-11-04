@@ -151,7 +151,7 @@ public:
    *
    * The minimal representation assumes that all shape tetrahedron
    * definitions are defined to be Positive targets, which is checked in
-   * the chemical_symmetries tests.
+   * the shapes tests.
    *
    * @param enforce Emit minimal representations of chiral constraints even if
    * the stereopermutator does not have any chiral state, i.e.

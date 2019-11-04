@@ -3,7 +3,7 @@
  *   See LICENSE.txt
  */
 #include "pybind11/pybind11.h"
-#include "chemical_symmetries/Symmetries.h"
+#include "shapes/Symmetries.h"
 
 void init_symmetry_submodule(pybind11::module& m) {
   using namespace Scine;

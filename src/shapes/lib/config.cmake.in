@@ -1,0 +1,10 @@
+include(CMakeFindDependencyMacro)
+find_dependency(Eigen3 3.1.1 REQUIRED)
+find_dependency(molassembler COMPONENTS temple REQUIRED)
+
+include(${CMAKE_CURRENT_LIST_DIR}/shapesTargets.cmake)
+
+@PACKAGE_INIT@
+set_and_check(SHAPES_INCLUDE_DIR "@PACKAGE_INCLUDE_INSTALL_DIR@")
+
+check_required_components(SHAPES)

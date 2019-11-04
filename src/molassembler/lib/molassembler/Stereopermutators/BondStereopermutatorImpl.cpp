@@ -5,7 +5,7 @@
 
 #include "molassembler/Stereopermutators/BondStereopermutatorImpl.h"
 
-#include "chemical_symmetries/Symmetries.h"
+#include "shapes/Symmetries.h"
 
 #include "temple/Adaptors/AllPairs.h"
 #include "temple/Adaptors/CyclicFrame.h"

@@ -11,7 +11,7 @@
 #include "boost/optional.hpp"
 #include "Utils/Geometry/ElementTypes.h"
 
-#include "chemical_symmetries/Shapes.h"
+#include "shapes/Shapes.h"
 
 #include "molassembler/Types.h"
 

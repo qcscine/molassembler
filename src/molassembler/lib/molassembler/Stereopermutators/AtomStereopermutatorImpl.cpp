@@ -6,9 +6,9 @@
 #include "molassembler/Stereopermutators/AtomStereopermutatorImpl.h"
 
 #include "boost/range/join.hpp"
-#include "chemical_symmetries/DynamicProperties.h"
-#include "chemical_symmetries/Properties.h"
-#include "chemical_symmetries/ContinuousMeasures.h"
+#include "shapes/DynamicProperties.h"
+#include "shapes/Properties.h"
+#include "shapes/ContinuousMeasures.h"
 #include "CyclicPolygons.h"
 #include <Eigen/Dense>
 #include <Eigen/SparseCore>

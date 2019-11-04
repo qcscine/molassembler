@@ -9,7 +9,7 @@
 #include "Utils/Geometry/ElementInfo.h"
 
 #include "temple/Stringify.h"
-#include "chemical_symmetries/Symmetries.h"
+#include "shapes/Symmetries.h"
 
 namespace Scine {
 
