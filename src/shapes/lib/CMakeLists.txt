@@ -44,11 +44,7 @@ target_include_directories(shapes
   SYSTEM PUBLIC $<INSTALL_INTERFACE:$<INSTALL_PREFIX>/include>
 )
 target_include_directories(shapes SYSTEM PUBLIC ${EIGEN3_INCLUDE_DIRS})
-target_link_libraries(shapes
-  PUBLIC
-    Boost::boost
-    temple
-)
+target_link_libraries(shapes PUBLIC Boost::boost temple)
 
 target_compile_options(shapes PRIVATE ${MOLASSEMBLER_CXX_FLAGS})
 if(${SHAPES_TRY_CONSTEXPR})
@@ -72,10 +68,7 @@ molassembler_install_component_cmake_files(
   EXPORT_NAME shapesTargets
 )
 
-molassembler_install_component_headers(
-  COMPONENT shapes
-  DIRECTORY shapes
-)
+molassembler_install_component_headers(COMPONENT shapes DIRECTORY shapes)
 
 add_library(molassembler::shapes ALIAS shapes)
 

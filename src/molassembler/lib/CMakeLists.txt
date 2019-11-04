@@ -7,8 +7,6 @@ if(NOT TARGET Boost::filesystem OR NOT TARGET Boost::system)
   find_package(Boost REQUIRED COMPONENTS filesystem system)
 endif()
 
-include(ScineUtils)
-
 # Add RingDecomposerLib include directory
 include_directories(SYSTEM ${RDL_INCLUDE_DIR} include)
 
