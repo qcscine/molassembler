@@ -324,7 +324,7 @@ struct CShM final : public Recognizer {
           return carry;
         }
 
-        double shapeMeasure = Shapes::continuous::shape(normalized, shape);
+        double shapeMeasure = Shapes::continuous::shape(normalized, shape).measure;
         if(shape == Shapes::Shape::TrigonalPyramid) {
           shapeMeasure *= 4;
         }
@@ -410,7 +410,7 @@ struct CShMPathDev final : public Recognizer {
     auto shapeMeasures = temple::map(
       matchingSizeShapes,
       [&](const Shapes::Shape shape) -> double {
-        return Shapes::continuous::shape(normalized, shape);
+        return Shapes::continuous::shape(normalized, shape).measure;
       }
     );
 
@@ -522,7 +522,7 @@ struct CShMPathDevBiased final : public Recognizer {
     auto shapeMeasures = temple::map(
       matchingSizeShapes,
       [&](const Shapes::Shape shape) -> double {
-        return Shapes::continuous::shape(normalized, shape);
+        return Shapes::continuous::shape(normalized, shape).measure;
       }
     );
 

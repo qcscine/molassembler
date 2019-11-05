@@ -1,3 +1,8 @@
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ */
+
 #include "shapes/InertialMoments.h"
 
 #include "shapes/CoordinateSystemTransformation.h"

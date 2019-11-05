@@ -1,3 +1,8 @@
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ */
+
 #include "shapes/ContinuousMeasures.h"
 
 #include "shapes/Diophantine.h"
