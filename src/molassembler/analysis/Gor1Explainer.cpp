@@ -240,7 +240,7 @@ private:
 
   GraphvizWriter& _writer;
   unsigned _counter = 0;
-  std::deque<Vertex> _A, _B;
+  std::deque<Vertex> A_, B_;
 
 public:
   VisualizationVisitor(
@@ -262,22 +262,22 @@ public:
 
   void a_push(const Vertex& v, const Graph& g) {
     _writer.statePtr->highlightVertex = v;
-    _A.push_front(v);
+    A_.push_front(v);
     makeGraphvizFiles(g);
   }
   void a_pop(const Vertex& v, const Graph& g) {
     _writer.statePtr->highlightVertex = v;
-    _A.pop_front();
+    A_.pop_front();
     makeGraphvizFiles(g);
   }
   void b_push(const Vertex& v, const Graph& g) {
     _writer.statePtr->highlightVertex = v;
-    _B.push_front(v);
+    B_.push_front(v);
     makeGraphvizFiles(g);
   }
   void b_pop(const Vertex& v, const Graph& g) {
     _writer.statePtr->highlightVertex = v;
-    _B.pop_front();
+    B_.pop_front();
     makeGraphvizFiles(g);
   }
 
@@ -311,11 +311,11 @@ public:
     graphFile.close();
 
     std::ofstream stackAFile(prefix + "1.dot"s);
-    write_graphviz(stackAFile, _A, "A");
+    write_graphviz(stackAFile, A_, "A");
     stackAFile.close();
 
     std::ofstream stackBFile(prefix + "2.dot"s);
-    write_graphviz(stackBFile, _B, "B");
+    write_graphviz(stackBFile, B_, "B");
     stackBFile.close();
 
     std::ofstream treeGraph(prefix + "3.dot"s);
