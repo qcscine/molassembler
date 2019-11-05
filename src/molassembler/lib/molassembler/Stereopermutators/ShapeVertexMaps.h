@@ -51,6 +51,12 @@ std::vector<unsigned> shapeVertexToSiteIndexMap(
   const RankingInformation::RankedSitesType& canonicalSites
 );
 
+stereopermutation::Stereopermutation stereopermutationFromSiteToShapeVertexMap(
+  const std::vector<unsigned>& siteToShapeVertexMap,
+  const std::vector<LinkInformation>& links,
+  const RankingInformation::RankedSitesType& canonicalSites
+);
+
 } // namespace molassembler
 } // namespace Scine
 

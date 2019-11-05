@@ -14,8 +14,8 @@ RankingInformation::RankedSitesType AbstractStereopermutations::canonicalize(
   RankingInformation::RankedSitesType rankedSites
 ) {
   std::stable_sort(
-    rankedSites.begin(),
-    rankedSites.end(),
+    std::begin(rankedSites),
+    std::end(rankedSites),
     [](const auto& setA, const auto& setB) -> bool {
       // Inverted comparison so that larger sets come first
       return setA.size() > setB.size();

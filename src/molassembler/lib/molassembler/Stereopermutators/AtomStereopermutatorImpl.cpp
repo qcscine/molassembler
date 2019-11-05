@@ -139,35 +139,40 @@ double minimumDistortionAngle(const Shapes::Shape a, const Shapes::Shape b) {
   return value;
 }
 
-Shapes::Shape classifyShape(const Eigen::Matrix<double, 3, Eigen::Dynamic>& sitePositions) {
+std::pair<Shapes::Shape, std::vector<unsigned>> classifyShape(const Eigen::Matrix<double, 3, Eigen::Dynamic>& sitePositions) {
   const unsigned S = sitePositions.cols() - 1;
   auto normalized = Shapes::continuous::normalize(sitePositions);
-  using CarryType = std::pair<double, Shapes::Shape>;
-  return temple::accumulate(
+  using CarryType = std::pair<Shapes::Shape, Shapes::continuous::ShapeResult>;
+  auto bestShapeResult = temple::accumulate(
     Shapes::allShapes,
-    CarryType {std::numeric_limits<double>::max(), Shapes::Shape::Line},
+    CarryType {Shapes::Shape::Line, {{}, std::numeric_limits<double>::max()}},
     [&](const CarryType& carry, const Shapes::Shape shape) {
       if(Shapes::size(shape) != S) {
         return carry;
       }
 
-      double shapeMeasure = Shapes::continuous::shape(normalized, shape);
+      auto shapeMeasureResult = Shapes::continuous::shape(normalized, shape);
       /* Disadvantage trigonal pyramid to avoid tetrahedral misclassifications */
       if(shape == Shapes::Shape::TrigonalPyramid) {
-        shapeMeasure *= 4;
+        shapeMeasureResult.measure *= 4;
       }
 
       if(shape == Shapes::Shape::Seesaw) {
-        shapeMeasure *= 2;
+        shapeMeasureResult.measure *= 2;
       }
 
-      if(shapeMeasure < carry.first) {
-        return CarryType {shapeMeasure, shape};
+      if(shapeMeasureResult.measure < carry.second.measure) {
+        return CarryType {shape, shapeMeasureResult};
       }
 
       return carry;
     }
-  ).second;
+  );
+
+  return std::make_pair(
+    std::move(bestShapeResult.first),
+    std::move(bestShapeResult.second.mapping)
+  );
 }
 
 } // namespace detail
@@ -876,78 +881,64 @@ void AtomStereopermutator::Impl::fit(
   // Add the putative center
   sitePositions.col(S) = angstromWrapper.positions.row(_centerAtom);
 
+  /* TODO
+   * - It should be possible to force the shape classification algorithm to
+   *   match the centroids directly (i.e. add a function variant accepting
+   *   partial mappings or a direct centroid position argument). That would
+   *   imply a N! -> (N - 1)! cost reduction.
+   */
+
   // Classify the shape and set it
-  const Shapes::Shape fittedShape = detail::classifyShape(sitePositions);
+  Shapes::Shape fittedShape;
+  std::vector<unsigned> matchingMapping;
+  std::tie(fittedShape, matchingMapping) = detail::classifyShape(sitePositions);
+  // Ensure centroids are mapped against one another
+  assert(matchingMapping.back() == matchingMapping.size() - 1);
+  /* Drop the centroid, making the remaining sequence viable as an index mapping
+   * within the set of shape rotations, i.e. for use in stereopermutation
+   * functionality
+   */
+  matchingMapping.pop_back();
+
   setShape(fittedShape, graph);
 
-  // Find a feasible permutation with lowest chiral penalty
-  using CarryType = std::pair<unsigned, double>;
-  auto bestPermutation = temple::accumulate(
-    temple::adaptors::range(numAssignments()),
-    CarryType {0, std::numeric_limits<double>::max()},
-    [&](const CarryType& carry, const unsigned assignment) {
-      assign(assignment);
-      // Angle deviations
-      double deviations = temple::sum(
-        temple::adaptors::transform(
-          temple::adaptors::allPairs(
-            temple::adaptors::range(Shapes::size(_shape))
-          ),
-          [&](const unsigned siteI, const unsigned siteJ) -> double {
-            return std::fabs(
-              cartesian::angle(
-                sitePositions.col(siteI),
-                angstromWrapper.positions.row(_centerAtom),
-                sitePositions.col(siteJ)
-              ) - angle(siteI, siteJ)
-            );
-          }
-        )
-      );
-
-      if(deviations > carry.second) {
-        return carry;
-      }
-
-      // Chiral deviations
-      deviations += temple::sum(
-        temple::adaptors::transform(
-          minimalChiralConstraints(),
-          [&](const auto& minimalPrototype) -> double {
-            auto fetchPosition = [&](const boost::optional<unsigned>& siteIndexOptional) -> Eigen::Vector3d {
-              if(siteIndexOptional) {
-                return sitePositions.col(siteIndexOptional.value());
-              }
-
-              return angstromWrapper.positions.row(_centerAtom);
-            };
-
-            double volume = cartesian::adjustedSignedVolume(
-              fetchPosition(minimalPrototype[0]),
-              fetchPosition(minimalPrototype[1]),
-              fetchPosition(minimalPrototype[2]),
-              fetchPosition(minimalPrototype[3])
-            );
-
-            // minimalChiralConstraints() supplies only Positive targets
-            if(volume < 0) {
-              return 1;
-            }
-
-            return 0;
-          }
-        )
-      );
-
-      if(deviations > carry.second) {
-        return carry;
-      }
-
-      return CarryType {assignment, deviations};
-    }
+  /* Ok, so: We have a mapping from site positions to shape vertices from the
+   * shape classification algorithm. Site positions are ordered identically to
+   * the sites, so we essentially have a mapping from sites to shape vertices.
+   *
+   * Now we need to find the (feasible) stereopermutation that matches it.
+   *
+   * Can we transform the site -> shape vertex mapping into a
+   * stereopermutation, generate all its rotations and then set-membership
+   * check each feasible permutation?
+   */
+  auto soughtStereopermutation = stereopermutationFromSiteToShapeVertexMap(
+    matchingMapping,
+    _ranking.links,
+    _abstract.canonicalSites
   );
 
-  /* In case NO assignments could be tested, return to the prior state.
+  auto soughtRotations = soughtStereopermutation.generateAllRotations(fittedShape);
+
+  /* Although the stereopermutations in _abstract are sorted by their index of
+   * permutation and we could potentially binary search all of our sought
+   * rotations within that set, this linear search will never be time-critical
+   * as long as we use shape classification.
+   */
+  boost::optional<unsigned> foundStereopermutation;
+  const unsigned A = _feasible.indices.size();
+  for(unsigned a = 0; a < A; ++a) {
+    const auto& feasiblePermutation = _abstract.permutations.stereopermutations.at(
+      _feasible.indices.at(a)
+    );
+    if(soughtRotations.count(feasiblePermutation) > 0) {
+      foundStereopermutation = a;
+      break;
+    }
+  }
+
+  /* In case NO assignments could be found, return to the prior state.
+   *
    * This guards against situations in which predicates in
    * uniques could lead no assignments to be returned, such as
    * in e.g. square-planar AAAB with {0, 3}, {1, 3}, {2, 3} with removal of
@@ -957,11 +948,11 @@ void AtomStereopermutator::Impl::fit(
    * At the moment, this predicate is disabled, so no such issues should arise.
    * Just being safe.
    */
-  if(bestPermutation.second == std::numeric_limits<double>::max()) {
+  if(foundStereopermutation == boost::none) {
     setShape(priorShape, graph);
     assign(priorStereopermutation);
   } else {
-    assign(bestPermutation.first);
+    assign(*foundStereopermutation);
   }
 }
 

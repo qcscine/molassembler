@@ -4,6 +4,8 @@
  */
 #include "molassembler/Stereopermutators/ShapeVertexMaps.h"
 
+#include "molassembler/Stereopermutators/AbstractPermutations.h"
+
 #include "stereopermutation/Stereopermutation.h"
 #include "temple/Functional.h"
 #include "temple/constexpr/Numeric.h"
@@ -163,6 +165,55 @@ std::vector<unsigned> shapeVertexToSiteIndexMap(
   }
 
   return inverseMap;
+}
+
+stereopermutation::Stereopermutation stereopermutationFromSiteToShapeVertexMap(
+  const std::vector<unsigned>& siteToShapeVertexMap,
+  const std::vector<LinkInformation>& links,
+  const RankingInformation::RankedSitesType& canonicalSites
+) {
+  /* We need to transform the sites to their canonical ranking characters
+   * using the canonical sites and then place them at their shape vertices
+   * according to the passed map.
+   *
+   * Then we need to map the links.
+   *
+   * From that we should be able to construct a Stereopermutation.
+   */
+  const unsigned S = siteToShapeVertexMap.size();
+  std::vector<char> characters(S);
+  for(unsigned siteIndex = 0; siteIndex < S; ++siteIndex) {
+    auto findIter = std::find_if(
+      std::begin(canonicalSites),
+      std::end(canonicalSites),
+      [siteIndex](const auto& equalSet) -> bool {
+        return std::find(
+          std::begin(equalSet),
+          std::end(equalSet),
+          siteIndex
+        ) != std::end(equalSet);
+      }
+    );
+
+    assert(findIter != std::end(canonicalSites));
+    unsigned canonicalSetIndex = findIter - std::begin(canonicalSites);
+    characters.at(
+      siteToShapeVertexMap.at(siteIndex)
+    ) = ('A' + canonicalSetIndex);
+  }
+
+  // Now for the links.
+  stereopermutation::Stereopermutation::LinksSetType selfReferentialLinks;
+  for(auto linkInformation: links) {
+    selfReferentialLinks.insert(
+      std::make_pair(
+        siteToShapeVertexMap.at(linkInformation.indexPair.first),
+        siteToShapeVertexMap.at(linkInformation.indexPair.second)
+      )
+    );
+  }
+
+  return stereopermutation::Stereopermutation {characters, selfReferentialLinks};
 }
 
 } // namespace molassembler

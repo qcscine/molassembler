@@ -114,6 +114,14 @@ double pointGroup(
   PointGroup pointGroup
 );
 
+//! Result of a continuous shape measure calculation
+struct ShapeResult {
+  //! Lowest value mapping from position indices to shape indices
+  std::vector<unsigned> mapping;
+  //! Continuous shape measure value
+  double measure;
+};
+
 /**
  * @brief Faithful implementation of the continuous shape measure calculation
  *   algorithm from the paper
@@ -126,7 +134,7 @@ double pointGroup(
  *
  * @return
  */
-double shapeFaithfulPaperImplementation(
+ShapeResult shapeFaithfulPaperImplementation(
   const PositionCollection& normalizedPositions,
   Shape shape
 );
@@ -152,7 +160,7 @@ double shapeFaithfulPaperImplementation(
  *
  * @return
  */
-double shapeAlternateImplementation(
+ShapeResult shapeAlternateImplementation(
   const PositionCollection& normalizedPositions,
   Shape shape
 );
@@ -187,7 +195,7 @@ double shapeAlternateImplementation(
  *
  * @return The continuous shape measure determined by heuristics
  */
-double shapeHeuristics(
+ShapeResult shapeHeuristics(
   const PositionCollection& normalizedPositions,
   Shape shape
 );
@@ -200,7 +208,7 @@ double shapeHeuristics(
  * release builds, forwards its call to shapeHeuristics() from shape size 9
  * onwards.
  */
-double shape(
+ShapeResult shape(
   const PositionCollection& normalizedPositions,
   Shape shape
 );

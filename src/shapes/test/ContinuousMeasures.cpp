@@ -418,6 +418,82 @@ BOOST_AUTO_TEST_CASE(AsymmetricTopStandardization) {
   }
 }
 
+BOOST_AUTO_TEST_CASE(ShapeMeasuresYieldForwardPermutation) {
+  const Shape testShape = Shape::Tetrahedron;
+
+  auto shapeCoordinates = continuous::normalize(
+    addOrigin(symmetryData().at(testShape).coordinates)
+  );
+
+  continuous::PositionCollection shuffled (3, shapeCoordinates.cols());
+  BOOST_REQUIRE_MESSAGE(size(testShape) == 4, "Test setup is no longer valid");
+  const std::vector<unsigned> shufflePermutation {{3, 4, 0, 2, 1}};
+  for(unsigned i = 0; i < 5; ++i) {
+    shuffled.col(shufflePermutation.at(i)) = shapeCoordinates.col(i);
+  }
+
+  auto faithful = continuous::shapeFaithfulPaperImplementation(shuffled, testShape);
+  auto alternate = continuous::shapeAlternateImplementation(shuffled, testShape);
+  auto heuristics = continuous::shapeHeuristics(shuffled, testShape);
+
+  BOOST_CHECK_CLOSE(faithful.measure, alternate.measure, 1);
+  BOOST_CHECK_CLOSE(faithful.measure, heuristics.measure, 1);
+
+  auto isBackwardsMapping = [](const std::vector<unsigned>& permutation) -> bool {
+    /* A forward permutation maps from positions to shape indices.
+     * A backwards permutation maps from shape indices to positions.
+     *
+     * Only backwards permutations have the (added) centroid at the back, and
+     * hence their [0, S] = [0, N - 1] = [0, N) ranges are sub-permutations
+     * (if ordered, identical to iota(N)) that can be rotated with shape
+     * rotations.
+     */
+    return permutation.back() == permutation.size() - 1;
+  };
+
+  auto invert = [](const std::vector<unsigned>& p) -> std::vector<unsigned> {
+    const unsigned P = p.size();
+    std::vector<unsigned> inverse(P);
+    for(unsigned i = 0; i < P; ++i) {
+      inverse.at(p.at(i)) = i;
+    }
+    return inverse;
+  };
+
+  BOOST_CHECK(shufflePermutation == invert(faithful.mapping));
+  BOOST_CHECK(shufflePermutation == invert(alternate.mapping));
+  BOOST_CHECK(shufflePermutation == invert(heuristics.mapping));
+
+  BOOST_CHECK_MESSAGE(
+    !isBackwardsMapping(faithful.mapping),
+    "Faithful mapping is not a forward mapping: " << temple::condense(faithful.mapping)
+  );
+
+  BOOST_CHECK_MESSAGE(
+    !isBackwardsMapping(alternate.mapping),
+    "Alternate mapping is not a forward mapping: " << temple::condense(alternate.mapping)
+  );
+
+  BOOST_CHECK_MESSAGE(
+    !isBackwardsMapping(heuristics.mapping),
+    "Heuristics mapping is not a forward mapping: " << temple::condense(heuristics.mapping)
+  );
+
+  BOOST_CHECK_MESSAGE(
+    faithful.mapping == alternate.mapping,
+    "Faithful mapping does not match alternate mapping.\n"
+    << "Faithful: " << temple::condense(faithful.mapping) << "\n"
+    << "Alternate: " << temple::condense(alternate.mapping)
+  );
+
+  BOOST_CHECK_MESSAGE(
+    faithful.mapping == heuristics.mapping,
+    "Faithful mapping does not match heuristics mapping.\n"
+    << "Faithful: " << temple::condense(faithful.mapping) << "\n"
+    << "Heuristics: " << temple::condense(heuristics.mapping)
+  );
+}
+
 BOOST_AUTO_TEST_CASE(ShapeMeasuresAlternateAlgorithm) {
 #ifdef NDEBUG
   constexpr unsigned testingShapeSizeLimit = 7;
@@ -433,13 +509,13 @@ BOOST_AUTO_TEST_CASE(ShapeMeasuresAlternateAlgorithm) {
     auto shapeCoordinates = continuous::normalize(
       addOrigin(symmetryData().at(shape).coordinates)
     );
-    const double unrotated = continuous::shapeAlternateImplementation(shapeCoordinates, shape);
+    const double unrotated = continuous::shapeAlternateImplementation(shapeCoordinates, shape).measure;
     BOOST_CHECK_MESSAGE(
       unrotated < 1e-10,
       "Expected CShM < 1e-10 for unrotated coordinates of " << name(shape) << ", but got " << unrotated
     );
     randomlyRotate(shapeCoordinates);
-    const double rotated = continuous::shapeAlternateImplementation(shapeCoordinates, shape);
+    const double rotated = continuous::shapeAlternateImplementation(shapeCoordinates, shape).measure;
     BOOST_CHECK_MESSAGE(
       rotated < 0.1,
       "Expected CShM < 1e-2 for rotated coordinates of " << name(shape) << ", but got " << rotated
@@ -454,8 +530,8 @@ BOOST_AUTO_TEST_CASE(ShapeMeasuresAlternateAlgorithm) {
       const double faithful = continuous::shapeFaithfulPaperImplementation(
         distorted,
         shape
-      );
-      const double alternate = continuous::shapeAlternateImplementation(distorted, shape);
+      ).measure;
+      const double alternate = continuous::shapeAlternateImplementation(distorted, shape).measure;
       BOOST_CHECK_CLOSE(faithful, alternate, 1);
     }
   }
@@ -494,9 +570,9 @@ BOOST_AUTO_TEST_CASE(ShapeMeasuresHeuristics) {
         distort(distorted, distortionNorm);
         distorted = continuous::normalize(distorted);
 
-        const double alternate = continuous::shapeAlternateImplementation(distorted, shape);
+        const double alternate = continuous::shapeAlternateImplementation(distorted, shape).measure;
         referenceValues.push_back(alternate);
-        const double heuristic = continuous::shapeHeuristics(distorted, shape);
+        const double heuristic = continuous::shapeHeuristics(distorted, shape).measure;
         const double error = std::fabs(alternate - heuristic);
 
         if(error > 1e-2) {
@@ -585,8 +661,8 @@ BOOST_AUTO_TEST_CASE(MinimumDistortionConstants) {
       );
     };
 
-    const double ab = continuous::shapeAlternateImplementation(makeShapeCoordinates(a), b);
-    const double ba = continuous::shapeAlternateImplementation(makeShapeCoordinates(b), a);
+    const double ab = continuous::shapeAlternateImplementation(makeShapeCoordinates(a), b).measure;
+    const double ba = continuous::shapeAlternateImplementation(makeShapeCoordinates(b), a).measure;
 
     BOOST_CHECK_CLOSE(ab, ba, 0.1);
 

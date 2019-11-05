@@ -206,8 +206,6 @@ BOOST_AUTO_TEST_CASE(BondStatePropagationTests) {
 
   BOOST_REQUIRE(hydrogenSubstituent);
 
-  IO::write("pre_butene.json", mol);
-
   // Replace the hydrogen substituent with a fluorine
   mol.setElementType(*hydrogenSubstituent, Scine::Utils::ElementType::F);
 

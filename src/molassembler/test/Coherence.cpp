@@ -6,6 +6,8 @@
 #include <boost/test/unit_test.hpp>
 #include "molassembler/DistanceGeometry/ConformerGeneration.h"
 
+#include "molassembler/IO.h"
+
 #include "Utils/Geometry/ElementTypes.h"
 #include "shapes/Data.h"
 
@@ -23,21 +25,20 @@ void explainDifference(
   const StereopermutatorList& a,
   const StereopermutatorList& b
 ) {
-  std::cout << "First:" << std::endl;
+  std::cout << "First: ";
   for(const auto& stereopermutator : a.atomStereopermutators()) {
     std::cout << stereopermutator.info() << "\n";
   }
 
-  std::cout << "Second:" << std::endl;
+  std::cout << "Second: ";
   for(const auto& stereopermutator : b.atomStereopermutators()) {
     std::cout << stereopermutator.info() << "\n";
   }
   std::cout << "\n";
 }
 
-/* NOTE: This tests reflects upon a lot of things.
- */
-BOOST_AUTO_TEST_CASE(CGReinterpretYieldsSameShapes) {
+// NOTE: This tests reflects upon a lot of things.
+BOOST_AUTO_TEST_CASE(AtomStereopermutationCGFitCoherence) {
   using namespace Scine;
   DistanceGeometry::Configuration DGConfiguration;
   DGConfiguration.partiality = DistanceGeometry::Partiality::All;
@@ -59,6 +60,8 @@ BOOST_AUTO_TEST_CASE(CGReinterpretYieldsSameShapes) {
 #else
   constexpr unsigned shapeSizeLimit = 4;
 #endif
+
+  constexpr unsigned ensembleSize = 10;
 
   for(const auto& shape: Shapes::allShapes) {
     if(Shapes::size(shape) > shapeSizeLimit) {
@@ -106,7 +109,7 @@ BOOST_AUTO_TEST_CASE(CGReinterpretYieldsSameShapes) {
       // For each possible arrangement of these ligands, create an ensemble
       auto ensemble = DistanceGeometry::run(
         molecule,
-        20,
+        ensembleSize,
         DGConfiguration
       );
 
@@ -114,29 +117,57 @@ BOOST_AUTO_TEST_CASE(CGReinterpretYieldsSameShapes) {
        * from the generated coordinates yields the same StereopermutatorList you
        * started out with.
        */
-      BOOST_CHECK_MESSAGE(
-        temple::all_of(
-          ensemble,
-          [&](const auto& positionResult) -> bool {
-            if(!positionResult) {
-              std::cout << "Failed to generate a conformer: " << positionResult.error().message() << "\n";
-            }
+      unsigned matches = 0;
+      unsigned mismatches = 0;
+      boost::optional<AngstromWrapper> matchingPositions;
+      for(const auto& positionResult : ensemble) {
+        if(!positionResult) {
+          std::cout << "Failed to generate a conformer: " << positionResult.error().message() << "\n";
+          continue;
+        }
 
-            auto inferredStereopermutatorList = molecule.inferStereopermutatorsFromPositions(positionResult.value());
+        auto inferredStereopermutatorList = molecule.inferStereopermutatorsFromPositions(positionResult.value());
 
-            bool pass = molecule.stereopermutators() == inferredStereopermutatorList;
+        bool pass = molecule.stereopermutators() == inferredStereopermutatorList;
 
-            if(!pass) {
-              explainDifference(
-                molecule.stereopermutators(),
-                inferredStereopermutatorList
-              );
-            }
-
-            return pass;
+        if(pass) {
+          if(matchingPositions == boost::none) {
+            matchingPositions = positionResult.value();
           }
-        ),
-        "Some reinterpretations of generated conformers did not yield identical stereopermutations!"
+          ++matches;
+        } else {
+          explainDifference(
+            molecule.stereopermutators(),
+            inferredStereopermutatorList
+          );
+
+          std::string filename = (
+            "shape_" + std::to_string(Shapes::nameIndex(shape))
+            + "_" + std::to_string(assignment)
+            + "_mismatch_" + std::to_string(mismatches)
+            + ".mol"
+          );
+          IO::write(filename, molecule, positionResult.value());
+          ++mismatches;
+        }
+      }
+
+      if(matches != ensembleSize && matchingPositions) {
+        std::string filename = (
+          "shape_" + std::to_string(Shapes::nameIndex(shape))
+          + "_" + std::to_string(assignment)
+          + "_match.mol"
+        );
+        IO::write(
+          filename,
+          molecule,
+          matchingPositions.value()
+        );
+      }
+
+      BOOST_CHECK_MESSAGE(
+        matches == ensembleSize,
+        "Expected " << ensembleSize << " matches for assignment " << assignment << " of shape " << name(shape) << ", got " << matches << " matches."
       );
     }
   }

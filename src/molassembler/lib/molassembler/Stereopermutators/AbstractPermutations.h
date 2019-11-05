@@ -68,7 +68,7 @@ struct AbstractStereopermutations {
    * links = {indexPair = {5, 8}}
    *
    * self-refential idx: 0  1  2    3  4    5
-   * canonicalSites = {1, 2, 4}, {5, 8}, {3} (this is output from canonicalize)
+   * canonicalSites =   {1, 2, 4}, {5, 8}, {3} (this is output from canonicalize)
    *
    * selfReferentialTransform(links, canonicalSites) = {3, 4}
    * @endverbatim

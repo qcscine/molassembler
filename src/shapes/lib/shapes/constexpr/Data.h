@@ -1234,10 +1234,10 @@ struct SquareAntiprism {
     std::array<unsigned, 4>,
     4
   > tetrahedra {{
-      {{0, 1, 4, 6}},
-      {{1, 2, 5, 7}},
-      {{2, 3, 6, 4}},
-      {{3, 0, 7, 5}},
+    {{0, 1, 4, 5}},
+    {{1, 2, 5, 6}},
+    {{2, 3, 6, 7}},
+    {{3, 0, 7, 4}}
   }};
   static constexpr std::array<unsigned, 8> mirror {{2, 1, 0, 3, 5, 4, 7, 6}};
 };

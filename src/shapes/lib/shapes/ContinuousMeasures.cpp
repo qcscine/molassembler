@@ -969,7 +969,7 @@ double pointGroup(
   return minimizationResult.value;
 }
 
-double shapeFaithfulPaperImplementation(
+ShapeResult shapeFaithfulPaperImplementation(
   const PositionCollection& normalizedPositions,
   const Shape shape
 ) {
@@ -1000,7 +1000,7 @@ double shapeFaithfulPaperImplementation(
   do {
     // Construct a permuted shape positions matrix
     for(unsigned i = 0; i < N; ++i) {
-      permutedShape.col(permutation.at(i)) = shapeCoordinates.col(i);
+      permutedShape.col(i) = shapeCoordinates.col(permutation.at(i));
     }
 
     // Perform a quaternion fit to minimize square norm difference over rotation
@@ -1017,14 +1017,20 @@ double shapeFaithfulPaperImplementation(
       std::numeric_limits<double>::digits
     );
 
-    permutationalMinimum = std::min(permutationalMinimum, scalingMinimizationResult.second);
+    if(scalingMinimizationResult.second < permutationalMinimum) {
+      permutationalMinimum = scalingMinimizationResult.second;
+      bestPermutation = permutation;
+    }
   } while(std::next_permutation(std::begin(permutation), std::end(permutation)));
 
   const double normalization = normalizedPositions.colwise().squaredNorm().sum();
-  return  100 * permutationalMinimum / normalization;
+  return {
+    std::move(bestPermutation),
+    100 * permutationalMinimum / normalization
+  };
 }
 
-double shapeAlternateImplementation(
+ShapeResult shapeAlternateImplementation(
   const PositionCollection& normalizedPositions,
   const Shape shape
 ) {
@@ -1074,7 +1080,7 @@ double shapeAlternateImplementation(
   do {
     // Construct a permuted shape positions matrix
     for(unsigned i = 0; i < N; ++i) {
-      permutedShape.col(permutation.at(i)) = shapeCoordinates.col(i);
+      permutedShape.col(i) = shapeCoordinates.col(permutation.at(i));
     }
 
     // Perform a quaternion fit
@@ -1090,7 +1096,7 @@ double shapeAlternateImplementation(
   } while(std::next_permutation(std::begin(permutation), std::end(permutation)));
 
   for(unsigned i = 0; i < N; ++i) {
-    permutedShape.col(bestPermutation.at(i)) = shapeCoordinates.col(i);
+    permutedShape.col(i) = shapeCoordinates.col(bestPermutation.at(i));
   }
   permutedShape = bestRotationMatrix * permutedShape;
 
@@ -1108,10 +1114,14 @@ double shapeAlternateImplementation(
 
   const double normalization = normalizedPositions.colwise().squaredNorm().sum();
 
-  return 100 * scalingMinimizationResult.second / normalization;
+  return {
+    bestPermutation,
+    100 * scalingMinimizationResult.second / normalization
+  };
 }
 
-using NarrowType = std::pair<double, std::unordered_map<unsigned, unsigned>>;
+using PartialMapping = std::unordered_map<unsigned, unsigned>;
+using NarrowType = std::pair<double, PartialMapping>;
 
 NarrowType shapeHeuristicsNarrow(
   const PositionCollection& stator,
@@ -1182,7 +1192,7 @@ NarrowType shapeHeuristicsNarrow(
   return {energy, permutation};
 }
 
-double shapeHeuristics(
+ShapeResult shapeHeuristics(
   const PositionCollection& normalizedPositions,
   const Shape shape
 ) {
@@ -1206,6 +1216,11 @@ double shapeHeuristics(
    * Four positions works reasonably well, but the costs matrix calculated
    * later is not well-converged and the minimal solution is not the shortest
    * cost path through the graph.
+   *
+   * TODO
+   * - Try variant accepting partially fixed mappings (this DOES save time)
+   * - Try variant with rotation memory
+   * - Try variant with parallelization
    */
 
   const unsigned N = normalizedPositions.cols();
@@ -1221,8 +1236,8 @@ double shapeHeuristics(
   shapeCoords = normalize(shapeCoords);
 
   NarrowType minimalNarrow {std::numeric_limits<double>::max(), {}};
+  PartialMapping permutation;
 
-  std::unordered_map<unsigned, unsigned> permutation;
   for(unsigned i = 0; i < N; ++i) {
     permutation[0] = i;
     for(unsigned j = 0; j < N; ++j) {
@@ -1308,7 +1323,11 @@ double shapeHeuristics(
    * during the repeated scaling minimization function call.
    */
 
-  const auto& bestPermutation = minimalNarrow.second;
+  std::vector<unsigned> bestPermutation(minimalNarrow.second.size());
+  for(const auto& iterPair : minimalNarrow.second) {
+    bestPermutation.at(iterPair.first) = iterPair.second;
+  }
+
   PositionCollection permutedShape(3, N);
   for(unsigned i = 0; i < N; ++i) {
     permutedShape.col(i) = shapeCoords.col(bestPermutation.at(i));
@@ -1328,10 +1347,13 @@ double shapeHeuristics(
 
   const double normalization = normalizedPositions.colwise().squaredNorm().sum();
 
-  return 100 * scalingMinimizationResult.second / normalization;
+  return {
+    std::move(bestPermutation),
+    100 * scalingMinimizationResult.second / normalization
+  };
 }
 
-double shape(
+ShapeResult shape(
   const PositionCollection& normalizedPositions,
   const Shape shape
 ) {
@@ -1361,7 +1383,7 @@ double minimumDistortionAngle(const Shape a, const Shape b) {
   p.col(S) = Eigen::Vector3d::Zero();
 
   return std::asin(
-    std::sqrt(shape(normalize(p), a)) / 10
+    std::sqrt(shape(normalize(p), a).measure) / 10
   );
 }
 
@@ -1373,8 +1395,8 @@ double minimalDistortionPathDeviation(
 ) {
   const auto normalized = normalize(positions);
   return (
-    std::asin(std::sqrt(shape(normalized, a)) / 10)
-    + std::asin(std::sqrt(shape(normalized, b)) / 10)
+    std::asin(std::sqrt(shape(normalized, a).measure) / 10)
+    + std::asin(std::sqrt(shape(normalized, b).measure) / 10)
   ) / minimumDistortionAngle - 1;
 }
 

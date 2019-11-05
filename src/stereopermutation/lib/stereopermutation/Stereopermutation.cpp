@@ -423,6 +423,29 @@ bool Stereopermutation::columnSmaller(
   return aSet < bSet;
 }
 
+unsigned Stereopermutation::indexOfPermutation() const {
+  const unsigned size = characters.size();
+
+  unsigned index = 0;
+  unsigned position = 2;
+  unsigned factor = 1;
+
+  for(unsigned p = size - 2; p != std::numeric_limits<unsigned>::max(); --p) {
+    unsigned largerSuccessors = 0;
+    for(unsigned q = p + 1; q < size; ++q) {
+      if(columnSmaller(q, p)) {
+        ++largerSuccessors;
+      }
+    }
+
+    index += largerSuccessors * factor;
+    factor *= position;
+    ++position;
+  }
+
+  return index;
+}
+
 std::map<
   char,
   std::vector<unsigned>

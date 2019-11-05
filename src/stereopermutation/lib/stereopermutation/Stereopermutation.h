@@ -172,6 +172,9 @@ public:
     std::vector<unsigned>
   > getCharMap() const;
 
+  //! Calculates the stereopermutation's index of permutation
+  unsigned indexOfPermutation() const;
+
   /*! @brief Returns whether the "columns" are sorted in ascending order
    *
    * @complexity{@math{O(N L \log L)}}
