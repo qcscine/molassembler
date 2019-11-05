@@ -75,15 +75,18 @@ public:
    * 0.0x mean x% variance. Must fulfill 0 < x << 1
    */
   static constexpr double bondRelativeVariance = 0.01;
-  //! Absolute angle variance in radians. Must fulfill 0 < x << M_PI
-  static constexpr double angleAbsoluteVariance = M_PI / 90; // ~ 2°
+  /*! @brief Relative angle variance
+   *
+   * 0.0x mean x& variance. Must fulfill 0 < x << 1
+   */
+  static constexpr double angleRelativeVariance = 0.02;
   //! Absolute dihedral angle variance in radians.
   static constexpr double dihedralAbsoluteVariance = M_PI / 90; // ~ 2°
 
   //! Defines clamping bounds on angles
   static constexpr ValueBounds angleClampBounds {0.0, M_PI};
   //! Defines the range (-π,π] using std::nextafter (not constexpr)
-  static ValueBounds defaultDihedralBounds;
+  static const ValueBounds defaultDihedralBounds;
 
 /* Static functions */
   /*! @brief Models the equilibrium distance between two bonded atoms

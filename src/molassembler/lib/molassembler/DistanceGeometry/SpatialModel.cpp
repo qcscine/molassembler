@@ -78,11 +78,11 @@ namespace DistanceGeometry {
 
 // General availability of static constexpr members
 constexpr double SpatialModel::bondRelativeVariance;
-constexpr double SpatialModel::angleAbsoluteVariance;
+constexpr double SpatialModel::angleRelativeVariance;
 constexpr double SpatialModel::dihedralAbsoluteVariance;
 
 constexpr ValueBounds SpatialModel::angleClampBounds;
-ValueBounds SpatialModel::defaultDihedralBounds = {std::nextafter(-M_PI, 0), M_PI};
+const ValueBounds SpatialModel::defaultDihedralBounds {std::nextafter(-M_PI, 0), M_PI};
 
 SpatialModel::SpatialModel(
   const Molecule& molecule,
@@ -137,14 +137,14 @@ SpatialModel::SpatialModel(
 
   // Check constraints on static constants
   static_assert(
-    0.0 < bondRelativeVariance && bondRelativeVariance < 1.0,
+    0.0 < bondRelativeVariance && bondRelativeVariance < 0.1,
     "SpatialModel static constant bond relative variance must fulfill"
-    "0 < x << 1"
+    "0 < x < 0.1"
   );
   static_assert(
-    0.0 < angleAbsoluteVariance && angleAbsoluteVariance < Shapes::smallestAngle,
+    0.0 < angleRelativeVariance && angleRelativeVariance < 0.1,
     "SpatialModel static constant angle absolute variance must fulfill"
-    "0 < x << (smallest angle any local shape returns)"
+    "0 < x < 0.1"
   );
 
   // Add all information pertaining to fixed positions immediately
@@ -970,26 +970,17 @@ ValueBounds SpatialModel::modelSiteAngle(
   /* The idealized shape angles are modified by the upper (!) cone angles
    * at each site, not split between lower and upper.
    */
+  const double centralAngle = siteCentralAngle(permutator, sites, inner);
   const ValueBounds angleBounds = makeBoundsFromCentralValue(
-    siteCentralAngle(permutator, sites, inner),
+    centralAngle,
     (
       feasiblePermutations.coneAngles.at(sites.first).value().upper
       + feasiblePermutations.coneAngles.at(sites.second).value().upper
+      + SpatialModel::angleRelativeVariance * looseningMultiplier * centralAngle
     )
   );
 
-  const double variation = (
-    DistanceGeometry::SpatialModel::angleAbsoluteVariance
-    * looseningMultiplier
-  );
-
-  return clamp(
-    ValueBounds {
-      angleBounds.lower - variation,
-      angleBounds.upper + variation
-    },
-    angleClampBounds
-  );
+  return clamp(angleBounds, angleClampBounds);
 }
 
 ChiralConstraint SpatialModel::makeChiralConstraint(
@@ -1076,12 +1067,12 @@ ChiralConstraint SpatialModel::makeChiralConstraint(
           CommonTrig::lawOfCosines(
             iBounds.value().lower,
             jBounds.value().lower,
-            std::max(0.0, siteAngle - angleAbsoluteVariance * looseningMultiplier)
+            std::max(0.0, siteAngle * (1 - angleRelativeVariance * looseningMultiplier))
           ),
           CommonTrig::lawOfCosines(
             iBounds.value().upper,
             jBounds.value().upper,
-            std::min(M_PI, siteAngle + angleAbsoluteVariance * looseningMultiplier)
+            std::min(M_PI, siteAngle * (1 + angleRelativeVariance * looseningMultiplier))
           )
         };
       } else if(iBounds) {
@@ -1883,7 +1874,7 @@ void SpatialModel::_modelFlatCycles(
               orderedSequence(i, j, k),
               makeBoundsFromCentralValue(
                 cycleInternalAngles.at(angleIndex),
-                angleAbsoluteVariance * looseningFactor
+                angleRelativeVariance * looseningFactor * cycleInternalAngles.at(angleIndex)
               )
             );
 
