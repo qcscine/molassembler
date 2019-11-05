@@ -200,6 +200,12 @@ ShapeResult shapeHeuristics(
   Shape shape
 );
 
+//! @brief Same as shapeHeuristics(), except with set centroid mapping, so faster
+ShapeResult shapeHeuristicsCentroidLast(
+  const PositionCollection& normalizedPositions,
+  Shape shape
+);
+
 /**
  * @brief Forwarding function to calculate the continuous shape measure
  *
@@ -211,6 +217,12 @@ ShapeResult shapeHeuristics(
 ShapeResult shape(
   const PositionCollection& normalizedPositions,
   Shape shape
+);
+
+//! @brief Same as shape(), except with set centroid mapping
+ShapeResult shapeCentroidLast(
+  const PositionCollection& normalizedPositions,
+  const Shape shape
 );
 
 /*! @brief Calculates minimum distortion angle in radians for shapes A and B

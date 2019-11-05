@@ -1225,7 +1225,6 @@ ShapeResult shapeHeuristics(
    * TODO
    * - Try variant accepting partially fixed mappings (this DOES save time)
    * - Try variant with rotation memory
-   * - Try variant with parallelization
    */
 
   const unsigned N = normalizedPositions.cols();
@@ -1358,19 +1357,181 @@ ShapeResult shapeHeuristics(
   };
 }
 
+ShapeResult shapeHeuristicsCentroidLast(
+  const PositionCollection& normalizedPositions,
+  const Shape shape
+) {
+  /* Same as shapeHeuristics, except we know two things:
+   *
+   * The centroid mapping is known, so the centroid index is unavailable in
+   * mapping. Additionally, we have a definitive mapping that we can exploit in
+   * every five-index quaternion fit. So the complexity reduces to
+   * (N - 1)! / (N - 5)! quaternion fits, I think.
+   */
+
+  const unsigned N = normalizedPositions.cols();
+
+  if(N < 6) {
+    throw std::logic_error("Do not call this heuristics function for less than 5 vertices");
+  }
+
+  // Add origin to shape coordinates and renormalize
+  PositionCollection shapeCoords (3, N);
+  shapeCoords.leftCols(N - 1) = symmetryData().at(shape).coordinates;
+  shapeCoords.col(N - 1) = Eigen::Vector3d::Zero();
+  shapeCoords = normalize(shapeCoords);
+
+  NarrowType minimalNarrow {std::numeric_limits<double>::max(), {}};
+  PartialMapping permutation;
+  permutation.emplace(N - 1, N - 1);
+
+  for(unsigned i = 0; i < N - 1; ++i) {
+    permutation[0] = i;
+    for(unsigned j = 0; j < N - 1; ++j) {
+      if(j == i) {
+        continue;
+      }
+
+      permutation[1] = j;
+      for(unsigned k = 0; k < N - 1; ++k) {
+        if(k == i || k == j) {
+          continue;
+        }
+
+        permutation[2] = k;
+        for(unsigned l = 0; l < N - 1; ++l) {
+          if(l == i || l == k || l == j) {
+            continue;
+          }
+
+          permutation[3] = l;
+          for(unsigned m = 0; m < N - 1; ++m) {
+            if(m == i || m == j || m == k || m == l) {
+              continue;
+            }
+
+            permutation[4] = m;
+            Eigen::Matrix3d R = fitQuaternion(normalizedPositions, shapeCoords, permutation);
+            auto rotatedShape = R * shapeCoords;
+
+            /* If the total penalty of a five positions fit is already larger
+             * than the tracked minimal penalty, we can discard it already
+             * as it can only increase
+             */
+            double penalty = (
+              (normalizedPositions.col(0) - rotatedShape.col(i)).squaredNorm()
+              + (normalizedPositions.col(1) - rotatedShape.col(j)).squaredNorm()
+              + (normalizedPositions.col(2) - rotatedShape.col(k)).squaredNorm()
+              + (normalizedPositions.col(3) - rotatedShape.col(l)).squaredNorm()
+              + (normalizedPositions.col(4) - rotatedShape.col(m)).squaredNorm()
+              + (normalizedPositions.col(N - 1) - rotatedShape.col(N - 1)).squaredNorm()
+            );
+
+            if(penalty > minimalNarrow.first) {
+              continue;
+            }
+
+            /* Solve the permutational (N-5)! subproblem without realigning all
+             * positions.
+             */
+            std::vector<unsigned> freeLeftVertices;
+            freeLeftVertices.reserve(N - 6);
+            for(unsigned a = 5; a < N - 1; ++a) {
+              freeLeftVertices.push_back(a);
+            }
+            std::vector<unsigned> freeRightVertices;
+            freeRightVertices.reserve(N - 6);
+            for(unsigned a = 0; a < N - 1; ++a) {
+              if(a != i && a != j && a != k && a != l && a != m) {
+                freeRightVertices.push_back(a);
+              }
+            }
+
+            auto narrowed = shapeHeuristicsNarrow(
+              normalizedPositions,
+              rotatedShape,
+              permutation,
+              std::move(freeLeftVertices),
+              std::move(freeRightVertices)
+            );
+
+            if(narrowed.first < minimalNarrow.first) {
+              minimalNarrow = narrowed;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  /* Given the best permutation for the rotational fit, we still have to
+   * minimize over the isotropic scaling factor. It is cheaper to reorder the
+   * positions once here for the minimization so that memory access is in-order
+   * during the repeated scaling minimization function call.
+   */
+
+  std::vector<unsigned> bestPermutation(minimalNarrow.second.size());
+  for(const auto& iterPair : minimalNarrow.second) {
+    bestPermutation.at(iterPair.first) = iterPair.second;
+  }
+
+  PositionCollection permutedShape(3, N);
+  for(unsigned i = 0; i < N; ++i) {
+    permutedShape.col(i) = shapeCoords.col(bestPermutation.at(i));
+  }
+  auto R = fitQuaternion(normalizedPositions, permutedShape);
+  permutedShape = R * permutedShape;
+
+  constexpr double scalingLowerBound = 0.5;
+  constexpr double scalingUpperBound = 1.1;
+
+  auto scalingMinimizationResult = boost::math::tools::brent_find_minima(
+    [&](double scaling) { return (normalizedPositions - scaling * permutedShape).colwise().squaredNorm().sum(); },
+    scalingLowerBound,
+    scalingUpperBound,
+    std::numeric_limits<double>::digits
+  );
+
+  const double normalization = normalizedPositions.colwise().squaredNorm().sum();
+
+  return {
+    std::move(bestPermutation),
+    100 * scalingMinimizationResult.second / normalization
+  };
+}
+
+
 ShapeResult shape(
   const PositionCollection& normalizedPositions,
   const Shape shape
 ) {
 #ifdef NDEBUG
   // In release builds, use heuristics starting from size 9
-  constexpr unsigned minSizeForHeuristics = 9;
+  constexpr unsigned minSizeForHeuristics = 8;
 #else
   // In debug builds, use heuristics starting from size 6
   constexpr unsigned minSizeForHeuristics = 6;
 #endif
   if(size(shape) >= minSizeForHeuristics) {
     return shapeHeuristics(normalizedPositions, shape);
+  }
+
+  return shapeAlternateImplementation(normalizedPositions, shape);
+}
+
+ShapeResult shapeCentroidLast(
+  const PositionCollection& normalizedPositions,
+  const Shape shape
+) {
+#ifdef NDEBUG
+  // In release builds, use heuristics starting from size 8
+  constexpr unsigned minSizeForHeuristics = 8;
+#else
+  // In debug builds, use heuristics starting from size 6
+  constexpr unsigned minSizeForHeuristics = 6;
+#endif
+  if(size(shape) >= minSizeForHeuristics) {
+    return shapeHeuristicsCentroidLast(normalizedPositions, shape);
   }
 
   return shapeAlternateImplementation(normalizedPositions, shape);

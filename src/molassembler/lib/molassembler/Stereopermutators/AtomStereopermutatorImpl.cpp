@@ -142,36 +142,41 @@ double minimumDistortionAngle(const Shapes::Shape a, const Shapes::Shape b) {
 std::pair<Shapes::Shape, std::vector<unsigned>> classifyShape(const Eigen::Matrix<double, 3, Eigen::Dynamic>& sitePositions) {
   const unsigned S = sitePositions.cols() - 1;
   auto normalized = Shapes::continuous::normalize(sitePositions);
-  using CarryType = std::pair<Shapes::Shape, Shapes::continuous::ShapeResult>;
-  auto bestShapeResult = temple::accumulate(
-    Shapes::allShapes,
-    CarryType {Shapes::Shape::Line, {{}, std::numeric_limits<double>::max()}},
-    [&](const CarryType& carry, const Shapes::Shape shape) {
-      if(Shapes::size(shape) != S) {
-        return carry;
-      }
 
-      auto shapeMeasureResult = Shapes::continuous::shape(normalized, shape);
-      /* Disadvantage trigonal pyramid to avoid tetrahedral misclassifications */
-      if(shape == Shapes::Shape::TrigonalPyramid) {
-        shapeMeasureResult.measure *= 4;
-      }
+  std::vector<Shapes::Shape> viableShapes;
+  for(const Shapes::Shape shape : Shapes::allShapes) {
+    if(Shapes::size(shape) == S) {
+      viableShapes.push_back(shape);
+    }
+  }
+  const unsigned shapesCount = viableShapes.size();
+  std::vector<Shapes::continuous::ShapeResult> shapeMeasureResults (shapesCount);
 
-      if(shape == Shapes::Shape::Seesaw) {
-        shapeMeasureResult.measure *= 2;
-      }
+#pragma omp parallel for
+  for(unsigned i = 0; i < shapesCount; ++i) {
+    const Shapes::Shape candidateShape = viableShapes[i];
+    shapeMeasureResults[i] = Shapes::continuous::shapeCentroidLast(normalized, candidateShape);
 
-      if(shapeMeasureResult.measure < carry.second.measure) {
-        return CarryType {shape, shapeMeasureResult};
-      }
+    if(candidateShape == Shapes::Shape::TrigonalPyramid) {
+      shapeMeasureResults[i].measure *= 4;
+    } else if(candidateShape == Shapes::Shape::Seesaw) {
+      shapeMeasureResults[i].measure *= 2;
+    }
+  }
 
-      return carry;
+  auto minElementIter = std::min_element(
+    std::begin(shapeMeasureResults),
+    std::end(shapeMeasureResults),
+    [](const auto& a, const auto& b) -> bool {
+      return a.measure < b.measure;
     }
   );
 
+  const unsigned minimalShapeIndex = minElementIter - std::begin(shapeMeasureResults);
+  const Shapes::Shape minimalShape = viableShapes.at(minimalShapeIndex);
   return std::make_pair(
-    std::move(bestShapeResult.first),
-    std::move(bestShapeResult.second.mapping)
+    minimalShape,
+    std::move(minElementIter->mapping)
   );
 }
 
