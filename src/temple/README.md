@@ -18,6 +18,7 @@ compile-time programming.
 - A highly customizable B-Tree
 - Two Cache implementations, one minimal with an underlying map of T -> U, one
   more involved with a boost::any ValueType
+- A partially ordered set geared towards gradual discovery of element ordering
 
 ## Constexpr containers (with constexpr iterators)
 - Array: like std::array, fixed-size 
@@ -61,11 +62,17 @@ compile-time programming.
 
 - Some SFINAE container and function traits
   - test for insert / push back / emplace / emplace back members
-  - C++14 is callable implementation (in lieu of C++17's standardization)
+  - C++14 `is_callable` implementation (in lieu of C++17's standardization)
   - get container value type
   - get function return type
 
-- boost::optional composition syntactic sugar
+- boost::optional composition helpers (for older boost versions)
+
+- Optimizers
+  - LBFGS and LBFGS-B (boxed)
+  - Nelder-Mead and SO(3) Nelder-Mead
+  - Newton-Raphson
+  - Newton-Raphson with trust region subspace minimization
 
 ## Constexpr algorithms
 
@@ -90,27 +97,3 @@ compile-time programming.
   - Uncompensated summation
   - Average, geometric mean, standard deviation
   - Min / Max
-
-
-## Integrating
-
-All code is header-only due to its heavily templated nature and requires C++14.
-
-Dependencies: 
-- boost
-
-
-## Compiling and running tests
-
-```bash
-$ mkdir build
-$ cd build
-$ cmake ..
-$ make
-$ make test
-```
-
-
-## Documentation
-
-You can build the documentation by running `doxygen` in the main directory.

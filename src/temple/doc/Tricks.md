@@ -62,7 +62,7 @@ unconditionally inherits from `std::false_type`, this works, and
 `hasSize<ContainerWithoutSize>::value = false`.
 
 
-## Container adaptor conditional ownership
+## Container adaptor argument conditional ownership
 
 If you want to create a new range from some container, the handling of whether
 the container being modified is owned by the new range is very important to
