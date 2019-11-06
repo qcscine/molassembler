@@ -177,7 +177,6 @@ target_link_libraries(
     cyclic_polygons
     gor1
     json
-    spectra
     Boost::filesystem
     Boost::system
     nautyStatic
@@ -194,7 +193,6 @@ target_include_directories(molassembler SYSTEM PRIVATE
   ${Boost_INCLUDE_DIR}
   $<TARGET_PROPERTY:Eigen3::Eigen,INTERFACE_INCLUDE_DIRECTORIES>
   $<TARGET_PROPERTY:json,INTERFACE_INCLUDE_DIRECTORIES>
-  $<TARGET_PROPERTY:spectra,INTERFACE_INCLUDE_DIRECTORIES>
   $<TARGET_PROPERTY:nautyStatic,INTERFACE_INCLUDE_DIRECTORIES>
 )
 

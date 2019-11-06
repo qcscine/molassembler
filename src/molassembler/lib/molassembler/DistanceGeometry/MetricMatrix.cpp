@@ -6,8 +6,6 @@
 #include "molassembler/DistanceGeometry/MetricMatrix.h"
 #include "molassembler/Types.h"
 
-#include "Spectra/SymEigsSolver.h"
-
 #include <Eigen/Eigenvalues>
 
 namespace Scine {
@@ -108,19 +106,6 @@ const Eigen::MatrixXd& MetricMatrix::access() const {
 }
 
 Eigen::MatrixXd MetricMatrix::embed() const {
-  const unsigned N = _matrix.cols();
-
-  if(N > 20) {
-    /* Try to use needed eigenpairs only, which may return an empty matrix if
-     * something goes wrong computationally
-     */
-    Eigen::MatrixXd possiblyEmbeddedCoordinates = embedWithNeededEigenpairs();
-
-    if(possiblyEmbeddedCoordinates.size() > 0) {
-      return possiblyEmbeddedCoordinates;
-    }
-  }
-
   return embedWithFullDiagonalization();
 }
 
@@ -164,46 +149,6 @@ Eigen::MatrixXd MetricMatrix::embedWithFullDiagonalization() const {
    * (N x 4) · (4 x 4) -> (N x 4), but we want (4 x N), so we transpose
    */
   return (V * L).transpose();
-}
-
-Eigen::MatrixXd MetricMatrix::embedWithNeededEigenpairs() const {
-  constexpr unsigned dimensionality = 4;
-
-  /* By default, DenseSymMatProd constructs a selfadjointView using the lower
-   * triangle of _matrix, so we can pass in _matrix unaltered.
-   */
-  Spectra::DenseSymMatProd<double> op(_matrix);
-  Spectra::SymEigsSolver<double, Spectra::LARGEST_ALGE, Spectra::DenseSymMatProd<double>> solver(
-    &op,
-    dimensionality,
-    2 * dimensionality
-  );
-
-  solver.init();
-  solver.compute();
-  int resultInfo = solver.info();
-
-  if(resultInfo == Spectra::NOT_CONVERGING) {
-    return {};
-  }
-
-  if(resultInfo == Spectra::NUMERICAL_ISSUE) {
-    return {};
-  }
-
-  Eigen::VectorXd eigenvalues = solver.eigenvalues();
-  Eigen::MatrixXd eigenvectors = solver.eigenvectors();
-
-  // Construct an L-matrix
-  Eigen::MatrixXd L = Eigen::MatrixXd::Zero(dimensionality, dimensionality);
-  for(unsigned i = 0; i < eigenvalues.rows(); ++i) {
-    if(eigenvalues(i) > 0) {
-      L.diagonal()(i) = std::sqrt(eigenvalues(i));
-    }
-  }
-
-  // Calculate X = VL, except we want N x 4, not 4 x N, so we transpose the result
-  return (eigenvectors * L).transpose();
 }
 
 bool MetricMatrix::operator == (const MetricMatrix& other) const {

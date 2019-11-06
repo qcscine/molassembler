@@ -65,7 +65,6 @@ Unowned libraries included this distribution:
 - RingDecomposerLib[^1]: Unique Ring Family[^2] cycle detection
 - Outcome (until released in boost): Improved error propagation
 - nlohmann/json: JSON serialization
-- spectra: ARPACK-like interface built on top of Eigen
 - nauty[^3]: Graph automorphism determination and canonical labeling
 
 This library uses CMake to model dependencies and make builds

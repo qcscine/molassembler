@@ -61,7 +61,8 @@ public:
   /*! @brief Implements embedding employing full diagonalization
    *
    * Uses Eigen's SelfAdjointEigenSolver to fully diagonalize the matrix,
-   * calculating all eigenpairs. Then selects the necessary from the full set.
+   * calculating all eigenpairs. Then selects the necessary ones from the full
+   * set.
    *
    * @complexity{@math{\Theta(9 N^3)} for the eigenvalue decomposition per
    * Eigen's documentation}
@@ -69,19 +70,6 @@ public:
    * @note Faster for roughly N < 20
    */
   Eigen::MatrixXd embedWithFullDiagonalization() const;
-
-  /*! @brief Implements embedding calculating only the needed eigenpairs
-   *
-   * Uses Spectra's SymEigsSolver that uses Arnoldi iterations under the hood
-   * to calculate only the required eigenpairs for embedding.
-   *
-   * @complexity{As far as I can tell, Arnoldi iteration scales as \math{N^2},
-   * and since we need only four eigenpairs, the prefactor is negligible, so
-   * this scales as \math{N^2}}
-   *
-   * @note Faster from roughly N >= 20 on
-   */
-  Eigen::MatrixXd embedWithNeededEigenpairs() const;
 
 /* Operators */
   bool operator == (const MetricMatrix& other) const;
