@@ -435,7 +435,7 @@ public:
 
   /*! @brief Removes a bond from the graph
    *
-   * Removes an atom after checking if removing that bond is safe, i.e. does not
+   * Removes a bond after checking if removing that bond is safe, i.e. does not
    * disconnect the graph. An example of bonds that can always be removed are
    * ring-closing bonds, since they never disconnect the molecular graph.
    *
@@ -476,7 +476,7 @@ public:
    * @param b The second index of the bond whose type should be changed
    * @param bondType The new bond type
    *
-   * @return If the bond type already existed.
+   * @return If the bond already existed.
    *
    * @throws out_of_range If a or b are invalid, i.e. >= N()
    * @throws std::logic_error If bondType is specified as BondType::Eta. The

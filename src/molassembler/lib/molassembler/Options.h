@@ -165,18 +165,6 @@ enum class ChiralStatePreservation {
 };
 
 /**
- * @brief Specifies use of the tau criterion in differentiating between
- *   shapes of sizes four and five
- *
- * If enabled, enables hard thresholds for tau values to differentiate between
- * some shapes of sizes four @cite Okuniewski2015 and five @cite Addison1984.
- */
-enum class TauCriterion {
-  Enable,
-  Disable
-};
-
-/**
  * @brief Influences the choice of shape in substituent additions and
  *   removals that lead to increases or decreases of ligand size
  */
@@ -209,14 +197,6 @@ struct Options {
    * Defaults to EffortlessAndUnique.
    */
   static ChiralStatePreservation chiralStatePreservation;
-
-  /**
-   * @brief Specifies whether the tau criterion is used throughout the library
-   *   in shape fitting.
-   *
-   * Defaults to Enable
-   */
-  static TauCriterion tauCriterion;
 
   /**
    * @brief Specifies AtomStereopermutator shape choice behavior on ligand

@@ -8,7 +8,7 @@
 void init_shape_submodule(pybind11::module& m) {
   using namespace Scine;
 
-  auto symmetrySubmodule = m.def_submodule("shape");
+  auto symmetrySubmodule = m.def_submodule("shapes");
   symmetrySubmodule.doc() = R"(Shape submodule)";
 
   pybind11::enum_<Shapes::Shape> shape(symmetrySubmodule, "Shape", "Shape enum");
@@ -28,8 +28,21 @@ void init_shape_submodule(pybind11::module& m) {
     .value("Octahedron", Shapes::Shape::Octahedron)
     .value("TrigonalPrism", Shapes::Shape::TrigonalPrism)
     .value("PentagonalPyramid", Shapes::Shape::PentagonalPyramid)
+    .value("Hexagon", Shapes::Shape::Hexagon)
     .value("PentagonalBipyramid", Shapes::Shape::PentagonalBipyramid)
-    .value("SquareAntiprism", Shapes::Shape::SquareAntiprism);
+    .value("CappedOctahedron", Shapes::Shape::CappedOctahedron)
+    .value("CappedTrigonalPrism", Shapes::Shape::CappedTrigonalPrism)
+    .value("SquareAntiprism", Shapes::Shape::SquareAntiprism)
+    .value("Cube", Shapes::Shape::Cube)
+    .value("TrigonalDodecahedron", Shapes::Shape::TrigonalDodecahedron)
+    .value("HexagonalBipyramid", Shapes::Shape::HexagonalBipyramid)
+    .value("TricappedTrigonalPrism", Shapes::Shape::TricappedTrigonalPrism)
+    .value("CappedSquareAntiprism", Shapes::Shape::CappedSquareAntiprism)
+    .value("HeptagonalBipyramid", Shapes::Shape::HeptagonalBipyramid)
+    .value("BicappedSquareAntiprism", Shapes::Shape::BicappedSquareAntiprism)
+    .value("EdgeContractedIcosahedron", Shapes::Shape::EdgeContractedIcosahedron)
+    .value("Icosahedron", Shapes::Shape::Icosahedron)
+    .value("Cuboctahedron", Shapes::Shape::Cuboctahedron);
 
   shape.def("__str__", &Shapes::name);
 

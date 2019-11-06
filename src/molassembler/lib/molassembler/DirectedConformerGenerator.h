@@ -84,6 +84,7 @@ public:
    */
   using DecisionList = std::vector<std::uint8_t>;
 
+  //! Value set in decision lists if no decision could be recovered
   constexpr static std::uint8_t unknownDecision = std::numeric_limits<std::uint8_t>::max();
 
   //* @brief Reason why a bond is ignored

@@ -99,7 +99,7 @@ std::tuple<Utils::AtomCollection, Utils::BondOrderCollection, std::vector<AtomIn
  * @throws If interpretation of coordinates and connectivity yields multiple
  *   molecules.
  * @note Interprets file type from extension. mol is a MOLFile, xyz an XYZ file
- *   and masm a CBOR serial representation of Molecule
+ *   and cbor/bson/json are serializations of Molecule
  */
 Molecule read(const std::string& filename);
 
@@ -107,7 +107,7 @@ Molecule read(const std::string& filename);
  *
  * @complexity{@math{\Theta(N)} typically}
  * @note Interprets file format from its extension. See read()
- * @note masm and json serializations of Molecules cannot be split, they always
+ * @note Serializations of Molecules cannot be split, they always
  *   contain only a single molecule. Use @p read() instead.
  */
 std::vector<Molecule> split(const std::string& filename);

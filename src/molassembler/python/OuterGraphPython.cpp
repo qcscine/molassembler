@@ -94,7 +94,8 @@ void init_outer_graph(pybind11::module& m) {
         std::move(atomsRange.first),
         std::move(atomsRange.second)
       );
-    }
+    },
+    "Iterate through all valid atom indices of the graph"
   );
 
   outerGraph.def(
@@ -105,7 +106,8 @@ void init_outer_graph(pybind11::module& m) {
         std::move(bondsRange.first),
         std::move(bondsRange.second)
       );
-    }
+    },
+    "Iterate through all valid bond indices of the graph"
   );
 
   outerGraph.def(
@@ -116,7 +118,9 @@ void init_outer_graph(pybind11::module& m) {
         std::move(adjacentsRange.first),
         std::move(adjacentsRange.second)
       );
-    }
+    },
+    pybind11::arg("a"),
+    "Iterate through all adjacent atom indices of an atom"
   );
 
   outerGraph.def(
@@ -127,6 +131,8 @@ void init_outer_graph(pybind11::module& m) {
         std::move(bondsRange.first),
         std::move(bondsRange.second)
       );
-    }
+    },
+    pybind11::arg("a"),
+    "Iterate through all incident bonds of an atom"
   );
 }

@@ -18,18 +18,21 @@ void init_version(pybind11::module& m) {
 
   versionSubmodule.def(
     "major_minor",
-    &version::majorMinor
+    &version::majorMinor,
+    "Returns a major.minor formatted string of the molassembler version"
   );
 
   versionSubmodule.def(
     "full_version",
-    &version::fullVersion
+    &version::fullVersion,
+    "Returns a major.minor.patch formatted string of the molassembler version"
   );
 
   versionSubmodule.def(
     "compiled",
     []() -> std::string {
       return std::string(__DATE__) + " " + std::string(__TIME__);
-    }
+    },
+    "Returns a string of date and time the python bindings were compiled"
   );
 }

@@ -19,7 +19,7 @@ molassembler
    options
    ranking_information
    serialization
-   symmetry
+   shapes
 
 Indices and tables
 ==================

@@ -56,19 +56,17 @@ void init_options(pybind11::module& m) {
       "new apical ligand -- but you only get one of them."
     );
 
-  /* Tau criterion */
-  pybind11::enum_<TauCriterion>(
-    m,
-    "TauCriterion",
-    "Specifies use of the tau criterion in differentiating between shapes "
-    "of sizes four and five."
-  ).value("Enable", TauCriterion::Enable)
-    .value("Disable", TauCriterion::Disable);
-
   pybind11::class_<Options> options(m, "Options", "Contains global library settings");
-  options.def_readwrite_static("temperature_regime", &Options::temperatureRegime);
-  options.def_readwrite_static("chiral_state_preservation", &Options::chiralStatePreservation);
-  options.def_readwrite_static("tau_criterion", &Options::tauCriterion);
+  options.def_readwrite_static(
+    "temperature_regime",
+    &Options::temperatureRegime,
+    "Global temperature regime setting of the library. Defaults to high temperature approximation"
+  );
+  options.def_readwrite_static(
+    "chiral_state_preservation",
+    &Options::chiralStatePreservation,
+    "Global chiral state preservation setting of the library. Defaults to effortless and unique"
+  );
 
   /* Access to the PRNG instance */
   m.def("randomness_engine", &randomnessEngine);

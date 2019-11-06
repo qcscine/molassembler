@@ -58,14 +58,28 @@ void init_io(pybind11::module& m) {
     "read",
     &IO::read,
     pybind11::arg("filename"),
-    "Reads a single molecule from a file"
+    R"delim(
+      Reads a single molecule from a file. Interprets the file format from its
+      extension. Supported formats:
+      - mol: MOLFile V2000
+      - xyz: XYZ file
+      - cbor/bson/json: Serialization formats of molecules
+
+      :param filename: File to read.
+    )delim"
   );
 
   io.def(
     "split",
     &IO::split,
     pybind11::arg("filename"),
-    "Reads multiple molecules from a file"
+    R"delim(
+      Reads multiple molecules from a file. Interprets the file format from its
+      extension just like read(). Note that serializations of molecules contain
+      only a single molecule. Use read() instead.
+
+      :param filename: File to read.
+    )delim"
   );
 
   io.def(
@@ -78,7 +92,14 @@ void init_io(pybind11::module& m) {
     pybind11::arg("filename"),
     pybind11::arg("molecule"),
     pybind11::arg("positions"),
-    "Write a file from a molecule and positions"
+    R"delim(
+      Write a molecule and its positions to a file
+
+      :param filename: File to write to. File format is interpreted from this
+        parameter's file extension.
+      :param molecule: Molecule to write to file
+      :param positions: Positions of molecule's atoms in bohr
+    )delim"
   );
 
   io.def(
@@ -86,6 +107,12 @@ void init_io(pybind11::module& m) {
     pybind11::overload_cast<const std::string&, const Molecule&>(&IO::write),
     pybind11::arg("filename"),
     pybind11::arg("molecule"),
-    "Write a Molecule serialization with the endings json/cbor/bson to a file."
+    R"delim(
+      Write a Molecule serialization with the endings json/cbor/bson to a file.
+
+      :param filename: File to write to. File format is interpreted from this
+        parameter's file extension
+      :param molecule: Molecule to serialize and write to file
+    )delim"
   );
 }

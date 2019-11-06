@@ -5,10 +5,6 @@ Options
    :members:
    :undoc-members:
 
-.. autoclass:: molassembler.TauCriterion
-   :members:
-   :undoc-members:
-
 .. autoclass:: molassembler.TemperatureRegime
    :members:
    :undoc-members:

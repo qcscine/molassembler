@@ -37,7 +37,7 @@ void init_interpret(pybind11::module& m) {
   interpretResult.def_readwrite(
     "component_map",
     &InterpretResult::componentMap,
-    "Mapping of indices from the original positional information to which "
+    "Mapping of atom indices from the original positional information to which "
     "molecule it is now part"
   );
 
@@ -53,7 +53,26 @@ void init_interpret(pybind11::module& m) {
     pybind11::arg("bond_orders"),
     pybind11::arg("discretization"),
     pybind11::arg("stereopermutator_bond_order_threshold") = 1.4,
-    "Interpret molecules from element types, positional information and bond orders"
+    R"delim(
+      Interpret molecules from element types, positional information and bond orders
+
+      Attempts to interpret (possibly multiple) Molecules from element types,
+      positional information and a bond order collection. Bond orders are
+      discretized into bond types. Connected components within the space are
+      identified and individually instantiated into Molecules. The
+      instantiation of BondStereopermutators in the Molecules can be limited to
+      edges whose bond order exceeds a particular value.
+
+      :param atom_collection: Element types and positional information in Bohr units
+      :param bond_orders: Fractional bond orders
+      :param discretization: How bond fractional orders are to be discretized
+      :param stereopermutator_bond_order_threshold: If specified, limits the
+        instantiation of BondStereopermutators onto edges whose fractional bond
+        orders exceed the provided threshold. If None, BondStereopermutators
+        are instantiated at all bonds.
+      :raises ValueError: If the number of particles in the atom collection and
+        bond order collections do not match
+    )delim"
   );
 
   m.def(
@@ -66,8 +85,25 @@ void init_interpret(pybind11::module& m) {
     pybind11::arg("atom_collection"),
     pybind11::arg("discretization"),
     pybind11::arg("stereopermutator_bond_order_threshold") = 1.4,
-    "Interpret molecules from element types and positional information. Bond "
-    "orders are then interpreted using UFF parameters."
+    R"delim(
+      Interpret molecules from element types and positional information. Bond
+      orders are calculated with UFF parameters.
+
+      Attempts to interpret (possibly multiple) Molecules from element types
+      and positional information. Bond orders are calculated from atom-pairwise
+      spatial distances using UFF parameters. The bond orders are then
+      discretized into bond types. Connected components within the space are
+      identified and individually instantiated into Molecules. The
+      instantiation behavior of BondStereopermutators in the Molecules can be
+      limited to edges whose bond order exceeds a particular value.
+
+      :param atom_collection: Element types and positional information in Bohr units
+      :param discretization: How bond fractional orders are to be discretized
+      :param stereopermutator_bond_order_threshold: If specified, limits the
+        instantiation of BondStereopermutators onto edges whose fractional bond orders
+        exceed the provided threshold. If None, BondStereopermutators are
+        instantiated at all bonds.
+    )delim"
   );
 
   m.def(
@@ -75,6 +111,13 @@ void init_interpret(pybind11::module& m) {
     &applyInterpretationMap,
     pybind11::arg("interpret_result"),
     pybind11::arg("atom_collection"),
-    "Splits an atom collection just like the interpret split the positions into multiple molecules"
+    R"delim(
+      Splits an atom collection just like an interpret split the positions
+      into multiple molecules
+
+      :param interpret_result: The result of an interpret call on the same atom collection
+      :param atom_collection: The atom collection to split
+      :rtype: List of atom collections
+    )delim"
   );
 }

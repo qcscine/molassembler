@@ -59,8 +59,8 @@ struct Editing {
   /** @brief Fuses two molecules, adding all adjacencies and continuations of one
    * Molecule's atoms to another.
    *
-   * Adds all adjacent atoms and continuations of @p bStackAtom in @p bottom to
-   * @p aStackAtom in @p top. @p aStackAtom's element type is unchanged as it
+   * Adds all adjacent atoms and continuations of @p bottomAtom in @p bottom to
+   * @p topAtom in @p top. @p topAtom's element type is unchanged as it
    * is the 'top' of the superimposition / overlay.
    *
    * @complexity{@math{\Theta(N)}}
