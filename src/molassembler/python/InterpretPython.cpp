@@ -17,8 +17,10 @@ void init_interpret(pybind11::module& m) {
   pybind11::enum_<BondDiscretizationOption>(
     m,
     "BondDiscretization",
-    "Specifies the algorithm used to discretize floating-point bond orders into "
-    "discrete bond types."
+    R"delim(
+      Specifies the algorithm used to discretize floating-point bond orders into
+      discrete bond types.
+    )delim"
   ).value("Binary", BondDiscretizationOption::Binary, "All bond orders >= 0.5 are considered single bonds")
     .value("RoundToNearest", BondDiscretizationOption::RoundToNearest, "Round bond orders to nearest integer");
 
@@ -80,6 +82,21 @@ void init_interpret(pybind11::module& m) {
         are instantiated at all bonds.
       :raises ValueError: If the number of particles in the atom collection and
         bond order collections do not match
+
+      >>> import scine_utils_os as utils
+      >>> import numpy as np
+      >>> elements = [utils.ElementType.H] * 4
+      >>> positions = np.array([[0.0, 0.0, 0.0], [0.0, 0.71, 0.0], [2.0, 2.0, 2.0], [2.0, 2.71, 2.0]])
+      >>> atoms = utils.AtomCollection(elements, positions)
+      >>> bond_orders = utils.BondOrderCollection(4)
+      >>> bond_orders.set_order(0, 1, 1.0)
+      >>> bond_orders.set_order(2, 3, 1.0)
+      >>> discretization = molassembler.BondDiscretization.RoundToNearest
+      >>> result = molassembler.interpret(atoms, bond_orders, discretization)
+      >>> assert len(result.molecules) == 2
+      >>> hydrogen = molassembler.Molecule()
+      >>> assert all([m == hydrogen for m in result.molecules])
+      >>> assert result.component_map == [0, 0, 1, 1]
     )delim"
   );
 

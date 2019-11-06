@@ -15,8 +15,15 @@ void init_bond_stereopermutator(pybind11::module& m) {
   pybind11::class_<BondStereopermutator> bondStereopermutator(
     m,
     "BondStereopermutator",
-    "Handles specific relative arrangements of two atom stereopermutators "
-    "joined by a bond"
+    R"delim(
+      Handles specific relative arrangements of two atom stereopermutators
+      joined by a bond.
+
+      :example:
+      >>> from_smiles = molassembler.io.LineNotation.from_isomeric_smiles
+      >>> z_butene = from_smiles("C/C=C/C")
+      >>> benzene = from_smiles("C1=CC=CC=CC1")
+    )delim"
   );
 
   pybind11::enum_<BondStereopermutator::FittingMode> fittingMode(
@@ -39,22 +46,29 @@ void init_bond_stereopermutator(pybind11::module& m) {
   bondStereopermutator.def(
     "assigned",
     &BondStereopermutator::assigned,
-    "Returns an integer indicating the assignment of the stereopermutator or "
-    "``None`` if the stereopermutator is unassigned."
+    R"delim(
+      Returns an integer indicating the assignment of the stereopermutator or
+      ``None`` if the stereopermutator is unassigned.
+    )delim"
   );
 
   bondStereopermutator.def(
     "index_of_permutation",
     &BondStereopermutator::indexOfPermutation,
-    "Returns an integer indicating the index of permutation if the "
-    "stereopermutator is assigned or ``None`` if the stereopermutator is unassigned."
+    R"delim(
+      Returns an integer indicating the index of permutation if the
+      stereopermutator is assigned or ``None`` if the stereopermutator is
+      unassigned.
+    )delim"
   );
 
   bondStereopermutator.def(
     "num_assignments",
     &BondStereopermutator::numAssignments,
-    "Returns the number of assignments. Valid assignment indices range from 0 "
-    "to this number minus one."
+    R"delim(
+      Returns the number of assignments. Valid assignment indices range from 0
+      to this number minus one.
+    )delim"
   );
 
   bondStereopermutator.def(
