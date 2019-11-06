@@ -1150,7 +1150,6 @@ RankingInformation Molecule::Impl::rankPriority(
   // Rank the substituents
   auto expandedTree = RankingTree(
     graph(),
-    graph().cycles(),
     stereopermutators(),
     molGraphviz,
     a,

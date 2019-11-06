@@ -259,7 +259,7 @@ public:
   }
 
   /**
-   * @brief Less-than compare two elements
+   * @brief Less-than compare two elements in the poset
    *
    * @param a The first element
    * @param b The second element
@@ -306,6 +306,26 @@ public:
     }
 
     return boost::indeterminate;
+  }
+
+  /**
+   * @brief Extracts the contained order, moving from each contained subset and
+   *   clearing the Poset
+   */
+  std::vector<
+    std::vector<T>
+  > extract() {
+    const unsigned N = subsets.size();
+    std::vector<
+      std::vector<T>
+    > extracted(N);
+
+    for(unsigned i = 0; i < N; ++i) {
+      extracted[i] = std::move(subsets[i].values);
+    }
+
+    subsets.clear();
+    return extracted;
   }
 
 private:

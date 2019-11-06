@@ -38,7 +38,6 @@ void writeExpandedTree(
 
   auto expandedTree = RankingTree(
     molecule.graph(),
-    molecule.graph().cycles(),
     molecule.stereopermutators(),
     molecule.dumpGraphviz(),
     expandOnIndex

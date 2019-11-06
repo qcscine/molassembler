@@ -90,5 +90,4 @@ void init_stereopermutator_list(pybind11::module& m) {
     },
     "Returns a range of all :class:`BondStereopermutator`"
   );
-
 }

@@ -14,7 +14,6 @@ if(NOT TARGET Boost::regex
 endif()
 
 set(analysisFiles
-  ${CMAKE_CURRENT_SOURCE_DIR}/BenchmarkEigenvalues.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/BenchmarkGraphAlgorithms.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/BenchmarkRefinement.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/BenchmarkRefinementFunctions.cpp

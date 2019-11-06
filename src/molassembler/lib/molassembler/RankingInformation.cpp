@@ -7,6 +7,7 @@
 #include "temple/Adaptors/Zip.h"
 #include "temple/Functional.h"
 #include "temple/TinySet.h"
+#include "temple/Poset.h"
 
 #include "molassembler/Containers/OrderDiscoveryHelper.h"
 #include "molassembler/Cycles.h"
@@ -115,48 +116,26 @@ RankingInformation::RankedSitesType RankingInformation::rankSites(
 ) {
   const unsigned sitesSize = sites.size();
 
-  // Use partial ordering helper
-  OrderDiscoveryHelper<unsigned> siteOrdering;
-  siteOrdering.setUnorderedValues(
-    temple::iota<unsigned>(sitesSize)
-  );
+  temple::Poset<unsigned> siteIndexPoset {temple::iota<unsigned>(sitesSize)};
 
-  // Pairwise compare all sites, adding relational discoveries to the ordering helper
-  for(unsigned i = 0; i < sitesSize; ++i) {
-    const auto& a = sites.at(i);
-
-    for(unsigned j = i + 1; j < sitesSize; ++j) {
-      const auto& b = sites.at(j);
-
-      if(a.size() < b.size()) {
-        siteOrdering.addLessThanRelationship(i, j);
-      } else if(a.size() > b.size()) {
-        siteOrdering.addLessThanRelationship(j, i);
-      } else {
-        auto aPositions = siteConstitutingAtomsRankedPositions(a, substituentRanking);
-        auto bPositions = siteConstitutingAtomsRankedPositions(b, substituentRanking);
-
-        // lexicographical comparison
-        if(aPositions < bPositions) {
-          siteOrdering.addLessThanRelationship(i, j);
-        } else if(aPositions > bPositions) {
-          siteOrdering.addLessThanRelationship(j, i);
-        }
-
-        // No further differentiation.
-      }
+  // Order by site size
+  siteIndexPoset.orderUnordered(
+    [&](const unsigned i, const unsigned j) -> bool {
+      return sites.at(i).size() < sites.at(j).size();
     }
-  }
-
-  // OrderingDiscoveryHelper's getSets() returns DESC order, so we reverse it to ASC
-  auto finalSets = siteOrdering.getSets();
-
-  std::reverse(
-    std::begin(finalSets),
-    std::end(finalSets)
   );
 
-  return finalSets;
+  // Then sub-order by ranked positions of their site constituting atoms
+  siteIndexPoset.orderUnordered(
+    [&](const unsigned i, const unsigned j) -> bool {
+      return (
+        siteConstitutingAtomsRankedPositions(sites.at(i), substituentRanking)
+        < siteConstitutingAtomsRankedPositions(sites.at(j), substituentRanking)
+      );
+    }
+  );
+
+  return siteIndexPoset.extract();
 }
 
 void RankingInformation::applyPermutation(const std::vector<AtomIndex>& permutation) {

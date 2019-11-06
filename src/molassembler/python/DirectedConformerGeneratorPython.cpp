@@ -23,6 +23,19 @@ void init_directed_conformer_generator(pybind11::module& m) {
       Generates guaranteed new combinations of BondStereopermutator assignments
       and provides helper functions for the generation of conformers using these
       combinations and the reverse, finding the combinations from conformers.
+
+      >>> import molassembler as masm
+      >>> mol = masm.io.read("...")
+      >>> generator = masm.DirectedConformerGenerator(mol)
+      >>> assert generator.bond_list()
+      >>> conformers = []
+      >>> while generator.decision_list_set_size() < generator.ideal_ensemble_size():
+              conformers.append(
+                generator.generate_conformation(
+                  generator.generate_new_decision_list()
+                )
+              )
+      >>> assert len(conformers) == generator.ideal_ensemble_size()
     )delim"
   );
 

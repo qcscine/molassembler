@@ -128,8 +128,6 @@ struct RankingInformation {
    * @param substituentRanking The substituent-level ranking result
    *
    * @return A ranked (ascending) nested list of ligand indices
-   *
-   * @todo Rewrite with Poset
    */
   static RankedSitesType rankSites(
     const SiteListType& sites,

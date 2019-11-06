@@ -171,7 +171,6 @@ BOOST_AUTO_TEST_CASE(sequenceRuleOneTests) {
 
   auto exampleThreeExpanded = RankingTree(
     exampleThree.graph(),
-    exampleThree.graph().cycles(),
     exampleThree.stereopermutators(),
     exampleThree.dumpGraphviz(),
     0,
@@ -191,7 +190,6 @@ BOOST_AUTO_TEST_CASE(sequenceRuleOneTests) {
 
   auto exampleThreeExpandedAgain = RankingTree(
     exampleThree.graph(),
-    exampleThree.graph().cycles(),
     exampleThree.stereopermutators(),
     exampleThree.dumpGraphviz(),
     1,

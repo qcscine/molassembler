@@ -30,6 +30,9 @@ namespace molassembler {
  * this type and its nested types follows same-base, not equal-base logic of
  * comparison due to management of the C pointer types and the associated
  * allocated memory using shared_ptrs.
+ *
+ * @note Keep in mind that if a node is part of a URF, that does NOT imply that
+ * it is also part of each RC of that URF.
  */
 class Cycles {
 public:
@@ -228,7 +231,7 @@ public:
 
 private:
   std::shared_ptr<RDLDataPtrs> _rdlPtr;
-  // Map form BondIndex to ordered list of its URF IDs
+  // Map from BondIndex to ordered list of its URF IDs
   std::unordered_map<BondIndex, std::vector<unsigned>, boost::hash<BondIndex>> _urfMap;
 };
 

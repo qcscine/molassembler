@@ -265,7 +265,7 @@ Cycles::containing(const BondIndex& bond) const {
 
 std::pair<Cycles::URFIDsCycleIterator, Cycles::URFIDsCycleIterator>
 Cycles::containing(const std::vector<BondIndex>& bonds) const {
-  auto fetch = [&](const BondIndex& bond) -> std::vector<unsigned> {
+  auto fetchBondURFs = [&](const BondIndex& bond) -> std::vector<unsigned> {
     auto findIter = _urfMap.find(bond);
     if(findIter == std::end(_urfMap)) {
       return {};
@@ -274,9 +274,9 @@ Cycles::containing(const std::vector<BondIndex>& bonds) const {
     return findIter->second;
   };
 
-  std::vector<unsigned> urfs = fetch(bonds.front());
+  std::vector<unsigned> urfs = fetchBondURFs(bonds.front());
   for(unsigned i = 1; i < bonds.size() && !urfs.empty(); ++i) {
-    urfs = detail::intersect(urfs, fetch(bonds.at(i)));
+    urfs = detail::intersect(urfs, fetchBondURFs(bonds.at(i)));
   }
 
   Cycles::URFIDsCycleIterator begin {bonds, std::move(urfs), _rdlPtr};

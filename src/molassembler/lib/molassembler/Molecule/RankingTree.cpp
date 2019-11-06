@@ -68,7 +68,7 @@ public:
 
   void operator() (std::ostream& os, const TreeVertexIndex& vertexIndex) const {
     auto symbolString = Scine::Utils::ElementInfo::symbol(
-      _baseRef._graphRef.elementType(
+      _baseRef._graph.elementType(
         _baseRef._tree[vertexIndex].molIndex
       )
     );
@@ -185,9 +185,9 @@ public:
     if(!aDuplicate && !bDuplicate) {
       // Casting elementType to unsigned basically gives Z
       return static_cast<unsigned>(
-        _base._graphRef.elementType(_base._tree[a].molIndex)
+        _base._graph.elementType(_base._tree[a].molIndex)
       ) < static_cast<unsigned>(
-        _base._graphRef.elementType(_base._tree[b].molIndex)
+        _base._graph.elementType(_base._tree[b].molIndex)
       );
     }
 
@@ -766,8 +766,8 @@ void RankingTree::_applySequenceRules(
       [&](const TreeVertexIndex nodeIndex) -> bool {
         return (
           AtomInfo::isMainGroupElement(
-            _graphRef.elementType(_tree[targetIndex].molIndex)
-          ) && _graphRef.bondType(
+            _graph.elementType(_tree[targetIndex].molIndex)
+          ) && _graph.bondType(
             BondIndex {
               _tree[targetIndex].molIndex,
               _tree[nodeIndex].molIndex
@@ -805,7 +805,7 @@ void RankingTree::_applySequenceRules(
      * adjacents yet again.
      */
     centerRanking.sites = GraphAlgorithms::ligandSiteGroups(
-      _graphRef.inner(),
+      _graph.inner(),
       molSourceIndex,
       temple::map(etaAdjacents, [&](const TreeVertexIndex i) { return _tree[i].molIndex; })
     );
@@ -838,7 +838,7 @@ void RankingTree::_applySequenceRules(
       localShape = existingStereopermutatorOption->getShape();
     } else {
       localShape = LocalGeometry::inferShape(
-        _graphRef,
+        _graph,
         molSourceIndex,
         centerRanking
       ).value_or_eval(
@@ -850,7 +850,7 @@ void RankingTree::_applySequenceRules(
 
     // Instantiate a AtomStereopermutator here!
     auto newStereopermutator = AtomStereopermutator {
-      _graphRef,
+      _graph,
       localShape,
       molSourceIndex,
       centerRanking
@@ -864,7 +864,7 @@ void RankingTree::_applySequenceRules(
        * if positions are available.
        */
       newStereopermutator.fit(
-        _graphRef,
+        _graph,
         positionsOption.value()
       );
     } else if(
@@ -884,7 +884,7 @@ void RankingTree::_applySequenceRules(
          */
         newStereopermutator.setShape(
           existingStereopermutatorOption->getShape(),
-          _graphRef
+          _graph
         );
         newStereopermutator.assign(existingStereopermutatorOption->assigned());
       } else {
@@ -893,11 +893,11 @@ void RankingTree::_applySequenceRules(
          */
         AtomStereopermutator permutatorCopy = *existingStereopermutatorOption;
         try {
-          permutatorCopy.propagate(_graphRef, centerRanking, localShape);
+          permutatorCopy.propagate(_graph, centerRanking, localShape);
           if(permutatorCopy.assigned()) {
             newStereopermutator.setShape(
               permutatorCopy.getShape(),
-              _graphRef
+              _graph
             );
             newStereopermutator.assign(permutatorCopy.assigned());
           }
@@ -909,8 +909,8 @@ void RankingTree::_applySequenceRules(
       newStereopermutator.assigned()
       && !disregardStereopermutator(
         newStereopermutator,
-        _graphRef.elementType(molSourceIndex),
-        _cyclesRef,
+        _graph.elementType(molSourceIndex),
+        _graph.cycles(),
         Options::temperatureRegime
       )
     ) {
@@ -984,7 +984,7 @@ void RankingTree::_applySequenceRules(
       }
 
       auto isGraphBondStereopermutatorCandidate = [&](const BondIndex& bond) -> bool {
-        BondType bondType = _graphRef.bondType(bond);
+        BondType bondType = _graph.bondType(bond);
 
         return (
           bondType == BondType::Double
@@ -2369,7 +2369,7 @@ std::vector<RankingTree::TreeVertexIndex> RankingTree::_expand(
   for(
     const InnerGraph::Vertex& molAdjacentIndex :
     boost::make_iterator_range(
-      _graphRef.inner().adjacents(_tree[index].molIndex)
+      _graph.inner().adjacents(_tree[index].molIndex)
     )
   ) {
     if(treeOutAdjacencies.count(molAdjacentIndex) != 0) {
@@ -2479,7 +2479,7 @@ unsigned RankingTree::_adjacentTerminalHydrogens(const TreeVertexIndex& index) c
     auto edgeTarget = boost::target(*outIterPair.first, _tree);
 
     if(
-      _graphRef.elementType(_tree[edgeTarget].molIndex) == Scine::Utils::ElementType::H
+      _graph.elementType(_tree[edgeTarget].molIndex) == Scine::Utils::ElementType::H
       && boost::out_degree(edgeTarget, _tree) == 0
     ) {
       ++count;
@@ -2662,7 +2662,7 @@ std::vector<RankingTree::TreeVertexIndex> RankingTree::_addBondOrderDuplicates(
   /* In case the bond order is non-fractional (e.g. aromatic / eta)
    * and > 1, add duplicate atoms corresponding to the order.
    */
-  BondType bondType = _graphRef.bondType(molGraphEdge);
+  BondType bondType = _graph.bondType(molGraphEdge);
 
   double bondOrder = Bond::bondOrderMap.at(
     static_cast<unsigned>(bondType)
@@ -2904,15 +2904,13 @@ std::unordered_set<RankingTree::TreeVertexIndex> RankingTree::_collectSeeds(
 
 RankingTree::RankingTree(
   const OuterGraph& graph,
-  const Cycles& cycles,
   const StereopermutatorList& stereopermutators,
   std::string molGraphviz,
   const AtomIndex atomToRank,
   const std::vector<AtomIndex>& excludeIndices,
   const ExpansionOption expansionMethod,
   const boost::optional<AngstromWrapper>& positionsOption
-) : _graphRef(graph),
-    _cyclesRef(cycles),
+) : _graph(graph),
     _stereopermutatorsRef(stereopermutators),
     _adaptedMolGraphviz(_adaptMolGraph(std::move(molGraphviz)))
 {
@@ -2929,7 +2927,7 @@ RankingTree::RankingTree(
   for(
     const AtomIndex rootAdjacentIndex :
     boost::make_iterator_range(
-      _graphRef.inner().adjacents(atomToRank)
+      _graph.inner().adjacents(atomToRank)
     )
   ) {
     if(
