@@ -14,10 +14,6 @@
 #include "molassembler/StereopermutatorList.h"
 #include "Utils/Geometry/AtomCollection.h"
 
-/* TODO
- * - Clean up function definition order
- */
-
 namespace Scine {
 
 namespace molassembler {

@@ -98,14 +98,9 @@
   \right]
 }
 
-% TODO refactor to vecDiff
-\newcommand{\volumeCalculation}[4]
-{\left(\vec{#1}-\vec{#4} \right)^{T}
-  \cdot \left[
-    \left(\vec{#2}-\vec{#4} \right)
-    \times\left(\vec{#3}-\vec{#4} \right)
-  \right]
-}
+\newcommand{\volumeCalculation}[4] {\left(\vec{#1}-\vec{#4} \right)^{T} \cdot
+\left[ \left(\vec{#2}-\vec{#4} \right) \times\left(\vec{#3}-\vec{#4} \right)
+\right] }
 
 \newcommand{\partialPosVec}[1]
 {\frac{\partial}{\partial\vec{r}_{#1}}}

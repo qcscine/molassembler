@@ -28,9 +28,6 @@ namespace stereopermutation {
  *
  * Acts as a container-like type for the generated stereopermutations after
  * construction.
- *
- * @todo There's some dead code here I think (see the static functions) and
- * PerpendicularAngleGroups really isn't a telling type
  */
 class Composite {
 public:
@@ -96,9 +93,6 @@ public:
      * More precisely, this function scales linearly with the number of
      * unlinked stereopermutations if all substituents are different, but that
      * itself probably scales factorially in the size of the shape.}
-     *
-     * @todo Check what this code shares with generateAllRotations and consider
-     *   refactoring
      */
     std::vector<unsigned> findReductionMapping(unsigned reducedFusedVertex) const;
 

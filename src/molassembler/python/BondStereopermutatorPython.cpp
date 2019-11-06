@@ -20,6 +20,7 @@ void init_bond_stereopermutator(pybind11::module& m) {
       joined by a bond.
 
       :example:
+
       >>> from_smiles = molassembler.io.LineNotation.from_isomeric_smiles
       >>> z_butene = from_smiles("C/C=C/C")
       >>> benzene = from_smiles("C1=CC=CC=CC1")

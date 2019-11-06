@@ -247,9 +247,9 @@ double element(
   const PositionCollection& normalizedPositions,
   const elements::Reflection& reflection
 ) {
-  /* TODO
-   * - calculateReflectionCSM could be memoized across its a,b arguments
-   *   also try memoizing other elements' basic calculation fns
+  /* calculateReflectionCSM could be memoized across its a,b arguments, and
+   * so could other elements' basic calculation fns. But no reason to optimize
+   * since continuous symmetry measures are not a central workload
    */
 
   const unsigned P = normalizedPositions.cols();
@@ -842,10 +842,9 @@ struct OrientationCSMFunctor {
                 }
               );
 
-              // TODO move partitionParticles
               const double permutationalGroupCSM = groupedSymmetryElements(
                 positions,
-                partitionParticles,
+                std::move(partitionParticles),
                 unfoldMatrices,
                 foldMatrices,
                 npGroup
@@ -1222,9 +1221,9 @@ ShapeResult shapeHeuristics(
    * later is not well-converged and the minimal solution is not the shortest
    * cost path through the graph.
    *
-   * TODO
-   * - Try variant accepting partially fixed mappings (this DOES save time)
-   * - Try variant with rotation memory
+   * Further optimization opportunities
+   * - Variant with rotation memory (divides number of quaternion fits by the
+   *   number of rotations of the iota permutation in the shape)
    */
 
   const unsigned N = normalizedPositions.cols();

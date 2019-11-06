@@ -886,13 +886,6 @@ void AtomStereopermutator::Impl::fit(
   // Add the putative center
   sitePositions.col(S) = angstromWrapper.positions.row(_centerAtom);
 
-  /* TODO
-   * - It should be possible to force the shape classification algorithm to
-   *   match the centroids directly (i.e. add a function variant accepting
-   *   partial mappings or a direct centroid position argument). That would
-   *   imply a N! -> (N - 1)! cost reduction.
-   */
-
   // Classify the shape and set it
   Shapes::Shape fittedShape;
   std::vector<unsigned> matchingMapping;

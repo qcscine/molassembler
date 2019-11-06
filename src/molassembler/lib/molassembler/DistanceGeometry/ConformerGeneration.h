@@ -111,7 +111,6 @@ std::list<RefinementData> debugRefinement(
   const Configuration& configuration
 );
 
-// TODO temp
 outcome::result<AngstromWrapper> generateConformer(
   const Molecule& molecule,
   const Configuration& configuration,

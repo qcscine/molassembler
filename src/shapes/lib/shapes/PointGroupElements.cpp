@@ -818,17 +818,6 @@ NPGroupingsMapType npGroupings(
   assert(elements.front()->matrix() == elements::Identity().matrix());
   const unsigned E = elements.size();
 
-  /* There can be multiple groupings of symmetry elements of equal l for
-   * different points in space. For now, we are ASSUMING that a particular
-   * grouping of symmetry elements leads the folded point to lie along the
-   * axis defined by the probe point used here to determine the grouping.
-   *
-   * So we store the point suggested by the element along with its grouping
-   * so we can test this theory (in ElementGrouping).
-   *
-   * TODO mark this resolved after it's been confirmed
-   */
-
   NPGroupingsMapType npGroupings;
 
   auto testVector = [&](const Eigen::Vector3d& v) {

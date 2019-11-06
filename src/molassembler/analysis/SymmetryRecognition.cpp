@@ -32,11 +32,6 @@
 #include <fstream>
 #include <random>
 
-/* TODO
- * - Ideas
- *   - CShM classification
- */
-
 using namespace std::string_literals;
 using namespace Scine;
 

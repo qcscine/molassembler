@@ -1,8 +1,6 @@
 /*!@file
  * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
  *   See LICENSE.txt
- * @todo
- * - add more tests from different geometries
  */
 
 #define BOOST_TEST_MODULE ConnectivityManagerTests

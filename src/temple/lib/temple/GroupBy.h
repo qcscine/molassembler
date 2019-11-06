@@ -17,8 +17,6 @@
 
 namespace temple {
 
-// TODO can't these functions be implemented in terms of one another?
-
 /*!
  * Split a container's values by a mapping function whose return value elements
  * are compared with. Matching mapped values are grouped and returned in a

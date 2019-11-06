@@ -1138,7 +1138,6 @@ void BondStereopermutator::Impl::propagateGraphChange(
       oldSite
     );
 
-    // TODO this might throw in some cases
     assert(findSiteIter != std::end(newRankingSites));
 
     const unsigned newSiteIndex = findSiteIter - std::begin(newRankingSites);

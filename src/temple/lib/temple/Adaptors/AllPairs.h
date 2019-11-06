@@ -147,9 +147,6 @@ struct SingleContainerPairsGenerator
   }
 
   iterator<ContainerIteratorType> end() const {
-    // TODO dependent on iterator type, do not use --(iter) but write an appropriate
-    // algorithm that gets you end and iterator prior to end (lots of iterator copies, but those are probably cheap)
-
     auto maybePriorToEnd = std::end(container);
     if(maybePriorToEnd != std::begin(container)) {
       --maybePriorToEnd;

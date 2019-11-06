@@ -43,8 +43,7 @@ struct Zipper {
     )
   );
 
-  // TODO mark T and U const ref and see what happens
-  using PairType = std::pair<T, U>;
+  using PairType = std::pair<const T&, const U&>;
 
   using ContainerTIteratorType = decltype(std::begin(std::declval<const ContainerT>()));
   using ContainerUIteratorType = decltype(std::begin(std::declval<const ContainerU>()));
