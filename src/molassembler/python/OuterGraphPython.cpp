@@ -33,7 +33,7 @@ void init_outer_graph(pybind11::module& m) {
     "bond_type",
     &OuterGraph::bondType,
     pybind11::arg("bond_index"),
-    "Fetches the bond type at a particular bond"
+    "Fetches the :class:`BondType` at a particular :class:`BondIndex`"
   );
 
   outerGraph.def(

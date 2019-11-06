@@ -58,11 +58,17 @@ if(MOLASSEMBLER_BUILD_DOCUMENTATION)
       DESTINATION ${CMAKE_CURRENT_BINARY_DIR}
     )
 
+    configure_file(
+      ${CMAKE_CURRENT_SOURCE_DIR}/sphinx/conf.py.in
+      ${CMAKE_CURRENT_BINARY_DIR}/sphinx/conf.py
+      @ONLY
+    )
+
     file(GLOB_RECURSE MOLASSEMBLER_PYTHON_DOC_FILES ${CMAKE_CURRENT_SOURCE_DIR}/sphinx/*.rst)
 
     add_custom_target(PythonDocumentation
       ALL
-      COMMAND ${PYTHON_EXECUTABLE} -m sphinx -M html "sphinx" "doc"
+      COMMAND ${PYTHON_EXECUTABLE} -m sphinx -b html -a -E "sphinx" "doc"
       DEPENDS molassembler_python
       SOURCES ${MOLASSEMBLER_PYTHON_DOC_FILES} ${CMAKE_CURRENT_SOURCE_DIR}/sphinx/conf.py
       COMMENT "Generate python documentation with sphinx"

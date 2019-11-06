@@ -22,7 +22,7 @@ void init_io(pybind11::module& m) {
   pybind11::class_<IO::LineNotation> lineNotation(
     io,
     "LineNotation",
-    "Generates Molecule instances from line notations of molecules"
+    "Generates :class:`Molecule` instances from line notations of molecules"
   );
 
   lineNotation.def_property_readonly_static(
@@ -30,28 +30,28 @@ void init_io(pybind11::module& m) {
     [](pybind11::object /* self */) -> bool {
       return IO::LineNotation::enabled();
     },
-    "Checks whether the `obabel` binary is found in your PATH"
+    "Checks whether the ``obabel`` binary is found in your PATH"
   );
 
   lineNotation.def_static(
     "from_canonical_smiles",
     &IO::LineNotation::fromCanonicalSMILES,
     pybind11::arg("canonical_smiles"),
-    "Construct a single molecule from a canonical SMILES string"
+    "Construct a single :class:`Molecule` from a canonical SMILES string"
   );
 
   lineNotation.def_static(
     "from_isomeric_smiles",
     &IO::LineNotation::fromIsomericSMILES,
     pybind11::arg("isomeric_smiles"),
-    "Construct a single molecule from an isomeric SMILES string"
+    "Construct a single :class:`Molecule` from an isomeric SMILES string"
   );
 
   lineNotation.def_static(
     "from_inchi",
     &IO::LineNotation::fromInChI,
     pybind11::arg("inchi"),
-    "Construct a single molecule from an InChI string"
+    "Construct a single :class:`Molecule` from an InChI string"
   );
 
   io.def(
@@ -59,7 +59,7 @@ void init_io(pybind11::module& m) {
     &IO::read,
     pybind11::arg("filename"),
     R"delim(
-      Reads a single molecule from a file. Interprets the file format from its
+      Reads a single :class:`Molecule` from a file. Interprets the file format from its
       extension. Supported formats:
       - mol: MOLFile V2000
       - xyz: XYZ file
@@ -76,7 +76,7 @@ void init_io(pybind11::module& m) {
     R"delim(
       Reads multiple molecules from a file. Interprets the file format from its
       extension just like read(). Note that serializations of molecules contain
-      only a single molecule. Use read() instead.
+      only a single :class:`Molecule`. Use read() instead.
 
       :param filename: File to read.
     )delim"
@@ -93,11 +93,11 @@ void init_io(pybind11::module& m) {
     pybind11::arg("molecule"),
     pybind11::arg("positions"),
     R"delim(
-      Write a molecule and its positions to a file
+      Write a :class:`Molecule` and its positions to a file
 
       :param filename: File to write to. File format is interpreted from this
         parameter's file extension.
-      :param molecule: Molecule to write to file
+      :param molecule: :class:`Molecule` to write to file
       :param positions: Positions of molecule's atoms in bohr
     )delim"
   );
@@ -108,11 +108,11 @@ void init_io(pybind11::module& m) {
     pybind11::arg("filename"),
     pybind11::arg("molecule"),
     R"delim(
-      Write a Molecule serialization with the endings json/cbor/bson to a file.
+      Write a :class:`Molecule` serialization with the endings json/cbor/bson to a file.
 
       :param filename: File to write to. File format is interpreted from this
         parameter's file extension
-      :param molecule: Molecule to serialize and write to file
+      :param molecule: :class:`Molecule` to serialize and write to file
     )delim"
   );
 }

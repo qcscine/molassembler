@@ -87,7 +87,7 @@ void init_molecule(pybind11::module& m) {
     pybind11::arg("first_element"),
     pybind11::arg("second_element"),
     pybind11::arg("bond_type") = BondType::Single,
-    "Initialize a molecule from two element types and a mutual bond type"
+    "Initialize a molecule from two element types and a mutual :class:`BondType`"
   );
 
   molecule.def(
@@ -143,7 +143,7 @@ void init_molecule(pybind11::module& m) {
 
       :param element: Element type of the new atom
       :param adjacent_to: Atom to which the new atom is added
-      :param bond_type: Bond type with which the new atom is attached
+      :param bond_type: :class:`BondType` with which the new atom is attached
     )delim"
   );
 
@@ -158,7 +158,7 @@ void init_molecule(pybind11::module& m) {
 
       :param first_atom: First atom to bond
       :param second_atom: Second atom to bond
-      :param bond_type: Bond type with which to bond the atoms
+      :param bond_type: :class:`BondType` with which to bond the atoms
     )delim"
   );
 
@@ -172,9 +172,9 @@ void init_molecule(pybind11::module& m) {
     R"delim(
       Sets the atom stereopermutator assignment at a particular atom
 
-      :param atom: Atom index of the atom stereopermutator to set
+      :param atom: Atom index of the :class:`AtomStereopermutator` to set
       :param assignment_option: An assignment integer if the stereopermutator
-        is to be assigned or None if the stereopermutator is to be dis-assigned.
+        is to be assigned or ``None`` if the stereopermutator is to be dis-assigned.
     )delim"
   );
 
@@ -188,9 +188,10 @@ void init_molecule(pybind11::module& m) {
     R"delim(
       Sets the bond stereopermutator assignment at a particular bond
 
-      :param bond_index: Bond index of the stereopermutator to set
+      :param bond_index: :class:`BondIndex` of the :class:`BondStereopermutator` to set
       :param assignment_option: An assignment integer if the stereopermutator
-        is to be assigned or None if the stereopermutator is to be dis-assigned.
+        is to be assigned or ``None`` if the stereopermutator is to be
+        dis-assigned.
     )delim"
   );
 
@@ -201,8 +202,8 @@ void init_molecule(pybind11::module& m) {
     },
     pybind11::arg("atom"),
     R"delim(
-      Assigns an atom stereopermutator at random (assignments are weighted by
-      relative statistical occurence).
+      Assigns an :class:`AtomStereopermutator` at random (assignments are
+      weighted by relative statistical occurence).
 
       :param atom: Atom index of the stereopermutator to assign randomly.
     )delim"
@@ -215,9 +216,9 @@ void init_molecule(pybind11::module& m) {
     },
     pybind11::arg("bond_index"),
     R"delim(
-      Assigns a bond stereopermutator at random.
+      Assigns a :class:`BondStereopermutator` at random.
 
-      :param bond_index: Bond index of the stereopermutator to assign randomly.
+      :param bond_index: :class:`BondIndex` of the stereopermutator to assign randomly.
     )delim"
   );
 
@@ -269,7 +270,7 @@ void init_molecule(pybind11::module& m) {
       Remove a bond from the graph, after checking that removing it is safe,
       i.e. the removal does not disconnect the graph.
 
-      :param bond_index: Bond index of the bond to be removed
+      :param bond_index: :class:`BondIndex` of the bond to be removed
     )delim"
   );
 
@@ -285,7 +286,7 @@ void init_molecule(pybind11::module& m) {
 
       :param first_atom: First atom of the bond to be changed
       :param second_atom: Second atom of the bond to be changed
-      :param bond_type: The new bond type
+      :param bond_type: The new :class:`BondType`
       :return: Whether the bond already existed
     )delim"
   );
@@ -331,19 +332,33 @@ void init_molecule(pybind11::module& m) {
   molecule.def_property_readonly(
     "graph",
     &Molecule::graph,
-    "Read only access to the graph representation"
+    R"delim(
+      Read only access to the graph representation
+
+      :rtype: :class:`Graph`
+    )delim"
   );
 
   molecule.def_property_readonly(
     "stereopermutators",
     &Molecule::stereopermutators,
-    "Read only access to the list of stereopermutators"
+    R"delim(
+      Read only access to the list of stereopermutators
+
+      :rtype: :class:`StereopermutatorList`
+    )delim"
   );
 
   molecule.def_property_readonly(
     "canonical_components",
     &Molecule::canonicalComponents,
-    "Yields the components of the molecule that were used in a previous canonicalization. Can be None."
+    R"delim(
+      Yields the components of the molecule that were used in a previous
+      canonicalization. Can be ``None`` if the molecule was never
+      canonicalized.
+
+      :rtype: :class:`AtomEnvironmentComponents` or ``None``
+    )delim"
   );
 
   molecule.def(

@@ -33,6 +33,9 @@ PYBIND11_MODULE(molassembler, m) {
        :toctree:
   )";
 
+  // Requires other modules to function properly
+  auto utils = pybind11::module::import("scine_utils_os");
+
   // Order is important here, do not reorder
   init_version(m);
   init_types(m);

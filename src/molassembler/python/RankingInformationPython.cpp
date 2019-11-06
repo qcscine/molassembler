@@ -20,14 +20,14 @@ void init_ranking_information(pybind11::module& m) {
   linkInformation.def_readonly(
     "index_pair",
     &LinkInformation::indexPair,
-    "An ordered pair of the ligand indices that are linked. See the "
-    "corresponding RankingInformation's ligands member"
+    "An ordered pair of the site indices that are linked. See the "
+    "corresponding :class:`RankingInformation` sites member"
   );
 
   linkInformation.def_readonly(
     "cycle_sequence",
     &LinkInformation::cycleSequence,
-    "The in-order atom sequence of the linked ligand indices"
+    "The in-order atom sequence of the linked sites"
   );
 
   linkInformation.def(pybind11::self == pybind11::self);
@@ -62,7 +62,7 @@ void init_ranking_information(pybind11::module& m) {
   rankingInformation.def_readonly(
     "links",
     &RankingInformation::links,
-    "An ordered list of information on all links between ligand sites"
+    "An ordered list of :class:`LinkInformation` on all links between binding sites"
   );
 
   rankingInformation.def(

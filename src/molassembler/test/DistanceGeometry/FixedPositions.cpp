@@ -32,7 +32,7 @@ BOOST_AUTO_TEST_CASE(FixedPositionsWork) {
       if(
         !positions.row(fixedPositionPair.first).isApprox(
           fixedPositionPair.second,
-          1e-3
+          1e-2
         )
       ) {
         pass = false;

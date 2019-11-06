@@ -42,8 +42,10 @@ void init_stereopermutator_list(pybind11::module& m) {
       pybind11::const_
     ),
     pybind11::arg("atom"),
-    "Fetches a read-only option to an AtomStereopermutator, if present on this "
-    "atom index"
+    R"delim(
+      Fetches a read-only option to an
+      :class:`AtomStereopermutator`, if present on this atom index
+    )delim"
   );
 
   stereopermutatorList.def(
@@ -53,20 +55,22 @@ void init_stereopermutator_list(pybind11::module& m) {
       pybind11::const_
     ),
     pybind11::arg("bond_index"),
-    "Fetches a read-only option to a BondStereopermutator, if present on this "
-    "atom index"
+    R"delim(
+      Fetches a read-only option to a
+      :class:`BondStereopermutator`, if present on this atom index
+    )delim"
   );
 
   stereopermutatorList.def(
     "A",
     &StereopermutatorList::A,
-    "Returns the number of AtomStereopermutators"
+    "Returns the number of :class:`AtomStereopermutator`"
   );
 
   stereopermutatorList.def(
     "B",
     &StereopermutatorList::B,
-    "Returns the number of BondStereopermutators"
+    "Returns the number of :class:`BondStereopermutator`"
   );
 
   stereopermutatorList.def(
@@ -75,7 +79,7 @@ void init_stereopermutator_list(pybind11::module& m) {
       auto range = list.atomStereopermutators();
       return pybind11::make_iterator(range.begin(), range.end());
     },
-    "Returns a range of all AtomStereopermutators"
+    "Returns a range of all :class:`AtomStereopermutator`"
   );
 
   stereopermutatorList.def(
@@ -84,7 +88,7 @@ void init_stereopermutator_list(pybind11::module& m) {
       auto range = list.bondStereopermutators();
       return pybind11::make_iterator(range.begin(), range.end());
     },
-    "Returns a range of all BondStereopermutators"
+    "Returns a range of all :class:`BondStereopermutator`"
   );
 
 }

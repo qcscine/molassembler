@@ -28,6 +28,12 @@ void init_editing(pybind11::module& m) {
 
       :param molecule: Molecule to cleave
       :param bridge: Bond index of bridge bond to cleave.
+      :return: A pair of molecules
+      :example:
+
+      >>> a = molassembler.Molecule() # Makes H2
+      >>> bond_index = a.addAtom(0, scine_utils_os.ElementType.H) # Make linear H3
+      >>> cleaved = molassembler.editing.cleave(a, bond_index) # Split into H2 and H
     )delim"
   );
 
@@ -40,19 +46,22 @@ void init_editing(pybind11::module& m) {
     pybind11::arg("first_wedge_atom"),
     pybind11::arg("second_wedge_atom"),
     R"delim(
-      Insert a molecule into a bond of another molecule. Splits log at
-      log_bond, then inserts wedge at the split atoms, connecting the first
-      atom of log_bond with first_wedge_atom and the second log_bond atom with
-      second_wedge_atom.
+      Insert a molecule into a bond of another molecule. Splits ``log`` at
+      ``log_bond``, then inserts ``wedge`` at the split atoms, connecting the
+      first atom of ``log_bond`` with ``first_wedge_atom`` and the second
+      ``log_bond`` atom with ``second_wedge_atom``.
 
-      The bond type of the log_bond is reused in the new bonds formed to the
-      wedge atoms.
+      The bond type of the ``log_bond`` is reused in the new bonds formed to the
+      ``wedge`` atoms.
 
       :param log: The molecule being inserted into
-      :param wedge: The molecule being inserted into the log
-      :param log_bond: Log's bond that wedge should be inserted into
-      :param first_wedge_atom: The atom of wedge to bond to the first atom in log_bond
-      :param second_wedge_atom: The atom of wedge to bond to the second atom in log_bond
+      :param wedge: The molecule being inserted into the ``log``
+      :param log_bond: Log's bond that ``wedge`` should be inserted into
+      :param first_wedge_atom: The atom of ``wedge`` to bond to the first atom
+        in ``log_bond``
+      :param second_wedge_atom: The atom of ``wedge`` to bond to the second
+        atom in ``log_bond``
+      :return: The result of the insert operation
     )delim"
   );
 
@@ -67,16 +76,16 @@ void init_editing(pybind11::module& m) {
       Fuse two molecules, adding all adjacencies of one Molecule's atoms to
       another
 
-      Adds all adjacent atoms and continuations of bottom_overlay_atom in
-      bottom to top_overlay_atom in top. top_overlay_atom's element type is
-      unchanged as it is the 'top' of the superimposition / overlay.
+      Adds all adjacent atoms and continuations of ``bottom_overlay_atom`` in
+      bottom to ``top_overlay_atom`` in top. ``top_overlay_atom``'s element
+      type is unchanged as it is the 'top' of the superimposition / overlay.
 
       :param top: The molecule at the "top" of the superposition.
       :param bottom: The molecule at the "bottom" of the superposition.
-      :param top_overlay_atom: The atom of top that is placed "onto" bottom's
-        bottom_overlay_atom
-      :param bottom_overlay_atom: The atom of bottom to place "beneath" top's
-        top_overlay_atom
+      :param top_overlay_atom: The atom of ``top`` that is placed "onto"
+        ``bottom``'s ``bottom_overlay_atom``
+      :param bottom_overlay_atom: The atom of ``bottom`` to place "beneath"
+        top's ``top_overlay_atom``
     )delim"
   );
 
@@ -118,9 +127,10 @@ void init_editing(pybind11::module& m) {
 
       :param left: The first molecule
       :param right: The second molecule
-      :param left_atom: The atom from left to connect
-      :param right_atom: The atom from right to connect
-      :param bond_type: The bond type with which to connect left_atom and right_atom
+      :param left_atom: The atom from ``left`` to connect
+      :param right_atom: The atom from ``right`` to connect
+      :param bond_type: The bond type with which to connect ``left_atom`` and
+        ``right_atom``
     )delim"
   );
 
@@ -137,9 +147,9 @@ void init_editing(pybind11::module& m) {
 
       :param a: The molecule the ligand is being connected to
       :param ligand: The ligand molecule being bound
-      :param complexating_atom: The atom in a to bind ligand to
-      :param ligand_binding_atoms: Atoms in ligand to bind to complexating_atom
-        to.
+      :param complexating_atom: The atom in ``a`` to bind ligand to
+      :param ligand_binding_atoms: Atoms in ``ligand`` to bind to
+        ``complexating_atom`` to.
     )delim"
   );
 }

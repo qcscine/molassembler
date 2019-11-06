@@ -40,14 +40,14 @@ void init_bond_stereopermutator(pybind11::module& m) {
     "assigned",
     &BondStereopermutator::assigned,
     "Returns an integer indicating the assignment of the stereopermutator or "
-    "None if the stereopermutator is unassigned."
+    "``None`` if the stereopermutator is unassigned."
   );
 
   bondStereopermutator.def(
     "index_of_permutation",
     &BondStereopermutator::indexOfPermutation,
     "Returns an integer indicating the index of permutation if the "
-    "stereopermutator is assigned or None if the stereopermutator is unassigned."
+    "stereopermutator is assigned or ``None`` if the stereopermutator is unassigned."
   );
 
   bondStereopermutator.def(
@@ -82,10 +82,10 @@ void init_bond_stereopermutator(pybind11::module& m) {
       You can glean site indices from the individual constituting atom
       stereopermutators' rankings.
 
-      :param stereopermutator_a: One constituting atom stereopermutator
-      :param site_index_a: The site index of stereopermutator_a starting the dihedral sequence
-      :param stereopermutator_b: The other constituting atom stereopermutator
-      :param site_index_b: The site index of stereopermutator_b ending the dihedral sequence
+      :param stereopermutator_a: One constituting :class:`AtomStereopermutator`
+      :param site_index_a: The site index of ``stereopermutator_a`` starting the dihedral sequence
+      :param stereopermutator_b: The other constituting :class:`AtomStereopermutator`
+      :param site_index_b: The site index of ``stereopermutator_b`` ending the dihedral sequence
     )delim"
   );
 

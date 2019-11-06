@@ -31,14 +31,22 @@ void init_interpret(pybind11::module& m) {
   interpretResult.def_readwrite(
     "molecules",
     &InterpretResult::molecules,
-    "Individual molecules found in the 3D information"
+    R"delim(
+      Individual molecules found in the 3D information.
+
+      :rtype: ``List`` of :class:`Molecule`
+    )delim"
   );
 
   interpretResult.def_readwrite(
     "component_map",
     &InterpretResult::componentMap,
-    "Mapping of atom indices from the original positional information to which "
-    "molecule it is now part"
+    R"delim(
+      Mapping of atom indices from the original positional information to which
+      molecule it is now part.
+
+      :rtype: ``List[int]``
+    )delim"
   );
 
   m.def(
@@ -68,7 +76,7 @@ void init_interpret(pybind11::module& m) {
       :param discretization: How bond fractional orders are to be discretized
       :param stereopermutator_bond_order_threshold: If specified, limits the
         instantiation of BondStereopermutators onto edges whose fractional bond
-        orders exceed the provided threshold. If None, BondStereopermutators
+        orders exceed the provided threshold. If ``None``, BondStereopermutators
         are instantiated at all bonds.
       :raises ValueError: If the number of particles in the atom collection and
         bond order collections do not match
@@ -101,7 +109,7 @@ void init_interpret(pybind11::module& m) {
       :param discretization: How bond fractional orders are to be discretized
       :param stereopermutator_bond_order_threshold: If specified, limits the
         instantiation of BondStereopermutators onto edges whose fractional bond orders
-        exceed the provided threshold. If None, BondStereopermutators are
+        exceed the provided threshold. If ``None``, BondStereopermutators are
         instantiated at all bonds.
     )delim"
   );

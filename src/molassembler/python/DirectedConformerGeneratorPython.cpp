@@ -31,9 +31,9 @@ void init_directed_conformer_generator(pybind11::module& m) {
     "IgnoreReason",
     "Reason why a bond is ignored for directed conformer generation"
   ).value("AtomStereopermutatorPreconditionsUnmet", DirectedConformerGenerator::IgnoreReason::AtomStereopermutatorPreconditionsUnmet, "There is not an assigned stereopermutator on both ends of the bond")
-    .value("HasAssignedBondStereopermutator", DirectedConformerGenerator::IgnoreReason::HasAssignedBondStereopermutator, "There is already an assigne bond stereopermutator on the bond")
+    .value("HasAssignedBondStereopermutator", DirectedConformerGenerator::IgnoreReason::HasAssignedBondStereopermutator, "There is already an assigned bond stereopermutator on the bond")
     .value("HasTerminalConstitutingAtom", DirectedConformerGenerator::IgnoreReason::HasTerminalConstitutingAtom, "At least one consituting atom is terminal")
-    .value("InCycle", DirectedConformerGenerator::IgnoreReason::InCycle, "The bond is in a cycle (see C++ documentation for details)")
+    .value("InCycle", DirectedConformerGenerator::IgnoreReason::InCycle, "The bond is in a cycle (see C++ documentation for details why cycle bonds are excluded)")
     .value("IsEtaBond", DirectedConformerGenerator::IgnoreReason::IsEtaBond, "The bond is an eta bond")
     .value("RotationIsIsotropic", DirectedConformerGenerator::IgnoreReason::RotationIsIsotropic, "Rotation around this bond is isotropic (at least one side's rotating substituents all have the same ranking)");
 
@@ -202,8 +202,9 @@ void init_directed_conformer_generator(pybind11::module& m) {
 
       For all bonds considered relevant (i.e. all bonds in bond_list()), fits
       supplied positions to possible stereopermutations and returns the result.
-      Entries have a value equal to UNKNOWN_DECISION if no permutation could be
-      recovered. The usual BondStereopermutator fitting tolerances apply.
+      Entries have a value equal to ``UNKNOWN_DECISION`` if no permutation
+      could be recovered. The usual BondStereopermutator fitting tolerances
+      apply.
 
       Assumes several things about your supplied positions:
       - There have only been dihedral changes
@@ -232,8 +233,9 @@ void init_directed_conformer_generator(pybind11::module& m) {
 
       For all bonds considered relevant (i.e. all bonds in bond_list()), fits
       supplied positions to possible stereopermutations and returns the result.
-      Entries have a value equal to UNKNOWN_DECISION if no permutation could be
-      recovered. The usual BondStereopermutator fitting tolerances apply.
+      Entries have a value equal to ``UNKNOWN_DECISION`` if no permutation
+      could be recovered. The usual BondStereopermutator fitting tolerances
+      apply.
 
       Assumes several things about your supplied positions:
       - There have only been dihedral changes
