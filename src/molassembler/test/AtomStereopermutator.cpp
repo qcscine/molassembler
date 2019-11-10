@@ -12,6 +12,7 @@
 #include "shapes/Data.h"
 #include "shapes/PropertyCaching.h"
 #include "Utils/Math/QuaternionFit.h"
+#include "Utils/Geometry/ElementInfo.h"
 
 using namespace Scine;
 using namespace molassembler;
@@ -82,7 +83,7 @@ BOOST_AUTO_TEST_CASE(ligandAdditionPropagatedStateSuperposable) {
 
     while(priorMol.graph().degree(0) != Shapes::size(source)) {
       priorMol.addAtom(
-        static_cast<Utils::ElementType>(priorMol.graph().N()),
+        Utils::ElementInfo::element(priorMol.graph().N()),
         0u,
         BondType::Single
       );
@@ -112,7 +113,7 @@ BOOST_AUTO_TEST_CASE(ligandAdditionPropagatedStateSuperposable) {
     auto postMol = priorMol;
     // Transition to a larger shape
     postMol.addAtom(
-      static_cast<Utils::ElementType>(postMol.graph().N()),
+      Utils::ElementInfo::element(postMol.graph().N()),
       0u,
       BondType::Single
     );

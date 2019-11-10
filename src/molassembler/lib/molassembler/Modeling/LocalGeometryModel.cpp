@@ -246,7 +246,7 @@ int formalCharge(
 
   if(AtomInfo::isMainGroupElement(graph.elementType(index))) {
     int valenceElectrons = AtomInfo::elementData.at(
-      static_cast<unsigned>(graph.elementType(index))
+      Utils::ElementInfo::Z(graph.elementType(index))
     ).valenceElectrons();
 
     for(const AtomIndex adjacent : boost::make_iterator_range(graph.adjacents(index))) {

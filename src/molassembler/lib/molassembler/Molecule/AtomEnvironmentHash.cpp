@@ -15,6 +15,8 @@
 #include "temple/Functional.h"
 #include "temple/Adaptors/Iota.h"
 
+#include "Utils/Geometry/ElementInfo.h"
+
 namespace Scine {
 
 namespace molassembler {
@@ -104,7 +106,7 @@ WideHashType hash(
   const boost::optional<Shapes::Shape>& shapeOptional,
   const boost::optional<unsigned>& assignedOptional
 ) {
-  // 2^7 = 128 will fit all element types
+  // 2^7 = 128 will fit all element type atomic numbers
   constexpr unsigned elementTypeBits = 7;
   constexpr unsigned shapeNameBits = temple::Math::ceil(
     temple::Math::log(Shapes::nShapes + 1.0, 2.0)
@@ -133,7 +135,7 @@ WideHashType hash(
    */
   WideHashType value;
   if(bitmask & AtomEnvironmentComponents::ElementTypes) {
-    value = static_cast<WideHashType>(elementType);
+    value = static_cast<WideHashType>(Utils::ElementInfo::Z(elementType));
   } else {
     value = 0;
   }

@@ -184,9 +184,9 @@ public:
 
     if(!aDuplicate && !bDuplicate) {
       // Casting elementType to unsigned basically gives Z
-      return static_cast<unsigned>(
+      return Utils::ElementInfo::Z(
         _base._graph.elementType(_base._tree[a].molIndex)
-      ) < static_cast<unsigned>(
+      ) < Utils::ElementInfo::Z(
         _base._graph.elementType(_base._tree[b].molIndex)
       );
     }

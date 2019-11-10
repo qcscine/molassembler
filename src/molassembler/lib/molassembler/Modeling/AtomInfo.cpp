@@ -5,6 +5,8 @@
 
 #include "molassembler/Modeling/AtomInfo.h"
 
+#include "Utils/Geometry/ElementInfo.h"
+
 #include "boost/optional.hpp"
 
 namespace Scine {
@@ -215,7 +217,7 @@ const std::array<double, 110> bondRadii {
 
 double bondRadius(const Scine::Utils::ElementType elementType) {
   return bondRadii.at(
-    static_cast<unsigned>(elementType)
+    Utils::ElementInfo::Z(elementType)
   );
 }
 
@@ -355,7 +357,7 @@ std::array<ElementInfo, 110> elementData {{
 }};
 
 bool isMainGroupElement(const Scine::Utils::ElementType elementType) {
-  auto Z = static_cast<unsigned>(elementType);
+  unsigned Z = Utils::ElementInfo::Z(elementType);
   return (
     Z <= 20
     || (31 <= Z && Z <= 38)
@@ -368,7 +370,7 @@ bool isMainGroupElement(const Scine::Utils::ElementType elementType) {
 boost::optional<unsigned> mainGroupVE(const Scine::Utils::ElementType elementType) {
   if(isMainGroupElement(elementType)) {
     return elementData.at(
-      static_cast<unsigned>(elementType)
+      Utils::ElementInfo::Z(elementType)
     ).valenceElectrons({'s', 'p'});
   }
 
@@ -381,13 +383,13 @@ unsigned dElectronCount(const Scine::Utils::ElementType elementType) {
   }
 
   return elementData.at(
-    static_cast<unsigned>(elementType)
+    Utils::ElementInfo::Z(elementType)
   ).valenceElectrons('d');
 }
 
 double vdwRadius(const Scine::Utils::ElementType elementType) {
   return elementData.at(
-    static_cast<unsigned>(elementType)
+    Utils::ElementInfo::Z(elementType)
   ).vdwRadius();
 }
 

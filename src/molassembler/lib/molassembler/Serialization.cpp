@@ -55,6 +55,10 @@ struct adl_serializer<Scine::molassembler::AtomEnvironmentComponents> {
 
 template<>
 struct adl_serializer<Scine::Utils::ElementType> {
+  /* Static casting element types around here is fine. It's not particularly
+   * human readable for monoisotopic elements or isotopes, but certainly
+   * doesn't violate correctness in any fashion.
+   */
   using Type = Scine::Utils::ElementType;
   using Underlying = std::underlying_type<Scine::Utils::ElementType>::type;
 

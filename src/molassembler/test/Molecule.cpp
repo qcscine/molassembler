@@ -201,7 +201,7 @@ HashArgumentsType randomArguments() {
   std::sort(bonds.begin(), bonds.end());
 
   return {
-    static_cast<Utils::ElementType>(
+    Utils::ElementInfo::element(
       temple::random::getSingle<unsigned>(1, 112, randomnessEngine())
     ),
     bonds,

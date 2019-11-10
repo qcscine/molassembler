@@ -77,14 +77,14 @@ ImplicitGraph::ImplicitGraph(
   for(AtomIndex i = 0; i < N; ++i) {
     auto elementType = inner.elementType(i);
     if(
-      static_cast<unsigned>(elementType)
-      > static_cast<unsigned>(_heaviestAtoms.back())
+      Utils::ElementInfo::Z(elementType)
+      > Utils::ElementInfo::Z(_heaviestAtoms.back())
     ) {
       _heaviestAtoms.back() = elementType;
 
       if(
-        static_cast<unsigned>(_heaviestAtoms.back())
-        > static_cast<unsigned>(_heaviestAtoms.front())
+        Utils::ElementInfo::Z(_heaviestAtoms.back())
+        > Utils::ElementInfo::Z(_heaviestAtoms.front())
       ) {
         std::swap(_heaviestAtoms.front(), _heaviestAtoms.back());
       }
