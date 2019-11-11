@@ -182,7 +182,7 @@ target_link_libraries(
     nautyStatic
     $<$<BOOL:${OpenMP_CXX_FOUND}>:OpenMP::OpenMP_CXX>
 )
-add_eigen(molassembler)
+target_link_eigen(molassembler PUBLIC)
 
 # Compiler flags and definitions
 target_compile_options(molassembler PRIVATE ${MOLASSEMBLER_CXX_FLAGS})

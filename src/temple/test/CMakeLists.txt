@@ -25,7 +25,7 @@ target_link_libraries(templeTests
     Boost::unit_test_framework
     temple
 )
-add_eigen(templeTests)
+target_link_eigen(templeTests PRIVATE)
 
 target_compile_definitions(templeTests PRIVATE BOOST_ALL_DYN_LINK)
 target_compile_options(templeTests PRIVATE ${MOLASSEMBLER_CXX_FLAGS})

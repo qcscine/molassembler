@@ -68,7 +68,7 @@ target_include_directories(
 target_include_directories(
   temple SYSTEM INTERFACE $<INSTALL_INTERFACE:$<INSTALL_PREFIX>/include>
 )
-add_eigen(temple)
+target_link_eigen(temple INTERFACE)
 
 # Make the interface an export-name
 install(

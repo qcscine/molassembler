@@ -27,7 +27,7 @@ target_link_libraries(cyclicPolygonTests
     Boost::unit_test_framework
     temple
 )
-add_eigen(cyclicPolygonTests)
+target_link_eigen(cyclicPolygonTests PRIVATE)
 
 add_test(NAME MASMCyclicPolygonTests COMMAND cyclicPolygonTests)
 

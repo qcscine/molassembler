@@ -44,7 +44,7 @@ target_include_directories(shapes
 )
 target_include_directories(shapes SYSTEM PUBLIC ${EIGEN3_INCLUDE_DIRS})
 target_link_libraries(shapes PUBLIC Boost::boost temple)
-add_eigen(shapes)
+target_link_eigen(shapes PUBLIC)
 
 target_compile_options(shapes PRIVATE ${MOLASSEMBLER_CXX_FLAGS})
 if(${SHAPES_TRY_CONSTEXPR})
