@@ -18,7 +18,7 @@ namespace Scine {
 
 // External forward-declarations
 namespace Utils {
-enum class ElementType;
+enum class ElementType : unsigned;
 class AtomCollection;
 class BondOrderCollection;
 using ElementTypeCollection = std::vector<ElementType>;

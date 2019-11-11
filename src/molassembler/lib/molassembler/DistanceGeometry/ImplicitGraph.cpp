@@ -16,6 +16,8 @@
 
 #include "temple/Random.h"
 
+#include "Utils/Geometry/ElementInfo.h"
+
 #ifdef MOLASSEMBLER_IMPLICIT_GRAPH_USE_SPECIALIZED_GOR1_ALGORITHM
 #include "molassembler/DistanceGeometry/Gor1.h"
 #else
