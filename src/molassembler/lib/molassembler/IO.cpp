@@ -47,10 +47,10 @@ Molecule LineNotation::fromFormat(const std::string& lineNotation, const std::st
   std::stringstream stream(lineNotation);
   Utils::OpenBabelStreamHandler handler;
   auto data = handler.read(stream, format);
-  InterpretResult interpretation = interpret(
+  auto interpretation = interpret::molecules(
     data.first,
     data.second,
-    BondDiscretizationOption::RoundToNearest
+    interpret::BondDiscretizationOption::RoundToNearest
   );
 
   if(interpretation.molecules.size() > 1) {
@@ -173,12 +173,12 @@ Molecule read(const std::string& filename) {
   // This can throw in lots of cases
   auto readData = Utils::ChemicalFileHandler::read(filename);
 
-  InterpretResult interpretation;
+  interpret::MoleculesResult interpretation;
   if(readData.second.empty()) {
     // Unfortunately, the file type does not include bond order information
-    interpretation = interpret(readData.first, BondDiscretizationOption::RoundToNearest);
+    interpretation = interpret::molecules(readData.first, interpret::BondDiscretizationOption::RoundToNearest);
   } else {
-    interpretation = interpret(readData.first, readData.second, BondDiscretizationOption::RoundToNearest);
+    interpretation = interpret::molecules(readData.first, readData.second, interpret::BondDiscretizationOption::RoundToNearest);
   }
 
   if(interpretation.molecules.size() > 1) {
@@ -201,12 +201,12 @@ std::vector<Molecule> split(const std::string& filename) {
   // This can throw in lots of cases
   auto readData = Utils::ChemicalFileHandler::read(filename);
 
-  InterpretResult interpretation;
+  interpret::MoleculesResult interpretation;
   if(readData.second.empty()) {
     // Unfortunately, the file type does not include bond order information
-    interpretation = interpret(readData.first);
+    interpretation = interpret::molecules(readData.first);
   } else {
-    interpretation = interpret(readData.first, readData.second);
+    interpretation = interpret::molecules(readData.first, readData.second);
   }
 
   return interpretation.molecules;

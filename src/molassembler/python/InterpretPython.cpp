@@ -6,6 +6,7 @@
 
 #include "molassembler/Interpret.h"
 #include "molassembler/Molecule.h"
+#include "molassembler/OuterGraph.h"
 
 #include "Utils/Bonds/BondOrderCollection.h"
 #include "Utils/Geometry/AtomCollection.h"
@@ -14,25 +15,28 @@ void init_interpret(pybind11::module& m) {
   using namespace Scine::molassembler;
   using namespace Scine::Utils;
 
-  pybind11::enum_<BondDiscretizationOption>(
-    m,
+  auto interpretSubmodule = m.def_submodule("interpret");
+  interpretSubmodule.doc() = R"(Interpretation submodule)";
+
+  pybind11::enum_<interpret::BondDiscretizationOption>(
+    interpretSubmodule,
     "BondDiscretization",
     R"delim(
       Specifies the algorithm used to discretize floating-point bond orders into
       discrete bond types.
     )delim"
-  ).value("Binary", BondDiscretizationOption::Binary, "All bond orders >= 0.5 are considered single bonds")
-    .value("RoundToNearest", BondDiscretizationOption::RoundToNearest, "Round bond orders to nearest integer");
+  ).value("Binary", interpret::BondDiscretizationOption::Binary, "All bond orders >= 0.5 are considered single bonds")
+    .value("RoundToNearest", interpret::BondDiscretizationOption::RoundToNearest, "Round bond orders to nearest integer");
 
-  pybind11::class_<InterpretResult> interpretResult(
-    m,
-    "InterpretResult",
-    "Result type of an interpret call."
+  pybind11::class_<interpret::MoleculesResult> interpretResult(
+    interpretSubmodule,
+    "MoleculesResult",
+    "Result type of a molceule interpret call."
   );
 
   interpretResult.def_readwrite(
     "molecules",
-    &InterpretResult::molecules,
+    &interpret::MoleculesResult::molecules,
     R"delim(
       Individual molecules found in the 3D information.
 
@@ -42,7 +46,7 @@ void init_interpret(pybind11::module& m) {
 
   interpretResult.def_readwrite(
     "component_map",
-    &InterpretResult::componentMap,
+    &interpret::MoleculesResult::componentMap,
     R"delim(
       Mapping of atom indices from the original positional information to which
       molecule it is now part.
@@ -51,14 +55,14 @@ void init_interpret(pybind11::module& m) {
     )delim"
   );
 
-  m.def(
-    "interpret",
+  interpretSubmodule.def(
+    "molecules",
     pybind11::overload_cast<
       const AtomCollection&,
       const BondOrderCollection&,
-      BondDiscretizationOption,
+      interpret::BondDiscretizationOption,
       const boost::optional<double>&
-    >(&interpret),
+    >(&interpret::molecules),
     pybind11::arg("atom_collection"),
     pybind11::arg("bond_orders"),
     pybind11::arg("discretization"),
@@ -100,13 +104,13 @@ void init_interpret(pybind11::module& m) {
     )delim"
   );
 
-  m.def(
+  interpretSubmodule.def(
     "interpret",
     pybind11::overload_cast<
       const AtomCollection&,
-      BondDiscretizationOption,
+      interpret::BondDiscretizationOption,
       const boost::optional<double>&
-    >(&interpret),
+    >(&interpret::molecules),
     pybind11::arg("atom_collection"),
     pybind11::arg("discretization"),
     pybind11::arg("stereopermutator_bond_order_threshold") = 1.4,
@@ -131,18 +135,71 @@ void init_interpret(pybind11::module& m) {
     )delim"
   );
 
-  m.def(
+  interpretSubmodule.def(
     "apply_interpretation_map",
-    &applyInterpretationMap,
-    pybind11::arg("interpret_result"),
+    &interpret::applyInterpretationMap,
+    pybind11::arg("component_map"),
     pybind11::arg("atom_collection"),
     R"delim(
       Splits an atom collection just like an interpret split the positions
       into multiple molecules
 
-      :param interpret_result: The result of an interpret call on the same atom collection
+      :param component_map: The component map of an interpret call on the same atom collection
       :param atom_collection: The atom collection to split
       :rtype: List of atom collections
+    )delim"
+  );
+
+  pybind11::class_<interpret::GraphsResult> graphsResult(
+    interpretSubmodule,
+    "GraphsResult",
+    "Result type of a graph interpret call."
+  );
+
+  graphsResult.def_readwrite(
+    "graphs",
+    &interpret::GraphsResult::graphs,
+    R"delim(
+      Individual graphs found in the 3D information.
+
+      :rtype: ``List`` of :class:`OuterGraph`
+    )delim"
+  );
+
+  graphsResult.def_readwrite(
+    "component_map",
+    &interpret::GraphsResult::componentMap,
+    R"delim(
+      Mapping of atom indices from the original positional information to which
+      molecule it is now part.
+
+      :rtype: ``List[int]``
+    )delim"
+  );
+
+  interpretSubmodule.def(
+    "graphs",
+    pybind11::overload_cast<
+      const AtomCollection&,
+      const BondOrderCollection&,
+      interpret::BondDiscretizationOption
+    >(&interpret::graphs),
+    pybind11::arg("atom_collection"),
+    pybind11::arg("bond_orders"),
+    pybind11::arg("discretization"),
+    R"delim(
+      Interpret graphs from element types, positional information and bond orders
+
+      Attempts to interpret (possibly multiple) graphs from element types,
+      positional information and a bond order collection. Bond orders are
+      discretized into bond types. Connected components within the space are
+      identified and individually instantiated into graphs.
+
+      :param atom_collection: Element types and positional information in Bohr units
+      :param bond_orders: Fractional bond orders
+      :param discretization: How bond fractional orders are to be discretized
+      :raises ValueError: If the number of particles in the atom collection and
+        bond order collections do not match
     )delim"
   );
 }

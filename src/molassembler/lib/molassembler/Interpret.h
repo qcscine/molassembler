@@ -28,7 +28,10 @@ namespace molassembler {
 
 // Forward-declarations
 class Molecule;
+class OuterGraph;
 class AngstromWrapper;
+
+namespace interpret {
 
 //! Specify the algorithm used to discretize floating-point bond orders into bond types
 enum class BondDiscretizationOption : unsigned {
@@ -38,12 +41,15 @@ enum class BondDiscretizationOption : unsigned {
   RoundToNearest
 };
 
+//! Type used to represent a map from an atom collection index to an interpreted object
+using ComponentMap = std::vector<unsigned>;
+
 //! Result type of an interpret call.
-struct InterpretResult {
+struct MoleculesResult {
   //! The list of individual molecules found in the 3D information
   std::vector<Molecule> molecules;
   //! A map from an index within the AtomCollection to its index in molecules member
-  std::vector<unsigned> componentMap;
+  ComponentMap componentMap;
 };
 
 /*! @brief The function that actually does all the work with the library-internal wrapper
@@ -64,7 +70,7 @@ struct InterpretResult {
  *
  * @returns A list of found molecules and an index mapping to each molecule
  */
-InterpretResult interpret(
+MoleculesResult molecules(
   const Utils::ElementTypeCollection& elements,
   const AngstromWrapper& angstromWrapper,
   const Utils::BondOrderCollection& bondOrders,
@@ -91,7 +97,7 @@ InterpretResult interpret(
  *
  * @returns A list of found molecules and an index mapping to each molecule
  */
-InterpretResult interpret(
+MoleculesResult molecules(
   const Utils::ElementTypeCollection& elements,
   const AngstromWrapper& angstromWrapper,
   BondDiscretizationOption discretization = BondDiscretizationOption::Binary,
@@ -121,7 +127,7 @@ InterpretResult interpret(
  * @note Assumes that the provided atom collection's positions are in
  *   Bohr units.
  */
-InterpretResult interpret(
+MoleculesResult molecules(
   const Utils::AtomCollection& atomCollection,
   const Utils::BondOrderCollection& bondOrders,
   BondDiscretizationOption discretization = BondDiscretizationOption::Binary,
@@ -151,7 +157,7 @@ InterpretResult interpret(
  * @warning UFF parameter bond order calculation is very primitive and carries
  *   a high risk of misinterpretation
  */
-InterpretResult interpret(
+MoleculesResult molecules(
   const Utils::AtomCollection& atomCollection,
   BondDiscretizationOption discretization = BondDiscretizationOption::Binary,
   const boost::optional<double>& stereopermutatorBondOrderThresholdOptional = 1.4
@@ -159,20 +165,86 @@ InterpretResult interpret(
 
 /**
  * @brief Splits an AtomCollection just like the interpret split the positions
- *   into multiple molecules
+ *   into parts
  *
- * @param interpretResult Result from interpreting the supplied atomCollection
+ * @param componentMap Component map received from an interpretation
  * @param atomCollection AtomCollection to split
  *
  * @return As many atom collections as molecules from interpretation
  */
 std::vector<Utils::AtomCollection> applyInterpretationMap(
-  const InterpretResult& interpretResult,
+  const ComponentMap& componentMap,
   const Utils::AtomCollection& atomCollection
 );
 
-} // namespace molassembler
+/**
+ * @brief Yields mapping from indices in components to original input indices
+ *
+ * @param componentMap Component mapping from an interpret call
+ *
+ * @return List of flat maps from indices within components to the original
+ *   input index
+ */
+std::vector<
+  std::vector<unsigned>
+> invertComponentMap(const ComponentMap& componentMap);
 
+//! Result type of a graph interpret call
+struct GraphsResult {
+  //! Individual graphs found
+  std::vector<OuterGraph> graphs;
+  //! Mapping from atom collection index to graph component index
+  ComponentMap componentMap;
+};
+
+/*! @brief The function that actually does all the work with the library-internal wrapper
+ *
+ * @complexity{@math{\Theta(M)} graph instantiations for each connected
+ * component found of at least linear complexity each}
+ *
+ * @param elements Element type collection
+ * @param angstromWrapper Positional information in Angstrom units
+ * @param bondOrders Bond orders
+ * @param discretization How to discretize fractional bond orders
+ *
+ * @throws invalid_argument If the number of particles in the element
+ *   collection, angstrom wrapper or bond order collection do not match.
+ *
+ * @returns A list of found graphs and an index mapping to each graph
+ */
+GraphsResult graphs(
+  const Utils::ElementTypeCollection& elements,
+  const AngstromWrapper& angstromWrapper,
+  const Utils::BondOrderCollection& bondOrders,
+  BondDiscretizationOption discretization = BondDiscretizationOption::Binary
+);
+
+/*!
+ * @brief Interpret graphs from element types, positional information and a bond order collection.
+ *
+ * Attempts to interpret (possibly multiple) graphs from element types,
+ * positional information and a bond order collection. Bond orders are
+ * discretized into bond types. Connected components within the space are
+ * identified and individually instantiated into Molecules.
+ *
+ * @param atomCollection Element types and positional information in Bohr units.
+ * @param bondOrders Fractional bond orders
+ * @param discretization Decide how bond orders are discretized into bond types
+ *
+ * @throws invalid_argument If the number of particles in the atom
+ *   collection and bond order collection do not match.
+ *
+ * @note Assumes that the provided atom collection's positions are in
+ *   Bohr units.
+ */
+GraphsResult graphs(
+  const Utils::AtomCollection& atomCollection,
+  const Utils::BondOrderCollection& bondOrders,
+  BondDiscretizationOption = BondDiscretizationOption::Binary
+);
+
+} // namespace interpret
+} // namespace molassembler
 } // namespace Scine
 
 #endif

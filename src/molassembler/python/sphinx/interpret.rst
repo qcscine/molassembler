@@ -1,12 +1,6 @@
 Interpret
 =========
 
-.. autoclass:: molassembler.BondDiscretization
+.. automodule:: molassembler.interpret
    :members:
    :undoc-members:
-
-.. autoclass:: molassembler.InterpretResult
-   :members:
-   :undoc-members:
-
-.. autofunction:: molassembler.interpret

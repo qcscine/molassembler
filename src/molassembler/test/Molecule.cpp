@@ -55,12 +55,12 @@ std::tuple<Molecule, Molecule, std::vector<AtomIndex>> readIsomorphism(const boo
   auto permutedData = IO::shuffle(readData.first, readData.second);
 
   auto interpretSingle = [](const Utils::AtomCollection& ac, const Utils::BondOrderCollection& boc) -> Molecule {
-    InterpretResult interpretation;
+    interpret::MoleculesResult interpretation;
     if(boc.empty()) {
       // Unfortunately, the file type does not include bond order information
-      interpretation = interpret(ac, BondDiscretizationOption::RoundToNearest);
+      interpretation = interpret::molecules(ac, interpret::BondDiscretizationOption::RoundToNearest);
     } else {
-      interpretation = interpret(ac, boc, BondDiscretizationOption::RoundToNearest);
+      interpretation = interpret::molecules(ac, boc, interpret::BondDiscretizationOption::RoundToNearest);
     }
 
     if(interpretation.molecules.size() > 1) {
