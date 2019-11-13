@@ -1181,10 +1181,9 @@ struct SpatialModel::ModelGraphWriter final : public MolGraphWriter {
   std::vector<std::string> atomStereopermutatorTooltips(
     const AtomStereopermutator& permutator
   ) const final {
-    std::vector<std::string> tooltips {{
-      Shapes::name(permutator.getShape()),
-      permutator.info()
-    }};
+    std::vector<std::string> tooltips;
+    tooltips.emplace_back(Shapes::name(permutator.getShape()));
+    tooltips.emplace_back(permutator.info());
 
     for(const auto& angleIterPair : spatialModel._angleBounds) {
       const auto& indexSequence = angleIterPair.first;

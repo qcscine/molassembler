@@ -112,7 +112,6 @@ BOOST_AUTO_TEST_CASE(ReproducibleEnsembles) {
       std::cout << "Could not find a match for conformer #" << i << "\n";
       writeEnsemble(a);
       writeEnsemble(b);
-      std::cout << temple::stringify(matchedBs);
       break;
     }
   }

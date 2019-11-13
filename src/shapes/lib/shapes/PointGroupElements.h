@@ -138,7 +138,7 @@ using NPGroupingsMapType = std::unordered_map<
   std::vector<ElementGrouping>,
   std::hash<unsigned>,
   std::equal_to<unsigned>,
-  Eigen::aligned_allocator<std::pair<unsigned, ElementGrouping>>
+  Eigen::aligned_allocator<std::pair<const unsigned, std::vector<ElementGrouping>>>
 >;
 
 /**
