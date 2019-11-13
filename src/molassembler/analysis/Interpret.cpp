@@ -151,8 +151,8 @@ int main(int argc, char* argv[]) {
       defaultThreshold = options_variables_map["threshold"].as<double>();
     }
 
-    auto interpretation = interpret(atomCollection, bondOrders, BondDiscretizationOption::RoundToNearest, defaultThreshold);
-    auto positions = applyInterpretationMap(interpretation, atomCollection);
+    auto interpretation = interpret::molecules(atomCollection, bondOrders, interpret::BondDiscretizationOption::RoundToNearest, defaultThreshold);
+    auto positions = interpret::applyInterpretationMap(interpretation.componentMap, atomCollection);
 
     if(interpretation.molecules.size() == 1) {
       std::ofstream graphFile("interpreted.dot");

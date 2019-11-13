@@ -171,9 +171,6 @@ public:
 
   //! Helper class to write a graphviz representation of the generated tree
   class GraphvizWriter;
-
-  //! Data class to store junction vertex and paths from the source vertices
-  struct JunctionInfo;
 //!@}
 
 private:
@@ -183,6 +180,13 @@ private:
   using TreeEdgeIndex = BGLType::edge_descriptor;
   //! Variant type of both
   using VariantType = boost::variant<TreeVertexIndex, TreeEdgeIndex>;
+
+  //! Data class to store junction vertex and paths from the source vertices
+  struct JunctionInfo {
+    TreeVertexIndex junction;
+
+    std::vector<TreeVertexIndex> firstPath, secondPath;
+  };
 
   //! A readbility-improving constexpr replacement for the root index 0 in code
   static constexpr TreeVertexIndex rootIndex = 0;

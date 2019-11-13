@@ -1349,38 +1349,48 @@ void RankingTree::_applySequenceRules(
 
           if(aDepth < bDepth) {
             relativeOrders.at(branchIndex).addLessThanRelationship(a, b);
-          } else if(bDepth < aDepth) {
+            return;
+          }
+
+          if(bDepth < aDepth) {
             relativeOrders.at(branchIndex).addLessThanRelationship(b, a);
-          } else {
-            // Try to resolve via ranking downwards from the junction
-            auto junctionInfo = _junction(
-              boost::apply_visitor(sourceNodeFetcher, a),
-              boost::apply_visitor(sourceNodeFetcher, b)
-            );
+            return;
+          }
 
-            auto aJunctionChild = junctionInfo.firstPath.back();
-            auto bJunctionChild = junctionInfo.secondPath.back();
+          TreeVertexIndex aSourceNode = boost::apply_visitor(sourceNodeFetcher, a);
+          TreeVertexIndex bSourceNode = boost::apply_visitor(sourceNodeFetcher, b);
 
-            /* Do not use _auxiliaryApplySequenceRules for root-level ranking,
-             * it should only establish differences within branches
-             */
-            if(junctionInfo.junction != rootIndex) {
-              auto relativeRank = _auxiliaryApplySequenceRules(
-                junctionInfo.junction,
-                {aJunctionChild, bJunctionChild},
-                junctionInfo.firstPath.size() - 1
-              );
+          if(aSourceNode == bSourceNode) {
+            return;
+          }
 
-              /* relativeRank can only have sizes 1 or 2, where size 1 means
-               * that no difference was found
-               */
-              if(relativeRank.size() == 2) {
-                if(relativeRank.front().front() == aJunctionChild) {
-                  relativeOrders.at(branchIndex).addLessThanRelationship(b, a);
-                } else {
-                  relativeOrders.at(branchIndex).addLessThanRelationship(a, b);
-                }
-              }
+          // Try to resolve via ranking downwards from the junction
+          auto junctionInfo = _junction(aSourceNode, bSourceNode);
+
+          auto aJunctionChild = junctionInfo.firstPath.back();
+          auto bJunctionChild = junctionInfo.secondPath.back();
+
+          /* Do not use _auxiliaryApplySequenceRules for root-level ranking,
+           * it should only establish differences within branches
+           */
+          if(junctionInfo.junction == rootIndex) {
+            return;
+          }
+
+          auto relativeRank = _auxiliaryApplySequenceRules(
+            junctionInfo.junction,
+            {aJunctionChild, bJunctionChild},
+            junctionInfo.firstPath.size() - 1
+          );
+
+          /* relativeRank can only have sizes 1 or 2, where size 1 means
+           * that no difference was found
+           */
+          if(relativeRank.size() == 2) {
+            if(relativeRank.front().front() == aJunctionChild) {
+              relativeOrders.at(branchIndex).addLessThanRelationship(b, a);
+            } else {
+              relativeOrders.at(branchIndex).addLessThanRelationship(a, b);
             }
           }
         }
@@ -2058,37 +2068,48 @@ std::vector<
 
           if(aDepth < bDepth) {
             relativeOrders.at(branchIndex).addLessThanRelationship(a, b);
-          } else if(bDepth < aDepth) {
+            return;
+          }
+
+          if(bDepth < aDepth) {
             relativeOrders.at(branchIndex).addLessThanRelationship(b, a);
-          } else {
-            auto junctionInfo = _junction(
-              boost::apply_visitor(sourceNodeFetcher, a),
-              boost::apply_visitor(sourceNodeFetcher, b)
-            );
+            return;
+          }
 
-            auto aJunctionChild = junctionInfo.firstPath.back();
-            auto bJunctionChild = junctionInfo.secondPath.back();
+          TreeVertexIndex aSourceNode = boost::apply_visitor(sourceNodeFetcher, a);
+          TreeVertexIndex bSourceNode = boost::apply_visitor(sourceNodeFetcher, b);
 
-            /* Do not use _auxiliaryApplySequenceRules for root-level ranking,
-             * it should only establish differences within branches here
-             */
-            if(junctionInfo.junction != rootIndex) {
-              auto relativeRank = _auxiliaryApplySequenceRules(
-                junctionInfo.junction,
-                {aJunctionChild, bJunctionChild},
-                junctionInfo.firstPath.size() - 1
-              );
+          if(aSourceNode == bSourceNode) {
+            return;
+          }
 
-              /* relativeRank can only have sizes 1 or 2, 1 meaning that no
-               * difference was found
-               */
-              if(relativeRank.size() == 2) {
-                if(relativeRank.front().front() == aJunctionChild) {
-                  relativeOrders.at(branchIndex).addLessThanRelationship(b, a);
-                } else {
-                  relativeOrders.at(branchIndex).addLessThanRelationship(a, b);
-                }
-              }
+          // Try to resolve via ranking downwards from the junction
+          auto junctionInfo = _junction(aSourceNode, bSourceNode);
+
+          auto aJunctionChild = junctionInfo.firstPath.back();
+          auto bJunctionChild = junctionInfo.secondPath.back();
+
+          /* Do not use _auxiliaryApplySequenceRules for root-level ranking,
+           * it should only establish differences within branches here
+           */
+          if(junctionInfo.junction == rootIndex) {
+            return;
+          }
+
+          auto relativeRank = _auxiliaryApplySequenceRules(
+            junctionInfo.junction,
+            {aJunctionChild, bJunctionChild},
+            junctionInfo.firstPath.size() - 1
+          );
+
+          /* relativeRank can only have sizes 1 or 2, 1 meaning that no
+           * difference was found
+           */
+          if(relativeRank.size() == 2) {
+            if(relativeRank.front().front() == aJunctionChild) {
+              relativeOrders.at(branchIndex).addLessThanRelationship(b, a);
+            } else {
+              relativeOrders.at(branchIndex).addLessThanRelationship(a, b);
             }
           }
         }
@@ -2790,13 +2811,6 @@ unsigned RankingTree::_mixedDepth(const TreeEdgeIndex& edgeIndex) const {
   ) + 1;
 }
 
-//! A data class, stores both the junction vertex and paths from the source vertices.
-struct RankingTree::JunctionInfo {
-  TreeVertexIndex junction;
-
-  std::vector<TreeVertexIndex> firstPath, secondPath;
-};
-
 /*!
  * Returns the deepest vertex in the tree in whose child branches both a and
  * b are located
@@ -2805,6 +2819,8 @@ typename RankingTree::JunctionInfo RankingTree::_junction(
   const TreeVertexIndex& a,
   const TreeVertexIndex& b
 ) const {
+  assert(a != b);
+
   JunctionInfo data;
 
   /* Determine the junction vertex */
@@ -2830,7 +2846,6 @@ typename RankingTree::JunctionInfo RankingTree::_junction(
   }
 
   /* Reconstruct the paths to the junction */
-
   for(
     TreeVertexIndex aCurrent = a;
     aCurrent != data.junction;
