@@ -14,7 +14,10 @@ option(MOLASSEMBLER_PARALLELIZE "Enables OpenMP parallelization" ON)
 option(MOLASSEMBLER_IPO "Try to enable interprocedural optimization" OFF)
 option(MOLASSEMBLER_NO_GNU_UNIQUE "Set --no-gnu-unique GCC flag" OFF)
 option(MOLASSEMBLER_ADDRESS_SANITIZE "Add address sanitizer" OFF)
-option(MOLASSEMBLER_BUILD_DOCUMENTATION "Builds and installs documentation" OFF)
+
+# SCINE options
+option(SCINE_BUILD_TESTS "Build test executables" ON)
+option(SCINE_BUILD_DOCS "Build the documentation" ON)
 
 # Set a default build type
 set(default_build_type "Release")

@@ -50,7 +50,7 @@ else()
   message(WARNING "Python will not be installed since the python module pip is unavailable.")
 endif()
 
-if(MOLASSEMBLER_BUILD_DOCUMENTATION)
+if(SCINE_BUILD_DOCS)
   find_python_module(sphinx)
   if(PY_SPHINX)
     file(

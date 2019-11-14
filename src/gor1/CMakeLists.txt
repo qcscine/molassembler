@@ -38,17 +38,19 @@ molassembler_install_component_headers(
 )
 
 # Tests
-add_executable(gor1Tests test.cpp)
-target_compile_options(gor1Tests PRIVATE ${MOLASSEMBLER_CXX_FLAGS})
-target_compile_definitions(gor1Tests PRIVATE BOOST_ALL_DYN_LINK)
-target_link_libraries(gor1Tests PRIVATE
-  Boost::boost
-  Boost::unit_test_framework
-)
+if(SCINE_BUILD_TESTS)
+  add_executable(gor1Tests test.cpp)
+  target_compile_options(gor1Tests PRIVATE ${MOLASSEMBLER_CXX_FLAGS})
+  target_compile_definitions(gor1Tests PRIVATE BOOST_ALL_DYN_LINK)
+  target_link_libraries(gor1Tests PRIVATE
+    Boost::boost
+    Boost::unit_test_framework
+  )
 
-add_test(NAME MASMGOR1Tests COMMAND gor1Tests)
+  add_test(NAME MASMGOR1Tests COMMAND gor1Tests)
 
-set_property(TARGET gor1Tests PROPERTY FOLDER "Tests")
+  set_property(TARGET gor1Tests PROPERTY FOLDER "Tests")
+endif()
 
 # Source groups
 source_group("Headers" FILES ${HEADERS_All})

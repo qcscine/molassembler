@@ -18,18 +18,20 @@ if(NOT TARGET Boost::unit_test_framework)
   find_package(Boost REQUIRED COMPONENTS unit_test_framework)
 endif()
 
-add_executable(cyclicPolygonTests tests.cpp)
-target_compile_definitions(cyclicPolygonTests PRIVATE BOOST_ALL_DYN_LINK)
-target_compile_options(cyclicPolygonTests PRIVATE ${MOLASSEMBLER_CXX_FLAGS})
-target_link_libraries(cyclicPolygonTests
-  PRIVATE
-    Boost::boost
-    Boost::unit_test_framework
-    temple
-)
-target_link_eigen(cyclicPolygonTests PRIVATE)
+if(SCINE_BUILD_TESTS)
+  add_executable(cyclicPolygonTests tests.cpp)
+  target_compile_definitions(cyclicPolygonTests PRIVATE BOOST_ALL_DYN_LINK)
+  target_compile_options(cyclicPolygonTests PRIVATE ${MOLASSEMBLER_CXX_FLAGS})
+  target_link_libraries(cyclicPolygonTests
+    PRIVATE
+      Boost::boost
+      Boost::unit_test_framework
+      temple
+  )
+  target_link_eigen(cyclicPolygonTests PRIVATE)
 
-add_test(NAME MASMCyclicPolygonTests COMMAND cyclicPolygonTests)
+  add_test(NAME MASMCyclicPolygonTests COMMAND cyclicPolygonTests)
+endif()
 
 install(
   TARGETS cyclic_polygons
