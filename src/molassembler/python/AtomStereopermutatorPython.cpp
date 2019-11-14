@@ -32,6 +32,19 @@ void init_atom_stereopermutator(pybind11::module& m) {
       every conformer will choose an assignment from the pool of feasible
       assignments randomly, but consistent with relative statistical occurrence
       weights.
+
+      Stereopermutator instances themselves are nonmodifiable. To change
+      them, you have to make changes at the molecule level.
+
+      >>> import molassembler as masm
+      >>> methane = masm.patterns.alkane(1)
+      >>> methane_central_stereopermutator = methane.stereopermutators.option(0)
+      >>> methane_central_stereopermutator is not None
+      True
+      >>> methane_central_stereopermutator.shape == masm.shapes.Shape.Tetrahedron
+      True
+      >>> methane_central_stereopermutator
+      A on 0 (tetrahedron, AAAA): 0/1
     )delim"
   );
 
@@ -40,26 +53,36 @@ void init_atom_stereopermutator(pybind11::module& m) {
     &AtomStereopermutator::angle,
     pybind11::arg("site_index_i"),
     pybind11::arg("site_index_j"),
-    "Fetches the angle between substituent site indices in radians"
+    R"delim(
+      Fetches the angle between substituent site indices in radians
+
+      >>> import math
+      >>> tetrahedron_angle = 2 * math.atan(math.sqrt(2))
+      >>> import molassembler as masm
+      >>> methane = masm.patterns.alkane(1)
+      >>> a = methane.stereopermutators.option(0)
+      >>> math.isclose(a.angle(0, 1), tetrahedron_angle)
+      True
+    )delim"
   );
 
-  atomStereopermutator.def(
+  atomStereopermutator.def_property_readonly(
     "assigned",
     &AtomStereopermutator::assigned,
-    "Returns the assignment integer if assigned, ``None`` otherwise."
+    "The assignment integer if assigned, ``None`` otherwise."
   );
 
-  atomStereopermutator.def(
+  atomStereopermutator.def_property_readonly(
     "central_index",
     &AtomStereopermutator::centralIndex,
-    "Returns the central atom this permutator is placed on"
+    "The central atom this permutator is placed on"
   );
 
-  atomStereopermutator.def(
+  atomStereopermutator.def_property_readonly(
     "index_of_permutation",
     &AtomStereopermutator::indexOfPermutation,
     R"delim(
-      Returns the index of permutation if assigned, otherwise returns ``None``.
+      The index of permutation if assigned, otherwise ``None``.
     )delim"
   );
 
@@ -83,16 +106,16 @@ void init_atom_stereopermutator(pybind11::module& m) {
     )delim"
   );
 
-  atomStereopermutator.def(
+  atomStereopermutator.def_property_readonly(
     "num_assignments",
     &AtomStereopermutator::numAssignments,
-    "Returns the number of possible assignments"
+    "The number of feasible assignments"
   );
 
-  atomStereopermutator.def(
+  atomStereopermutator.def_property_readonly(
     "num_stereopermutations",
     &AtomStereopermutator::numStereopermutations,
-    "Returns the number of stereopermutations"
+    "The number of stereopermutations"
   );
 
   atomStereopermutator.def(pybind11::self == pybind11::self);
