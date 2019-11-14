@@ -42,7 +42,7 @@ if(PY_PIP)
 
   file(
     WRITE ${CMAKE_CURRENT_BINARY_DIR}/molassembler/__init__.py
-    "from .molassembler import *\ndel molassembler\n"
+    "from .molassembler import *\n"
   )
 
   install(CODE "execute_process(WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR} COMMAND ${PYTHON_EXECUTABLE} -m pip install --prefix=${CMAKE_INSTALL_PREFIX} --upgrade .)")
@@ -80,5 +80,14 @@ if(SCINE_BUILD_DOCS)
       MESSAGE_NEVER
       OPTIONAL
     )
+
+    find_python_module(doctest)
+    if(PY_DOCTEST)
+      add_test(
+        NAME PythonBindingsDoctest
+        COMMAND ${PYTHON_EXECUTABLE} -c "import doctest; import molassembler; doctest.testmod(molassembler.molassembler, verbose=True)"
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+      )
+    endif()
   endif()
 endif()

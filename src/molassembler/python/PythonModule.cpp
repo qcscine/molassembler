@@ -15,6 +15,7 @@ void init_io(pybind11::module& m);
 void init_molecule(pybind11::module& m);
 void init_options(pybind11::module& m);
 void init_outer_graph(pybind11::module& m);
+void init_patterns_submodule(pybind11::module& m);
 void init_random_engine(pybind11::module& m);
 void init_ranking_information(pybind11::module& m);
 void init_serialization(pybind11::module& m);
@@ -54,5 +55,6 @@ PYBIND11_MODULE(molassembler, m) {
   init_io(m);
   init_serialization(m);
   init_conformers(m);
+  init_patterns_submodule(m);
   init_directed_conformer_generator(m);
 }

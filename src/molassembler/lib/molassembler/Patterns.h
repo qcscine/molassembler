@@ -22,6 +22,8 @@ using PlugType = std::pair<Molecule, std::vector<AtomIndex>>;
 
 PlugType methyl();
 
+Molecule alkane(const unsigned N);
+
 } // namespace patterns
 } // namespace molassembler
 } // namespace Scine

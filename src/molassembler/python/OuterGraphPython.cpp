@@ -76,8 +76,8 @@ void init_outer_graph(pybind11::module& m) {
     "Fetch the element type of an atom"
   );
 
-  outerGraph.def("N", &OuterGraph::N, "The number of atoms in the graph");
-  outerGraph.def("B", &OuterGraph::B, "The number of bonds in the graph");
+  outerGraph.def_property_readonly("N", &OuterGraph::N, "The number of atoms in the graph");
+  outerGraph.def_property_readonly("B", &OuterGraph::B, "The number of bonds in the graph");
 
   outerGraph.def(
     "split_along_bridge",

@@ -12,10 +12,10 @@ def test_LineNotation():
     inchi = "InChI=1S/C8H10N4O2/c1-10-4-9-6-5(10)7(13)12(3)8(14)11(6)2/h4H,1-3H3"
     caffeine_from_smiles = molassembler.io.LineNotation.from_isomeric_smiles(
         smiles)
-    assert caffeine_from_smiles.graph.N() == 24
+    assert caffeine_from_smiles.graph.N == 24
 
     caffeine_from_inchi = molassembler.io.LineNotation.from_inchi(inchi)
-    assert caffeine_from_inchi.graph.N() == 24
+    assert caffeine_from_inchi.graph.N == 24
 
 
 def test_FileIO():
@@ -138,7 +138,7 @@ M  END"""
     splat = molassembler.io.split("sample.mol")
     assert len(splat) == 1
 
-    assert mol.graph.N() == 50
+    assert mol.graph.N == 50
 
     # Clean up
     os.remove("sample.mol")

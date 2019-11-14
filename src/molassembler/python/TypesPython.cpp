@@ -44,7 +44,7 @@ void init_types(pybind11::module& m) {
 
       :example:
 
-      >>> b = molassembler.BondIndex(10, 4)
+      >>> b = BondIndex(10, 4)
       >>> b
       (4, 10)
       >>> b.first
@@ -58,10 +58,10 @@ void init_types(pybind11::module& m) {
       True
       >>> 10 in b
       False
-      >>> c = molassembler.BondIndex(4, 3)
+      >>> c = BondIndex(4, 3)
       >>> b == c
       True
-      >>> d = molassembler(2, 4)
+      >>> d = BondIndex(2, 4)
       >>> d < c
       True
     )delim"

@@ -17,6 +17,7 @@ molassembler
    interpret
    io
    options
+   patterns
    ranking_information
    serialization
    shapes
