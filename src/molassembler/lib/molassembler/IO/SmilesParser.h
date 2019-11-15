@@ -2,6 +2,7 @@
 #define INCLUDE_MOLASSEMBLER_IO_SMILES_PARSER_H
 
 #include <string>
+#include <vector>
 
 namespace Scine {
 namespace molassembler {
@@ -10,7 +11,7 @@ class Molecule;
 
 namespace IO {
 
-Molecule parseSMILES(const std::string& smiles);
+std::vector<Molecule> parseSmiles(const std::string& smiles);
 
 } // namespace IO
 

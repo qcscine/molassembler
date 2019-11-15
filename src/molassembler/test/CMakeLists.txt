@@ -20,6 +20,7 @@ set(MainTestFiles
   ${CMAKE_CURRENT_SOURCE_DIR}/RankingInformation.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/RankingSpotCheck.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/Serialization.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/Smiles.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/Subgraphs.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/VSEPR.cpp
 )
