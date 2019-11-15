@@ -12,6 +12,7 @@
 #include "temple/Functional.h"
 
 /* TODO missing
+ * - Add more examples for ring closure edge counting
  * - allene "NC(Br)=[C@]=C(O)C"
  * - square planar centers
  * - trigonal bipyramidal centers
@@ -20,6 +21,27 @@
 
 using namespace Scine;
 using namespace molassembler;
+
+Molecule expectSingle(std::vector<Molecule>&& a) {
+  if(a.size() == 1) {
+    return a.front();
+  }
+
+  throw std::runtime_error("Expected single molecule result");
+}
+
+BOOST_AUTO_TEST_CASE(SmilesClosesRingCycles) {
+  // Pairs of Smiles strings and expected numbers of edges
+  std::vector<std::pair<std::string, unsigned>> pairs {
+    {"C1=CC=CC=C1", 6}
+  };
+
+  for(const auto& pair : pairs) {
+    Molecule result;
+    BOOST_REQUIRE_NO_THROW(result = expectSingle(IO::parseSmiles(pair.first)));
+    BOOST_CHECK_EQUAL(result.graph().B(), pair.second);
+  }
+}
 
 BOOST_AUTO_TEST_CASE(AcceptValidSmiles) {
   const std::vector<std::string> validSmiles {
@@ -102,14 +124,6 @@ BOOST_AUTO_TEST_CASE(IdenticalSmiles) {
     {"F/C=C/F", R"y(F\C=C\F)y"},
     {"F/C=C/F", R"y(C(\F)=C/F)y"},
     {R"y(F\C=C/F)y", R"y(C(/F)=C/F)y"},
-  };
-
-  auto expectSingle = [](std::vector<Molecule>&& a) -> Molecule {
-    if(a.size() == 1) {
-      return a.front();
-    }
-
-    throw std::runtime_error("Expected single molecule result");
   };
 
   for(const auto& pair : pairs) {

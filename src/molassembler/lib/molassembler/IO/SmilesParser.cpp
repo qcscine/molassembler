@@ -17,7 +17,6 @@
 #include <iostream>
 
 /* TODO
- * - Piece together the molecules by adding the cycle closing bonds when paired
  * - Collect the passed atom data and use to apply valence rules to fill up
  *   with hydrogen atoms
  * - Collect the passed bond data and use it to figure out some Kekule
@@ -26,6 +25,9 @@
  * - Stereostuff
  *   - Double bond stereo
  *   - @/@@
+ *   - Square planar centers
+ *   - Trigonal biypramidal centers
+ *   - Octahedral centers
  */
 
 namespace Scine {
@@ -264,8 +266,60 @@ struct MoleculeBuilder {
     lastBondData = bond;
   }
 
+  void addRingClosureBonds() {
+    if(ringClosures.size() % 2 != 0) {
+      throw std::runtime_error("Odd number of ring-closure bonds");
+    }
+
+    std::sort(
+      std::begin(ringClosures),
+      std::end(ringClosures),
+      [](const auto& a, const auto& b) {
+        assert(a.second.ringNumber);
+        assert(b.second.ringNumber);
+
+        return a.second.ringNumber.value() < b.second.ringNumber.value();
+      }
+    );
+
+    // Go through the sorted ring closures pairwise
+    const auto end = std::end(ringClosures);
+    for(auto it = std::begin(ringClosures); it != end; it += 2) {
+      auto matchingIt = it + 1;
+      assert(matchingIt != end);
+      // Ensure that the purported match has the same ring number
+      if(it->second.ringNumber != matchingIt->second.ringNumber) {
+        throw std::runtime_error("Missing matching ring number");
+      }
+
+      // Ensure that the specified bond order matches
+      if(it->second.type != matchingIt->second.type) {
+        throw std::runtime_error("Mismatched ring closing bond order");
+      }
+
+      // Ensure the edge isn't self-referential
+      if(it->first == matchingIt->first) {
+        throw std::runtime_error("Loop ring-closing bond");
+      }
+
+      // Ensure the edge doesn't already exist
+      if(graph.edgeOption(it->first, matchingIt->first) != boost::none) {
+        throw std::runtime_error("Ring closing bond already exists");
+      }
+
+      // Add the ring-closing edge to the graph
+      graph.addEdge(
+        it->first,
+        matchingIt->first,
+        it->second.type
+      );
+    }
+  }
+
   // Interpret the graph as possibly distinct molecules
   std::vector<Molecule> interpret() {
+    addRingClosureBonds();
+
     std::vector<unsigned> componentMap;
     const unsigned M = graph.connectedComponents(componentMap);
 
