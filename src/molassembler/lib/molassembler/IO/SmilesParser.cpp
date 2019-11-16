@@ -7,8 +7,9 @@
 #include <boost/fusion/adapted/struct/adapt_struct.hpp>
 #include <boost/fusion/include/adapt_struct.hpp>
 
-#include "molassembler/Molecule.h"
 #include "molassembler/Graph/InnerGraph.h"
+#include "molassembler/Modeling/BondDistance.h"
+#include "molassembler/Molecule.h"
 #include "shapes/Shapes.h"
 #include "Utils/Geometry/ElementTypes.h"
 #include "Utils/Geometry/ElementInfo.h"
@@ -17,8 +18,6 @@
 #include <iostream>
 
 /* TODO
- * - Collect the passed atom data and use to apply valence rules to fill up
- *   with hydrogen atoms
  * - Collect the passed bond data and use it to figure out some Kekule
  *   variation of double bonds in aromatic cycles or at least to set triangle
  *   shapes
@@ -206,9 +205,73 @@ struct bond_ : qi::symbols<char, BondData> {
 } // namespace symbols
 
 struct MoleculeBuilder {
+  static bool isValenceFillElement(Utils::ElementType e) {
+    const unsigned Z = Utils::ElementInfo::Z(e);
+    if(5 <= Z && Z <= 9) {
+      // B, C, N, O, F
+      return true;
+    }
+
+    if(15 <= Z && Z <= 17) {
+      // P, S, Cl
+      return true;
+    }
+
+    if(Z == 35 || Z == 53) {
+      // Br, I
+      return true;
+    }
+
+    return false;
+  }
+
+  static unsigned valenceFillElementImplicitHydrogenCount(
+    const int valence,
+    Utils::ElementType e
+  ) {
+    assert(valence >= 0);
+    assert(isValenceFillElement(e));
+
+    /* Quoting from the spec:
+     *
+     * The implicit hydrogen count is determined by summing the bond orders of
+     * the bonds connected to the atom. If that sum is equal to a known valence
+     * for the element or is greater than any known valence then the implicit
+     * hydrogen count is 0. Otherwise the implicit hydrogen count is the
+     * difference between that sum and the next highest known valence.
+     */
+
+    switch(Utils::ElementInfo::Z(e)) {
+      case 5: return std::max(0, 3 - valence); // B
+      case 6: return std::max(0, 4 - valence); // C
+      case 7: { // N
+        return std::min(
+          std::max(0, 3 - valence),
+          std::max(0, 5 - valence)
+        );
+      }
+      case 8: return std::max(0, 2 - valence); // O
+      case 15: { // P
+        return std::min(
+          std::max(0, 3 - valence),
+          std::max(0, 5 - valence)
+        );
+      }
+      case 16: { // S
+        return std::min({
+          std::max(0, 2 - valence),
+          std::max(0, 4 - valence),
+          std::max(0, 6 - valence)
+        });
+      }
+      default: return std::max(0, 1 - valence); // F, Cl, Br, I are the remaining cases
+    }
+  }
+
   // On atom addition
   void addAtom(const AtomData& atom) {
     InnerGraph::Vertex newVertex = graph.addVertex(atom.getElement());
+    vertexData.push_back(atom);
 
     if(lastBondData.which() == 0) {
       auto data = boost::get<SimpleLastBondData>(lastBondData);
@@ -336,7 +399,7 @@ struct MoleculeBuilder {
       indexInComponentMap.at(i) = newIndex;
     }
 
-    // Copy edges
+    /* Copy edges into the separate components */
     for(const InnerGraph::Edge& edge : boost::make_iterator_range(graph.edges())) {
       const InnerGraph::Vertex source = graph.source(edge);
       const InnerGraph::Vertex target = graph.target(edge);
@@ -351,12 +414,54 @@ struct MoleculeBuilder {
       );
     }
 
+    /* Valence fill organic subset in each precursor */
+    assert(vertexData.size() == N);
+    for(unsigned i = 0; i < N; ++i) {
+      const AtomData& data = vertexData.at(i);
+      auto& precursor = precursors.at(componentMap.at(i));
+      InnerGraph::Vertex vertexInPrecursor = indexInComponentMap.at(i);
+
+      if(data.hCount) {
+        // Fill with specified number of hydrogen atoms
+        for(unsigned j = 0; j < data.hCount.value(); ++j) {
+          InnerGraph::Vertex newHydrogenVertex = precursor.addVertex(Utils::ElementType::H);
+          precursor.addEdge(vertexInPrecursor, newHydrogenVertex, BondType::Single);
+        }
+      } else if(isValenceFillElement(precursor.elementType(vertexInPrecursor))) {
+        // Figure out current valence.
+        int currentValence = 0;
+        for(
+          const InnerGraph::Edge edge :
+          boost::make_iterator_range(precursor.edges(vertexInPrecursor))
+        ) {
+          currentValence += Bond::bondOrderMap.at(
+            static_cast<unsigned>(
+              precursor.bondType(edge)
+            )
+          );
+        }
+
+        const unsigned fillCount = valenceFillElementImplicitHydrogenCount(
+          currentValence,
+          precursor.elementType(vertexInPrecursor)
+        );
+
+        for(unsigned j = 0; j < fillCount; ++j) {
+          InnerGraph::Vertex newHydrogenVertex = precursor.addVertex(Utils::ElementType::H);
+          precursor.addEdge(vertexInPrecursor, newHydrogenVertex, BondType::Single);
+        }
+      }
+    }
+
+    /* Convert the graphs to molecules */
     std::vector<Molecule> molecules;
     molecules.reserve(M);
     for(auto&& precursor : precursors) {
       molecules.emplace_back(
         OuterGraph(std::move(precursor))
       );
+
+      /* TODO set shapes here */
     }
     return molecules;
   }
@@ -366,12 +471,22 @@ struct MoleculeBuilder {
     Single
   };
 
+  //! State for last stored bond data
   boost::variant<SimpleLastBondData, BondData> lastBondData = SimpleLastBondData::Unbonded;
+
+  //! Possibly disconnected tracking graph
   InnerGraph graph;
+
+  //! State to track the vertex a new vertex is bound to
   std::stack<InnerGraph::Vertex> vertexStack;
+
+  //! Storage for ring closure bond indicators
   std::vector<
     std::pair<AtomIndex, BondData>
   > ringClosures;
+
+  //! AtomData for each created vertex
+  std::vector<AtomData> vertexData;
 };
 
 template<typename Iterator>

@@ -11,8 +11,7 @@
 
 #include "temple/Functional.h"
 
-/* TODO missing
- * - Add more examples for ring closure edge counting
+/* TODO
  * - allene "NC(Br)=[C@]=C(O)C"
  * - square planar centers
  * - trigonal bipyramidal centers
@@ -30,11 +29,49 @@ Molecule expectSingle(std::vector<Molecule>&& a) {
   throw std::runtime_error("Expected single molecule result");
 }
 
+BOOST_AUTO_TEST_CASE(SmilesHydrogenFilling) {
+  // Pairs of smiles strings and atom counts
+  std::vector<std::pair<std::string, unsigned>> pairs {
+    {"C", 5},
+    {"[CH4]", 5},
+    {"N", 4},
+    {"[NH3]", 4},
+    {"Cl", 2},
+    {"[ClH]", 2},
+    {"[H]Cl", 2},
+    {"[H][Cl]", 2},
+    {"BrBr", 2},
+    {"FCl", 2},
+    {"Br", 2},
+    {"I", 2},
+    {"F", 2},
+    {"CC", 8}, // C2H6
+    {"C=C", 6}, // C2H4
+    {"C#C", 4}, // C2H2
+    {"C=O", 4}, // H2CO
+    {"C#N", 3} // HCN
+  };
+
+  // TODO add more tests for P, S, N (these are the odd ones out): e.g. what is the right smiles for H2SO4?
+
+  for(const auto& pair : pairs) {
+    Molecule result;
+    BOOST_REQUIRE_NO_THROW(result = expectSingle(IO::parseSmiles(pair.first)));
+    BOOST_CHECK_MESSAGE(
+      result.graph().N() ==  pair.second,
+      "Expected " << pair.second << " atoms for '" << pair.first << "', got "
+      << result.graph().N() << " instead."
+    );
+  }
+}
+
 BOOST_AUTO_TEST_CASE(SmilesClosesRingCycles) {
   // Pairs of Smiles strings and expected numbers of edges
   std::vector<std::pair<std::string, unsigned>> pairs {
-    {"C1=CC=CC=C1", 6}
+    {"C1=CC=CC=C1", 12}
   };
+
+  // TODO more ring-closing tests
 
   for(const auto& pair : pairs) {
     Molecule result;
