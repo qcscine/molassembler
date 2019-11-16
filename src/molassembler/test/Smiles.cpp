@@ -180,10 +180,11 @@ BOOST_AUTO_TEST_CASE(IdenticalSmiles) {
 BOOST_AUTO_TEST_CASE(SmilesWithMultipleMolecules) {
   const std::vector<std::pair<std::string, std::vector<unsigned>>> pairs {
     {"[Na+].[Cl-]", {{1, 1}}},
-    {"Oc1ccccc1.NCCO", {{13, 11}}},
-    {"c1cc(O.NCCO)ccc1", {{13, 11}}},
-    {"Oc1cc(.NCCO)ccc1", {{13, 11}}},
-    {"[NH4+].[NH4+].[O-]S(=O)(=O)[S-]", {{5, 5, 5}}}
+    {"Oc1ccccc1.NCCO", {{13, 11}}}, // Regular spec of multiple molecules
+    {"c1cc(O.NCCO)ccc1", {{13, 11}}}, // Irregular, but valid
+    {"Oc1cc(.NCCO)ccc1", {{13, 11}}}, // even more irregular, but valid
+    {"[NH4+].[NH4+].[O-]S(=O)(=O)[S-]", {{5, 5, 5}}},
+    {"C=1CCCCC1.C=1CCCCC1", {{12, 12}}} // Reuse of ring closure numbers
   };
 
   // parse, count sizes, order and lex. compare

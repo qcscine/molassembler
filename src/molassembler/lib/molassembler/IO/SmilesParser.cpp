@@ -336,10 +336,41 @@ struct MoleculeBuilder {
   }
 
   void addRingClosure(const BondData& bond) {
-    ringClosures.emplace_back(
-      vertexStack.top(),
-      bond
-    );
+    assert(bond.ringNumber);
+    const unsigned key = bond.ringNumber.value();
+    auto findIter = ringClosures.find(key);
+    if(findIter == std::end(ringClosures)) {
+      // Add the entry to the map for later
+      ringClosures.emplace_hint(
+        findIter,
+        std::piecewise_construct,
+        std::make_tuple(key),
+        std::make_tuple(vertexStack.top(), bond.type)
+      );
+    } else {
+      // Add the edge to the graph now and remove the map entry
+      InnerGraph::Vertex a = findIter->second.first;
+      InnerGraph::Vertex b = vertexStack.top();
+
+      if(a == b) {
+        throw std::runtime_error("Same-atom ring-closing bond!");
+      }
+
+      if(graph.edgeOption(a, b) != boost::none) {
+        throw std::runtime_error("Ring closing bond already exists!");
+      }
+
+      // Ensure the specified bond types match (this fn can throw)
+      const BondType type = mutualBondType(
+        findIter->second.second,
+        bond.type
+      );
+
+      graph.addEdge(a, b, type);
+
+      // Remove the entry from the map
+      ringClosures.erase(findIter);
+    }
   }
 
   // Trigger on branch open
@@ -362,60 +393,11 @@ struct MoleculeBuilder {
     lastBondData = bond;
   }
 
-  void addRingClosureBonds() {
-    if(ringClosures.size() % 2 != 0) {
-      throw std::runtime_error("Odd number of ring-closure bonds");
-    }
-
-    std::sort(
-      std::begin(ringClosures),
-      std::end(ringClosures),
-      [](const auto& a, const auto& b) {
-        assert(a.second.ringNumber);
-        assert(b.second.ringNumber);
-
-        return a.second.ringNumber.value() < b.second.ringNumber.value();
-      }
-    );
-
-    // Go through the sorted ring closures pairwise
-    const auto end = std::end(ringClosures);
-    for(auto it = std::begin(ringClosures); it != end; it += 2) {
-      auto matchingIt = it + 1;
-      assert(matchingIt != end);
-      // Ensure that the purported match has the same ring number
-      if(it->second.ringNumber != matchingIt->second.ringNumber) {
-        throw std::runtime_error("Missing matching ring number");
-      }
-
-      // Ensure the edge isn't self-referential
-      if(it->first == matchingIt->first) {
-        throw std::runtime_error("Loop ring-closing bond");
-      }
-
-      // Ensure the edge doesn't already exist
-      if(graph.edgeOption(it->first, matchingIt->first) != boost::none) {
-        throw std::runtime_error("Ring closing bond already exists");
-      }
-
-      // Ensure the specified bond types match (this fn throws)
-      const BondType type = mutualBondType(
-        it->second.type,
-        matchingIt->second.type
-      );
-
-      // Add the ring-closing edge to the graph
-      graph.addEdge(
-        it->first,
-        matchingIt->first,
-        type
-      );
-    }
-  }
-
   // Interpret the graph as possibly distinct molecules
   std::vector<Molecule> interpret() {
-    addRingClosureBonds();
+    if(!ringClosures.empty()) {
+      throw std::runtime_error("Unmatched ring closure markers remain!");
+    }
 
     std::vector<unsigned> componentMap;
     const unsigned M = graph.connectedComponents(componentMap);
@@ -515,8 +497,9 @@ struct MoleculeBuilder {
   std::stack<InnerGraph::Vertex> vertexStack;
 
   //! Storage for ring closure bond indicators
-  std::vector<
-    std::pair<AtomIndex, BondData>
+  std::unordered_map<
+    unsigned,
+    std::pair<InnerGraph::Vertex, boost::optional<BondType>>
   > ringClosures;
 
   //! AtomData for each created vertex
