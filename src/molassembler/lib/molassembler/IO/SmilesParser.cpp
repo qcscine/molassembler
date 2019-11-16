@@ -271,6 +271,11 @@ struct MoleculeBuilder {
   // On atom addition
   void addAtom(const AtomData& atom) {
     InnerGraph::Vertex newVertex = graph.addVertex(atom.getElement());
+
+    if(atom.partialElement.Z == 1 && atom.hCount) {
+      throw std::runtime_error("Hydrogen atoms cannot have hydrogen counts!");
+    }
+
     vertexData.push_back(atom);
 
     if(lastBondData.which() == 0) {
