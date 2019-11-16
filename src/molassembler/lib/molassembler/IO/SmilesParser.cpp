@@ -76,7 +76,7 @@ struct AtomData {
 };
 
 struct BondData {
-  BondType type = BondType::Single;
+  boost::optional<BondType> type;
   boost::optional<unsigned> ezStereo;
   boost::optional<unsigned> ringNumber;
 };
@@ -109,7 +109,7 @@ BOOST_FUSION_ADAPT_STRUCT(
 
 BOOST_FUSION_ADAPT_STRUCT(
   Scine::molassembler::IO::BondData,
-  (Scine::molassembler::BondType, type),
+  (boost::optional<Scine::molassembler::BondType>, type),
   (boost::optional<unsigned>, ezStereo)
   (boost::optional<unsigned>, ringNumber)
 )
@@ -268,6 +268,34 @@ struct MoleculeBuilder {
     }
   }
 
+  static BondType mutualBondType(
+    const boost::optional<BondType>& a,
+    const boost::optional<BondType>& b
+  ) {
+    /* Ensure that the specified bond order matches. Both bond orders
+     * are optionals. If one of both is specified, that one's type is used.
+     * If neither is specified, use a single bond. If both are specified,
+     * their type is used if it matches, otherwise throw.
+     */
+    if(!a && !b) {
+      return BondType::Single;
+    }
+
+    if(a && !b) {
+      return a.value();
+    }
+
+    if(!a && b) {
+      return b.value();
+    }
+
+    if(a.value() != b.value()) {
+      throw std::runtime_error("Mismatched ring closing bond order");
+    }
+
+    return a.value();
+  }
+
   // On atom addition
   void addAtom(const AtomData& atom) {
     InnerGraph::Vertex newVertex = graph.addVertex(atom.getElement());
@@ -280,7 +308,7 @@ struct MoleculeBuilder {
 
     if(lastBondData.which() == 0) {
       auto data = boost::get<SimpleLastBondData>(lastBondData);
-      if(data == SimpleLastBondData::Single) {
+      if(data == SimpleLastBondData::Unspecified) {
         assert(!vertexStack.empty());
         graph.addEdge(
           newVertex,
@@ -294,7 +322,7 @@ struct MoleculeBuilder {
       graph.addEdge(
         newVertex,
         vertexStack.top(),
-        data.type
+        data.type.value_or(BondType::Single)
       );
     }
 
@@ -304,7 +332,7 @@ struct MoleculeBuilder {
       vertexStack.top() = newVertex;
     }
 
-    lastBondData = SimpleLastBondData::Single;
+    lastBondData = SimpleLastBondData::Unspecified;
   }
 
   void addRingClosure(const BondData& bond) {
@@ -360,11 +388,6 @@ struct MoleculeBuilder {
         throw std::runtime_error("Missing matching ring number");
       }
 
-      // Ensure that the specified bond order matches
-      if(it->second.type != matchingIt->second.type) {
-        throw std::runtime_error("Mismatched ring closing bond order");
-      }
-
       // Ensure the edge isn't self-referential
       if(it->first == matchingIt->first) {
         throw std::runtime_error("Loop ring-closing bond");
@@ -375,11 +398,17 @@ struct MoleculeBuilder {
         throw std::runtime_error("Ring closing bond already exists");
       }
 
+      // Ensure the specified bond types match (this fn throws)
+      const BondType type = mutualBondType(
+        it->second.type,
+        matchingIt->second.type
+      );
+
       // Add the ring-closing edge to the graph
       graph.addEdge(
         it->first,
         matchingIt->first,
-        it->second.type
+        type
       );
     }
   }
@@ -473,7 +502,7 @@ struct MoleculeBuilder {
 
   enum class SimpleLastBondData {
     Unbonded,
-    Single
+    Unspecified
   };
 
   //! State for last stored bond data

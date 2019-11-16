@@ -68,7 +68,10 @@ BOOST_AUTO_TEST_CASE(SmilesHydrogenFilling) {
 BOOST_AUTO_TEST_CASE(SmilesClosesRingCycles) {
   // Pairs of Smiles strings and expected numbers of edges
   std::vector<std::pair<std::string, unsigned>> pairs {
-    {"C1=CC=CC=C1", 12}
+    {"C1=CC=CC=C1", 12}, // benzene
+    {"C1CCCCC=1", 16}, // three variations on cyclohexene, all valid
+    {"C=1CCCCC1", 16},
+    {"C=1CCCCC=1", 16}
   };
 
   // TODO more ring-closing tests
