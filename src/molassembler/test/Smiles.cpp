@@ -10,6 +10,7 @@
 #include "molassembler/IO/SmilesParser.h"
 
 #include "temple/Functional.h"
+#include "temple/Stringify.h"
 
 /* TODO
  * - allene "NC(Br)=[C@]=C(O)C"
@@ -45,6 +46,7 @@ BOOST_AUTO_TEST_CASE(SmilesHydrogenFilling) {
     {"Br", 2},
     {"I", 2},
     {"F", 2},
+    {"[F]", 1}, // Atom brackets aren't valence filled
     {"CC", 8}, // C2H6
     {"C=C", 6}, // C2H4
     {"C#C", 4}, // C2H2
@@ -180,11 +182,11 @@ BOOST_AUTO_TEST_CASE(IdenticalSmiles) {
 BOOST_AUTO_TEST_CASE(SmilesWithMultipleMolecules) {
   const std::vector<std::pair<std::string, std::vector<unsigned>>> pairs {
     {"[Na+].[Cl-]", {{1, 1}}},
-    {"Oc1ccccc1.NCCO", {{13, 11}}}, // Regular spec of multiple molecules
-    {"c1cc(O.NCCO)ccc1", {{13, 11}}}, // Irregular, but valid
-    {"Oc1cc(.NCCO)ccc1", {{13, 11}}}, // even more irregular, but valid
+    {"Oc1ccccc1.NCCO", {{11, 13}}}, // Regular spec of multiple molecules
+    {"c1cc(O.NCCO)ccc1", {{11, 13}}}, // Irregular, but valid
+    {"Oc1cc(.NCCO)ccc1", {{11, 13}}}, // even more irregular, but valid
     {"[NH4+].[NH4+].[O-]S(=O)(=O)[S-]", {{5, 5, 5}}},
-    {"C=1CCCCC1.C=1CCCCC1", {{12, 12}}} // Reuse of ring closure numbers
+    {"C=1CCCCC1.C=1CCCCC1", {{16, 16}}} // Reuse of ring closure numbers
   };
 
   // parse, count sizes, order and lex. compare
@@ -192,13 +194,19 @@ BOOST_AUTO_TEST_CASE(SmilesWithMultipleMolecules) {
     std::vector<Molecule> results;
     BOOST_REQUIRE_NO_THROW(results = IO::parseSmiles(pair.first));
     BOOST_REQUIRE(results.size() > 1);
-    auto sizes = temple::map(
-      results,
-      [](const Molecule& m) -> unsigned {
-        return m.graph().N();
-      }
+
+    BOOST_CHECK_EQUAL(results.size(), pair.second.size());
+
+    auto sizes = temple::sort(
+      temple::map(
+        results,
+        [](const Molecule& m) -> unsigned { return m.graph().N(); }
+      )
     );
 
-    BOOST_CHECK(temple::sort(sizes) == temple::sort(pair.second));
+    BOOST_CHECK_MESSAGE(
+      sizes == pair.second,
+      "Expected sizes: " << temple::stringify(pair.second) << ", got " << temple::stringify(sizes) << " instead for smiles '" << pair.first << "'"
+    );
   }
 }

@@ -20,7 +20,7 @@
 /* TODO
  * - Collect the passed bond data and use it to figure out some Kekule
  *   variation of double bonds in aromatic cycles or at least to set triangle
- *   shapes
+ *   shapes when elements are aromatic
  * - Stereostuff
  *   - Double bond stereo
  *   - @/@@
@@ -61,6 +61,7 @@ struct AtomData {
   boost::optional<ChiralData> chiralOptional;
   boost::optional<unsigned> hCount;
   boost::optional<int> chargeOptional;
+  bool atomBracket = false;
 
   Utils::ElementType getElement() const {
     if(partialElement.Z == 0) {
@@ -104,7 +105,8 @@ BOOST_FUSION_ADAPT_STRUCT(
   (Scine::molassembler::IO::ElementData, partialElement),
   (boost::optional<Scine::molassembler::IO::ChiralData>, chiralOptional),
   (boost::optional<unsigned>, hCount),
-  (boost::optional<int>, chargeOptional)
+  (boost::optional<int>, chargeOptional),
+  (bool, atomBracket)
 )
 
 BOOST_FUSION_ADAPT_STRUCT(
@@ -300,7 +302,7 @@ struct MoleculeBuilder {
   void addAtom(const AtomData& atom) {
     InnerGraph::Vertex newVertex = graph.addVertex(atom.getElement());
 
-    if(atom.partialElement.Z == 1 && atom.hCount) {
+    if(atom.partialElement.Z == 1 && atom.hCount && atom.hCount.value() != 0) {
       throw std::runtime_error("Hydrogen atoms cannot have hydrogen counts!");
     }
 
@@ -443,7 +445,7 @@ struct MoleculeBuilder {
           InnerGraph::Vertex newHydrogenVertex = precursor.addVertex(Utils::ElementType::H);
           precursor.addEdge(vertexInPrecursor, newHydrogenVertex, BondType::Single);
         }
-      } else if(isValenceFillElement(precursor.elementType(vertexInPrecursor))) {
+      } else if(!data.atomBracket && isValenceFillElement(precursor.elementType(vertexInPrecursor))) {
         // Figure out current valence.
         int currentValence = 0;
         for(
@@ -576,7 +578,7 @@ struct openSMILES : qi::grammar<Iterator> {
 
     // bracket_atom ::= `[` isotope? symbol chiral? hcount? charge? class? `]`
     bracket_atom = (
-      lit('[') > ( // Opening bracket must be followed by a match of the rest
+      lit('[')[at_c<5>(_val) = true] > ( // Opening bracket must be followed by a match of the rest
         -digits<1, 3>()[at_c<0>(_val) = _1]
         >> ( // symbol
           symbols::aromatic_symbols[at_c<1>(_val) = _1]
@@ -716,7 +718,7 @@ std::vector<Molecule> parseSmiles(const std::string& smiles) {
     return parser.builder.interpret();
   }
 
-  throw std::logic_error("Failed to parse SMILES");
+  throw std::runtime_error("Failed to parse SMILES");
 }
 
 } // namespace IO
