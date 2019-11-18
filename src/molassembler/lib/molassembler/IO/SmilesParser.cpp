@@ -184,8 +184,7 @@ struct openSMILES : qi::grammar<Iterator> {
 
     // chiral ::= lots of cases (see chiral_subset and the @TB(num) @OH(num) cases here
     chiral = (
-      symbols::chiral_subset[_val = _1]
-      | (
+      (
         lit("@TB")[at_c<0>(_val) = Shapes::Shape::TrigonalBipyramid]
         >> digits<1, 2>()[at_c<1>(_val) = _1]
       )
@@ -193,6 +192,7 @@ struct openSMILES : qi::grammar<Iterator> {
         lit("@OH")[at_c<0>(_val) = Shapes::Shape::Octahedron]
         >> digits<1, 2>()[at_c<1>(_val) = _1]
       )
+      | symbols::chiral_subset[_val = _1]
     );
 
     /* hcount is defined as

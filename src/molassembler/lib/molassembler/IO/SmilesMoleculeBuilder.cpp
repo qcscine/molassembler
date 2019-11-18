@@ -2,6 +2,7 @@
 
 #include "molassembler/StereopermutatorList.h"
 #include "molassembler/Stereopermutators/AbstractPermutations.h"
+#include "molassembler/Stereopermutators/FeasiblePermutations.h"
 #include "molassembler/Stereopermutators/ShapeVertexMaps.h"
 #include "molassembler/RankingInformation.h"
 #include "molassembler/Graph/InnerGraph.h"
@@ -17,36 +18,6 @@
 namespace Scine {
 namespace molassembler {
 namespace IO {
-
-struct TrigonalBipyramidSpec {
-  std::uint8_t top;
-  std::uint8_t bottom;
-  bool clockwise;
-};
-
-// These are the TBxx numbers as specified
-constexpr std::array<TrigonalBipyramidSpec, 20> trigonalBipyramidStereoSpec {{
-  {0, 4, false},
-  {0, 4, true},
-  {0, 3, false},
-  {0, 3, true},
-  {0, 2, false},
-  {0, 2, true},
-  {0, 1, false},
-  {0, 1, true},
-  {1, 4, false}, // Weird order starts below here (this is on purpose)
-  {1, 3, false},
-  {1, 4, true},
-  {1, 3, true},
-  {1, 2, false},
-  {1, 2, true},
-  {2, 4, false},
-  {2, 3, false},
-  {3, 4, false},
-  {3, 4, true},
-  {2, 3, true},
-  {2, 4, true}
-}};
 
 bool MoleculeBuilder::isValenceFillElement(Utils::ElementType e) {
   const unsigned Z = Utils::ElementInfo::Z(e);
@@ -137,6 +108,47 @@ BondType MoleculeBuilder::mutualBondType(
   }
 
   return a.value();
+}
+
+std::vector<unsigned> MoleculeBuilder::shapeMap(const ChiralData& chiralData) {
+  if(chiralData.shape == Shapes::Shape::Tetrahedron) {
+    switch(chiralData.chiralIndex) {
+      case 0: return {{0, 1, 2, 3}}; // @, TH1
+      case 1: return {{0, 1, 3, 2}}; // @@, TH2
+    }
+  } else if(chiralData.shape == Shapes::Shape::Square) {
+    switch(chiralData.chiralIndex) {
+      case 0: return {{0, 1, 2, 3}}; // SP1 = U
+      case 1: return {{0, 2, 3, 1}}; // SP2 = 4
+      case 2: return {{3, 2, 0, 1}}; // SP3 = Z
+    }
+  } else if(chiralData.shape == Shapes::Shape::TrigonalBipyramid) {
+    // These are 1-based since they're read as integers, not matched in symbols
+    switch(chiralData.chiralIndex) {
+      case  1: return {{1, 2, 3, 0, 4}}; // TB1 = a, e, @
+      case  2: return {{1, 3, 2, 0, 4}}; // TB2 = a, e, @@
+      case  3: return {{1, 2, 4, 0, 3}}; // TB3 = a, d, @
+      case  4: return {{1, 4, 2, 0, 3}}; // TB4 = a, d, @@
+      case  5: return {{1, 3, 4, 0, 2}}; // TB5 = a, c, @
+      case  6: return {{1, 4, 3, 0, 2}}; // TB6 = a, c, @@
+      case  7: return {{2, 3, 4, 0, 1}}; // TB7 = a, b, @
+      case  8: return {{2, 4, 3, 0, 1}}; // TB8 = a, b, @@
+      case  9: return {{0, 2, 3, 1, 4}}; // TB9 = b, e, @
+      case 10: return {{0, 2, 4, 1, 3}}; // TB10 = b, d, @
+      case 11: return {{0, 3, 2, 1, 4}}; // TB11 = b, e, @@
+      case 12: return {{0, 4, 2, 1, 3}}; // TB12 = b, d, @@
+      case 13: return {{0, 3, 4, 1, 2}}; // TB13 = b, c, @
+      case 14: return {{0, 4, 3, 1, 2}}; // TB14 = b, c, @@
+      case 15: return {{0, 1, 3, 2, 4}}; // TB15 = c, e, @
+      case 16: return {{0, 1, 4, 2, 3}}; // TB16 = c, d, @
+      case 17: return {{0, 1, 2, 3, 4}}; // TB17 = d, e, @
+      case 18: return {{0, 2, 1, 3, 4}}; // TB18 = d, e, @@
+      case 19: return {{0, 4, 1, 2, 3}}; // TB19 = c, d, @@
+      case 20: return {{0, 3, 1, 2, 4}}; // TB20 = c, e, @@
+    }
+  }
+
+  throw std::logic_error("Invalid combination of shape and chiral index!");
 }
 
 void MoleculeBuilder::addAtom(const AtomData& atom) {
@@ -255,64 +267,75 @@ void MoleculeBuilder::setAtomStereo(
       continue;
     }
 
-    /* Shape-specific algorithms */
-    if(chiralData.shape == Shapes::Shape::Tetrahedron) {
-      /* Build a shape vertex map by transferring the substituents in
-       * numerical order to shape vertex indices by the spec:
-       * Then use stereopermutationFromSiteToShapeVertexMap and look for a
-       * matching stereopermutation.
-       */
-      const RankingInformation& ranking = permutator.getRanking();
-      std::vector<unsigned> siteToShapeVertexMap = temple::iota<unsigned>(4);
-      /* The order in which the atoms were added is reflected in their index
-       * so we can just sort use lexicographic comparison of the sites.
-       */
-      temple::inplace::sort(
-        siteToShapeVertexMap,
-        [&](const unsigned a, const unsigned b) -> bool {
-          return ranking.sites.at(a) < ranking.sites.at(b);
-        }
-      );
-
-      // @ / @@ difference
-      if(chiralData.chiralIndex == 1) {
-        std::swap(siteToShapeVertexMap.at(2), siteToShapeVertexMap.at(3));
+    /* Now for the shape stereo markers:
+     * - Ordering the sites of the ranking by their constituting indices
+     *   yields the order in which they were specified in the SMILES string
+     * - We apply any weirdness (like that hcounts get placed at the front of
+     *   the list or TODO something about ring closing bonds)
+     * - We transfer them onto shape vertex indices depending on the shape and
+     *   specified chiral index using shapeMap
+     * - We generate a stereopermutation from the siteToShapeVertexMap
+     * - And then go looking for it in the list of feasibles
+     */
+    const unsigned S = Shapes::size(chiralData.shape);
+    const RankingInformation& ranking = permutator.getRanking();
+    std::vector<unsigned> sortedSites = temple::sort(
+      temple::iota<unsigned>(S),
+      [&](const unsigned a, const unsigned b) -> bool {
+        return ranking.sites.at(a) < ranking.sites.at(b);
       }
+    );
 
-      /* Atom bracket hcount special case:
-       *
-       * If one of the neighbors is a hydrogen atom and is represented as an
-       * hcount instead of explicitly, then it is considered to be the first
-       * atom in the clockwise or anticlockwise counting.
-       */
-      for(unsigned j = 0; j < ranking.sites.size(); ++j) {
-        if(
-          ranking.sites.at(j).size() == 1
-          && mol.graph().elementType(ranking.sites.at(j).front()) == Utils::ElementType::H
-          && vertexData.at(i).hCount == 1u
-        ) {
-          auto vertexMapIter = std::find(std::begin(siteToShapeVertexMap), std::end(siteToShapeVertexMap), j);
-          assert(vertexMapIter != std::end(siteToShapeVertexMap));
-          std::iter_swap(std::begin(siteToShapeVertexMap), vertexMapIter);
-          break;
-        }
-      }
-
-      // TODO changes to sequencing order when there are ring closing bonds
-
-      auto soughtStereopermutation = stereopermutationFromSiteToShapeVertexMap(
-        siteToShapeVertexMap,
-        ranking.links,
-        permutator.getAbstract().canonicalSites
-      );
-
-      auto soughtRotations = soughtStereopermutation.generateAllRotations(Shapes::Shape::Tetrahedron);
-      if(soughtRotations.count(permutator.getAbstract().permutations.stereopermutations.front()) > 0) {
-        mol.assignStereopermutator(permutator.centralIndex(), 0);
-      } else {
-        mol.assignStereopermutator(permutator.centralIndex(), 1);
+    /* Atom bracket hcount special case:
+     *
+     * If one of the neighbors is a hydrogen atom and is represented as an
+     * hcount instead of explicitly, then it is considered to be the first
+     * atom in the clockwise or anticlockwise counting.
+     */
+    for(unsigned j = 0; j < ranking.sites.size(); ++j) {
+      if(
+        ranking.sites.at(j).size() == 1
+        && mol.graph().elementType(ranking.sites.at(j).front()) == Utils::ElementType::H
+        && vertexData.at(i).hCount == 1u
+      ) {
+        auto vertexMapIter = std::find(std::begin(sortedSites), std::end(sortedSites), j);
+        assert(vertexMapIter != std::end(sortedSites));
+        std::iter_swap(std::begin(sortedSites), vertexMapIter);
+        break;
       }
     }
+
+    // TODO missing weirdness re: ring closing bonds
+
+    /* Transfer the sorted sites onto shape vertices */
+    auto vertexMap = shapeMap(chiralData);
+    std::vector<unsigned> siteToShapeVertexMap(S);
+    for(unsigned j = 0; j < S; ++j) {
+      siteToShapeVertexMap.at(vertexMap.at(j)) = sortedSites.at(j);
+    }
+
+    /* Create a stereopermutation and look for it in the list of feasibles */
+    auto soughtStereopermutation = stereopermutationFromSiteToShapeVertexMap(
+      siteToShapeVertexMap,
+      ranking.links,
+      permutator.getAbstract().canonicalSites
+    );
+
+    auto soughtRotations = soughtStereopermutation.generateAllRotations(chiralData.shape);
+    const auto& assignables = permutator.getFeasible().indices;
+    auto assignmentIter = temple::find_if(
+      assignables,
+      [&](const unsigned stereopermutationIndex) -> bool {
+        const auto& stereopermutation = permutator.getAbstract().permutations.stereopermutations.at(stereopermutationIndex);
+        return soughtRotations.count(stereopermutation) > 0;
+      }
+    );
+
+    if(assignmentIter == std::end(assignables)) {
+      throw std::logic_error("Could not find matching feasible stereopermutation for stereocenter");
+    }
+
+    mol.assignStereopermutator(permutator.centralIndex(), assignmentIter - std::begin(assignables));
   }
 }
 

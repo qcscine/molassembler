@@ -89,6 +89,9 @@ private:
     const boost::optional<BondType>& a,
     const boost::optional<BondType>& b
   );
+
+  //! Fetches a map to help with the atom chiral markers
+  static std::vector<unsigned> shapeMap(const ChiralData& chiralData);
 //!@}
 
 //!@name Private member functions

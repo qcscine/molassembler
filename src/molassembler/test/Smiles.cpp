@@ -171,6 +171,9 @@ BOOST_AUTO_TEST_CASE(IdenticalSmiles) {
     {"F/C=C/F", R"y(F\C=C\F)y"},
     {"F/C=C/F", R"y(C(\F)=C/F)y"},
     {R"y(F\C=C/F)y", R"y(C(/F)=C/F)y"},
+    {"S[As@TB1](F)(Cl)(Br)N", "S[As@TB5](F)(N)(Cl)Br"},
+    {"F[As@TB15](Cl)(S)(Br)N", "S[As@TB2](Br)(Cl)(F)N"},
+    {"F[As@TB10](S)(Cl)(N)Br", "Br[As@TB20](Cl)(S)(F)N"},
   };
 
   for(const auto& pair : pairs) {
@@ -181,6 +184,10 @@ BOOST_AUTO_TEST_CASE(IdenticalSmiles) {
       a == b,
       "Smiles pair " << pair.first << ", " << pair.second << " did not compare equal as expected"
     );
+
+    // if(a != b) {
+    //   std::cout << "A: " << a << "\nB:" << b << "\n\n";
+    // }
   }
 }
 
