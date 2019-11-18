@@ -14,9 +14,13 @@
 
 /* TODO
  * - allene "NC(Br)=[C@]=C(O)C"
- * - square planar centers
- * - trigonal bipyramidal centers
- * - octahedral centers
+     -> different smiles: {"F/C=C=C=C/F", R"(F/C=C=C=C\F)"}, // allene trans, cis
+ * - Tests for
+ *   - correct inferred shapes in simple cases
+ *   - correct bond type and shape inferral in aromatic cycles and heterocycles
+ *   - square planar centers
+ *   - trigonal bipyramidal centers
+ *   - octahedral centers
  */
 
 using namespace Scine;
@@ -176,6 +180,27 @@ BOOST_AUTO_TEST_CASE(IdenticalSmiles) {
       a == b,
       "Smiles pair " << pair.first << ", " << pair.second << " did not compare equal as expected"
     );
+  }
+}
+
+BOOST_AUTO_TEST_CASE(DifferentSmiles) {
+  // Pairs of smiles that give different molecules
+  const std::vector<std::pair<std::string, std::string>> pairs {
+    {"F/C=C/F", R"y(C(/F)=C/F)y"}, // trans, cis
+    {"F/C=C/F", R"y(F\C=C/F)y"}, // trans, cis
+    {R"y(C(\F)=C/F)y", R"y(F\C=C/F)y"}, // trans, cis
+    {R"y(C(\F)=C/F)y", R"y(C(/F)=C/F)y"}, // trans, cis
+  };
+
+  for(const auto& pair : pairs) {
+    Molecule a, b;
+    BOOST_REQUIRE_NO_THROW(a = expectSingle(IO::parseSmiles(pair.first)));
+    BOOST_REQUIRE_NO_THROW(b = expectSingle(IO::parseSmiles(pair.second)));
+    BOOST_CHECK_MESSAGE(
+      a != b,
+      "Smiles pair " << pair.first << ", " << pair.second << " did not compare different as expected"
+    );
+    std::cout << "A: " << a << "\nB:" << b << "\n\n";
   }
 }
 

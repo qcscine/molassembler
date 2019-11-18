@@ -7,12 +7,16 @@
 #include <boost/fusion/adapted/struct/adapt_struct.hpp>
 #include <boost/fusion/include/adapt_struct.hpp>
 
+#include "molassembler/StereopermutatorList.h"
+#include "molassembler/RankingInformation.h"
 #include "molassembler/Graph/InnerGraph.h"
 #include "molassembler/Modeling/BondDistance.h"
 #include "molassembler/Molecule.h"
 #include "shapes/Shapes.h"
 #include "Utils/Geometry/ElementTypes.h"
 #include "Utils/Geometry/ElementInfo.h"
+
+#include "temple/Optionals.h"
 
 #include <stack>
 #include <iostream>
@@ -21,12 +25,44 @@
  * - Collect the passed bond data and use it to figure out some Kekule
  *   variation of double bonds in aromatic cycles or at least to set triangle
  *   shapes when elements are aromatic
+ *   The spec has the following to say regarding aromaticity: In an aromatic
+ *   system, all of the aromatic atoms must be sp 2 hybridized, and the number
+ *   of π electrons must meet Huckel’s 4n+2 criterion When parsing a SMILES, a
+ *   parser must note the aromatic designation of each atom on input, then when
+ *   the parsing is complete, the SMILES software must verify that electrons
+ *   can be assigned without violating the valence rules, consistent with the
+ *   sp 2 markings, the specified or implied hydrogens, external bonds, and
+ *   charges on the atoms.
+ *
+ *   BUT it also says that "aromatic" bond types are also allowed in
+ *   antiaromatic systems such as cyclobutadiene!
  * - Stereostuff
- *   - Double bond stereo
  *   - @/@@
+ *     SMILES use the order in which atoms are specified together with @
+ *     (anticlockwise looking along the first to the center) to define order.
+ *     (Watch out for the special case involving h-count hydrogens instead of
+ *     explicit ones, then they are first in the ordering). I think it might be
+ *     possible to just figure out whether the ranking of the substituents in
+ *     order is an even or odd permutation as proxy for figuring out the
+ *     stereopermutation.
  *   - Square planar centers
+ *     This is more complicated than tetrahedral owing to the fact that there
+ *     are more possible stereopermutations. The specified index corresponds to
+ *     a 2D character's shape that is made if you follow the atoms as ordered
+ *     in the smiles: One for U, two for 4, three for Z. You can relate these
+ *     shapes to the shape vertex indinces for square planar (ccw in order,
+ *     so one is just 0123, 3210, or any rotation thereof)
  *   - Trigonal biypramidal centers
+ *     The trigonal bipyramidal spec is that each number corresponds to a pair
+ *     of apical atoms and an ccw/cw sense of the equatorial atoms viewed
+ *     along the axis. The ordering is arbitrarily weird (without explanation).
+ *     I think the same applies as before to the shape vertex ordering choice
+ *     (4 and 5 are the ordered top and bottom pair forming the axis, and then
+ *     the rest can only be rotations of 012 (ccw) or 021 (cw))
  *   - Octahedral centers
+ *     Combination of the earlier ideas (square planar shapes combined with a
+ *     specified axis and an ordering criterion, have another look at this
+ *     when done with the rest)
  */
 
 namespace Scine {
@@ -35,6 +71,36 @@ namespace IO {
 
 namespace qi = boost::spirit::qi;
 namespace ascii = boost::spirit::ascii;
+
+struct TrigonalBipyramidSpec {
+  std::uint8_t top;
+  std::uint8_t bottom;
+  bool clockwise;
+};
+
+// These are the TBxx numbers as specified
+constexpr std::array<TrigonalBipyramidSpec, 20> trigonalBipyramidStereoSpec {{
+  {0, 4, false},
+  {0, 4, true},
+  {0, 3, false},
+  {0, 3, true},
+  {0, 2, false},
+  {0, 2, true},
+  {0, 1, false},
+  {0, 1, true},
+  {1, 4, false}, // Weird order starts below here (this is on purpose)
+  {1, 3, false},
+  {1, 4, true},
+  {1, 3, true},
+  {1, 2, false},
+  {1, 2, true},
+  {2, 4, false},
+  {2, 3, false},
+  {3, 4, false},
+  {3, 4, true},
+  {2, 3, true},
+  {2, 4, true}
+}};
 
 struct ElementData {
   unsigned Z = 0;
@@ -77,8 +143,10 @@ struct AtomData {
 };
 
 struct BondData {
+  enum class StereoMarker {Forward, Backward};
+
   boost::optional<BondType> type;
-  boost::optional<unsigned> ezStereo;
+  boost::optional<StereoMarker> ezStereo;
   boost::optional<unsigned> ringNumber;
 };
 
@@ -112,7 +180,7 @@ BOOST_FUSION_ADAPT_STRUCT(
 BOOST_FUSION_ADAPT_STRUCT(
   Scine::molassembler::IO::BondData,
   (boost::optional<Scine::molassembler::BondType>, type),
-  (boost::optional<unsigned>, ezStereo)
+  (boost::optional<Scine::molassembler::IO::BondData::StereoMarker>, ezStereo)
   (boost::optional<unsigned>, ringNumber)
 )
 
@@ -181,10 +249,10 @@ struct chiral_subset_ : qi::symbols<char, ChiralData> {
     add
       ("@", {Shapes::Shape::Tetrahedron, 0})
       ("@@", {Shapes::Shape::Tetrahedron, 1})
-      ("@TH1", {Shapes::Shape::Tetrahedron, 0})
-      ("@TH2", {Shapes::Shape::Tetrahedron, 1})
-      ("@AL1", {Shapes::Shape::Tetrahedron, 0})
-      ("@AL2", {Shapes::Shape::Tetrahedron, 1})
+      ("@TH1", {Shapes::Shape::Tetrahedron, 0}) // Same as @
+      ("@TH2", {Shapes::Shape::Tetrahedron, 1}) // Same as @@
+      ("@AL1", {Shapes::Shape::Tetrahedron, 0}) // Allene
+      ("@AL2", {Shapes::Shape::Tetrahedron, 1}) // Allene
       ("@SP1", {Shapes::Shape::Square, 0})
       ("@SP2", {Shapes::Shape::Square, 1})
       ("@SP3", {Shapes::Shape::Square, 2});
@@ -199,8 +267,8 @@ struct bond_ : qi::symbols<char, BondData> {
       ("#", {BondType::Triple, boost::none, boost::none})
       ("$", {BondType::Quadruple, boost::none, boost::none})
       (":", {BondType::Single, boost::none, boost::none})  // TODO actually aromatic
-      ("/", {BondType::Single, 0, boost::none})
-      ("\\", {BondType::Single, 1, boost::none});
+      ("/", {BondType::Single, BondData::StereoMarker::Forward, boost::none})
+      ("\\", {BondType::Single, BondData::StereoMarker::Backward, boost::none});
   }
 } bond;
 
@@ -313,8 +381,8 @@ struct MoleculeBuilder {
       if(data == SimpleLastBondData::Unspecified) {
         assert(!vertexStack.empty());
         graph.addEdge(
-          newVertex,
           vertexStack.top(),
+          newVertex,
           BondType::Single
         );
       }
@@ -322,10 +390,19 @@ struct MoleculeBuilder {
       assert(!vertexStack.empty());
       auto data = boost::get<BondData>(lastBondData);
       graph.addEdge(
-        newVertex,
         vertexStack.top(),
+        newVertex,
         data.type.value_or(BondType::Single)
       );
+
+      // Store stereo-marked bonds for later
+      if(data.ezStereo) {
+        stereoMarkedBonds.emplace_back(
+          vertexStack.top(),
+          newVertex,
+          data.ezStereo.value()
+        );
+      }
     }
 
     if(vertexStack.empty()) {
@@ -393,6 +470,276 @@ struct MoleculeBuilder {
   // Triggered on non-default bond information after atom addition
   void setNextAtomBondInformation(const BondData& bond) {
     lastBondData = bond;
+  }
+
+  void setBondStereo(
+    std::vector<Molecule>& molecules,
+    std::vector<unsigned> componentMap,
+    std::vector<InnerGraph::Vertex> indexInComponentMap
+  ) {
+    /* Setting the bond stereo from the forward and backward markers is tricky
+     * for several reasons.
+     *
+     * 1. The "/" and "\" markers indicate the "up" or "down" positioning
+     * relative to the carbon atom, which may freely occur before or after the
+     * marked atom.
+     *
+     * 2. All we have from the parsing is the sequence in which the
+     * stereomarkers were discovered. During parsing, none of these are
+     * directly interpreted. We have to make sure they make sense in the first
+     * place (no two markers on one side of the double bond may indicate the
+     * same relative positioning).
+     *
+     * That said, I think there are some patterns we can exploit to structure
+     * the mess.
+     *
+     * F/C=C/F is trans, and so is C(\F)=C/F
+     *
+     * The only side for which there is freedom of reordering for the
+     * stereomarkers is left of the bond. I.e. F/C=(\F)C is invalid. So the only
+     * side of the double bond for which we have to figure out the relative
+     * ordering is left. We can exploit the double bond that must be present in
+     * the graph:
+     *
+     * F/C=C/F -> AB forward, CD forward and BC double bonded
+     * C(\F)=C/F -> AB backward, CD forward and AC double bonded
+     *
+     * It is legal to mark the second substituent at either side too: We can
+     * express this molecule also as:
+     *
+     * [H]\C(\F)=C/F(\[H]) -> AB backward, BC backward, DE forward, DF backward, B = D
+     * C(\F)(/[H])=C/F(\[H]) -> AB backward, AC forward, DE forward, DF backward, A = D
+     *
+     * Unfortunately, all we have is the ordered sequence of marked bonds, so
+     * we have to write a state machine that can deal with that. Index
+     * repetitions and changes can be our guides to deciding when we have
+     * crossed sides of the bond.
+     */
+    struct BondStereo {
+      boost::optional<InnerGraph::Vertex> left;
+      InnerGraph::Vertex right;
+      boost::optional<InnerGraph::Vertex> upOfLeft;
+      boost::optional<InnerGraph::Vertex> downOfLeft;
+      boost::optional<InnerGraph::Vertex> upOfRight;
+      boost::optional<InnerGraph::Vertex> downOfRight;
+
+      unsigned findAssignment(
+        BondStereopermutator stereopermutator,
+        const Molecule& mol,
+        const std::vector<InnerGraph::Vertex>& indexInComponentMap
+      ) const {
+        auto first = mol.stereopermutators().option(stereopermutator.edge().first).value();
+        auto second = mol.stereopermutators().option(stereopermutator.edge().second).value();
+
+        if(first.centralIndex() == indexInComponentMap.at(right)) {
+          std::swap(first, second);
+        }
+
+        auto getSiteIndexLeft = [&](const InnerGraph::Vertex i) -> unsigned {
+          return first.getRanking().getSiteIndexOf(indexInComponentMap.at(i));
+        };
+        auto getSiteIndexRight = [&](const InnerGraph::Vertex i) -> unsigned {
+          return second.getRanking().getSiteIndexOf(indexInComponentMap.at(i));
+        };
+
+        assert(stereopermutator.numAssignments() == 2);
+        for(unsigned i = 0; i < 2; ++i) {
+          stereopermutator.assign(i);
+
+          auto upOfLeftSiteIndex = temple::optionals::map(upOfLeft, getSiteIndexLeft);
+          auto downOfLeftSiteIndex = temple::optionals::map(downOfLeft, getSiteIndexLeft);
+          auto upOfRightSiteIndex = temple::optionals::map(upOfRight, getSiteIndexRight);
+          auto downOfRightSiteIndex = temple::optionals::map(downOfRight, getSiteIndexRight);
+
+          if(upOfLeftSiteIndex) {
+            if(upOfRightSiteIndex) {
+              if(std::fabs(stereopermutator.dihedral(first, *upOfLeftSiteIndex, second, *upOfRightSiteIndex)) > 1e-3) {
+                continue;
+              }
+            }
+            if(downOfRightSiteIndex) {
+              if(std::fabs(stereopermutator.dihedral(first, *upOfLeftSiteIndex, second, *downOfRightSiteIndex) - M_PI) > 1e-3) {
+                continue;
+              }
+            }
+          }
+          if(downOfLeftSiteIndex) {
+            if(upOfRightSiteIndex) {
+              if(std::fabs(stereopermutator.dihedral(first, *downOfLeftSiteIndex, second, *upOfRightSiteIndex) - M_PI) > 1e-3) {
+                continue;
+              }
+            }
+            if(downOfRightSiteIndex) {
+              if(std::fabs(stereopermutator.dihedral(first, *downOfLeftSiteIndex, second, *downOfRightSiteIndex)) > 1e-3) {
+                continue;
+              }
+            }
+          }
+
+          return i;
+        }
+
+        throw std::logic_error("Failed to find matching stereopermutation for BondStereo state.");
+      }
+    };
+
+    auto first = [](const auto& tup) { return std::get<0>(tup); };
+    auto second = [](const auto& tup) { return std::get<1>(tup); };
+    auto marker = [](const auto& tup) { return std::get<2>(tup); };
+
+    using Iterator = std::vector<StereoMarkedBondTuple>::const_iterator;
+    Iterator start = std::cbegin(stereoMarkedBonds);
+    const Iterator end = std::cend(stereoMarkedBonds);
+
+    while(start != end) {
+      BondStereo state;
+
+      InnerGraph::Vertex A = first(*start);
+      InnerGraph::Vertex B = second(*start);
+
+      // We assume that all vertices are in the same component
+      Molecule& mol = molecules.at(componentMap.at(A));
+
+      std::vector<Iterator> leftMarkers {start};
+      std::vector<Iterator> rightMarkers;
+
+      /* Iff the first two marked bonds have an overlapping atom index, then
+       * they are on the same side of the bond. The overlapping bond must
+       * then be the left atom.
+       */
+      Iterator explorer = start + 1;
+      if(explorer == end) {
+        throw std::runtime_error("Missing right side of stereo-marked double bond");
+      }
+
+      // Check for second marker left of bond
+      {
+        InnerGraph::Vertex X = first(*explorer);
+
+        if(A == X) {
+          // Two markers left of bond, C(\F)(/[H]) pattern
+          state.left = A;
+          leftMarkers.push_back(explorer);
+          ++explorer;
+        } else if(B == X) {
+          // Two markers left of bond, [H]\C(\F) pattern
+          state.left = B;
+          leftMarkers.push_back(explorer);
+          ++explorer;
+        }
+      }
+
+      // Now we have ensured the explorer is right of the bond
+      if(explorer == end) {
+        throw std::runtime_error("Missing right side of stereo-marked double bond");
+      }
+
+      auto bondTypeOption = [&](const InnerGraph::Vertex a, const InnerGraph::Vertex b) {
+        return temple::optionals::map(
+          mol.graph().bond(
+            indexInComponentMap.at(a),
+            indexInComponentMap.at(b)
+          ),
+          [&](const BondIndex& bond) -> BondType {
+            return mol.graph().bondType(bond);
+          }
+        );
+      };
+
+      // Establish the right atom
+      {
+        rightMarkers.push_back(explorer);
+        state.right = first(*explorer);
+
+        // Establish the left atom if it is unknown
+        if(!state.left) {
+          if(bondTypeOption(A, state.right) == BondType::Double) {
+            state.left = A;
+          } else if(bondTypeOption(B, state.right) == BondType::Double) {
+            state.left = B;
+          } else {
+            throw std::runtime_error("Right side of marked double bond expected, got unrelated bond");
+          }
+        }
+      }
+
+      /* Check for an additional right marker and place explorer at end of
+       * relevant marked bonds
+       */
+      ++explorer;
+      if(explorer != end && first(*explorer) == state.right) {
+        rightMarkers.push_back(explorer);
+        ++explorer;
+      }
+
+      assert(state.left);
+      /* Now process the collected markers for directionality */
+      for(const Iterator& leftMarker : leftMarkers) {
+        /* Four cases:
+         * - first of the marker is left and forward: C(/F) -> second is up
+         * - first of the marker is left and backward: C(\F) -> second is down
+         * - second of the marker is left and forward: F/C -> first is down
+         * - second of the marker is left and backward: F\C -> first is up
+         */
+        bool firstIsLeft = (first(*leftMarker) == state.left.value());
+        bool markerIsForward = (marker(*leftMarker) == BondData::StereoMarker::Forward);
+        bool up = (firstIsLeft == markerIsForward);
+        InnerGraph::Vertex which = (firstIsLeft ? second(*leftMarker) : first(*leftMarker));
+
+        if(up) {
+          if(state.upOfLeft) {
+            throw std::runtime_error("Both markers left of double bond indicate 'up' directionality");
+          }
+          state.upOfLeft = which;
+        } else {
+          if(state.downOfLeft) {
+            throw std::runtime_error("Both markers left of double bond indicate 'down' directionality");
+          }
+          state.downOfLeft = which;
+        }
+      }
+      for(const Iterator& rightMarker : rightMarkers) {
+        assert(first(*rightMarker) == state.right);
+        if(marker(*rightMarker) == BondData::StereoMarker::Forward) {
+          if(state.upOfRight) {
+            throw std::runtime_error("Both markers right of double bond indicate 'up' directionality");
+          }
+          state.upOfRight = second(*rightMarker);
+        } else { // Backward
+          if(state.downOfRight) {
+            throw std::runtime_error("Both markers right of double bond indicate 'down' directionality");
+          }
+          state.downOfRight = second(*rightMarker);
+        }
+      }
+
+      /* Add the information to the molecular graph */
+      auto molBondOption = mol.graph().bond(
+        indexInComponentMap.at(state.left.value()),
+        indexInComponentMap.at(state.right)
+      );
+      assert(molBondOption);
+
+      if(auto stereopermutatorOption = mol.stereopermutators().option(molBondOption.value())) {
+        if(stereopermutatorOption->numAssignments() == 2) {
+          mol.assignStereopermutator(
+            molBondOption.value(),
+            state.findAssignment(
+              *stereopermutatorOption,
+              mol,
+              indexInComponentMap
+            )
+          );
+        } else {
+          std::cerr << "Warning: Smiles contains stereo markers for non-stereogenic double bond\n";
+        }
+      } else {
+        std::cerr << "Warning: Smiles contains stereo markers for non-stereogenic double bond\n";
+      }
+
+      // Advance the start iterator
+      start = explorer;
+    }
   }
 
   // Interpret the graph as possibly distinct molecules
@@ -481,6 +828,14 @@ struct MoleculeBuilder {
 
       /* TODO set shapes here */
     }
+
+    /* Set bond stereo */
+    setBondStereo(
+      molecules,
+      componentMap,
+      indexInComponentMap
+    );
+
     return molecules;
   }
 
@@ -497,6 +852,10 @@ struct MoleculeBuilder {
 
   //! State to track the vertex a new vertex is bound to
   std::stack<InnerGraph::Vertex> vertexStack;
+
+  //! Storage for bonds marked with stereo indicators ("/" and "\")
+  using StereoMarkedBondTuple = std::tuple<InnerGraph::Vertex, InnerGraph::Vertex, BondData::StereoMarker>;
+  std::vector<StereoMarkedBondTuple> stereoMarkedBonds;
 
   //! Storage for ring closure bond indicators
   std::unordered_map<
