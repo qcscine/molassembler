@@ -1,3 +1,9 @@
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ * @brief Semantic interpreter of the smiles grammar, constructs molecules
+ *   from the data accrued by the parser
+ */
 #ifndef INCLUDE_MOLASSEMBLER_IO_SMILES_MOLECULE_BUILDER_H
 #define INCLUDE_MOLASSEMBLER_IO_SMILES_MOLECULE_BUILDER_H
 
@@ -21,59 +27,89 @@ class Molecule;
 
 namespace IO {
 
-struct MoleculeBuilder {
-  static bool isValenceFillElement(Utils::ElementType e);
-
-  static unsigned valenceFillElementImplicitHydrogenCount(
-    const int valence,
-    Utils::ElementType e
-  );
-
-  static BondType mutualBondType(
-    const boost::optional<BondType>& a,
-    const boost::optional<BondType>& b
-  );
-
-  // On atom addition
+/**
+ * @brief Semantic interpreter of the smiles grammar, constructs molecules
+ *   from the data accrued by the parser
+ */
+class MoleculeBuilder {
+public:
+//!@name Parsing triggers
+//!@{
+  /* @brief Parsing trigger on encountering an atom
+   *
+   * Adds an atom with the last set bond information.
+   */
   void addAtom(const AtomData& atom);
 
+  //! @brief Parsing trigger on encountering a ring closure marker
   void addRingClosure(const BondData& bond);
 
-  // Trigger on branch open
+  //! @brief Parsing trigger on branch open
   inline void branchOpen() {
     vertexStack.push(vertexStack.top());
   }
 
+  //! @brief Parsing trigger on branch close
   inline void branchClose() {
     assert(!vertexStack.empty());
     vertexStack.pop();
   }
 
-  // Trigger on dot bond parse
+  //! @brief Parsing trigger on finding a dot (molecule separator) in place of a bond
   inline void setNextAtomUnbonded() {
     lastBondData = SimpleLastBondData::Unbonded;
   }
 
-  // Triggered on non-default bond information after atom addition
+  //! @brief Parsing trigger on encountering non-default bond information
   inline void setNextAtomBondInformation(const BondData& bond) {
     lastBondData = bond;
   }
+//!@}
 
+  //! @brief Interpret the collected graph as (possibly multiple molecules)
+  std::vector<Molecule> interpret();
+
+private:
+//!@name Static private members
+//!@{
+  //! Checks whether an element type is valence filled
+  static bool isValenceFillElement(Utils::ElementType e);
+
+  //! Determines the implicit hydrogen count of a valence fill element
+  static unsigned valenceFillElementImplicitHydrogenCount(
+    int valence,
+    Utils::ElementType e
+  );
+
+  /*! Determines the mutual bond type of two bond type optionals
+   *
+   * @throws std::runtime_error If the bond types are mismatched
+   */
+  static BondType mutualBondType(
+    const boost::optional<BondType>& a,
+    const boost::optional<BondType>& b
+  );
+//!@}
+
+//!@name Private member functions
+//!@{
+  //! @brief Set atom stereo post-parse and conversion to molecules
   void setAtomStereo(
     std::vector<Molecule>& molecules,
     const std::vector<unsigned>& componentMap,
     const std::vector<InnerGraph::Vertex>& indexInComponentMap
   );
 
+  //! @brief Set bond stereo post-parse and conversion to molecules
   void setBondStereo(
     std::vector<Molecule>& molecules,
     const std::vector<unsigned>& componentMap,
     const std::vector<InnerGraph::Vertex>& indexInComponentMap
   );
+//!@}
 
-  // Interpret the graph as possibly distinct molecules
-  std::vector<Molecule> interpret();
-
+//!@name Private member data
+//!@{
   enum class SimpleLastBondData {
     Unbonded,
     Unspecified
@@ -100,6 +136,7 @@ struct MoleculeBuilder {
 
   //! AtomData for each created vertex
   std::vector<AtomData> vertexData;
+//!@}
 };
 
 } // namespace IO

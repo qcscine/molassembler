@@ -1,3 +1,9 @@
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ * @brief Define data accrued in smiles parser for consumption in the
+ *   accompanying molecule builder
+ */
 #ifndef INCLUDE_MOLASSEMBLER_IO_SMILES_PARSER_DATA_H
 #define INCLUDE_MOLASSEMBLER_IO_SMILES_PARSER_DATA_H
 

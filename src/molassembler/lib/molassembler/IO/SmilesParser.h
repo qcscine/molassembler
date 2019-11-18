@@ -1,3 +1,8 @@
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ * @brief Parse SMILES strings into molecules
+ */
 #ifndef INCLUDE_MOLASSEMBLER_IO_SMILES_PARSER_H
 #define INCLUDE_MOLASSEMBLER_IO_SMILES_PARSER_H
 
