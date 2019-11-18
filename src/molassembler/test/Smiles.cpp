@@ -166,7 +166,8 @@ BOOST_AUTO_TEST_CASE(IdenticalSmiles) {
     {"C[C@](Br)(N)O", "Br[C@](N)(C)O"},
     {"C[C@@](Br)(O)N", "Br[C@@](N)(O)C"},
     {"[C@@](C)(Br)(O)N", "[C@@](Br)(N)(O)C"},
-    {"FC1C[C@](Br)(Cl)CCC1", "C@]1(Br)(Cl)CCCC(F)C1"},
+    {"N[C@H](O)C", "[H][C@](N)(O)C"},
+    {"FC1C[C@](Br)(Cl)CCC1", "[C@]1(Br)(Cl)CCCC(F)C1"},
     {"F/C=C/F", R"y(F\C=C\F)y"},
     {"F/C=C/F", R"y(C(\F)=C/F)y"},
     {R"y(F\C=C/F)y", R"y(C(/F)=C/F)y"},
@@ -190,6 +191,7 @@ BOOST_AUTO_TEST_CASE(DifferentSmiles) {
     {"F/C=C/F", R"y(F\C=C/F)y"}, // trans, cis
     {R"y(C(\F)=C/F)y", R"y(F\C=C/F)y"}, // trans, cis
     {R"y(C(\F)=C/F)y", R"y(C(/F)=C/F)y"}, // trans, cis
+    {"N[C@](Br)(O)C", "N[C@@](Br)(O)C"}, // R, S
   };
 
   for(const auto& pair : pairs) {
@@ -200,7 +202,6 @@ BOOST_AUTO_TEST_CASE(DifferentSmiles) {
       a != b,
       "Smiles pair " << pair.first << ", " << pair.second << " did not compare different as expected"
     );
-    std::cout << "A: " << a << "\nB:" << b << "\n\n";
   }
 }
 
