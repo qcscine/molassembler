@@ -264,6 +264,9 @@ void MoleculeBuilder::setAtomStereo(
        */
       const RankingInformation& ranking = permutator.getRanking();
       std::vector<unsigned> siteToShapeVertexMap = temple::iota<unsigned>(4);
+      /* The order in which the atoms were added is reflected in their index
+       * so we can just sort use lexicographic comparison of the sites.
+       */
       temple::inplace::sort(
         siteToShapeVertexMap,
         [&](const unsigned a, const unsigned b) -> bool {
@@ -276,9 +279,26 @@ void MoleculeBuilder::setAtomStereo(
         std::swap(siteToShapeVertexMap.at(2), siteToShapeVertexMap.at(3));
       }
 
-      /* TODO changes to this sequencing order if there is an atom bracket hcount
-       * or ring closing bonds
+      /* Atom bracket hcount special case:
+       *
+       * If one of the neighbors is a hydrogen atom and is represented as an
+       * hcount instead of explicitly, then it is considered to be the first
+       * atom in the clockwise or anticlockwise counting.
        */
+      for(unsigned j = 0; j < ranking.sites.size(); ++j) {
+        if(
+          ranking.sites.at(j).size() == 1
+          && mol.graph().elementType(ranking.sites.at(j).front()) == Utils::ElementType::H
+          && vertexData.at(i).hCount == 1u
+        ) {
+          auto vertexMapIter = std::find(std::begin(siteToShapeVertexMap), std::end(siteToShapeVertexMap), j);
+          assert(vertexMapIter != std::end(siteToShapeVertexMap));
+          std::iter_swap(std::begin(siteToShapeVertexMap), vertexMapIter);
+          break;
+        }
+      }
+
+      // TODO changes to sequencing order when there are ring closing bonds
 
       auto soughtStereopermutation = stereopermutationFromSiteToShapeVertexMap(
         siteToShapeVertexMap,
