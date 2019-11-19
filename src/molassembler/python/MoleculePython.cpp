@@ -10,6 +10,7 @@
 #include "molassembler/Molecule.h"
 #include "molassembler/OuterGraph.h"
 #include "molassembler/StereopermutatorList.h"
+#include "molassembler/Serialization.h"
 
 #include "Utils/Geometry/ElementTypes.h"
 #include "Utils/Geometry/AtomCollection.h"
@@ -74,12 +75,34 @@ void init_molecule(pybind11::module& m) {
   /* Constructors */
   molecule.def(
     pybind11::init<>(),
-    "Initialize a hydrogen molecule"
+    R"delim(
+      Initialize a hydrogen molecule
+
+      >>> h2 = Molecule()
+      >>> h2.graph.N
+      2
+      >>> h2.graph.B
+      1
+    )delim"
   );
 
   molecule.def(
     pybind11::init<ElementType>(),
-    "Initialize a single-atom molecule"
+    R"delim(
+      Initialize a single-atom molecule.
+
+      This is a bit of a paradox, yes, and it might have been preferable for
+      the concept of a molecule to contain at least two bonded atoms, but
+      unfortunately single atoms occur everywhere and enforcing the concept
+      would complicate many interfaces.
+
+      >>> import scine_utils_os as utils
+      >>> f = Molecule(utils.ElementType.F)
+      >>> f.graph.N
+      1
+      >>> f.graph.B
+      0
+    )delim"
   );
 
   molecule.def(
@@ -87,7 +110,14 @@ void init_molecule(pybind11::module& m) {
     pybind11::arg("first_element"),
     pybind11::arg("second_element"),
     pybind11::arg("bond_type") = BondType::Single,
-    "Initialize a molecule from two element types and a mutual :class:`BondType`"
+    R"delim(
+      Initialize a molecule from two element types and a mutual :class:`BondType`
+
+      >>> import scine_utils_os as utils
+      >>> hf = Molecule(utils.ElementType.H, utils.ElementType.F)
+      >>> hf.graph.N == 2
+      True
+    )delim"
   );
 
   molecule.def(
@@ -96,6 +126,15 @@ void init_molecule(pybind11::module& m) {
     R"delim(
       Initialize a molecule from connectivity alone, inferring shapes and
       stereopermutators from the graph.
+
+      >>> # Rebuild a molecule with an assigned stereopermutator from just the graph
+      >>> import molassembler as masm
+      >>> a = masm.io.experimental.from_smiles("[C@](F)(Cl)[H]")
+      >>> a.stereopermutators.has_unassigned_stereopermutators()
+      False
+      >>> b = Molecule(a.graph)
+      >>> b.stereopermutators.has_unassigned_stereopermutators()
+      True
     )delim"
   );
 
@@ -106,6 +145,21 @@ void init_molecule(pybind11::module& m) {
       Calculates a convoluted hash of a molecule. The molecule must be at least
       partially canonical. Hashes between molecules of different canonicity are
       not comparable.
+
+      >>> import molassembler as masm
+      >>> from copy import copy
+      >>> spiro = masm.io.experimental.from_smiles("C12(CCC1)CCC2")
+      >>> # We make two variants of the molecule that have different canonicalization states
+      >>> # to demonstrate that their hashes are unequal. We discard the mappings
+      >>> # we get from canonicalize()
+      >>> partially_canonical = copy(spiro)
+      >>> _ = partially_canonical.canonicalize(masm.AtomEnvironmentComponents.ElementsAndBonds)
+      >>> fully_canonical = copy(spiro)
+      >>> _ = fully_canonical.canonicalize()
+      >>> partially_canonical == fully_canonical
+      True
+      >>> partially_canonical.hash() == fully_canonical.hash()
+      False
     )delim"
   );
 
@@ -121,7 +175,7 @@ void init_molecule(pybind11::module& m) {
     pybind11::arg("atom_collection"),
     R"delim(
       Reorders an atom collection according to an index mapping from
-      canonicalization
+      canonicalization.
 
       :param canonicalization_index_map: Index mapping saved from previous
         canonicalization
@@ -419,5 +473,21 @@ void init_molecule(pybind11::module& m) {
     "_repr_svg_",
     &::pipeSVG,
     "Generates an SVG representation of the molecule"
+  );
+
+  /* Pickling support */
+  molecule.def(
+    pybind11::pickle(
+      [](const Molecule& mol) {
+        JSONSerialization serialization(mol);
+        std::string serialized = serialization;
+        return serialized;
+      },
+      [](const std::string& serialized) {
+        JSONSerialization serialization(serialized);
+        Molecule mol = serialization;
+        return mol;
+      }
+    )
   );
 }

@@ -19,7 +19,7 @@ void init_io(pybind11::module& m) {
   auto io = m.def_submodule("io");
   io.doc() = R"(IO Submodule)";
 
-  auto experimental = m.def_submodule("experimental");
+  auto experimental = io.def_submodule("experimental");
   experimental.doc() = R"(Experimental IO submodule)";
 
   experimental.def(

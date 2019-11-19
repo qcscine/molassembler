@@ -9,7 +9,28 @@
 
 void init_cycles(pybind11::module& m) {
   using namespace Scine::molassembler;
-  pybind11::class_<Cycles> cycles(m, "Cycles", "Information about molecular graph cycles.");
+  pybind11::class_<Cycles> cycles(
+    m,
+    "Cycles",
+    R"delim(
+      Information about molecular graph cycles.
+
+      >>> # Simple molecule for which relevant cycles and cycle families are the same
+      >>> import molassembler as masm
+      >>> spiro = masm.io.experimental.from_smiles("C12(CCC1)CCC2")
+      >>> cycles = spiro.graph.cycles
+      >>> cycles.num_cycle_families()
+      2
+      >>> cycles.num_cycle_families(0) # The spiroatom belongs to both families
+      2
+      >>> cycles.num_cycle_families(1) # Other cycle atoms only belong to one
+      1
+      >>> cycles.num_cycle_families() == cycles.num_relevant_cycles()
+      True
+      >>> cycles.num_cycle_families(1) == cycles.num_relevant_cycles(1)
+      True
+    )delim"
+  );
 
   cycles.def(
     "num_cycle_families",
