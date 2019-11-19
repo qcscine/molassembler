@@ -16,7 +16,32 @@ void init_interpret(pybind11::module& m) {
   using namespace Scine::Utils;
 
   auto interpretSubmodule = m.def_submodule("interpret");
-  interpretSubmodule.doc() = R"(Interpretation submodule)";
+  interpretSubmodule.doc() = R"delim(
+    Submodule with freestanding functions yielding :class:`Molecule` or
+    :class:`Graph` instances from Cartesian coordinate data (and optionally
+    bond order data).
+
+    **Bond discretization**
+
+    In the discretization of fractional bond orders to classic integer internal
+    bond types (e.g. single, double, etc.), there are two options. You can
+    choose to round bond orders to the nearest integer, but this is
+    particularly error prone for particularly weakly-bound metal ligands
+    (around 0.5) and aromatic bonds (around 1.5). For instance, two adjacent
+    aromatic bonds that both show a fractional bond order around 1.5 may be
+    randomly rounded up or down depending on the bond order generation method
+    or its particular conformation. This can cause unexpected ranking
+    inequivalency / equivalency artifacts. If you expect there to be conjugated
+    systems or transition metals in your set of interpreted molecules,
+    discretizing bond orders in this fashion is currently disadvised.
+
+    It can instead be preferable to discretize bond orders in a purely binary
+    manner, i.e. bond orders are interpreted as a single bond if the fractional
+    bond order is is more than or equal to 0.5. Double bond stereocenters (i.e.
+    in organic molecules E/Z stereocenters) are still interpreted from
+    coordinate information despite the main bond type discretized to a single
+    bond.
+  )delim";
 
   pybind11::enum_<interpret::BondDiscretizationOption>(
     interpretSubmodule,

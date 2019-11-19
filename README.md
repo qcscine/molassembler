@@ -12,8 +12,8 @@ generate non-superposable stereopermutations as output.
 ## Features
 
 - Molecule construction from many types of information. 
-- Stereocenters are treated from trigonal pyramidal all the way up to square
-  antiprismatic local geometries.
+- Stereocenters are treated from trigonal pyramidal all the way up to
+  icosahedral and cuboctahedral local geometries.
 - High-temperature approximation is invoked by default to avoid considering
   inverting nitrogen centers as stereocenters, but this is optional. Even in
   the high-temperature approximation, nitrogen centers whose substituents

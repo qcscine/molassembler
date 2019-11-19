@@ -1,5 +1,5 @@
-Conformers
-==========
+Conformer generation
+====================
 
 .. automodule:: molassembler.dg
    :members:

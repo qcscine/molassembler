@@ -1,9 +1,51 @@
 molassembler
 ============
 
+Molassembler is a C++ library that aims to facilitate conversions between
+Cartesian and graph representations of molecules. It provides the necessary
+functionality to represent a molecule as a graph, modify it in graph space, and
+generate coordinates from graphs. It can capture the absolute configuration
+of multidentate and haptic inorganic molecules from positional data and
+generate non-superposable stereopermutations as output.
+
+This is the documentation for molassembler's Python bindings which bind the core
+functionality of the library for quick prototyping.
+
+Core features
+-------------
+
+- Molecules can be constructed from many types of information. 
+- Stereocenters are treated from trigonal pyramidal all the way up to
+  icosahedral and cuboctahedral local shapes.
+- A high-temperature approximation is invoked by default to avoid considering
+  inverting nitrogen centers as stereocenters, but this is optional. Even in
+  the high-temperature approximation, nitrogen centers whose substituents
+  form a strained cycle and hence do not invert rapidly are considered a
+  stereocenter.
+- All stereocenter permutations are generated with relative statistical
+  occurrence weights. Linking of ligands (denticity) is properly considered.
+  Several classes of haptic ligands are supported.
+- Editing of molecules preservers chiral information by default, and is highly
+  configurable.
+- Molecules can be canonicalized for fast isomorphism tests. Canonicalization
+  can be customized to use subsets of the available information for vertex
+  coloring if desired.
+- Ranking algorithms are nearly fully IUPAC Blue Book 2013 compliant, extended
+  to larger symmetries.
+- Stochastic conformer generation with Distance Geometry
+- Directed conformer generation through enumeration of rotamers
+
 .. toctree::
+   :hidden:
    :maxdepth: 2
-   :caption: Contents:
+   :caption: Introduction
+
+   model
+
+.. toctree::
+   :hidden:
+   :maxdepth: 2
+   :caption: API Documentation
 
    molassembler
    molecule
@@ -21,9 +63,10 @@ molassembler
    serialization
    shapes
 
-Indices and tables
-==================
+.. toctree::
+   :hidden:
+   :maxdepth: 1
+   :caption: Appendix
 
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+   changelog
+   genindex

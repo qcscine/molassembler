@@ -12,7 +12,11 @@ void init_editing(pybind11::module& m) {
   using namespace Scine::molassembler;
 
   auto editing = m.def_submodule("editing");
-  editing.doc() = "Editing submodule";
+  editing.doc() = R"delim(
+    A collection of functions to ease larger-scale molecule editing, since
+    it can be difficult to get anywhere with the miniscule alteration functions
+    defined in the :class:`Molecule` interface.
+  )delim";
 
   editing.def(
     "cleave",

@@ -62,7 +62,26 @@ void init_conformers(pybind11::module& m) {
   using namespace Scine::molassembler;
 
   auto dg = m.def_submodule("dg", "Distance geometry");
-  dg.doc() = "Distance geometry submodule";
+  dg.doc() = R"delim(
+    Conformer generation is based on four-spatial dimension Distance Geometry. This
+    library's implementation features the following:
+
+    1. A spatial model generates atom-pairwise bounds on their distance in the final
+       conformations and four-atom chiral constraints when distance bounds cannot
+       encompass chiral elements of complex shapes. For large shapes, chiral
+       information is captured by using multiple chiral constraints.
+    2. The distance bounds are smoothed to conform to the triangle inequalities.
+       After each successive choice of a fixed distance between the bounds, you can
+       choose to re-smooth all bounds (full metrization) or stop re-smoothing after
+       a fixed number of chosen distances (partial metrization).
+    3. The bounds are embedded in four dimensions and refined in three stages,
+       permitting the chiral constraints to invert by expanding into four
+       dimensions, and then compressing the fourth dimension back out. Lastly,
+       dihedral error terms are minimized.
+    4. The refinement error function is modified to enable the placement of haptic
+       ligand's bonding atoms' average position at shapes' idealized ligand
+       sites.
+  )delim";
 
   pybind11::enum_<DistanceGeometry::Partiality>(
     dg,

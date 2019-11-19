@@ -70,7 +70,9 @@ void init_molecule(pybind11::module& m) {
   pybind11::class_<Molecule> molecule(
     m,
     "Molecule",
-    "Models a molecule as a graph and a list of stereopermutators"
+    R"delim(
+      Models a molecule as a graph and a list of stereopermutators
+    )delim"
   );
 
   /* Constructors */
@@ -335,6 +337,27 @@ void init_molecule(pybind11::module& m) {
     R"delim(
       Transform the molecule to a canonical form. Invalidates all atom and bond
       indices.
+
+      Molecule instances can be canonicalized. Graph canonicalization is an
+      algorithm that reduces all isomorphic forms of an input graph into a
+      canonical form. After canonicalization, isomorphism tests are reduced to
+      mere identity tests.
+
+      The canonicalization itself, however, is computationally at least as
+      expensive as an isomorphism itself. Therefore, no expense is saved if an
+      isomorphism test is to be computed only once for two molecules by
+      canonizing both. Only if a molecule instance is to be a repeated
+      candidate for isomorphism tests is there value in canonizing it.
+
+      This library takes the approach of adding a tag to molecules that
+      identifies which components of the graph and stereocenters have been used
+      in the generation of the canonical form. This tag is voided with the use
+      of any non-const member function. Pay close attention to the
+      documentation of comparison member functions and operators to ensure that
+      you are making good use of the provided shortcuts.
+
+      Note that canonicalization information is only retained across IO
+      boundaries using the JSON serialization variations.
 
       :param components_bitmask: The components of the molecular graph to
         include in the canonicalization procedure.

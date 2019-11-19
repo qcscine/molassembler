@@ -1,5 +1,5 @@
-Ranking
-=======
+Substituent ranking
+===================
 
 .. autoclass:: molassembler.LinkInformation
    :members:

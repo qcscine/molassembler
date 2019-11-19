@@ -1,7 +1,5 @@
-Overview
-========
-
-Text about molassembler's general structure.
+Basic types
+===========
 
 .. autoclass:: molassembler.BondIndex
    :members:

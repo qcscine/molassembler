@@ -1,11 +1,12 @@
-# Changelog
-All notable changes to this project will be documented in this file.
+Changelog
+=========
 
-The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
-and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
+This project adheres to semantic versioning.
 
-## [1.0.0] - 2019-01-DD
-### Added
+1.0.0 - 2019-12-01
+------------------
+Added
+~~~~~
 - Explicit definition of which headers make up the public API in the
   tutorial-like documentation
 - Molecule canonicalization: After canonicalization, isomorphism checks reduce
@@ -21,7 +22,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Python bindings
   - Molecule instances integrate nicely with notebooks using `_repr_svg_`
 
-### Changed
+Changed
+~~~~~~~
 - temple::Bitmask no longer forms part of the public interface
 - Rebased the library on Scine's UtilsOS instead of on the Delib (which is now
   deprecated)
@@ -43,13 +45,3 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   CMake options)
 - Library is no longer based on Delib exchange formats, but rather on scine
   utils open source library (which are virtually identical).
-- Add ETH license to all files and a checker script
-
-## [Unreleased]
-### Added
-### Changed
-### Deprecated
-### Removed
-### Fixed
-
-## [X.Y.Z] - 20YY-MM-DD
