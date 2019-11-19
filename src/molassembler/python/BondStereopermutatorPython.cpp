@@ -24,8 +24,8 @@ void init_bond_stereopermutator(pybind11::module& m) {
       >>> import molassembler as masm
       >>> z_butene = masm.io.experimental.from_smiles("C/C=C\C")
       >>> bond_index = masm.BondIndex(1, 2)
-      >>> assert z_butene.graph.bond_type(bond_index) = masm.BondType.Double
-      >>> permutator = masm.stereopermutators.option(bond_index)
+      >>> assert z_butene.graph.bond_type(bond_index) == masm.BondType.Double
+      >>> permutator = z_butene.stereopermutators.option(bond_index)
       >>> assert permutator is not None
       >>> permutator.assigned is not None
       True
@@ -51,19 +51,19 @@ void init_bond_stereopermutator(pybind11::module& m) {
   );
 
 
-  bondStereopermutator.def(
+  bondStereopermutator.def_property_readonly(
     "assigned",
     &BondStereopermutator::assigned,
     R"delim(
-      Returns an integer indicating the assignment of the stereopermutator or
-      ``None`` if the stereopermutator is unassigned.
+      An integer indicating the assignment of the stereopermutator or ``None``
+      if the stereopermutator is unassigned.
 
       >>> # An unassigned bond stereopermutator
       >>> import molassembler as masm
       >>> butene = masm.io.experimental.from_smiles("CC=CC")
       >>> bond_index = masm.BondIndex(1, 2)
-      >>> assert z_butene.graph.bond_type(bond_index) = masm.BondType.Double
-      >>> permutator = masm.stereopermutators.option(bond_index)
+      >>> assert butene.graph.bond_type(bond_index) == masm.BondType.Double
+      >>> permutator = butene.stereopermutators.option(bond_index)
       >>> assert permutator is not None
       >>> permutator.assigned is None
       True
@@ -72,7 +72,7 @@ void init_bond_stereopermutator(pybind11::module& m) {
     )delim"
   );
 
-  bondStereopermutator.def(
+  bondStereopermutator.def_property_readonly(
     "index_of_permutation",
     &BondStereopermutator::indexOfPermutation,
     R"delim(
@@ -86,7 +86,7 @@ void init_bond_stereopermutator(pybind11::module& m) {
       >>> benzene = masm.io.experimental.from_smiles("C1=CC=CC=C1")
       >>> permutators = benzene.stereopermutators.bond_stereopermutators()
       >>> has_two_stereopermutations = lambda p: p.num_stereopermutations == 2
-      >>> has_one_assignment = lamda p: p.num_assignments == 1
+      >>> has_one_assignment = lambda p: p.num_assignments == 1
       >>> all(map(has_two_stereopermutations, permutators))
       True
       >>> all(map(has_one_assignment, permutators))
@@ -94,25 +94,25 @@ void init_bond_stereopermutator(pybind11::module& m) {
     )delim"
   );
 
-  bondStereopermutator.def(
+  bondStereopermutator.def_property_readonly(
     "num_assignments",
     &BondStereopermutator::numAssignments,
     R"delim(
-      Returns the number of assignments. Valid assignment indices range from 0
-      to this number minus one.
+      The number of assignments. Valid assignment indices range from 0 to this
+      number minus one.
     )delim"
   );
 
-  bondStereopermutator.def(
+  bondStereopermutator.def_property_readonly(
     "num_stereopermutations",
     &BondStereopermutator::numStereopermutations,
     "Returns the number of stereopermutations."
   );
 
-  bondStereopermutator.def(
+  bondStereopermutator.def_property_readonly(
     "edge",
     &BondStereopermutator::edge,
-    "Returns the edge this stereopermutator is placed on."
+    "The edge this stereopermutator is placed on."
   );
 
   bondStereopermutator.def(

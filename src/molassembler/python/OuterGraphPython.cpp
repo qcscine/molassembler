@@ -9,6 +9,7 @@
 #include "molassembler/OuterGraph.h"
 
 #include "Utils/Bonds/BondOrderCollection.h"
+#include "Utils/Geometry/FormulaGenerator.h"
 #include "Utils/Typenames.h"
 
 void init_outer_graph(pybind11::module& m) {
@@ -141,5 +142,15 @@ void init_outer_graph(pybind11::module& m) {
     },
     pybind11::arg("a"),
     "Iterate through all incident bonds of an atom"
+  );
+
+  outerGraph.def(
+    "__repr__",
+    [](const OuterGraph& graph) {
+      return (
+        "Graph of elemental composition "
+        + Scine::Utils::generateChemicalFormula(graph.elementCollection())
+      );
+    }
   );
 }

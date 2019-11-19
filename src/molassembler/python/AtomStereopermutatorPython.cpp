@@ -86,7 +86,7 @@ void init_atom_stereopermutator(pybind11::module& m) {
       >>> import scine_utils_os as utils
       >>> import molassembler as masm
       >>> asymmetric_carbon = masm.io.experimental.from_smiles("NC(Br)(O)F")
-      >>> carbon_index = asymmetric_carbon.graph.atomsOfElement(utils.ElementType.C)
+      >>> carbon_index = asymmetric_carbon.graph.atoms_of_element(utils.ElementType.C)[0]
       >>> stereopermutator = asymmetric_carbon.stereopermutators.option(carbon_index)
       >>> assert stereopermutator is not None
       >>> stereopermutator.num_assignments == 2
@@ -124,16 +124,16 @@ void init_atom_stereopermutator(pybind11::module& m) {
       >>> permutator.num_assignments # Number of spatially feasible permutations
       2
       >>> permutator.index_of_permutation
-      1
-      >>> permutator.assignment
+      2
+      >>> permutator.assigned
       1
       >>> shipscrew.assign_stereopermutator(0, None) # Dis-assign the stereopermutator
       >>> permutator = shipscrew.stereopermutators.option(0)
       >>> assert permutator is not None
-      >>> permutator.index_of_permutation
-      None
-      >>> permutator.assignment
-      None
+      >>> permutator.index_of_permutation is None
+      True
+      >>> permutator.assigned is None
+      True
     )delim"
   );
 

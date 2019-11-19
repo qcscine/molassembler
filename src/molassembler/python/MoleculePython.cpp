@@ -14,6 +14,7 @@
 
 #include "Utils/Geometry/ElementTypes.h"
 #include "Utils/Geometry/AtomCollection.h"
+#include "Utils/Geometry/FormulaGenerator.h"
 
 #include "boost/process/child.hpp"
 #include "boost/process/io.hpp"
@@ -129,11 +130,11 @@ void init_molecule(pybind11::module& m) {
 
       >>> # Rebuild a molecule with an assigned stereopermutator from just the graph
       >>> import molassembler as masm
-      >>> a = masm.io.experimental.from_smiles("[C@](F)(Cl)[H]")
-      >>> a.stereopermutators.has_unassigned_stereopermutators()
+      >>> a = masm.io.experimental.from_smiles("[C@](F)(Cl)(C)[H]")
+      >>> a.stereopermutators.has_unassigned_permutators()
       False
       >>> b = Molecule(a.graph)
-      >>> b.stereopermutators.has_unassigned_stereopermutators()
+      >>> b.stereopermutators.has_unassigned_permutators()
       True
     )delim"
   );
@@ -198,6 +199,10 @@ void init_molecule(pybind11::module& m) {
       :param element: Element type of the new atom
       :param adjacent_to: Atom to which the new atom is added
       :param bond_type: :class:`BondType` with which the new atom is attached
+
+      >>> import scine_utils_os as utils
+      >>> mol = Molecule() # Default constructor makes H2
+      >>> _ = mol.add_atom(utils.ElementType.H, 0) # Make linear H3
     )delim"
   );
 
@@ -213,6 +218,11 @@ void init_molecule(pybind11::module& m) {
       :param first_atom: First atom to bond
       :param second_atom: Second atom to bond
       :param bond_type: :class:`BondType` with which to bond the atoms
+
+      >>> import scine_utils_os as utils
+      >>> mol = Molecule() # Default constructor makes H2
+      >>> _ = mol.add_atom(utils.ElementType.H, 0) # Make linear H3
+      >>> _ = mol.add_bond(1, 2) # Make triangular H3
     )delim"
   );
 
@@ -229,6 +239,17 @@ void init_molecule(pybind11::module& m) {
       :param atom: Atom index of the :class:`AtomStereopermutator` to set
       :param assignment_option: An assignment integer if the stereopermutator
         is to be assigned or ``None`` if the stereopermutator is to be dis-assigned.
+
+      >>> # Assign an unspecified asymmetric carbon atom and then dis-assign it
+      >>> import molassembler as masm
+      >>> mol = masm.io.experimental.from_smiles("F[CH1](Br)C")
+      >>> asymmetric_carbon_index = 1
+      >>> mol.assign_stereopermutator(asymmetric_carbon_index, 0)
+      >>> mol.stereopermutators.option(asymmetric_carbon_index).assigned
+      0
+      >>> mol.assign_stereopermutator(asymmetric_carbon_index, None)
+      >>> mol.stereopermutators.option(asymmetric_carbon_index).assigned is None
+      True
     )delim"
   );
 
@@ -246,6 +267,16 @@ void init_molecule(pybind11::module& m) {
       :param assignment_option: An assignment integer if the stereopermutator
         is to be assigned or ``None`` if the stereopermutator is to be
         dis-assigned.
+
+      >>> import molassembler as masm
+      >>> mol = masm.io.experimental.from_smiles("C/C=C\C")
+      >>> double_bond_index = masm.BondIndex(1, 2)
+      >>> assert mol.graph.bond_type(double_bond_index) == masm.BondType.Double
+      >>> mol.stereopermutators.option(double_bond_index).assigned is not None
+      True
+      >>> mol.assign_stereopermutator(double_bond_index, None)
+      >>> mol.stereopermutators.option(double_bond_index).assigned is not None
+      False
     )delim"
   );
 
@@ -260,6 +291,16 @@ void init_molecule(pybind11::module& m) {
       weighted by relative statistical occurence).
 
       :param atom: Atom index of the stereopermutator to assign randomly.
+
+      >>> # Assign an unspecified chiral center
+      >>> import molassembler as masm
+      >>> mol = masm.io.experimental.from_smiles("S[As](F)(Cl)(Br)N")
+      >>> as_index = 1
+      >>> mol.stereopermutators.option(as_index).assigned is None
+      True
+      >>> mol.assign_stereopermutator_randomly(1)
+      >>> mol.stereopermutators.option(as_index).assigned is None
+      False
     )delim"
   );
 
@@ -273,6 +314,17 @@ void init_molecule(pybind11::module& m) {
       Assigns a :class:`BondStereopermutator` at random.
 
       :param bond_index: :class:`BondIndex` of the stereopermutator to assign randomly.
+
+      >>> # Assign an unspecified double bond randomly
+      >>> import molassembler as masm
+      >>> mol = masm.io.experimental.from_smiles("CC=CC")
+      >>> double_bond_index = masm.BondIndex(1, 2)
+      >>> assert mol.graph.bond_type(double_bond_index) == masm.BondType.Double
+      >>> mol.stereopermutators.option(double_bond_index).assigned is None
+      True
+      >>> mol.assign_stereopermutator_randomly(double_bond_index)
+      >>> mol.stereopermutators.option(double_bond_index).assigned is None
+      False
     )delim"
   );
 
@@ -287,6 +339,20 @@ void init_molecule(pybind11::module& m) {
       :param components_bitmask: The components of the molecular graph to
         include in the canonicalization procedure.
       :return: Flat index mapping/permutation from old indices to new
+
+      >>> # Create two different representations of the same molecule
+      >>> import molassembler as masm
+      >>> a = masm.io.experimental.from_smiles("N[C@](Br)(O)C")
+      >>> b = masm.io.experimental.from_smiles("Br[C@](O)(N)C")
+      >>> # a and be represent the same molecule, but have different vertex order
+      >>> a == b # Equality operators perform an isomorphism for non-canonical pairs
+      True
+      >>> amap = a.canonicalize()
+      >>> bmap = b.canonicalize()
+      >>> amap == bmap # This shows the vertex order was different
+      False
+      >>> a == b # Equality operators perform a same-graph test for canonical pairs (faster)
+      True
     )delim"
   );
 
@@ -297,6 +363,7 @@ void init_molecule(pybind11::module& m) {
     R"delim(
       Remove an atom from the graph, including bonds to it, after checking
       that removing it is safe, i.e. the removal does not disconnect the graph.
+      Invalidates all atom and bond indices.
 
       :param atom: Atom to remove
     )delim"
@@ -309,7 +376,8 @@ void init_molecule(pybind11::module& m) {
     pybind11::arg("second_atom"),
     R"delim(
       Remove a bond from the graph, after checking that removing it is safe,
-      i.e. the removal does not disconnect the graph.
+      i.e. the removal does not disconnect the graph. Invalidates all atom and
+      bond indices.
 
       :param first_atom: First atom of the bond to be removed
       :param second_atom: Second atom of the bond to be removed
@@ -342,6 +410,11 @@ void init_molecule(pybind11::module& m) {
       :param second_atom: Second atom of the bond to be changed
       :param bond_type: The new :class:`BondType`
       :return: Whether the bond already existed
+
+      >>> # You really do have full freedom when it comes to your graphs:
+      >>> import molassembler as masm
+      >>> h2 = masm.Molecule()
+      >>> _ = h2.set_bond_type(0, 1, masm.BondType.Double) # Double bonded hydrogen atoms!
     )delim"
   );
 
@@ -355,6 +428,16 @@ void init_molecule(pybind11::module& m) {
 
       :param atom: Atom index of the atom to alter
       :param element: New element type to set
+
+      >>> # Transform H2 into HF
+      >>> import molassembler as masm
+      >>> import scine_utils_os as utils
+      >>> from copy import copy
+      >>> H2 = masm.Molecule()
+      >>> HF = copy(H2)
+      >>> HF.set_element_type(0, utils.ElementType.F)
+      >>> HF == H2
+      False
     )delim"
   );
 
@@ -373,6 +456,15 @@ void init_molecule(pybind11::module& m) {
       this index, one is instantiated. In all cases, new or modified
       stereopermutators are default-assigned if there is only one possible
       assignment.
+
+      >>> # Make methane square planar
+      >>> import molassembler as masm
+      >>> from copy import copy
+      >>> methane = masm.io.experimental.from_smiles("C")
+      >>> square_planar_methane = copy(methane)
+      >>> square_planar_methane.set_shape_at_atom(0, masm.shapes.Shape.Square)
+      >>> methane == square_planar_methane
+      False
     )delim"
   );
 
@@ -423,6 +515,10 @@ void init_molecule(pybind11::module& m) {
     R"delim(
       Modular comparison of this Molecule with another, assuming that both are
       in a canonical form.
+
+      For comparisons of fully canonical molecule pairs, regular equality
+      comparison will just call this function instead of performing a full
+      isomorphism.
 
       :param other: The other (canonical) molecule to compare against
       :param components_bitmask: The components of an atom's environment to
@@ -475,7 +571,33 @@ void init_molecule(pybind11::module& m) {
     "Generates an SVG representation of the molecule"
   );
 
-  /* Pickling support */
+  // Shell integration
+  molecule.def(
+    "__repr__",
+    [](const Molecule& mol) -> std::string {
+      std::string repr = "Molecule of elemental composition ";
+      repr += Scine::Utils::generateChemicalFormula(mol.graph().elementCollection());
+      const unsigned A = mol.stereopermutators().A();
+      const unsigned B = mol.stereopermutators().B();
+
+      if(A > 0) {
+        repr += " with " + std::to_string(A) + " atom ";
+
+        if(B > 0) {
+          repr += "and " + std::to_string(B) + " bond ";
+        }
+        repr += "stereopermutator";
+        if(A + B > 1) {
+          repr += "s";
+        }
+      }
+
+      return repr;
+    },
+    "Generate a string representation of the molecule"
+  );
+
+  /* Pickling support (allows copying) */
   molecule.def(
     pybind11::pickle(
       [](const Molecule& mol) {
