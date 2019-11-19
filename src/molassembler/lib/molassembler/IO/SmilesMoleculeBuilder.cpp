@@ -1,3 +1,7 @@
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ */
 #include "molassembler/IO/SmilesMoleculeBuilder.h"
 
 #include "molassembler/StereopermutatorList.h"

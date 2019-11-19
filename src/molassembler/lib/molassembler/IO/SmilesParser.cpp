@@ -1,3 +1,7 @@
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ */
 #include "molassembler/IO/SmilesParser.h"
 
 #include <boost/spirit/include/qi.hpp>
@@ -343,6 +347,8 @@ struct openSMILES : qi::grammar<Iterator> {
   qi::rule<Iterator> start;
 };
 
+namespace experimental {
+
 std::vector<Molecule> parseSmiles(const std::string& smiles) {
   auto iter = std::begin(smiles);
   const auto end = std::end(smiles);
@@ -360,6 +366,17 @@ std::vector<Molecule> parseSmiles(const std::string& smiles) {
   throw std::runtime_error("Failed to parse SMILES");
 }
 
+Molecule parseSmilesSingleMolecule(const std::string& smiles) {
+  auto results = parseSmiles(smiles);
+
+  if(results.size() > 1) {
+    throw std::logic_error("Passed smiles strings string contains multiple molecules");
+  }
+
+  return results.front();
+}
+
+} // namespace experimental
 } // namespace IO
 } // namespace molassembler
 } // namespace Scine
