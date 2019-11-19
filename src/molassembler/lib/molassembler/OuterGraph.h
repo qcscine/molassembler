@@ -197,6 +197,11 @@ public:
    * @complexity{@math{\Theta(1)}}
    */
   bool adjacent(AtomIndex a, AtomIndex b) const;
+  /*! @brief Returns atoms matching an element type
+   *
+   * @complexity{@math{\Theta(N)}}
+   */
+  std::vector<AtomIndex> atomsOfElement(Utils::ElementType e) const;
   /*! @brief Optionally fetch the bond index of a possibly non-existent bond
    *
    * @complexity{@math{\Theta(1)}}

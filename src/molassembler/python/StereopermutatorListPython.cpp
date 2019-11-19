@@ -12,13 +12,56 @@ void init_stereopermutator_list(pybind11::module& m) {
   pybind11::class_<StereopermutatorList> stereopermutatorList(
     m,
     "StereopermutatorList",
-    "Manages all stereopermutators that are part of a molecule"
+    R"delim(
+      Manages all stereopermutators that are part of a molecule.
+
+      >>> # A sample molecule with one stereogenic atom and bond stereopermutator each
+      >>> import molassembler as masm
+      >>> mol = masm.io.experimental.from_smiles("CC=C[C@](F)(Cl)[H]")
+      >>> is_stereogenic = lambda p: p.num_assignments > 1
+      >>> atom_permutators = mol.stereopermutators.atom_stereopermutators
+      >>> bond_permutators = mol.stereopermutators.bond_stereopermutators
+      >>> stereogenic_atom_permutators = [p for p in atom_permutators if is_stereogenic(p)]
+      >>> stereogenic_bond_permutators = [p for p in bond_permutators if is_stereogenic(p)]
+      >>> # Atom stereopermutators are instantiated on every non-terminal atom
+      >>> len(atom_permutators) > len(stereogenic_atom_stereopermutators)
+      True
+      >>> len(stereogenic_atom_stereopermutators) # But only one of them is stereogenic here
+      1
+      >>> # Bond stereopermutators are instantiated only where they are stereogenic
+      >>> # or conserve information on relative spatial orientation
+      >>> len(bond_permutators) > len(stereogenic_bond_stereopermutators)
+      False
+      >>> len(stereogenic_bond_stereopermutators)
+      1
+      >>> mol.has_unassigned_permutators() # The stereo of the double bond is unspecified
+      True
+      >>> mol.has_zero_assignment_permutators()
+      False
+      >>> double_bond_index = masm.BondIndex(1, 2)
+      >>> assert mol.graph.bond_type(double_bond_index) == masm.BondType.Double
+      >>> # When looking up a stereopermutator, remember that you can get None back
+      >>> bond_stereopermutator = mol.stereopermutators.option(double_bond_index)
+      >>> bond_stereopermutator is None
+      False
+      >>> is_stereogenic(bond_stereopermutator)
+      True
+    )delim"
   );
 
   stereopermutatorList.def(
     "empty",
     &StereopermutatorList::empty,
-    "Whether the list is empty or not"
+    R"delim(
+      Whether the list is empty or not. Remember that since atom
+      stereopermutators are instantiated on all non-terminal atoms, this is
+      rare.
+
+      >>> import molassembler as masm
+      >>> h2 = masm.Molecule() # Default constructor makes the diatomic hydrogen molecule
+      >>> h2.stereopermutators.empty() # Both atoms are terminal here, so no permutators
+      True
+    )delim"
   );
 
   stereopermutatorList.def(
@@ -64,13 +107,13 @@ void init_stereopermutator_list(pybind11::module& m) {
   stereopermutatorList.def(
     "A",
     &StereopermutatorList::A,
-    "Returns the number of :class:`AtomStereopermutator`"
+    "Returns the number of :class:`AtomStereopermutator` instances stored"
   );
 
   stereopermutatorList.def(
     "B",
     &StereopermutatorList::B,
-    "Returns the number of :class:`BondStereopermutator`"
+    "Returns the number of :class:`BondStereopermutator` instances stored"
   );
 
   stereopermutatorList.def(

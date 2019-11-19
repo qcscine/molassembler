@@ -14,6 +14,7 @@
 
 #include "molassembler/DistanceGeometry/ConformerGeneration.h"
 #include "molassembler/IO.h"
+#include "molassembler/IO/SmilesParser.h"
 #include "molassembler/Log.h"
 
 #include <fstream>
@@ -125,6 +126,11 @@ int main(int argc, char* argv[]) {
       "Read molecule to generate from file"
     )
     (
+      "line_notation,l",
+      boost::program_options::value<std::string>(),
+      "Generate molecule from passed SMILES string"
+    )
+    (
       "partiality,p",
       boost::program_options::value<unsigned>(),
       "Set metrization partiality option (Default: full)"
@@ -196,95 +202,106 @@ int main(int argc, char* argv[]) {
   }
 
 /* Generating work */
+  std::string baseName;
+  Molecule mol;
+
   // Generate from file
   if(options_variables_map.count("from_file") == 1) {
     auto filename = options_variables_map["from_file"].as<std::string>();
 
     if(!boost::filesystem::exists(filename)) {
-      std::cout << "The specified file could not be found!" << std::endl;
-      return 0;
+      std::cout << "The specified file could not be found!\n";
+      return 1;
     }
 
-    auto mol = IO::read(filename);
-
-    std::cout << mol << std::endl;
+    mol = IO::read(filename);
 
     boost::filesystem::path filepath {filename};
-    std::string filestem = filepath.stem().string();
+    baseName = filepath.stem().string();
+  } else if(options_variables_map.count("line_notation") == 1) {
+    mol = IO::experimental::parseSmilesSingleMolecule(
+      options_variables_map["line_notation"].as<std::string>()
+    );
+    baseName = "smiles";
 
-    std::ofstream graphFile(filestem +  "-graph.dot");
-    graphFile << mol.dumpGraphviz();
-    graphFile.close();
+    std::cout << mol << "\n";
+  } else {
+    std::cout << "No molecule input specified!\n";
+    return 1;
+  }
 
-    DistanceGeometry::Configuration DGConfiguration;
-    DGConfiguration.partiality = metrizationOption;
-    DGConfiguration.refinementStepLimit = nSteps;
+  std::ofstream graphFile(baseName +  "-graph.dot");
+  graphFile << mol.dumpGraphviz();
+  graphFile.close();
+
+  DistanceGeometry::Configuration DGConfiguration;
+  DGConfiguration.partiality = metrizationOption;
+  DGConfiguration.refinementStepLimit = nSteps;
 
 #ifndef NDEBUG
-    auto debugData = DistanceGeometry::debugRefinement(
+  auto debugData = DistanceGeometry::debugRefinement(
+    mol,
+    nStructures,
+    DGConfiguration
+  );
+
+  for(const auto& enumPair : temple::adaptors::enumerate(debugData)) {
+    const auto& structNum = enumPair.index;
+    const auto& refinementData = enumPair.value;
+
+    std::string structBaseName = baseName + "-"s + std::to_string(structNum);
+
+    writeProgressFiles(
       mol,
-      nStructures,
-      DGConfiguration
+      structBaseName,
+      refinementData
     );
 
-    for(const auto& enumPair : temple::adaptors::enumerate(debugData)) {
-      const auto& structNum = enumPair.index;
-      const auto& refinementData = enumPair.value;
-
-      std::string baseName = filestem + "-"s + std::to_string(structNum);
-
-      writeProgressFiles(
-        mol,
-        baseName,
-        refinementData
-      );
-
-      IO::write(
-        filestem + "-"s + std::to_string(structNum) + "-last.mol"s,
-        mol,
-        DistanceGeometry::detail::convertToAngstromWrapper(
-          DistanceGeometry::detail::gather(refinementData.steps.back().positions)
-        )
-      );
-    }
-
-    auto failures = temple::sum(
-      temple::map(
-        debugData,
-        [](const auto& refinementData) -> unsigned {
-          return static_cast<unsigned>(refinementData.isFailure);
-        }
+    IO::write(
+      structBaseName + "-last.mol"s,
+      mol,
+      DistanceGeometry::detail::convertToAngstromWrapper(
+        DistanceGeometry::detail::gather(refinementData.steps.back().positions)
       )
     );
-
-    if(failures > 0) {
-      std::cout << "WARNING: " << failures << " refinements failed.\n";
-    }
-#else
-    auto conformers = DistanceGeometry::run(
-      mol,
-      nStructures,
-      DGConfiguration
-    );
-
-    unsigned i = 0;
-    unsigned failures = 0;
-    for(const auto& conformerResult : conformers) {
-      if(conformerResult) {
-        IO::write(
-          filestem + "-"s + std::to_string(i) + "-last.mol"s,
-          mol,
-          conformerResult.value()
-        );
-      } else {
-        std::cout << "Conformer " << i << " failed: " << conformerResult.error().message() << "\n";
-        ++failures;
-      }
-
-      ++i;
-    }
-
-    std::cout << "WARNING: " << failures << " refinement(s) failed.\n";
-#endif
   }
+
+  auto failures = temple::sum(
+    temple::map(
+      debugData,
+      [](const auto& refinementData) -> unsigned {
+        return static_cast<unsigned>(refinementData.isFailure);
+      }
+    )
+  );
+
+  if(failures > 0) {
+    std::cout << "WARNING: " << failures << " refinements failed.\n";
+  }
+#else
+  auto conformers = DistanceGeometry::run(
+    mol,
+    nStructures,
+    DGConfiguration
+  );
+
+  unsigned i = 0;
+  unsigned failures = 0;
+  for(const auto& conformerResult : conformers) {
+    if(conformerResult) {
+      IO::write(
+        baseName + "-"s + std::to_string(i) + "-last.mol"s,
+        mol,
+        conformerResult.value()
+      );
+    } else {
+      std::cout << "Conformer " << i << " failed: " << conformerResult.error().message() << "\n";
+      ++failures;
+    }
+
+    ++i;
+  }
+
+  std::cout << "WARNING: " << failures << " refinement(s) failed.\n";
+#endif
 }

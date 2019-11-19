@@ -17,7 +17,20 @@ void init_bond_stereopermutator(pybind11::module& m) {
     "BondStereopermutator",
     R"delim(
       Handles specific relative arrangements of two atom stereopermutators
-      joined by a bond.
+      joined by a bond. This includes, importantly, E/Z stereocenters at double
+      bonds.
+
+      >>> # The bond stereopermutator in but-2z-ene
+      >>> import molassembler as masm
+      >>> z_butene = masm.io.experimental.from_smiles("C/C=C\C")
+      >>> bond_index = masm.BondIndex(1, 2)
+      >>> assert z_butene.graph.bond_type(bond_index) = masm.BondType.Double
+      >>> permutator = masm.stereopermutators.option(bond_index)
+      >>> assert permutator is not None
+      >>> permutator.assigned is not None
+      True
+      >>> permutator.num_assignments
+      2
     )delim"
   );
 
@@ -44,6 +57,18 @@ void init_bond_stereopermutator(pybind11::module& m) {
     R"delim(
       Returns an integer indicating the assignment of the stereopermutator or
       ``None`` if the stereopermutator is unassigned.
+
+      >>> # An unassigned bond stereopermutator
+      >>> import molassembler as masm
+      >>> butene = masm.io.experimental.from_smiles("CC=CC")
+      >>> bond_index = masm.BondIndex(1, 2)
+      >>> assert z_butene.graph.bond_type(bond_index) = masm.BondType.Double
+      >>> permutator = masm.stereopermutators.option(bond_index)
+      >>> assert permutator is not None
+      >>> permutator.assigned is None
+      True
+      >>> permutator.num_assignments
+      2
     )delim"
   );
 
@@ -54,6 +79,18 @@ void init_bond_stereopermutator(pybind11::module& m) {
       Returns an integer indicating the index of permutation if the
       stereopermutator is assigned or ``None`` if the stereopermutator is
       unassigned.
+
+      >>> # A case in which the number of abstract and feasible permutations
+      >>> # differ: bond stereopermutators in small cycles (<= 6)
+      >>> import molassembler as masm
+      >>> benzene = masm.io.experimental.from_smiles("C1=CC=CC=C1")
+      >>> permutators = benzene.stereopermutators.bond_stereopermutators()
+      >>> has_two_stereopermutations = lambda p: p.num_stereopermutations == 2
+      >>> has_one_assignment = lamda p: p.num_assignments == 1
+      >>> all(map(has_two_stereopermutations, permutators))
+      True
+      >>> all(map(has_one_assignment, permutators))
+      True
     )delim"
   );
 
@@ -86,7 +123,8 @@ void init_bond_stereopermutator(pybind11::module& m) {
     pybind11::arg("stereopermutator_b"),
     pybind11::arg("site_index_b"),
     R"delim(
-      Returns the dihedral angle between two sites of the constituting atom stereopermutators
+      Returns the dihedral angle between two sites of the constituting atom
+      stereopermutators in radians
 
       You can glean site indices from the individual constituting atom
       stereopermutators' rankings.

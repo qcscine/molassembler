@@ -24,6 +24,13 @@ void init_outer_graph(pybind11::module& m) {
   );
 
   outerGraph.def(
+    "atoms_of_element",
+    &OuterGraph::atomsOfElement,
+    pybind11::arg("element_type"),
+    "Returns atoms matching an element type"
+  );
+
+  outerGraph.def(
     "bond_orders",
     &OuterGraph::bondOrders,
     "Generates a BondOrderCollection representation of the molecule connectivity"

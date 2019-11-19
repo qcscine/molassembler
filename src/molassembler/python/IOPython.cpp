@@ -7,6 +7,7 @@
 #include "pybind11/eigen.h"
 
 #include "molassembler/IO.h"
+#include "molassembler/IO/SmilesParser.h"
 #include "molassembler/Molecule.h"
 
 #include "Utils/Typenames.h"
@@ -17,6 +18,77 @@ void init_io(pybind11::module& m) {
 
   auto io = m.def_submodule("io");
   io.doc() = R"(IO Submodule)";
+
+  auto experimental = m.def_submodule("experimental");
+  experimental.doc() = R"(Experimental IO submodule)";
+
+  experimental.def(
+    "from_smiles_multiple",
+    &IO::experimental::parseSmiles,
+    pybind11::arg("smiles_str"),
+    R"delim(
+      Parse a smiles string containing possibly multiple molecules
+
+      The smiles parser is implemented according to the OpenSMILES spec. It
+      supports the following features:
+      - Arbitrarily many molecules in a string
+      - Isotope markers (as long as they exist in Scine::Utils::ElementType)
+      - Valence filling of the organic subset
+      - Set shapes from VSEPR using (possibly) supplied charge
+      - Ring closures
+      - Stereo markers
+        - Double bond
+        - Tetrahedral (@ / @@ / @TH1 / @TH2)
+        - Square planar (@SP1 - @SP3)
+        - Trigonal bipyramidal (@TB1 - @TB20)
+        - Octahedral (@OH1 - @OH30)
+
+      :param smiles_str: A smiles string containing possibly multiple molecules
+      :rtype: List[molassembler.Molecule]
+
+      >>> methane_and_ammonia = from_smiles_multiple("C.[NH4+]")
+      >>> len(methane_and_ammonia) == 2
+      True
+    )delim"
+  );
+
+  experimental.def(
+    "from_smiles",
+    &IO::experimental::parseSmilesSingleMolecule,
+    pybind11::arg("smiles_str"),
+    R"delim(
+      Parse a smiles string containing only a single molecule
+
+      The smiles parser is implemented according to the OpenSMILES spec. It
+      supports the following features:
+      - Arbitrarily many molecules in a string
+      - Isotope markers (as long as they exist in Scine::Utils::ElementType)
+      - Valence filling of the organic subset
+      - Set shapes from VSEPR using (possibly) supplied charge
+      - Ring closures
+      - Stereo markers
+        - Double bond
+        - Tetrahedral (@ / @@ / @TH1 / @TH2)
+        - Square planar (@SP1 - @SP3)
+        - Trigonal bipyramidal (@TB1 - @TB20)
+        - Octahedral (@OH1 - @OH30)
+
+      :param smiles_str: A smiles string containing a single molecule
+      :rtype: molassembler.Molecule
+
+      >>> import scine_utils_os as utils
+      >>> methane = from_smiles("C")
+      >>> methane.graph.N == 4
+      True
+      >>> cobalt_complex = from_smiles("Br[Co@OH12](Cl)(I)(F)(S)C")
+      >>> cobalt_index = cobalt_complex.graph.atoms_of_element(utils.ElementType.Co)[0]
+      >>> permutator = cobalt_complex.stereopermutators.option(cobalt_index)
+      >>> permutator is not None
+      True
+      >>> permutator.assigned is not None
+      True
+    )delim"
+  );
 
   /* Line notations */
   pybind11::class_<IO::LineNotation> lineNotation(

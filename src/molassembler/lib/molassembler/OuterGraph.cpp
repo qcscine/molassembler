@@ -83,6 +83,16 @@ bool OuterGraph::adjacent(const AtomIndex a, const AtomIndex b) const {
   );
 }
 
+std::vector<AtomIndex> OuterGraph::atomsOfElement(const Utils::ElementType e) const {
+  std::vector<AtomIndex> matches;
+  for(AtomIndex i : boost::make_iterator_range(inner().vertices())) {
+    if(inner().elementType(i) == e) {
+      matches.push_back(i);
+    }
+  }
+  return matches;
+}
+
 boost::optional<BondIndex> OuterGraph::bond(const AtomIndex a, const AtomIndex b) const {
   if(auto edgeOption = inner().edgeOption(a, b)) {
     return toOuter(edgeOption.value(), inner());
