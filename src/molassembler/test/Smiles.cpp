@@ -180,7 +180,6 @@ BOOST_AUTO_TEST_CASE(IdenticalSmiles) {
   //   {"c1occc1", "C1OC=CC=1"},
   //   {"c1ccc1", "C1=CC=C1"},
   //   {"c1c2c3c4cc1.Br2.Cl3.Cl4", "C1=CC(=C(C(=C1)Br)Cl)Cl"}, // Aromatics + dot
-
   for(const auto& pair : pairs) {
     Molecule a, b;
     BOOST_REQUIRE_NO_THROW(a = expectSingle(IO::experimental::parseSmiles(pair.first)));
