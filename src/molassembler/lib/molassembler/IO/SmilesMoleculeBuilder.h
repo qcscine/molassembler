@@ -96,6 +96,13 @@ private:
 
 //!@name Private member functions
 //!@{
+  //! @brief Set shapes according to specified charges and stereo markers
+  void setShapes(
+    std::vector<Molecule>& molecules,
+    const std::vector<unsigned>& componentMap,
+    const std::vector<InnerGraph::Vertex>& indexInComponentMap
+  );
+
   //! @brief Set atom stereo post-parse and conversion to molecules
   void setAtomStereo(
     std::vector<Molecule>& molecules,

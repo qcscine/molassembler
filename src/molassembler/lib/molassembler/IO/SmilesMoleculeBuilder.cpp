@@ -7,6 +7,7 @@
 #include "molassembler/RankingInformation.h"
 #include "molassembler/Graph/InnerGraph.h"
 #include "molassembler/Modeling/BondDistance.h"
+#include "molassembler/Modeling/LocalGeometryModel.h"
 #include "molassembler/Molecule.h"
 #include "shapes/Data.h"
 
@@ -113,17 +114,16 @@ BondType MoleculeBuilder::mutualBondType(
 std::vector<unsigned> MoleculeBuilder::shapeMap(const ChiralData& chiralData) {
   if(chiralData.shape == Shapes::Shape::Tetrahedron) {
     switch(chiralData.chiralIndex) {
-      case 0: return {{0, 1, 2, 3}}; // @, TH1
-      case 1: return {{0, 1, 3, 2}}; // @@, TH2
+      case 1: return {{0, 1, 2, 3}}; // @, TH1
+      case 2: return {{0, 1, 3, 2}}; // @@, TH2
     }
   } else if(chiralData.shape == Shapes::Shape::Square) {
     switch(chiralData.chiralIndex) {
-      case 0: return {{0, 1, 2, 3}}; // SP1 = U
-      case 1: return {{0, 2, 3, 1}}; // SP2 = 4
-      case 2: return {{3, 2, 0, 1}}; // SP3 = Z
+      case 1: return {{0, 1, 2, 3}}; // SP1 = U
+      case 2: return {{0, 2, 3, 1}}; // SP2 = 4
+      case 3: return {{3, 2, 0, 1}}; // SP3 = Z
     }
   } else if(chiralData.shape == Shapes::Shape::TrigonalBipyramid) {
-    // These are 1-based since they're read as integers, not matched in symbols
     switch(chiralData.chiralIndex) {
       case  1: return {{1, 2, 3, 0, 4}}; // TB1 = a, e, @
       case  2: return {{1, 3, 2, 0, 4}}; // TB2 = a, e, @@
@@ -145,6 +145,50 @@ std::vector<unsigned> MoleculeBuilder::shapeMap(const ChiralData& chiralData) {
       case 18: return {{0, 2, 1, 3, 4}}; // TB18 = d, e, @@
       case 19: return {{0, 4, 1, 2, 3}}; // TB19 = c, d, @@
       case 20: return {{0, 3, 1, 2, 4}}; // TB20 = c, e, @@
+    }
+  } else if(chiralData.shape == Shapes::Shape::Octahedron) {
+    switch(chiralData.chiralIndex) {
+      /* Look along an axis, what remains is a square with a winding. So
+       * square shapes are reused with definitions of square shapes and windings
+       */
+      case  1: return {{1, 2, 3, 4, 0, 5}}; // OH1 = a, f, U, @
+      case  2: return {{4, 3, 2, 1, 0, 5}}; // OH2 = a, f, U, @@
+      case  3: return {{1, 2, 3, 5, 0, 4}}; // OH3 = a, e, U, @
+      case 16: return {{5, 3, 2, 1, 0, 4}}; // OH16 = a, e, U, @@
+      case  6: return {{1, 2, 4, 5, 0, 3}}; // OH6 = a, d, U, @
+      case 18: return {{5, 4, 2, 1, 0, 3}}; // OH18 = a, d, U, @@
+      case 19: return {{1, 3, 4, 5, 0, 2}}; // OH19 = a, c, U, @
+      case 24: return {{5, 4, 3, 1, 0, 2}}; // OH24 = a, c, U, @@
+      case 25: return {{2, 3, 4, 5, 0, 1}}; // OH25 = a, b, U, @
+      case 30: return {{5, 4, 3, 2, 0, 1}}; // OH30 = a, b, U, @@
+
+      /* Note: For the Z shape, the connection between the first two atoms
+       * determines the winding.
+       */
+      case  4: return {{1, 2, 4, 3, 0, 5}}; // OH4 = a, f, Z, @
+      case 14: return {{3, 4, 2, 1, 0, 5}}; // OH14 = a, f, Z, @@
+      case  5: return {{1, 2, 5, 3, 0, 4}}; // OH5 = a, e, Z, @
+      case 15: return {{3, 5, 2, 1, 0, 4}}; // OH15 = a, e, Z, @@
+      case  7: return {{1, 2, 5, 4, 0, 3}}; // OH7 = a, d, Z, @
+      case 17: return {{4, 5, 2, 1, 0, 3}}; // OH17 = a, d, Z, @@
+      case 20: return {{1, 3, 5, 4, 0, 2}}; // OH20 = a, c, Z, @
+      case 23: return {{4, 5, 3, 1, 0, 2}}; // OH23 = a, c, Z, @@
+      case 26: return {{2, 3, 5, 4, 0, 1}}; // OH26 = a, b, Z, @
+      case 29: return {{4, 5, 3, 2, 0, 1}}; // OH29 = a, b, Z, @@
+
+      /* For the 4 shape, the connection between the second and third atom
+       * determines the winding.
+       */
+      case 10: return {{4, 2, 3, 1, 0, 5}}; // OH10 = a, f, 4, @
+      case  8: return {{1, 3, 2, 4, 0, 5}}; // OH8 = a, f, 4, @@
+      case 11: return {{5, 2, 3, 1, 0, 4}}; // OH11 = a, e, 4, @
+      case  9: return {{1, 3, 2, 5, 0, 4}}; // OH9 = a, e, 4, @@
+      case 13: return {{5, 2, 4, 1, 0, 3}}; // OH13 = a, d, 4, @
+      case 12: return {{1, 4, 2, 5, 0, 3}}; // OH12 = a, d, 4, @@
+      case 22: return {{5, 3, 4, 1, 0, 2}}; // OH22 = a, c, 4, @
+      case 21: return {{1, 4, 3, 5, 0, 2}}; // OH21 = a, c, 4, @@
+      case 28: return {{5, 3, 4, 2, 0, 1}}; // OH28 = a, b, 4, @
+      case 27: return {{2, 4, 3, 5, 0, 1}}; // OH27 = a, b, 4, @@
     }
   }
 
@@ -236,6 +280,68 @@ void MoleculeBuilder::addRingClosure(const BondData& bond) {
   }
 }
 
+void MoleculeBuilder::setShapes(
+  std::vector<Molecule>& molecules,
+  const std::vector<unsigned>& componentMap,
+  const std::vector<InnerGraph::Vertex>& indexInComponentMap
+) {
+  const unsigned N = vertexData.size();
+  for(unsigned i = 0; i < N; ++i) {
+    AtomData& atomData = vertexData.at(i);
+    Molecule& mol = molecules.at(componentMap.at(i));
+    const AtomIndex atomIndex = indexInComponentMap.at(i);
+
+    if(atomData.chiralOptional) {
+      ChiralData& chiralData = atomData.chiralOptional.value();
+      const auto& stereoOption = mol.stereopermutators().option(atomIndex);
+      if(!stereoOption) {
+        continue;
+      }
+      const unsigned numSites = stereoOption->getRanking().sites.size();
+      if(numSites == Shapes::size(chiralData.shape)) {
+        mol.setShapeAtAtom(atomIndex, chiralData.shape);
+      } else if(chiralData.chiralIndex <= 2) {
+        /* We interpreted an @/@@ primarily as Tetrahedron 1 / 2, but
+         * they're also in use for trigonal biypramid and octahedron markers
+         * as shortcuts for TB1/TB2 and OH1/OH2.
+         */
+        if(numSites == 5) {
+          chiralData.shape = Shapes::Shape::TrigonalBipyramid;
+          mol.setShapeAtAtom(atomIndex, chiralData.shape);
+        } else if(numSites == 6) {
+          chiralData.shape = Shapes::Shape::Octahedron;
+          mol.setShapeAtAtom(atomIndex, chiralData.shape);
+        }
+      }
+    } else if(atomData.chargeOptional) {
+      /* We need to call VSEPR with the supplied formal charge and make sure
+       * the right shape has been inferred. If not, we need to set it.
+       */
+      const auto& stereoOption = mol.stereopermutators().option(atomIndex);
+      if(!stereoOption) {
+        // This can happen for ions, for instance, so we consider it harmless
+        continue;
+      }
+
+      auto modelArgs = LocalGeometry::reduceToSiteInformation(
+        mol.graph(),
+        atomIndex,
+        stereoOption->getRanking()
+      );
+
+      auto shapeOption = LocalGeometry::vsepr(
+        mol.graph().elementType(atomIndex),
+        modelArgs,
+        *atomData.chargeOptional
+      );
+
+      if(shapeOption && shapeOption.value() != stereoOption->getShape()) {
+        mol.setShapeAtAtom(atomIndex, *shapeOption);
+      }
+    }
+  }
+}
+
 void MoleculeBuilder::setAtomStereo(
   std::vector<Molecule>& molecules,
   const std::vector<unsigned>& componentMap,
@@ -254,13 +360,12 @@ void MoleculeBuilder::setAtomStereo(
     auto stereopermutatorOptional = mol.stereopermutators().option(
       indexInComponentMap.at(i)
     );
-    assert(stereopermutatorOptional);
-    if(stereopermutatorOptional->getShape() != chiralData.shape) {
-      mol.setShapeAtAtom(stereopermutatorOptional->centralIndex(), chiralData.shape);
+    if(!stereopermutatorOptional) {
+      throw std::logic_error("Atom stereopermutator missing for stereomarked atom!");
     }
-    stereopermutatorOptional = mol.stereopermutators().option(
-      indexInComponentMap.at(i)
-    );
+    if(stereopermutatorOptional->getShape() != chiralData.shape) {
+      throw std::logic_error("Mismatched shape for set chiral data");
+    }
     const AtomStereopermutator& permutator = *stereopermutatorOptional;
     if(permutator.numAssignments() < 2) {
       std::cerr << "Warning: Smiles contains a stereo marker for a non-stereogenic " << Shapes::name(chiralData.shape) << " shape center\n";
@@ -312,6 +417,7 @@ void MoleculeBuilder::setAtomStereo(
     std::vector<unsigned> siteToShapeVertexMap(S);
     for(unsigned j = 0; j < S; ++j) {
       siteToShapeVertexMap.at(vertexMap.at(j)) = sortedSites.at(j);
+      // siteToShapeVertexMap.at(j) = sortedSites.at(vertexMap.at(j));
     }
 
     /* Create a stereopermutation and look for it in the list of feasibles */
@@ -691,11 +797,10 @@ std::vector<Molecule> MoleculeBuilder::interpret() {
     molecules.emplace_back(
       OuterGraph(std::move(precursor))
     );
-
-    /* TODO set shapes here */
   }
 
   /* Stereo routines */
+  setShapes(molecules, componentMap, indexInComponentMap);
   setAtomStereo(molecules, componentMap, indexInComponentMap);
   setBondStereo(molecules, componentMap, indexInComponentMap);
 

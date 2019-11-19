@@ -119,15 +119,15 @@ struct element_symbols_ : qi::symbols<char, ElementData> {
 struct chiral_subset_ : qi::symbols<char, ChiralData> {
   chiral_subset_() {
     add
-      ("@", {Shapes::Shape::Tetrahedron, 0})
-      ("@@", {Shapes::Shape::Tetrahedron, 1})
-      ("@TH1", {Shapes::Shape::Tetrahedron, 0}) // Same as @
-      ("@TH2", {Shapes::Shape::Tetrahedron, 1}) // Same as @@
-      // ("@AL1", {Shapes::Shape::Tetrahedron, 0}) // Allene
-      // ("@AL2", {Shapes::Shape::Tetrahedron, 1}) // Allene
-      ("@SP1", {Shapes::Shape::Square, 0})
-      ("@SP2", {Shapes::Shape::Square, 1})
-      ("@SP3", {Shapes::Shape::Square, 2});
+      ("@", {Shapes::Shape::Tetrahedron, 1})
+      ("@@", {Shapes::Shape::Tetrahedron, 2})
+      ("@TH1", {Shapes::Shape::Tetrahedron, 1}) // Same as @
+      ("@TH2", {Shapes::Shape::Tetrahedron, 2}) // Same as @@
+      // ("@AL1", {Shapes::Shape::Tetrahedron, 1}) // Allene
+      // ("@AL2", {Shapes::Shape::Tetrahedron, 2}) // Allene
+      ("@SP1", {Shapes::Shape::Square, 1})
+      ("@SP2", {Shapes::Shape::Square, 2})
+      ("@SP3", {Shapes::Shape::Square, 3});
   }
 } chiral_subset;
 

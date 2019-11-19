@@ -149,31 +149,35 @@ BOOST_AUTO_TEST_CASE(RejectInvalidSmiles) {
 
 BOOST_AUTO_TEST_CASE(IdenticalSmiles) {
   const std::vector<std::pair<std::string, std::string>> pairs {
-    {"C", "[CH4]"},
+    {"C", "[CH4]"}, // Implicit hydrogens
     {"[H][CH2][H]", "[H]C([H])([H])[H]"},
-    {"C-C", "CC"},
+    {"C-C", "CC"}, // Implicit bonds
     {"C-C-O", "CCO"},
     {"C-C=C-C", "CC=CC"},
-    {"c1ccccc1", "C1=CC=CC=C1"},
+    {"c1ccccc1", "C1=CC=CC=C1"}, // Aromatics
     {"c1ccc2CCCc2c1", "C1=CC=CC(CCC2)=C12"},
     {"c1occc1", "C1OC=CC=1"},
     {"c1ccc1", "C1=CC=C1"},
     {"C1.C1", "CC"}, // Odd use of dot, but legal
     {"C1.C12.C2", "CCC"},
-    {"c1c2c3c4cc1.Br2.Cl3.Cl4", "C1=CC(=C(C(=C1)Br)Cl)Cl"},
-    {"N[C@](Br)(O)C", "Br[C@](O)(N)C"},
+    {"c1c2c3c4cc1.Br2.Cl3.Cl4", "C1=CC(=C(C(=C1)Br)Cl)Cl"}, // Aromatics + dot
+    {"N[C@](Br)(O)C", "Br[C@](O)(N)C"}, // Tetrahedral stereo
     {"O[C@](Br)(C)N", "Br[C@](C)(O)N"},
     {"C[C@](Br)(N)O", "Br[C@](N)(C)O"},
     {"C[C@@](Br)(O)N", "Br[C@@](N)(O)C"},
     {"[C@@](C)(Br)(O)N", "[C@@](Br)(N)(O)C"},
     {"N[C@H](O)C", "[H][C@](N)(O)C"},
     {"FC1C[C@](Br)(Cl)CCC1", "[C@]1(Br)(Cl)CCCC(F)C1"},
-    {"F/C=C/F", R"y(F\C=C\F)y"},
+    {"F/C=C/F", R"y(F\C=C\F)y"}, // Double bond stereo
     {"F/C=C/F", R"y(C(\F)=C/F)y"},
     {R"y(F\C=C/F)y", R"y(C(/F)=C/F)y"},
-    {"S[As@TB1](F)(Cl)(Br)N", "S[As@TB5](F)(N)(Cl)Br"},
-    {"F[As@TB15](Cl)(S)(Br)N", "S[As@TB2](Br)(Cl)(F)N"},
-    {"F[As@TB10](S)(Cl)(N)Br", "Br[As@TB20](Cl)(S)(F)N"},
+    {"S[As@TB1](F)(Cl)(Br)N", "S[As@TB2](Br)(Cl)(F)N"}, // Trig bipy stereo
+    {"S[As@TB5](F)(N)(Cl)Br", "F[As@TB10](S)(Cl)(N)Br"},
+    {"F[As@TB15](Cl)(S)(Br)N", "Br[As@TB20](Cl)(S)(F)N"},
+    {"C[Co@](F)(Cl)(Br)(I)S", "F[Co@@](S)(I)(C)(Cl)Br"}, // Octahedral stereo
+    {"S[Co@OH5](F)(I)(Cl)(C)Br", "Br[Co@OH9](C)(S)(Cl)(F)I"},
+    {"Br[Co@OH12](Cl)(I)(F)(S)C", "Cl[Co@OH15](C)(Br)(F)(I)S"},
+    {"Cl[Co@OH19](C)(I)(F)(S)Br", "I[Co@OH27](Cl)(Br)(F)(S)C"},
   };
 
   for(const auto& pair : pairs) {
