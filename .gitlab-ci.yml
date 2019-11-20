@@ -5,7 +5,6 @@ stages:
   - build
   - test
   - quality_checks
-  - deploy
 
 #
 # GCC Debug test and coverage
@@ -22,7 +21,7 @@ build:gcc_debug:
     - cmake -DSCINE_BUILD_PYTHON_BINDINGS=ON -DPYTHON_EXECUTABLE=$(which python) -DCMAKE_CXX_FLAGS="-g -O0 -coverage" -DCMAKE_EXE_LINKER_FLAGS="-coverage" ..
     - make -j8
   artifacts:
-    expire_in: 4 hours
+    expire_in: 2 hours
     paths:
       - build_gcc_debug
 
@@ -38,68 +37,68 @@ test:gcc_debug:
     - build:gcc_debug
   coverage: '/^TOTAL.*\s+(\d+\%)$/'
   artifacts:
-    expire_in: 4 hours
+    expire_in: 2 hours
 
 #
 # GCC Release test
 #
-#build:gcc_release:
-#  stage: build
-#  tags:
-#    - default_docker
-#  image: gitlab.chab.ethz.ch:4567/reiher/docker/scine-gcc:latest
-#  script:
-#    - mkdir -p build_gcc_release
-#    - cd build_gcc_release
-#    - cmake -DCMAKE_BUILD_TYPE=Release -DSCINE_BUILD_PYTHON_BINDINGS=ON -DPYTHON_EXECUTABLE=$(which python) ..
-#    - make -j8
-#  artifacts:
-#    expire_in: 4 hours
-#    paths:
-#      - build_gcc_release
-#
-#test:gcc_release:
-#  stage: test
-#  tags:
-#    - default_docker
-#  image: gitlab.chab.ethz.ch:4567/reiher/docker/scine-gcc:latest
-#  script:
-#    - (cd build_gcc_release && ctest --output-on-failure)
-#  dependencies:
-#    - build:gcc_release
+build:gcc_release:
+  stage: build
+  tags:
+    - default_docker
+  image: gitlab.chab.ethz.ch:4567/reiher/docker/scine-gcc:latest
+  script:
+    - mkdir -p build_gcc_release
+    - cd build_gcc_release
+    - cmake -DCMAKE_BUILD_TYPE=Release -DSCINE_BUILD_PYTHON_BINDINGS=ON -DPYTHON_EXECUTABLE=$(which python) ..
+    - make -j8
+  artifacts:
+    expire_in: 2 hours
+    paths:
+      - build_gcc_release
+
+test:gcc_release:
+  stage: test
+  tags:
+    - default_docker
+  image: gitlab.chab.ethz.ch:4567/reiher/docker/scine-gcc:latest
+  script:
+    - (cd build_gcc_release && ctest --output-on-failure)
+  dependencies:
+    - build:gcc_release
 
 
 #
 # Clang Release test
 #
-#build:clang_release:
-#  stage: build
-#  tags:
-#    - default_docker
-#  image: gitlab.chab.ethz.ch:4567/reiher/docker/scine-clang:latest
-#  only:
-#    - master
-#  script:
-#    - mkdir -p build_clang
-#    - cd build_clang
-#    - cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_EXPORT_COMPILE_COMMANDS=ON ..
-#    - make -j8
-#  artifacts:
-#    expire_in: 4 hours
-#    paths:
-#      - build_clang
-#
-#test:clang_release:
-#  stage: test
-#  tags:
-#    - default_docker
-#  image: gitlab.chab.ethz.ch:4567/reiher/docker/scine-clang:latest
-#  only:
-#    - master
-#  script:
-#    - (cd build_clang && ctest --output-on-failure)
-#  dependencies:
-#    - build:clang_release
+build:clang_release:
+  stage: build
+  tags:
+    - default_docker
+  image: gitlab.chab.ethz.ch:4567/reiher/docker/scine-clang:latest
+  only:
+    - master
+  script:
+    - mkdir -p build_clang
+    - cd build_clang
+    - cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_EXPORT_COMPILE_COMMANDS=ON ..
+    - make -j8
+  artifacts:
+    expire_in: 4 hours
+    paths:
+      - build_clang
+
+test:clang_release:
+  stage: test
+  tags:
+    - default_docker
+  image: gitlab.chab.ethz.ch:4567/reiher/docker/scine-clang:latest
+  only:
+    - master
+  script:
+    - (cd build_clang && ctest --output-on-failure)
+  dependencies:
+    - build:clang_release
 
 #
 # Verify that the ETH license is present in all source files
@@ -112,18 +111,19 @@ eth_license:
   script:
     - bash scripts/license_validity_check.sh
 
-pages:
-  # only:
-  #   - develop
-  stage: deploy
-  script:
-    - mv build_gcc_debug/src/molassembler/python/doc public
-  tags:
-    - default_docker
-  image: gitlab.chab.ethz.ch:4567/reiher/docker/scine-gcc:latest
-  dependencies:
-    - build:gcc_debug
-  artifacts:
-    expire_in: 30 days
-    paths:
-    - public
+# Wishful thinking:
+# pages:
+#   # only:
+#   #   - develop
+#   stage: deploy
+#   script:
+#     - mv build_gcc_debug/src/molassembler/python/doc public
+#   tags:
+#     - default_docker
+#   image: gitlab.chab.ethz.ch:4567/reiher/docker/scine-gcc:latest
+#   dependencies:
+#     - build:gcc_debug
+#   artifacts:
+#     expire_in: 30 days
+#     paths:
+#     - public

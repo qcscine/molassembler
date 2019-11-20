@@ -70,6 +70,30 @@ constexpr InnerGraph::Vertex InnerGraph::removalPlaceholder;
 InnerGraph::InnerGraph() = default;
 InnerGraph::InnerGraph(const InnerGraph::Vertex N) : _graph {N} {}
 
+/* Rule of five members */
+/* Implementation note
+ *
+ * Copying the graph invalidates any stored edge_descriptors in the properties
+ * since the copied graph is now elsewhere in memory and edge_descriptor's
+ * property member is no longer correct, leading to subtle bugs.
+ *
+ * Moving the graph does not invalidate descriptors since the graph does
+ * not change location in memory.
+ */
+InnerGraph::InnerGraph(const InnerGraph& other) : _graph(other._graph) {}
+InnerGraph::InnerGraph(InnerGraph&& other) = default;
+InnerGraph& InnerGraph::operator = (const InnerGraph& other) {
+  _graph = other._graph;
+  _properties.invalidate();
+  return *this;
+}
+InnerGraph& InnerGraph::operator = (InnerGraph&& other) {
+  _graph = std::move(other._graph);
+  _properties = std::move(other._properties);
+  return *this;
+}
+InnerGraph::~InnerGraph() = default;
+
 /* Modifiers */
 InnerGraph::Edge InnerGraph::addEdge(const Vertex a, const Vertex b, const BondType bondType) {
   /* We have to be careful here since the edge list for a vector is not a set
@@ -195,8 +219,10 @@ bool InnerGraph::canRemove(const Edge& edge) const {
     ).second
   );
 
+  const auto& bridges = removalSafetyData().bridges;
+
   // Removable if the edge is not a bridge
-  return removalSafetyData().bridges.count(edge) == 0;
+  return bridges.count(edge) == 0;
 }
 
 /* Information */
@@ -389,14 +415,15 @@ InnerGraph::RemovalSafetyData InnerGraph::_generateRemovalSafetyData() const {
     componentMap,
     std::back_inserter(articulationVertices)
   );
+  assert(!componentMapData.empty());
 
   // Copy articulation vertices to the set
   for(const auto& vertex : articulationVertices) {
     safetyData.articulationVertices.insert(vertex);
   }
 
-  /* Work out from the biconnected components which edges are bridges: If the
-   * biconnected component encompasses only a single edge, it is a bridge
+  /* Work out from the biconnected components which edges are bridges: If a
+   * biconnected component contains only a single edge, that edge is a bridge
    */
   std::vector<
     std::set<InnerGraph::Edge>
@@ -406,7 +433,7 @@ InnerGraph::RemovalSafetyData InnerGraph::_generateRemovalSafetyData() const {
     const auto& edgeIndex = mapIterPair.first;
     const auto& componentIndex = mapIterPair.second;
 
-    componentSets[componentIndex].insert(edgeIndex);
+    componentSets.at(componentIndex).insert(edgeIndex);
   }
 
   for(const auto& componentSet : componentSets) {

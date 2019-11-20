@@ -101,6 +101,15 @@ public:
   InnerGraph(Vertex N);
 //!@}
 
+//!@name Rule of five members
+//!@{
+  InnerGraph(const InnerGraph& other);
+  InnerGraph(InnerGraph&& other);
+  InnerGraph& operator = (const InnerGraph& other);
+  InnerGraph& operator = (InnerGraph&& other);
+  ~InnerGraph();
+//!@}
+
 //!@name Static members
 //!@{
   //! Placeholder vertex index used to indicate that a vertex has been removed

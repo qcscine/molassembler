@@ -14,7 +14,34 @@
 
 void init_outer_graph(pybind11::module& m) {
   using namespace Scine::molassembler;
-  pybind11::class_<OuterGraph> outerGraph(m, "Graph", "Molecular graph");
+  pybind11::class_<OuterGraph> outerGraph(
+    m,
+    "Graph",
+    R"delim(
+      Molecular graph in which atoms are vertices and bonds are edges.
+
+      >>> import molassembler as masm
+      >>> import scine_utils_os as utils
+      >>> ethane = masm.io.experimental.from_smiles("CC")
+      >>> g = ethane.graph
+      >>> g.atoms_of_element(utils.ElementType.C)
+      [0, 1]
+      >>> g.degree(0)
+      4
+      >>> g.can_remove(0)
+      False
+      >>> g.can_remove(masm.BondIndex(0, 1))
+      False
+      >>> hydrogen_indices = g.atoms_of_element(utils.ElementType.H)
+      >>> can_remove = lambda a : g.can_remove(a)
+      >>> all(map(can_remove, hydrogen_indices))
+      True
+      >>> g.N
+      8
+      >>> g.B
+      7
+    )delim"
+  );
 
   outerGraph.def(
     "adjacent",
