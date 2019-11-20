@@ -5,6 +5,7 @@ stages:
   - build
   - test
   - quality_checks
+  - deploy
 
 #
 # GCC Debug test and coverage
@@ -17,8 +18,8 @@ build:gcc_debug:
   script:
     - mkdir -p build_gcc_debug
     - cd build_gcc_debug
-    - pwd
-    - cmake -DSCINE_BUILD_PYTHON_BINDINGS=ON -DPYTHON_EXECUTABLE=$(which python) -DCMAKE_CXX_FLAGS="-g -O0 -coverage" -DCMAKE_EXE_LINKER_FLAGS="-coverage" ..
+    - pip3 install --user sphinx sphinx_rtd_theme
+    - cmake -DSCINE_BUILD_PYTHON_BINDINGS=ON -DPYTHON_EXECUTABLE=$(which python3) -DCMAKE_CXX_FLAGS="-g -O0 -coverage" -DCMAKE_EXE_LINKER_FLAGS="-coverage" ..
     - make -j8
   artifacts:
     expire_in: 1 day
@@ -42,69 +43,63 @@ test:gcc_debug:
 #
 # GCC Release test
 #
-build:gcc_release:
-  stage: build
-  tags:
-    - default_docker
-  image: gitlab.chab.ethz.ch:4567/reiher/docker/scine-gcc:latest
-  script:
-    - mkdir -p build_gcc_release
-    - cd build_gcc_release
-    - pwd
-    - cmake -DCMAKE_BUILD_TYPE=Release -DSCINE_BUILD_PYTHON_BINDINGS=ON -DPYTHON_EXECUTABLE=$(which python) ..
-    - make -j8
-  artifacts:
-    expire_in: 1 day
-    paths:
-      - build_gcc_release
-
-test:gcc_release:
-  stage: test
-  tags:
-    - default_docker
-  image: gitlab.chab.ethz.ch:4567/reiher/docker/scine-gcc:latest
-  script:
-    - (cd build_gcc_release && ctest --output-on-failure)
-  dependencies:
-    - build:gcc_release
-  artifacts:
-    expire_in: 1 day
+#build:gcc_release:
+#  stage: build
+#  tags:
+#    - default_docker
+#  image: gitlab.chab.ethz.ch:4567/reiher/docker/scine-gcc:latest
+#  script:
+#    - mkdir -p build_gcc_release
+#    - cd build_gcc_release
+#    - cmake -DCMAKE_BUILD_TYPE=Release -DSCINE_BUILD_PYTHON_BINDINGS=ON -DPYTHON_EXECUTABLE=$(which python3) ..
+#    - make -j8
+#  artifacts:
+#    expire_in: 1 day
+#    paths:
+#      - build_gcc_release
+#
+#test:gcc_release:
+#  stage: test
+#  tags:
+#    - default_docker
+#  image: gitlab.chab.ethz.ch:4567/reiher/docker/scine-gcc:latest
+#  script:
+#    - (cd build_gcc_release && ctest --output-on-failure)
+#  dependencies:
+#    - build:gcc_release
 
 
 #
 # Clang Release test
 #
-build:clang_release:
-  stage: build
-  tags:
-    - default_docker
-  image: gitlab.chab.ethz.ch:4567/reiher/docker/scine-clang:latest
-  only:
-    - master
-  script:
-    - mkdir -p build_clang
-    - cd build_clang
-    - pwd
-    - cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_EXPORT_COMPILE_COMMANDS=ON ..
-    - make -j8
-  artifacts:
-    expire_in: 1 day
-    paths:
-      - build_clang
-
-test:clang_release:
-  stage: test
-  tags:
-    - default_docker
-  image: gitlab.chab.ethz.ch:4567/reiher/docker/scine-clang:latest
-  only:
-    - master
-  script:
-    - (cd build_clang && ctest --output-on-failure)
-  dependencies:
-    - build:clang_release
-  artifacts:
-    expire_in: 1 day
+#build:clang_release:
+#  stage: build
+#  tags:
+#    - default_docker
+#  image: gitlab.chab.ethz.ch:4567/reiher/docker/scine-clang:latest
+#  only:
+#    - master
+#  script:
+#    - mkdir -p build_clang
+#    - cd build_clang
+#    - cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_EXPORT_COMPILE_COMMANDS=ON ..
+#    - make -j8
+#  artifacts:
+#    expire_in: 1 day
+#    paths:
+#      - build_clang
+#
+#test:clang_release:
+#  stage: test
+#  tags:
+#    - default_docker
+#  image: gitlab.chab.ethz.ch:4567/reiher/docker/scine-clang:latest
+#  only:
+#    - master
+#  script:
+#    - (cd build_clang && ctest --output-on-failure)
+#  dependencies:
+#    - build:clang_release
 
 #
 # Verify that the ETH license is present in all source files
@@ -116,3 +111,19 @@ eth_license:
   image: gitlab.chab.ethz.ch:4567/reiher/docker/scine-gcc:latest
   script:
     - bash scripts/license_validity_check.sh
+
+pages:
+  # only:
+  #   - develop
+  stage: deploy
+  script:
+    - mv build_gcc_debug/src/molassembler/python/doc public
+  tags:
+    - default_docker
+  image: gitlab.chab.ethz.ch:4567/reiher/docker/scine-gcc:latest
+  dependencies:
+    - build:gcc_debug
+  artifacts:
+    expire_in: 1 day
+    paths:
+    - public
