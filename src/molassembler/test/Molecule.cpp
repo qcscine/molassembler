@@ -472,6 +472,13 @@ BOOST_AUTO_TEST_CASE(MoleculeIsomorphism) {
   );
 }
 
+BOOST_AUTO_TEST_CASE(MoleculeIsotopicInequivalency) {
+  Molecule H2;
+  Molecule HD;
+  HD.setElementType(0, Utils::ElementType::D);
+  BOOST_CHECK(H2 != HD);
+}
+
 // Atom stereocenter assignments are part of strict equivalency
 BOOST_AUTO_TEST_CASE(MoleculeBasicRSInequivalency) {
   // Build an asymmetric tetrahedral carbon

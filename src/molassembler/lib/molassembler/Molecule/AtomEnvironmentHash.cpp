@@ -106,8 +106,10 @@ WideHashType hash(
   const boost::optional<Shapes::Shape>& shapeOptional,
   const boost::optional<unsigned>& assignedOptional
 ) {
-  // 2^7 = 128 will fit all element type atomic numbers
-  constexpr unsigned elementTypeBits = 7;
+  /* The bit representation of element types is 16 bits wide storing both atomic
+   * number and atomic mass number in order to account for isotopes
+   */
+  constexpr unsigned elementTypeBits = 16;
   constexpr unsigned shapeNameBits = temple::Math::ceil(
     temple::Math::log(Shapes::nShapes + 1.0, 2.0)
   );
@@ -129,13 +131,11 @@ WideHashType hash(
     "Element type, bond and shape information no longer fit into a 64-bit unsigned integer"
   );
 
-  /* First 7 bits of the 64 bit unsigned number are from the element type
-   *
-   * Biggest is Cn, which has a value of 112 -> Fits in 7 bits (2^7 = 128)
-   */
+  // First 16 bits of the number are from the element type
   WideHashType value;
   if(bitmask & AtomEnvironmentComponents::ElementTypes) {
-    value = static_cast<WideHashType>(Utils::ElementInfo::Z(elementType));
+    using ElementTypeUnderlying = std::underlying_type<Utils::ElementType>::type;
+    value = static_cast<WideHashType>(static_cast<ElementTypeUnderlying>(elementType));
   } else {
     value = 0;
   }
@@ -149,7 +149,7 @@ WideHashType hash(
    *
    * So, a single bond's information needs 6 bits.
    *
-   * So, left shift by 7 bits (so there are 7 zeros on the right in the bit
+   * So, left shift by 16 bits (so there are 16 zeros on the right in the bit
    * representation, where the element type is stored) plus the current bond
    * number multiplied by the width of a BondInformation hash to place a
    * maximum of 12 bond types (maximum shape size currently)
@@ -176,7 +176,7 @@ WideHashType hash(
     value += (WideHashType(shapeOptional.value()) + 1) << (elementTypeBits + bondsHashSectionWidth);
 
     if(bitmask & AtomEnvironmentComponents::Stereopermutations) {
-      /* The remaining space (128 - (7 + 72 + 5) = 44 bits) is used for the
+      /* The remaining space (128 - (16 + 72 + 5) = 35 bits) is used for the
        * current permutation. Log_2(12!) ~= 29, so we're good.
        */
       WideHashType permutationValue;
