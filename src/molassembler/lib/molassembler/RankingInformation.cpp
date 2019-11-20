@@ -37,7 +37,7 @@ LinkInformation::LinkInformation(
   /* After centralization, the source vertex is first. We need to fix the
    * remaining degree of freedom, which is if that the cycle sequence in
    * between can be reversed. We choose to fix it by making it ascending if
-   * there are at least four vertices in the sequence between the second and
+   * there are at least three vertices in the sequence between the second and
    * second-to-last vertices
    */
 

@@ -46,13 +46,11 @@ struct LinkInformation {
    * @brief The in-order atom sequence of the cycle atom indices
    *
    * @note The cycle sequence is centralized on the source vertex, meaning the
-   * front and back indices are the source vertex
+   * front index is always the source vertex
    *
-   * @note The cycle sequence between the repeated source vertices is
-   * standardized by ordering the first and last vertices of the remaining
-   * sequence ascending (i.e. reversing the part of the sequence in between
-   * front and back indices if the second index is larger than the
-   * second-to-last one)
+   * @note The cycle sequence is standardized by ordering the second and last
+   * vertices of the sequence ascending (i.e. reversing the sequence past the
+   * source vertex if the second index is larger than the last one)
    */
   std::vector<AtomIndex> cycleSequence;
 //!@}

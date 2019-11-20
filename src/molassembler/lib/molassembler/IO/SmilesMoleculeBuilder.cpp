@@ -10,6 +10,7 @@
 #include "molassembler/Stereopermutators/ShapeVertexMaps.h"
 #include "molassembler/RankingInformation.h"
 #include "molassembler/Graph/InnerGraph.h"
+#include "molassembler/Graph/GraphAlgorithms.h"
 #include "molassembler/Modeling/BondDistance.h"
 #include "molassembler/Modeling/LocalGeometryModel.h"
 #include "molassembler/Molecule.h"
@@ -753,6 +754,11 @@ std::vector<Molecule> MoleculeBuilder::interpret() {
       indexInComponentMap.at(target),
       graph.bondType(edge)
     );
+  }
+
+  // Mark eta bonds
+  for(auto& precursor : precursors) {
+    GraphAlgorithms::updateEtaBonds(precursor);
   }
 
   /* Valence fill organic subset in each precursor */

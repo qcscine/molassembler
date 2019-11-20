@@ -14,7 +14,34 @@ void init_ranking_information(pybind11::module& m) {
   pybind11::class_<LinkInformation> linkInformation(
     m,
     "LinkInformation",
-    "Information on links (graph paths) between substituents of a central atom"
+    R"delim(
+      Information on links (graph paths) between substituents of a central atom
+
+      This captures all cycles that the central atom whose substituents are
+      being ranked and its sites are in.
+
+      >>> # Simple example of links between substituents
+      >>> import molassembler as masm
+      >>> import scine_utils_os as utils
+      >>> cyclopropane = molassembler.io.experimental.from_smiles("C1CC1")
+      >>> p = cyclopropane.stereopermutators.option(0)
+      >>> # Sites are single-index, non-haptic
+      >>> site_is_single_index = lambda s: len(s) == 1
+      >>> all(map(site_is_single_index, p.ranking.sites))
+      True
+      >>> # There is a single link between carbon atom sites
+      >>> is_carbon = lambda a: cyclopropane.graph.element_type(a) == utils.ElementType.C
+      >>> site_is_carbon = lambda s: len(s) == 1 and is_carbon(s[0])
+      >>> len(p.ranking.links) == 1
+      True
+      >>> single_link = p.ranking.links[0]
+      >>> all(map(site_is_carbon, single_link.index_pair))
+      True
+      >>> single_link.cycleSequence # Atom indices of cycle members
+      [0, 1, 2]
+      >>> all(map(is_carbon, single_link.cycleSequence)) # All carbons
+      True
+    )delim"
   );
 
   linkInformation.def_readonly(
@@ -27,7 +54,11 @@ void init_ranking_information(pybind11::module& m) {
   linkInformation.def_readonly(
     "cycle_sequence",
     &LinkInformation::cycleSequence,
-    "The in-order atom sequence of the linked sites"
+    R"delim(
+      The in-order atom sequence of the cycle involving the linked sites. The
+      source vertex is always placed at the front of this sequence. The
+      sequence is normalized such that second atom index is less than the last.
+    )delim"
   );
 
   linkInformation.def(pybind11::self == pybind11::self);
@@ -38,7 +69,31 @@ void init_ranking_information(pybind11::module& m) {
   pybind11::class_<RankingInformation> rankingInformation(
     m,
     "RankingInformation",
-    "Ranking data of substituents around a central vertex"
+    R"delim(
+      Ranking data of substituents around a central vertex
+
+      >>> # Model compound with a haptically bonded ethene
+      >>> import molassembler as masm
+      >>> compound_smiles = "[Co]1(C#O)(C#O)(C#O)(C#O)(C#O)C=C1"
+      >>> compound = masm.io.experimental.from_smiles(compound_smiles)
+      >>> cobalt_index = 0
+      >>> p = compound.stereopermutators.option(cobalt_index)
+      >>> is_haptic_site = lambda s: len(s) > 1
+      >>> any(map(is_haptic_site, p.ranking.sites))
+      True
+      >>> # There are no links for this, none of the sites are interconnected
+      >>> len(p.ranking.links)
+      0
+      >>> # All of the sites are ranked equally save for the haptic site
+      >>> p.ranking.ranked_sites
+      [[0, 1, 2, 3, 4], [5]]
+      >>> p.ranking.sites[5] # The constituting atom indices of the haptic site
+      [11, 12]
+      >>> p.ranking.site_index_of_atom(12) # Look up atom indices
+      5
+      >>> p.ranking.rank_index_of_site(1) # Get ranking position of a site
+      0
+    )delim"
   );
 
   rankingInformation.def_readonly(
@@ -50,7 +105,7 @@ void init_ranking_information(pybind11::module& m) {
   rankingInformation.def_readonly(
     "sites",
     &RankingInformation::sites,
-    "An unordered nested list of atom indices that constitute a binding site"
+    "An unordered nested list of atom indices that constitute binding sites"
   );
 
   rankingInformation.def_readonly(
