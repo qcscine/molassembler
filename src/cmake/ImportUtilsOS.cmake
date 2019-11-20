@@ -20,6 +20,10 @@ macro(import_utils_os)
       # option values specified in the imported project.
       add_subdirectory(${scine-utils-os_SOURCE_DIR} ${scine-utils-os_BINARY_DIR})
 
+      if(SCINE_BUILD_PYTHON_BINDINGS)
+        set(SCINE_UTILS_PYTHON_BINARY_PATH ${scine-utils-os_BINARY_DIR}/src/Utils)
+      endif()
+
       # Final check if all went well
       if(TARGET Scine::UtilsOS)
         message(STATUS

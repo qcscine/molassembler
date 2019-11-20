@@ -23,7 +23,7 @@ void init_ranking_information(pybind11::module& m) {
       >>> # Simple example of links between substituents
       >>> import molassembler as masm
       >>> import scine_utils_os as utils
-      >>> cyclopropane = molassembler.io.experimental.from_smiles("C1CC1")
+      >>> cyclopropane = masm.io.experimental.from_smiles("C1CC1")
       >>> p = cyclopropane.stereopermutators.option(0)
       >>> # Sites are single-index, non-haptic
       >>> site_is_single_index = lambda s: len(s) == 1
@@ -35,11 +35,12 @@ void init_ranking_information(pybind11::module& m) {
       >>> len(p.ranking.links) == 1
       True
       >>> single_link = p.ranking.links[0]
-      >>> all(map(site_is_carbon, single_link.index_pair))
+      >>> site_index_is_carbon = lambda s: site_is_carbon(p.ranking.sites[s])
+      >>> all(map(site_index_is_carbon, single_link.index_pair))
       True
-      >>> single_link.cycleSequence # Atom indices of cycle members
+      >>> single_link.cycle_sequence # Atom indices of cycle members
       [0, 1, 2]
-      >>> all(map(is_carbon, single_link.cycleSequence)) # All carbons
+      >>> all(map(is_carbon, single_link.cycle_sequence)) # All carbons
       True
     )delim"
   );

@@ -83,11 +83,23 @@ if(SCINE_BUILD_DOCS)
 
     find_python_module(doctest)
     if(PY_DOCTEST)
-      add_test(
-        NAME PythonBindingsDoctest
-        COMMAND ${PYTHON_EXECUTABLE} -c "import doctest; import molassembler; doctest.testmod(molassembler.molassembler, verbose=True)"
-        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-      )
+      # Add the utils python module path to PYTHONPATH briefly to ensure
+      # in-tree utils modules are found for this test
+      set(CURRENT_PYTHONPATH $ENV{PYTHONPATH})
+      set(ENV{PYTHONPATH} ${SCINE_UTILS_PYTHON_BINARY_PATH}:${CURRENT_PYTHONPATH})
+      find_python_module(scine_utils_os)
+      set(ENV{PYTHONPATH} ${CURRENT_PYTHONPATH})
+
+      if(PY_SCINE_UTILS_OS)
+        add_test(
+          NAME PythonBindingsDoctest
+          COMMAND ${PYTHON_EXECUTABLE} -c "import sys, doctest, molassembler; (f, _) = doctest.testmod(molassembler.molassembler, verbose=True); sys.exit(f > 0)"
+          WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+        )
+        set_tests_properties(PythonBindingsDoctest PROPERTIES
+          ENVIRONMENT PYTHONPATH=${PY_SCINE_UTILS_OS}:$ENV{PYTHONPATH}
+        )
+      endif()
     endif()
   endif()
 endif()
