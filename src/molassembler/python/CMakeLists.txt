@@ -75,8 +75,8 @@ if(SCINE_BUILD_DOCS)
     )
 
     install(
-      DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/doc/html/
-      DESTINATION share/molassembler/sphinx
+      DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/doc/
+      DESTINATION share/molassembler/doc-python
       MESSAGE_NEVER
       OPTIONAL
     )

@@ -25,7 +25,7 @@ add_custom_target(doc
 
 install(
   DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/html/
-  DESTINATION share/molassembler/doxygen
+  DESTINATION share/molassembler/doc-cpp
   MESSAGE_NEVER
   OPTIONAL
 )

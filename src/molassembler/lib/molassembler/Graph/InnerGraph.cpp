@@ -415,7 +415,6 @@ InnerGraph::RemovalSafetyData InnerGraph::_generateRemovalSafetyData() const {
     componentMap,
     std::back_inserter(articulationVertices)
   );
-  assert(!componentMapData.empty());
 
   // Copy articulation vertices to the set
   for(const auto& vertex : articulationVertices) {
