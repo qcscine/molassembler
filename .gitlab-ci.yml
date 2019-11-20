@@ -18,8 +18,8 @@ build:gcc_debug:
   script:
     - mkdir -p build_gcc_debug
     - cd build_gcc_debug
-    - pip3 install --user sphinx sphinx_rtd_theme
-    - cmake -DSCINE_BUILD_PYTHON_BINDINGS=ON -DPYTHON_EXECUTABLE=$(which python3) -DCMAKE_CXX_FLAGS="-g -O0 -coverage" -DCMAKE_EXE_LINKER_FLAGS="-coverage" ..
+    - pip install --user sphinx sphinx_rtd_theme
+    - cmake -DSCINE_BUILD_PYTHON_BINDINGS=ON -DPYTHON_EXECUTABLE=$(which python) -DCMAKE_CXX_FLAGS="-g -O0 -coverage" -DCMAKE_EXE_LINKER_FLAGS="-coverage" ..
     - make -j8
   artifacts:
     expire_in: 4 hours
@@ -51,7 +51,7 @@ test:gcc_debug:
 #  script:
 #    - mkdir -p build_gcc_release
 #    - cd build_gcc_release
-#    - cmake -DCMAKE_BUILD_TYPE=Release -DSCINE_BUILD_PYTHON_BINDINGS=ON -DPYTHON_EXECUTABLE=$(which python3) ..
+#    - cmake -DCMAKE_BUILD_TYPE=Release -DSCINE_BUILD_PYTHON_BINDINGS=ON -DPYTHON_EXECUTABLE=$(which python) ..
 #    - make -j8
 #  artifacts:
 #    expire_in: 4 hours

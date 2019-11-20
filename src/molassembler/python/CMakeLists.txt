@@ -47,7 +47,7 @@ if(PY_PIP)
 
   install(CODE "execute_process(WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR} COMMAND ${PYTHON_EXECUTABLE} -m pip install --prefix=${CMAKE_INSTALL_PREFIX} --upgrade .)")
 else()
-  message(WARNING "Python will not be installed since the python module pip is unavailable.")
+  message(WARNING "The Python bindings will not be installed since the python module pip is unavailable.")
 endif()
 
 if(SCINE_BUILD_DOCS)
@@ -71,7 +71,7 @@ if(SCINE_BUILD_DOCS)
       COMMAND ${PYTHON_EXECUTABLE} -m sphinx -b html -a -E "sphinx" "doc"
       DEPENDS molassembler_python
       SOURCES ${MOLASSEMBLER_PYTHON_DOC_FILES} ${CMAKE_CURRENT_SOURCE_DIR}/sphinx/conf.py
-      COMMENT "Generate python documentation with sphinx"
+      COMMENT "Generate python bindings documentation with sphinx"
     )
 
     install(
@@ -83,23 +83,26 @@ if(SCINE_BUILD_DOCS)
 
     find_python_module(doctest)
     if(PY_DOCTEST)
-      # Add the utils python module path to PYTHONPATH briefly to ensure
-      # in-tree utils modules are found for this test
-      set(CURRENT_PYTHONPATH $ENV{PYTHONPATH})
-      set(ENV{PYTHONPATH} ${SCINE_UTILS_PYTHON_BINARY_PATH}:${CURRENT_PYTHONPATH})
       find_python_module(scine_utils_os)
-      set(ENV{PYTHONPATH} ${CURRENT_PYTHONPATH})
-
-      if(PY_SCINE_UTILS_OS)
+      if(PY_SCINE_UTILS_OS OR SCINE_UTILS_PYTHON_BINARY_PATH)
         add_test(
           NAME PythonBindingsDoctest
           COMMAND ${PYTHON_EXECUTABLE} -c "import sys, doctest, molassembler; (f, _) = doctest.testmod(molassembler.molassembler, verbose=True); sys.exit(f > 0)"
           WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
         )
-        set_tests_properties(PythonBindingsDoctest PROPERTIES
-          ENVIRONMENT PYTHONPATH=${PY_SCINE_UTILS_OS}:$ENV{PYTHONPATH}
-        )
+
+        if(SCINE_UTILS_PYTHON_BINARY_PATH)
+          set_tests_properties(PythonBindingsDoctest PROPERTIES
+            ENVIRONMENT PYTHONPATH=${SCINE_UTILS_PYTHON_BINARY_PATH}:$ENV{PYTHONPATH}
+          )
+        endif()
+      else()
+        message(STATUS "Python documentation testing is disabled as the scine_utils_os module cannot be found and is not being built in-tree")
       endif()
+    else()
+      message(STATUS "Python documentation testing is disabled as doctest cannot be found")
     endif()
+  else()
+    message(STATUS "The Python binding documentation will not be built as sphinx cannot be found")
   endif()
 endif()
