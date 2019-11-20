@@ -48,27 +48,74 @@ void init_outer_graph(pybind11::module& m) {
     &OuterGraph::adjacent,
     pybind11::arg("first_atom"),
     pybind11::arg("second_atom"),
-    "Returns whether two atoms are bonded"
+    R"delim(
+      Returns whether two atoms are bonded
+
+      >>> import molassembler as masm
+      >>> ethane = masm.io.experimental.from_smiles("CC")
+      >>> ethane.graph.degree(0)
+      4
+      >>> [ethane.graph.adjacent(0, a) for a in range(1, ethane.graph.N)]
+      [True, True, True, True, False, False, False]
+    )delim"
   );
 
   outerGraph.def(
     "atoms_of_element",
     &OuterGraph::atomsOfElement,
     pybind11::arg("element_type"),
-    "Returns atoms matching an element type"
+    R"delim(
+      Returns atoms matching an element type
+
+      >>> import molassembler as masm
+      >>> import scine_utils_os as utils
+      >>> ethanol = masm.io.experimental.from_smiles("CCO")
+      >>> ethanol.graph.atoms_of_element(utils.ElementType.O)
+      [2]
+      >>> ethanol.graph.atoms_of_element(utils.ElementType.C)
+      [0, 1]
+    )delim"
   );
 
   outerGraph.def(
     "bond_orders",
     &OuterGraph::bondOrders,
-    "Generates a BondOrderCollection representation of the molecule connectivity"
+    R"delim(
+      Generates a BondOrderCollection representation of the molecule connectivity
+
+      >>> # Convert acetaldehyde's graph into a floating point bond order matrix
+      >>> import molassembler as masm
+      >>> import scine_utils_os as utils
+      >>> acetaldehyde = masm.io.experimental.from_smiles("CC=O")
+      >>> bo = acetaldehyde.graph.bond_orders()
+      >>> bo.empty()
+      False
+      >>> bo.get_order(0, 1) # The order between the carbon atoms
+      1.0
+      >>> bo.get_order(1, 2) # The order between a carbon and oxygen
+      2.0
+    )delim"
   );
 
   outerGraph.def(
     "bond_type",
     &OuterGraph::bondType,
     pybind11::arg("bond_index"),
-    "Fetches the :class:`BondType` at a particular :class:`BondIndex`"
+    R"delim(
+      Fetches the :class:`BondType` at a particular :class:`BondIndex`
+
+      >>> # Look at some bond orders of an interesting model compound
+      >>> import molassembler as masm
+      >>> compound = masm.io.experimental.from_smiles("[Co]1(C#N)(C#O)C=C1")
+      >>> compound.graph.bond_type(masm.BondIndex(0, 1)) # Co-CN bond
+      BondType.Single
+      >>> compound.graph.bond_type(masm.BondIndex(0, 5)) # Co-C=C bond
+      BondType.Eta
+      >>> compound.graph.bond_type(masm.BondIndex(5, 6)) # C=C bond
+      BondType.Double
+      >>> compound.graph.bond_type(masm.BondIndex(1, 2)) # C#N bond
+      BondType.Triple
+    )delim"
   );
 
   outerGraph.def(

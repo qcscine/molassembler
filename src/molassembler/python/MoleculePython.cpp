@@ -71,7 +71,7 @@ void init_molecule(pybind11::module& m) {
     m,
     "Molecule",
     R"delim(
-      Models a molecule as a graph and a list of stereopermutators
+      Models a molecule as a :class:`Graph` and a :class:`StereopermutatorList`.
     )delim"
   );
 
@@ -116,6 +116,7 @@ void init_molecule(pybind11::module& m) {
     R"delim(
       Initialize a molecule from two element types and a mutual :class:`BondType`
 
+      >>> # Make H-F
       >>> import scine_utils_os as utils
       >>> hf = Molecule(utils.ElementType.H, utils.ElementType.F)
       >>> hf.graph.N == 2
@@ -149,6 +150,7 @@ void init_molecule(pybind11::module& m) {
       partially canonical. Hashes between molecules of different canonicity are
       not comparable.
 
+      >>> # Show that hash values differ at various levels of canonicity
       >>> import molassembler as masm
       >>> from copy import copy
       >>> spiro = masm.io.experimental.from_smiles("C12(CCC1)CCC2")
@@ -202,6 +204,7 @@ void init_molecule(pybind11::module& m) {
       :param adjacent_to: Atom to which the new atom is added
       :param bond_type: :class:`BondType` with which the new atom is attached
 
+      >>> # Let's make linear H3
       >>> import scine_utils_os as utils
       >>> mol = Molecule() # Default constructor makes H2
       >>> _ = mol.add_atom(utils.ElementType.H, 0) # Make linear H3
@@ -221,6 +224,7 @@ void init_molecule(pybind11::module& m) {
       :param second_atom: Second atom to bond
       :param bond_type: :class:`BondType` with which to bond the atoms
 
+      >>> # Let's make triangular H3
       >>> import scine_utils_os as utils
       >>> mol = Molecule() # Default constructor makes H2
       >>> _ = mol.add_atom(utils.ElementType.H, 0) # Make linear H3
@@ -270,14 +274,15 @@ void init_molecule(pybind11::module& m) {
         is to be assigned or ``None`` if the stereopermutator is to be
         dis-assigned.
 
+      >>> # Dis-assign an assigned bond stereopermutator
       >>> import molassembler as masm
-      >>> mol = masm.io.experimental.from_smiles("C/C=C\C")
+      >>> ethene = masm.io.experimental.from_smiles("C/C=C\C")
       >>> double_bond_index = masm.BondIndex(1, 2)
-      >>> assert mol.graph.bond_type(double_bond_index) == masm.BondType.Double
-      >>> mol.stereopermutators.option(double_bond_index).assigned is not None
+      >>> assert ethene.graph.bond_type(double_bond_index) == masm.BondType.Double
+      >>> ethene.stereopermutators.option(double_bond_index).assigned is not None
       True
-      >>> mol.assign_stereopermutator(double_bond_index, None)
-      >>> mol.stereopermutators.option(double_bond_index).assigned is not None
+      >>> ethene.assign_stereopermutator(double_bond_index, None)
+      >>> ethene.stereopermutators.option(double_bond_index).assigned is not None
       False
     )delim"
   );
@@ -389,6 +394,17 @@ void init_molecule(pybind11::module& m) {
       Invalidates all atom and bond indices.
 
       :param atom: Atom to remove
+
+      >>> m = Molecule() # Make H2
+      >>> [a for a in m.graph.atoms()]
+      [0, 1]
+      >>> m.graph.can_remove(0) # We can remove a hydrogen from H2
+      True
+      >>> m.remove_atom(0)
+      >>> m.graph.N # We are left with just a hydrogen atom
+      1
+      >>> m.graph.B
+      0
     )delim"
   );
 
@@ -404,6 +420,27 @@ void init_molecule(pybind11::module& m) {
 
       :param first_atom: First atom of the bond to be removed
       :param second_atom: Second atom of the bond to be removed
+
+      >>> import molassembler as masm
+      >>> cyclopropane = masm.io.experimental.from_smiles("C1CC1")
+      >>> # In cyclopropane, we can remove a C-C bond without disconnecting the graph
+      >>> cyclopropane.graph.can_remove(masm.BondIndex(0, 1))
+      True
+      >>> N_before = cyclopropane.graph.N
+      >>> B_before = cyclopropane.graph.B
+      >>> cyclopropane.remove_bond(masm.BondIndex(0, 1))
+      >>> N_before - cyclopropane.graph.N # The number of atoms is unchanged
+      0
+      >>> B_before - cyclopropane.graph.B # We really only removed a bond
+      1
+      >>> # Note that now the valence of the carbon atoms where we removed
+      >>> # the bond is... funky
+      >>> cyclopropane.graph.degree(0)
+      3
+      >>> [cyclopropane.graph.bond_type(b) for b in cyclopropane.graph.bonds(0)]
+      [BondType.Single, BondType.Single, BondType.Single]
+      >>> cyclopropane.stereopermutators.option(0).shape
+      Shape.VacantTetrahedron
     )delim"
   );
 
@@ -527,6 +564,15 @@ void init_molecule(pybind11::module& m) {
       canonicalized.
 
       :rtype: :class:`AtomEnvironmentComponents` or ``None``
+
+      >>> # Canonicalize something and retrieve its canonical components
+      >>> import molassembler as masm
+      >>> mol = masm.io.experimental.from_smiles("C12(CCC1)COCC2")
+      >>> mol.canonical_components is None
+      True
+      >>> _ = mol.canonicalize()
+      >>> mol.canonical_components
+      AtomEnvironmentComponents.All
     )delim"
   );
 
@@ -537,17 +583,46 @@ void init_molecule(pybind11::module& m) {
     pybind11::arg("components_bitmask") = AtomEnvironmentComponents::All,
     R"delim(
       Modular comparison of this Molecule with another, assuming that both are
-      in a canonical form.
+      in some (possibly partial) canonical form.
 
       For comparisons of fully canonical molecule pairs, regular equality
-      comparison will just call this function instead of performing a full
-      isomorphism.
+      comparison will just call this function with all environment components
+      considered instead of performing a full isomorphism.
+
+      This function is akin to partial_compare, but faster, since if both
+      molecules are in a canonical form, comparison does not require an
+      isomorphism, but merely a same-graph test over the components used.
 
       :param other: The other (canonical) molecule to compare against
       :param components_bitmask: The components of an atom's environment to
         include in the comparison. You should use the same bitmask as when
         canonicalizing the molecules you are comparing here. It may be possible
         to use a bitmask with fewer components, but certainly not one with more.
+
+      >>> # Bring two molecules into a partial canonical form and compare them
+      >>> import molassembler as masm
+      >>> a = masm.io.experimental.from_smiles("OCC")
+      >>> b = masm.io.experimental.from_smiles("SCC")
+      >>> a == b
+      False
+      >>> # A and B are identical when considered purely by their graph
+      >>> part = masm.AtomEnvironmentComponents.Connectivity
+      >>> _ = a.canonicalize(part)
+      >>> _ = b.canonicalize(part)
+      >>> a.canonical_compare(b, part)
+      True
+      >>> a == b # Partial canonicalization does not change the meaning of strict equality
+      False
+      >>> # Another pair that is identical save for a stereopermutation
+      >>> c = masm.io.experimental.from_smiles("N[C@](Br)(O)C")
+      >>> d = masm.io.experimental.from_smiles("N[C@@](Br)(O)C")
+      >>> c == d # Strict equality includes stereopermutation
+      False
+      >>> part = masm.AtomEnvironmentComponents.ElementsBondsAndShapes
+      >>> _ = c.canonicalize(part)
+      >>> _ = d.canonicalize(part)
+      >>> c.canonical_compare(d, part) # Limited comparison yields equality
+      True
     )delim"
   );
 
@@ -581,6 +656,22 @@ void init_molecule(pybind11::module& m) {
       :param other: The molecule to compare against
       :param components_bitmask: The components of the molecule to use in the
         comparison
+
+      >>> import molassembler as masm
+      >>> a = masm.io.experimental.from_smiles("OCC")
+      >>> b = masm.io.experimental.from_smiles("SCC")
+      >>> a == b
+      False
+      >>> # A and B are identical when considered purely by their graph
+      >>> a.partial_compare(b, masm.AtomEnvironmentComponents.Connectivity)
+      True
+      >>> # Another pair that is identical save for a stereopermutation
+      >>> c = masm.io.experimental.from_smiles("N[C@](Br)(O)C")
+      >>> d = masm.io.experimental.from_smiles("N[C@@](Br)(O)C")
+      >>> c == d # Strict equality includes stereopermutation
+      False
+      >>> c.partial_compare(d, masm.AtomEnvironmentComponents.ElementsBondsAndShapes)
+      True
     )delim"
   );
 
