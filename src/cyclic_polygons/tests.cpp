@@ -128,11 +128,11 @@ BOOST_AUTO_TEST_CASE(centralAngleRootFinding) {
         );
       }
 
-      bool pass = std::fabs(deviation) < 1e-6;
+      bool pass = std::fabs(deviation) < 1e-5;
 
       BOOST_CHECK_MESSAGE(
         pass,
-        "Central angle deviation norm is not smaller than 1e-6 for " << temple::stringify(edgeLengths)
+        "Central angle deviation norm is not smaller than 1e-5 for " << temple::stringify(edgeLengths)
           << ", circumcenter is inside: " << circumcenterInside << ", deviation: " << deviation
       );
 
@@ -140,14 +140,14 @@ BOOST_AUTO_TEST_CASE(centralAngleRootFinding) {
         CyclicPolygons::detail::generalizedInternalAngles(edgeLengths, circumradius, circumcenterInside)
       ) - (nSides - 2) * M_PI;
 
-      pass = pass && (std::fabs(internalAngleSumDeviation) < 1e-6);
+      pass = pass && (std::fabs(internalAngleSumDeviation) < 1e-5);
 
       BOOST_CHECK_MESSAGE(
-        std::fabs(internalAngleSumDeviation) < 1e-6,
+        std::fabs(internalAngleSumDeviation) < 1e-5,
         "Internal angle sum deviation from " << (nSides - 2)
           <<  "π for edge lengths " << temple::stringify(edgeLengths)
           << " is " << internalAngleSumDeviation
-          << ", whose norm is not less than 1e-6"
+          << ", whose norm is not less than 1e-5"
       );
 
       if(!pass) {
