@@ -70,11 +70,7 @@ void init_serialization(pybind11::module& m) {
       >>> serializer = masm.JSONSerialization(spiro)
       >>> bson_format = masm.JSONSerialization.BinaryFormat.BSON
       >>> spiro_as_bson = serializer.to_binary(bson_format)
-      >>> type(spiro_as_bson)
-      <class 'bytes'>
       >>> bson_in_b64 = serializer.base_64_encode(spiro_as_bson)
-      >>> type(bson_in_b64)
-      <class 'str'>
       >>> reverted_bson = masm.JSONSerialization.base_64_decode(bson_in_b64)
       >>> serializer = masm.JSONSerialization(reverted_bson, bson_format)
       >>> reverted = serializer.to_molecule()
