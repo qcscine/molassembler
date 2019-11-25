@@ -113,7 +113,7 @@ void init_outer_graph(pybind11::module& m) {
       BondType.Eta
       >>> compound.graph.bond_type(masm.BondIndex(5, 6)) # C=C bond
       BondType.Double
-      >>> compound.graph.bond_type(masm.BondIndex(1, 2)) # C#N bond
+      >>> compound.graph[masm.BondIndex(1, 2)] # C#N bond by bond subsetting
       BondType.Triple
     )delim"
   );
@@ -210,7 +210,7 @@ void init_outer_graph(pybind11::module& m) {
       ElementType.H1
       >>> m.graph.element_type(2)
       ElementType.D
-      >>> m.graph.element_type(4)
+      >>> m.graph[4] # Subsettable wih atom indices to get element types
       ElementType.H
     )delim"
   );
@@ -321,6 +321,20 @@ void init_outer_graph(pybind11::module& m) {
         "Graph of elemental composition "
         + Scine::Utils::generateChemicalFormula(graph.elementCollection())
       );
+    }
+  );
+
+  outerGraph.def(
+    "__getitem__",
+    [](const OuterGraph& g, const AtomIndex i) -> Scine::Utils::ElementType {
+      return g.elementType(i);
+    }
+  );
+
+  outerGraph.def(
+    "__getitem__",
+    [](const OuterGraph& g, const BondIndex i) -> BondType {
+      return g.bondType(i);
     }
   );
 }

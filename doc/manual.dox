@@ -7,24 +7,24 @@
 @section manual-description Description
 
 --------------------------------------------------------------------------------
-Molassembler is a C++ library that aims to facilitate crossings between
+Molassembler is a C++ library that aims to facilitate conversions between
 Cartesian and graph representations of molecules. It provides the necessary
 functionality to represent a molecule as a graph, modify it in graph space, and
 generate new coordinates from graphs. It can capture the absolute configuration
 of multidentate and haptic inorganic molecules from positional data and
 generate non-superposable stereopermutations as output.
 
+This is the documentation for molassembler's C++ code. 
+
 
 @section manual-installation Prerequisites and installation
 
 --------------------------------------------------------------------------------
-Molassembler depends on several libraries:
+Molassembler depends on the following libraries not shipped along as external code:
 
+- SCINE Utils >= 1.0.0
 - Boost >= 1.64
-- dlib >= 19.4
 - Eigen >= 3
-- Delib >= 0.2
-- (BLAS library, added if detected during compilation)
 
 Molassembler is coded in the C++14 standard and makes heavy use of `constexpr`
 algorithms. As a result, fairly modern compilers are needed to build the
@@ -37,7 +37,7 @@ GCC >= 7   | Fully working
 VS2017     | Not working
 
 Regarding VS2017, an effort needs to be made to make the library compatible.
-Perhaps the `constexpr` code can yet be made palatable.
+Perhaps the `constexpr` code can yet be made palatable to it.
 
 @section manual-introduction Introduction
 
@@ -73,7 +73,7 @@ Stereopermutator        | Object managing absolute configuration of ligand sites
 @note Stereopermutators are not called stereocenters - which might seem the more
 natural choice - because these objects also manage shape and ranking
 combinations in which there is only one possible arrangement and its central
-atom therefore cannot be considered a stereocenter.
+atom is consequentially not a stereocenter.
 
 @subsection manual-quickstart-flow Dataflow & conversions
 
@@ -172,9 +172,9 @@ Temple is a data structure and algorithm library that consists of
   - C++14 is callable implementation (in lieu of C++17's standardization)
   - get container value type
   - get function return type
-- boost::optional composition syntactic sugar
+- boost::optional composition functions
 
-@subsection manual-sublibraries-symmetries Local shapes
+@subsection manual-sublibraries-shapes Local shapes
 
 Non-terminal atoms in molecules often adopt nearly ideal local shapes when
 no strain is placed upon its substituents due to small cycles. The local
@@ -191,16 +191,16 @@ Size | Name
 8    | Square antiprismatic
 
 Data provided per shape:
-- Number of binding sites
+- Number of vertices
 - String representation
-- Angle function returning idealized angles between shape positions
+- Angle function returning idealized angles between vertices
 - Idealized coordinates
 - A minimal set of rotations to allow the generation of all superimposable
   sequences of binding site mapping indices
 - A set of tetrahedra whose signed volumes permit the distinction of chiral
   elements within the shape
 
-In addition, this libraries can compute ligand addition and ligand loss
+In addition, this libraries can compute site addition and site loss
 transitions between shapes at compile-time.
 
 
@@ -211,8 +211,8 @@ idealized shapes is a permutational problem and is the core task of this
 library. It builds upon the definitions provided by the chemical shapes
 library to achieve its task.
 
-Most of organic chemistry, can be composed of linear, bent, trigonal planar and
-tetrahedral local shapes. The most common source of chiral information in
+Most of organic chemistry can be composed of linear, bent, equilateral triangle
+and tetrahedron shapes. The most common source of chiral information in
 organic chemistry is an asymmetric tetrahedral carbon, where its four
 subtituents are all different (i.e. have different ranking according to the
 IUPAC rules). From a local shape and the information that all substituents

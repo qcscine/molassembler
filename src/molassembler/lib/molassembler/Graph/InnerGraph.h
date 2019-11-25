@@ -226,7 +226,7 @@ public:
 
   /*! @brief Make an edge descriptor from two vertex descriptors
    *
-   * @pre The edge exists
+   * @throws std::out_of_range if the edge doesn't exist in the graph
    * @complexity{@math{\Theta(1)}}
    */
   Edge edge(Vertex a, Vertex b) const;

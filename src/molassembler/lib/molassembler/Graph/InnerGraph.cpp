@@ -250,7 +250,11 @@ Utils::ElementType InnerGraph::elementType(const Vertex a) const {
 
 InnerGraph::Edge InnerGraph::edge(const Vertex a, const Vertex b) const {
   auto edge = boost::edge(a, b, _graph);
-  assert(edge.second);
+
+  if(!edge.second) {
+    throw std::out_of_range("Specified edge does not exist in the graph");
+  }
+
   return edge.first;
 }
 
