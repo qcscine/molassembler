@@ -122,14 +122,40 @@ void init_outer_graph(pybind11::module& m) {
     "can_remove",
     pybind11::overload_cast<AtomIndex>(&OuterGraph::canRemove, pybind11::const_),
     pybind11::arg("atom"),
-    "Returns whether an atom can be removed without disconnecting the graph"
+    R"delim(
+      Returns whether an atom can be removed without disconnecting the graph
+
+      >>> # In graph terms, articulation vertices cannot be removed
+      >>> import molassembler as masm
+      >>> methane = masm.io.experimental.from_smiles("C")
+      >>> methane.graph.can_remove(0) # We cannot remove the central carbon
+      False
+      >>> all([methane.graph.can_remove(i) for i in range(1, 5)]) # But hydrogens!
+      True
+    )delim"
   );
 
   outerGraph.def(
     "can_remove",
     pybind11::overload_cast<const BondIndex&>(&OuterGraph::canRemove, pybind11::const_),
     pybind11::arg("bond_index"),
-    "Returns whether a bond can be removed without disconnecting the graph"
+    R"delim(
+      Returns whether a bond can be removed without disconnecting the graph
+
+      >>> # In graph terms, bridge edges cannot be removed
+      >>> import molassembler as masm
+      >>> import scine_utils_os as utils
+      >>> from itertools import combinations
+      >>> cyclopropane = masm.io.experimental.from_smiles("C1CC1")
+      >>> carbon_atoms = cyclopropane.graph.atoms_of_element(utils.ElementType.C)
+      >>> cc_bonds = [masm.BondIndex(a, b) for (a, b) in combinations(carbon_atoms, 2)]
+      >>> can_remove = lambda b: cyclopropane.graph.can_remove(b)
+      >>> all(map(can_remove, cc_bonds)) # We can remove any one of the bonds
+      True
+      >>> cyclopropane.remove_bond(cc_bonds[0]) # Remove one C-C bond
+      >>> any(map(can_remove, cc_bonds[1:])) # Can we still remove any of the others?
+      False
+    )delim"
   );
 
   outerGraph.def_property_readonly(
@@ -142,20 +168,51 @@ void init_outer_graph(pybind11::module& m) {
     "degree",
     &OuterGraph::degree,
     pybind11::arg("atom"),
-    "Returns the number of bonds incident upon an atom"
+    R"delim(
+      Returns the number of bonds incident upon an atom.
+
+      >>> # A silly example
+      >>> import molassembler as masm
+      >>> model = masm.io.experimental.from_smiles("CNO[H]")
+      >>> [model.graph.degree(i) for i in range(0, 4)]
+      [4, 3, 2, 1]
+    )delim"
   );
 
+  // TODO rename to elements
   outerGraph.def(
     "element_collection",
     &OuterGraph::elementCollection,
-    "Generates an ElementCollection representation of the molecule's atoms' element types"
+    R"delim(
+      Generates an ElementCollection representation of the molecule's atoms' element types
+
+      >>> # Some isotopes
+      >>> import molassembler as masm
+      >>> import scine_utils_os as utils
+      >>> m = masm.io.experimental.from_smiles("[1H]C([2H])([3H])[H]")
+      >>> m.graph.element_collection()
+      [ElementType.H1, ElementType.C, ElementType.D, ElementType.T, ElementType.H]
+    )delim"
   );
 
   outerGraph.def(
     "element_type",
     &OuterGraph::elementType,
     pybind11::arg("atom"),
-    "Fetch the element type of an atom"
+    R"delim(
+      Fetch the element type of an atom
+
+      >>> # Some isotopes
+      >>> import molassembler as masm
+      >>> import scine_utils_os as utils
+      >>> m = masm.io.experimental.from_smiles("[1H]C([2H])([3H])[H]")
+      >>> m.graph.element_type(0)
+      ElementType.H1
+      >>> m.graph.element_type(2)
+      ElementType.D
+      >>> m.graph.element_type(4)
+      ElementType.H
+    )delim"
   );
 
   outerGraph.def_property_readonly("N", &OuterGraph::N, "The number of atoms in the graph");
@@ -165,7 +222,15 @@ void init_outer_graph(pybind11::module& m) {
     "split_along_bridge",
     &OuterGraph::splitAlongBridge,
     pybind11::arg("bridge_bond"),
-    "Determine which atoms belong to either side of a bond"
+    R"delim(
+      Determine which atoms belong to either side of a bond
+
+      >>> # Hypothetically splitting a model compound
+      >>> import molassembler as masm
+      >>> m = masm.io.experimental.from_smiles("CN")
+      >>> m.graph.split_along_bridge(masm.BondIndex(0, 1))
+      ([0, 2, 3, 4], [1, 5, 6])
+    )delim"
   );
 
   outerGraph.def(
@@ -177,7 +242,11 @@ void init_outer_graph(pybind11::module& m) {
         std::move(atomsRange.second)
       );
     },
-    "Iterate through all valid atom indices of the graph"
+    R"delim(
+      Iterate through all valid atom indices of the graph
+
+      Fully equivalent to: ``range(graph.N)``
+    )delim"
   );
 
   outerGraph.def(
@@ -189,7 +258,15 @@ void init_outer_graph(pybind11::module& m) {
         std::move(bondsRange.second)
       );
     },
-    "Iterate through all valid bond indices of the graph"
+    R"delim(
+      Iterate through all valid bond indices of the graph
+
+      >>> import molassembler as masm
+      >>> import scine_utils_os as utils
+      >>> model = masm.io.experimental.from_smiles("F/C=C/I")
+      >>> [b for b in model.graph.bonds()]
+      [(0, 1), (1, 2), (2, 3), (1, 4), (2, 5)]
+    )delim"
   );
 
   outerGraph.def(
@@ -202,7 +279,18 @@ void init_outer_graph(pybind11::module& m) {
       );
     },
     pybind11::arg("a"),
-    "Iterate through all adjacent atom indices of an atom"
+    R"delim(
+      Iterate through all adjacent atom indices of an atom
+
+      >>> import molassembler as masm
+      >>> import scine_utils_os as utils
+      >>> m = masm.io.experimental.from_smiles("NC")
+      >>> [a for a in m.graph.adjacents(0)]
+      [1, 2, 3]
+      >>> element = lambda a: m.graph.element_type(a)
+      >>> [element(a) for a in m.graph.adjacents(0)]
+      [ElementType.C, ElementType.H, ElementType.H]
+    )delim"
   );
 
   outerGraph.def(
@@ -215,7 +303,15 @@ void init_outer_graph(pybind11::module& m) {
       );
     },
     pybind11::arg("a"),
-    "Iterate through all incident bonds of an atom"
+    R"delim(
+      Iterate through all incident bonds of an atom
+
+      >>> import molassembler as masm
+      >>> import scine_utils_os as utils
+      >>> m = masm.io.experimental.from_smiles("NC")
+      >>> [b for b in m.graph.bonds(0)]
+      [(0, 1), (0, 2), (0, 3)]
+    )delim"
   );
 
   outerGraph.def(

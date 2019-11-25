@@ -51,13 +51,36 @@ Scine::molassembler::JSONSerialization JSONFromBytes(
   return Scine::molassembler::JSONSerialization(binaryFromPythonBytes(bytes), format);
 }
 
+std::string toString(const Scine::molassembler::JSONSerialization& s) {
+  return s;
+}
+
 void init_serialization(pybind11::module& m) {
   using namespace Scine::molassembler;
 
   pybind11::class_<JSONSerialization> serialization(
     m,
     "JSONSerialization",
-    "Class representing a compact JSON serialization of a molecule"
+    R"delim(
+      Class representing a compact JSON serialization of a molecule
+
+      >>> # Demonstrate a serialize-deserialize loop
+      >>> import molassembler as masm
+      >>> spiro = masm.io.experimental.from_smiles("C12(CCCC1)CCC2")
+      >>> serializer = masm.JSONSerialization(spiro)
+      >>> bson_format = masm.JSONSerialization.BinaryFormat.BSON
+      >>> spiro_as_bson = serializer.to_binary(bson_format)
+      >>> type(spiro_as_bson)
+      <class 'bytes'>
+      >>> bson_in_b64 = serializer.base_64_encode(spiro_as_bson)
+      >>> type(bson_in_b64)
+      <class 'str'>
+      >>> reverted_bson = masm.JSONSerialization.base_64_decode(bson_in_b64)
+      >>> serializer = masm.JSONSerialization(reverted_bson, bson_format)
+      >>> reverted = serializer.to_molecule()
+      >>> reverted == spiro # Compare the deserialized molecule
+      True
+    )delim"
   );
 
   pybind11::enum_<JSONSerialization::BinaryFormat> binaryFormat(
@@ -109,6 +132,12 @@ void init_serialization(pybind11::module& m) {
 
   serialization.def(
     "__str__",
+    &JSONSerialization::operator std::string,
+    "Dump the JSON serialization into a string"
+  );
+
+  serialization.def(
+    "to_string",
     &JSONSerialization::operator std::string,
     "Dump the JSON serialization into a string"
   );

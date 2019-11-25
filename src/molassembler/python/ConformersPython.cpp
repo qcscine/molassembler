@@ -157,6 +157,11 @@ void init_conformers(pybind11::module& m) {
       unassigned asymmetric tetrahedron atom stereopermutator, the ensemble
       will contain confomers of both assignments, akin to a racemic mixture.
 
+      .. note::
+         Regarding reproducibility, it is guaranteed that the same set of
+         conformers is generated for the same PRNG state, but not their order
+         within the ensemble.
+
       :param molecule: Molecule to generate positions for. May not contain
         stereopermutators with zero assignments (no feasible stereopermutations).
       :param num_structures: Number of desired structures to generate
