@@ -246,8 +246,8 @@ AtomStereopermutator::Impl::Impl(
 
 /* Modification */
 void AtomStereopermutator::Impl::assign(boost::optional<unsigned> assignment) {
-  if(assignment) {
-    assert(assignment.value() < _feasible.indices.size());
+  if(assignment && assignment.value() >= _feasible.indices.size()) {
+    throw std::out_of_range("Supplied assignment index is out of range");
   }
 
   // Store new assignment
@@ -271,18 +271,27 @@ void AtomStereopermutator::Impl::assign(boost::optional<unsigned> assignment) {
 }
 
 void AtomStereopermutator::Impl::assignRandom(random::Engine& engine) {
-  assign(
-    temple::random::pickDiscrete(
-      // Map the feasible permutations onto their weights
-      temple::map(
-        _feasible.indices,
-        [&](const unsigned permutationIndex) -> unsigned {
-          return _abstract.permutations.weights.at(permutationIndex);
-        }
-      ),
-      engine
-    )
-  );
+  const unsigned A = numAssignments();
+  if(A == 0) {
+    throw std::logic_error("Cannot randomly assign a stereopermutator without feasible stereopermutations");
+  }
+
+  if(A == 1) {
+    assign(0);
+  } else {
+    assign(
+      temple::random::pickDiscrete(
+        // Map the feasible permutations onto their weights
+        temple::map(
+          _feasible.indices,
+          [&](const unsigned permutationIndex) -> unsigned {
+            return _abstract.permutations.weights.at(permutationIndex);
+          }
+        ),
+        engine
+      )
+    );
+  }
 }
 
 void AtomStereopermutator::Impl::applyPermutation(const std::vector<AtomIndex>& permutation) {

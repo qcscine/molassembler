@@ -795,7 +795,7 @@ BondStereopermutator::Impl::Impl(
 /* Public members */
 /* Modification */
 void BondStereopermutator::Impl::assign(boost::optional<unsigned> assignment) {
-  if(assignment) {
+  if(assignment && assignment.value() >= numAssignments()) {
     /* The distinction here between numAssignments and _composite.permutations()
      * is important because if the composite is isotropic, we simulate that
      * there is only a singular assignment (see numAssignments), although
@@ -806,20 +806,25 @@ void BondStereopermutator::Impl::assign(boost::optional<unsigned> assignment) {
      * same assignment index when asked which assignment is currently set
      * in assigned().
      */
-    assert(assignment.value() < numAssignments());
+    throw std::out_of_range("Supplied assignment index is out of range");
   }
 
   _assignment = assignment;
 }
 
 void BondStereopermutator::Impl::assignRandom(random::Engine& engine) {
-  assert(_composite.permutations() > 0);
+  const unsigned A = numAssignments();
+  if(A == 0) {
+    throw std::logic_error("Cannot randomly assign a stereopermutator without feasible stereopermutations");
+  }
 
-  _assignment = temple::random::getSingle<unsigned>(
-    0,
-    _composite.permutations() - 1,
-    engine
-  );
+  if(A == 1) {
+    assign(0);
+  } else {
+    assign(
+      temple::random::getSingle<unsigned>(0, A - 1, engine)
+    );
+  }
 }
 
 void BondStereopermutator::Impl::applyPermutation(const std::vector<AtomIndex>& permutation) {

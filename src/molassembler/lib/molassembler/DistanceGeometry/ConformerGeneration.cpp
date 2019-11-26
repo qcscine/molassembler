@@ -21,6 +21,8 @@
 #include "temple/Optimization/LBFGS.h"
 #include "temple/Random.h"
 
+#include <iostream>
+
 namespace Scine {
 
 namespace molassembler {
@@ -928,8 +930,8 @@ std::vector<
       engine.seed(randomnessEngine()());
 #endif
 
-      /* We have to handle any and all exceptions here if this is a parallel
-       * environment
+      /* We have to handle any and all exceptions here bceause this is a
+       * parallel environment
        */
       try {
         // Generate the conformer
@@ -945,9 +947,10 @@ std::vector<
         {
           results.push_back(std::move(conformerResult));
         }
-      } catch(...) {
+      } catch(std::exception& e) {
 #pragma omp critical(collectConformer)
         {
+          std::cerr << "WARNING: Uncaught exception in conformer generation: " << e.what() << "\n";
           // Add an unknown error
           results.push_back(static_cast<DGError>(0));
         }
