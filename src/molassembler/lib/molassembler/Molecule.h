@@ -347,13 +347,18 @@ public:
    * @throws std::out_of_range If the atom index is invalid (i.e. is >= N()) or
    *   there is no atom stereopermutator at this bond index.
    *
-   * @note Any molecular edit causes a full re-rank at each non-terminal
+   * @parblock @note Any molecular edit causes a full re-rank at each non-terminal
    *   atom, and can lead to changes in the list of stereopermutators.
    *   Stereopermutators may disappear, change their assignment and number of
    *   assignments, or new stereopermutators can appear as a consequence of the
    *   most minor edit. For procedural safety, consider iterators to
    *   StereopermutatorList members and any stereopermutator state stored
    *   external to a Molecule instance and its members invalidated.
+   * @endparblock
+   *
+   * @parblock @note This function advances the state of the global PRNG by
+   * default if the default argument for @p engine is chosen.
+   * @endparblock
    */
   void assignStereopermutatorRandomly(AtomIndex a, random::Engine& engine = randomnessEngine());
 
@@ -369,13 +374,19 @@ public:
    * @throws std::out_of_range If the bond index is invalid (i.e. either atom
    *   index is >= N()) or there is no bond stereopermutator at this bond index.
    *
-   * @note Any molecular edit causes a full re-rank at each non-terminal
-   *   atom, and can lead to changes in the list of stereopermutators.
-   *   Stereopermutators may disappear, change their assignment and number of
-   *   assignments, or new stereopermutators can appear as a consequence of the
-   *   most minor edit. For procedural safety, consider iterators to
-   *   StereopermutatorList members and any stereopermutator state stored
-   *   external to a Molecule instance and its members invalidated.
+   * @parblock @note Any molecular edit causes a full re-rank at each
+   *   non-terminal atom, and can lead to changes in the list of
+   *   stereopermutators. Stereopermutators may disappear, change their
+   *   assignment and number of assignments, or new stereopermutators can
+   *   appear as a consequence of the most minor edit. For procedural safety,
+   *   consider iterators to StereopermutatorList members and any
+   *   stereopermutator state stored external to a Molecule instance and its
+   *   members invalidated.
+   * @endparblock
+   *
+   * @parblock @note This function advances the state of the global PRNG by
+   * default if the default argument for @p engine is chosen.
+   * @endparblock
    */
   void assignStereopermutatorRandomly(const BondIndex& e, random::Engine& engine = randomnessEngine());
 

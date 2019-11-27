@@ -177,7 +177,10 @@ public:
    * @brief Assign the Stereopermutator at random
    *
    * @complexity{@math{\Theta(1)}}
-   * @note If the stereocenter is already assigned, it is reassigned.
+   * @parblock @note If the stereocenter is already assigned, it is reassigned.
+   * @endparblock
+   * @parblock @note The state of the passed PRNG is advanced.
+   * @endparblock
    */
   void assignRandom(random::Engine& engine);
 

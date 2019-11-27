@@ -56,8 +56,14 @@ public:
     return _decisionLists.capacity();
   }
 
+  outcome::result<Utils::PositionCollection> generateRandomConformation(
+    const DecisionList& decisionList,
+    const DistanceGeometry::Configuration& configuration
+  );
+
   outcome::result<Utils::PositionCollection> generateConformation(
     const DecisionList& decisionList,
+    unsigned seed,
     const DistanceGeometry::Configuration& configuration
   );
 

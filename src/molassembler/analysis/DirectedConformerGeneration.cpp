@@ -98,7 +98,7 @@ int main(int argc, char* argv[]) {
 
     const unsigned maxTries = 3;
     for(unsigned attempt = 0; attempt < maxTries; ++attempt) {
-      auto positionResult = generateConformation(mol);
+      auto positionResult = generateRandomConformation(mol);
       if(positionResult) {
         std::cout << "Generated conformation.\n";
         IO::write(
@@ -130,7 +130,7 @@ int main(int argc, char* argv[]) {
 
     for(unsigned attempt = 0; attempt < maxTries; ++attempt) {
       const auto& confMol = generator.conformationMolecule(newDecisionList);
-      auto positionResult = generateConformation(confMol, configuration);
+      auto positionResult = generateRandomConformation(confMol, configuration);
 
       if(positionResult) {
         std::cout << "Generated conformer #" << (conformerCount + 1) << ", decision list " << temple::stringify(newDecisionList) << "\n";

@@ -23,12 +23,12 @@ BOOST_AUTO_TEST_CASE(ReproducibleConformers) {
   Molecule mol = IO::read("stereocenter_detection_molecules/RSs-halogenated-propane.mol");
   prng.seed(seed);
   const auto prngStatePriorGeneration = randomnessEngine();
-  const auto a = generateConformation(mol);
+  const auto a = generateRandomConformation(mol);
   const auto prngStatePostGeneration = randomnessEngine();
 
   prng.seed(seed);
   BOOST_CHECK(randomnessEngine() == prngStatePriorGeneration);
-  const auto b = generateConformation(mol);
+  const auto b = generateRandomConformation(mol);
   BOOST_CHECK(randomnessEngine() == prngStatePostGeneration);
 
   BOOST_REQUIRE_MESSAGE(
@@ -56,12 +56,12 @@ BOOST_AUTO_TEST_CASE(ReproducibleEnsembles) {
   Molecule mol = IO::read("stereocenter_detection_molecules/RSs-halogenated-propane.mol");
   prng.seed(seed);
   const auto prngStatePriorGeneration = randomnessEngine();
-  const auto a = generateEnsemble(mol, ensembleSize);
+  const auto a = generateRandomEnsemble(mol, ensembleSize);
   const auto prngStatePostGeneration = randomnessEngine();
 
   prng.seed(seed);
   BOOST_CHECK(randomnessEngine() == prngStatePriorGeneration);
-  const auto b = generateEnsemble(mol, ensembleSize);
+  const auto b = generateRandomEnsemble(mol, ensembleSize);
   BOOST_CHECK(randomnessEngine() == prngStatePostGeneration);
 
   auto writeEnsemble = [](const auto& resultVector) {

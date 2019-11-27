@@ -158,8 +158,11 @@ struct Configuration {
  * @endparblock
  *
  * @parblock @note This function is parallelized. Use the OMP_NUM_THREADS
- * environment variable to control the number of threads used. The resulting
- * order is unsequenced, but otherwise reproducible.
+ * environment variable to control the number of threads used. Results are
+ * sequenced and reproducible.
+ * @endparblock
+ *
+ * @parblock @note This function advances the state of the global PRNG.
  * @endparblock
  *
  * @returns A result type which may or may not contain a vector of
@@ -168,7 +171,7 @@ struct Configuration {
  * order to help diagnose possible mistakes made in the molecular graph
  * specification.
  * @code{.cpp}
- * auto ensemble = generateEnsemble(mol, 10);
+ * auto ensemble = generateRandomEnsemble(mol, 10);
  * unsigned conformerIndex = 0;
  * for(auto& conformerResult : ensemble) {
  *   if(conformerResult) {
@@ -187,9 +190,82 @@ struct Configuration {
  */
 std::vector<
   outcome::result<Utils::PositionCollection>
+> generateRandomEnsemble(
+  const Molecule& molecule,
+  unsigned numStructures,
+  const DistanceGeometry::Configuration& configuration = DistanceGeometry::Configuration {}
+);
+
+/*! @brief Generate multiple sets of positional data for a Molecule
+ *
+ * In the case of a molecule that does not have unassigned stereopermutators,
+ * this is akin to generating a conformational ensemble. If there are
+ * unassigned stereopermutators, these are assigned at random (consistent with
+ * relative statistical occurrences of stereopermutations) for each structure.
+ *
+ * @param molecule The molecule for which to generate sets of three-dimensional
+ *   positions. This molecule may not contain stereopermutators with zero
+ *   assignments.
+ * @param numStructures The number of desired structures to generate
+ * @param seed A number to seed the pseudo-random number generator used in
+ *   conformer generation with
+ * @param configuration The configuration object to control Distance Geometry
+ *   in detail. The defaults are usually fine.
+ *
+ * @pre @p molecule may not contain stereopermutators with zero assignments as
+ *   this means that the molecule is not representable in three dimensions.
+ * @pre @p configuration's preconditions must be met
+ *
+ * @complexity{Roughly @math{O(C \cdot N^3) where @math{C} is the number of
+ * conformers and @math{N} is the number of atoms in @p molecule}
+ *
+ * @parblock @note The Distance Geometry procedure can fail stochastically
+ * without fault in the input. See the documentation of DGError for detailed
+ * description of error return codes and how to deal with them.
+ * @endparblock
+ *
+ * @parblock @note This function is parallelized. Use the OMP_NUM_THREADS
+ * environment variable to control the number of threads used. Results are
+ * sequenced and reproducible.
+ * @endparblock
+ *
+ * @returns A result type which may or may not contain a vector of
+ * PositionCollections (in Bohr length units). The result type is much like an
+ * optional, except that in the error case it carries data about the error in
+ * order to help diagnose possible mistakes made in the molecular graph
+ * specification.
+ */
+std::vector<
+  outcome::result<Utils::PositionCollection>
 > generateEnsemble(
   const Molecule& molecule,
   unsigned numStructures,
+  unsigned seed,
+  const DistanceGeometry::Configuration& configuration = DistanceGeometry::Configuration {}
+);
+
+/*! @brief Generate a 3D structure of a Molecule
+ *
+ * @param molecule The molecule for which to generate three-dimensional
+ *   positions. This molecule may not contain stereopermutators with zero
+ *   assignments.
+ * @param configuration The configuration object to control Distance Geometry
+ *   in detail. The defaults are usually fine.
+ *
+ * @complexity{Roughly @math{O(N^3)}
+ *
+ * @parblock @note This function advances the state of the global PRNG.
+ * @endparblock
+ *
+ * @see generateEnsemble
+ *
+ * @returns A result type which may or may not contain a PositionCollection (in
+ *   Bohr length units). The result type is much like an optional, except that
+ *   in the error case it carries data about the error in order to help
+ *   diagnose possible mistakes made in the molecular graph specification.
+ */
+outcome::result<Utils::PositionCollection> generateRandomConformation(
+  const Molecule& molecule,
   const DistanceGeometry::Configuration& configuration = DistanceGeometry::Configuration {}
 );
 
@@ -212,6 +288,7 @@ std::vector<
  */
 outcome::result<Utils::PositionCollection> generateConformation(
   const Molecule& molecule,
+  unsigned seed,
   const DistanceGeometry::Configuration& configuration = DistanceGeometry::Configuration {}
 );
 

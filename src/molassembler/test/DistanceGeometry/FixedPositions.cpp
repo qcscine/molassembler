@@ -55,7 +55,7 @@ BOOST_AUTO_TEST_CASE(FixedPositionsWork) {
   DistanceGeometry::Configuration config;
   config.fixedPositions = {{13, origin}};
 
-  auto conformerResult = generateConformation(octadecane, config);
+  auto conformerResult = generateRandomConformation(octadecane, config);
   BOOST_CHECK_MESSAGE(
     conformerResult,
     "Could not generate a conformer for octadecane with an atom fixed to the origin"
@@ -74,7 +74,7 @@ BOOST_AUTO_TEST_CASE(FixedPositionsWork) {
     {16, Scine::Utils::Position {-3, 0.0, 0.0}},
     {17, Scine::Utils::Position {3, 0.0, 0.0}}
   };
-  conformerResult = generateConformation(octadecane, config);
+  conformerResult = generateRandomConformation(octadecane, config);
   BOOST_CHECK_MESSAGE(
     conformerResult,
     "Could not generate a conformer for octadecane with ends close together"

@@ -122,6 +122,11 @@ void Molecule::Impl::_tryAddBondStereopermutator(
     bond
   };
 
+  // Default-assign single-assignment bond stereopermutators
+  if(newStereopermutator.numAssignments() == 1) {
+    newStereopermutator.assign(0);
+  }
+
   if(newStereopermutator.numStereopermutations() > 1) {
     stereopermutators.add(std::move(newStereopermutator));
   }

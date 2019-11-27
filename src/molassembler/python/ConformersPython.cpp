@@ -13,12 +13,12 @@ using VariantType = boost::variant<
   std::string
 >;
 
-std::vector<VariantType> generateEnsemble(
+std::vector<VariantType> generateRandomEnsemble(
   const Scine::molassembler::Molecule& molecule,
   unsigned numStructures,
   const Scine::molassembler::DistanceGeometry::Configuration& config
 ) {
-  auto ensemble = Scine::molassembler::generateEnsemble(
+  auto ensemble = Scine::molassembler::generateRandomEnsemble(
     molecule,
     numStructures,
     config
@@ -42,12 +42,61 @@ std::vector<VariantType> generateEnsemble(
   return returnList;
 }
 
+std::vector<VariantType> generateEnsemble(
+  const Scine::molassembler::Molecule& molecule,
+  const unsigned numStructures,
+  const unsigned seed,
+  const Scine::molassembler::DistanceGeometry::Configuration& config
+) {
+  auto ensemble = Scine::molassembler::generateEnsemble(
+    molecule,
+    numStructures,
+    seed,
+    config
+  );
+
+  std::vector<VariantType> returnList;
+  returnList.reserve(ensemble.size());
+
+  for(auto& positionResult : ensemble) {
+    if(positionResult) {
+      returnList.emplace_back(
+        std::move(positionResult.value())
+      );
+    } else {
+      returnList.emplace_back(
+        positionResult.error().message()
+      );
+    }
+  }
+
+  return returnList;
+}
+
+VariantType generateRandomConformation(
+  const Scine::molassembler::Molecule& molecule,
+  const Scine::molassembler::DistanceGeometry::Configuration& config
+) {
+  auto conformerResult = Scine::molassembler::generateRandomConformation(
+    molecule,
+    config
+  );
+
+  if(conformerResult) {
+    return conformerResult.value();
+  }
+
+  return conformerResult.error().message();
+}
+
 VariantType generateConformation(
   const Scine::molassembler::Molecule& molecule,
+  const unsigned seed,
   const Scine::molassembler::DistanceGeometry::Configuration& config
 ) {
   auto conformerResult = Scine::molassembler::generateConformation(
     molecule,
+    seed,
     config
   );
 
@@ -141,8 +190,8 @@ void init_conformers(pybind11::module& m) {
   );
 
   dg.def(
-    "generate_ensemble",
-    &::generateEnsemble,
+    "generate_random_ensemble",
+    &::generateRandomEnsemble,
     pybind11::arg("molecule"),
     pybind11::arg("num_structures"),
     pybind11::arg("configuration") = DistanceGeometry::Configuration {},
@@ -158,9 +207,7 @@ void init_conformers(pybind11::module& m) {
       will contain confomers of both assignments, akin to a racemic mixture.
 
       .. note::
-         Regarding reproducibility, it is guaranteed that the same set of
-         conformers is generated for the same PRNG state, but not their order
-         within the ensemble.
+         This function advances molassembler's global PRNG state.
 
       :param molecule: Molecule to generate positions for. May not contain
         stereopermutators with zero assignments (no feasible stereopermutations).
@@ -173,7 +220,7 @@ void init_conformers(pybind11::module& m) {
       >>> # Generate a conformational ensemble
       >>> import molassembler as masm
       >>> butane = masm.io.experimental.from_smiles("CCCC")
-      >>> results = generate_ensemble(butane, 10)
+      >>> results = generate_random_ensemble(butane, 10)
       >>> # Each element in the list can be either a string or a positions matrix
       >>> # So let's see how many failed:
       >>> sum([1 if isinstance(r, str) else 0 for r in results])
@@ -182,8 +229,46 @@ void init_conformers(pybind11::module& m) {
   );
 
   dg.def(
-    "generate_conformation",
-    &::generateConformation,
+    "generate_ensemble",
+    &::generateEnsemble,
+    pybind11::arg("molecule"),
+    pybind11::arg("num_structures"),
+    pybind11::arg("seed"),
+    pybind11::arg("configuration") = DistanceGeometry::Configuration {},
+    R"delim(
+      Generate a set of 3D positions for a molecule.
+
+      In the case of a molecule that does not have unassigned
+      stereopermutators, this is akin to generating a conformational ensemble.
+      If there are unassigned stereopermutators, these are assigned at random
+      (consistent with relative statistical occurrences of stereopermutations)
+      for each structure. If, for instance, your molecules contains a single
+      unassigned asymmetric tetrahedron atom stereopermutator, the ensemble
+      will contain confomers of both assignments, akin to a racemic mixture.
+
+      :param molecule: Molecule to generate positions for. May not contain
+        stereopermutators with zero assignments (no feasible stereopermutations).
+      :param num_structures: Number of desired structures to generate
+      :param configuration: Detailed Distance Geometry settings. Defaults are
+        usually fine.
+      :rtype: Heterogeneous list of either a position result or an error
+        string explaining why conformer generation failed.
+
+      >>> # Generate a conformational ensemble
+      >>> import molassembler as masm
+      >>> butane = masm.io.experimental.from_smiles("CCCC")
+      >>> seed = 1010
+      >>> results = generate_ensemble(butane, 10, seed)
+      >>> # Each element in the list can be either a string or a positions matrix
+      >>> # So let's see how many failed:
+      >>> sum([1 if isinstance(r, str) else 0 for r in results])
+      0
+    )delim"
+  );
+
+  dg.def(
+    "generate_random_conformation",
+    &::generateRandomConformation,
     pybind11::arg("molecule"),
     pybind11::arg("configuration") = DistanceGeometry::Configuration {},
     R"delim(
@@ -204,10 +289,50 @@ void init_conformers(pybind11::module& m) {
       :rtype: Either a position result or an error string explaining why
         conformer generation failed.
 
+      .. note::
+         This function advances molassembler's global PRNG state
+
       >>> # Generate a single conformation
       >>> import molassembler as masm
       >>> mol = masm.io.experimental.from_smiles("N[C@](Br)(O)F")
-      >>> conformation = generate_conformation(mol)
+      >>> conformation = generate_random_conformation(mol)
+      >>> isinstance(conformation, str) # Did the conformer generation fail?
+      False
+      >>> type(conformation) # Successful results have matrix type:
+      <class 'numpy.ndarray'>
+    )delim"
+  );
+
+  dg.def(
+    "generate_conformation",
+    &::generateConformation,
+    pybind11::arg("molecule"),
+    pybind11::arg("seed"),
+    pybind11::arg("configuration") = DistanceGeometry::Configuration {},
+    R"delim(
+      Generate 3D positions for a molecule.
+
+      In the case of a molecule that does not have unassigned
+      stereopermutators, this is akin to generating a conformer.
+      If there are unassigned stereopermutators, these are assigned at random
+      (consistent with relative statistical occurrences of stereopermutations)
+      for each structure. If, for instance, your molecules contains a single
+      unassigned asymmetric tetrahedron atom stereopermutator, the resulting
+      conformation will be one of both assignments.
+
+      :param molecule: Molecule to generate positions for. May not contain
+        stereopermutators with zero assignments (no feasible stereopermutations).
+      :param seed: Seed with which to initialize a PRNG with for the conformer
+        generation procedure.
+      :param configuration: Detailed Distance Geometry settings. Defaults are
+        usually fine.
+      :rtype: Either a position result or an error string explaining why
+        conformer generation failed.
+
+      >>> # Generate a single conformation
+      >>> import molassembler as masm
+      >>> mol = masm.io.experimental.from_smiles("N[C@](Br)(O)F")
+      >>> conformation = generate_conformation(mol, 110)
       >>> isinstance(conformation, str) # Did the conformer generation fail?
       False
       >>> type(conformation) # Successful results have matrix type:

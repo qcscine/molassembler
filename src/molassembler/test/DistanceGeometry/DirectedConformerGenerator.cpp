@@ -74,7 +74,7 @@ BOOST_AUTO_TEST_CASE(DirectedConformerGeneration) {
       bool pass = false;
       boost::optional<DirectedConformerGenerator::DecisionList> generatedDecisionsOption;
       for(unsigned attempt = 0; attempt < maxTries; ++attempt) {
-        auto positionResult = generator.generateConformation(newDecisionList, configuration);
+        auto positionResult = generator.generateRandomConformation(newDecisionList, configuration);
 
         if(positionResult) {
           generatedDecisionsOption = generator.getDecisionList(

@@ -138,7 +138,7 @@ void checkExpectations(const boost::filesystem::path& filePath) {
     }
 
     // Generate a conformation
-    auto positionsResult = generateConformation(mol);
+    auto positionsResult = generateRandomConformation(mol);
 
     // If DG fails, we're screwed
     if(!positionsResult) {

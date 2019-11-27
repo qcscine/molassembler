@@ -132,7 +132,8 @@ std::vector<
 > run(
   const Molecule& molecule,
   unsigned numConformers,
-  const Configuration& configuration
+  const Configuration& configuration,
+  const boost::optional<unsigned> seedOption
 );
 
 } // namespace DistanceGeometry

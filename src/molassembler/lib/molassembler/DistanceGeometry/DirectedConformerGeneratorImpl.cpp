@@ -329,12 +329,25 @@ const Molecule& DirectedConformerGenerator::Impl::conformationMolecule(const Dec
 }
 
 outcome::result<Utils::PositionCollection>
+DirectedConformerGenerator::Impl::generateRandomConformation(
+  const DecisionList& decisionList,
+  const DistanceGeometry::Configuration& configuration
+) {
+  return Scine::molassembler::generateRandomConformation(
+    conformationMolecule(decisionList),
+    configuration
+  );
+}
+
+outcome::result<Utils::PositionCollection>
 DirectedConformerGenerator::Impl::generateConformation(
   const DecisionList& decisionList,
+  const unsigned seed,
   const DistanceGeometry::Configuration& configuration
 ) {
   return Scine::molassembler::generateConformation(
     conformationMolecule(decisionList),
+    seed,
     configuration
   );
 }

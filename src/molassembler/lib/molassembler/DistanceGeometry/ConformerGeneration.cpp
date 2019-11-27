@@ -19,6 +19,7 @@
 #include "Utils/Math/QuaternionFit.h"
 
 #include "temple/Optimization/LBFGS.h"
+#include "temple/Optionals.h"
 #include "temple/Random.h"
 
 #include <iostream>
@@ -863,7 +864,8 @@ std::vector<
 > run(
   const Molecule& molecule,
   const unsigned numConformers,
-  const Configuration& configuration
+  const Configuration& configuration,
+  const boost::optional<unsigned> seedOption
 ) {
   using ReturnType = std::vector<
     outcome::result<AngstromWrapper>
@@ -892,8 +894,22 @@ std::vector<
     *DGDataPtr = gatherDGInformation(molecule, configuration, randomnessEngine());
   }
 
-  ReturnType results;
-  results.reserve(numConformers);
+  ReturnType results(numConformers, static_cast<DGError>(0));
+
+  auto engineOption = temple::optionals::map(
+    seedOption,
+    [](unsigned seed) -> random::Engine {
+      random::Engine engine;
+      engine.seed(seed);
+      return engine;
+    }
+  );
+
+  std::reference_wrapper<random::Engine> backgroundEngineWrapper = randomnessEngine();
+  if(engineOption) {
+    backgroundEngineWrapper = engineOption.value();
+  }
+  random::Engine& backgroundEngine = backgroundEngineWrapper.get();
 
 #pragma omp parallel
   {
@@ -923,11 +939,11 @@ std::vector<
 
       // Re-seed the thread-local PRNG engine for each conformer
 #pragma omp critical
-      engine.seed(randomnessEngine()());
+      engine.seed(backgroundEngine());
 
 #else
       random::Engine engine;
-      engine.seed(randomnessEngine()());
+      engine.seed(backgroundEngine());
 #endif
 
       /* We have to handle any and all exceptions here bceause this is a
@@ -943,16 +959,11 @@ std::vector<
           engine
         );
 
-#pragma omp critical(collectConformer)
-        {
-          results.push_back(std::move(conformerResult));
-        }
+        results.at(i) = std::move(conformerResult);
       } catch(std::exception& e) {
 #pragma omp critical(collectConformer)
         {
           std::cerr << "WARNING: Uncaught exception in conformer generation: " << e.what() << "\n";
-          // Add an unknown error
-          results.push_back(static_cast<DGError>(0));
         }
       } // end catch
     } // end pragma omp for private(DGDataPtr)

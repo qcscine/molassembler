@@ -73,11 +73,20 @@ unsigned DirectedConformerGenerator::idealEnsembleSize() const {
 }
 
 outcome::result<Utils::PositionCollection>
-DirectedConformerGenerator::generateConformation(
+DirectedConformerGenerator::generateRandomConformation(
   const DecisionList& decisionList,
   const DistanceGeometry::Configuration& configuration
 ) {
-  return _pImpl->generateConformation(decisionList, configuration);
+  return _pImpl->generateRandomConformation(decisionList, configuration);
+}
+
+outcome::result<Utils::PositionCollection>
+DirectedConformerGenerator::generateConformation(
+  const DecisionList& decisionList,
+  const unsigned seed,
+  const DistanceGeometry::Configuration& configuration
+) {
+  return _pImpl->generateConformation(decisionList, seed, configuration);
 }
 
 const Molecule& DirectedConformerGenerator::conformationMolecule(const DecisionList& decisionList) {

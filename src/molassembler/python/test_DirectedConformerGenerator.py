@@ -17,7 +17,7 @@ def test_DirectedConformerGenerator():
     decision = generator.generate_decision_list()
     conf = None
     while not isinstance(conf, numpy.ndarray):
-        conf = generator.generate_conformation(decision)
+        conf = generator.generate_random_conformation(decision)
 
     # Reinterpret the conformer and make sure it matches
     reinterpreted_decisions = generator.get_decision_list(conf, mode_nearest)
@@ -28,7 +28,7 @@ def test_DirectedConformerGenerator():
     assert another_decision != decision
     conf = None
     while not isinstance(conf, numpy.ndarray):
-        conf = generator.generate_conformation(another_decision)
+        conf = generator.generate_random_conformation(another_decision)
 
     # Reinterpret and make sure it matches
     another_reinterpreted = generator.get_decision_list(conf, mode_nearest)

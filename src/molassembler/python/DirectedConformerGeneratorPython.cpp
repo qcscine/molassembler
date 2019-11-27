@@ -31,7 +31,7 @@ void init_directed_conformer_generator(pybind11::module& m) {
       >>> conformers = []
       >>> while generator.decision_list_set_size() < generator.ideal_ensemble_size():
       ...     conformers.append(
-      ...       generator.generate_conformation(
+      ...       generator.generate_random_conformation(
       ...         generator.generate_decision_list()
       ...       )
       ...     )
@@ -162,13 +162,13 @@ void init_directed_conformer_generator(pybind11::module& m) {
   >;
 
   dirConfGen.def(
-    "generate_conformation",
+    "generate_random_conformation",
     [](
       DirectedConformerGenerator& generator,
       const DirectedConformerGenerator::DecisionList& decisionList,
       const DistanceGeometry::Configuration& configuration
     ) -> VariantType {
-      auto result = generator.generateConformation(
+      auto result = generator.generateRandomConformation(
         decisionList,
         configuration
       );
@@ -185,6 +185,43 @@ void init_directed_conformer_generator(pybind11::module& m) {
       Try to generate a conformer for a particular decision list.
 
       :param decision_list: Decision list to use in conformer generation
+      :param configuration: Distance geometry configurations object. Defaults
+        are usually fine.
+
+      .. note::
+         This function advances molassembler's global PRNG state.
+    )delim"
+  );
+
+  dirConfGen.def(
+    "generate_conformation",
+    [](
+      DirectedConformerGenerator& generator,
+      const DirectedConformerGenerator::DecisionList& decisionList,
+      const unsigned seed,
+      const DistanceGeometry::Configuration& configuration
+    ) -> VariantType {
+      auto result = generator.generateConformation(
+        decisionList,
+        seed,
+        configuration
+      );
+
+      if(result) {
+        return result.value();
+      }
+
+      return result.error().message();
+    },
+    pybind11::arg("decision_list"),
+    pybind11::arg("seed"),
+    pybind11::arg("configuration") = DistanceGeometry::Configuration {},
+    R"delim(
+      Try to generate a conformer for a particular decision list.
+
+      :param decision_list: Decision list to use in conformer generation
+      :param seed: Seed to initialize a PRNG with for use in conformer
+        generation.
       :param configuration: Distance geometry configurations object. Defaults
         are usually fine.
     )delim"

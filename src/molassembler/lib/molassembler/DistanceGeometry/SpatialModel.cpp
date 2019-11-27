@@ -323,7 +323,7 @@ void SpatialModel::addAtomStereopermutatorInformation(
     );
   }
 
-  /* Intra-site modelling / Within each site */
+  /* Intra-site modelling / Between atoms within each site */
   for(unsigned long siteI = 0; siteI < feasiblePermutations.siteDistances.size(); ++siteI) {
     /* Set the distance to the center:
      * If no cone information is present, do not correct the distance to the
@@ -553,14 +553,6 @@ void SpatialModel::addBondStereopermutatorInformation(
       dihedralVariance += 5 * dihedralAbsoluteVariance * looseningMultiplier;
     }
 
-    /* Modify the dihedral angle by the upper cone angles of the i and l
-     * sites and the usual variances.
-     */
-    ValueBounds dihedralBounds = makeBoundsFromCentralValue(
-      dihedralAngle,
-      dihedralVariance
-    );
-
     /* If the width of the dihedral angle is now larger than 2π, then we may
      * overrepresent some dihedral values when choosing randomly in that
      * interval, and it is preferable just not to emit a dihedral constraint or
@@ -569,9 +561,20 @@ void SpatialModel::addBondStereopermutatorInformation(
      *
      * This should be very rare or not occur at all; it's just a safeguard.
      */
-    if(dihedralBounds.upper - dihedralBounds.lower >= 2 * M_PI) {
+    if(dihedralVariance >= M_PI) {
       continue;
     }
+
+    /* Modify the dihedral angle by the upper cone angles of the i and l
+     * sites and the usual variances.
+     *
+     * NOTE: Don't worry about the periodicity issue here, the error function
+     * terms in refinement have to take care of that.
+     */
+    ValueBounds dihedralBounds = makeBoundsFromCentralValue(
+      dihedralAngle,
+      dihedralVariance
+    );
 
     // Set per-atom sequence dihedral distance bounds
     temple::forEach(

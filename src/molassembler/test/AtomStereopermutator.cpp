@@ -17,7 +17,7 @@
 using namespace Scine;
 using namespace molassembler;
 
-BOOST_AUTO_TEST_CASE(atomStereopermutatorUpDown) {
+BOOST_AUTO_TEST_CASE(AtomStereopermutatorUpDown) {
   using namespace Shapes;
 
   // Copy out preservation mode and set for test
@@ -69,7 +69,7 @@ BOOST_AUTO_TEST_CASE(atomStereopermutatorUpDown) {
   Options::chiralStatePreservation = prior;
 }
 
-BOOST_AUTO_TEST_CASE(ligandAdditionPropagatedStateSuperposable) {
+BOOST_AUTO_TEST_CASE(LigandAdditionPropagatedStateSuperposable) {
   /* For the RSMD argument to work, the mappings must be effortless (i.e. no
    * angular distortion). So we need to make sure the setting is correct.
    */
@@ -139,9 +139,9 @@ BOOST_AUTO_TEST_CASE(ligandAdditionPropagatedStateSuperposable) {
      * quaternion fit it over the first to see whether propagation was right.
      */
 
-    auto priorConformerResult = generateConformation(priorMol);
+    auto priorConformerResult = generateRandomConformation(priorMol);
     BOOST_REQUIRE(priorConformerResult);
-    auto postConformerResult = generateConformation(postMol);
+    auto postConformerResult = generateRandomConformation(postMol);
     BOOST_REQUIRE(postConformerResult);
 
     /* Quaternion fit conformations of source and target, matching
@@ -206,7 +206,7 @@ BOOST_AUTO_TEST_CASE(ligandAdditionPropagatedStateSuperposable) {
   );
 }
 
-BOOST_AUTO_TEST_CASE(atomStereopermutatorContinuity) {
+BOOST_AUTO_TEST_CASE(AtomStereopermutatorContinuity) {
   /* The following shape pairs should be fully reversible starting from any
    * stereopermutation in the first shape, adding a ligand and removing it
    * again.

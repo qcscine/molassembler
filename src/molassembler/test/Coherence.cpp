@@ -110,7 +110,8 @@ BOOST_AUTO_TEST_CASE(AtomStereopermutationCGFitCoherence) {
       auto ensemble = DistanceGeometry::run(
         molecule,
         ensembleSize,
-        DGConfiguration
+        DGConfiguration,
+        boost::none
       );
 
       /* Check that for every PositionCollection, inferring the StereopermutatorList

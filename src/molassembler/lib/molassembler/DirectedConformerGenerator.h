@@ -313,6 +313,23 @@ public:
 
   /*! @brief Try to generate a conformer for a particular decision list
    *
+   * This is very similar to the free generateRandomConformation function in
+   * terms of what @p configuration will accept.
+   *
+   * @see Scine::molassembler::generateRandomConformation()
+   *
+   * @note Advances the state of the global PRNG.
+   *
+   * @throws std::invalid_argument If the passed decisionList does not match
+   *   the length of the result of bondList().
+   */
+  outcome::result<Utils::PositionCollection> generateRandomConformation(
+    const DecisionList& decisionList,
+    const DistanceGeometry::Configuration& configuration = DistanceGeometry::Configuration {}
+  );
+
+  /*! @brief Try to generate a conformer for a particular decision list
+   *
    * This is very similar to the free generateConformation function in terms
    * of what @p configuration will accept.
    *
@@ -323,6 +340,7 @@ public:
    */
   outcome::result<Utils::PositionCollection> generateConformation(
     const DecisionList& decisionList,
+    const unsigned seed,
     const DistanceGeometry::Configuration& configuration = DistanceGeometry::Configuration {}
   );
 
