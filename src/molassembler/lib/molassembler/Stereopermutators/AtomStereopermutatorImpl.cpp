@@ -112,33 +112,6 @@ Shapes::Shape pickTransition(
   return Shapes::properties::mostSymmetric(std::move(propositions));
 }
 
-//! Thread-safe caching access to continuous shape measure minimum distortion angles
-double minimumDistortionAngle(const Shapes::Shape a, const Shapes::Shape b) {
-  double value;
-
-  /* Since all of the below is not thread-safe due to Eigen, mark the whole
-   * thing critical.
-   */
-#pragma omp critical
-  {
-    static Eigen::SparseMatrix<double> cache {Shapes::nShapes, Shapes::nShapes};
-
-    unsigned i, j;
-    std::tie(i, j) = std::minmax(Shapes::nameIndex(a), Shapes::nameIndex(b));
-
-    double storedAngle = cache.coeff(i, j);
-    if(storedAngle != 0.0) {
-      value = storedAngle;
-    } else {
-      const double angle = Shapes::continuous::minimumDistortionAngle(a, b);
-      cache.coeffRef(i, j) = angle;
-      value = angle;
-    }
-  }
-
-  return value;
-}
-
 std::pair<Shapes::Shape, std::vector<unsigned>> classifyShape(const Eigen::Matrix<double, 3, Eigen::Dynamic>& sitePositions) {
   const unsigned S = sitePositions.cols() - 1;
   auto normalized = Shapes::continuous::normalize(sitePositions);

@@ -4,13 +4,16 @@
  */
 
 #include <boost/test/unit_test.hpp>
+#include "molassembler/Conformers.h"
 #include "molassembler/DistanceGeometry/ConformerGeneration.h"
 
 #include "molassembler/IO.h"
+#include "molassembler/IO/SmilesParser.h"
 
 #include "Utils/Geometry/ElementTypes.h"
 #include "shapes/Data.h"
 
+#include "temple/Optionals.h"
 #include "temple/Functional.h"
 #include "temple/Random.h"
 
@@ -171,5 +174,28 @@ BOOST_AUTO_TEST_CASE(AtomStereopermutationCGFitCoherence) {
         "Expected " << ensembleSize << " matches for assignment " << assignment << " of shape " << name(shape) << ", got " << matches << " matches."
       );
     }
+  }
+}
+
+BOOST_AUTO_TEST_CASE(BidentateAssignmentRecognized) {
+  const std::string pincer_smiles = "[Ir]12([H])(Cl)P(C(C)(C)(C))(C(C)(C)(C))CC(=CC=C3)C1=C3CP2(C(C)(C)(C))C(C)(C)C";
+  // NOTE: set shape at 0 to trigonal bipyramid
+  auto pincer = IO::experimental::parseSmilesSingleMolecule(pincer_smiles);
+  pincer.setShapeAtAtom(0, Shapes::Shape::TrigonalBipyramid);
+  pincer.assignStereopermutator(0, 0);
+  if(auto conf = generateRandomConformation(pincer)) {
+    Molecule reinterpreted {
+      pincer.graph(),
+      AngstromWrapper {conf.value()}
+    };
+    auto assignmentOptional = temple::optionals::flatMap(
+      reinterpreted.stereopermutators().option(0),
+      [](const AtomStereopermutator& f) -> boost::optional<unsigned> {
+        return f.assigned();
+      }
+    );
+    BOOST_CHECK(assignmentOptional == 0u);
+  } else {
+    BOOST_FAIL(conf.error());
   }
 }
