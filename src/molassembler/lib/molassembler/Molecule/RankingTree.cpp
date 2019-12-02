@@ -879,14 +879,12 @@ void RankingTree::_applySequenceRules(
         molSourceIndex,
         centerRanking
       ).value_or_eval(
-        [&]() {
-          return LocalGeometry::firstOfSize(centerRanking.sites.size());
-        }
+        [&]() { return LocalGeometry::firstOfSize(centerRanking.sites.size()); }
       );
     }
 
     // Instantiate a AtomStereopermutator here!
-    auto newStereopermutator = AtomStereopermutator {
+    AtomStereopermutator newStereopermutator {
       _graph,
       localShape,
       molSourceIndex,
@@ -895,19 +893,15 @@ void RankingTree::_applySequenceRules(
 
     /* Find an assignment (and maybe a better shape) */
     if(positionsOption) {
-      /* Fit has the side effect that the chosen shape is not necessarily
-       * kept but rather the best combination of shape and assignment is
-       * chosen. It is therefore not wise to default-assign newStereopermutator
-       * if positions are available.
+      /* Fit has the additional effect that the chosen shape can change. It is
+       * therefore not wise to default-assign newStereopermutator if positions
+       * are available.
        */
       newStereopermutator.fit(
         _graph,
         positionsOption.value()
       );
-    } else if(
-      newStereopermutator.numStereopermutations() == 1
-      && newStereopermutator.numAssignments() == 1
-    ) {
+    } else if(newStereopermutator.numAssignments() == 1) {
       // Default assign the stereopermutator for particularly simple cases
       newStereopermutator.assign(0);
     } else if(existingStereopermutatorOption) {
@@ -928,31 +922,20 @@ void RankingTree::_applySequenceRules(
         /* Try to propagate the molecule's stereopermutator to the new ranking
          * case. If it's possible, take the resulting assignment.
          */
-        AtomStereopermutator permutatorCopy = *existingStereopermutatorOption;
         try {
+          AtomStereopermutator permutatorCopy = *existingStereopermutatorOption;
           permutatorCopy.propagate(_graph, centerRanking, localShape);
           if(permutatorCopy.assigned()) {
-            newStereopermutator.setShape(
-              permutatorCopy.getShape(),
-              _graph
-            );
+            newStereopermutator.setShape(permutatorCopy.getShape(), _graph);
             newStereopermutator.assign(permutatorCopy.assigned());
           }
         } catch(...) {}
       }
     }
 
-    if(
-      newStereopermutator.assigned()
-      && !disregardStereopermutator(
-        newStereopermutator,
-        _graph.elementType(molSourceIndex),
-        _graph.cycles(),
-        Options::temperatureRegime
-      )
-    ) {
-      if(newStereopermutator.numStereopermutations() > 1) {
-        // Mark that we instantiated something interesting
+    if(newStereopermutator.assigned()) {
+      // Did we find something interesting?
+      if(newStereopermutator.numAssignments() > 1) {
         foundAtomStereopermutators = true;
       }
 

@@ -36,7 +36,7 @@ BOOST_AUTO_TEST_CASE(ExplicitGraphStructure) {
 
     using EG = DistanceGeometry::ExplicitGraph;
 
-    DistanceGeometry::SpatialModel spatialModel {molecule, DistanceGeometry::Configuration {}, randomnessEngine()};
+    DistanceGeometry::SpatialModel spatialModel {molecule, DistanceGeometry::Configuration {}};
 
     EG explicitGraph {
       molecule.graph().inner(),

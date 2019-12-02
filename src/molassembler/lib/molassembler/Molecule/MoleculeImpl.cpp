@@ -78,16 +78,7 @@ void Molecule::Impl::_tryAddAtomStereopermutator(
     newStereopermutator.assign(0);
   }
 
-  if(
-    !disregardStereopermutator(
-      newStereopermutator,
-      graph().elementType(candidateIndex),
-      graph().cycles(),
-      Options::temperatureRegime
-    )
-  ) {
-    stereopermutators.add(std::move(newStereopermutator));
-  }
+  stereopermutators.add(std::move(newStereopermutator));
 }
 
 void Molecule::Impl::_tryAddBondStereopermutator(
@@ -212,8 +203,6 @@ void Molecule::Impl::_propagateGraphChange() {
    * Need state propagation for BondStereopermutators, anything else is madness
    */
 
-  const Cycles& cycleData = graph().cycles();
-
   for(
     const InnerGraph::Vertex vertex :
     boost::make_iterator_range(inner.vertices())
@@ -262,25 +251,6 @@ void Molecule::Impl::_propagateGraphChange() {
         && stereopermutatorOption -> assigned() == boost::none
       ) {
         stereopermutatorOption -> assign(0);
-      }
-
-      // If the change makes the stereopermutator undesirable, remove it
-      if(
-        disregardStereopermutator(
-          *stereopermutatorOption,
-          inner.elementType(vertex),
-          cycleData,
-          Options::temperatureRegime
-        )
-      ) {
-        _stereopermutators.remove(vertex);
-
-        // And all the BondStereopermutators that are placed here too
-        for(BondIndex bond : adjacentBondStereopermutators) {
-          _stereopermutators.remove(bond);
-        }
-
-        continue;
       }
 
       /* If the chiral state for this atom stereopermutator was not successfully
@@ -975,17 +945,7 @@ StereopermutatorList Molecule::Impl::inferStereopermutatorsFromPositions(
     };
 
     stereopermutator.fit(_adjacencies, angstromWrapper);
-
-    if(
-      !disregardStereopermutator(
-        stereopermutator,
-        graph().elementType(vertex),
-        graph().cycles(),
-        Options::temperatureRegime
-      )
-    ) {
-      stereopermutators.add(std::move(stereopermutator));
-    }
+    stereopermutators.add(std::move(stereopermutator));
   }
 
   auto tryInstantiateBondStereopermutator = [&](const BondIndex& bondIndex) -> void {

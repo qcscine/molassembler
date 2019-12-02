@@ -86,11 +86,8 @@ const ValueBounds SpatialModel::defaultDihedralBounds {std::nextafter(-M_PI, 0),
 
 SpatialModel::SpatialModel(
   const Molecule& molecule,
-  const Configuration& configuration,
-  random::Engine& engine
-) : _molecule(molecule),
-    _stereopermutators(molecule.stereopermutators())
-{
+  const Configuration& configuration
+) : _molecule(molecule) {
   /* This is overall a pretty complicated constructor since it encompasses the
    * entire conversion from a molecular graph into some model of the internal
    * coordinates of all connected atoms, determining which conformations are
@@ -102,17 +99,6 @@ SpatialModel::SpatialModel(
    * - Gather information on local geometries of all non-terminal atoms, using
    *   the existing stereopermutator data and supplanting it with random-assignment
    *   inferred stereopermutators on all other non-terminal atoms or double bonds.
-   *
-   *   - Copy original molecule's list of stereopermutators. Set unassigned ones to
-   *     a random assignment (consistent with occurrence statistics)
-   *   - Instantiate BondStereopermutators on all double bonds that aren't immediately
-   *     involved in other stereopermutators. This is to ensure that all atoms
-   *     involved in non-stereogenic double bonds are also flat in the
-   *     resulting 3D structure. They additionally allow extraction of
-   *     angle and dihedral angle information just like AtomStereopermutators.
-   *   - Instantiate AtomStereopermutators on all remaining atoms and default-assign
-   *     them. This is so that we can get angle data between substituents easily.
-   *
    * - Set internal angles of all small flat cycles
    * - Set all remaining 1-3 bounds with additional tolerance if atoms involved
    *   in the angle are part of a small cycle
@@ -125,11 +111,22 @@ SpatialModel::SpatialModel(
    */
 
   // Check invariants
-  assert(
-    !molecule.stereopermutators().hasZeroAssignmentStereopermutators()
-    && !molecule.stereopermutators().hasUnassignedStereopermutators()
-    && "The passed molecule may not have zero-assignment or unassigned stereopermutators!"
-  );
+  if(
+    molecule.stereopermutators().hasZeroAssignmentStereopermutators()
+    || molecule.stereopermutators().hasUnassignedStereopermutators()
+  ) {
+    throw std::logic_error("Failed precondition: molecule has zero-assignment or unassigned stereopermutators");
+  }
+
+  for(AtomIndex i : boost::make_iterator_range(_molecule.graph().atoms())) {
+    if(_molecule.graph().degree(i) == 1) {
+      continue;
+    }
+
+    if(!_molecule.stereopermutators().option(i)) {
+      throw std::logic_error("Non-terminal atom is missing an atom stereopermutator");
+    }
+  }
 
   // Helper variables
   const Cycles& cycleData = molecule.graph().cycles();
@@ -175,16 +172,6 @@ SpatialModel::SpatialModel(
   // Set bond distances
   _modelBondDistances(fixedAngstromPositions, configuration.spatialModelLoosening);
 
-  /* The StereopermutatorList is already copy initialized with the Molecule's
-   * stereopermutators, but we need to instantiate AtomStereopermutators everywhere,
-   * regardless of whether they are stereogenic or not, to ensure that
-   * modelling gets the information it needs.
-   *
-   * So for every missing non-terminal atom, create a AtomStereopermutator in the
-   * determined geometry
-   */
-  _instantiateMissingAtomStereopermutators(engine);
-
   /* For all flat cycles for which the internal angles can be determined
    * exactly, add that information
    */
@@ -195,7 +182,7 @@ SpatialModel::SpatialModel(
    * BondStereopermutators.
    */
   std::unordered_set<AtomIndex> forceConstraintEmissionSet;
-  for(const auto& bondStereopermutator : _stereopermutators.bondStereopermutators()) {
+  for(const auto& bondStereopermutator : _molecule.stereopermutators().bondStereopermutators()) {
     for(AtomIndex placedAtomIndex : bondStereopermutator.edge()) {
       forceConstraintEmissionSet.insert(placedAtomIndex);
     }
@@ -203,7 +190,7 @@ SpatialModel::SpatialModel(
 
 
   // Get 1-3 information from AtomStereopermutators
-  for(const auto& stereopermutator : _stereopermutators.atomStereopermutators()) {
+  for(const auto& stereopermutator : _molecule.stereopermutators().atomStereopermutators()) {
     addAtomStereopermutatorInformation(
       stereopermutator,
       _molecule.graph().inner(),
@@ -214,13 +201,13 @@ SpatialModel::SpatialModel(
   }
 
   // Get 1-4 information from BondStereopermutators
-  for(const auto& bondStereopermutator : _stereopermutators.bondStereopermutators()) {
+  for(const auto& bondStereopermutator : _molecule.stereopermutators().bondStereopermutators()) {
     addBondStereopermutatorInformation(
       bondStereopermutator,
-      _stereopermutators.option(
+      _molecule.stereopermutators().option(
         bondStereopermutator.edge().first
       ).value(),
-      _stereopermutators.option(
+      _molecule.stereopermutators().option(
         bondStereopermutator.edge().second
       ).value(),
       configuration.spatialModelLoosening,
@@ -1163,7 +1150,7 @@ struct SpatialModel::ModelGraphWriter final : public MolGraphWriter {
 
 /* Constructor */
   ModelGraphWriter(const InnerGraph& inner, const SpatialModel& passSpatialModel)
-    : MolGraphWriter(&inner, &passSpatialModel._stereopermutators),
+    : MolGraphWriter(&inner, &passSpatialModel._molecule.stereopermutators()),
       spatialModel(passSpatialModel) {}
 
   std::vector<std::string> edgeTooltips(AtomIndex source, AtomIndex target) const final {
@@ -1682,47 +1669,6 @@ void SpatialModel::_addDefaultDihedrals() {
   }
 }
 
-void SpatialModel::_instantiateMissingAtomStereopermutators(random::Engine& engine) {
-  const unsigned N = _molecule.graph().N();
-  for(unsigned i = 0; i < N; ++i) {
-    // Already an instantiated AtomStereopermutator?
-    if(_stereopermutators.option(i)) {
-      continue;
-    }
-
-    auto localRanking = _molecule.rankPriority(i);
-
-    // Terminal atom index? skip those
-    if(localRanking.sites.size() <= 1) {
-      continue;
-    }
-
-    Shapes::Shape localShape = _molecule.inferShape(i, localRanking).value_or_eval(
-      [&]() {
-        return LocalGeometry::firstOfSize(localRanking.sites.size());
-      }
-    );
-
-    auto newStereopermutator = AtomStereopermutator {
-      _molecule.graph(),
-      localShape,
-      i,
-      std::move(localRanking)
-    };
-
-    /* New stereopermutators encountered at this point can have multiple
-     * assignments, since some types of stereopermutators are flatly ignored by the
-     * candidate functions from Molecule, such as trigonal pyramidal nitrogens.
-     * These are found here, though, and MUST be chosen randomly according to
-     * the relative weights to get a single conformation in the final model
-     */
-    newStereopermutator.assignRandom(engine);
-
-    // Add it to the list of stereopermutators
-    _stereopermutators.add(std::move(newStereopermutator));
-  }
-}
-
 void SpatialModel::_modelBondDistances(
   const FixedPositionsMapType& fixedAngstromPositions,
   const double looseningFactor
@@ -1908,7 +1854,7 @@ void SpatialModel::_modelSpirocenters(
    * We also only have to worry about modeling them if the two URFs are
    * particularly small, i.e. are sizes 3-5
    */
-  for(const auto& stereopermutator : _stereopermutators.atomStereopermutators()) {
+  for(const auto& stereopermutator : _molecule.stereopermutators().atomStereopermutators()) {
     AtomIndex i = stereopermutator.centralIndex();
 
     // Skip any fixed central atoms

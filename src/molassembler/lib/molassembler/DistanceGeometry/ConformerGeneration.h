@@ -87,8 +87,7 @@ struct MoleculeDGInformation {
  */
 MoleculeDGInformation gatherDGInformation(
   const Molecule& molecule,
-  const Configuration& configuration,
-  random::Engine& engine
+  const Configuration& configuration
 );
 
 //! @overload

@@ -141,7 +141,7 @@ std::vector<unsigned> randomReorderingSequence(const unsigned length) {
   return reorderSequence;
 }
 
-BOOST_AUTO_TEST_CASE( reorderingWorks ) {
+BOOST_AUTO_TEST_CASE(MatrixReorderingReversibility) {
   bool allPassed = true;
   const unsigned N = 10;
 
@@ -151,13 +151,8 @@ BOOST_AUTO_TEST_CASE( reorderingWorks ) {
     auto reorderingOrder = randomReorderingSequence(N);
 
     auto result = reorder(
-      reorder(
-        testMatrix,
-        reorderingOrder
-      ),
-      inverseReorderSequence(
-        reorderingOrder
-      )
+      reorder(testMatrix, reorderingOrder),
+      inverseReorderSequence(reorderingOrder)
     );
 
     if(testMatrix != result) {
@@ -176,14 +171,14 @@ BOOST_AUTO_TEST_CASE( reorderingWorks ) {
   BOOST_CHECK(allPassed);
 }
 
-BOOST_AUTO_TEST_CASE( constructionIsInvariantUnderOrderingSwap ) {
+BOOST_AUTO_TEST_CASE(MetricMatrixConstructionIsInvariantUnderOrderingSwap) {
   for(
     const boost::filesystem::path& currentFilePath :
     boost::filesystem::recursive_directory_iterator("ez_stereocenters")
   ) {
     auto molecule = IO::read(currentFilePath.string());
 
-    auto DGData = DistanceGeometry::gatherDGInformation(molecule, DistanceGeometry::Configuration {}, randomnessEngine());
+    auto DGData = DistanceGeometry::gatherDGInformation(molecule, DistanceGeometry::Configuration {});
 
     DistanceBoundsMatrix distanceBounds {
       molecule.graph().inner(),
@@ -238,8 +233,7 @@ BOOST_AUTO_TEST_CASE( constructionIsInvariantUnderOrderingSwap ) {
   }
 }
 
-BOOST_AUTO_TEST_CASE( explicitFromLecture ) {
-  // From Algorithms & Programming in C++ lecture
+BOOST_AUTO_TEST_CASE(ExplicitExampleFromLecture) {
   Eigen::MatrixXd exactDistanceMatrix (4, 4);
   // No need to enter lower triangle
   exactDistanceMatrix << 0, 1, sqrt(2),       1,

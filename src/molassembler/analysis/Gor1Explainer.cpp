@@ -379,7 +379,7 @@ int main(int argc, char* argv[]) {
 
     auto mol = IO::read(filename);
 
-    DistanceGeometry::SpatialModel spatialModel {mol, DistanceGeometry::Configuration {}, randomnessEngine()};
+    DistanceGeometry::SpatialModel spatialModel {mol, DistanceGeometry::Configuration {}};
 
     DistanceGeometry::ImplicitGraph shortestPathsGraph {
       mol.graph().inner(),

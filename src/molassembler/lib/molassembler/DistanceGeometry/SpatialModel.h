@@ -329,12 +329,10 @@ public:
    * @param configuration The Distance Geometry configuration object. Relevant
    *   for this stage of the process are the loosening multiplier and fixed
    *   positions, if set.
-   * @param engine The PRNG engine used for randomness
    */
   SpatialModel(
     const Molecule& molecule,
-    const Configuration& configuration,
-    random::Engine& engine
+    const Configuration& configuration
   );
 //!@}
 
@@ -484,9 +482,6 @@ public:
 private:
   // Molecule closure
   const Molecule& _molecule;
-
-  // Mutable state
-  StereopermutatorList _stereopermutators;
 
   //! Constraints by fixed positions
   BoundsMapType<2> _constraints;

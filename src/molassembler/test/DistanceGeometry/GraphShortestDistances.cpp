@@ -178,7 +178,7 @@ BOOST_AUTO_TEST_CASE(ShortestPathsGraphConcepts) {
       currentFilePath.string()
     );
 
-    DistanceGeometry::SpatialModel spatialModel {molecule, DistanceGeometry::Configuration {}, randomnessEngine()};
+    DistanceGeometry::SpatialModel spatialModel {molecule, DistanceGeometry::Configuration {}};
 
     using EG = DistanceGeometry::ExplicitGraph;
     using Vertex = EG::GraphType::vertex_descriptor;
@@ -536,7 +536,7 @@ BOOST_AUTO_TEST_CASE(GraphShortestDistancesCorrectness) {
     );
     const unsigned N = sampleMol.graph().N();
 
-    DistanceGeometry::SpatialModel spatialModel {sampleMol, DistanceGeometry::Configuration {}, randomnessEngine()};
+    DistanceGeometry::SpatialModel spatialModel {sampleMol, DistanceGeometry::Configuration {}};
 
     const auto boundsList = spatialModel.makePairwiseBounds();
 

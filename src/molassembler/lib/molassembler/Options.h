@@ -207,32 +207,6 @@ struct Options {
   static ShapeTransition shapeTransition;
 };
 
-// Forward-declare Cycles and AtomStereopermutator
-class Cycles;
-class AtomStereopermutator;
-
-/*! @brief Decides whether to keep a stereopermutator within a temperature regime
- *
- * Criteria applied are:
- * - Minimum of three adjacent indices
- * - If the high-temperature approximation is invoked, trivalent nitrogen
- *   inverts too rapidly to carry stereoinformation (unless part of a cycle
- *   of size 4 or smaller, where strain hinders inversion)
- *
- * @complexity{@math{\Theta(U)} where @math{U} is the number of unique ring
- * families in the molecule}
- *
- * @todo This has to change! Disregarding stereopermutators is not the way to
- * solve stereopermutation interconversion, it should be handled at the
- * stereopermutator itself!
- */
-bool disregardStereopermutator(
-  const AtomStereopermutator& stereopermutator,
-  Scine::Utils::ElementType centralType,
-  const Cycles& cycleData,
-  TemperatureRegime temperatureRegimeSetting
-);
-
 } // namespace molassembler
 
 } // namespace Scine

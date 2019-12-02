@@ -194,11 +194,10 @@ struct GradientOrIterLimitStop {
 
 MoleculeDGInformation gatherDGInformation(
   const Molecule& molecule,
-  const Configuration& configuration,
-  random::Engine& engine
+  const Configuration& configuration
 ) {
   // Generate a spatial model from the molecular graph and stereopermutators
-  SpatialModel spatialModel {molecule, configuration, engine};
+  SpatialModel spatialModel {molecule, configuration};
 
   // Extract gathered data
   MoleculeDGInformation data;
@@ -215,7 +214,7 @@ MoleculeDGInformation gatherDGInformation(
   std::string& spatialModelGraphvizString
 ) {
   // Generate a spatial model from the molecular graph and stereopermutators
-  SpatialModel spatialModel {molecule, configuration, randomnessEngine()};
+  SpatialModel spatialModel {molecule, configuration};
   spatialModelGraphvizString = spatialModel.dumpGraphviz();
 
   // Extract gathered data
@@ -305,10 +304,10 @@ std::list<RefinementData> debugRefinement(
       if(regenerateEachStep) {
         auto moleculeCopy = detail::narrow(molecule, randomnessEngine());
 
-        SpatialModel model {moleculeCopy, configuration, randomnessEngine()};
+        SpatialModel model {moleculeCopy, configuration};
         model.writeGraphviz("DG-failure-spatial-model-" + std::to_string(currentStructureNumber) + ".dot");
       } else {
-        SpatialModel model {molecule, configuration, randomnessEngine()};
+        SpatialModel model {molecule, configuration};
         model.writeGraphviz("DG-failure-spatial-model-" + std::to_string(currentStructureNumber) + ".dot");
       }
 
@@ -811,7 +810,7 @@ outcome::result<AngstromWrapper> generateConformer(
     }
 
     DGDataPtr = std::make_shared<MoleculeDGInformation>(
-      gatherDGInformation(moleculeCopy, configuration, engine)
+      gatherDGInformation(moleculeCopy, configuration)
     );
   }
 
@@ -891,7 +890,7 @@ std::vector<
   auto DGDataPtr = std::make_shared<MoleculeDGInformation>();
   bool regenerateEachStep = molecule.stereopermutators().hasUnassignedStereopermutators();
   if(!regenerateEachStep) {
-    *DGDataPtr = gatherDGInformation(molecule, configuration, randomnessEngine());
+    *DGDataPtr = gatherDGInformation(molecule, configuration);
   }
 
   ReturnType results(numConformers, static_cast<DGError>(0));

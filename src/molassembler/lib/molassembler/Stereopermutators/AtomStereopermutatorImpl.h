@@ -54,9 +54,18 @@ public:
    * @brief Generates an shape position index mapping from a shape
    *   transition group
    */
-  boost::optional<std::vector<unsigned>> getIndexMapping(
+  static boost::optional<std::vector<unsigned>> getIndexMapping(
     const Shapes::properties::SymmetryTransitionGroup& mappingsGroup,
     const ChiralStatePreservation& preservationOption
+  );
+
+  //! @brief Whether the stereopermutations interconvert rapidly at selected temp
+  static bool thermalized(
+    const OuterGraph& graph,
+    AtomIndex centerAtom,
+    const Shapes::Shape shape,
+    const RankingInformation& ranking,
+    const TemperatureRegime temperature
   );
 //!@}
 
@@ -234,6 +243,9 @@ private:
 
   //! Derived property of @p _assignmentOption
   std::vector<unsigned> _shapePositionMap;
+
+  //! Whether all feasible assignments interconvert thermally
+  bool _thermalized;
 };
 
 } // namespace molassembler

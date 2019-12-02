@@ -74,7 +74,7 @@ std::vector<FunctorResults> timeFunctors(
 
   for(unsigned n = 0; n < N; ++n) {
     // Prepare new data for the functors in every experiment
-    DistanceGeometry::SpatialModel spatialModel {molecule, DistanceGeometry::Configuration {}, randomnessEngine()};
+    DistanceGeometry::SpatialModel spatialModel {molecule, DistanceGeometry::Configuration {}};
 
     const auto boundsList = spatialModel.makePairwiseBounds();
 

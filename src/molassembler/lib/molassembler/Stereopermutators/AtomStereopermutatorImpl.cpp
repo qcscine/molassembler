@@ -34,6 +34,8 @@
 #include "molassembler/Modeling/CommonTrig.h"
 #include "molassembler/Stereopermutators/ShapeVertexMaps.h"
 
+#include "Utils/Geometry/ElementInfo.h"
+
 namespace Scine {
 
 namespace molassembler {
@@ -199,6 +201,44 @@ boost::optional<std::vector<unsigned>> AtomStereopermutator::Impl::getIndexMappi
   return boost::none;
 }
 
+bool AtomStereopermutator::Impl::thermalized(
+  const OuterGraph& graph,
+  const AtomIndex centerAtom,
+  const Shapes::Shape shape,
+  const RankingInformation& ranking,
+  const TemperatureRegime temperature
+) {
+  if(temperature == TemperatureRegime::Low) {
+    return false;
+  }
+
+  /* Nitrogen atom inversion */
+  constexpr unsigned nitrogenZ = 7;
+  bool isNitrogenIsotope = Utils::ElementInfo::Z(graph.elementType(centerAtom)) == nitrogenZ;
+
+  if(
+    isNitrogenIsotope
+    && shape == Shapes::Shape::VacantTetrahedron
+  ) {
+    // Generally thermalized, except if in a small cycle
+    if(
+      temple::any_of(ranking.links,
+        [](const LinkInformation& link) {
+          return link.cycleSequence.size() <= 4;
+        }
+      )
+    ) {
+      return false;
+    }
+
+    return true;
+  }
+
+  // TODO Bartell mechanism and Berry pseudorotation
+
+  return false;
+}
+
 /* Constructors */
 AtomStereopermutator::Impl::Impl(
   const OuterGraph& graph,
@@ -214,7 +254,14 @@ AtomStereopermutator::Impl::Impl(
     _abstract {_ranking, _shape},
     _feasible {_abstract, _shape, _centerAtom, _ranking, graph},
     _assignmentOption {boost::none},
-    _shapePositionMap {}
+    _shapePositionMap {},
+    _thermalized {thermalized(
+      graph,
+      centerAtom,
+      shape,
+      ranking,
+      Options::temperatureRegime
+    )}
 {}
 
 /* Modification */
@@ -764,6 +811,13 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
   _ranking = std::move(newRanking);
   _abstract = std::move(newAbstract);
   _feasible = std::move(newFeasible);
+  _thermalized = thermalized(
+    graph,
+    _centerAtom,
+    _shape,
+    _ranking,
+    Options::temperatureRegime
+  );
   assign(newAssignmentOption);
 
   return {std::move(oldStateTuple)};
@@ -951,6 +1005,10 @@ double AtomStereopermutator::Impl::angle(
 }
 
 boost::optional<unsigned> AtomStereopermutator::Impl::assigned() const {
+  if(_thermalized) {
+    return temple::optionals::map(_assignmentOption, [](unsigned /* a */) { return 0u; });
+  }
+
   return _assignmentOption;
 }
 
@@ -959,11 +1017,14 @@ AtomIndex AtomStereopermutator::Impl::centralIndex() const {
 }
 
 boost::optional<unsigned> AtomStereopermutator::Impl::indexOfPermutation() const {
-  if(_assignmentOption) {
-    return _feasible.indices.at(_assignmentOption.value());
+  if(_thermalized) {
+    return temple::optionals::map(_assignmentOption, [](unsigned /* a */) { return 0u; });
   }
 
-  return boost::none;
+  return temple::optionals::map(
+    _assignmentOption,
+    [&](unsigned a) { return _feasible.indices.at(a); }
+  );
 }
 
 std::vector<AtomStereopermutator::MinimalChiralConstraint>
@@ -992,12 +1053,8 @@ AtomStereopermutator::Impl::minimalChiralConstraints(bool enforce) const {
    */
   if(
     _assignmentOption
-    && (
-      numStereopermutations() > 1
-      || enforce
-    )
+    && (numStereopermutations() > 1 || enforce)
   ) {
-
     /* Invert _neighborSymmetryPositionMap, we need a mapping of
      *  (position in symmetry) -> atom index
      */
@@ -1090,10 +1147,18 @@ std::string AtomStereopermutator::Impl::rankInfo() const {
 }
 
 unsigned AtomStereopermutator::Impl::numAssignments() const {
+  if(_thermalized) {
+    return 1;
+  }
+
   return _feasible.indices.size();
 }
 
 unsigned AtomStereopermutator::Impl::numStereopermutations() const {
+  if(_thermalized) {
+    return 1;
+  }
+
   return _abstract.permutations.stereopermutations.size();
 }
 
@@ -1120,6 +1185,14 @@ void AtomStereopermutator::Impl::setShape(
     _ranking,
     graph
   };
+
+  _thermalized = thermalized(
+    graph,
+    _centerAtom,
+    _shape,
+    _ranking,
+    Options::temperatureRegime
+  );
 
   // Dis-assign the stereopermutator
   assign(boost::none);

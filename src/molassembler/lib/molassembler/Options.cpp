@@ -8,10 +8,6 @@
 #include "boost/range/iterator_range_core.hpp"
 #include "shapes/Data.h"
 
-#include "molassembler/AtomStereopermutator.h"
-#include "molassembler/Cycles.h"
-#include "molassembler/OuterGraph.h"
-
 namespace Scine {
 
 namespace molassembler {
@@ -25,37 +21,6 @@ random::Engine& randomnessEngine() {
 TemperatureRegime Options::temperatureRegime = TemperatureRegime::High;
 ChiralStatePreservation Options::chiralStatePreservation = ChiralStatePreservation::EffortlessAndUnique;
 ShapeTransition Options::shapeTransition = ShapeTransition::MaximizeChiralStatePreservation;
-
-bool disregardStereopermutator(
-  const AtomStereopermutator& stereopermutator,
-  const Scine::Utils::ElementType centralType,
-  const Cycles& cycleData,
-  const TemperatureRegime temperatureRegimeSetting
-) {
-  if(
-    temperatureRegimeSetting == TemperatureRegime::High
-    && stereopermutator.getShape() == Shapes::Shape::VacantTetrahedron
-    && centralType == Scine::Utils::ElementType::N
-  ) {
-    // Figure out if the nitrogen is in a cycle of size 4 or smaller
-    for(
-      const auto cycleEdges :
-      boost::make_iterator_range(
-        cycleData.containing(
-          stereopermutator.centralIndex()
-        )
-      )
-    ) {
-      if(cycleEdges.size() <= 4) {
-        return false;
-      }
-    }
-
-    return true;
-  }
-
-  return false;
-}
 
 } // namespace molassembler
 

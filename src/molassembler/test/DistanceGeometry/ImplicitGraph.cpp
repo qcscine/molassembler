@@ -64,7 +64,7 @@ BOOST_AUTO_TEST_CASE(ImplicitGraphStructure) {
 
     using IG = DistanceGeometry::ImplicitGraph;
 
-    DistanceGeometry::SpatialModel spatialModel {molecule, DistanceGeometry::Configuration {}, randomnessEngine()};
+    DistanceGeometry::SpatialModel spatialModel {molecule, DistanceGeometry::Configuration {}};
 
     IG ig {
       molecule.graph().inner(),
