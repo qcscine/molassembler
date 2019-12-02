@@ -142,6 +142,9 @@ public:
   // IUPAC Sequence rule one tree vertex comparator
   class SequenceRuleOneVertexComparator;
 
+  // IUPAC Sequence rule two tree vertex comparator
+  class SequenceRuleTwoVertexComparator;
+
   // IUPAC Sequence rule three tree edge comparator
   class SequenceRuleThreeEdgeComparator;
 

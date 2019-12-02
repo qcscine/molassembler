@@ -179,8 +179,8 @@ public:
      * - One is duplicate -> Non-duplicate is bigger
      * - Both are duplicate -> Compare distance to root
      */
-    const bool& aDuplicate = _base._tree[a].isDuplicate;
-    const bool& bDuplicate = _base._tree[b].isDuplicate;
+    const bool aDuplicate = _base._tree[a].isDuplicate;
+    const bool bDuplicate = _base._tree[b].isDuplicate;
 
     if(!aDuplicate && !bDuplicate) {
       // Casting elementType to unsigned basically gives Z
@@ -202,6 +202,25 @@ public:
     }*/
 
     return aDuplicate && !bDuplicate;
+  }
+};
+
+class RankingTree::SequenceRuleTwoVertexComparator {
+private:
+  const RankingTree& _base;
+
+public:
+  SequenceRuleTwoVertexComparator(const RankingTree& base) : _base(base) {}
+
+  bool operator () (const TreeVertexIndex& b, const TreeVertexIndex& a) const {
+    // Compare atomic mass of vertices
+    const Utils::ElementType aElement = _base._graph.elementType(
+      _base._tree[a].molIndex
+    );
+    const Utils::ElementType bElement = _base._graph.elementType(
+      _base._tree[b].molIndex
+    );
+    return Utils::ElementInfo::A(aElement) < Utils::ElementInfo::A(bElement);
   }
 };
 
@@ -641,18 +660,36 @@ void RankingTree::_applySequenceRules(
 ) {
   /* Sequence rule 2
    * - A node with higher atomic mass precedes ones with lower atomic mass
-   *
-   * NOTE: We skip this sequence rule for two reasons
-   * - There is currently no way to represent isotopes in the library
-   * - This rule may come to bear when disconnecting heteroaromatic cycles,
-   *   where all aromatic atoms are given a duplicate atom with a mass equal
-   *   to the average of what it would have if the double bonds were located
-   *   at each of the possible positions. Although differentiating these
-   *   cases would be good, there is currently no code to detect aromaticity
-   *   nor permute all possible arrangements of double bonds in their
-   *   subgraphs.
    */
+  _runBFS<
+    2, // Sequence rule 2
+    true, // BFS downwards only
+    false, // Insert edges
+    true, // Insert vertices
+    TreeVertexIndex, // Multiset value type
+    SequenceRuleTwoVertexComparator // Multiset comparator type
+  >(
+    rootIndex, // source index is root
+    _branchOrderingHelper
+  );
 
+  if /* C++17 constexpr */ (buildTypeIsDebug) {
+    Log::log(Log::Particulars::RankingTreeDebugInfo)
+      << "  Sets post sequence rule 2: {"
+      << temple::condense(
+        temple::map(
+          _branchOrderingHelper.getSets(),
+          [](const auto& indexSet) -> std::string {
+            return "{"s + temple::condense(indexSet) + "}"s;
+          }
+        )
+      ) << "}\n";
+  }
+
+  // Was sequence rule 2 enough?
+  if(_branchOrderingHelper.isTotallyOrdered()) {
+    return;
+  }
 
   /* Sequence rule 3: double bond configurations
    * - Z > E > unassigned > non-stereogenic
@@ -1749,17 +1786,38 @@ std::vector<
 
   /* Sequence rule 2
    * - A node with higher atomic mass precedes ones with lower atomic mass
-   *
-   * NOTE: We skip this sequence rule for two reasons
-   * - There is currently no way to represent isotopes in the library
-   * - This rule may come to bear when disconnecting heteroaromatic cycles,
-   *   where all aromatic atoms are given a duplicate atom with a mass equal
-   *   to the average of what it would have if the double bonds were located
-   *   at each of the possible positions. Although differentiating these
-   *   cases would be good, there is currently no code to detect aromaticity
-   *   nor permute all possible arrangements of double bonds in their
-   *   subgraphs.
    */
+  _runBFS<
+    2, // Sequence rule 2
+    false, // BFS downwards only
+    false, // Insert edges
+    true, // Insert vertices
+    TreeVertexIndex, // Multiset value type
+    SequenceRuleTwoVertexComparator // Multiset comparator type
+  >(
+    sourceIndex,
+    orderingHelper,
+    depthLimitOptional
+  );
+
+  if /* C++17 constexpr */ (buildTypeIsDebug) {
+    Log::log(Log::Particulars::RankingTreeDebugInfo)
+      << "  Sets post sequence rule 2: {"
+      << temple::condense(
+        temple::map(
+          orderingHelper.getSets(),
+          [](const auto& indexSet) -> std::string {
+            return "{"s + temple::condense(indexSet) + "}"s;
+          }
+        )
+      ) << "}\n";
+  }
+
+  // Is Sequence Rule 2 enough?
+  if(orderingHelper.isTotallyOrdered()) {
+    // No conversion of indices in _auxiliaryApplySequenceRules()!
+    return orderingHelper.getSets();
+  }
 
   /* Sequence rule 3: double bond configurations
    * - Z > E > unassigned > non-stereogenic

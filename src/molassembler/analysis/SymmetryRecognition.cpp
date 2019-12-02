@@ -245,26 +245,6 @@ struct AngularDeviationGeometryIndexHybrid final : public Recognizer {
   }
 };
 
-const std::map<Shapes::Shape, Shapes::PointGroup> pointGroupMapping {
-  {Shapes::Shape::Line, Shapes::PointGroup::Dinfh},
-  {Shapes::Shape::Bent, Shapes::PointGroup::C2v},
-  {Shapes::Shape::EquilateralTriangle, Shapes::PointGroup::D3h},
-  {Shapes::Shape::VacantTetrahedron, Shapes::PointGroup::C3v},
-  {Shapes::Shape::T, Shapes::PointGroup::C2v},
-  {Shapes::Shape::Tetrahedron, Shapes::PointGroup::Td},
-  {Shapes::Shape::Square, Shapes::PointGroup::D4h},
-  {Shapes::Shape::Seesaw, Shapes::PointGroup::C2v},
-  {Shapes::Shape::TrigonalPyramid, Shapes::PointGroup::C3v},
-  {Shapes::Shape::SquarePyramid, Shapes::PointGroup::C4v},
-  {Shapes::Shape::TrigonalBipyramid, Shapes::PointGroup::D3h},
-  {Shapes::Shape::Pentagon, Shapes::PointGroup::D5h},
-  {Shapes::Shape::Octahedron, Shapes::PointGroup::Oh},
-  {Shapes::Shape::TrigonalPrism, Shapes::PointGroup::D3h},
-  {Shapes::Shape::PentagonalPyramid, Shapes::PointGroup::C5v},
-  {Shapes::Shape::PentagonalBipyramid, Shapes::PointGroup::D5h},
-  {Shapes::Shape::SquareAntiprism, Shapes::PointGroup::D4d}
-};
-
 struct PureCSM final : public Recognizer {
   Shapes::Shape identify(const Positions& positions) const final {
     const unsigned S = positions.cols() - 1;
@@ -286,7 +266,7 @@ struct PureCSM final : public Recognizer {
 
         const double csm = Shapes::continuous::pointGroup(
           normalized,
-          pointGroupMapping.at(name)
+          Shapes::pointGroup(name)
         );
 
         if(csm < bestPair.first) {
@@ -320,9 +300,6 @@ struct CShM final : public Recognizer {
         }
 
         double shapeMeasure = Shapes::continuous::shape(normalized, shape).measure;
-        if(shape == Shapes::Shape::TrigonalPyramid) {
-          shapeMeasure *= 4;
-        }
 
         if(shapeMeasure < carry.first) {
           return CarryType {shapeMeasure, shape};
@@ -335,6 +312,42 @@ struct CShM final : public Recognizer {
 
   std::string name() const final {
     return "CShM";
+  }
+};
+
+struct BiasedCShM final : public Recognizer {
+  Shapes::Shape identify(const Positions& positions) const final {
+    const unsigned S = positions.cols() - 1;
+
+    Positions normalized = Shapes::continuous::normalize(positions);
+    using CarryType = std::pair<double, Shapes::Shape>;
+    return temple::accumulate(
+      Shapes::allShapes,
+      CarryType {std::numeric_limits<double>::max(), Shapes::Shape::Line},
+      [&](const CarryType& carry, const Shapes::Shape shape) {
+        if(Shapes::size(shape) != S) {
+          return carry;
+        }
+
+        double shapeMeasure = Shapes::continuous::shape(normalized, shape).measure;
+
+        if(shape == Shapes::Shape::TrigonalPyramid) {
+          shapeMeasure *= 4;
+        } else if(shape == Shapes::Shape::Seesaw) {
+          shapeMeasure *= 2;
+        }
+
+        if(shapeMeasure < carry.first) {
+          return CarryType {shapeMeasure, shape};
+        }
+
+        return carry;
+      }
+    ).second;
+  }
+
+  std::string name() const final {
+    return "Biased CShM";
   }
 };
 
@@ -626,7 +639,7 @@ void distort(Eigen::Ref<Positions> positions, const double distortionNorm, PRNG&
   }
 }
 
-using RecognizersTuple = boost::mpl::list<PureAngularDeviationSquare, AngularDeviationGeometryIndexHybrid, CShM, CShMPathDev>;
+using RecognizersTuple = boost::mpl::list<PureAngularDeviationSquare, AngularDeviationGeometryIndexHybrid, PureCSM, CShM, BiasedCShM, CShMPathDev>;
 constexpr std::size_t nRecognizers = boost::mpl::size<RecognizersTuple>::value;
 using RecognizersList = std::vector<std::unique_ptr<Recognizer>>;
 

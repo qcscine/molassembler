@@ -40,7 +40,7 @@ barplot_matrix <- function(symmetryIndex, recognizer) {
     m,
     horiz=TRUE,
     main=paste(c(recognizers[recognizer], shapeNames[symmetryIndex])),
-    xlab="Identified symmetry frequencies",
+    xlab="Identified shape frequencies",
     ylab="Distortion vector norms",
     names.arg=x.values
   )

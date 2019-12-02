@@ -304,8 +304,6 @@ The following alterations arise due to the current implementation state:
   the distinction is slight. Sequence rule 4a is shortened to enforce priority
   of stereogenic units over nonstereogenic units. Sequence rule 4c is conflated
   with 5.
-- No functionality currently exists to alter atomic mass number. Sequence rule 2
-  is discarded.
 - Conjugation detection is currently not implemented. No regularization of
   Mancude rings and rings systems is performed. This is the only change that can
   lead to false differences between substituents when they are actually
@@ -317,7 +315,7 @@ Nr. | Sequence rule
 --- | -------------
 1a  | Higher atomic number precedes lower. \diffminus{Atomic numbers in Mancude rings and ring systems are the mean of the atomic numbers in all mesomeric Kekule structures.}
 1b  | A duplicate atom node whose corresponding nonduplicated atom node is closer to the root ranks higher than a duplicate atom node whose corresponding nonduplicated atom node is farther from the root
-2   | \diffminus{Higher atomic mass number precedes lower}
+2   | Higher atomic mass number precedes lower
 3   | When considering double bonds and planar tetraligand atoms Z precedes E and this precedes nonstereogenic double bonds.
 4a  | Chiral stereogenic units precede \diffminus{pseudoasymmetric stereogenic units and these precede} nonstereogenic units
 4b  | When two ligands have different descriptor pairs, then the one with the first chosen *like* descriptor pairs has priority over the one with a corresponding *unlike* descriptor pair. Descriptors are alike if they \diffplus{have an equal number of stereopermutations and equal index of permutation} \diffminus{are within the same set. The two sets are {R, M, Z} and {S, P, E}}.

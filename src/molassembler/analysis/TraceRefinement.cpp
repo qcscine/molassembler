@@ -282,7 +282,8 @@ int main(int argc, char* argv[]) {
   auto conformers = DistanceGeometry::run(
     mol,
     nStructures,
-    DGConfiguration
+    DGConfiguration,
+    boost::none
   );
 
   unsigned i = 0;

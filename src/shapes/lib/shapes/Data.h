@@ -19,7 +19,7 @@
 #include "shapes/constexpr/Data.h"
 
 #include <vector>
-#include <map>
+#include <unordered_map>
 
 namespace Scine {
 
@@ -92,10 +92,11 @@ constexpr std::array<Shape, nShapes> allShapes = makeAllShapes(
 );
 
 //! Map type used to store symmetry information structs
-using SymmetryDataMapType = std::map<
+using SymmetryDataMapType = std::unordered_map<
   Shape,
   SymmetryInformation,
-  std::less<>,
+  std::hash<Shape>,
+  std::equal_to<Shape>,
   Eigen::aligned_allocator<std::pair<const Shape, SymmetryInformation>>
 >;
 
