@@ -304,7 +304,7 @@ void init_molecule(pybind11::module& m) {
 
       >>> # Assign an unspecified chiral center
       >>> import molassembler as masm
-      >>> mol = masm.io.experimental.from_smiles("S[As](F)(Cl)(Br)N")
+      >>> mol = masm.io.experimental.from_smiles("S[As](F)(Cl)(Br)(N)[H]")
       >>> as_index = 1
       >>> mol.stereopermutators.option(as_index).assigned is None
       True

@@ -14,6 +14,8 @@
 #include "Utils/Math/QuaternionFit.h"
 #include "Utils/Geometry/ElementInfo.h"
 
+#include "Fixtures.h"
+
 using namespace Scine;
 using namespace molassembler;
 
@@ -69,7 +71,7 @@ BOOST_AUTO_TEST_CASE(AtomStereopermutatorUpDown) {
   Options::chiralStatePreservation = prior;
 }
 
-BOOST_AUTO_TEST_CASE(LigandAdditionPropagatedStateSuperposable) {
+BOOST_FIXTURE_TEST_CASE(LigandAdditionPropagatedStateSuperposable, LowTemperatureFixture) {
   /* For the RSMD argument to work, the mappings must be effortless (i.e. no
    * angular distortion). So we need to make sure the setting is correct.
    */
@@ -206,7 +208,10 @@ BOOST_AUTO_TEST_CASE(LigandAdditionPropagatedStateSuperposable) {
   );
 }
 
-BOOST_AUTO_TEST_CASE(AtomStereopermutatorContinuity) {
+/* This test needs to happen in the low temperature because otherwise the
+ * trigonal bipyramid is thermalized (since none of its ligands are bidentate)
+ */
+BOOST_FIXTURE_TEST_CASE(AtomStereopermutatorContinuity, LowTemperatureFixture) {
   /* The following shape pairs should be fully reversible starting from any
    * stereopermutation in the first shape, adding a ligand and removing it
    * again.

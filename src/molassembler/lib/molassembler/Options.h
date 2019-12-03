@@ -38,13 +38,26 @@ random::Engine& randomnessEngine();
 /*! @brief Modeling temperature regime enumerator
  *
  * Specifies for which temperature regime the Molecule is being modeled.
- * This currently affects only whether nitrogen atoms with a trigonal
- * pyramidal geometry are considered stereopermutators.
+ *
+ * This affects
+ * - whether nitrogen atoms with a vacant tetrahedron shape and not part of a
+ *   small cycle can be stereocenters (nitrogen inversion)
+ * - whether trigonal- and pentagonal bipyramids without linked ligands can be
+ *   stereocenters (Berry pseudorotation and Bartell mechanism)
  */
 enum class TemperatureRegime {
-  //! No pyramidal inversion, all nitrogens can be stereopermutators
+  /*! @brief No thermalization of stereopermutations at atom stereopermutators
+   *
+   * Meaning no pyramidal inversion, Berry pseudorotation or Bartell mechanisms.
+   */
   Low,
-  //! Only nitrogen geometries in particularly strained cycles (3, 4) can be stereopermutators
+  /*! @brief In certain circumstances, stereopermutations are thermalized
+   *
+   * Only vacant tetrahedron nitrogen atoms in particularly strained cycles (3,
+   * 4) can be stereopermutators. Berry pseudorotation and Bartell mechanisms
+   * thermalize all stereopermutations of trigonal bipyramid and pentagonal
+   * bipyramid shaped centers if none of its substituents are linked.
+   */
   High
 };
 

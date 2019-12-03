@@ -12,6 +12,8 @@
 #include "temple/Functional.h"
 #include "temple/Stringify.h"
 
+#include "Fixtures.h"
+
 #include <iostream>
 
 /* TODO
@@ -146,7 +148,11 @@ BOOST_AUTO_TEST_CASE(RejectInvalidSmiles) {
   }
 }
 
-BOOST_AUTO_TEST_CASE(IdenticalSmiles) {
+/* This needs to be executed in the low temperature regime for the trigonal
+ * bipyramidal smiles (these are considered achiral in the high temperature
+ * approximation)
+ */
+BOOST_FIXTURE_TEST_CASE(IdenticalSmiles, LowTemperatureFixture) {
   const std::vector<std::pair<std::string, std::string>> pairs {
     {"C", "[CH4]"}, // Implicit hydrogens
     {"[H][CH2][H]", "[H]C([H])([H])[H]"},

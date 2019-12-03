@@ -13,13 +13,17 @@ void init_options(pybind11::module& m) {
     m,
     "TemperatureRegime",
     R"delim(
-      Temperature we model molecules at. Low means that no pyramidal inversion
-      occurs, so that all nitrogen atoms can be stereocenters. If ``High`` is set,
-      then only nitrogen geometries in particularly strained cycles (3, 4) can
-      be stereocenters.
+      Temperature we model molecules at. Low means that no stereopermutations
+      interconvert thermally. There is no pyramidal inversion and all nitrogen
+      atoms can be stereocenters. No Berry pseudorotations or Bartell mechanisms
+      occur, so trigonal bipyramid and pentagonal bipyramid centers can be
+      stereocenters. If ``High`` is set, then nitrogen atoms in
+      particularly strained cycles (3, 4) can be stereocenters. Berry
+      pseudorotations and Bartell mechanisms thermalize all stereopermutations
+      of their respective shapes if none of the substituents are linked.
     )delim"
-  ).value("Low", TemperatureRegime::Low, "No pyramidal inversion, all nitrogen atoms can be stereopermutators")
-    .value("High", TemperatureRegime::High, "Only nitrogen atoms in particularly strained cycles (3, 4) can be stereopermutators");
+  ).value("Low", TemperatureRegime::Low, "No stereopermutations interconvert thermally.")
+    .value("High", TemperatureRegime::High, "Under specific circumstances, stereopermutations interconvert rapidly.");
 
   /* Chiral state preservation */
   pybind11::enum_<ChiralStatePreservation>(
@@ -75,7 +79,7 @@ void init_options(pybind11::module& m) {
   options.def_readwrite_static(
     "temperature_regime",
     &Options::temperatureRegime,
-    "Global temperature regime setting of the library. Defaults to high temperature approximation"
+    "Global temperature regime setting of the library. Defaults to high."
   );
   options.def_readwrite_static(
     "chiral_state_preservation",

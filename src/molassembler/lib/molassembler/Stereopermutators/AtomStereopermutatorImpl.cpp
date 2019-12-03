@@ -234,7 +234,16 @@ bool AtomStereopermutator::Impl::thermalized(
     return true;
   }
 
-  // TODO Bartell mechanism and Berry pseudorotation
+
+  // Berry pseudorotation and Bartell mechanism
+  if(
+    ranking.links.empty() && (
+      shape == Shapes::Shape::PentagonalBipyramid
+      || shape == Shapes::Shape::TrigonalBipyramid
+    )
+  ) {
+    return true;
+  }
 
   return false;
 }
