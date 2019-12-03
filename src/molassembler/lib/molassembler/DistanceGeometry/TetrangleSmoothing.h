@@ -26,7 +26,7 @@ namespace DistanceGeometry {
  *
  * @return Tetrangle smoothed bounds matrix
  */
-Eigen::MatrixXd tetrangleSmooth(Eigen::MatrixXd bounds);
+unsigned tetrangleSmooth(Eigen::Ref<Eigen::MatrixXd> bounds);
 
 } // namespace DistanceGeometry
 } // namespace molassembler

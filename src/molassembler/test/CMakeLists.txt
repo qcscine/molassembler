@@ -38,6 +38,7 @@ set(DGTestFiles
   ${CMAKE_CURRENT_SOURCE_DIR}/DistanceGeometry/ImplicitGraph.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/DistanceGeometry/MetricMatrix.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/DistanceGeometry/RefinementProblem.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/DistanceGeometry/Smoothing.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/DistanceGeometry/main.cpp
 )
 

@@ -512,11 +512,11 @@ void SpatialModel::addBondStereopermutatorInformation(
   for(const auto& dihedralTuple : composite.dihedrals(permutation)) {
     std::tie(firstShapePosition, secondShapePosition, dihedralAngle) = dihedralTuple;
 
-    unsigned siteIndexIAtFirst = SymmetryMapHelper::getSiteIndexAt(
+    const unsigned siteIndexIAtFirst = SymmetryMapHelper::getSiteIndexAt(
       firstShapePosition,
       firstStereopermutator.getShapePositionMap()
     );
-    unsigned siteIndexLAtSecond = SymmetryMapHelper::getSiteIndexAt(
+    const unsigned siteIndexLAtSecond = SymmetryMapHelper::getSiteIndexAt(
       secondShapePosition,
       secondStereopermutator.getShapePositionMap()
     );

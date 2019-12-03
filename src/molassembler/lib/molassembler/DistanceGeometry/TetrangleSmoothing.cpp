@@ -34,7 +34,7 @@ std::pair<
   );
 
   Eigen::Matrix4d& lower = result.first;
-  Eigen::Matrix4d& upper = result.first;
+  Eigen::Matrix4d& upper = result.second;
 
   for(unsigned i = 0; i < 4; ++i) {
     for(unsigned j = i + 1; j < 4; ++j) {
@@ -204,7 +204,7 @@ bool collinear(
     throw std::logic_error("Underflow");
   }
 
-  return (i - 1);
+  return i - 1;
 }
 
 /* limitTest overload set definitions section */
@@ -391,183 +391,6 @@ std::enable_if_t<
   return false;
 }
 
-/* NOTE: from here to MARKERA is needed only for the original triCheck impl */
-
-template<unsigned a, unsigned b, unsigned c>
-bool triangleUpperLimitTest(
-  const Eigen::Matrix4d& lower,
-  const Eigen::Matrix4d& upper,
-  const double minimalUpperLimit,
-  const double tripletLimit
-) {
-  static_assert(a == 3 && c == 4, "Unexpected instantiation!");
-  constexpr unsigned d = pickMissingInOneToFour(a, b, c);
-  static_assert(0 < b && b < 5 && 0 < d && d < 5, "One-based indices!");
-  constexpr unsigned i = decrement(b);
-  constexpr unsigned j = decrement(d);
-
-  return (
-    tripletLimit == minimalUpperLimit
-    && collinear(
-      upper(i, decrement(3)),
-      upper(i, decrement(4)),
-      lower(j, decrement(3)),
-      lower(j, decrement(4)),
-      lower(i, j),
-      upper(j, decrement(3)),
-      upper(j, decrement(4)),
-      upper(i, j)
-    )
-  );
-}
-
-template<unsigned c, unsigned a, unsigned b, unsigned d>
-bool tetrangleUpperLimitTest(
-  const Eigen::Matrix4d& lower,
-  const Eigen::Matrix4d& upper,
-  const double minimalUpperLimit,
-  const double quadrupletLimit
-) {
-  constexpr unsigned i = decrement(a);
-  constexpr unsigned j = decrement(b);
-  constexpr unsigned k = decrement(c);
-  constexpr unsigned l = decrement(d);
-
-  if(quadrupletLimit == minimalUpperLimit) {
-    const double firstConditionA = upper(j, k);
-    const double firstConditionB = (
-      upper(i, k) + upper(i, j)
-    );
-    const double firstConditionC = lower(j, k);
-
-    // ujk >= uik + uij >= ljk
-    if(firstConditionA >= firstConditionB && firstConditionB >= firstConditionC) {
-      const double secondConditionA = upper(i, l);
-      const double secondConditionB = (
-        upper(j, l) + upper(i, l)
-      );
-      const double secondConditionC = lower(i, l);
-
-      // uil >= ujl + uil >= lil
-      return (secondConditionA >= secondConditionB && secondConditionB >= secondConditionC);
-    }
-
-    return false;
-  }
-
-  return false;
-}
-
-template<unsigned a, unsigned c, unsigned d>
-bool triangleLowerLimitTest(
-  const Eigen::Matrix4d& lower,
-  const Eigen::Matrix4d& upper,
-  const double maximalLowerLimit,
-  const double triangleLimit
-) {
-  constexpr unsigned b = pickMissingInOneToFour(a, c, d);
-
-  constexpr unsigned i = decrement(a);
-  constexpr unsigned j = decrement(b);
-  constexpr unsigned k = decrement(c);
-  constexpr unsigned l = decrement(d);
-  return(
-    triangleLimit == maximalLowerLimit
-    && collinear(
-      upper(i, k),
-      /* Paper has l_3(b_k, b_l) below, assuming that's a typo, as it would
-       * mean the lower triangle inequality bound between k and l instead
-       * of the current lower bound on that quantity. There is no such
-       * subscripted quantity in the place of the paper where triangle upper
-       * limit tests are performed.
-       */
-      lower(k, l),
-      lower(i, j),
-      lower(j, l),
-      lower(j, k),
-      upper(i, j),
-      upper(j, l),
-      upper(j, k)
-    )
-  );
-}
-
-// First set of 4-atom lower limits with L[a, c, d, b] with {c, d} = {3, 4}
-template<unsigned a, unsigned c, unsigned d, unsigned b>
-std::enable_if_t<
-  (c == 3 && d == 4) || (c == 4 && d == 3),
-  bool
-> tetrangleLowerLimitTest(
-  const Eigen::Matrix4d& lower,
-  const Eigen::Matrix4d& upper,
-  const double maximalLowerLimit,
-  const double quadrupletLimit
-) {
-  constexpr unsigned i = decrement(a);
-  constexpr unsigned j = decrement(b);
-  constexpr unsigned k = decrement(c);
-  constexpr unsigned l = decrement(d);
-
-  if(quadrupletLimit == maximalLowerLimit) {
-    const double firstConditionA = upper(i, k);
-    const double firstConditionB = lower(i, j) - upper(i, k);
-    const double firstConditionC = lower(j, k);
-
-    // uik >= lij - uik >= ljk
-    if(firstConditionA >= firstConditionB && firstConditionB >= firstConditionC) {
-      const double secondConditionA = upper(i, l);
-      const double secondConditionB = lower(i, j) - upper(j, l);
-      const double secondConditionC = lower(i, l);
-
-      // uil >= lij - ujl >= lil
-      return (secondConditionA >= secondConditionB && secondConditionB >= secondConditionC);
-    }
-
-    return false;
-  }
-
-  return false;
-}
-
-/* Second set of 4-atom lower limits with L[a, b, c, d] with {c, d} = {3, 4}
- * Here, c and d are the last two indices instead of in the middle.
- */
-template<unsigned a, unsigned b, unsigned c, unsigned d>
-std::enable_if_t<
-  (c == 3 && d == 4) || (c == 4 && d == 3),
-  bool
-> tetrangleLowerLimitTest(
-  const Eigen::Matrix4d& lower,
-  const Eigen::Matrix4d& upper,
-  const double maximalLowerLimit,
-  const double quadrupletLimit
-) {
-  constexpr unsigned i = decrement(a);
-  constexpr unsigned j = decrement(b);
-  constexpr unsigned k = decrement(c);
-  constexpr unsigned l = decrement(d);
-
-  if(quadrupletLimit == maximalLowerLimit) {
-    const double firstConditionA = upper(j, l);
-    const double firstConditionB = lower(i, l) - upper(i, j);
-    const double firstConditionC = lower(j, l);
-
-    // ujl >= lil - uij >= ljl
-    if(firstConditionA >= firstConditionB && firstConditionB >= firstConditionC) {
-      const double secondConditionA = upper(i, k);
-      const double secondConditionB = upper(i, j) + upper(j, k);
-      const double secondConditionC = lower(i, k);
-
-      // uik >= uij + ujk >= lik
-      return (secondConditionA >= secondConditionB && secondConditionB >= secondConditionC);
-    }
-
-    return false;
-  }
-
-  return false;
-}
-
 bool triangleInequalitiesHold(const Eigen::Matrix3d& matrix) {
   // Ensure triangle inequalities are satisified in this matrix
   for(unsigned k = 0; k < 3; ++k) {
@@ -615,110 +438,6 @@ bool zeroBoundTest(
 
   return false;
 }
-
-template<unsigned a, unsigned b, unsigned c>
-double upperNAngleBound(const Eigen::Matrix4d& upper) {
-  static_assert(0 < a && a < 5 && 0 < b && b < 5 && 0 < c && c < 5, "One-based indices!");
-  constexpr unsigned i = (a - 1);
-  constexpr unsigned j = (b - 1);
-  constexpr unsigned k = (c - 1);
-  return upper(i, j) + upper(j, k);
-}
-
-template<unsigned a, unsigned b, unsigned c, unsigned d>
-double upperNAngleBound(const Eigen::Matrix4d& upper) {
-  static_assert(0 < a && a < 5 && 0 < b && b < 5 && 0 < c && c < 5, "One-based indices!");
-  constexpr unsigned i = (a - 1);
-  constexpr unsigned j = (b - 1);
-  constexpr unsigned k = (c - 1);
-  constexpr unsigned l = (d - 1);
-  return upper(i, j) + upper(j, k) + upper(k, l);
-}
-
-template<unsigned a, unsigned b, unsigned c>
-double lowerNAngleBound(const Eigen::Matrix4d& lower, const Eigen::Matrix4d& upper) {
-  static_assert(0 < a && a < 5 && 0 < b && b < 5 && 0 < c && c < 5, "One-based indices!");
-  constexpr unsigned i = (a - 1);
-  constexpr unsigned j = (b - 1);
-  constexpr unsigned k = (c - 1);
-  return lower(i, k) - upper(i, j);
-}
-
-template<unsigned a, unsigned b, unsigned c, unsigned d>
-double lowerNAngleBound(const Eigen::Matrix4d& lower, const Eigen::Matrix4d& upper) {
-  static_assert(0 < a && a < 5 && 0 < b && b < 5 && 0 < c && c < 5 && 0 < d && d < 5, "One-based indices!");
-  constexpr unsigned i = (a - 1);
-  constexpr unsigned j = (b - 1);
-  constexpr unsigned k = (c - 1);
-  constexpr unsigned l = (d - 1);
-  return lower(i, l) - upper(i, j) - upper(j, k);
-}
-
-TriCheckResult triCheck(
-  const Eigen::Matrix4d& lower,
-  const Eigen::Matrix4d& upper
-) {
-  TriCheckResult result;
-
-  /* Check to see if the triangle inequality and not the tetrangle inequality
-   * is the limiting lower and/or upper constraint on the k-l distance.
-   *
-   * Determine whether or not the various triangle limits
-   * (which are possible among four atoms)
-   * can be attained without violating any of the given bounds.
-   */
-  const double U314 = upperNAngleBound<3, 1, 4>(upper);
-  const double U324 = upperNAngleBound<3, 2, 4>(upper);
-  const double U3124 = upperNAngleBound<3, 1, 2, 4>(upper);
-  const double U4123 = upperNAngleBound<4, 1, 2, 3>(upper);
-
-  result.klUpperBound = std::min({
-    U314, U324,
-    U3124, U4123
-  });
-
-  const double L134 = lowerNAngleBound<1, 3, 4>(lower, upper);
-  const double L234 = lowerNAngleBound<2, 3, 4>(lower, upper);
-  const double L143 = lowerNAngleBound<1, 4, 3>(lower, upper);
-  const double L243 = lowerNAngleBound<2, 4, 3>(lower, upper);
-  const double L1342 = lowerNAngleBound<1, 3, 4, 2>(lower, upper);
-  const double L1432 = lowerNAngleBound<1, 4, 3, 2>(lower, upper);
-  const double L1234 = lowerNAngleBound<1, 2, 3, 4>(lower, upper);
-  const double L2134 = lowerNAngleBound<2, 1, 3, 4>(lower, upper);
-  const double L1243 = lowerNAngleBound<1, 2, 4, 3>(lower, upper);
-  const double L2143 = lowerNAngleBound<2, 1, 4, 3>(lower, upper);
-
-  result.klLowerBound = std::max({
-    0.0,
-    L134, L234, L143, L243,
-    L1342, L1432, L1234, L2134, L1243, L2143
-  });
-
-  result.u_col = (
-    triangleUpperLimitTest<3, 1, 4>(lower, upper, result.klUpperBound, U314)
-    || triangleUpperLimitTest<3, 2, 4>(lower, upper, result.klUpperBound, U324)
-    || tetrangleUpperLimitTest<3, 1, 2, 4>(lower, upper, result.klUpperBound, U3124)
-    || tetrangleUpperLimitTest<4, 1, 2, 3>(lower, upper, result.klUpperBound, U4123)
-  );
-
-  result.l_col = (
-    zeroBoundTest(lower, upper, result.klLowerBound)
-    || triangleLowerLimitTest<1, 3, 4>(lower, upper, result.klLowerBound, L134)
-    || triangleLowerLimitTest<2, 3, 4>(lower, upper, result.klLowerBound, L234)
-    || triangleLowerLimitTest<1, 4, 3>(lower, upper, result.klLowerBound, L143)
-    || triangleLowerLimitTest<2, 4, 3>(lower, upper, result.klLowerBound, L243)
-    || tetrangleLowerLimitTest<1, 3, 4, 2>(lower, upper, result.klLowerBound, L1342)
-    || tetrangleLowerLimitTest<1, 4, 3, 2>(lower, upper, result.klLowerBound, L1432)
-    || tetrangleLowerLimitTest<1, 2, 3, 4>(lower, upper, result.klLowerBound, L1234)
-    || tetrangleLowerLimitTest<2, 1, 3, 4>(lower, upper, result.klLowerBound, L2134)
-    || tetrangleLowerLimitTest<1, 2, 4, 3>(lower, upper, result.klLowerBound, L1243)
-    || tetrangleLowerLimitTest<2, 1, 4, 3>(lower, upper, result.klLowerBound, L2143)
-  );
-
-  return result;
-}
-
-/* NOTE: MARKERA, below is relevant only to new implementation */
 
 constexpr unsigned NAngleBoundNoneValue = 100;
 template<bool isUpper, unsigned a, unsigned b, unsigned c, unsigned d = NAngleBoundNoneValue>
@@ -786,6 +505,7 @@ bool foldCallableArgsPairLogicalOr(
   return temple::invoke(a.first, std::tuple_cat(args, std::tie(a.second)));
 }
 
+// C++17 fold
 template<typename ArgsTuple, typename CallableArgPair, typename OtherCallableArgPair, typename ... Conditionals>
 bool foldCallableArgsPairLogicalOr(
   const ArgsTuple& args,
@@ -839,7 +559,7 @@ auto limitAnyOf(
   );
 }
 
-TriCheckResult triCheckRetry(
+TriCheckResult triCheck(
   const Eigen::Matrix4d& lower,
   const Eigen::Matrix4d& upper
 ) {
@@ -1062,8 +782,9 @@ double upperTetrangleLimit(
    * m::l is lower
    * m::u is upper
    *
-   * These functions had to be duplicated and fully qualified since we cannot
-   * pass templated functions as an overload set.
+   * These functions had to be duplicated from the original lower and upper
+   * functions and fully qualified since we cannot pass templated functions as
+   * an overload set.
    */
   return std::max({
     temple::invoke(CMUpper, m::fetchAppropriateBounds(bounds, b, m::l, m::u, m::u, m::u, m::u)),
@@ -1094,7 +815,8 @@ struct TetrangleLimits {
     const std::array<unsigned, 4>& b
   ) {
     auto matrixPair = makeLU(bounds, b);
-    TriCheckResult check = triCheckRetry(matrixPair.first, matrixPair.second);
+    // Can try the original triCheck here too
+    TriCheckResult check = triCheck(matrixPair.first, matrixPair.second);
 
     if(check.u_col) {
       klLimits.upper = check.klUpperBound;
@@ -1108,14 +830,18 @@ struct TetrangleLimits {
       klLimits.lower = std::sqrt(lowerTetrangleLimit(bounds, b));
     }
 
-    boundViolation = klLimits.upper < klLimits.upper;
+    boundViolation = klLimits.upper < klLimits.lower;
   }
 };
 
-Eigen::MatrixXd tetrangleSmooth(Eigen::MatrixXd bounds) {
+unsigned tetrangleSmooth(Eigen::Ref<Eigen::MatrixXd> bounds) {
   const unsigned N = bounds.cols();
 
+  // Minimal change in the bounds required to consider something has changed
+  constexpr double epsilon = 0.01;
+
   bool changedSomething;
+  unsigned iterations = 0;
   do {
     changedSomething = false;
 
@@ -1124,7 +850,7 @@ Eigen::MatrixXd tetrangleSmooth(Eigen::MatrixXd bounds) {
         // NOTE (i,j) and (k,l) are not mutually disjoint
         for(unsigned k = 0; k < N - 1; ++k) {
           for(unsigned l = k + 1; l < N; ++l) {
-            TetrangleLimits limits {bounds, {i, j, k, l}};
+            const TetrangleLimits limits {bounds, {i, j, k, l}};
 
             if(limits.boundViolation) {
               throw std::logic_error("Bound violation found!");
@@ -1134,18 +860,22 @@ Eigen::MatrixXd tetrangleSmooth(Eigen::MatrixXd bounds) {
             double& klLowerBound = bounds(l, k);
             double& klUpperBound = bounds(k, l);
 
+            assert(klLowerBound <= klUpperBound);
+
             if(
               limits.klLimits.lower > klLowerBound
-              && std::fabs(limits.klLimits.lower - klLowerBound) / klLowerBound > 0.01
+              && std::fabs(limits.klLimits.lower - klLowerBound) / klLowerBound > epsilon
             ) {
+              assert(limits.klLimits.lower <= klUpperBound);
               klLowerBound = limits.klLimits.lower;
               changedSomething = true;
             }
 
             if(
               limits.klLimits.upper < klUpperBound
-              && std::fabs(klUpperBound - limits.klLimits.upper) / klUpperBound > 0.01
+              && std::fabs(klUpperBound - limits.klLimits.upper) / klUpperBound > epsilon
             ) {
+              assert(limits.klLimits.upper >= klLowerBound);
               klUpperBound = limits.klLimits.upper;
               changedSomething = true;
             }
@@ -1153,9 +883,11 @@ Eigen::MatrixXd tetrangleSmooth(Eigen::MatrixXd bounds) {
         }
       }
     }
+
+    ++iterations;
   } while(changedSomething);
 
-  return bounds;
+  return iterations;
 }
 
 } // namespace DistanceGeometry
