@@ -218,7 +218,7 @@ public:
 
 /* Operators */
   inline auto tie() const {
-    return std::make_tuple(_shape, _centerAtom, numStereopermutations(), _assignmentOption);
+    return std::make_tuple(_shape, _centerAtom, numStereopermutations(), numAssignments());
   }
 
 private:

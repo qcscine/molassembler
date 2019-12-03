@@ -17,6 +17,8 @@
 #include "temple/Functional.h"
 #include "temple/Random.h"
 
+#include "Fixtures.h"
+
 #include <iostream>
 
 using namespace std::string_literals;
@@ -40,8 +42,11 @@ void explainDifference(
   std::cout << "\n";
 }
 
-// NOTE: This tests reflects upon a lot of things.
-BOOST_AUTO_TEST_CASE(AtomStereopermutationCGFitCoherence) {
+/* NOTE: This tests reflects upon a lot of things. It's run in the low
+ * temperature approximation so that trigonal bipyramid and pentagonal bipyramid
+ * don't get an easy out since they have one assignment only.
+ */
+BOOST_FIXTURE_TEST_CASE(AtomStereopermutationCGFitCoherence, LowTemperatureFixture) {
   using namespace Scine;
   DistanceGeometry::Configuration DGConfiguration;
   DGConfiguration.partiality = DistanceGeometry::Partiality::All;
@@ -102,7 +107,7 @@ BOOST_AUTO_TEST_CASE(AtomStereopermutationCGFitCoherence) {
      * Also because fitting stereopermutators to positions becomes ridiculously
      * expensive since it brute forces all assignments...
      */
-    if(centralStereopermutator -> numAssignments() > 10) {
+    if(assignments.size() > 10) {
       assignments.resize(10);
     }
 
