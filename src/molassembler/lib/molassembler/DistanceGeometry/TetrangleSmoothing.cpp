@@ -10,52 +10,42 @@
 #include "temple/Invoke.h"
 
 #include <Eigen/Dense>
+#include <fenv.h>
 
 namespace Scine {
 namespace molassembler {
 namespace DistanceGeometry {
 
-std::pair<
-  Eigen::Matrix4d,
-  Eigen::Matrix4d
-> makeLU(
-  const Eigen::MatrixXd& bounds,
-  const std::array<unsigned, 4>& indices
-) {
-  auto result = std::make_pair<Eigen::Matrix4d, Eigen::Matrix4d>(
-    Eigen::Matrix4d::Zero(),
-    Eigen::Matrix4d::Zero()
-  );
+struct LU {
+  Eigen::Matrix4d L = Eigen::Matrix4d::Zero();
+  Eigen::Matrix4d U = Eigen::Matrix4d::Zero();
 
-  Eigen::Matrix4d& lower = result.first;
-  Eigen::Matrix4d& upper = result.second;
-
-  for(unsigned i = 0; i < 4; ++i) {
-    for(unsigned j = i + 1; j < 4; ++j) {
-      unsigned a = indices[i];
-      unsigned b = indices[j];
-      if(b < a) {
-        std::swap(a, b);
+  LU(
+    const Eigen::MatrixXd& bounds,
+    const std::array<unsigned, 4>& indices
+  ) {
+    for(unsigned i = 0; i < 4; ++i) {
+      for(unsigned j = i + 1; j < 4; ++j) {
+        unsigned a, b;
+        std::tie(a, b) = std::minmax(indices[i], indices[j]);
+        U(i, j) = bounds(a, b);
+        U(j, i) = bounds(a, b);
+        L(i, j) = bounds(b, a);
+        L(j, i) = bounds(b, a);
       }
-
-      upper(i, j) = bounds(a, b);
-      upper(j, i) = bounds(a, b);
-
-      lower(i, j) = bounds(b, a);
-      lower(j, i) = bounds(b, a);
     }
   }
 
-  return result;
-}
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+};
 
 // Named parameters to indicate when indices passed to lower and upper are ordered
 struct OrderedIndicesTag {};
 constexpr OrderedIndicesTag orderedIndicesTag;
 
-constexpr unsigned pickMissingInOneToFour(unsigned a, unsigned b, unsigned c) {
+constexpr unsigned pickMissingInZeroToThree(unsigned a, unsigned b, unsigned c) {
   if(
-    !(1 <= a && a <= 4 && 1 <= b && b <= 4 && 1 <= c && c <= 4)
+    !(a < 4 && b < 4 && c < 4)
     || a == b
     || a == c
     || b == c
@@ -65,7 +55,7 @@ constexpr unsigned pickMissingInOneToFour(unsigned a, unsigned b, unsigned c) {
 
   unsigned x = 0;
 
-  for(unsigned i = 1; i < 5; ++i) {
+  for(unsigned i = 0; i < 4; ++i) {
     if(a != i && b != i && c != i) {
       x = i;
       break;
@@ -203,7 +193,7 @@ bool collinear(
 
 /* limitTest overload set definitions section */
 
-template<bool isUpper, unsigned a, unsigned b, unsigned c>
+template<bool isUpper, unsigned i, unsigned j, unsigned k>
 std::enable_if_t<isUpper, bool> limitTest(
   const Eigen::Matrix4d& lower,
   const Eigen::Matrix4d& upper,
@@ -211,11 +201,9 @@ std::enable_if_t<isUpper, bool> limitTest(
   const double tripletLimit
 ) {
   // Triangle upper limit test
-  static_assert(a == 3 && c == 4, "Unexpected instantiation!");
-  constexpr unsigned d = pickMissingInOneToFour(a, b, c);
-  static_assert(0 < b && b < 5 && 0 < d && d < 5, "One-based indices!");
-  constexpr unsigned i = decrement(b);
-  constexpr unsigned j = decrement(d);
+  static_assert(i == 2 && k == 3, "Unexpected instantiation!");
+  constexpr unsigned l = pickMissingInZeroToThree(i, j, k);
+  static_assert(j < 4 && l < 4, "Zero-based indices");
 
   return (
     tripletLimit == minimalUpperLimit
@@ -232,7 +220,7 @@ std::enable_if_t<isUpper, bool> limitTest(
   );
 }
 
-template<bool isUpper, unsigned a, unsigned c, unsigned d>
+template<bool isUpper, unsigned i, unsigned k, unsigned l>
 std::enable_if_t<!isUpper, bool> limitTest(
   const Eigen::Matrix4d& lower,
   const Eigen::Matrix4d& upper,
@@ -240,12 +228,7 @@ std::enable_if_t<!isUpper, bool> limitTest(
   const double tripletLimit
 ) {
   // Triangle lower limit test
-  constexpr unsigned b = pickMissingInOneToFour(a, c, d);
-
-  constexpr unsigned i = decrement(a);
-  constexpr unsigned j = decrement(b);
-  constexpr unsigned k = decrement(c);
-  constexpr unsigned l = decrement(d);
+  constexpr unsigned j = pickMissingInZeroToThree(i, k, l);
   return(
     tripletLimit == maximalLowerLimit
     && collinear(
@@ -267,7 +250,7 @@ std::enable_if_t<!isUpper, bool> limitTest(
   );
 }
 
-template<bool isUpper, unsigned c, unsigned a, unsigned b, unsigned d>
+template<bool isUpper, unsigned k, unsigned i, unsigned j, unsigned l>
 std::enable_if_t<isUpper, bool> limitTest(
   const Eigen::Matrix4d& lower,
   const Eigen::Matrix4d& upper,
@@ -275,11 +258,6 @@ std::enable_if_t<isUpper, bool> limitTest(
   const double quadrupletLimit
 ) {
   // Tetrangle upper limit test
-  constexpr unsigned i = decrement(a);
-  constexpr unsigned j = decrement(b);
-  constexpr unsigned k = decrement(c);
-  constexpr unsigned l = decrement(d);
-
   if(quadrupletLimit == minimalUpperLimit) {
     const double firstConditionA = upper(j, k);
     const double firstConditionB = (
@@ -305,11 +283,11 @@ std::enable_if_t<isUpper, bool> limitTest(
   return false;
 }
 
-// First set of 4-atom lower limits with L[a, c, d, b] with {c, d} = {3, 4}
-template<bool isUpper, unsigned a, unsigned c, unsigned d, unsigned b>
+// First set of 4-atom lower limits with L[i, k, l, j] with {k, l} = {3, 4}
+template<bool isUpper, unsigned i, unsigned k, unsigned l, unsigned j>
 std::enable_if_t<
   !isUpper && (
-    (c == 3 && d == 4) || (c == 4 && d == 3)
+    (k == 2 && l == 3) || (k == 3 && l == 2)
   ),
   bool
 > limitTest(
@@ -318,11 +296,6 @@ std::enable_if_t<
   const double maximalLowerLimit,
   const double quadrupletLimit
 ) {
-  constexpr unsigned i = decrement(a);
-  constexpr unsigned j = decrement(b);
-  constexpr unsigned k = decrement(c);
-  constexpr unsigned l = decrement(d);
-
   if(quadrupletLimit == maximalLowerLimit) {
     const double firstConditionA = upper(i, k);
     const double firstConditionB = lower(i, j) - upper(i, k);
@@ -344,13 +317,13 @@ std::enable_if_t<
   return false;
 }
 
-/* Second set of 4-atom lower limits with L[a, b, c, d] with {c, d} = {3, 4}
- * Here, c and d are the last two indices instead of in the middle.
+/* Second set of 4-atom lower limits with L[i, j, k, l] with {k, l} = {3, 4}
+ * Here, k and l are the last two indices instead of in the middle.
  */
-template<bool isUpper, unsigned a, unsigned b, unsigned c, unsigned d>
+template<bool isUpper, unsigned i, unsigned j, unsigned k, unsigned l>
 std::enable_if_t<
   !isUpper && (
-    (c == 3 && d == 4) || (c == 4 && d == 3)
+    (k == 2 && l == 3) || (k == 3 && l == 2)
   ),
   bool
 > limitTest(
@@ -359,11 +332,6 @@ std::enable_if_t<
   const double maximalLowerLimit,
   const double quadrupletLimit
 ) {
-  constexpr unsigned i = decrement(a);
-  constexpr unsigned j = decrement(b);
-  constexpr unsigned k = decrement(c);
-  constexpr unsigned l = decrement(d);
-
   if(quadrupletLimit == maximalLowerLimit) {
     const double firstConditionA = upper(j, l);
     const double firstConditionB = lower(i, l) - upper(i, j);
@@ -433,18 +401,26 @@ bool zeroBoundTest(
   return false;
 }
 
+/* This function is a catch-all for the various bounds calculated in the
+ * beginning of triCheck based on an index_sequence type argument.
+ *
+ * Although it may seem ridiculous to instantiate this for each index sequence
+ * if the matrix element access is resolved at runtime anyway, using
+ * index_sequence to store the various sequences allows for code reuse in the
+ * checking stage of triCheck. It also allows us to group the expressions
+ * for the various bounds nicely.
+ *
+ * Note that this takes zero-based indices! Make sure to use decrement() for
+ * the index_sequence with which this is instantiated.
+ */
 constexpr unsigned NAngleBoundNoneValue = 100;
-template<bool isUpper, unsigned a, unsigned b, unsigned c, unsigned d = NAngleBoundNoneValue>
+template<bool isUpper, bool firstPattern, unsigned i, unsigned j, unsigned k, unsigned l = NAngleBoundNoneValue>
 double NAngleBound(const Eigen::Matrix4d& lower, const Eigen::Matrix4d& upper) {
-  static_assert(0 < a && a < 5 && 0 < b && b < 5 && 0 < c && c < 5, "One-based indices!");
-  static_assert(d == NAngleBoundNoneValue || (0 < d && d < 5), "Optional d argument is not one-based!");
-  constexpr unsigned i = decrement(a);
-  constexpr unsigned j = decrement(b);
-  constexpr unsigned k = decrement(c);
+  static_assert(i < 4 && j < 4 && k < 4, "Zero-based indices!");
+  static_assert(l == NAngleBoundNoneValue || l < 4, "Optional d argument is not zero-based!");
 
   // NOTE all ifs here could be if constexpr in C++17
-
-  if(d == NAngleBoundNoneValue) {
+  if(l == NAngleBoundNoneValue) {
     // Triangle algorithms
     if(isUpper) {
       // Upper triangle bound
@@ -455,26 +431,31 @@ double NAngleBound(const Eigen::Matrix4d& lower, const Eigen::Matrix4d& upper) {
     return lower(i, k) - upper(i, j);
   }
 
-  // Tetrangle algorithms: d != NAngleBoundNoneValue
-  constexpr unsigned l = decrement(d);
+  // Tetrangle algorithms: l != NAngleBoundNoneValue
   if(isUpper) {
     // Upper tetrangle bound
     return upper(i, j) + upper(j, k) + upper(k, l);
   }
 
-  // Lower tetrangle bound
-  return lower(i, l) - upper(i, j) - upper(j, k);
+  // Lower tetrangle bound (THESE ARE IRREGULAR!)
+  if(firstPattern) {
+    return lower(i, l) - upper(i, j) - upper(k, l); // for the first two
+  }
+
+  return lower(i, l) - upper(i, j) - upper(j, k); // for the last four
 }
 
-template<bool isUpper, std::size_t ... Inds>
+template<bool isUpper, bool firstPattern, std::size_t ... Inds>
 double NAngleBoundsMap(const Eigen::Matrix4d& lower, const Eigen::Matrix4d& upper, std::index_sequence<Inds ...> /* inds */) {
-  return NAngleBound<isUpper, Inds...>(lower, upper);
+  // Raise the index sequence from function argument to template argument
+  return NAngleBound<isUpper, firstPattern, decrement(Inds)...>(lower, upper);
 }
 
-template<typename TupleType, bool isUpper, std::size_t ... TupleInds>
+template<typename TupleType, bool isUpper, bool firstPattern, std::size_t ... TupleInds>
 auto mapIndexSetsHelper(const Eigen::Matrix4d& lower, const Eigen::Matrix4d& upper, std::index_sequence<TupleInds ...> /* inds */) {
+  // Create an array with the results of bounds evaluations
   return std::array<double, sizeof...(TupleInds)> {
-    NAngleBoundsMap<isUpper>(
+    NAngleBoundsMap<isUpper, firstPattern>(
       lower,
       upper,
       std::tuple_element_t<TupleInds, TupleType> {}
@@ -482,9 +463,14 @@ auto mapIndexSetsHelper(const Eigen::Matrix4d& lower, const Eigen::Matrix4d& upp
   };
 }
 
-template<typename TupleType, bool isUpper>
+/* isUpper denotes whether we are calculating an upper or lower bound
+ * firstPattern is only for the tetrangle lower limits, where there are two
+ * index patterns.
+ */
+template<typename TupleType, bool isUpper, bool firstPattern>
 auto mapIndexSets(const Eigen::Matrix4d& lower, const Eigen::Matrix4d& upper) {
-  return mapIndexSetsHelper<TupleType, isUpper>(
+  // Enumerate the index sequences in TupleType
+  return mapIndexSetsHelper<TupleType, isUpper, firstPattern>(
     lower,
     upper,
     std::make_index_sequence<std::tuple_size<TupleType>::value> {}
@@ -496,6 +482,12 @@ bool foldCallableArgsPairLogicalOr(
   const ArgsTuple& args,
   CallableArgPair&& a
 ) {
+  /* Piece together the arguments in order to call LimitTester::operator(),
+   * which forwards its arguments to the limitTest overload set
+   *
+   * The CallableArgPair is created in limitAnyOfHelper and consists of a
+   * LimitTester and a part of the arguments needed to call it.
+   */
   return temple::invoke(a.first, std::tuple_cat(args, std::tie(a.second)));
 }
 
@@ -507,6 +499,7 @@ bool foldCallableArgsPairLogicalOr(
   OtherCallableArgPair&& b,
   Conditionals ... conditionals
 ) {
+  // Fold the results of calls hopefully with short-circuiting
   return (
     foldCallableArgsPairLogicalOr(args, a)
     || foldCallableArgsPairLogicalOr(args, b, conditionals...)
@@ -516,13 +509,14 @@ bool foldCallableArgsPairLogicalOr(
 template<bool isUpper, std::size_t ... Inds>
 struct LimitTester {
   template<typename ... Args>
-  bool operator() (Args ... args) {
-    return limitTest<isUpper, Inds ...>(args...);
+  bool operator() (Args&& ... args) {
+    return limitTest<isUpper, decrement(Inds)...>(std::forward<Args>(args)...);
   }
 };
 
 template<bool isUpper, std::size_t ... Inds>
 auto makeLimitTester(std::index_sequence<Inds ...> /* inds */) {
+  // Raise index sequence from function argument to template argument
   return LimitTester<isUpper, Inds ...> {};
 }
 
@@ -532,6 +526,9 @@ auto limitAnyOfHelper(
   const std::array<double, std::tuple_size<TupleType>::value>& values,
   std::index_sequence<Inds ...> /* inds */
 ) {
+  /* Create a long list of pairs of test functors corresponding to index
+   * sequences in TupleType that we can fold with logical or
+   */
   return foldCallableArgsPairLogicalOr(
     args,
     std::make_pair(
@@ -546,6 +543,7 @@ auto limitAnyOf(
   const ArgsTuple& args,
   const std::array<double, std::tuple_size<TupleType>::value>& values
 ) {
+  // Enumerate the indices into TupleType
   return limitAnyOfHelper<TupleType, isUpper>(
     args,
     values,
@@ -558,17 +556,26 @@ TriCheckResult triCheck(
   const Eigen::Matrix4d& upper
 ) {
   TriCheckResult result;
-
+  /* The comments here sometimes refer to the parts of TRI_CHECK that they
+   * implement from the original algorithm.
+   *
+   * Here we first define all the index sequences we will need as types so we
+   * can freely mess with them. Note that these are one-based purely to match
+   * the definitions from the original algorithm description.
+   */
+  // Definitions of upper triangle index sets that `U` is called with
   using UpperTriangleIndexSets = std::tuple<
     std::index_sequence<3, 1, 4>,
     std::index_sequence<3, 2, 4>
   >;
 
+  // Definitions of upper tetrangle index sets that `U` is called with
   using UpperTetrangleIndexSets = std::tuple<
     std::index_sequence<3, 1, 2, 4>,
     std::index_sequence<4, 1, 2, 3>
   >;
 
+  // Definitions of lower triangle index sets that `L` is called with
   using LowerTriangleIndexSets = std::tuple<
     std::index_sequence<1, 3, 4>,
     std::index_sequence<2, 3, 4>,
@@ -576,90 +583,82 @@ TriCheckResult triCheck(
     std::index_sequence<2, 4, 3>
   >;
 
-  using LowerTetrangleIndexSets = std::tuple<
+  // Lower tetrangle index sets following the pattern l_ik - u_ij - u_kl
+  using FirstLowerTetrangleIndexSets = std::tuple<
     std::index_sequence<1, 3, 4, 2>,
-    std::index_sequence<1, 4, 3, 2>,
+    std::index_sequence<1, 4, 3, 2>
+  >;
+
+  // Lower tetrangle index sets following the pattern l_ik - u_ij - u_jk
+  using SecondLowerTetrangleIndexSets = std::tuple<
     std::index_sequence<1, 2, 3, 4>,
     std::index_sequence<2, 1, 3, 4>,
     std::index_sequence<1, 2, 4, 3>,
     std::index_sequence<2, 1, 4, 3>
   >;
 
-  const auto upperTriangleBounds = mapIndexSets<UpperTriangleIndexSets, true>(lower, upper);
-  const auto upperTetrangleBounds = mapIndexSets<UpperTetrangleIndexSets, true>(lower, upper);
-  const auto lowerTriangleBounds = mapIndexSets<LowerTriangleIndexSets, false>(lower, upper);
-  const auto lowerTetrangleBounds = mapIndexSets<LowerTetrangleIndexSets, false>(lower, upper);
+  /* Now we actually calculate all of those values by calling `U` and `L` with
+   * them. mapIndexSets takes care of forwarding the index sequences to the
+   * right functions and grouping the results into arrays. The first boolean
+   * template argument denotes whether we are calculating an upper bound, which
+   * we are.
+   *
+   * The second is relevant only to the lower tetrangle bounds, and its value
+   * is just set false here.
+   *
+   * The three- and four-argument `L` and `U` functions are represented by
+   * the function NAngleBound.
+   */
+  const auto upperTriangleBounds = mapIndexSets<UpperTriangleIndexSets, true, false>(lower, upper);
+  const auto upperTetrangleBounds = mapIndexSets<UpperTetrangleIndexSets, true, false>(lower, upper);
 
+  /* Now for the lower bounds. Regarding the tetrangle bounds, you saw in the
+   * index sequence definition that there are two sets, each following a
+   * different pattern. If the second boolean template argument to mapIndexSets
+   * is true, that means the current set follows the first pattern.
+   */
+  const auto lowerTriangleBounds = mapIndexSets<LowerTriangleIndexSets, false, false>(lower, upper);
+  const auto firstLowerTetrangleBounds = mapIndexSets<FirstLowerTetrangleIndexSets, false, true>(lower, upper);
+  const auto secondLowerTetrangleBounds = mapIndexSets<SecondLowerTetrangleIndexSets, false, false>(lower, upper);
+
+  /* We set u3 and l3 from the minimum and maximum of the calculated bounds */
   result.klUpperBound = std::min(
-    temple::min(upperTriangleBounds),
-    temple::min(upperTetrangleBounds)
+    temple::min(upperTriangleBounds), // min(U[i, j, k])
+    temple::min(upperTetrangleBounds) // min(U[i, j, k, l])
   );
 
   result.klLowerBound = std::max({
-    0.0,
-    temple::max(lowerTriangleBounds),
-    temple::max(lowerTetrangleBounds)
+    0.0, // L[0] := 0
+    temple::max(lowerTriangleBounds), // min(L[i, j, k])
+    temple::max(firstLowerTetrangleBounds), // min(L[i, j, k, l]) of first pattern
+    temple::max(secondLowerTetrangleBounds) // min(L[i, j, k, l]) of second pattern
   });
 
-  const auto args = std::tie(lower, upper, result.klUpperBound);
+  /* Now we determine u_col and l_col. These are "true whenever the triangle
+   * inequality limits on the (3, 4)-distance are attainable without violating
+   * the given bounds or the tetrangle inequality.
+   *
+   * The algorithm itself has multiple "For each 3-atom upper limit", "For each
+   * 4-atom upper limit" parts that we abstract over here. If any of those
+   * trigger, then the rest need not be evaluated, so we short-circuit with
+   * logical ors.
+   */
 
+  const auto upperArgs = std::tie(lower, upper, result.klUpperBound);
   result.u_col = (
-    limitAnyOf<UpperTriangleIndexSets, true>(args, upperTriangleBounds)
-    || limitAnyOf<UpperTetrangleIndexSets, true>(args, upperTetrangleBounds)
+    limitAnyOf<UpperTriangleIndexSets, true>(upperArgs, upperTriangleBounds)
+    || limitAnyOf<UpperTetrangleIndexSets, true>(upperArgs, upperTetrangleBounds)
   );
 
+  const auto lowerArgs = std::tie(lower, upper, result.klLowerBound);
   result.l_col = (
-    temple::invoke(zeroBoundTest, args)
-    || limitAnyOf<LowerTriangleIndexSets, false>(args, lowerTriangleBounds)
-    || limitAnyOf<LowerTetrangleIndexSets, false>(args, lowerTetrangleBounds)
+    temple::invoke(zeroBoundTest, lowerArgs)
+    || limitAnyOf<LowerTriangleIndexSets, false>(lowerArgs, lowerTriangleBounds)
+    || limitAnyOf<FirstLowerTetrangleIndexSets, false>(lowerArgs, firstLowerTetrangleBounds)
+    || limitAnyOf<SecondLowerTetrangleIndexSets, false>(lowerArgs, secondLowerTetrangleBounds)
   );
 
   return result;
-}
-
-// Please inline and optimize repeated expressions of me my dear compiler
-[[gnu::const]] constexpr inline double sq(const double a) noexcept {
-  return a * a;
-}
-
-// Calculates D(1, 2, 3; 1, 2, 4)|D_34 = 0
-double CMMixed(
-  const double d12,
-  const double d13,
-  const double d14,
-  const double d23,
-  const double d24
-) {
-  Eigen::Matrix4d cayleyMengerMatrix;
-
-  /* Zero entries in this matrix:
-   * d_ii = 0 (distance to itself is zero)
-   * d_34 = 0 (additional condition)
-   */
-  // Indices colwise             1        2        3
-  cayleyMengerMatrix << 0,       1,       1,       1,
-                        1,       0, sq(d12), sq(d13),  // 1
-                        1, sq(d12),       0, sq(d23),  // 2
-                        1, sq(d14), sq(d24),       0;  // 4
-
-  return -cayleyMengerMatrix.determinant() / 4;
-}
-
-double CMWith34Zeroed(
-  const double d12,
-  const double d13,
-  const double d14,
-  const double d23,
-  const double d24
-) {
-  Eigen::Matrix<double, 5, 5> cayleyMengerMatrix;
-  cayleyMengerMatrix << 0,       1,       1,       1,       1,
-                        1,       0, sq(d12), sq(d13), sq(d14),
-                        1, sq(d12),       0, sq(d23), sq(d24),
-                        1, sq(d13), sq(d23),       0,       0,
-                        1, sq(d14), sq(d24),       0,       0;
-
-  return cayleyMengerMatrix.determinant() / 8;
 }
 
 double CMUpper(
@@ -669,13 +668,26 @@ double CMUpper(
   const double d23,
   const double d24
 ) {
-  const double ATimesMinusFour = std::pow(d12, 2);
-  const double B = CMMixed(d12, d13, d14, d23, d24);
-  const double C = CMWith34Zeroed(d12, d13, d14, d23, d24);
-  const double discriminant = std::pow(B, 2) + ATimesMinusFour * C;
+  const double a = std::pow(d12, 2);
+  const double b = std::pow(d13, 2);
+  const double c = std::pow(d14, 2);
+  const double d = std::pow(d23, 2);
+  const double e = std::pow(d24, 2);
+
+  const double A = -a / 4;
+  const double B = (
+    a * (-a + b + c + d + e)
+    - b * c + b * e + c * d - d * e
+  ) / 4;
+  const double C = (
+    d * (- a * b + a * c + b * c - c * c - c * d)
+    + e * (a * b - b * b - a * c + b * c + b * d + c * d - b * e)
+  ) / 4;
+
+  const double discriminant = B * B + a * C; // A = -a / 4 -> -4 A = a
 
   if(discriminant >= 0) {
-    return (-B - std::sqrt(discriminant)) / ((2.0 / -4) * ATimesMinusFour);
+    return (-B - std::sqrt(discriminant)) / (2.0 * A);
   }
 
   return std::numeric_limits<double>::lowest();
@@ -688,13 +700,27 @@ double CMLower(
   const double d23,
   const double d24
 ) {
-  const double ATimesMinusFour = std::pow(d12, 2);
-  const double B = CMMixed(d12, d13, d14, d23, d24);
-  const double C = CMWith34Zeroed(d12, d13, d14, d23, d24);
-  const double discriminant = std::pow(B, 2) + ATimesMinusFour * C;
+  // NOTE: Nearly identical to CMUpper
+  const double a = std::pow(d12, 2);
+  const double b = std::pow(d13, 2);
+  const double c = std::pow(d14, 2);
+  const double d = std::pow(d23, 2);
+  const double e = std::pow(d24, 2);
+
+  const double A = -a / 4;
+  const double B = (
+    a * (-a + b + c + d + e)
+    - b * c + b * e + c * d - d * e
+  ) / 4;
+  const double C = (
+    d * (- a * b + a * c + b * c - c * c - c * d)
+    + e * (a * b - b * b - a * c + b * c + b * d + c * d - b * e)
+  ) / 4;
+
+  const double discriminant = B * B + a * C; // A = -a / 4 -> -4 A = a
 
   if(discriminant >= 0) {
-    return (-B + std::sqrt(discriminant)) / ((2.0 / -4) * ATimesMinusFour);
+    return (-B + std::sqrt(discriminant)) / (2.0 * A);
   }
 
   return std::numeric_limits<double>::max();
@@ -808,20 +834,25 @@ struct TetrangleLimits {
     const Eigen::MatrixXd& bounds,
     const std::array<unsigned, 4>& b
   ) {
-    auto matrixPair = makeLU(bounds, b);
+    LU matrixPair {bounds, b};
     // Can try the original triCheck here too
-    TriCheckResult check = triCheck(matrixPair.first, matrixPair.second);
+    TriCheckResult check = triCheck(matrixPair.L, matrixPair.U);
 
+    /* NOTE: upperTetrangleLimit and lowerTetrangleLimit could use the LU
+     * matrices for better data locality if this ever needs optimization
+     */
     if(check.u_col) {
       klLimits.upper = check.klUpperBound;
     } else {
-      klLimits.upper = std::sqrt(upperTetrangleLimit(bounds, b));
+      const double limit = upperTetrangleLimit(bounds, b);
+      klLimits.upper = std::sqrt(limit);
     }
 
     if(check.l_col) {
       klLimits.lower = check.klLowerBound;
     } else {
-      klLimits.lower = std::sqrt(lowerTetrangleLimit(bounds, b));
+      const double limit = lowerTetrangleLimit(bounds, b);
+      klLimits.lower = std::sqrt(limit);
     }
 
     boundViolation = klLimits.upper < klLimits.lower;
@@ -829,6 +860,8 @@ struct TetrangleLimits {
 };
 
 unsigned tetrangleSmooth(Eigen::Ref<Eigen::MatrixXd> bounds) {
+  feenableexcept(FE_DIVBYZERO | FE_INVALID | FE_OVERFLOW);
+
   const unsigned N = bounds.cols();
 
   // Minimal change in the bounds required to consider something has changed
@@ -844,6 +877,11 @@ unsigned tetrangleSmooth(Eigen::Ref<Eigen::MatrixXd> bounds) {
         // NOTE (i,j) and (k,l) are not mutually disjoint
         for(unsigned k = 0; k < N - 1; ++k) {
           for(unsigned l = k + 1; l < N; ++l) {
+            // Equal index pairs are trouble
+            if(i == k && j == l) {
+              continue;
+            }
+
             const TetrangleLimits limits {bounds, {i, j, k, l}};
 
             if(limits.boundViolation) {
@@ -886,6 +924,7 @@ unsigned tetrangleSmooth(Eigen::Ref<Eigen::MatrixXd> bounds) {
     ++iterations;
   } while(changedSomething);
 
+  fedisableexcept(FE_DIVBYZERO | FE_INVALID | FE_OVERFLOW);
   return iterations;
 }
 

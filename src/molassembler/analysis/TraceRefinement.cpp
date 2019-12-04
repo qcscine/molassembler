@@ -94,6 +94,25 @@ MoleculeDGInformation gatherDGInformation(
   data.dihedralConstraints = spatialModel.getDihedralConstraints();
 
   if(applyTetrangleSmoothing) {
+    /* Add implicit lower and upper bounds */
+    const AtomIndex N = molecule.graph().N();
+    for(AtomIndex i = 0; i < N; ++i) {
+      for(AtomIndex j = i + 1; j < N; ++j) {
+        double& lower = data.bounds(j, i);
+        double& upper = data.bounds(i, j);
+
+        if(lower == 0.0 && upper == 0.0) {
+          double vdwLowerBound = (
+            AtomInfo::vdwRadius(molecule.graph().elementType(i))
+            + AtomInfo::vdwRadius(molecule.graph().elementType(j))
+          );
+
+          lower = vdwLowerBound;
+          upper = 100.0;
+        }
+      }
+    }
+
     unsigned iterations = tetrangleSmooth(data.bounds);
     std::cout << "Applied " << iterations << " iterations of tetrangle smoothing\n";
   }
