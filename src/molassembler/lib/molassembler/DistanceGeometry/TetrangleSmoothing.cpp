@@ -11,12 +11,6 @@
 
 #include <Eigen/Dense>
 
-/* TODO
- * - test this with some examples to see if it blows up spectacularly or does
- *   its job on the first attempt. Try both variants of triCheck, too. The
- *   template trickery might mess with correctness in some places.
- */
-
 namespace Scine {
 namespace molassembler {
 namespace DistanceGeometry {

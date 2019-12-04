@@ -16,6 +16,7 @@
 #include "molassembler/DistanceGeometry/ExplicitGraph.h"
 #include "molassembler/DistanceGeometry/MetricMatrix.h"
 #include "molassembler/DistanceGeometry/RefinementMeta.h"
+#include "molassembler/DistanceGeometry/TetrangleSmoothing.h"
 #include "molassembler/IO.h"
 #include "molassembler/IO/SmilesParser.h"
 #include "molassembler/Log.h"
@@ -79,7 +80,8 @@ struct GradientOrIterLimitStop {
 MoleculeDGInformation gatherDGInformation(
   const Molecule& molecule,
   const Configuration& configuration,
-  std::string& spatialModelGraphvizString
+  std::string& spatialModelGraphvizString,
+  bool applyTetrangleSmoothing
 ) {
   // Generate a spatial model from the molecular graph and stereopermutators
   SpatialModel spatialModel {molecule, configuration};
@@ -90,6 +92,11 @@ MoleculeDGInformation gatherDGInformation(
   data.bounds = spatialModel.makePairwiseBounds();
   data.chiralConstraints = spatialModel.getChiralConstraints();
   data.dihedralConstraints = spatialModel.getDihedralConstraints();
+
+  if(applyTetrangleSmoothing) {
+    unsigned iterations = tetrangleSmooth(data.bounds);
+    std::cout << "Applied " << iterations << " iterations of tetrangle smoothing\n";
+  }
 
   return data;
 }
@@ -104,7 +111,8 @@ MoleculeDGInformation gatherDGInformation(
 std::list<RefinementData> debugRefinement(
   const Molecule& molecule,
   unsigned numConformers,
-  const Configuration& configuration
+  const Configuration& configuration,
+  bool applyTetrangleSmoothing
 ) {
   if(molecule.stereopermutators().hasZeroAssignmentStereopermutators()) {
     Log::log(Log::Level::Warning)
@@ -134,7 +142,12 @@ std::list<RefinementData> debugRefinement(
   std::string spatialModelGraphviz;
 
   if(!regenerateEachStep) { // Collect once, keep all the time
-    DGData = gatherDGInformation(molecule, configuration, spatialModelGraphviz);
+    DGData = gatherDGInformation(
+      molecule,
+      configuration,
+      spatialModelGraphviz,
+      applyTetrangleSmoothing
+    );
   }
 
   unsigned failures = 0;
@@ -158,7 +171,8 @@ std::list<RefinementData> debugRefinement(
       DGData = gatherDGInformation(
         moleculeCopy,
         configuration,
-        spatialModelGraphviz
+        spatialModelGraphviz,
+        applyTetrangleSmoothing
       );
     }
 
@@ -590,6 +604,7 @@ int main(int argc, char* argv[]) {
   unsigned nStructures = 1;
 
   bool showFinalContributions = false;
+  bool applyTetrangleSmoothing = false;
 
   // Set up option parsing
   boost::program_options::options_description options_description("Recognized options");
@@ -624,6 +639,11 @@ int main(int argc, char* argv[]) {
       "contributions,c",
       boost::program_options::bool_switch(&showFinalContributions),
       "Show the final contributions to the refinement error functions"
+    )
+    (
+      "tetrangle,t",
+      boost::program_options::bool_switch(&applyTetrangleSmoothing),
+      "Apply tetrangle smoothing once, prior to distance matrix generation"
     )
   ;
 
@@ -722,7 +742,8 @@ int main(int argc, char* argv[]) {
   auto debugData = DistanceGeometry::debugRefinement(
     mol,
     nStructures,
-    DGConfiguration
+    DGConfiguration,
+    applyTetrangleSmoothing
   );
 
   for(const auto& enumPair : temple::adaptors::enumerate(debugData)) {
