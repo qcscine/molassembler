@@ -853,7 +853,7 @@ unsigned tetrangleSmooth(Eigen::Ref<Eigen::MatrixXd> bounds) {
             const TetrangleLimits limits {bounds, {i, j, k, l}};
 
             if(limits.boundViolation) {
-              throw std::logic_error("Bound violation found!");
+              throw std::runtime_error("Bound violation found!");
             }
 
             // k < l, so bounds(k, l) is the upper bound, bounds(l, k) the lower
@@ -866,7 +866,10 @@ unsigned tetrangleSmooth(Eigen::Ref<Eigen::MatrixXd> bounds) {
               limits.klLimits.lower > klLowerBound
               && std::fabs(limits.klLimits.lower - klLowerBound) / klLowerBound > epsilon
             ) {
-              assert(limits.klLimits.lower <= klUpperBound);
+              if(limits.klLimits.lower > klUpperBound) {
+                throw std::runtime_error("Bound violation found!");
+              }
+
               klLowerBound = limits.klLimits.lower;
               changedSomething = true;
             }
@@ -875,7 +878,9 @@ unsigned tetrangleSmooth(Eigen::Ref<Eigen::MatrixXd> bounds) {
               limits.klLimits.upper < klUpperBound
               && std::fabs(klUpperBound - limits.klLimits.upper) / klUpperBound > epsilon
             ) {
-              assert(limits.klLimits.upper >= klLowerBound);
+              if(limits.klLimits.upper < klLowerBound) {
+                throw std::runtime_error("Bound violation found!");
+              }
               klUpperBound = limits.klLimits.upper;
               changedSomething = true;
             }

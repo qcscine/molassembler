@@ -59,3 +59,21 @@ BOOST_AUTO_TEST_CASE(TetrangleSmoothingExplicit) {
     << expected << "\nGot:\n" << a << "\n"
   );
 }
+
+BOOST_AUTO_TEST_CASE(TriangleSmoothingDetectsViolations) {
+  Eigen::Matrix3d impossibleBounds;
+  impossibleBounds << 0.0, 1.0, 4.0,
+                      1.0, 0.0, 2.0,
+                      4.0, 2.0, 0.0;
+
+  BOOST_CHECK_THROW(DistanceBoundsMatrix::smooth(impossibleBounds), std::runtime_error);
+}
+
+BOOST_AUTO_TEST_CASE(TetrangleSmoothingDetectsViolations) {
+  Eigen::Matrix3d impossibleBounds;
+  impossibleBounds << 0.0, 1.0, 4.0,
+                      1.0, 0.0, 2.0,
+                      4.0, 2.0, 0.0;
+
+  BOOST_CHECK_THROW(tetrangleSmooth(impossibleBounds), std::runtime_error);
+}

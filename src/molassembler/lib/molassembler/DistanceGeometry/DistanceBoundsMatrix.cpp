@@ -71,7 +71,7 @@ void DistanceBoundsMatrix::smooth(Eigen::Ref<Eigen::MatrixXd> matrix) {
       double& lowerIK = upperLowerIK.second;
 
       if(lowerIK > upperIK) {
-        throw std::logic_error("Triangle smoothing encountered bound inversion");
+        throw std::runtime_error("Triangle smoothing encountered bound inversion");
       }
 
       for(AtomIndex j = i + 1; j < N; ++j) {
@@ -102,7 +102,7 @@ void DistanceBoundsMatrix::smooth(Eigen::Ref<Eigen::MatrixXd> matrix) {
 
         // Safety
         if(lowerIJ > upperIJ) {
-          throw std::logic_error("Triangle smoothing encountered bound inversion");
+          throw std::runtime_error("Triangle smoothing encountered bound inversion");
         }
       }
     }
