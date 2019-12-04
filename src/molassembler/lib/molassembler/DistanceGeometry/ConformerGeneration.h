@@ -90,26 +90,15 @@ MoleculeDGInformation gatherDGInformation(
   const Configuration& configuration
 );
 
-//! @overload
-MoleculeDGInformation gatherDGInformation(
-  const Molecule& molecule,
+//! @brief Distance Geometry refinement
+outcome::result<AngstromWrapper> refine(
+  Eigen::MatrixXd embeddedPositions,
+  const DistanceBoundsMatrix& distanceBounds,
   const Configuration& configuration,
-  std::string& spatialModelGraphvizString
+  const std::shared_ptr<MoleculeDGInformation>& DGDataPtr
 );
 
-/*! @brief Logging, not throwing mostly identical implementation to run()
- *
- * A logging, not throwing, mostly identical implementation of
- * runDistanceGeometry that returns detailed intermediate data from
- * refinements, while run returns only the final conformers, which may
- * also be translated and rotated to satisfy fixed position constraints.
- */
-std::list<RefinementData> debugRefinement(
-  const Molecule& molecule,
-  unsigned numConformers,
-  const Configuration& configuration
-);
-
+// @brief Individual conformer generation routine
 outcome::result<AngstromWrapper> generateConformer(
   const Molecule& molecule,
   const Configuration& configuration,
