@@ -234,7 +234,6 @@ public:
    * @complexity{@math{\Omega(C)}}
    */
   void chiralContributions(const VectorType& positions, FloatType& error, Eigen::Ref<VectorType> gradient) const {
-    // Delegate to SIMD or non-SIMD implementation
     chiralContributionsImpl(positions, error, gradient);
   }
 
@@ -244,7 +243,6 @@ public:
    */
   void dihedralContributions(const VectorType& positions, FloatType& error, Eigen::Ref<VectorType> gradient) const {
     if(dihedralTerms) {
-      // Delegate to SIMD or non-SIMD implementation
       dihedralContributionsImpl(positions, error, gradient);
     }
   }
@@ -667,7 +665,6 @@ private:
   /*!
    * @brief Adds chiral error and gradient contributions
    */
-  template<bool dependent = SIMD, std::enable_if_t<!dependent, int>...>
   void chiralContributionsImpl(const VectorType& positions, FloatType& error, Eigen::Ref<VectorType> gradient) const {
     unsigned nonZeroChiralConstraints = 0;
     unsigned incorrectNonZeroChiralConstraints = 0;
@@ -697,14 +694,14 @@ private:
       }
 
       // Upper bound term
-      const FloatType upperTerm = volume - static_cast<FloatType>(constraint.upper);
+      const FloatType upperTerm = static_cast<FloatType>(constraint.weight) * (volume - static_cast<FloatType>(constraint.upper));
 
       if(upperTerm > 0) {
         error += upperTerm * upperTerm;
       }
 
       // Lower bound term
-      const FloatType lowerTerm = static_cast<FloatType>(constraint.lower) - volume;
+      const FloatType lowerTerm = static_cast<FloatType>(constraint.weight) * (static_cast<FloatType>(constraint.lower) - volume);
       if(lowerTerm > 0) {
         error += lowerTerm * lowerTerm;
       }
@@ -772,258 +769,8 @@ private:
   }
 
   /*!
-   * @brief SIMD implementation of chiral contributions
-   */
-  template<bool dependent = SIMD, std::enable_if_t<dependent, int>...>
-  void chiralContributionsImpl(const VectorType& positions, FloatType& error, Eigen::Ref<VectorType> gradient) const {
-    assert(positions.size() == gradient.size());
-    /* We have to calculate the adjusted signed volume for each chiral
-     * constraint once for both value and gradient, so we could principally do
-     * all of them at once
-     *
-     * Each site sequence has four averaged three-dimensional positions as
-     * source data, need to do three vector differences:
-     *
-     * minuend = sites[0], sites[1], sites[2]
-     * subtrahend = sites[3], sites[3], sites[3]
-     * difference = minuend - subtrahend (SIMD advantage the more of these we do at once)
-     *
-     * volume = difference[0].dot(difference[1].cross(difference[2]));
-     *
-     * then, we do:
-     *   upperTerm = volume - constraint.upper
-     *   if(upperTerm > 0) {
-     *     error += upperTerm * upperTerm;
-     *   }
-     *
-     * in SIMD baby steps:
-     *   volumes = volume of constraint 0, ...
-     *   upper_constraints = constraint.upper of constraint 0, ...
-     *   upper_term = volumes - upper_constraints
-     *   positive_upper_terms = upper_term.cwiseMax(0.0)
-     *   positive_upper_terms_sq_arr = positive_upper_terms.array().square()
-     *   positive_upper_term_sq_sum = positive_upper_terms_sq_arr.sum()
-     *   error += positive_upper_term_sq_sum
-     *
-     *   or altogether:
-     *     error += (volumes - upper_constraints).array().max(0.0).square().sum()
-     *
-     * and similarly for the lower term:
-     *   error += (lower_constraints - volumes).array().max(0.0).square().sum()
-     *
-     * gradient:
-     * calculate adjusted signed volume of constraint (see chiralError)
-     * calculate upper and lower term (see chiralError)
-     *
-     * if either upper or lower term are greater than zero,
-     *   factor = 2 * (
-     *     max(0.0, upperTerm) - max(0.0, lowerTerm)
-     *   )
-     *
-     * SIMD-izing this if is a little difficult. but calculating factor for all
-     * chiral constraints would be
-     *   factor = (upper_terms.max(0.0) - lower_terms.max(0.0)) * 2
-     *
-     * Then collect all chiral constraints for which factor != 0.0 and for each
-     * of those, we calculate:
-     *
-     *   a) alpha - delta = sites[0] - sites[3]
-     *   b) beta - delta = sites[1] - sites[3]
-     *   c) gamma - delta = sites[2] - sites[3]
-     *   d) alpha - gamma = sites[0] - sites[2]
-     *   e) beta - gamma = sites[1] - sites[2]
-     *
-     *   can SIMD-ize this part with
-     *     minuend = sites[0], sites[1], sites[2], sites[0], sites[1] (gather)
-     *     subtrahend = sites[3], sites[3], sites[3], sites[2], sites[2] (gather)
-     *     difference = minuend - subtrahend (SIMD op)
-     *     a = difference[0], b = difference[1], ...  (scatter)
-     *
-     *   ijkl contributions
-     *     individually: factor * (cross product of two a-e terms) / site size count (different for each term)
-     *
-     *     cross_products (arr) = b.cross(c), c.cross(a), a.cross(b), e.cross(d)
-     *     site_sizes (arr) = sites[0].size(), sites[1].size(), sites[2].size(), sites[3].size()
-     *     ijkl_contributions = (crossProducts / site_sizes) * factor
-     *
-     *   then distribute each contribution vector across all component atoms of each
-     *   site (i to site 0, etc.)
-     *
-     * this can (in principle) be done for all chiral constraints at once,
-     * except for the distribution step, which then must be done serially
-     */
-    const unsigned C = chiralConstraints.size();
-    VectorType volumes(C);
-
-    ThreeDimensionalMatrixType positionDifferences, minuend;
-    {
-      // Three differences per constraint * number of constraints
-      unsigned differencesCount = 3 * chiralConstraints.size();
-      ThreeDimensionalMatrixType subtrahend;
-      minuend.resize(Eigen::NoChange, differencesCount);
-      subtrahend.resize(Eigen::NoChange, differencesCount);
-
-      // Populate minuend and subtrahend
-      for(unsigned constraintIndex = 0; constraintIndex < C; ++constraintIndex) {
-        const ChiralConstraint& constraint = chiralConstraints[constraintIndex];
-
-        auto lastSitePosition = getAveragePosition3D(positions, constraint.sites.back());
-        for(unsigned siteIndex = 0; siteIndex < 3; ++siteIndex) {
-          const unsigned offset = constraintIndex * 3 + siteIndex;
-          minuend.col(offset) = getAveragePosition3D(
-            positions,
-            constraint.sites[siteIndex]
-          );
-          subtrahend.col(offset) = lastSitePosition;
-        }
-      }
-
-      // SIMD (benchmark, of questionable value!)
-      positionDifferences = minuend - subtrahend;
-    } // release subtrahend
-
-    // Reduce positionDifferences to volumes
-    for(unsigned constraintIndex = 0; constraintIndex < C; ++constraintIndex) {
-      volumes(constraintIndex) = positionDifferences.col(
-        constraintIndex * 3 + 0
-      ).dot(
-        positionDifferences.col(constraintIndex * 3 + 1).cross(
-          positionDifferences.col(constraintIndex * 3 + 2)
-        )
-      );
-    }
-
-    // Count constraints with correct signs and set signaling member
-    unsigned nonZeroChiralConstraints = 0;
-    unsigned incorrectNonZeroChiralConstraints = 0;
-    for(unsigned constraintIndex = 0; constraintIndex < C; ++constraintIndex) {
-      const ChiralConstraint& constraint = chiralConstraints[constraintIndex];
-      if(std::fabs(constraint.lower + constraint.upper) > 1e-4) {
-        ++nonZeroChiralConstraints;
-        const double volume = volumes(constraintIndex);
-        if(
-          ( volume < 0 && constraint.lower > 0)
-          || (volume > 0 && constraint.lower < 0)
-        ) {
-          ++incorrectNonZeroChiralConstraints;
-        }
-      }
-    }
-    if(nonZeroChiralConstraints == 0) {
-      proportionChiralConstraintsCorrectSign = 1;
-    } else {
-      proportionChiralConstraintsCorrectSign = static_cast<double>(
-        nonZeroChiralConstraints - incorrectNonZeroChiralConstraints
-      ) / nonZeroChiralConstraints;
-    }
-
-    // SIMD
-    const VectorType upperTerms = volumes - chiralUpperConstraints;
-    error += upperTerms.array().max(0.0).square().sum();
-
-    // SIMD
-    const VectorType lowerTerms = chiralLowerConstraints - volumes;
-    error += lowerTerms.array().max(0.0).square().sum();
-
-    // SIMD
-    const VectorType factors = 2 * (
-      upperTerms.array().max(0.0) - lowerTerms.array().max(0.0)
-    ).matrix();
-
-    /* A priori unknown how many chiral constraints contribute to the error
-     * function and gradients over time and how much value an optimization would
-     * have:
-     *
-     * Possible optimization: collect all constraints that have factor != 0.0
-     * then populate ijklContributions and site_sizes
-     */
-    ThreeDimensionalMatrixType ijklContributions(3, 4 * C);
-    VectorType siteSizes(4 * C);
-    for(unsigned constraintIndex = 0; constraintIndex < C; ++constraintIndex) {
-      const FloatType factor = factors(constraintIndex);
-      if(factor != 0) {
-        // Collect sub-expressions for the various terms, does nothing yet
-        auto a = positionDifferences.col(3 * constraintIndex + 0);
-        auto b = positionDifferences.col(3 * constraintIndex + 1);
-        auto c = positionDifferences.col(3 * constraintIndex + 2);
-        auto d = (
-          minuend.col(3 * constraintIndex + 0)
-          - minuend.col(3 * constraintIndex + 2)
-        );
-        auto e = (
-          minuend.col(3 * constraintIndex + 1)
-          - minuend.col(3 * constraintIndex + 2)
-        );
-
-        // ijkl contributions
-        ijklContributions.col(4 * constraintIndex + 0) = b.cross(c);
-        ijklContributions.col(4 * constraintIndex + 1) = c.cross(a);
-        ijklContributions.col(4 * constraintIndex + 2) = a.cross(b);
-        ijklContributions.col(4 * constraintIndex + 3) = e.cross(d);
-
-        const ChiralConstraint& constraint = chiralConstraints[constraintIndex];
-
-        // site sizes
-        siteSizes(4 * constraintIndex + 0) = constraint.sites[0].size();
-        siteSizes(4 * constraintIndex + 1) = constraint.sites[1].size();
-        siteSizes(4 * constraintIndex + 2) = constraint.sites[2].size();
-        siteSizes(4 * constraintIndex + 3) = constraint.sites[3].size();
-      }
-    }
-
-    // SIMD
-    /* - ijklContributions is 3 x (4 * C)
-     * - factors is 1xC
-     * - siteSizes is 1 x (4 * C)
-     *
-     * -> for each constraint, multiply the corresponding 3x4 ijkl block
-     *    by (factors * siteSizes).asDiagonal()
-     */
-    for(unsigned constraintIndex = 0; constraintIndex < C; ++constraintIndex) {
-      // SIMD (?)
-      ijklContributions.template block<3, 4>(0, 4 * constraintIndex) *= (
-        siteSizes.template segment<4>(4 * constraintIndex) * factors(constraintIndex)
-      ).asDiagonal();
-    }
-    // ijklContributions = ijklContributions * (factors.array() * siteSizes.array()).matrix().asDiagonal();
-    // ijklContributions.array().colwise() *= (factors.array() * siteSizes.array()).transpose();
-
-    // Distribute ijkl contributions into gradient
-    for(unsigned constraintIndex = 0; constraintIndex < C; ++constraintIndex) {
-      if(factors(constraintIndex) != 0) {
-        const ChiralConstraint& constraint = chiralConstraints[constraintIndex];
-        /* ijklContributions.col is a Eigen::ColExpr.
-         * If FloatType == double, then iContribution is Eigen::ColExpr -> no copy
-         * If FloatType == float, then iContribution is Eigen::ColExpr.cast<double>().eval() == Vector3d -> copying cast
-         */
-        auto iContribution = ijklContributions.col(4 * constraintIndex + 0);
-        auto jContribution = ijklContributions.col(4 * constraintIndex + 1);
-        auto kContribution = ijklContributions.col(4 * constraintIndex + 2);
-        auto lContribution = ijklContributions.col(4 * constraintIndex + 3);
-
-        for(const AtomIndex alphaI : constraint.sites[0]) {
-          gradient.template segment<3>(dimensionality * alphaI) += iContribution;
-        }
-
-        for(const AtomIndex betaI : constraint.sites[1]) {
-          gradient.template segment<3>(dimensionality * betaI) += jContribution;
-        }
-
-        for(const AtomIndex gammaI : constraint.sites[2]) {
-          gradient.template segment<3>(dimensionality * gammaI) += kContribution;
-        }
-
-        for(const AtomIndex deltaI : constraint.sites[3]) {
-          gradient.template segment<3>(dimensionality * deltaI) += lContribution;
-        }
-      }
-    }
-  }
-
-  /*!
    * @brief Adds dihedral error and gradient contributions
    */
-  template<bool dependent = SIMD, std::enable_if_t<!dependent, int>...>
   void dihedralContributionsImpl(const VectorType& positions, FloatType& error, Eigen::Ref<VectorType> gradient) const {
     assert(positions.size() == gradient.size());
     constexpr FloatType reductionFactor = 1.0 / 10;
@@ -1095,210 +842,6 @@ private:
         throw std::runtime_error("Encountered zero-length b vector in dihedral gradient contributions");
       }
       b /= bLengthSq;
-      const FloatType fDotG = f.dot(g);
-      const FloatType gDotH = g.dot(h);
-
-      const ThreeDimensionalVector iContribution = (
-        -(h_phi / constraint.sites[0].size()) * gLength * a
-      );
-
-      const ThreeDimensionalVector jContribution = (
-        (h_phi / constraint.sites[1].size()) * (
-          (gLength + fDotG / gLength) * a
-          - (gDotH / gLength) * b
-        )
-      );
-
-      const ThreeDimensionalVector kContribution = (
-        (h_phi / constraint.sites[2].size()) * (
-          (gDotH / gLength - gLength) * b
-          - (fDotG / gLength) * a
-        )
-      );
-
-      const ThreeDimensionalVector lContribution = (
-        (h_phi / constraint.sites[3].size()) * gLength * b
-      );
-
-      if(
-        !iContribution.array().isFinite().all()
-        || !jContribution.array().isFinite().all()
-        || !kContribution.array().isFinite().all()
-        || !lContribution.array().isFinite().all()
-      ) {
-        throw std::runtime_error("Encountered non-finite dihedral gradient contributions");
-      }
-
-      /* Distribute contributions among constituting indices */
-      for(const AtomIndex alphaConstitutingIndex : constraint.sites[0]) {
-        gradient.template segment<3>(dimensionality * alphaConstitutingIndex) += iContribution;
-      }
-
-      for(const AtomIndex betaConstitutingIndex: constraint.sites[1]) {
-        gradient.template segment<3>(dimensionality * betaConstitutingIndex) += jContribution;
-      }
-
-      for(const AtomIndex gammaConstitutingIndex : constraint.sites[2]) {
-        gradient.template segment<3>(dimensionality * gammaConstitutingIndex) += kContribution;
-      }
-
-      for(const AtomIndex deltaConstitutingIndex : constraint.sites[3]) {
-        gradient.template segment<3>(dimensionality * deltaConstitutingIndex) += lContribution;
-      }
-    }
-  }
-
-  /*!
-   * @brief SIMD implementation of dihedral contributions
-   */
-  template<bool dependent = SIMD, std::enable_if_t<dependent, int>...>
-  void dihedralContributionsImpl(const VectorType& positions, FloatType& error, Eigen::Ref<VectorType> gradient) const {
-    assert(positions.size() == gradient.size());
-    /* NOTE: site is average position of constituting atoms in three dimensions
-     *
-     * For each dihedral constraint,
-     *   calculate the current dihedral angle (very little SIMD value):
-     *   f = site[1] - site[0]
-     *   g = site[2] - site[1]
-     *   h = site[3] - site[2]
-     *   a = f.cross(g)
-     *   b = g.cross(h)
-     *   phi = atan2(
-     *     a.cross(b).dot(
-     *       g.normalized()
-     *     ),
-     *     a.dot(b)
-     *   )
-     *
-     *   constraint_sum_halved = (constraint.upper + constraint.lower) / 2
-     *   constraint_diff_halved = (constraint.upper - constraint.lower) / 2
-     *
-     *   if phi < constraint_sum_halved - pi:
-     *     phi += 2 * pi
-     *   elif phi > constraint_sum_halved + pi:
-     *     phi -= 2 * pi
-     *
-     *   term = fabs(phi - constraint_sum_halved) - constraint_diff_halved
-     *
-     *   if term > 0:
-     *     error += term * term / 10
-     *
-     * SIMD:
-     *   use constraint_sums_halved and constraint_diffs_halved, calculated at ctor
-     *
-     *   phis = calculate dihedral and adjust by 2 pi (perhaps with select?)
-     *
-     *   adjust phi by 2pi as before
-     *
-     *   w_phi = phi - constraint_sum_halved
-     *   h_phi = fabs(w_phi) - constraint_diff_halved
-     *   error += h_phi.max(0.0).square().sum() / 10 (scale reduction factor)
-     *
-     * NOTE
-     *   When reading this, remember that matrix.col(i) yields a ColExpr, a
-     *   proxy object instance that directly references matrix' data without a
-     *   copy. The use of these objects manipulate the matrix' underlying data!
-     */
-    constexpr FloatType reductionFactor = 1.0 / 10;
-    const unsigned D = dihedralConstraints.size();
-    ThreeDimensionalMatrixType fs(3, D), gs(3, D), hs(3, D), as(3, D), bs(3, D);
-    VectorType phis(D);
-    for(unsigned i = 0; i < D; ++i) {
-      const DihedralConstraint& constraint = dihedralConstraints[i];
-
-      const ThreeDimensionalVector alpha = getAveragePosition3D(positions, constraint.sites[0]);
-      const ThreeDimensionalVector beta = getAveragePosition3D(positions, constraint.sites[1]);
-      const ThreeDimensionalVector gamma = getAveragePosition3D(positions, constraint.sites[2]);
-      const ThreeDimensionalVector delta = getAveragePosition3D(positions, constraint.sites[3]);
-
-      // Get proxy objects for column vectors in the matrices
-      auto f = fs.col(i);
-      auto g = gs.col(i);
-      auto h = hs.col(i);
-      auto a = as.col(i);
-      auto b = bs.col(i);
-
-      /* Each of these expressions assigns a column in one of the two-character
-       * matrices
-       */
-      f = alpha - beta;
-      g = beta - gamma;
-      h = delta - gamma;
-
-      // WARNING: a and b can be zero-length-vectors!
-      a = f.cross(g);
-      b = h.cross(g);
-
-      // Calculate the dihedral angle
-      FloatType& phi = phis(i);
-      phi = std::atan2(
-        a.cross(b).dot(
-          -g.normalized()
-        ),
-        a.dot(b)
-      );
-
-      constexpr FloatType pi {M_PI};
-
-      if(phi < dihedralConstraintSumsHalved(i) - pi) {
-        phi += 2 * pi;
-      } else if(phi > dihedralConstraintSumsHalved(i) + pi) {
-        phi -= 2 * pi;
-      }
-    }
-
-    // SIMD
-    const VectorType w_phis = phis - dihedralConstraintSumsHalved;
-
-    // SIMD
-    VectorType h_phis = w_phis.cwiseAbs() - dihedralConstraintDiffsHalved;
-
-    // SIMD
-    error += h_phis.array().max(0.0).square().sum() / 10;
-
-    // Gradient contribution
-    for(unsigned i = 0; i < D; ++i) {
-      FloatType& h_phi = h_phis(i);
-
-      // Early exit conditions (max function yields zero)
-      if(h_phi <= 0) {
-        continue;
-      }
-
-      /* Skip this constraint if length of g is zero -> all contributions would
-       * be NaNs since we divide by it.
-       */
-      const ThreeDimensionalVector& g = gs.col(i);
-      const FloatType gLength = g.norm();
-      if(gLength == 0) {
-        throw std::runtime_error("Encountered zero-length g vector in dihedral errors");
-      }
-
-      const FloatType& w_phi = w_phis(i);
-      // Multiply with sgn (w)
-      h_phi *= static_cast<int>(0 < w_phi) - static_cast<int>(w_phi < 0);
-
-      // Multiply in 2 and the reduction factor
-      h_phi *= 2 * reductionFactor;
-
-      const DihedralConstraint& constraint = dihedralConstraints[i];
-      const ThreeDimensionalVector& f = fs.col(i);
-      const ThreeDimensionalVector& h = hs.col(i);
-      auto a = as.col(i);
-      auto b = bs.col(i);
-
-      const FloatType aLengthSquared = a.squaredNorm();
-      if(aLengthSquared == 0) {
-        throw std::runtime_error("Encountered zero-length a vector in dihedral gradient contributions");
-      }
-      a /= aLengthSquared;
-
-      const FloatType bLengthSquared = b.squaredNorm();
-      if(bLengthSquared == 0) {
-        throw std::runtime_error("Encountered zero-length b vector in dihedral gradient contributions");
-      }
-      b /= bLengthSquared;
-
       const FloatType fDotG = f.dot(g);
       const FloatType gDotH = g.dot(h);
 

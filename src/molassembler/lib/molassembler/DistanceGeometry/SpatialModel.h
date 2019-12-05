@@ -243,7 +243,7 @@ public:
     const InnerGraph& inner
   );
 
-  /** @brief Models the angle between AtomStereopermutator sites
+  /** @brief Models bounds on the angle between AtomStereopermutator sites
    *
    * @complexity{Varies. For most cases, @math{\Omega(1)}}
    *
@@ -254,7 +254,7 @@ public:
    *
    * @return Bounds on the angle between two AtomStereopermutator sites
    */
-  static ValueBounds modelSiteAngle(
+  static ValueBounds modelSiteAngleBounds(
     const AtomStereopermutator& permutator,
     const std::pair<unsigned, unsigned>& sites,
     const double looseningMultiplier,

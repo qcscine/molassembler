@@ -41,6 +41,11 @@ struct ChiralConstraint {
   double lower;
   //! Upper bound on signed volume
   double upper;
+  /*! @brief Weight of the chiral constraint
+   *
+   * This allows tuning of the relative importance of chiral constraints.
+   */
+  double weight = 1.0;
 
   ChiralConstraint(
     SiteSequence passSites,

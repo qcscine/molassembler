@@ -40,7 +40,6 @@
 #include <Eigen/Dense>
 
 namespace Scine {
-
 namespace molassembler {
 
 template<typename ... Inds>
@@ -187,7 +186,6 @@ SpatialModel::SpatialModel(
       forceConstraintEmissionSet.insert(placedAtomIndex);
     }
   }
-
 
   // Get 1-3 information from AtomStereopermutators
   for(const auto& stereopermutator : _molecule.stereopermutators().atomStereopermutators()) {
@@ -455,10 +453,10 @@ void SpatialModel::addAtomStereopermutatorInformation(
           [&](const AtomIndex x, const AtomIndex y) -> void {
             setAngleBoundsIfEmpty(
               orderedSequence(x, centerAtom, y),
-              modelSiteAngle(
+              modelSiteAngleBounds(
                 permutator,
                 {i, j},
-                looseningMultiplier * smallestCycleDistortionMultiplier(centerAtom, graph.cycles()),
+                looseningMultiplier,
                 graph
               )
             );
@@ -476,6 +474,35 @@ void SpatialModel::addAtomStereopermutatorInformation(
     _chiralConstraints.emplace_back(
       makeChiralConstraint(minimalConstraint, permutator, looseningMultiplier)
     );
+  }
+
+  /* Add weak (low weight) planarity-enforcing chiral constraints if the shape
+   * is planar and has more than two vertices
+   */
+  const Shapes::Shape shape = permutator.getShape();
+  const unsigned S = Shapes::size(shape);
+  if(!Shapes::threeDimensional(shape) && S > 2) {
+    constexpr double tolerance = 0.1;
+    constexpr double weight = 0.01;
+
+    auto siteIndices = temple::iota<unsigned>(S);
+
+    const auto& sites = permutator.getRanking().sites;
+    assert(sites.size() == S);
+    for(unsigned offset = 0; offset < S - 2; ++offset) {
+      ChiralConstraint::SiteSequence constraintSites;
+      constraintSites[0] = {permutator.centralIndex()};
+      constraintSites[1] = sites.at(offset);
+      constraintSites[2] = sites.at(offset + 1);
+      constraintSites[3] = sites.at(offset + 2);
+
+      _chiralConstraints.emplace_back(
+        std::move(constraintSites),
+        -tolerance,
+        tolerance
+      );
+      _chiralConstraints.back().weight = weight;
+    }
   }
 }
 
@@ -947,7 +974,7 @@ double SpatialModel::siteCentralAngle(
   );
 }
 
-ValueBounds SpatialModel::modelSiteAngle(
+ValueBounds SpatialModel::modelSiteAngleBounds(
   const AtomStereopermutator& permutator,
   const std::pair<unsigned, unsigned>& sites,
   const double looseningMultiplier,
@@ -961,16 +988,26 @@ ValueBounds SpatialModel::modelSiteAngle(
    * at each site, not split between lower and upper.
    */
   const double centralAngle = siteCentralAngle(permutator, sites, inner);
-  const ValueBounds angleBounds = makeBoundsFromCentralValue(
-    centralAngle,
-    (
-      feasiblePermutations.coneAngles.at(sites.first).value().upper
-      + feasiblePermutations.coneAngles.at(sites.second).value().upper
-      + SpatialModel::angleRelativeVariance * looseningMultiplier * centralAngle
-    )
-  );
+  const double absoluteVariance = [&]() -> double{
+    // Turn the angle relative variance into an absolute variance
+    double variance = SpatialModel::angleRelativeVariance * centralAngle;
+    variance *= smallestCycleDistortionMultiplier(
+      permutator.centralIndex(),
+      inner.cycles()
+    );
+    variance *= looseningMultiplier;
 
-  return clamp(angleBounds, angleClampBounds);
+    // Additional terms are the upper(!) cone angles!
+    variance += feasiblePermutations.coneAngles.at(sites.first).value().upper;
+    variance += feasiblePermutations.coneAngles.at(sites.second).value().upper;
+
+    return variance;
+  }();
+
+  return clamp(
+    makeBoundsFromCentralValue(centralAngle, absoluteVariance),
+    angleClampBounds
+  );
 }
 
 ChiralConstraint SpatialModel::makeChiralConstraint(
@@ -2017,7 +2054,5 @@ void SpatialModel::_modelSpirocenters(
 }
 
 } // namespace DistanceGeometry
-
 } // namespace molassembler
-
 } // namespace Scine
