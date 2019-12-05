@@ -299,7 +299,7 @@ Eigen::Vector3d getCoordinates(
   if(indexInShapeOption) {
     assert(indexInShapeOption.value() < Shapes::size(shape));
 
-    return symmetryData().at(shape).coordinates.col(
+    return shapeData().at(shape).coordinates.col(
       indexInShapeOption.value()
     );
   }

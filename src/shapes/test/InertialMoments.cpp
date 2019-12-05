@@ -54,7 +54,7 @@ BOOST_AUTO_TEST_CASE(InertialStandardization) {
   };
 
   for(const auto nameTopPair : tops) {
-    auto positions = addOrigin(symmetryData().at(nameTopPair.first).coordinates);
+    auto positions = addOrigin(shapeData().at(nameTopPair.first).coordinates);
 
     // Apply a random coordinate transformation
 
@@ -65,7 +65,7 @@ BOOST_AUTO_TEST_CASE(InertialStandardization) {
       top == nameTopPair.second,
       "Top standardization failed. Expected "
       << topName(nameTopPair.second)
-      << " for symmetry " << Shapes::name(nameTopPair.first)
+      << " for shape " << Shapes::name(nameTopPair.first)
       << ", got " << topName(top) << " instead."
     );
   }

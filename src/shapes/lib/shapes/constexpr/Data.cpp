@@ -179,7 +179,7 @@ static_assert(
  * redundant declarations, they are definitely NOT redundant.
  * - Removing the grouped declarations for each Symmetry below, which are all
  *   constexpr, makes it impossible to use these values outside of a constexpr
- *   context.  However, since symmetryData is generated from these classes at
+ *   context.  However, since shapeData is generated from these classes at
  *   run-time, they need to be available then too.
  * - For the stringName declarations, static const non-literal members require
  *   out-of-class initializers, so they too are non-redundant

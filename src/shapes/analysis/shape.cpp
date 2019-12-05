@@ -147,7 +147,7 @@ struct OldShapeAlgorithm {
   virtual ~OldShapeAlgorithm() = default;
 
   static PositionCollection shapeCoordinates(const Shape shape) {
-    return normalize(addOrigin(symmetryData().at(shape).coordinates));
+    return normalize(addOrigin(shapeData().at(shape).coordinates));
   }
 
   virtual double shape(const PositionCollection& positions, Shape shape) = 0;
@@ -198,7 +198,7 @@ struct ShapeAlgorithm {
   }
 
   static PositionCollection shapeCoordinates(const Shape shape) {
-    return normalize(addOrigin(symmetryData().at(shape).coordinates));
+    return normalize(addOrigin(shapeData().at(shape).coordinates));
   }
 
   virtual ResultPair shape(
@@ -1199,7 +1199,7 @@ void writeEnergyStatistics() {
 
     shapes.push_back(shape);
 
-    auto shapeCoordinates = normalize(addOrigin(symmetryData().at(shape).coordinates));
+    auto shapeCoordinates = normalize(addOrigin(shapeData().at(shape).coordinates));
     const unsigned N = shapeCoordinates.cols();
 
     auto distorted = shapeCoordinates;

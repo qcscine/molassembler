@@ -20,6 +20,7 @@
 #include "molassembler/IO.h"
 #include "molassembler/IO/SmilesParser.h"
 #include "molassembler/Log.h"
+#include "molassembler/GraphAlgorithms.h"
 
 #include "temple/Adaptors/Enumerate.h"
 #include "temple/Functional.h"
@@ -81,7 +82,8 @@ MoleculeDGInformation gatherDGInformation(
   const Molecule& molecule,
   const Configuration& configuration,
   std::string& spatialModelGraphvizString,
-  bool applyTetrangleSmoothing
+  const bool applyTetrangleSmoothing,
+  const bool printBounds
 ) {
   // Generate a spatial model from the molecular graph and stereopermutators
   SpatialModel spatialModel {molecule, configuration};
@@ -113,8 +115,29 @@ MoleculeDGInformation gatherDGInformation(
       }
     }
 
+    // Triangle smooth
+    DistanceBoundsMatrix::smooth(data.bounds);
+    // Tetrangle smooth
     unsigned iterations = tetrangleSmooth(data.bounds);
     std::cout << "Applied " << iterations << " iterations of tetrangle smoothing\n";
+  }
+
+  if(printBounds) {
+    const AtomIndex N = molecule.graph().N();
+    for(AtomIndex i = 0; i < N; ++i) {
+      auto iGraphDistances = distance(i, molecule.graph());
+
+      for(AtomIndex j = i + 1; j < N; ++j) {
+        const double lower = data.bounds(j, i);
+        const double upper = data.bounds(i, j);
+
+        if(lower != 0.0 || upper != 0.0) {
+          std::cout << i << " - " << j
+            << " = [" << lower << ", " << upper << "], width = " << (upper - lower)
+            << ", graph distance " << iGraphDistances.at(j) << "\n";
+        }
+      }
+    }
   }
 
   return data;
@@ -131,7 +154,8 @@ std::list<RefinementData> debugRefinement(
   const Molecule& molecule,
   unsigned numConformers,
   const Configuration& configuration,
-  bool applyTetrangleSmoothing
+  bool applyTetrangleSmoothing,
+  bool printBounds
 ) {
   if(molecule.stereopermutators().hasZeroAssignmentStereopermutators()) {
     Log::log(Log::Level::Warning)
@@ -165,7 +189,8 @@ std::list<RefinementData> debugRefinement(
       molecule,
       configuration,
       spatialModelGraphviz,
-      applyTetrangleSmoothing
+      applyTetrangleSmoothing,
+      printBounds
     );
   }
 
@@ -191,7 +216,8 @@ std::list<RefinementData> debugRefinement(
         moleculeCopy,
         configuration,
         spatialModelGraphviz,
-        applyTetrangleSmoothing
+        applyTetrangleSmoothing,
+        printBounds
       );
     }
 
@@ -624,6 +650,7 @@ int main(int argc, char* argv[]) {
 
   bool showFinalContributions = false;
   bool applyTetrangleSmoothing = false;
+  bool printBounds = false;
 
   // Set up option parsing
   boost::program_options::options_description options_description("Recognized options");
@@ -663,6 +690,11 @@ int main(int argc, char* argv[]) {
       "tetrangle,t",
       boost::program_options::bool_switch(&applyTetrangleSmoothing),
       "Apply tetrangle smoothing once, prior to distance matrix generation"
+    )
+    (
+      "bounds,b",
+      boost::program_options::bool_switch(&printBounds),
+      "Print the distance bounds matrix"
     )
   ;
 
@@ -762,7 +794,8 @@ int main(int argc, char* argv[]) {
     mol,
     nStructures,
     DGConfiguration,
-    applyTetrangleSmoothing
+    applyTetrangleSmoothing,
+    printBounds
   );
 
   for(const auto& enumPair : temple::adaptors::enumerate(debugData)) {

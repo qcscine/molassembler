@@ -32,17 +32,17 @@ Eigen::Vector3d toEigen(const temple::Vector& cVector) {
  *   destructors use this variable, because once again, the order of static
  *   deinitialization is random.
  */
-const SymmetryDataMapType& symmetryData() {
+const ShapeDataMapType& shapeData() {
   static const auto dataMap = temple::TupleType::unpackToFunction<
     data::allShapeDataTypes,
-    data::symmetryInformationFunctor
+    data::shapeInformationFunctor
   >();
 
   return dataMap;
 }
 
 std::string spaceFreeName(const Shape shape) {
-  std::string toModify = symmetryData().at(shape).stringName;
+  std::string toModify = shapeData().at(shape).stringName;
 
   std::replace(
     toModify.begin(),

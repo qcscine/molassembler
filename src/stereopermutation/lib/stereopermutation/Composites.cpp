@@ -643,7 +643,7 @@ Composite::Composite(
    * NOTE: The central atom of both symmetries is always placed at the origin
    * in the coordinate definitions.
    */
-  Shapes::CoordinateList firstCoordinates = Shapes::symmetryData().at(
+  Shapes::CoordinateList firstCoordinates = Shapes::shapeData().at(
     _orientations.first.shape
   ).coordinates;
   // Rotate left fused position onto <1, 0, 0>
@@ -653,7 +653,7 @@ Composite::Composite(
     Eigen::Vector3d::UnitX()
   );
 
-  auto secondCoordinates = Shapes::symmetryData().at(
+  auto secondCoordinates = Shapes::shapeData().at(
     _orientations.second.shape
   ).coordinates;
   // Rotate right fused position onto <-1, 0, 0>

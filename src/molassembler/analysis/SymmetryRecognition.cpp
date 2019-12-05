@@ -783,7 +783,7 @@ int main(int argc, char* argv[]) {
 
     Positions basePositions (3, S + 1);
     basePositions.col(0) = Eigen::Vector3d::Zero();
-    basePositions.rightCols(S) = Shapes::symmetryData().at(name).coordinates;
+    basePositions.rightCols(S) = Shapes::shapeData().at(name).coordinates;
 
     std::vector< // each recognizer has its own vector
       std::vector< // each distortion value

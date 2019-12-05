@@ -24,6 +24,7 @@
 #include <set>
 #include <numeric>
 #include <iostream>
+#include <iomanip>
 
 using namespace Scine;
 using namespace Shapes;
@@ -145,7 +146,7 @@ BOOST_AUTO_TEST_CASE(AnglesMatchCoordinates) {
 
   for(const auto& shape: allShapes) {
     auto getCoordinates =  [&](const unsigned index) -> Eigen::Vector3d {
-      return symmetryData().at(shape).coordinates.col(index);
+      return shapeData().at(shape).coordinates.col(index);
     };
 
     bool all_pass = true;
@@ -189,7 +190,7 @@ BOOST_AUTO_TEST_CASE(AllTetrahedraPositive) {
   for(const auto& shape: allShapes) {
     auto getCoordinates = [&](const boost::optional<unsigned>& indexOption) -> Eigen::Vector3d {
       if(indexOption) {
-        return symmetryData().at(shape).coordinates.col(indexOption.value());
+        return shapeData().at(shape).coordinates.col(indexOption.value());
       }
 
       return {0, 0, 0};
@@ -264,18 +265,18 @@ BOOST_AUTO_TEST_CASE(SmallestAngleValueCorrect) {
     temple::map(
       allShapes,
       [](const Shape& shape) -> double {
-        double symmetrySmallestAngle = angleFunction(shape)(0, 1);
+        double shapeSmallestAngle = angleFunction(shape)(0, 1);
 
         for(unsigned i = 0; i < size(shape); i++) {
           for(unsigned j = i + 1; j < size(shape); j++) {
             double angle = angleFunction(shape)(i, j);
-            if(angle < symmetrySmallestAngle) {
-              symmetrySmallestAngle = angle;
+            if(angle < shapeSmallestAngle) {
+              shapeSmallestAngle = angle;
             }
           }
         }
 
-        return symmetrySmallestAngle;
+        return shapeSmallestAngle;
       }
     )
   );
@@ -575,9 +576,9 @@ struct RotationGenerationTest {
  * Although this seems equivalent, it really isn't, since initialize() is called
  * at static initialization time instead of at first use as when value is
  * a function. Since, in this case, the value function depends on another static
- * value (generateAllRotations -> symmetryData), the value-initialize variant
+ * value (generateAllRotations -> shapeData), the value-initialize variant
  * leads to a static initialization fiasco, where it is unclear whether the
- * value data member or symmetryData is initialized first.
+ * value data member or shapeData is initialized first.
  *
  * Only in the case of static constexpr is the value-initialize variant
  * semantically equivalent to the data member variant.
@@ -773,4 +774,13 @@ BOOST_AUTO_TEST_CASE(PositionGroups) {
   BOOST_CHECK(properties::positionGroups(Shape::Octahedron) == std::vector<char> (6, 'A'));
   BOOST_CHECK(properties::positionGroups(Shape::Cube) == std::vector<char> (8, 'A'));
   BOOST_CHECK(properties::positionGroups(Shape::Icosahedron) == std::vector<char> (12, 'A'));
+}
+
+BOOST_AUTO_TEST_CASE(DimensionalityProperty) {
+  BOOST_CHECK(threeDimensional(Shape::Tetrahedron));
+  BOOST_CHECK(!threeDimensional(Shape::Line));
+  BOOST_CHECK(!threeDimensional(Shape::Bent));
+  BOOST_CHECK(!threeDimensional(Shape::Pentagon));
+  BOOST_CHECK(!threeDimensional(Shape::Hexagon));
+  BOOST_CHECK(threeDimensional(Shape::Icosahedron));
 }

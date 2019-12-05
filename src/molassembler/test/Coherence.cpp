@@ -7,6 +7,7 @@
 #include "molassembler/Conformers.h"
 #include "molassembler/DistanceGeometry/ConformerGeneration.h"
 
+#include "molassembler/RankingInformation.h"
 #include "molassembler/IO.h"
 #include "molassembler/IO/SmilesParser.h"
 
@@ -187,7 +188,36 @@ BOOST_AUTO_TEST_CASE(BidentateAssignmentRecognized) {
   // NOTE: set shape at 0 to trigonal bipyramid
   auto pincer = IO::experimental::parseSmilesSingleMolecule(pincer_smiles);
   pincer.setShapeAtAtom(0, Shapes::Shape::TrigonalBipyramid);
-  pincer.assignStereopermutator(0, 0);
+
+  // Find an assignment in which the phoshorus atoms are trans-arranged
+  boost::optional<unsigned> expectedAssignmentOption;
+  BOOST_REQUIRE(pincer.stereopermutators().option(0));
+  const auto& permutator = pincer.stereopermutators().option(0).value();
+
+  // Which sites at the permutator are the phosphorus atoms?
+  std::vector<unsigned> phosphorusSites;
+  const auto& ranking = permutator.getRanking();
+  for(unsigned i = 0; i < ranking.sites.size(); ++i) {
+    if(
+      ranking.sites.at(i).size() == 1
+      && pincer.graph().elementType(ranking.sites.at(i).front()) == Utils::ElementType::P
+    ) {
+      phosphorusSites.push_back(i);
+    }
+  }
+  BOOST_REQUIRE(phosphorusSites.size() == 2);
+
+  // Find a trans-arranged assignment
+  const unsigned A = permutator.numAssignments();
+  for(unsigned i = 0; i < A; ++i) {
+    pincer.assignStereopermutator(0, i);
+    if(std::fabs(permutator.angle(phosphorusSites.front(), phosphorusSites.back()) - M_PI) < 1e-10) {
+      expectedAssignmentOption = i;
+      break;
+    }
+  }
+  BOOST_REQUIRE(expectedAssignmentOption);
+
   if(auto conf = generateRandomConformation(pincer)) {
     Molecule reinterpreted {
       pincer.graph(),
@@ -199,7 +229,7 @@ BOOST_AUTO_TEST_CASE(BidentateAssignmentRecognized) {
         return f.assigned();
       }
     );
-    BOOST_CHECK(assignmentOptional == 0u);
+    BOOST_CHECK(assignmentOptional == expectedAssignmentOption);
   } else {
     BOOST_FAIL(conf.error());
   }
