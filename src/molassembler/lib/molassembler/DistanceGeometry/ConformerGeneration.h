@@ -14,7 +14,6 @@
 
 #include "molassembler/Conformers.h"
 #include "molassembler/DistanceGeometry/SpatialModel.h"
-#include "molassembler/DistanceGeometry/RefinementDebugData.h"
 #include "molassembler/Log.h"
 
 namespace Scine {

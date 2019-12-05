@@ -33,6 +33,51 @@
 namespace Scine {
 namespace molassembler {
 namespace DistanceGeometry {
+
+/**
+ * @brief Debug class containing a step from refinement
+ */
+struct RefinementStepData {
+  Eigen::VectorXd positions;
+  double distanceError;
+  double chiralError;
+  double dihedralError;
+  double fourthDimError;
+  Eigen::VectorXd gradient;
+  double proportionCorrectChiralConstraints;
+  bool compress;
+
+  RefinementStepData(
+    const Eigen::VectorXd& passPositions,
+    const double passDistanceError,
+    const double passChiralError,
+    const double passDihedralError,
+    const double passFourthDimError,
+    const Eigen::VectorXd& passGradient,
+    const double passProportionCorrectChiralConstraints,
+    const bool passCompress
+  ) : positions(passPositions),
+      distanceError(passDistanceError),
+      chiralError(passChiralError),
+      dihedralError(passDihedralError),
+      fourthDimError(passFourthDimError),
+      gradient(passGradient),
+      proportionCorrectChiralConstraints(passProportionCorrectChiralConstraints),
+      compress(passCompress)
+  {}
+};
+
+/**
+ * @brief Debug data class containing data on a refinement
+ */
+struct RefinementData {
+  std::list<RefinementStepData> steps;
+  std::vector<ChiralConstraint> constraints;
+  double looseningFactor;
+  bool isFailure;
+  std::string spatialModelGraphviz;
+};
+
 namespace detail {
 
 template<typename EigenRefinementType>
