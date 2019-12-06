@@ -189,7 +189,7 @@ void init_directed_conformer_generator(pybind11::module& m) {
         are usually fine.
 
       .. note::
-         This function advances molassembler's global PRNG state.
+         This function advances ``molassembler``'s global PRNG state.
     )delim"
   );
 

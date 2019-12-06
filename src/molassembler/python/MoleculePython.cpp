@@ -300,7 +300,7 @@ void init_molecule(pybind11::module& m) {
       :param atom: Atom index of the stereopermutator to assign randomly.
 
       .. note::
-         This function advances molassembler's global PRNG state.
+         This function advances ``molassembler``'s global PRNG state.
 
       >>> # Assign an unspecified chiral center
       >>> import molassembler as masm
@@ -326,7 +326,7 @@ void init_molecule(pybind11::module& m) {
       :param bond_index: :class:`BondIndex` of the stereopermutator to assign randomly.
 
       .. note::
-         This function advances molassembler's global PRNG state.
+         This function advances ``molassembler``'s global PRNG state.
 
       >>> # Assign an unspecified double bond randomly
       >>> import molassembler as masm

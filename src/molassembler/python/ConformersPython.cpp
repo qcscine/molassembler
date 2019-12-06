@@ -207,7 +207,12 @@ void init_conformers(pybind11::module& m) {
       will contain confomers of both assignments, akin to a racemic mixture.
 
       .. note::
-         This function advances molassembler's global PRNG state.
+         This function is parallelized and will utilize ``OMP_NUM_THREADS``
+         threads. The resulting list is sequenced and reproducible given the
+         same global PRNG state.
+
+      .. note::
+         This function advances ``molassembler``'s global PRNG state.
 
       :param molecule: Molecule to generate positions for. May not contain
         stereopermutators with zero assignments (no feasible stereopermutations).
@@ -245,6 +250,10 @@ void init_conformers(pybind11::module& m) {
       for each structure. If, for instance, your molecules contains a single
       unassigned asymmetric tetrahedron atom stereopermutator, the ensemble
       will contain confomers of both assignments, akin to a racemic mixture.
+
+      .. note::
+         This function is parallelized and will utilize ``OMP_NUM_THREADS``
+         threads
 
       :param molecule: Molecule to generate positions for. May not contain
         stereopermutators with zero assignments (no feasible stereopermutations).
@@ -290,7 +299,7 @@ void init_conformers(pybind11::module& m) {
         conformer generation failed.
 
       .. note::
-         This function advances molassembler's global PRNG state
+         This function advances ``molassembler``'s global PRNG state.
 
       >>> # Generate a single conformation
       >>> import molassembler as masm
