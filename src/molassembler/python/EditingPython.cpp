@@ -35,10 +35,11 @@ void init_editing(pybind11::module& m) {
       :return: A pair of molecules
       :example:
 
-      >>> import scine_utils_os as utils
-      >>> a = molassembler.Molecule() # Makes H2
+      >>> import scine_molassembler as masm
+      >>> import scine_utils as utils
+      >>> a = masm.Molecule() # Makes H2
       >>> bond_index = a.addAtom(0, utils.ElementType.H) # Make linear H3
-      >>> cleaved = molassembler.editing.cleave(a, bond_index) # Split into H2 and H
+      >>> cleaved = masm.editing.cleave(a, bond_index) # Split into H2 and H
     )delim"
   );
 

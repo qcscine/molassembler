@@ -8,8 +8,8 @@ file(GLOB_RECURSE MOLASSEMBLER_PYTHON_CPPS ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp)
 pybind11_add_module(molassembler_python ${MOLASSEMBLER_PYTHON_CPPS})
 set_target_properties(molassembler_python PROPERTIES
   SUFFIX ".so"
-  LIBRARY_OUTPUT_NAME "molassembler"
-  LIBRARY_OUTPUT_DIRECTORY "molassembler"
+  LIBRARY_OUTPUT_NAME "scine_molassembler"
+  LIBRARY_OUTPUT_DIRECTORY "scine_molassembler"
 )
 target_include_directories(molassembler_python SYSTEM PRIVATE ${PYBIND11_INCLUDE_DIR})
 target_compile_options(molassembler_python PRIVATE ${MOLASSEMBLER_CXX_FLAGS})
@@ -41,8 +41,8 @@ if(PY_PIP)
   )
 
   file(
-    WRITE ${CMAKE_CURRENT_BINARY_DIR}/molassembler/__init__.py
-    "from .molassembler import *\n"
+    WRITE ${CMAKE_CURRENT_BINARY_DIR}/scine_molassembler/__init__.py
+    "from .scine_molassembler import *\n"
   )
 
   install(CODE "execute_process(WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR} COMMAND ${PYTHON_EXECUTABLE} -m pip install --prefix=${CMAKE_INSTALL_PREFIX} --upgrade .)")
@@ -83,11 +83,11 @@ if(SCINE_BUILD_DOCS)
 
     find_python_module(doctest)
     if(PY_DOCTEST)
-      find_python_module(scine_utils_os)
-      if(PY_SCINE_UTILS_OS OR SCINE_UTILS_PYTHON_BINARY_PATH)
+      find_python_module(scine_utils)
+      if(PY_SCINE_UTILS OR SCINE_UTILS_PYTHON_BINARY_PATH)
         add_test(
           NAME PythonBindingsDoctest
-          COMMAND ${PYTHON_EXECUTABLE} -c "import sys, doctest, molassembler; (f, _) = doctest.testmod(molassembler.molassembler, verbose=True); sys.exit(f > 0)"
+          COMMAND ${PYTHON_EXECUTABLE} -c "import sys, doctest, scine_molassembler; (f, _) = doctest.testmod(scine_molassembler.scine_molassembler); sys.exit(f > 0)"
           WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
         )
 
@@ -97,7 +97,7 @@ if(SCINE_BUILD_DOCS)
           )
         endif()
       else()
-        message(STATUS "Python documentation testing is disabled as the scine_utils_os module cannot be found and is not being built in-tree")
+        message(STATUS "Python documentation testing is disabled as the scine_utils module cannot be found and is not being built in-tree")
       endif()
     else()
       message(STATUS "Python documentation testing is disabled as doctest cannot be found")

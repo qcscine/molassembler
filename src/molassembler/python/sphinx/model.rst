@@ -4,23 +4,25 @@ Molecule model
 Parts
 -----
 
-:class:`molassembler.Molecule` instances are composed of a
-:class:`molassembler.Graph` and a :class:`molassembler.StereopermutatorList`.
-The :class:`molassembler.Graph` represents atoms as vertices and bonds as edges
-in a mathematical graph. The :class:`molassembler.StereopermutatorList` contains
-objects to handle the relative spatial arrangements of atoms.
-:class:`molassembler.AtomStereopermutator` instances are responsible for
+:class:`scine_molassembler.Molecule` instances are composed of a
+:class:`scine_molassembler.Graph` and a
+:class:`scine_molassembler.StereopermutatorList`. The
+:class:`scine_molassembler.Graph` represents atoms as vertices and bonds as
+edges in a mathematical graph. The
+:class:`scine_molassembler.StereopermutatorList` contains objects to handle the
+relative spatial arrangements of atoms.
+:class:`scine_molassembler.AtomStereopermutator` instances are responsible for
 classifying the local shape of its substituents and allowing permutation through
 distinct non-rotationally superimposable arrangements of its substituents. The
 simplest stereogenic case it manages is an asymmetric tetrahedron, where its two
 stereopermutations represent the R and S arrangements. The
-:class:`molassembler.AtomStereopermutator` manages these arrangements in
+:class:`scine_molassembler.AtomStereopermutator` manages these arrangements in
 distinct shapes that range from two substituents (linear and bent) up to twelve
-(icosahedron and cuboctahedron). :class:`molassembler.BondStereopermutator`
-instances are responsible for the relative arrangement of two
-:class:`molassembler.AtomStereopermutator` instances fused at arbitrary vertices
-of their shapes. They manage, for instance, the E and Z arrangements at
-asymmetric double bonds.
+(icosahedron and cuboctahedron).
+:class:`scine_molassembler.BondStereopermutator` instances are responsible for
+the relative arrangement of two :class:`scine_molassembler.AtomStereopermutator`
+instances fused at arbitrary vertices of their shapes. They manage, for
+instance, the E and Z arrangements at asymmetric double bonds.
 
 
 Construction steps

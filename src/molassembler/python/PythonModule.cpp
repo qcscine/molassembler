@@ -23,18 +23,18 @@ void init_shape_submodule(pybind11::module& m);
 void init_types(pybind11::module& m);
 void init_version(pybind11::module& m);
 
-PYBIND11_MODULE(molassembler, m) {
+PYBIND11_MODULE(scine_molassembler, m) {
   m.doc() = R"(
-    Pybind11 bindings for molassembler
+    Pybind11 bindings for scine_molassembler
 
-    .. currentmodule:: molassembler
+    .. currentmodule:: scine_molassembler
 
     .. autosummary::
        :toctree:
   )";
 
   // Requires other modules to function properly
-  // auto utils = pybind11::module::import("scine_utils_os");
+  // auto utils = pybind11::module::import("scine_utils");
 
   // Order is important here, do not reorder
   init_version(m);

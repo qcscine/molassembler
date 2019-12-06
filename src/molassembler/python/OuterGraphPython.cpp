@@ -20,8 +20,8 @@ void init_outer_graph(pybind11::module& m) {
     R"delim(
       Molecular graph in which atoms are vertices and bonds are edges.
 
-      >>> import molassembler as masm
-      >>> import scine_utils_os as utils
+      >>> import scine_molassembler as masm
+      >>> import scine_utils as utils
       >>> ethane = masm.io.experimental.from_smiles("CC")
       >>> g = ethane.graph
       >>> g.atoms_of_element(utils.ElementType.C)
@@ -51,7 +51,7 @@ void init_outer_graph(pybind11::module& m) {
     R"delim(
       Returns whether two atoms are bonded
 
-      >>> import molassembler as masm
+      >>> import scine_molassembler as masm
       >>> ethane = masm.io.experimental.from_smiles("CC")
       >>> ethane.graph.degree(0)
       4
@@ -67,8 +67,8 @@ void init_outer_graph(pybind11::module& m) {
     R"delim(
       Returns atoms matching an element type
 
-      >>> import molassembler as masm
-      >>> import scine_utils_os as utils
+      >>> import scine_molassembler as masm
+      >>> import scine_utils as utils
       >>> ethanol = masm.io.experimental.from_smiles("CCO")
       >>> ethanol.graph.atoms_of_element(utils.ElementType.O)
       [2]
@@ -84,8 +84,8 @@ void init_outer_graph(pybind11::module& m) {
       Generates a BondOrderCollection representation of the molecule connectivity
 
       >>> # Convert acetaldehyde's graph into a floating point bond order matrix
-      >>> import molassembler as masm
-      >>> import scine_utils_os as utils
+      >>> import scine_molassembler as masm
+      >>> import scine_utils as utils
       >>> acetaldehyde = masm.io.experimental.from_smiles("CC=O")
       >>> bo = acetaldehyde.graph.bond_orders()
       >>> bo.empty()
@@ -105,7 +105,7 @@ void init_outer_graph(pybind11::module& m) {
       Fetches the :class:`BondType` at a particular :class:`BondIndex`
 
       >>> # Look at some bond orders of an interesting model compound
-      >>> import molassembler as masm
+      >>> import scine_molassembler as masm
       >>> compound = masm.io.experimental.from_smiles("[Co]1(C#N)(C#O)C=C1")
       >>> compound.graph.bond_type(masm.BondIndex(0, 1)) # Co-CN bond
       BondType.Single
@@ -126,7 +126,7 @@ void init_outer_graph(pybind11::module& m) {
       Returns whether an atom can be removed without disconnecting the graph
 
       >>> # In graph terms, articulation vertices cannot be removed
-      >>> import molassembler as masm
+      >>> import scine_molassembler as masm
       >>> methane = masm.io.experimental.from_smiles("C")
       >>> methane.graph.can_remove(0) # We cannot remove the central carbon
       False
@@ -143,8 +143,8 @@ void init_outer_graph(pybind11::module& m) {
       Returns whether a bond can be removed without disconnecting the graph
 
       >>> # In graph terms, bridge edges cannot be removed
-      >>> import molassembler as masm
-      >>> import scine_utils_os as utils
+      >>> import scine_molassembler as masm
+      >>> import scine_utils as utils
       >>> from itertools import combinations
       >>> cyclopropane = masm.io.experimental.from_smiles("C1CC1")
       >>> carbon_atoms = cyclopropane.graph.atoms_of_element(utils.ElementType.C)
@@ -172,7 +172,7 @@ void init_outer_graph(pybind11::module& m) {
       Returns the number of bonds incident upon an atom.
 
       >>> # A silly example
-      >>> import molassembler as masm
+      >>> import scine_molassembler as masm
       >>> model = masm.io.experimental.from_smiles("CNO[H]")
       >>> [model.graph.degree(i) for i in range(0, 4)]
       [4, 3, 2, 1]
@@ -187,8 +187,8 @@ void init_outer_graph(pybind11::module& m) {
       Generates an ElementCollection representation of the molecule's atoms' element types
 
       >>> # Some isotopes
-      >>> import molassembler as masm
-      >>> import scine_utils_os as utils
+      >>> import scine_molassembler as masm
+      >>> import scine_utils as utils
       >>> m = masm.io.experimental.from_smiles("[1H]C([2H])([3H])[H]")
       >>> m.graph.element_collection()
       [ElementType.H1, ElementType.C, ElementType.D, ElementType.T, ElementType.H]
@@ -203,8 +203,8 @@ void init_outer_graph(pybind11::module& m) {
       Fetch the element type of an atom
 
       >>> # Some isotopes
-      >>> import molassembler as masm
-      >>> import scine_utils_os as utils
+      >>> import scine_molassembler as masm
+      >>> import scine_utils as utils
       >>> m = masm.io.experimental.from_smiles("[1H]C([2H])([3H])[H]")
       >>> m.graph.element_type(0)
       ElementType.H1
@@ -226,7 +226,7 @@ void init_outer_graph(pybind11::module& m) {
       Determine which atoms belong to either side of a bond
 
       >>> # Hypothetically splitting a model compound
-      >>> import molassembler as masm
+      >>> import scine_molassembler as masm
       >>> m = masm.io.experimental.from_smiles("CN")
       >>> m.graph.split_along_bridge(masm.BondIndex(0, 1))
       ([0, 2, 3, 4], [1, 5, 6])
@@ -261,8 +261,8 @@ void init_outer_graph(pybind11::module& m) {
     R"delim(
       Iterate through all valid bond indices of the graph
 
-      >>> import molassembler as masm
-      >>> import scine_utils_os as utils
+      >>> import scine_molassembler as masm
+      >>> import scine_utils as utils
       >>> model = masm.io.experimental.from_smiles("F/C=C/I")
       >>> [b for b in model.graph.bonds()]
       [(0, 1), (1, 2), (2, 3), (1, 4), (2, 5)]
@@ -282,8 +282,8 @@ void init_outer_graph(pybind11::module& m) {
     R"delim(
       Iterate through all adjacent atom indices of an atom
 
-      >>> import molassembler as masm
-      >>> import scine_utils_os as utils
+      >>> import scine_molassembler as masm
+      >>> import scine_utils as utils
       >>> m = masm.io.experimental.from_smiles("NC")
       >>> [a for a in m.graph.adjacents(0)]
       [1, 2, 3]
@@ -306,8 +306,8 @@ void init_outer_graph(pybind11::module& m) {
     R"delim(
       Iterate through all incident bonds of an atom
 
-      >>> import molassembler as masm
-      >>> import scine_utils_os as utils
+      >>> import scine_molassembler as masm
+      >>> import scine_utils as utils
       >>> m = masm.io.experimental.from_smiles("NC")
       >>> [b for b in m.graph.bonds(0)]
       [(0, 1), (0, 2), (0, 3)]

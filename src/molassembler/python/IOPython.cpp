@@ -44,7 +44,7 @@ void init_io(pybind11::module& m) {
         - Octahedral (@OH1 - @OH30)
 
       :param smiles_str: A smiles string containing possibly multiple molecules
-      :rtype: List[molassembler.Molecule]
+      :rtype: List[scine_molassembler.Molecule]
 
       >>> methane_and_ammonia = from_smiles_multiple("C.[NH4+]")
       >>> len(methane_and_ammonia) == 2
@@ -74,9 +74,9 @@ void init_io(pybind11::module& m) {
         - Octahedral (@OH1 - @OH30)
 
       :param smiles_str: A smiles string containing a single molecule
-      :rtype: molassembler.Molecule
+      :rtype: scine_molassembler.Molecule
 
-      >>> import scine_utils_os as utils
+      >>> import scine_utils as utils
       >>> methane = from_smiles("C")
       >>> methane.graph.N == 4
       True

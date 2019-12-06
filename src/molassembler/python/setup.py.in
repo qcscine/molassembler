@@ -15,7 +15,7 @@ generate non-superposable stereopermutations as output.
 
 # Define the setup
 setuptools.setup(
-    name="molassembler",
+    name="scine_molassembler",
     version="@molassembler_VERSION@",
     author="Jan-Grimo Sobez",
     author_email="jan-grimo.sobez@phys.chem.ethz.ch",
@@ -23,8 +23,9 @@ setuptools.setup(
     long_description=markdown_description,
     long_description_content_type="text/markdown",
     url="https://gitlab.chab.ethz.ch/scine/molassembler",
-    packages=["molassembler"],
-    package_data={"molassembler": ["__init__.py", "molassembler.so"]},
+    packages=["scine_molassembler"],
+    package_data={"scine_molassembler": [
+        "__init__.py", "scine_molassembler.so"]},
     classifiers=[
         "Programming Language :: Python :: 3",
         "Programming Language :: C++",

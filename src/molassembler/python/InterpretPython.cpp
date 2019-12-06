@@ -112,7 +112,8 @@ void init_interpret(pybind11::module& m) {
       :raises ValueError: If the number of particles in the atom collection and
         bond order collections do not match
 
-      >>> import scine_utils_os as utils
+      >>> import scine_molassembler as masm
+      >>> import scine_utils as utils
       >>> import numpy as np
       >>> elements = [utils.ElementType.H] * 4
       >>> positions = np.array([[0.0, 0.0, 0.0], [0.0, 0.71, 0.0], [2.0, 2.0, 2.0], [2.0, 2.71, 2.0]])
@@ -120,10 +121,10 @@ void init_interpret(pybind11::module& m) {
       >>> bond_orders = utils.BondOrderCollection(4)
       >>> bond_orders.set_order(0, 1, 1.0)
       >>> bond_orders.set_order(2, 3, 1.0)
-      >>> discretization = molassembler.BondDiscretization.RoundToNearest
-      >>> result = molassembler.interpret(atoms, bond_orders, discretization)
+      >>> discretization = masm.BondDiscretization.RoundToNearest
+      >>> result = masm.interpret(atoms, bond_orders, discretization)
       >>> assert len(result.molecules) == 2
-      >>> hydrogen = molassembler.Molecule()
+      >>> hydrogen = masm.Molecule()
       >>> assert all([m == hydrogen for m in result.molecules])
       >>> assert result.component_map == [0, 0, 1, 1]
     )delim"

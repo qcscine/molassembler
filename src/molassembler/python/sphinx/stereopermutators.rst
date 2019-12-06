@@ -30,20 +30,20 @@ The fused shape positions of each side affect the overall permutations if the
 shape has multiple position groups. For instance, this is the case in square
 pyramidal shapes, where there are axial and equatorial shape positions.
 
-.. autoclass:: molassembler.StereopermutatorList
+.. autoclass:: scine_molassembler.StereopermutatorList
    :members:
    :undoc-members:
 
 Atom stereopermutators
 ----------------------
 
-.. autoclass:: molassembler.AtomStereopermutator
+.. autoclass:: scine_molassembler.AtomStereopermutator
    :members:
    :undoc-members:
 
 Bond stereopermutators
 ----------------------
 
-.. autoclass:: molassembler.BondStereopermutator
+.. autoclass:: scine_molassembler.BondStereopermutator
    :members:
    :undoc-members:

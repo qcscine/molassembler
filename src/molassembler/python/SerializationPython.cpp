@@ -65,7 +65,7 @@ void init_serialization(pybind11::module& m) {
       Class representing a compact JSON serialization of a molecule
 
       >>> # Demonstrate a serialize-deserialize loop
-      >>> import molassembler as masm
+      >>> import scine_molassembler as masm
       >>> spiro = masm.io.experimental.from_smiles("C12(CCCC1)CCC2")
       >>> serializer = masm.JsonSerialization(spiro)
       >>> bson_format = masm.JsonSerialization.BinaryFormat.BSON

@@ -1,6 +1,6 @@
 Input / Output
 ==============
 
-.. automodule:: molassembler.io
+.. automodule:: scine_molassembler.io
    :members:
    :undoc-members:

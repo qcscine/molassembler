@@ -24,7 +24,7 @@ void init_directed_conformer_generator(pybind11::module& m) {
       and provides helper functions for the generation of conformers using these
       combinations and the reverse, finding the combinations from conformers.
 
-      >>> import molassembler as masm
+      >>> import scine_molassembler as masm
       >>> butane = masm.io.experimental.from_smiles("CCCC")
       >>> generator = DirectedConformerGenerator(butane)
       >>> assert generator.bond_list()

@@ -1,10 +1,10 @@
 Substituent ranking
 ===================
 
-.. autoclass:: molassembler.LinkInformation
+.. autoclass:: scine_molassembler.LinkInformation
    :members:
    :undoc-members:
 
-.. autoclass:: molassembler.RankingInformation
+.. autoclass:: scine_molassembler.RankingInformation
    :members:
    :undoc-members:

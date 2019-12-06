@@ -1,7 +1,7 @@
 Directed conformer generator
 ============================
 
-.. autoclass:: molassembler.DirectedConformerGenerator
+.. autoclass:: scine_molassembler.DirectedConformerGenerator
    :members:
    :undoc-members:
 

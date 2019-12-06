@@ -1,6 +1,6 @@
 import pytest
 
-import molassembler as masm
+import scine_molassembler as masm
 import numpy
 
 

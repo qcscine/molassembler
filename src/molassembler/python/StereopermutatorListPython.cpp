@@ -16,7 +16,7 @@ void init_stereopermutator_list(pybind11::module& m) {
       Manages all stereopermutators that are part of a molecule.
 
       >>> # A sample molecule with one stereogenic atom and bond stereopermutator each
-      >>> import molassembler as masm
+      >>> import scine_molassembler as masm
       >>> mol = masm.io.experimental.from_smiles("CC=C[C@](F)(Cl)[H]")
       >>> permutators = mol.stereopermutators
       >>> is_stereogenic = lambda p: p.num_assignments > 1
@@ -58,7 +58,7 @@ void init_stereopermutator_list(pybind11::module& m) {
       stereopermutators are instantiated on all non-terminal atoms, this is
       rare.
 
-      >>> import molassembler as masm
+      >>> import scine_molassembler as masm
       >>> h2 = masm.Molecule() # Default constructor makes the diatomic hydrogen molecule
       >>> h2.stereopermutators.empty() # Both atoms are terminal here, so no permutators
       True

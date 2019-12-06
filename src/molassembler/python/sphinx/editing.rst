@@ -1,5 +1,5 @@
 Large-scale molecule editing
 ============================
 
-.. automodule:: molassembler.editing
+.. automodule:: scine_molassembler.editing
    :members:

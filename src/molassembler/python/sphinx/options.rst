@@ -1,20 +1,20 @@
 Options
 =======
 
-.. autoclass:: molassembler.ChiralStatePreservation
+.. autoclass:: scine_molassembler.ChiralStatePreservation
    :members:
    :undoc-members:
 
-.. autoclass:: molassembler.TemperatureRegime
+.. autoclass:: scine_molassembler.TemperatureRegime
    :members:
    :undoc-members:
 
-.. autoclass:: molassembler.Options
+.. autoclass:: scine_molassembler.Options
    :members:
    :undoc-members:
 
-.. autoclass:: molassembler.PRNG
+.. autoclass:: scine_molassembler.PRNG
    :members:
    :undoc-members:
 
-.. autofunction:: molassembler.randomness_engine
+.. autofunction:: scine_molassembler.randomness_engine

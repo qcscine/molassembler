@@ -1,6 +1,6 @@
 Interpret
 =========
 
-.. automodule:: molassembler.interpret
+.. automodule:: scine_molassembler.interpret
    :members:
    :undoc-members:

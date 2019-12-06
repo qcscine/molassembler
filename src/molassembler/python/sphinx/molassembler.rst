@@ -1,12 +1,12 @@
 Basic types
 ===========
 
-.. autoclass:: molassembler.BondIndex
+.. autoclass:: scine_molassembler.BondIndex
    :members:
    :undoc-members:
 
    .. automethod:: __init__
 
-.. autoclass:: molassembler.BondType
+.. autoclass:: scine_molassembler.BondType
    :members:
    :undoc-members:

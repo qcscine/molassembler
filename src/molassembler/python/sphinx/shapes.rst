@@ -10,6 +10,6 @@ Shapes
    Shapes are classified into molecules by determining the nearest shape with
    a matching number of vertices.
 
-.. automodule:: molassembler.shapes
+.. automodule:: scine_molassembler.shapes
    :members:
    :undoc-members:

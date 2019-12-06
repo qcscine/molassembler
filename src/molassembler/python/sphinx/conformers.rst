@@ -1,6 +1,6 @@
 Conformer generation
 ====================
 
-.. automodule:: molassembler.dg
+.. automodule:: scine_molassembler.dg
    :members:
    :undoc-members:

@@ -16,7 +16,7 @@ void init_cycles(pybind11::module& m) {
       Information about molecular graph cycles.
 
       >>> # Simple molecule for which relevant cycles and cycle families are the same
-      >>> import molassembler as masm
+      >>> import scine_molassembler as masm
       >>> spiro = masm.io.experimental.from_smiles("C12(CCC1)CCC2")
       >>> cycles = spiro.graph.cycles
       >>> cycles.num_cycle_families()
