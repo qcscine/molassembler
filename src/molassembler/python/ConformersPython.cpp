@@ -253,7 +253,8 @@ void init_conformers(pybind11::module& m) {
 
       .. note::
          This function is parallelized and will utilize ``OMP_NUM_THREADS``
-         threads
+         threads. The resulting list is sequenced and reproducible given the
+         same seed.
 
       :param molecule: Molecule to generate positions for. May not contain
         stereopermutators with zero assignments (no feasible stereopermutations).
