@@ -15,8 +15,8 @@ Core features
 -------------
 
 - Molecules can be constructed from many types of information. 
-- Stereocenters are treated from trigonal pyramidal all the way up to
-  icosahedral and cuboctahedral local shapes.
+- Stereocenters are treated in shapes ranging from monovacant tetrahedron all
+  the way up to the icosahedron and cuboctahedron.
 - A high-temperature approximation is invoked by default to avoid considering
   inverting nitrogen centers as stereocenters, but this is optional. Even in
   the high-temperature approximation, nitrogen centers whose substituents

@@ -13,3 +13,11 @@ compile_commands.json
 *.vim
 scripts/**/*.tar
 *.pyc
+manual/manual.aux
+manual/manual.bbl
+manual/manual.blg
+manual/manual.idx
+manual/manual.log
+manual/manual.out
+manual/manual.pdf
+manual/manual.toc
