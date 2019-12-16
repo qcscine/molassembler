@@ -37,57 +37,57 @@ pybind11::bytes pythonBytesFromBinary(const std::vector<std::uint8_t>& binary) {
   };
 }
 
-pybind11::bytes JSONToBytes(
-  const Scine::molassembler::JSONSerialization& serialization,
-  const Scine::molassembler::JSONSerialization::BinaryFormat format
+pybind11::bytes JsonToBytes(
+  const Scine::molassembler::JsonSerialization& serialization,
+  const Scine::molassembler::JsonSerialization::BinaryFormat format
 ) {
   return pythonBytesFromBinary(serialization.toBinary(format));
 }
 
-Scine::molassembler::JSONSerialization JSONFromBytes(
+Scine::molassembler::JsonSerialization JsonFromBytes(
   const pybind11::bytes& bytes,
-  const Scine::molassembler::JSONSerialization::BinaryFormat format
+  const Scine::molassembler::JsonSerialization::BinaryFormat format
 ) {
-  return Scine::molassembler::JSONSerialization(binaryFromPythonBytes(bytes), format);
+  return Scine::molassembler::JsonSerialization(binaryFromPythonBytes(bytes), format);
 }
 
-std::string toString(const Scine::molassembler::JSONSerialization& s) {
+std::string toString(const Scine::molassembler::JsonSerialization& s) {
   return s;
 }
 
 void init_serialization(pybind11::module& m) {
   using namespace Scine::molassembler;
 
-  pybind11::class_<JSONSerialization> serialization(
+  pybind11::class_<JsonSerialization> serialization(
     m,
-    "JSONSerialization",
+    "JsonSerialization",
     R"delim(
       Class representing a compact JSON serialization of a molecule
 
       >>> # Demonstrate a serialize-deserialize loop
       >>> import molassembler as masm
       >>> spiro = masm.io.experimental.from_smiles("C12(CCCC1)CCC2")
-      >>> serializer = masm.JSONSerialization(spiro)
-      >>> bson_format = masm.JSONSerialization.BinaryFormat.BSON
+      >>> serializer = masm.JsonSerialization(spiro)
+      >>> bson_format = masm.JsonSerialization.BinaryFormat.BSON
       >>> spiro_as_bson = serializer.to_binary(bson_format)
       >>> bson_in_b64 = serializer.base_64_encode(spiro_as_bson)
-      >>> reverted_bson = masm.JSONSerialization.base_64_decode(bson_in_b64)
-      >>> serializer = masm.JSONSerialization(reverted_bson, bson_format)
+      >>> reverted_bson = masm.JsonSerialization.base_64_decode(bson_in_b64)
+      >>> serializer = masm.JsonSerialization(reverted_bson, bson_format)
       >>> reverted = serializer.to_molecule()
       >>> reverted == spiro # Compare the deserialized molecule
       True
     )delim"
   );
 
-  pybind11::enum_<JSONSerialization::BinaryFormat> binaryFormat(
+  pybind11::enum_<JsonSerialization::BinaryFormat> binaryFormat(
     serialization,
     "BinaryFormat",
     "Specifies the type of JSON binary format"
   );
-  binaryFormat.value("CBOR", JSONSerialization::BinaryFormat::CBOR, "Compact Binary Object Representation")
-   .value("BSON", JSONSerialization::BinaryFormat::BSON, "Binary JSON")
-   .value("MsgPack", JSONSerialization::BinaryFormat::MsgPack, "MsgPack")
-   .value("UBJSON", JSONSerialization::BinaryFormat::UBJSON, "Universal Binary JSON");
+  binaryFormat.value("CBOR", JsonSerialization::BinaryFormat::CBOR, "Compact Binary Object Representation")
+   .value("BSON", JsonSerialization::BinaryFormat::BSON, "Binary JSON")
+   .value("MsgPack", JsonSerialization::BinaryFormat::MsgPack, "MsgPack")
+   .value("UBJSON", JsonSerialization::BinaryFormat::UBJSON, "Universal Binary JSON");
 
   serialization.def(
     pybind11::init<const std::string&>(),
@@ -102,7 +102,7 @@ void init_serialization(pybind11::module& m) {
   );
 
   serialization.def(
-    pybind11::init(&JSONFromBytes),
+    pybind11::init(&JsonFromBytes),
     pybind11::arg("bytes"),
     pybind11::arg("binary_format"),
     "Parse a binary JSON molecule serialization"
@@ -111,7 +111,7 @@ void init_serialization(pybind11::module& m) {
   serialization.def_static(
     "base_64_encode",
     [](const pybind11::bytes& bytes) -> std::string {
-      return JSONSerialization::base64Encode(binaryFromPythonBytes(bytes));
+      return JsonSerialization::base64Encode(binaryFromPythonBytes(bytes));
     },
     pybind11::arg("binary"),
     "Encode binary format as base-64 string"
@@ -120,7 +120,7 @@ void init_serialization(pybind11::module& m) {
   serialization.def_static(
     "base_64_decode",
     [](const std::string base64) -> pybind11::bytes {
-      return pythonBytesFromBinary(JSONSerialization::base64Decode(base64));
+      return pythonBytesFromBinary(JsonSerialization::base64Decode(base64));
     },
     pybind11::arg("base_64_string"),
     "Decode base-64 string into binary"
@@ -128,31 +128,31 @@ void init_serialization(pybind11::module& m) {
 
   serialization.def(
     "__str__",
-    &JSONSerialization::operator std::string,
+    &JsonSerialization::operator std::string,
     "Dump the JSON serialization into a string"
   );
 
   serialization.def(
     "to_string",
-    &JSONSerialization::operator std::string,
+    &JsonSerialization::operator std::string,
     "Dump the JSON serialization into a string"
   );
 
   serialization.def(
     "standardize",
-    &JSONSerialization::standardize,
+    &JsonSerialization::standardize,
     "Standardize the internal JSON serialization (only for canonical molecules)"
   );
 
   serialization.def(
     "to_molecule",
-    &JSONSerialization::operator Scine::molassembler::Molecule,
+    &JsonSerialization::operator Scine::molassembler::Molecule,
     "Construct a molecule from the serialization"
   );
 
   serialization.def(
     "to_binary",
-    &JSONToBytes,
+    &JsonToBytes,
     pybind11::arg("binary_format"),
     "Serialize a molecule into a binary format"
   );

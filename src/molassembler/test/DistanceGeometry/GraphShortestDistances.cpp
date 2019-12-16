@@ -46,10 +46,10 @@ using namespace molassembler;
 using namespace DistanceGeometry;
 
 template<class Graph>
-struct BFFunctor {
+struct BfFunctor {
   const Graph& graph;
 
-  BFFunctor(const Graph& g) : graph(g) {}
+  BfFunctor(const Graph& g) : graph(g) {}
 
   std::vector<double> operator() (unsigned sourceVertex) {
     unsigned M = boost::num_vertices(graph);
@@ -267,7 +267,7 @@ bool shortestPathsRepresentInequalities(
 ) {
   bool pass = true;
   for(unsigned outerVertex = 0; outerVertex < N; ++outerVertex) {
-    auto BF_EG_distances = BFFunctor<ExplicitGraph::GraphType> {limits.graph()} (2 * outerVertex);
+    auto BF_EG_distances = BfFunctor<ExplicitGraph::GraphType> {limits.graph()} (2 * outerVertex);
     auto Gor_EG_distances = Gor1Functor<ExplicitGraph::GraphType> {limits.graph()} (2 * outerVertex);
 
     if(
@@ -338,13 +338,13 @@ bool shortestPathsRepresentInequalities(
 }
 
 bool graphsIdentical(const ExplicitGraph& explicitGraph, const ImplicitGraph& implicitGraph) {
-  using IGVertex = ImplicitGraph::VertexDescriptor;
-  IGVertex N = boost::num_vertices(implicitGraph);
+  using IgVertex = ImplicitGraph::VertexDescriptor;
+  IgVertex N = boost::num_vertices(implicitGraph);
 
   // Check that both graphs are 1:1 identical
   bool identical = true;
-  for(IGVertex i = 0; i < N && identical; ++i) {
-    for(IGVertex j = 0; j < N; ++j) {
+  for(IgVertex i = 0; i < N && identical; ++i) {
+    for(IgVertex j = 0; j < N; ++j) {
       auto igEdge = boost::edge(i, j, implicitGraph);
       auto egEdge = boost::edge(i, j, explicitGraph.graph());
 
@@ -378,7 +378,7 @@ bool shortestGraphsAlgorithmsResultsMatch(
   bool pass = true;
   for(unsigned outerVertex = 0; outerVertex < N; ++outerVertex) {
     // ImplicitGraph without implicit bounds should be consistent with ExplicitGraph
-    auto BF_IG_distances = BFFunctor<DistanceGeometry::ImplicitGraph> {implicitGraph} (2 * outerVertex);
+    auto BF_IG_distances = BfFunctor<DistanceGeometry::ImplicitGraph> {implicitGraph} (2 * outerVertex);
 
     auto Gor_IG_distances = Gor1Functor<DistanceGeometry::ImplicitGraph> {implicitGraph} (2 * outerVertex);
 

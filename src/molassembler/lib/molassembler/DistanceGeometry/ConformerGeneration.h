@@ -94,14 +94,14 @@ outcome::result<AngstromWrapper> refine(
   Eigen::MatrixXd embeddedPositions,
   const DistanceBoundsMatrix& distanceBounds,
   const Configuration& configuration,
-  const std::shared_ptr<MoleculeDGInformation>& DGDataPtr
+  const std::shared_ptr<MoleculeDGInformation>& DgDataPtr
 );
 
 // @brief Individual conformer generation routine
 outcome::result<AngstromWrapper> generateConformer(
   const Molecule& molecule,
   const Configuration& configuration,
-  std::shared_ptr<MoleculeDGInformation>& DGDataPtr,
+  std::shared_ptr<MoleculeDGInformation>& DgDataPtr,
   bool regenerateDGDataEachStep,
   random::Engine& engine
 );

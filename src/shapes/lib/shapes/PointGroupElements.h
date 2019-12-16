@@ -133,7 +133,7 @@ struct ElementGrouping {
  * So the resulting map can be indexed with four to get the symmetry element
  * groups.
  */
-using NPGroupingsMapType = std::unordered_map<
+using NpGroupingsMapType = std::unordered_map<
   unsigned,
   std::vector<ElementGrouping>,
   std::hash<unsigned>,
@@ -149,7 +149,7 @@ using NPGroupingsMapType = std::unordered_map<
  *
  * @return Groups of symmetry elements
  */
-NPGroupingsMapType npGroupings(const ElementsList& elements);
+NpGroupingsMapType npGroupings(const ElementsList& elements);
 
 } // namespace elements
 } // namespace Shapes

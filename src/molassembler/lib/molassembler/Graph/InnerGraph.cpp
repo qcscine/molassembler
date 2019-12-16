@@ -20,7 +20,7 @@ namespace detail {
 
 //! Visitor to help split a graph along a bridge edge
 struct BridgeSplittingBFSVisitor {
-  using Graph = InnerGraph::BGLType;
+  using Graph = InnerGraph::BglType;
   using Vertex = InnerGraph::Vertex;
   using Edge = InnerGraph::Edge;
 
@@ -97,7 +97,7 @@ InnerGraph::~InnerGraph() = default;
 /* Modifiers */
 InnerGraph::Edge InnerGraph::addEdge(const Vertex a, const Vertex b, const BondType bondType) {
   /* We have to be careful here since the edge list for a vector is not a set
-   * (see BGLType).  Check if there is already such an edge before adding it.
+   * (see BglType).  Check if there is already such an edge before adding it.
    */
   auto existingEdgePair = boost::edge(a, b, _graph);
   if(existingEdgePair.second) {
@@ -129,7 +129,7 @@ void InnerGraph::applyPermutation(const std::vector<Vertex>& permutation) {
   // Invalidate the cache
   _properties.invalidate();
 
-  BGLType transformedGraph(boost::num_vertices(_graph));
+  BglType transformedGraph(boost::num_vertices(_graph));
 
   /* I failed to get copy_graph to perform the permutation for me, so we copy
    * manually:
@@ -186,7 +186,7 @@ Utils::ElementType& InnerGraph::elementType(const Vertex a) {
   return _graph[a].elementType;
 }
 
-InnerGraph::BGLType& InnerGraph::bgl() {
+InnerGraph::BglType& InnerGraph::bgl() {
   // Invalidate the cache values
   _properties.invalidate();
 
@@ -365,7 +365,7 @@ InnerGraph::IncidentEdgeRange InnerGraph::edges(const Vertex a) const {
   return boost::out_edges(a, _graph);
 }
 
-const InnerGraph::BGLType& InnerGraph::bgl() const {
+const InnerGraph::BglType& InnerGraph::bgl() const {
   return _graph;
 }
 

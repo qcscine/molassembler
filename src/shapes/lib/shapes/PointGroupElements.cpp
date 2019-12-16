@@ -812,13 +812,13 @@ unsigned order(const PointGroup group) {
   return orders.at(underlying(group));
 }
 
-NPGroupingsMapType npGroupings(
+NpGroupingsMapType npGroupings(
   const std::vector<std::unique_ptr<SymmetryElement>>& elements
 ) {
   assert(elements.front()->matrix() == elements::Identity().matrix());
   const unsigned E = elements.size();
 
-  NPGroupingsMapType npGroupings;
+  NpGroupingsMapType npGroupings;
 
   auto testVector = [&](const Eigen::Vector3d& v) {
     // Check if there is already a grouping for this vector

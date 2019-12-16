@@ -966,7 +966,7 @@ void AtomStereopermutator::Impl::fit(
   /* Although the stereopermutations in _abstract are sorted by their index of
    * permutation and we could potentially binary search all of our sought
    * rotations within that set, this linear search will never be time-critical
-   * as long as we use shape classification.
+   * as long as we use continuous shape measure-based shape classification.
    */
   boost::optional<unsigned> foundStereopermutation;
   const unsigned A = _feasible.indices.size();

@@ -41,7 +41,7 @@ public:
    *
    * An adjacency list is used due to sparsity of the molecular graph.
    */
-  using BGLType = boost::adjacency_list<
+  using BglType = boost::adjacency_list<
     /* OutEdgeListS = Type of Container for edges of a vertex
      * Options: vector, list, slist, set, multiset, unordered_set
      * Choice: vecS, we have to rigorously test that no parallel edges are
@@ -67,16 +67,16 @@ public:
     // EdgeListS: Omitted, defaults
   >;
 
-  using Vertex = BGLType::vertex_descriptor;
-  using Edge = BGLType::edge_descriptor;
+  using Vertex = BglType::vertex_descriptor;
+  using Edge = BglType::edge_descriptor;
 
   template<typename Iter>
   using Range = std::pair<Iter, Iter>;
 
-  using VertexRange = Range<BGLType::vertex_iterator>;
-  using EdgeRange = Range<BGLType::edge_iterator>;
-  using AdjacentVertexRange = Range<BGLType::adjacency_iterator>;
-  using IncidentEdgeRange = Range<BGLType::out_edge_iterator>;
+  using VertexRange = Range<BglType::vertex_iterator>;
+  using EdgeRange = Range<BglType::edge_iterator>;
+  using AdjacentVertexRange = Range<BglType::adjacency_iterator>;
+  using IncidentEdgeRange = Range<BglType::out_edge_iterator>;
 
   /*!
    * @brief Data class to return removal safety information on the graph
@@ -145,7 +145,7 @@ public:
   BondType& bondType(const Edge& edge);
 
   //! @brief Referential access to the underlying BGL graph
-  BGLType& bgl();
+  BglType& bgl();
 
   /*! @brief Removes all bonds involving a vertex
    *
@@ -189,7 +189,7 @@ public:
    */
   BondType bondType(const Edge& edge) const;
   //! @brief Nonmodifiable access to the underlying BGL graph
-  const BGLType& bgl() const;
+  const BglType& bgl() const;
 
   /*! @brief Determine whether a vertex can be safely removed
    *
@@ -322,7 +322,7 @@ private:
 //!@name Private state
 //!@{
   //! A directly owned Boost Library Graph.
-  BGLType _graph;
+  BglType _graph;
   //! Property caching
   mutable Properties _properties;
 //!@}

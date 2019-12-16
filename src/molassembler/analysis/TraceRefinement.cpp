@@ -226,11 +226,11 @@ std::list<RefinementData> debugRefinement(
 
   bool regenerateEachStep = molecule.stereopermutators().hasUnassignedStereopermutators();
 
-  MoleculeDGInformation DGData;
+  MoleculeDGInformation DgData;
   std::string spatialModelGraphviz;
 
   if(!regenerateEachStep) { // Collect once, keep all the time
-    DGData = gatherDGInformation(
+    DgData = gatherDGInformation(
       molecule,
       configuration,
       spatialModelGraphviz,
@@ -257,7 +257,7 @@ std::list<RefinementData> debugRefinement(
       }
 
       // Fetch the DG data from the molecule with no unassigned stereopermutators
-      DGData = gatherDGInformation(
+      DgData = gatherDGInformation(
         moleculeCopy,
         configuration,
         spatialModelGraphviz,
@@ -270,7 +270,7 @@ std::list<RefinementData> debugRefinement(
 
     ExplicitGraph explicitGraph {
       molecule.graph().inner(),
-      DGData.bounds
+      DgData.bounds
     };
 
     auto distanceBoundsResult = explicitGraph.makeDistanceBounds();
@@ -346,8 +346,8 @@ std::list<RefinementData> debugRefinement(
 
     FullRefinementType refinementFunctor {
       squaredBounds,
-      DGData.chiralConstraints,
-      DGData.dihedralConstraints
+      DgData.chiralConstraints,
+      DgData.dihedralConstraints
     };
 
     /* If a count of chiral constraints reveals that more than half are
@@ -491,7 +491,7 @@ std::list<RefinementData> debugRefinement(
         // Collect refinement data
         RefinementData refinementData;
         refinementData.steps = std::move(refinementSteps);
-        refinementData.constraints = DGData.chiralConstraints;
+        refinementData.constraints = DgData.chiralConstraints;
         refinementData.looseningFactor = configuration.spatialModelLoosening;
         refinementData.isFailure = true;
         refinementData.spatialModelGraphviz = spatialModelGraphviz;
@@ -500,7 +500,7 @@ std::list<RefinementData> debugRefinement(
           std::move(refinementData)
         );
 
-        if(Log::particulars.count(Log::Particulars::DGFinalErrorContributions) > 0) {
+        if(Log::particulars.count(Log::Particulars::DgFinalErrorContributions) > 0) {
           explainFinalContributions(
             refinementFunctor,
             distanceBounds,
@@ -548,7 +548,7 @@ std::list<RefinementData> debugRefinement(
       transformedPositions
     );
 
-    if(Log::particulars.count(Log::Particulars::DGFinalErrorContributions) > 0) {
+    if(Log::particulars.count(Log::Particulars::DgFinalErrorContributions) > 0) {
       explainFinalContributions(
         refinementFunctor,
         distanceBounds,
@@ -558,7 +558,7 @@ std::list<RefinementData> debugRefinement(
 
     RefinementData refinementData;
     refinementData.steps = std::move(refinementSteps);
-    refinementData.constraints = DGData.chiralConstraints;
+    refinementData.constraints = DgData.chiralConstraints;
     refinementData.looseningFactor = configuration.spatialModelLoosening;
     refinementData.isFailure = (reachedMaxIterations || notAllChiralitiesCorrect || !structureAcceptable);
     refinementData.spatialModelGraphviz = spatialModelGraphviz;
@@ -583,7 +583,7 @@ std::list<RefinementData> debugRefinement(
 
       if(!structureAcceptable) {
         Log::log(Log::Level::Warning) << "- The final structure is unacceptable.\n";
-        if(Log::isSet(Log::Particulars::DGStructureAcceptanceFailures)) {
+        if(Log::isSet(Log::Particulars::DgStructureAcceptanceFailures)) {
           explainAcceptanceFailure(
             refinementFunctor,
             distanceBounds,
@@ -786,10 +786,10 @@ int main(int argc, char* argv[]) {
     metrizationOption = static_cast<DistanceGeometry::Partiality>(index);
   }
 
-  Log::particulars.insert(Log::Particulars::DGStructureAcceptanceFailures);
+  Log::particulars.insert(Log::Particulars::DgStructureAcceptanceFailures);
 
   if(showFinalContributions) {
-    Log::particulars.insert(Log::Particulars::DGFinalErrorContributions);
+    Log::particulars.insert(Log::Particulars::DgFinalErrorContributions);
   }
 
   unsigned nSteps = 10000;
@@ -830,15 +830,15 @@ int main(int argc, char* argv[]) {
   graphFile << mol.dumpGraphviz();
   graphFile.close();
 
-  DistanceGeometry::Configuration DGConfiguration;
-  DGConfiguration.partiality = metrizationOption;
-  DGConfiguration.refinementStepLimit = nSteps;
+  DistanceGeometry::Configuration DgConfiguration;
+  DgConfiguration.partiality = metrizationOption;
+  DgConfiguration.refinementStepLimit = nSteps;
 
 #ifndef NDEBUG
   auto debugData = DistanceGeometry::debugRefinement(
     mol,
     nStructures,
-    DGConfiguration,
+    DgConfiguration,
     applyTetrangleSmoothing,
     printBounds
   );
@@ -880,7 +880,7 @@ int main(int argc, char* argv[]) {
   auto conformers = DistanceGeometry::run(
     mol,
     nStructures,
-    DGConfiguration,
+    DgConfiguration,
     boost::none
   );
 

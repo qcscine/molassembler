@@ -99,8 +99,8 @@ const boost::optional<const properties::SymmetryTransitionGroup&> getMapping(
     if(constexprOption.hasValue()) {
       const auto& constexprMappings = constexprOption.value();
 
-      properties::SymmetryTransitionGroup STLResult;
-      STLResult.indexMappings = temple::map(
+      properties::SymmetryTransitionGroup stlResult;
+      stlResult.indexMappings = temple::map(
         temple::toSTL(constexprMappings.mappings),
         [&](const auto& indexList) -> std::vector<unsigned> {
           return {
@@ -110,12 +110,12 @@ const boost::optional<const properties::SymmetryTransitionGroup&> getMapping(
         }
       );
 
-      STLResult.angularDistortion = constexprMappings.angularDistortion;
-      STLResult.chiralDistortion = constexprMappings.chiralDistortion;
+      stlResult.angularDistortion = constexprMappings.angularDistortion;
+      stlResult.chiralDistortion = constexprMappings.chiralDistortion;
 
       mappingsCache.add(
         cacheKey,
-        STLResult
+        stlResult
       );
     } else {
       // Calculate dynamically (relevant for targets of size 9 and higher)

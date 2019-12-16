@@ -178,11 +178,11 @@ BOOST_AUTO_TEST_CASE(MetricMatrixConstructionIsInvariantUnderOrderingSwap) {
   ) {
     auto molecule = IO::read(currentFilePath.string());
 
-    auto DGData = DistanceGeometry::gatherDGInformation(molecule, DistanceGeometry::Configuration {});
+    auto DgData = DistanceGeometry::gatherDGInformation(molecule, DistanceGeometry::Configuration {});
 
     DistanceBoundsMatrix distanceBounds {
       molecule.graph().inner(),
-      DGData.bounds
+      DgData.bounds
     };
 
     // choose a random reordering

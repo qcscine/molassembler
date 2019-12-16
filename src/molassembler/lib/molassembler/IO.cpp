@@ -121,10 +121,10 @@ std::tuple<Utils::AtomCollection, Utils::BondOrderCollection, std::vector<AtomIn
   using SparseMatrixType = std::decay_t<
     decltype(std::declval<Utils::BondOrderCollection>().getMatrix())
   >;
-  const SparseMatrixType& BOMatrix = bos.getMatrix();
+  const SparseMatrixType& boMatrix = bos.getMatrix();
   // Iterate through the sparse representation
-  for(int k = 0; k < BOMatrix.outerSize(); ++k) {
-    for(SparseMatrixType::InnerIterator it(BOMatrix, k); it; ++it) {
+  for(int k = 0; k < boMatrix.outerSize(); ++k) {
+    for(SparseMatrixType::InnerIterator it(boMatrix, k); it; ++it) {
       permutedBOs.setOrder(
         permutation.at(it.row()),
         permutation.at(it.col()),
@@ -148,16 +148,16 @@ Molecule read(const std::string& filename) {
 
   // Direct serializations of molecules have their own filetypes
   if(filepath.extension() == ".cbor") {
-    return JSONSerialization(
+    return JsonSerialization(
       BinaryHandler::read(filename),
-      JSONSerialization::BinaryFormat::CBOR
+      JsonSerialization::BinaryFormat::CBOR
     );
   }
 
   if(filepath.extension() == ".bson") {
-    return JSONSerialization(
+    return JsonSerialization(
       BinaryHandler::read(filename),
-      JSONSerialization::BinaryFormat::BSON
+      JsonSerialization::BinaryFormat::BSON
     );
   }
 
@@ -165,7 +165,7 @@ Molecule read(const std::string& filename) {
     std::ifstream input(filename);
     std::stringstream buffer;
     buffer << input.rdbuf();
-    Molecule mol = JSONSerialization(buffer.str());
+    Molecule mol = JsonSerialization(buffer.str());
     input.close();
     return mol;
   }
@@ -242,7 +242,7 @@ void write(
   if(filepath.extension() == ".cbor") {
     BinaryHandler::write(
       filename,
-      JSONSerialization(molecule).toBinary(JSONSerialization::BinaryFormat::CBOR)
+      JsonSerialization(molecule).toBinary(JsonSerialization::BinaryFormat::CBOR)
     );
     return;
   }
@@ -250,14 +250,14 @@ void write(
   if(filepath.extension() == ".bson") {
     BinaryHandler::write(
       filename,
-      JSONSerialization(molecule).toBinary(JSONSerialization::BinaryFormat::BSON)
+      JsonSerialization(molecule).toBinary(JsonSerialization::BinaryFormat::BSON)
     );
     return;
   }
 
   if(filepath.extension() == ".json") {
     std::ofstream outfile(filename);
-    outfile << JSONSerialization(molecule).operator std::string();
+    outfile << JsonSerialization(molecule).operator std::string();
     outfile.close();
     return;
   }

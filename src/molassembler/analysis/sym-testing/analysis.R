@@ -25,7 +25,7 @@ coordinationNumber <- c(2, 2, 3, 3, 4, 4, 4, 4, 5, 5, 5, 6, 6, 6, 7, 8)
 
 # read data
 filedata <- read.csv(
-  file="DGRefinementProblem-symmetric-ensemble-errors.csv",
+  file="DgRefinementProblem-symmetric-ensemble-errors.csv",
   header=FALSE,
   sep=","
 )

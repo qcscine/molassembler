@@ -22,18 +22,18 @@
 
 using namespace Scine;
 
-class RGBGradient {
+class RgbGradient {
 public:
-  using RGBType = std::array<double, 3>;
+  using RgbType = std::array<double, 3>;
 
 private:
-  const RGBType _from, _to;
+  const RgbType _from, _to;
   const double _min, _max;
 
 public:
-  RGBGradient(
-    const RGBType& from,
-    const RGBType& to,
+  RgbGradient(
+    const RgbType& from,
+    const RgbType& to,
     double min,
     double max
   ) : _from(from),
@@ -41,7 +41,7 @@ public:
       _min(min),
       _max(max) {};
 
-  RGBType operator () (const double value) const {
+  RgbType operator () (const double value) const {
     if(!(
       _min <= value
       && value <= _max
@@ -54,7 +54,7 @@ public:
       advancement = (value - _min) / (_max - _min);
     }
 
-    return RGBType {{
+    return RgbType {{
       _from[0] + advancement * (static_cast<double>(_to[0]) - _from[0]),
       _from[1] + advancement * (static_cast<double>(_to[1]) - _from[1]),
       _from[2] + advancement * (static_cast<double>(_to[2]) - _from[2])
@@ -180,7 +180,7 @@ void writeSymmetryTransitionDotFile(
         )
       );
 
-      RGBGradient gradient {
+      RgbGradient gradient {
         {{0u, 100u, 0u}}, // HTML dark green
         {{255u, 99u, 71u}}, // HTML color tomato
         0.0, // smallest ist green

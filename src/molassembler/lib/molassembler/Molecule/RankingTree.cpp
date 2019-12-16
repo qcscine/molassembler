@@ -395,7 +395,7 @@ class RankingTree::SequenceRuleFiveVariantComparator {
 public:
   class VariantComparisonVisitor : boost::static_visitor<bool> {
   private:
-    const BGLType& _treeRef;
+    const BglType& _treeRef;
 
   public:
     explicit VariantComparisonVisitor(
@@ -505,7 +505,7 @@ public:
       );
     }
 
-    // Heterogeneous comparison vertex < edge
+    // Heterogeneous comparison: vertex < edge
     bool operator() (const TreeVertexIndex& a, const TreeEdgeIndex& b) const {
       /* Start by comparing the instantiation state. This sorts instantiated
        * stereopermutators before uninstantiated ones and creates indeterminate
@@ -518,12 +518,10 @@ public:
       return compareInstantiation(a, b).value_or(true);
     }
 
-    // Heterogeneous comparison edge < vertex
+    // Heterogeneous comparison: edge > vertex
     bool operator() (const TreeEdgeIndex& a, const TreeVertexIndex& b) const {
       // Just invert the vertex < edge comparison
-      return !(
-        this->operator()(b, a)
-      );
+      return !(this->operator()(b, a));
     }
   };
 
@@ -1559,7 +1557,7 @@ void RankingTree::_applySequenceRules(
               branchAStereopermutatorGroupIter != branchAOrders.rend()
               && branchBStereopermutatorGroupIter != branchBOrders.rend()
             ) {
-              unsigned ABranchLikePairs = 0, BBranchLikePairs = 0;
+              unsigned aBranchLikePairs = 0, bBranchLikePairs = 0;
 
               // Count A-branch like pairs
               temple::forEach(
@@ -1575,7 +1573,7 @@ void RankingTree::_applySequenceRules(
                       variantB
                     )
                   ) {
-                    ABranchLikePairs += 1;
+                    aBranchLikePairs += 1;
                   }
                 }
               );
@@ -1594,7 +1592,7 @@ void RankingTree::_applySequenceRules(
                       variantB
                     )
                   ) {
-                    BBranchLikePairs += 1;
+                    bBranchLikePairs += 1;
                   }
                 }
               );
@@ -1619,12 +1617,12 @@ void RankingTree::_applySequenceRules(
                 }
               }
 
-              if(ABranchLikePairs < BBranchLikePairs) {
+              if(aBranchLikePairs < bBranchLikePairs) {
                 _branchOrderingHelper.addLessThanRelationship(branchB, branchA);
                 break;
               }
 
-              if(BBranchLikePairs < ABranchLikePairs) {
+              if(bBranchLikePairs < aBranchLikePairs) {
                 _branchOrderingHelper.addLessThanRelationship(branchA, branchB);
                 break;
               }
@@ -2271,7 +2269,7 @@ std::vector<
               branchAStereopermutatorGroupIter != branchAOrders.rend()
               && branchBStereopermutatorGroupIter != branchBOrders.rend()
             ) {
-              unsigned ABranchLikePairs = 0, BBranchLikePairs = 0;
+              unsigned aBranchLikePairs = 0, bBranchLikePairs = 0;
 
               // Count A-branch like pairs
               temple::forEach(
@@ -2287,7 +2285,7 @@ std::vector<
                       variantB
                     )
                   ) {
-                    ABranchLikePairs += 1;
+                    aBranchLikePairs += 1;
                   }
                 }
               );
@@ -2306,7 +2304,7 @@ std::vector<
                       variantB
                     )
                   ) {
-                    BBranchLikePairs += 1;
+                    bBranchLikePairs += 1;
                   }
                 }
               );
@@ -2331,12 +2329,12 @@ std::vector<
                 }
               }
 
-              if(ABranchLikePairs < BBranchLikePairs) {
+              if(aBranchLikePairs < bBranchLikePairs) {
                 orderingHelper.addLessThanRelationship(branchB, branchA);
                 break;
               }
 
-              if(BBranchLikePairs < ABranchLikePairs) {
+              if(bBranchLikePairs < aBranchLikePairs) {
                 orderingHelper.addLessThanRelationship(branchA, branchB);
                 break;
               }
@@ -2414,7 +2412,7 @@ std::vector<RankingTree::TreeVertexIndex> RankingTree::_expand(
   std::vector<TreeVertexIndex> newIndices;
 
   std::set<AtomIndex> treeOutAdjacencies;
-  BGLType::out_edge_iterator iter, end;
+  BglType::out_edge_iterator iter, end;
   std::tie(iter, end) = boost::out_edges(index, _tree);
   while(iter != end) {
     auto targetVertex = boost::target(*iter, _tree);

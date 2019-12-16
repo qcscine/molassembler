@@ -153,7 +153,7 @@ struct Configuration {
  * conformers and @math{N} is the number of atoms in @p molecule}
  *
  * @parblock @note The Distance Geometry procedure can fail stochastically
- * without fault in the input. See the documentation of DGError for detailed
+ * without fault in the input. See the documentation of DgError for detailed
  * description of error return codes and how to deal with them.
  * @endparblock
  *
@@ -220,7 +220,7 @@ std::vector<
  * conformers and @math{N} is the number of atoms in @p molecule}
  *
  * @parblock @note The Distance Geometry procedure can fail stochastically
- * without fault in the input. See the documentation of DGError for detailed
+ * without fault in the input. See the documentation of DgError for detailed
  * description of error return codes and how to deal with them.
  * @endparblock
  *

@@ -208,7 +208,7 @@ outcome::result<AngstromWrapper> refine(
   Eigen::MatrixXd embeddedPositions,
   const DistanceBoundsMatrix& distanceBounds,
   const Configuration& configuration,
-  const std::shared_ptr<MoleculeDGInformation>& DGDataPtr
+  const std::shared_ptr<MoleculeDGInformation>& DgDataPtr
 ) {
   /* Refinement problem compile-time settings
    * - Dimensionality four is needed to ensure chiral constraints invert
@@ -239,8 +239,8 @@ outcome::result<AngstromWrapper> refine(
 
   FullRefinementType refinementFunctor {
     squaredBounds,
-    DGDataPtr->chiralConstraints,
-    DGDataPtr->dihedralConstraints
+    DgDataPtr->chiralConstraints,
+    DgDataPtr->dihedralConstraints
   };
 
   /* If a count of chiral constraints reveals that more than half are
@@ -282,15 +282,15 @@ outcome::result<AngstromWrapper> refine(
       );
       firstStageIterations = result.iterations;
     } catch(std::runtime_error& e) {
-      return DGError::RefinementException;
+      return DgError::RefinementException;
     }
 
     if(firstStageIterations >= configuration.refinementStepLimit) {
-      return DGError::RefinementMaxIterationsReached;
+      return DgError::RefinementMaxIterationsReached;
     }
 
     if(refinementFunctor.proportionChiralConstraintsCorrectSign < 1.0) {
-      return DGError::RefinedChiralsWrong;
+      return DgError::RefinedChiralsWrong;
     }
   }
 
@@ -314,17 +314,17 @@ outcome::result<AngstromWrapper> refine(
     );
     secondStageIterations = result.iterations;
   } catch(std::out_of_range& e) {
-    return DGError::RefinementException;
+    return DgError::RefinementException;
   }
 
   // Max iterations reached
   if(secondStageIterations >= gradientChecker.iterLimit) {
-    return DGError::RefinementMaxIterationsReached;
+    return DgError::RefinementMaxIterationsReached;
   }
 
   // Not all chiral constraints have the right sign
   if(refinementFunctor.proportionChiralConstraintsCorrectSign < 1) {
-    return DGError::RefinedChiralsWrong;
+    return DgError::RefinedChiralsWrong;
   }
 
   /* Add dihedral terms and refine again */
@@ -349,11 +349,11 @@ outcome::result<AngstromWrapper> refine(
     );
     thirdStageIterations = result.iterations;
   } catch(std::out_of_range& e) {
-    return DGError::RefinementException;
+    return DgError::RefinementException;
   }
 
   if(thirdStageIterations >= gradientChecker.iterLimit) {
-    return DGError::RefinementMaxIterationsReached;
+    return DgError::RefinementMaxIterationsReached;
   }
 
   // Structure inacceptable
@@ -364,7 +364,7 @@ outcome::result<AngstromWrapper> refine(
       transformedPositions
     )
   ) {
-    return DGError::RefinedStructureInacceptable;
+    return DgError::RefinedStructureInacceptable;
   }
 
   auto gatheredPositions = detail::gather(transformedPositions);
@@ -381,7 +381,7 @@ outcome::result<AngstromWrapper> refine(
 outcome::result<AngstromWrapper> generateConformer(
   const Molecule& molecule,
   const Configuration& configuration,
-  std::shared_ptr<MoleculeDGInformation>& DGDataPtr,
+  std::shared_ptr<MoleculeDGInformation>& DgDataPtr,
   bool regenerateDGDataEachStep,
   random::Engine& engine
 ) {
@@ -389,17 +389,17 @@ outcome::result<AngstromWrapper> generateConformer(
     auto moleculeCopy = detail::narrow(molecule, engine);
 
     if(moleculeCopy.stereopermutators().hasZeroAssignmentStereopermutators()) {
-      return DGError::ZeroAssignmentStereopermutators;
+      return DgError::ZeroAssignmentStereopermutators;
     }
 
-    DGDataPtr = std::make_shared<MoleculeDGInformation>(
+    DgDataPtr = std::make_shared<MoleculeDGInformation>(
       gatherDGInformation(moleculeCopy, configuration)
     );
   }
 
   ExplicitGraph explicitGraph {
     molecule.graph().inner(),
-    DGDataPtr->bounds
+    DgDataPtr->bounds
   };
 
   // Get distance bounds matrix from the graph
@@ -437,7 +437,7 @@ outcome::result<AngstromWrapper> generateConformer(
     std::move(embeddedPositions),
     distanceBounds,
     configuration,
-    DGDataPtr
+    DgDataPtr
   );
 }
 
@@ -455,7 +455,7 @@ std::vector<
 
   // In case there are zero assignment stereopermutators, we give up immediately
   if(molecule.stereopermutators().hasZeroAssignmentStereopermutators()) {
-    return ReturnType(numConformers, DGError::ZeroAssignmentStereopermutators);
+    return ReturnType(numConformers, DgError::ZeroAssignmentStereopermutators);
   }
 
 #ifdef _OPENMP
@@ -470,13 +470,13 @@ std::vector<
    * bounds matrix. If not, then modelling data can be kept across all
    * conformer generation runs since no randomness has entered the equation.
    */
-  auto DGDataPtr = std::make_shared<MoleculeDGInformation>();
+  auto DgDataPtr = std::make_shared<MoleculeDGInformation>();
   bool regenerateEachStep = molecule.stereopermutators().hasUnassignedStereopermutators();
   if(!regenerateEachStep) {
-    *DGDataPtr = gatherDGInformation(molecule, configuration);
+    *DgDataPtr = gatherDGInformation(molecule, configuration);
   }
 
-  ReturnType results(numConformers, static_cast<DGError>(0));
+  ReturnType results(numConformers, static_cast<DgError>(0));
 
   auto engineOption = temple::optionals::map(
     seedOption,
@@ -504,14 +504,14 @@ std::vector<
     std::vector<random::Engine> randomnessEngines(nThreads);
 #endif
 
-    /* Each thread has its own DGDataPtr, for the following reason: If we do
+    /* Each thread has its own DgDataPtr, for the following reason: If we do
      * not need to regenerate the SpatialModel data, then having all threads
      * share access the underlying data to generate conformers is fine. If,
      * otherwise, we do need to regenerate the SpatialModel data for each
      * conformer, then each thread will reset its pointer to its self-generated
      * SpatialModel data, creating thread-private state.
      */
-#pragma omp for firstprivate(DGDataPtr)
+#pragma omp for firstprivate(DgDataPtr)
     for(unsigned i = 0; i < numConformers; ++i) {
       // Get thread-specific randomness engine reference
 #ifdef _OPENMP
@@ -536,7 +536,7 @@ std::vector<
         auto conformerResult = generateConformer(
           molecule,
           configuration,
-          DGDataPtr,
+          DgDataPtr,
           regenerateEachStep,
           engine
         );
@@ -548,7 +548,7 @@ std::vector<
           std::cerr << "WARNING: Uncaught exception in conformer generation: " << e.what() << "\n";
         }
       } // end catch
-    } // end pragma omp for private(DGDataPtr)
+    } // end pragma omp for private(DgDataPtr)
   } // end pragma omp parallel
 
   return results;

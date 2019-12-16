@@ -154,8 +154,8 @@ double timeFunctionEvaluation(
   std::chrono::time_point<std::chrono::steady_clock>& start,
   std::chrono::time_point<std::chrono::steady_clock>& end
 ) {
-  using NTPRefinementType = EigenRefinementType<dimensionality, FloatType, SIMD>;
-  using PositionsType = typename NTPRefinementType::VectorType;
+  using NtpRefinementType = EigenRefinementType<dimensionality, FloatType, SIMD>;
+  using PositionsType = typename NtpRefinementType::VectorType;
 
   Eigen::MatrixXd positionCopy = positions;
 
@@ -165,7 +165,7 @@ double timeFunctionEvaluation(
     positionCopy.cols() * positionCopy.rows()
   ).template cast<FloatType>();
 
-  NTPRefinementType refinementFunctor {
+  NtpRefinementType refinementFunctor {
     squaredBounds,
     chiralConstraints,
     dihedralConstraints

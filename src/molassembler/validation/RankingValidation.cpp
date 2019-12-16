@@ -3,7 +3,7 @@
  *   See LICENSE.txt
  */
 
-#define BOOST_TEST_MODULE CIPValidationModule
+#define BOOST_TEST_MODULE CipValidationModule
 #define BOOST_FILESYSTEM_NO_DEPRECATED
 
 #include "boost/filesystem.hpp"
@@ -459,7 +459,7 @@ std::pair<bool, temple::Bitmask<TestFlags>> descriptorSetsMatch(
   return {pass, summary};
 }
 
-BOOST_AUTO_TEST_CASE(CIPValidationSuiteTests) {
+BOOST_AUTO_TEST_CASE(CipValidationSuiteTests) {
   /* Test against a validation suite of organic molecules
    *
    * Reference:

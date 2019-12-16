@@ -52,20 +52,20 @@ enum class Particulars {
    * fully determined into chiral constraints, emit some debug information
    */
   PrototypePropagatorDebugInfo,
-  //! In DGRefinementProblem, chiral constraint numerical debug information
-  DGRefinementChiralityNumericalDebugInfo,
-  /*! In DGRefinementProblem, the callback function can reveal some information
+  //! In DgRefinementProblem, chiral constraint numerical debug information
+  DgRefinementChiralityNumericalDebugInfo,
+  /*! In DgRefinementProblem, the callback function can reveal some information
    * on the current status of the optimization
    */
-  DGRefinementProgress,
+  DgRefinementProgress,
   //! In ConformerGeneration, explain final contributions to the error function
-  DGFinalErrorContributions,
+  DgFinalErrorContributions,
   //! Explain why a structure was not accepted
-  DGStructureAcceptanceFailures,
+  DgStructureAcceptanceFailures,
   //! In generateConformation, show the Trees generated from the molecules
   gatherDGInformationTrees,
   //! in debugDistanceGeometry, progress information
-  DGDebugInfo,
+  DgDebugInfo,
   //! Ranking debug information
   RankingTreeDebugInfo
 };

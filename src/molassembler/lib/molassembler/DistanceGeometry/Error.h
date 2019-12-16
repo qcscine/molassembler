@@ -14,7 +14,7 @@
 /**
  * @brief Errors that can occur in Distance Geometry related algorithms.
  */
-enum class DGError {
+enum class DgError {
   /**
    * @brief The molecule you are trying to generate conformers for has
    *   zero-assignment stereopermutators, meaning that it is not representable
@@ -114,9 +114,9 @@ enum class DGError {
   TooManyFailures = 7
 };
 
-// Boilerplate to allow interoperability of DGerror with std::error_code
+// Boilerplate to allow interoperability of DgError with std::error_code
 namespace std {
-  template<> struct is_error_code_enum<DGError> : std::true_type {};
+  template<> struct is_error_code_enum<DgError> : std::true_type {};
 } // namespace std
 
 namespace detail {
@@ -126,20 +126,20 @@ namespace detail {
     }
 
     virtual std::string message(int c) const override final {
-      switch(static_cast<DGError>(c)) {
-        case DGError::ZeroAssignmentStereopermutators:
+      switch(static_cast<DgError>(c)) {
+        case DgError::ZeroAssignmentStereopermutators:
           return "Graph contains Stereopermutators with zero possible permutations.";
-        case DGError::GraphImpossible:
+        case DgError::GraphImpossible:
           return "Graph cannot be modeled in three-dimensional space.";
-        case DGError::RefinementException:
+        case DgError::RefinementException:
           return "Refinement encountered an exception during minimization.";
-        case DGError::RefinementMaxIterationsReached:
+        case DgError::RefinementMaxIterationsReached:
           return "Refinement did not converge in maximum number of iterations.";
-        case DGError::RefinedStructureInacceptable:
+        case DgError::RefinedStructureInacceptable:
           return "Refined structure deemed inacceptable.";
-        case DGError::RefinedChiralsWrong:
+        case DgError::RefinedChiralsWrong:
           return "Refined structure has chiral constraints with wrong sign.";
-        case DGError::TooManyFailures:
+        case DgError::TooManyFailures:
           return "Conformer generation yielded too many failures.";
         default:
           return "Unknown error.";
@@ -153,7 +153,7 @@ extern inline const detail::DGError_category& DGError_category() {
   return c;
 }
 
-inline std::error_code make_error_code(DGError e) {
+inline std::error_code make_error_code(DgError e) {
   return {static_cast<int>(e), DGError_category()};
 }
 

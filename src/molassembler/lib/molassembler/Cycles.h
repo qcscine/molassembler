@@ -42,7 +42,7 @@ public:
    * Limited operability type to avoid any accidental moves or copies. Manages
    * memory allocation and destruction in all situations.
    */
-  struct RDLDataPtrs;
+  struct RdlDataPtrs;
 
 
   /*!
@@ -52,7 +52,7 @@ public:
    * memory allocation and destruction in all situations. Pointer correctness
    * and iterator advancement is also provided.
    */
-  struct RDLCyclePtrs;
+  struct RdlCyclePtrs;
 
   //! Iterator for all relevant cycles of the graph
   class AllCyclesIterator {
@@ -66,7 +66,7 @@ public:
 
     AllCyclesIterator() = delete;
     AllCyclesIterator(
-      const std::shared_ptr<RDLDataPtrs>& dataPtr,
+      const std::shared_ptr<RdlDataPtrs>& dataPtr,
       unsigned rCycleIndex = 0
     );
 
@@ -89,13 +89,13 @@ public:
 
   private:
     //! Hold an owning reference to the base data to avoid dangling pointers
-    std::shared_ptr<RDLDataPtrs> _rdlPtr;
+    std::shared_ptr<RdlDataPtrs> _rdlPtr;
     //! Manage cycle data as shared pointer to permit expected iterator functionality
-    std::unique_ptr<RDLCyclePtrs> _cyclePtr;
+    std::unique_ptr<RdlCyclePtrs> _cyclePtr;
   };
 
   //! Iterator for cycles of specific universal ring families
-  class URFIDsCycleIterator {
+  class UrfIdsCycleIterator {
   public:
     using difference_type = unsigned;
     using value_type = const std::vector<BondIndex>&;
@@ -104,52 +104,52 @@ public:
     using iterator_category = std::forward_iterator_tag;
 
     /* Rule of five members */
-    URFIDsCycleIterator(const URFIDsCycleIterator& other);
-    URFIDsCycleIterator(URFIDsCycleIterator&& other) noexcept;
-    URFIDsCycleIterator& operator = (const URFIDsCycleIterator& other);
-    URFIDsCycleIterator& operator = (URFIDsCycleIterator&& other) noexcept;
-    ~URFIDsCycleIterator();
+    UrfIdsCycleIterator(const UrfIdsCycleIterator& other);
+    UrfIdsCycleIterator(UrfIdsCycleIterator&& other) noexcept;
+    UrfIdsCycleIterator& operator = (const UrfIdsCycleIterator& other);
+    UrfIdsCycleIterator& operator = (UrfIdsCycleIterator&& other) noexcept;
+    ~UrfIdsCycleIterator();
 
-    URFIDsCycleIterator() = delete;
+    UrfIdsCycleIterator() = delete;
 
     /* Constructors */
-    URFIDsCycleIterator(
+    UrfIdsCycleIterator(
       AtomIndex soughtIndex,
-      const std::shared_ptr<RDLDataPtrs>& dataPtr
+      const std::shared_ptr<RdlDataPtrs>& dataPtr
     );
 
-    URFIDsCycleIterator(
+    UrfIdsCycleIterator(
       const BondIndex& soughtBond,
       const std::vector<unsigned> urfs,
-      const std::shared_ptr<RDLDataPtrs>& dataPtr
+      const std::shared_ptr<RdlDataPtrs>& dataPtr
     );
 
-    URFIDsCycleIterator(
+    UrfIdsCycleIterator(
       const std::vector<BondIndex>& soughtBonds,
       const std::vector<unsigned> urfs,
-      const std::shared_ptr<RDLDataPtrs>& dataPtr
+      const std::shared_ptr<RdlDataPtrs>& dataPtr
     );
 
-    URFIDsCycleIterator& operator ++ ();
-    URFIDsCycleIterator operator ++ (int);
+    UrfIdsCycleIterator& operator ++ ();
+    UrfIdsCycleIterator operator ++ (int);
     value_type operator * () const;
     pointer operator -> () const;
 
     void advanceToEnd();
 
-    bool operator == (const URFIDsCycleIterator& other) const;
-    bool operator != (const URFIDsCycleIterator& other) const;
+    bool operator == (const UrfIdsCycleIterator& other) const;
+    bool operator != (const UrfIdsCycleIterator& other) const;
 
   private:
-    struct URFHelper;
+    struct UrfHelper;
 
-    std::shared_ptr<RDLDataPtrs> _rdlPtr;
-    std::unique_ptr<URFHelper> _urfsPtr;
-    std::unique_ptr<RDLCyclePtrs> _cyclePtr;
+    std::shared_ptr<RdlDataPtrs> _rdlPtr;
+    std::unique_ptr<UrfHelper> _urfsPtr;
+    std::unique_ptr<RdlCyclePtrs> _cyclePtr;
 
     void _advanceToNextPermissibleCycle();
     void _initializeCyclesFromURFID();
-    void _matchCycleState(const URFIDsCycleIterator& other);
+    void _matchCycleState(const UrfIdsCycleIterator& other);
   };
 
 //!@name Special member functions
@@ -208,18 +208,18 @@ public:
    * @complexity{@math{O(U)} where @math{U} is the number of unique ring
    * families of the molecule}
    */
-  std::pair<URFIDsCycleIterator, URFIDsCycleIterator> containing(AtomIndex atom) const;
+  std::pair<UrfIdsCycleIterator, UrfIdsCycleIterator> containing(AtomIndex atom) const;
   /*! @brief Range of relevant cycles containing a bond
    *
    * @complexity{@math{\Theta(1)}}
    */
-  std::pair<URFIDsCycleIterator, URFIDsCycleIterator> containing(const BondIndex& bond) const;
+  std::pair<UrfIdsCycleIterator, UrfIdsCycleIterator> containing(const BondIndex& bond) const;
   /*! @brief Range of relevant cycles containing several bonds
    *
    * @complexity{@math{\Theta(B)} where @math{B} is the number of bonds in the
    * parameters}
    */
-  std::pair<URFIDsCycleIterator, URFIDsCycleIterator> containing(const std::vector<BondIndex>& bonds) const;
+  std::pair<UrfIdsCycleIterator, UrfIdsCycleIterator> containing(const std::vector<BondIndex>& bonds) const;
 //!@}
 
 //!@name Operators
@@ -230,7 +230,7 @@ public:
 //!@}
 
 private:
-  std::shared_ptr<RDLDataPtrs> _rdlPtr;
+  std::shared_ptr<RdlDataPtrs> _rdlPtr;
   // Map from BondIndex to ordered list of its URF IDs
   std::unordered_map<BondIndex, std::vector<unsigned>, boost::hash<BondIndex>> _urfMap;
 };

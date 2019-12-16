@@ -721,12 +721,12 @@ void init_molecule(pybind11::module& m) {
   molecule.def(
     pybind11::pickle(
       [](const Molecule& mol) {
-        JSONSerialization serialization(mol);
+        JsonSerialization serialization(mol);
         std::string serialized = serialization;
         return serialized;
       },
       [](const std::string& serialized) {
-        JSONSerialization serialization(serialized);
+        JsonSerialization serialization(serialized);
         Molecule mol = serialization;
         return mol;
       }

@@ -346,12 +346,12 @@ outcome::result<Eigen::MatrixXd> ExplicitGraph::makeDistanceBounds() const noexc
       // If the upper bound is less than the lower bound, we have a contradiction
       if(bounds(a, b) < bounds(b, a)) {
         explainContradictionPaths(a, b, predecessors, distances);
-        return DGError::GraphImpossible;
+        return DgError::GraphImpossible;
       }
 
       // Negative values are not allowed
       if(bounds(a, b) <= 0 || bounds(b, a) <= 0) {
-        return DGError::GraphImpossible;
+        return DgError::GraphImpossible;
       }
     }
   }
@@ -465,7 +465,7 @@ outcome::result<Eigen::MatrixXd> ExplicitGraph::makeDistanceMatrix(random::Engin
 
       if(upper < lower) {
         explainContradictionPaths(a, b, predecessors, distances);
-        return DGError::GraphImpossible;
+        return DgError::GraphImpossible;
       }
 
       /* Shortest distance from left a vertex to right b vertex is lower bound (negative)

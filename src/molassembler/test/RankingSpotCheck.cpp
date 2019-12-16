@@ -206,33 +206,33 @@ BOOST_AUTO_TEST_CASE(sequenceRuleOneTests) {
 
 BOOST_AUTO_TEST_CASE(sequenceRuleThreeTests) {
   // P-92.4.2.1 Example 1 (Z before E)
-  auto ZEDifference = IO::read(
+  auto zeDifference = IO::read(
     getPathString("2Z5S7E-nona-2,7-dien-5-ol.mol"s)
   );
 
   BOOST_CHECK_MESSAGE(
-    noCarbonsAreTrigonalPyramidal(ZEDifference),
+    noCarbonsAreTrigonalPyramidal(zeDifference),
     "2Z5S7E-nona-2,7-dien-5-ol has carbons that were interpreted as trigonal pyramids!\n"
   );
 
   BOOST_CHECK_MESSAGE(
-    isAtomStereocenter(ZEDifference, 0, 2, 0),
+    isAtomStereocenter(zeDifference, 0, 2, 0),
     "Stereopermutator at C0 in 2Z5S7E-nona-2,7-dien-5-ol is not S"
   );
 
   // P-92.4.2.2 Example 1 (Z before E in aux. stereopermutators, splitting)
-  auto EECyclobutane = IO::read(
+  auto eeCyclobutane = IO::read(
     getPathString("1E3E-1,3-difluoromethylidenecyclobutane.mol")
   );
 
   BOOST_CHECK_MESSAGE(
-    noCarbonsAreTrigonalPyramidal(EECyclobutane),
+    noCarbonsAreTrigonalPyramidal(eeCyclobutane),
     "1E3E-1,3-difluoromethylidenecyclobutane has carbons that were interpreted as trigonal pyramids!\n"
   );
 
   BOOST_CHECK_MESSAGE(
-    isBondStereopermutator(EECyclobutane, BondIndex {0, 3}, 2, 0)
-    && isBondStereopermutator(EECyclobutane, BondIndex {5, 6}, 2, 0),
+    isBondStereopermutator(eeCyclobutane, BondIndex {0, 3}, 2, 0)
+    && isBondStereopermutator(eeCyclobutane, BondIndex {5, 6}, 2, 0),
     "1E3E-1,3-difluoromethylidenecyclobutane double bonds aren't E. "
   );
 

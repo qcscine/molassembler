@@ -686,7 +686,7 @@ struct OrientationCSMFunctor {
   const PositionCollection& coordinates;
   const MatrixType unfoldMatrices;
   const MatrixType foldMatrices;
-  const elements::NPGroupingsMapType npGroups;
+  const elements::NpGroupingsMapType npGroups;
 
   OrientationCSMFunctor(
     const PositionCollection& normalizedPositions,

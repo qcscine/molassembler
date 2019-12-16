@@ -555,7 +555,7 @@ Molecule deserialize(const nlohmann::json& m) {
 
 } // namespace detail
 
-struct JSONSerialization::Impl {
+struct JsonSerialization::Impl {
   explicit Impl(const std::string& jsonString) : serialization(nlohmann::json::parse(jsonString)) {}
   explicit Impl(const Molecule& molecule) : serialization(detail::serialize(molecule)) {
     // If the molecule is fully canonical, make serializations canonical too
@@ -622,52 +622,52 @@ struct JSONSerialization::Impl {
   nlohmann::json serialization;
 };
 
-/* JSONSerialization implementation */
+/* JsonSerialization implementation */
 
-std::string JSONSerialization::base64Encode(const BinaryType& binary) {
+std::string JsonSerialization::base64Encode(const BinaryType& binary) {
   return base64::encode(binary);
 }
 
-JSONSerialization::BinaryType JSONSerialization::base64Decode(const std::string& binary) {
+JsonSerialization::BinaryType JsonSerialization::base64Decode(const std::string& binary) {
   return base64::decode(binary);
 }
 
-JSONSerialization::JSONSerialization(JSONSerialization&& other) noexcept = default;
-JSONSerialization& JSONSerialization::operator = (JSONSerialization&& other) noexcept = default;
+JsonSerialization::JsonSerialization(JsonSerialization&& other) noexcept = default;
+JsonSerialization& JsonSerialization::operator = (JsonSerialization&& other) noexcept = default;
 
-JSONSerialization::JSONSerialization(const JSONSerialization& other) : _pImpl(
+JsonSerialization::JsonSerialization(const JsonSerialization& other) : _pImpl(
   std::make_unique<Impl>(*other._pImpl)
 ) {}
 
-JSONSerialization& JSONSerialization::operator = (const JSONSerialization& other) {
+JsonSerialization& JsonSerialization::operator = (const JsonSerialization& other) {
   *_pImpl = *other._pImpl;
   return *this;
 }
 
-JSONSerialization::~JSONSerialization() = default;
+JsonSerialization::~JsonSerialization() = default;
 
-JSONSerialization::JSONSerialization(const std::string& jsonString)
+JsonSerialization::JsonSerialization(const std::string& jsonString)
   : _pImpl(std::make_unique<Impl>(jsonString)) {}
 
-JSONSerialization::JSONSerialization(const Molecule& molecule)
+JsonSerialization::JsonSerialization(const Molecule& molecule)
   : _pImpl(std::make_unique<Impl>(molecule)) {}
 
-JSONSerialization::JSONSerialization(const BinaryType& binary, const BinaryFormat format)
+JsonSerialization::JsonSerialization(const BinaryType& binary, const BinaryFormat format)
   : _pImpl(std::make_unique<Impl>(binary, format)) {}
 
-JSONSerialization::operator std::string() const {
+JsonSerialization::operator std::string() const {
   return _pImpl->operator std::string();
 }
 
-JSONSerialization::operator Molecule() const {
+JsonSerialization::operator Molecule() const {
   return _pImpl->operator Molecule();
 }
 
-JSONSerialization::BinaryType JSONSerialization::toBinary(const BinaryFormat format) const {
+JsonSerialization::BinaryType JsonSerialization::toBinary(const BinaryFormat format) const {
   return _pImpl->toBinary(format);
 }
 
-JSONSerialization& JSONSerialization::standardize() {
+JsonSerialization& JsonSerialization::standardize() {
   _pImpl->standardize();
   return *this;
 }

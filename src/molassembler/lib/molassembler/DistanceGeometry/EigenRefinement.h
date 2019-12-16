@@ -922,7 +922,7 @@ struct RefinementTraits {
   using TemplateArgumentsTuple = decltype(templateArgumentHelper(std::declval<RefinementType>()));
   using DimensionalityConstant = std::tuple_element_t<0, TemplateArgumentsTuple>;
   using FloatingPointType = std::tuple_element_t<1, TemplateArgumentsTuple>;
-  using SIMDConstant = std::tuple_element_t<2, TemplateArgumentsTuple>;
+  using SimdConstant = std::tuple_element_t<2, TemplateArgumentsTuple>;
 };
 
 } // namespace DistanceGeometry

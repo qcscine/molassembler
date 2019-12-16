@@ -66,9 +66,9 @@ boost::optional<Shapes::Shape> vsepr(
   }
 
   // get uncharged VE count, returns none if not a main group element
-  auto VEOption = molassembler::AtomInfo::mainGroupVE(centerAtomType);
+  auto veOption = molassembler::AtomInfo::mainGroupVE(centerAtomType);
 
-  if(!VEOption) {
+  if(!veOption) {
     return boost::none;
   }
 
@@ -78,7 +78,7 @@ boost::optional<Shapes::Shape> vsepr(
   const unsigned& X = nSites;
   const int E = std::ceil(
     (
-      static_cast<double>(VEOption.value())
+      static_cast<double>(veOption.value())
       - formalCharge
       - std::accumulate(
         sites.begin(),
@@ -98,13 +98,13 @@ boost::optional<Shapes::Shape> vsepr(
 
   using Shapes::Shape;
 
-  const auto XESum = X + E;
+  const auto xeSum = X + E;
 
-  if(XESum == 2) {
+  if(xeSum == 2) {
     return Shape::Line;
   }
 
-  if(XESum == 3) {
+  if(xeSum == 3) {
     if(X == 3) {
       return Shape::EquilateralTriangle;
     }
@@ -112,7 +112,7 @@ boost::optional<Shapes::Shape> vsepr(
     return Shape::Bent;
   }
 
-  if(XESum == 4) {
+  if(xeSum == 4) {
     if(X == 4) {
       return Shape::Tetrahedron;
     }
@@ -127,7 +127,7 @@ boost::optional<Shapes::Shape> vsepr(
     return Shape::Bent;
   }
 
-  if(XESum == 5) {
+  if(xeSum == 5) {
     if(X == 5) {
       return Shape::TrigonalBipyramid;
     }
@@ -143,7 +143,7 @@ boost::optional<Shapes::Shape> vsepr(
     return Shape::Line;
   }
 
-  if(XESum == 6) {
+  if(xeSum == 6) {
     if(X == 6) {
       return Shape::Octahedron;
     }
@@ -155,7 +155,7 @@ boost::optional<Shapes::Shape> vsepr(
     return Shape::Square;
   }
 
-  if(XESum == 7) {
+  if(xeSum == 7) {
     if(X == 7) {
       return Shape::PentagonalBipyramid;
     }
@@ -167,7 +167,7 @@ boost::optional<Shapes::Shape> vsepr(
     return Shape::Pentagon;
   }
 
-  if(XESum == 8) {
+  if(xeSum == 8) {
     return Shape::SquareAntiprism;
   }
 

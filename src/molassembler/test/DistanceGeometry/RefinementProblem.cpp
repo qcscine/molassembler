@@ -59,15 +59,15 @@ struct RefinementBaseData {
   RefinementBaseData(const std::string& filename) {
     Molecule molecule = IO::read(filename);
 
-    auto DGInfo = gatherDGInformation(molecule, DistanceGeometry::Configuration {});
+    auto DgInfo = gatherDGInformation(molecule, DistanceGeometry::Configuration {});
 
     distanceBounds = DistanceBoundsMatrix {
       molecule.graph().inner(),
-      DGInfo.bounds
+      DgInfo.bounds
     };
 
-    chiralConstraints = std::move(DGInfo.chiralConstraints);
-    dihedralConstraints = std::move(DGInfo.dihedralConstraints);
+    chiralConstraints = std::move(DgInfo.chiralConstraints);
+    dihedralConstraints = std::move(DgInfo.dihedralConstraints);
 
     auto distancesResult = distanceBounds.makeDistanceMatrix(randomnessEngine());
     if(!distancesResult) {

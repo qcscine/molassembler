@@ -47,13 +47,13 @@ struct SubgraphCallback {
       mappingsRef(mappings)
   {}
 
-  template<class ABMap>
-  IndexMap makeIndexMap(const ABMap& m) {
+  template<class AbMap>
+  IndexMap makeIndexMap(const AbMap& m) {
     IndexMap bimap;
 
     for(AtomIndex i = 0; i < N; ++i) {
       AtomIndex t = boost::get(m, i);
-      if(t != boost::graph_traits<InnerGraph::BGLType>::null_vertex()) {
+      if(t != boost::graph_traits<InnerGraph::BglType>::null_vertex()) {
         bimap.insert(
           IndexMap::value_type(i, t)
         );
@@ -63,10 +63,10 @@ struct SubgraphCallback {
     return bimap;
   }
 
-  template<class ABMap, class BAMap>
+  template<class AbMap, class BaMap>
   bool operator() (
-    ABMap a,
-    BAMap /* b */,
+    AbMap a,
+    BaMap /* b */,
     AtomIndex /* subgraphSize */
   ) {
     mappingsRef.get().push_back(

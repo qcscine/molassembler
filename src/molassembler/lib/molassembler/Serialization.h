@@ -55,8 +55,8 @@ class Molecule;
  * converting operators:
  * @code{cpp}
  * Molecule mol;
- * std::string jsonSerialization = JSONSerialization(mol);
- * Molecule reverted = JSONSerialization(jsonSerialization);
+ * std::string jsonSerialization = JsonSerialization(mol);
+ * Molecule reverted = JsonSerialization(jsonSerialization);
  * @endcode
  *
  * For BinaryType - Molecule interconversions, only the implicit Molecule
@@ -64,15 +64,15 @@ class Molecule;
  * specified:
  * @code{cpp}
  * Molecule mol;
- * JSONSerialization::BinaryType bson = JSONSerialization(mol).toBinary(JSONSerialization::BinaryFormat::BSON);
- * Molecule reverted = JSONSerialization(bson, JSONSerialization::BinaryFormat::BSON);
+ * JsonSerialization::BinaryType bson = JsonSerialization(mol).toBinary(JsonSerialization::BinaryFormat::BSON);
+ * Molecule reverted = JsonSerialization(bson, JsonSerialization::BinaryFormat::BSON);
  * @endcode
  *
  * @warning Serializations of molecules have substantial notational freedom.
  * Using lexicographical comparison on serializations does not have the same
  * semantics as calling Molecule's relational operators.
  */
-class JSONSerialization {
+class JsonSerialization {
 public:
 //!@name Public types
 //!@{
@@ -96,22 +96,22 @@ public:
 
 //!@name Special member functions
 //!@{
-  JSONSerialization(JSONSerialization&& other) noexcept;
-  JSONSerialization& operator = (JSONSerialization&& other) noexcept;
-  JSONSerialization(const JSONSerialization& other);
-  JSONSerialization& operator = (const JSONSerialization& other);
-  ~JSONSerialization();
+  JsonSerialization(JsonSerialization&& other) noexcept;
+  JsonSerialization& operator = (JsonSerialization&& other) noexcept;
+  JsonSerialization(const JsonSerialization& other);
+  JsonSerialization& operator = (const JsonSerialization& other);
+  ~JsonSerialization();
 //!@}
 
 //!@name Constructors
 //!@{
-  JSONSerialization() = delete;
+  JsonSerialization() = delete;
   //! Construct a serialization from a JSON string
-  explicit JSONSerialization(const std::string& jsonString);
+  explicit JsonSerialization(const std::string& jsonString);
   //! Construct a serialization from a Molecule
-  explicit JSONSerialization(const Molecule& molecule);
+  explicit JsonSerialization(const Molecule& molecule);
   //! Construct a serialization from a binary JSON format
-  JSONSerialization(const BinaryType& binary, BinaryFormat format);
+  JsonSerialization(const BinaryType& binary, BinaryFormat format);
 //!@}
 
 //!@name Conversions
@@ -144,7 +144,7 @@ public:
    *
    * @returns *this for method chaining
    */
-  JSONSerialization& standardize();
+  JsonSerialization& standardize();
 //!@}
 
 private:

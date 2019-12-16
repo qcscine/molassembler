@@ -168,7 +168,7 @@ outcome::result<Eigen::MatrixXd> DistanceBoundsMatrix::makeDistanceMatrix(random
       }
 
       if(upperBound(matrixCopy, i, j) < lowerBound(matrixCopy, i, j)) {
-        return DGError::GraphImpossible;
+        return DgError::GraphImpossible;
       }
 
       double chosenDistance = temple::random::getSingle<double>(

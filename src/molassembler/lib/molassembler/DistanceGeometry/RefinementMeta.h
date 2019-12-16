@@ -92,7 +92,7 @@ void explainAcceptanceFailure(
     const double deviationThreshold = 0.5;
     bool earlyExit = false;
     bool value = true;
-    std::ostream& log = Log::log(Log::Particulars::DGStructureAcceptanceFailures);
+    std::ostream& log = Log::log(Log::Particulars::DgStructureAcceptanceFailures);
     const DistanceBoundsMatrix& distanceBounds;
 
     AcceptanceFailureExplainer(const DistanceBoundsMatrix& passBounds)
@@ -144,7 +144,7 @@ void explainFinalContributions(
     const double deviationThreshold = 0;
     bool earlyExit = false;
     bool value = true;
-    std::ostream& log = Log::log(Log::Particulars::DGFinalErrorContributions);
+    std::ostream& log = Log::log(Log::Particulars::DgFinalErrorContributions);
     const DistanceBoundsMatrix& distanceBounds;
 
     FinalContributionsExplainer(const DistanceBoundsMatrix& passBounds)

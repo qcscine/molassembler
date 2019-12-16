@@ -219,7 +219,7 @@ outcome::result<Eigen::MatrixXd> ImplicitGraph::makeDistanceBounds() const noexc
 
       if(bounds(a, b) < bounds(b, a)) {
         _explainContradictionPaths(a, b, predecessors, distances);
-        return DGError::GraphImpossible;
+        return DgError::GraphImpossible;
       }
     }
   }
@@ -332,7 +332,7 @@ outcome::result<Eigen::MatrixXd> ImplicitGraph::makeDistanceMatrix(random::Engin
 
       if(distances.at(left(b)) < -distances.at(right(b))) {
         _explainContradictionPaths(a, b, predecessors, distances);
-        return DGError::GraphImpossible;
+        return DgError::GraphImpossible;
       }
 
       // Pick fixed distance

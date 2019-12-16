@@ -116,7 +116,7 @@ public:
   };
 
   //! The BGL Graph type used to store the tree
-  using BGLType = boost::adjacency_list<
+  using BglType = boost::adjacency_list<
     /* OutEdgeListS = Type of Container for edges of a vertex
      * Options: vector, list, slist, set, multiset, unordered_set
      * Choice: setS
@@ -178,9 +178,9 @@ public:
 
 private:
   //! Type of tree vertex accessor
-  using TreeVertexIndex = BGLType::vertex_descriptor;
+  using TreeVertexIndex = BglType::vertex_descriptor;
   //! Type of tree edge accessor
-  using TreeEdgeIndex = BGLType::edge_descriptor;
+  using TreeEdgeIndex = BglType::edge_descriptor;
   //! Variant type of both
   using VariantType = boost::variant<TreeVertexIndex, TreeEdgeIndex>;
 
@@ -196,7 +196,7 @@ private:
 
 /* State */
   //! The BGL Graph representing the acyclic tree
-  BGLType _tree;
+  BglType _tree;
 
   //! The helper instance for discovering the ordering of the to-rank branches
   OrderDiscoveryHelper<TreeVertexIndex> _branchOrderingHelper;
@@ -475,7 +475,7 @@ private:
    *
    * @tparam ruleNumber For logging purposes, indicate which sequence rule is
    *   being tested with this BFS traversal
-   * @tparam BFSDownOnly If set true, only out-edges of any BFS seeds are
+   * @tparam BfsDownOnly If set true, only out-edges of any BFS seeds are
    *   considered for the multisets and seed continuations. This has the effect
    *   that the traversal is unidirectional, going "down" from the root of the
    *   tree, which is drawn at the top of the graphical representation
@@ -495,7 +495,7 @@ private:
    */
   template<
     unsigned ruleNumber,
-    bool BFSDownOnly,
+    bool bfsDownOnly,
     bool insertEdges,
     bool insertVertices,
     typename MultisetValueType,
@@ -567,7 +567,7 @@ private:
     EdgeInserter<insertEdges, MultisetValueType, MultisetComparatorType> edgeInserter;
     VertexInserter<insertVertices, MultisetValueType, MultisetComparatorType> vertexInserter;
 
-    if(!BFSDownOnly) { // Initialization is only necessary in this case
+    if(!bfsDownOnly) { // Initialization is only necessary in this case
       visitedVertices.insert(sourceIndex);
     }
 
@@ -587,7 +587,7 @@ private:
         );
 
         if(insertEdges) {
-          if(BFSDownOnly) {
+          if(bfsDownOnly) {
             edgeInserter.execute(
               comparisonSets,
               undecidedBranch,
@@ -628,7 +628,7 @@ private:
       ) {
         std::string header = (
           (
-            BFSDownOnly
+            bfsDownOnly
             ? ""s
             : "aux "s
           ) + "R"s + std::to_string(ruleNumber)
@@ -683,7 +683,7 @@ private:
 
           for(const auto& seed : seeds.at(undecidedBranch)) {
 
-            if(!BFSDownOnly) {
+            if(!bfsDownOnly) {
               // Mark as visited
               visitedVertices.insert(seed);
 
@@ -727,7 +727,7 @@ private:
               auto edgeTarget = boost::target(outEdge, _tree);
 
               // Skip this vertex if in omnidirectional BFS and already-seen node
-              if(!BFSDownOnly && visitedVertices.count(edgeTarget) > 0) {
+              if(!bfsDownOnly && visitedVertices.count(edgeTarget) > 0) {
                 continue;
               }
 
@@ -770,7 +770,7 @@ private:
           && _notEmpty(comparisonSets)
         ) {
           std::string header;
-          if(!BFSDownOnly) {
+          if(!bfsDownOnly) {
             header += "aux "s;
           }
           header += "R"s + std::to_string(ruleNumber);

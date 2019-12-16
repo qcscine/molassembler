@@ -49,8 +49,8 @@ void explainDifference(
  */
 BOOST_FIXTURE_TEST_CASE(AtomStereopermutationCGFitCoherence, LowTemperatureFixture) {
   using namespace Scine;
-  DistanceGeometry::Configuration DGConfiguration;
-  DGConfiguration.partiality = DistanceGeometry::Partiality::All;
+  DistanceGeometry::Configuration DgConfiguration;
+  DgConfiguration.partiality = DistanceGeometry::Partiality::All;
 
   const std::array<Utils::ElementType, 9> elements {
     Utils::ElementType::F,
@@ -119,7 +119,7 @@ BOOST_FIXTURE_TEST_CASE(AtomStereopermutationCGFitCoherence, LowTemperatureFixtu
       auto ensemble = DistanceGeometry::run(
         molecule,
         ensembleSize,
-        DGConfiguration,
+        DgConfiguration,
         boost::none
       );
 

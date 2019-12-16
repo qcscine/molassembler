@@ -58,15 +58,15 @@ BOOST_AUTO_TEST_CASE(MoleculeSerializationReversibility) {
   ) {
     auto molecule = IO::read(currentFilePath.string());
 
-    std::string json = JSONSerialization(molecule);
-    Molecule decoded = JSONSerialization(json);
+    std::string json = JsonSerialization(molecule);
+    Molecule decoded = JsonSerialization(json);
 
     BOOST_CHECK_MESSAGE(
       decoded == molecule,
       "JSON serialization / deserialization failed! The molecule " << currentFilePath.string() << "before and after a serialization/deserialization pair is no longer the same!\n"
         << "JSON representation of original molecule: " << json << "\n"
         << "JSON representation of decoded molecule: "
-        << JSONSerialization(json).operator std::string()
+        << JsonSerialization(json).operator std::string()
     );
   }
 }
@@ -114,8 +114,8 @@ BOOST_AUTO_TEST_CASE(MoleculeCanonicalSerialization) {
     b.canonicalize();
 
     // Get standardized JSON strings for both
-    std::string aSerialization = JSONSerialization(a).standardize();
-    std::string bSerialization = JSONSerialization(b).standardize();
+    std::string aSerialization = JsonSerialization(a).standardize();
+    std::string bSerialization = JsonSerialization(b).standardize();
 
     // Ensure canonicalized JSON representations are lexicographically equal
     BOOST_CHECK_MESSAGE(

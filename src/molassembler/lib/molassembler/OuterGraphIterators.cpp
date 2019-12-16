@@ -129,7 +129,7 @@ struct BaseIteratorWrapper {
 /* Impl definitions and missing functions */
 template<>
 struct OuterGraph::AtomIterator::Impl
-  : public BaseIteratorWrapper<InnerGraph::BGLType::vertex_iterator>
+  : public BaseIteratorWrapper<InnerGraph::BglType::vertex_iterator>
 {
   Impl(const InnerGraph& inner, bool begin) {
     auto vertexIterators = inner.vertices();
@@ -148,7 +148,7 @@ struct OuterGraph::AtomIterator::Impl
 
 template<>
 struct OuterGraph::BondIterator::Impl
-  : public BaseIteratorWrapper<InnerGraph::BGLType::edge_iterator>
+  : public BaseIteratorWrapper<InnerGraph::BglType::edge_iterator>
 {
   const InnerGraph* innerPtr;
 
@@ -168,7 +168,7 @@ struct OuterGraph::BondIterator::Impl
 
 template<>
 struct OuterGraph::AdjacencyIterator::Impl
-  : public BaseIteratorWrapper<InnerGraph::BGLType::adjacency_iterator>
+  : public BaseIteratorWrapper<InnerGraph::BglType::adjacency_iterator>
 {
   Impl(
     const AtomIndex a,
@@ -190,7 +190,7 @@ struct OuterGraph::AdjacencyIterator::Impl
 
 template<>
 struct OuterGraph::IncidentEdgesIterator::Impl
-  : public BaseIteratorWrapper<InnerGraph::BGLType::out_edge_iterator>
+  : public BaseIteratorWrapper<InnerGraph::BglType::out_edge_iterator>
 {
   const InnerGraph* innerPtr;
 
