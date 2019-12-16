@@ -83,8 +83,8 @@ if(SCINE_BUILD_DOCS)
 
     find_python_module(doctest)
     if(PY_DOCTEST)
-      find_python_module(scine_utils)
-      if(PY_SCINE_UTILS OR SCINE_UTILS_PYTHON_BINARY_PATH)
+      find_python_module(scine_utilities)
+      if(PY_SCINE_UTILITIES OR SCINE_UTILS_PYTHON_BINARY_PATH)
         add_test(
           NAME PythonBindingsDoctest
           COMMAND ${PYTHON_EXECUTABLE} -c "import sys, doctest, scine_molassembler; (f, _) = doctest.testmod(scine_molassembler.scine_molassembler); sys.exit(f > 0)"
@@ -97,7 +97,7 @@ if(SCINE_BUILD_DOCS)
           )
         endif()
       else()
-        message(STATUS "Python documentation testing is disabled as the scine_utils module cannot be found and is not being built in-tree")
+        message(STATUS "Python documentation testing is disabled as the scine_utilities module cannot be found and is not being built in-tree")
       endif()
     else()
       message(STATUS "Python documentation testing is disabled as doctest cannot be found")

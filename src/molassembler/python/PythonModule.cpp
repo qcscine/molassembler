@@ -34,7 +34,7 @@ PYBIND11_MODULE(scine_molassembler, m) {
   )";
 
   // Requires other modules to function properly
-  // auto utils = pybind11::module::import("scine_utils");
+  // auto utils = pybind11::module::import("scine_utilities");
 
   // Order is important here, do not reorder
   init_version(m);

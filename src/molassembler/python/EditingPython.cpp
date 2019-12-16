@@ -36,7 +36,7 @@ void init_editing(pybind11::module& m) {
       :example:
 
       >>> import scine_molassembler as masm
-      >>> import scine_utils as utils
+      >>> import scine_utilities as utils
       >>> a = masm.Molecule() # Makes H2
       >>> bond_index = a.addAtom(0, utils.ElementType.H) # Make linear H3
       >>> cleaved = masm.editing.cleave(a, bond_index) # Split into H2 and H

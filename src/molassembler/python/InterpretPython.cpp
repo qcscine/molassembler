@@ -113,7 +113,7 @@ void init_interpret(pybind11::module& m) {
         bond order collections do not match
 
       >>> import scine_molassembler as masm
-      >>> import scine_utils as utils
+      >>> import scine_utilities as utils
       >>> import numpy as np
       >>> elements = [utils.ElementType.H] * 4
       >>> positions = np.array([[0.0, 0.0, 0.0], [0.0, 0.71, 0.0], [2.0, 2.0, 2.0], [2.0, 2.71, 2.0]])

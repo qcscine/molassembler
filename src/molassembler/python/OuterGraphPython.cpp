@@ -21,7 +21,7 @@ void init_outer_graph(pybind11::module& m) {
       Molecular graph in which atoms are vertices and bonds are edges.
 
       >>> import scine_molassembler as masm
-      >>> import scine_utils as utils
+      >>> import scine_utilities as utils
       >>> ethane = masm.io.experimental.from_smiles("CC")
       >>> g = ethane.graph
       >>> g.atoms_of_element(utils.ElementType.C)
@@ -68,7 +68,7 @@ void init_outer_graph(pybind11::module& m) {
       Returns atoms matching an element type
 
       >>> import scine_molassembler as masm
-      >>> import scine_utils as utils
+      >>> import scine_utilities as utils
       >>> ethanol = masm.io.experimental.from_smiles("CCO")
       >>> ethanol.graph.atoms_of_element(utils.ElementType.O)
       [2]
@@ -85,7 +85,7 @@ void init_outer_graph(pybind11::module& m) {
 
       >>> # Convert acetaldehyde's graph into a floating point bond order matrix
       >>> import scine_molassembler as masm
-      >>> import scine_utils as utils
+      >>> import scine_utilities as utils
       >>> acetaldehyde = masm.io.experimental.from_smiles("CC=O")
       >>> bo = acetaldehyde.graph.bond_orders()
       >>> bo.empty()
@@ -144,7 +144,7 @@ void init_outer_graph(pybind11::module& m) {
 
       >>> # In graph terms, bridge edges cannot be removed
       >>> import scine_molassembler as masm
-      >>> import scine_utils as utils
+      >>> import scine_utilities as utils
       >>> from itertools import combinations
       >>> cyclopropane = masm.io.experimental.from_smiles("C1CC1")
       >>> carbon_atoms = cyclopropane.graph.atoms_of_element(utils.ElementType.C)
@@ -188,7 +188,7 @@ void init_outer_graph(pybind11::module& m) {
 
       >>> # Some isotopes
       >>> import scine_molassembler as masm
-      >>> import scine_utils as utils
+      >>> import scine_utilities as utils
       >>> m = masm.io.experimental.from_smiles("[1H]C([2H])([3H])[H]")
       >>> m.graph.element_collection()
       [ElementType.H1, ElementType.C, ElementType.D, ElementType.T, ElementType.H]
@@ -204,7 +204,7 @@ void init_outer_graph(pybind11::module& m) {
 
       >>> # Some isotopes
       >>> import scine_molassembler as masm
-      >>> import scine_utils as utils
+      >>> import scine_utilities as utils
       >>> m = masm.io.experimental.from_smiles("[1H]C([2H])([3H])[H]")
       >>> m.graph.element_type(0)
       ElementType.H1
@@ -262,7 +262,7 @@ void init_outer_graph(pybind11::module& m) {
       Iterate through all valid bond indices of the graph
 
       >>> import scine_molassembler as masm
-      >>> import scine_utils as utils
+      >>> import scine_utilities as utils
       >>> model = masm.io.experimental.from_smiles("F/C=C/I")
       >>> [b for b in model.graph.bonds()]
       [(0, 1), (1, 2), (2, 3), (1, 4), (2, 5)]
@@ -283,7 +283,7 @@ void init_outer_graph(pybind11::module& m) {
       Iterate through all adjacent atom indices of an atom
 
       >>> import scine_molassembler as masm
-      >>> import scine_utils as utils
+      >>> import scine_utilities as utils
       >>> m = masm.io.experimental.from_smiles("NC")
       >>> [a for a in m.graph.adjacents(0)]
       [1, 2, 3]
@@ -307,7 +307,7 @@ void init_outer_graph(pybind11::module& m) {
       Iterate through all incident bonds of an atom
 
       >>> import scine_molassembler as masm
-      >>> import scine_utils as utils
+      >>> import scine_utilities as utils
       >>> m = masm.io.experimental.from_smiles("NC")
       >>> [b for b in m.graph.bonds(0)]
       [(0, 1), (0, 2), (0, 3)]

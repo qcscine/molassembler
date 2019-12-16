@@ -76,7 +76,7 @@ void init_io(pybind11::module& m) {
       :param smiles_str: A smiles string containing a single molecule
       :rtype: scine_molassembler.Molecule
 
-      >>> import scine_utils as utils
+      >>> import scine_utilities as utils
       >>> methane = from_smiles("C")
       >>> methane.graph.N == 4
       True

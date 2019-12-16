@@ -99,7 +99,7 @@ void init_molecule(pybind11::module& m) {
       unfortunately single atoms occur everywhere and enforcing the concept
       would complicate many interfaces.
 
-      >>> import scine_utils as utils
+      >>> import scine_utilities as utils
       >>> f = Molecule(utils.ElementType.F)
       >>> f.graph.N
       1
@@ -117,7 +117,7 @@ void init_molecule(pybind11::module& m) {
       Initialize a molecule from two element types and a mutual :class:`BondType`
 
       >>> # Make H-F
-      >>> import scine_utils as utils
+      >>> import scine_utilities as utils
       >>> hf = Molecule(utils.ElementType.H, utils.ElementType.F)
       >>> hf.graph.N == 2
       True
@@ -205,7 +205,7 @@ void init_molecule(pybind11::module& m) {
       :param bond_type: :class:`BondType` with which the new atom is attached
 
       >>> # Let's make linear H3
-      >>> import scine_utils as utils
+      >>> import scine_utilities as utils
       >>> mol = Molecule() # Default constructor makes H2
       >>> _ = mol.add_atom(utils.ElementType.H, 0) # Make linear H3
     )delim"
@@ -225,7 +225,7 @@ void init_molecule(pybind11::module& m) {
       :param bond_type: :class:`BondType` with which to bond the atoms
 
       >>> # Let's make triangular H3
-      >>> import scine_utils as utils
+      >>> import scine_utilities as utils
       >>> mol = Molecule() # Default constructor makes H2
       >>> _ = mol.add_atom(utils.ElementType.H, 0) # Make linear H3
       >>> _ = mol.add_bond(1, 2) # Make triangular H3
@@ -497,7 +497,7 @@ void init_molecule(pybind11::module& m) {
 
       >>> # Transform H2 into HF
       >>> import scine_molassembler as masm
-      >>> import scine_utils as utils
+      >>> import scine_utilities as utils
       >>> from copy import copy
       >>> H2 = masm.Molecule()
       >>> HF = copy(H2)

@@ -37,7 +37,7 @@ void init_atom_stereopermutator(pybind11::module& m) {
       them, you have to make changes at the molecule level.
 
       >>> # Enantiomeric pair of asymmetric tetrahedral carbon atoms
-      >>> import scine_utils as utils
+      >>> import scine_utilities as utils
       >>> import scine_molassembler as masm
       >>> asym_carbon = masm.io.experimental.from_smiles("N[C@](Br)(O)F")
       >>> carbon_index = asym_carbon.graph.atoms_of_element(utils.ElementType.C)[0]
@@ -83,7 +83,7 @@ void init_atom_stereopermutator(pybind11::module& m) {
       The assignment integer if assigned, ``None`` otherwise.
 
       >>> # A stereo-unspecified tetrahedral asymmetric carbon atom
-      >>> import scine_utils as utils
+      >>> import scine_utilities as utils
       >>> import scine_molassembler as masm
       >>> asymmetric_carbon = masm.io.experimental.from_smiles("NC(Br)(O)F")
       >>> carbon_index = asymmetric_carbon.graph.atoms_of_element(utils.ElementType.C)[0]
