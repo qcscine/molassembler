@@ -46,9 +46,8 @@ class Cycles;
  * haptically-bonded subset of atoms (i.e. a contiguous group of atoms all
  * bonded to a transition metal).
  *
- * The Graph class leaves a consumer a lot of freedom in the
- * specification of the molecule's graph, but does enforce some model
- * limitations.
+ * The Graph class leaves a consumer a lot of freedom in the specification of
+ * the molecule's graph, but does enforce some model limitations.
  * - A molecule's graph must consist of a single connected
  *   component, meaning that there must be a path from any atom of the molecule
  *   to any other.

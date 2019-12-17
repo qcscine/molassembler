@@ -1,15 +1,16 @@
 # Contribution guidelines
 
 ## Structure
-Any headers (and their corresponding implementations) that are meant for
-use by library consumers MUST be placed into the top-level library directory.
-Any headers that are NOT meant for consumer access but are auxiliary to
-top-level implementations MUST be in a subfolder.
+Molassembler widely uses the pImpl pattern.
 
-No top-level header may include a subfolder header.
+Headers in the top-level library directory are meant for library consumers. Any
+subfolder headers are implementation details and do not form part of the public
+interface. No top-level headers may therefore include sublevel headers.
 
 
 ## Code style
+
+Molassembler follows SCINE code style convention.
 
 ### signed vs unsigned
 Molassembler prefers using unsigned to represent container element indices
@@ -27,8 +28,8 @@ Any integers where subtracting is expected should be signed. If unsigned values
 are used in subtractions, `static_cast` them!
 
 ### C++ style
-Try to follow the C++ Core Guidelines. Clang-tidy will enforce some aspects of
-it.
+Try to follow the C++ Core Guidelines.
 
 ### Formatting
-Enforced by clang-format.
+Unenforced since I currently have my own idiosyncratic formatting style that I
+think clang-format doesn't support. I try to keep the code 80-char wide at most.

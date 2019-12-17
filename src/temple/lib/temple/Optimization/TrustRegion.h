@@ -7,7 +7,7 @@
 #ifndef INCLUDE_TEMPLE_OPTIMIZATION_TRUST_REGION_NEWTON_H
 #define INCLUDE_TEMPLE_OPTIMIZATION_TRUST_REGION_NEWTON_H
 
-#include "temple/STL17.h"
+#include "temple/Stl17.h"
 #include "temple/Optimization/Common.h"
 #include "temple/Optimization/SylvestersCriterion.h"
 #include "boost/math/tools/roots.hpp"

@@ -1,6 +1,13 @@
 /*!@file
  * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
  *   See LICENSE.txt
+ *
+ * The implementation of this consumer-facing type is a little complicated, so
+ * it warrants an explanation at length. Since molassembler mostly pImpls its
+ * public types, this class was another opportunity to hide dependencies from
+ * library consumers. But this one is a little tricky, because the boost graph
+ * dependency brings with it vertex and edge descriptors which need to be freely
+ * distributable to work with the graph itself.
  */
 
 #include "molassembler/OuterGraph.h"
