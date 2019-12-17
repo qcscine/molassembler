@@ -29,7 +29,6 @@ class BondOrderCollection;
 } // namespace Scine
 
 namespace Scine {
-
 namespace molassembler {
 
 // Forward-declare InnerGraph
@@ -80,6 +79,11 @@ public:
   template<typename T, bool isVertexInitialized>
   class InnerBasedIterator {
   public:
+    static_assert(
+      std::is_same<T, AtomIndex>::value || std::is_same<T, BondIndex>::value,
+      "You may not instantiate this type for other Ts than AtomIndex or BondIndex"
+    );
+
     using iterator_category = std::forward_iterator_tag;
     using difference_type = std::ptrdiff_t;
     using value_type = T;
@@ -349,7 +353,6 @@ private:
 };
 
 } // namespace molassembler
-
 } // namespace Scine
 
 #endif

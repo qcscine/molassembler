@@ -8,6 +8,19 @@
  * library consumers. But this one is a little tricky, because the boost graph
  * dependency brings with it vertex and edge descriptors which need to be freely
  * distributable to work with the graph itself.
+ *
+ * In order to hide those types, alternate vertex and edge descriptors are
+ * defined in Types.h (AtomIndex and BondIndex) and the conversion to the
+ * underlying boost graph descriptors is implemented in Graph/Bridge.h.
+ *
+ * The iterators giving easy access to atoms, bonds, adjacents and incidents
+ * have to be declared in the header, these are all template specializations of
+ * the InnerBasedIterator facade, which are themselves pImpl-ed. Their
+ * implementations are in OuterGraphIterators.cpp.
+ *
+ * The InnerGraph type is the Impl struct of OuterGraph, except it's not a
+ * OuterGraph-local type, but a free type that many implementation details of
+ * other molassembler components expect to be passed.
  */
 
 #include "molassembler/OuterGraph.h"
@@ -20,7 +33,6 @@
 #include "molassembler/Modeling/BondDistance.h"
 
 namespace Scine {
-
 namespace molassembler {
 
 static_assert(
@@ -54,9 +66,7 @@ Scine::Utils::ElementTypeCollection OuterGraph::elementCollection() const {
   elements.reserve(size);
 
   for(AtomIndex i = 0; i < size; ++i) {
-    elements.push_back(
-      elementType(i)
-    );
+    elements.push_back(elementType(i));
   }
 
   return elements;
@@ -185,5 +195,4 @@ OuterGraph::Range<OuterGraph::IncidentEdgesIterator> OuterGraph::bonds(const Ato
 }
 
 } // namespace molassembler
-
 } // namespace Scine

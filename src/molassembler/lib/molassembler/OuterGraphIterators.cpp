@@ -9,8 +9,35 @@
 
 #include "molassembler/Graph/Bridge.h"
 
-namespace Scine {
+/* The implementation of the bridging iterators proceeds in the following steps
+ * to reduce the seemingly neverending boilerplate of wrapping other iterators
+ *
+ * - Write the outer implementation of InnerBasedIterator that just forwards to
+ *   its private implementation
+ * - Make sure that facade passes the necessary boost iterator concepts
+ * - Since the implementation of the Impl struct for each template variation of
+ *   InnerBasedIterator share some code, summarize the commonalities in
+ *   BaseIteratorWrapper (from which we can derive to make the various Impl
+ *   impls)
+ * - Define the Impl structs for each InnerBasedIterator in terms of template
+ *   specializations of BaseIteratorWrapper and a little bit of specific code
+ * - Add actual instantiations of the InnerBasedIterator so that the symbols
+ *   are in the library when somebody uses their interfaces from the header
+ *   without a definition (and its enabled double-templated constructors too)
+ *
+ * Frankly, I'm still a little surprised it's not NDR ill-formed as it seems a
+ * bit like magic to me. But as long as the symbols of the explicit
+ * instantiations of InnerBasedIterator are there for consumers using the
+ * templated declaration in the header and everything those iterators need is
+ * defined at the point of instantiation here, it works like a charm.
+ *
+ * It's disallowed to instantiate InnerBasedIterator for any other Ts than the
+ * ones for which we explicitly instantiate the definitions here (by
+ * static_assert), so I don't think anyone can abuse the public nature of
+ * InnerBasedIterator in any fashion to cause an NDR ill-formed program.
+ */
 
+namespace Scine {
 namespace molassembler {
 
 /* Implementation for iterator facade */
@@ -109,7 +136,8 @@ struct BaseIteratorWrapper {
   Iterator iterator;
 
   BaseIteratorWrapper() = default;
-  BaseIteratorWrapper(Iterator passIterator) : iterator(std::move(passIterator)) {}
+  explicit BaseIteratorWrapper(Iterator passIterator) : iterator(std::move(passIterator)) {}
+  virtual ~BaseIteratorWrapper() = default;
 
   BaseIteratorWrapper& operator ++ () {
     ++iterator;
@@ -242,5 +270,4 @@ template OuterGraph::InnerBasedIterator<BondIndex, true>::InnerBasedIterator(
 );
 
 } // namespace molassembler
-
 } // namespace Scine
