@@ -6,7 +6,7 @@
 #ifndef INCLUDE_TEMPLE_OPTIMIZATION_LBFGS_H
 #define INCLUDE_TEMPLE_OPTIMIZATION_LBFGS_H
 
-#include "temple/STL17.h"
+#include "temple/Stl17.h"
 #include "temple/Optimization/Common.h"
 
 /* TODO
@@ -123,7 +123,7 @@ void adjustDirection(
 } // namespace detail
 
 template<typename FloatType = double, unsigned ringBufferSize = 16>
-class LBFGS {
+class Lbfgs {
 public:
   constexpr static bool isPowerOfTwo(unsigned x) {
     return (x & (x - 1)) == 0;

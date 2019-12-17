@@ -8,7 +8,7 @@
 #define INCLUDE_MOLASSEMBLER_OPTIONS_H
 
 #include "shapes/Shapes.h"
-#include "molassembler/PRNG.h"
+#include "molassembler/Prng.h"
 
 #include "Utils/Geometry/ElementTypes.h"
 #include "molassembler/AngstromWrapper.h"

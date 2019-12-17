@@ -14,7 +14,7 @@
 #include "temple/Functional.h"
 #include "temple/OrderedPair.h"
 #include "temple/Random.h"
-#include "temple/STL17.h"
+#include "temple/Stl17.h"
 
 #include "molassembler/AngstromWrapper.h"
 #include "molassembler/AtomStereopermutator.h"

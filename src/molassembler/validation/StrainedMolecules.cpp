@@ -11,7 +11,7 @@
 
 #include "molassembler/Conformers.h"
 #include "molassembler/DistanceGeometry/SpatialModel.h"
-#include "molassembler/IO.h"
+#include "molassembler/Io.h"
 #include "molassembler/Molecule.h"
 #include "molassembler/StereopermutatorList.h"
 

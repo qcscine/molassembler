@@ -18,7 +18,7 @@
 #include "temple/constexpr/DynamicMap.h"
 #include "temple/constexpr/DynamicSet.h"
 #include "temple/constexpr/FloatingPointComparison.h"
-#include "temple/constexpr/JSF.h"
+#include "temple/constexpr/Jsf.h"
 #include "temple/constexpr/LogicalOperatorTests.h"
 #include "temple/constexpr/Math.h"
 #include "temple/constexpr/TupleType.h"

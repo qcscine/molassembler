@@ -12,7 +12,7 @@
 #include "temple/Stringify.h"
 #include "temple/constexpr/Array.h"
 #include "temple/constexpr/BTree.h"
-#include "temple/constexpr/JSF.h"
+#include "temple/constexpr/Jsf.h"
 
 #include <set>
 #include <iostream>

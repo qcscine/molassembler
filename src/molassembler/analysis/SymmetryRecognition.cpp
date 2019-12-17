@@ -25,7 +25,7 @@
 #include "temple/Functional.h"
 #include "temple/Random.h"
 #include "temple/Stringify.h"
-#include "temple/constexpr/JSF.h"
+#include "temple/constexpr/Jsf.h"
 #include "temple/constexpr/Numeric.h"
 
 #include <iostream>

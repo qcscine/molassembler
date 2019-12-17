@@ -23,7 +23,7 @@
 #include "temple/Optionals.h"
 #include "temple/SetAlgorithms.h"
 #include "temple/Stringify.h"
-#include "temple/STL17.h"
+#include "temple/Stl17.h"
 
 #include "molassembler/Cycles.h"
 #include "molassembler/Detail/Cartesian.h"

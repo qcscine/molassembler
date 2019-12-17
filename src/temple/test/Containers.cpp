@@ -10,7 +10,7 @@
 #include "temple/Poset.h"
 #include "temple/Random.h"
 #include "temple/Stringify.h"
-#include "temple/constexpr/JSF.h"
+#include "temple/constexpr/Jsf.h"
 
 #include <algorithm>
 #include <random>

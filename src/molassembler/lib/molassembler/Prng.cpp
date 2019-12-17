@@ -3,9 +3,9 @@
  *   See LICENSE.txt
  */
 
-#include "PRNG.h"
+#include "Prng.h"
 
-#include "temple/constexpr/JSF.h"
+#include "temple/constexpr/Jsf.h"
 #include <random>
 
 namespace Scine {

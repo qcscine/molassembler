@@ -5,7 +5,7 @@
 
 #include <boost/test/unit_test.hpp>
 
-#include "temple/Optimization/LBFGS.h"
+#include "temple/Optimization/Lbfgs.h"
 
 template<typename FloatType>
 struct GradientBasedChecker {
@@ -40,7 +40,7 @@ BOOST_AUTO_TEST_CASE(LBFGSSimpleMinimization) {
     gradients[1] = 4 * firstBracket + 2 * secondBracket;
   };
 
-  temple::LBFGS<double, 16> optimizer;
+  temple::Lbfgs<double, 16> optimizer;
   GradientBasedChecker<double> gradientChecker;
   Eigen::VectorXd positions(2);
   positions[0] = 0.25 * M_PI;
@@ -69,7 +69,7 @@ BOOST_AUTO_TEST_CASE(LBFGSSimpleMaximization) {
     gradients[1] = -2 * (y - 2);
   };
 
-  temple::LBFGS<double, 16> optimizer;
+  temple::Lbfgs<double, 16> optimizer;
   GradientBasedChecker<double> gradientChecker;
 
   Eigen::VectorXd positions(2);
@@ -118,7 +118,7 @@ BOOST_AUTO_TEST_CASE(LBFGSBraninMinimization) {
     gradients[1] = 2 * polynomialBracket;
   };
 
-  using OptimizerType = temple::LBFGS<double, 16>;
+  using OptimizerType = temple::Lbfgs<double, 16>;
   OptimizerType optimizer;
   GradientBasedChecker<double> gradientChecker;
   Eigen::VectorXd positions(2);
@@ -160,7 +160,7 @@ BOOST_AUTO_TEST_CASE(LBFGSBoxedMinimization) {
     gradients[1] = 0.5 * std::sin(y);
   };
 
-  using OptimizerType = temple::LBFGS<double, 16>;
+  using OptimizerType = temple::Lbfgs<double, 16>;
 
   OptimizerType optimizer;
   GradientBasedChecker<double> gradientChecker;

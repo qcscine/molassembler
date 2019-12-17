@@ -17,7 +17,7 @@
 #include "molassembler/Graph/GraphAlgorithms.h"
 #include "Utils/Math/QuaternionFit.h"
 
-#include "temple/Optimization/LBFGS.h"
+#include "temple/Optimization/Lbfgs.h"
 #include "temple/Optionals.h"
 #include "temple/Random.h"
 
@@ -272,7 +272,7 @@ outcome::result<AngstromWrapper> refine(
       refinementFunctor
     };
 
-    temple::LBFGS<FloatType, 32> optimizer;
+    temple::Lbfgs<FloatType, 32> optimizer;
 
     try {
       auto result = optimizer.minimize(
@@ -305,7 +305,7 @@ outcome::result<AngstromWrapper> refine(
   gradientChecker.iterLimit = configuration.refinementStepLimit - firstStageIterations;
 
   try {
-    temple::LBFGS<FloatType, 32> optimizer;
+    temple::Lbfgs<FloatType, 32> optimizer;
 
     auto result = optimizer.minimize(
       transformedPositions,
@@ -340,7 +340,7 @@ outcome::result<AngstromWrapper> refine(
   refinementFunctor.dihedralTerms = true;
 
   try {
-    temple::LBFGS<FloatType, 32> optimizer;
+    temple::Lbfgs<FloatType, 32> optimizer;
 
     auto result = optimizer.minimize(
       transformedPositions,

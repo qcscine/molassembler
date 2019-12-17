@@ -10,7 +10,7 @@
 #include "shapes/Data.h"
 #include "shapes/ContinuousMeasures.h"
 
-#include "temple/Optimization/LBFGS.h"
+#include "temple/Optimization/Lbfgs.h"
 #include "temple/Adaptors/Iota.h"
 #include "temple/Adaptors/AllPairs.h"
 #include "temple/Functional.h"
@@ -238,7 +238,7 @@ void spherize(Shape shape, const M& p) {
   M positions = p;
   positions.colwise().normalize();
 
-  using Optimizer = temple::LBFGS<>;
+  using Optimizer = temple::Lbfgs<>;
   auto parameters = transformToAngles(positions);
 
   std::cout << "positions:\n" << positions.transpose() << "\n";

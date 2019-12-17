@@ -20,13 +20,13 @@ set(HEADERS_All
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/constexpr/DynamicMap.h
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/constexpr/DynamicSet.h
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/constexpr/FloatingPointComparison.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/temple/constexpr/JSF.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/temple/constexpr/Jsf.h
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/constexpr/LogicalOperatorTests.h
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/constexpr/Math.h
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/constexpr/Numeric.h
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/constexpr/Optional.h
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/constexpr/Pair.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/temple/constexpr/ToSTL.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/temple/constexpr/ToStl.h
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/constexpr/TupleType.h
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/constexpr/TupleTypePairs.h
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/constexpr/TypeTests.h
@@ -39,9 +39,10 @@ set(HEADERS_All
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/Invoke.h
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/OperatorSuppliers.h
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/Optimization/Common.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/temple/Optimization/LBFGS.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/temple/Optimization/Lbfgs.h
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/Optimization/NelderMead.h
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/Optimization/NewtonRaphson.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/temple/Optimization/SO3NelderMead.h
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/Optimization/SylvestersCriterion.h
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/Optimization/TrustRegion.h
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/Optionals.h
@@ -50,7 +51,7 @@ set(HEADERS_All
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/Poset.h
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/Preprocessor.h
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/Random.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/temple/STL17.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/temple/Stl17.h
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/SetAlgorithms.h
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/StringAlgorithms.h
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/Stringify.h

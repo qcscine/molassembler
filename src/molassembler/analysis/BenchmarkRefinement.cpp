@@ -14,7 +14,7 @@
 #include "molassembler/DistanceGeometry/EigenRefinement.h"
 #include "molassembler/DistanceGeometry/ConformerGeneration.h"
 
-#include "temple/Optimization/LBFGS.h"
+#include "temple/Optimization/Lbfgs.h"
 
 #include "molassembler/IO.h"
 #include "temple/Functional.h"
@@ -219,7 +219,7 @@ boost::optional<unsigned> eigenRefine(
     initiallyCorrectChiralConstraints = 1 - initiallyCorrectChiralConstraints;
   }
 
-  temple::LBFGS<FloatType, 32> optimizer;
+  temple::Lbfgs<FloatType, 32> optimizer;
   optimizer.c1 = optimizerParameters.c1;
   optimizer.c2 = optimizerParameters.c2;
   optimizer.stepLength = optimizerParameters.stepLength;

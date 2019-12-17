@@ -17,7 +17,7 @@
 #include "temple/Functional.h"
 #include "temple/Stringify.h"
 #include "temple/Random.h"
-#include "temple/constexpr/JSF.h"
+#include "temple/constexpr/Jsf.h"
 #include "temple/Permutations.h"
 
 #include <Eigen/SparseCore>

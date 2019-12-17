@@ -5,7 +5,7 @@
 
 #include "molassembler/Modeling/CommonTrig.h"
 
-#include "temple/Optimization/LBFGS.h"
+#include "temple/Optimization/Lbfgs.h"
 
 namespace Scine {
 
@@ -97,8 +97,8 @@ ValueBounds dihedralLengthBounds(
    * through numerical optimization.
    */
 
-  temple::LBFGS<> optimizer;
-  using VectorType = typename temple::LBFGS<>::VectorType;
+  temple::Lbfgs<> optimizer;
+  using VectorType = typename temple::Lbfgs<>::VectorType;
 
 
   VectorType lower(6);
@@ -108,7 +108,7 @@ ValueBounds dihedralLengthBounds(
   upper << aBounds.upper, bBounds.upper, cBounds.upper, alphaBounds.upper,
         betaBounds.upper, dihedralBounds.upper;
 
-  const temple::LBFGS<>::Box box { lower, upper };
+  const temple::Lbfgs<>::Box box { lower, upper };
 
   /* Start minimum searches in two positions for each:
    * minimum: at lower bounds and at the medians

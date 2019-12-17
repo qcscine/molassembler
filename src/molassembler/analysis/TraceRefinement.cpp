@@ -24,7 +24,7 @@
 
 #include "temple/Adaptors/Enumerate.h"
 #include "temple/Functional.h"
-#include "temple/Optimization/LBFGS.h"
+#include "temple/Optimization/Lbfgs.h"
 #include "temple/constexpr/Numeric.h"
 
 #include <fstream>
@@ -422,7 +422,7 @@ std::list<RefinementData> debugRefinement(
         refinementFunctor
       };
 
-      temple::LBFGS<FloatType, 32> optimizer;
+      temple::Lbfgs<FloatType, 32> optimizer;
 
       try {
         auto result = optimizer.minimize(
@@ -466,7 +466,7 @@ std::list<RefinementData> debugRefinement(
     gradientChecker.iterLimit = configuration.refinementStepLimit - firstStageIterations;
 
     try {
-      temple::LBFGS<FloatType, 32> optimizer;
+      temple::Lbfgs<FloatType, 32> optimizer;
 
       auto result = optimizer.minimize(
         transformedPositions,
@@ -524,7 +524,7 @@ std::list<RefinementData> debugRefinement(
     refinementFunctor.dihedralTerms = true;
 
     try {
-      temple::LBFGS<FloatType, 32> optimizer;
+      temple::Lbfgs<FloatType, 32> optimizer;
 
       auto result = optimizer.minimize(
         transformedPositions,

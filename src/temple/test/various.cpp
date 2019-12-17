@@ -14,7 +14,7 @@
 #include "temple/Stringify.h"
 #include "temple/constexpr/Numeric.h"
 #include "temple/constexpr/Optional.h"
-#include "temple/constexpr/JSF.h"
+#include "temple/constexpr/Jsf.h"
 
 #include <chrono>
 #include <cmath>

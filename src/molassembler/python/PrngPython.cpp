@@ -3,7 +3,7 @@
  *   See LICENSE.txt
  */
 #include "pybind11/pybind11.h"
-#include "molassembler/PRNG.h"
+#include "molassembler/Prng.h"
 
 void init_random_engine(pybind11::module& m) {
   using namespace Scine::molassembler;
