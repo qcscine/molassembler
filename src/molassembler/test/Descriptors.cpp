@@ -21,7 +21,7 @@ std::map<
   std::string,
   unsigned
 > rotatableBondExpectations {
-  {"Benzene", 2},
+  {"Benzene", 0},
   {"Cyclobutadiene", 1},
   {"Cyclobutane", 1},
   {"Cyclohexane", 3},
@@ -30,7 +30,7 @@ std::map<
   {"Cyclopentene", 2}, // 8/5 rounded up
   {"Cyclopropane", 0},
   {"EEDifluorobutadiene", 1},
-  {"Toluol", 3}
+  {"Toluol", 1}
 };
 
 BOOST_AUTO_TEST_CASE(RotatableBondsDescriptorsExamples) {
