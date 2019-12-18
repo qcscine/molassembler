@@ -11,9 +11,7 @@
 #include "molassembler/Types.h"
 
 namespace Scine {
-
 namespace molassembler {
-
 namespace cartesian {
 
 /* Reimplementation on vector basis alone */
@@ -22,7 +20,7 @@ namespace cartesian {
  * @complexity{@math{\Theta(N)}}
  */
 Eigen::Vector3d averagePosition(
-  const Scine::Utils::PositionCollection& positions,
+  const Utils::PositionCollection& positions,
   const std::vector<AtomIndex>& indices
 );
 
@@ -71,9 +69,20 @@ double adjustedSignedVolume(
   const Eigen::Vector3d& l
 );
 
+/*! @brief Fits a plane to indices and calculates its rms deviation
+ *
+ * @param positions Full set of positions
+ * @param indices Positions to plane fit
+ *
+ * @complexity{Performs a singular value decomposition. At least linear in the
+ * number of indices.}
+ */
+double rmsPlaneDeviation(
+  const Utils::PositionCollection& positions,
+  const std::vector<AtomIndex>& indices
+);
+
 } // namespace cartesian
-
 } // namespace molassembler
-
 } // namespace Scine
 #endif

@@ -43,7 +43,7 @@ AngstromWrapper convertToAngstromWrapper(const Eigen::MatrixXd& positions) {
   const unsigned N = positions.rows();
   AngstromWrapper angstromWrapper {N};
   for(unsigned i = 0; i < N; ++i) {
-    angstromWrapper.positions.row(i) = Scine::Utils::Position {
+    angstromWrapper.positions.row(i) = Utils::Position {
       positions.row(i).transpose()
     };
   }
@@ -74,10 +74,10 @@ Eigen::MatrixXd fitAndSetFixedPositions(
     weights(indexPositionPair.first) = 1;
   }
 
-  referenceMatrix *= Scine::Utils::Constants::angstrom_per_bohr;
+  referenceMatrix *= Utils::Constants::angstrom_per_bohr;
 
   // Perform the QuaternionFit
-  Scine::Utils::QuaternionFit fit(referenceMatrix, positions, weights);
+  Utils::QuaternionFit fit(referenceMatrix, positions, weights);
 
   return fit.getFittedData();
 }

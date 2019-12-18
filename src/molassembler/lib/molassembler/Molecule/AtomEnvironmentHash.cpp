@@ -101,7 +101,7 @@ bool BondInformation::operator == (const BondInformation& other) const {
 
 WideHashType hash(
   const AtomEnvironmentComponents bitmask,
-  const Scine::Utils::ElementType elementType,
+  const Utils::ElementType elementType,
   const std::vector<BondInformation>& sortedBonds,
   const boost::optional<Shapes::Shape>& shapeOptional,
   const boost::optional<unsigned>& assignedOptional

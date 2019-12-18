@@ -23,9 +23,9 @@ namespace interpret {
 
 namespace detail {
 
-Scine::Utils::PositionCollection paste(const std::vector<Scine::Utils::Position>& positions) {
+Utils::PositionCollection paste(const std::vector<Utils::Position>& positions) {
   const unsigned N = positions.size();
-  auto matrix = Scine::Utils::PositionCollection(N, 3);
+  auto matrix = Utils::PositionCollection(N, 3);
   for(unsigned i = 0; i < N; ++i) {
     matrix.row(i) = positions.at(i);
   }
@@ -36,7 +36,7 @@ Scine::Utils::PositionCollection paste(const std::vector<Scine::Utils::Position>
 
 struct MoleculeParts {
   InnerGraph graph;
-  std::vector<Scine::Utils::Position> angstromPositions;
+  std::vector<Utils::Position> angstromPositions;
   boost::optional<
     std::vector<BondIndex>
   > bondStereopermutatorCandidatesOptional;
@@ -48,33 +48,13 @@ struct Parts {
   unsigned nZeroLengthPositions = 0;
 };
 
-Parts construeParts(
-  const Scine::Utils::ElementTypeCollection& elements,
-  const AngstromWrapper& angstromWrapper,
-  const Scine::Utils::BondOrderCollection& bondOrders,
-  const BondDiscretizationOption discretization,
-  const boost::optional<double>& stereopermutatorBondOrderThresholdOptional
+// Yields a graph structure without element type annotations
+InnerGraph discretize(
+  const Utils::BondOrderCollection& bondOrders,
+  const BondDiscretizationOption discretization
 ) {
-  Parts parts;
-
-  // Discretize bond orders
-  const unsigned N = elements.size();
-
-  if(angstromWrapper.positions.rows() != N) {
-    throw std::invalid_argument(
-      "Number of positions in angstrom wrapper do not match number of elements"
-    );
-  }
-
-  if(bondOrders.getSystemSize<unsigned>() != N) {
-    throw std::invalid_argument(
-      "Bond order argument system size does not match number of elements"
-    );
-  }
-
-  InnerGraph atomCollectionGraph {
-    static_cast<InnerGraph::Vertex>(N)
-  };
+  const InnerGraph::Vertex N = bondOrders.getSystemSize();
+  InnerGraph graph {N};
 
   if(discretization == BondDiscretizationOption::Binary) {
     for(unsigned i = 0; i < N; ++i) {
@@ -82,7 +62,7 @@ Parts construeParts(
         double bondOrder = bondOrders.getOrder(i, j);
 
         if(bondOrder > 0.5) {
-          atomCollectionGraph.addEdge(i, j, BondType::Single);
+          graph.addEdge(i, j, BondType::Single);
         }
       }
     }
@@ -100,15 +80,41 @@ Parts construeParts(
             bond = BondType::Sextuple;
           }
 
-          atomCollectionGraph.addEdge(i, j, bond);
+          graph.addEdge(i, j, bond);
         }
       }
     }
   }
 
-  // Calculate the number of components and keep the component map
-  unsigned numComponents = atomCollectionGraph.connectedComponents(parts.componentMap);
+  return graph;
+}
 
+Parts construeParts(
+  const Utils::ElementTypeCollection& elements,
+  const AngstromWrapper& angstromWrapper,
+  const Utils::BondOrderCollection& bondOrders,
+  const BondDiscretizationOption discretization,
+  const boost::optional<double>& stereopermutatorBondOrderThresholdOptional
+) {
+  const unsigned N = elements.size();
+
+  // Check preconditions
+  if(angstromWrapper.positions.rows() != N) {
+    throw std::invalid_argument(
+      "Number of positions in angstrom wrapper do not match number of elements"
+    );
+  }
+
+  if(bondOrders.getSystemSize<unsigned>() != N) {
+    throw std::invalid_argument(
+      "Bond order argument system size does not match number of elements"
+    );
+  }
+
+  InnerGraph atomCollectionGraph = discretize(bondOrders, discretization);
+
+  Parts parts;
+  const unsigned numComponents = atomCollectionGraph.connectedComponents(parts.componentMap);
   parts.precursors.resize(numComponents);
 
   if(stereopermutatorBondOrderThresholdOptional) {
@@ -157,8 +163,8 @@ Parts construeParts(
       atomCollectionGraph.edges()
     )
   ) {
-    InnerGraph::Vertex source = atomCollectionGraph.source(edge),
-                       target = atomCollectionGraph.target(edge);
+    const InnerGraph::Vertex source = atomCollectionGraph.source(edge);
+    const InnerGraph::Vertex target = atomCollectionGraph.target(edge);
 
     // Both source and target are part of the same component (since they are bonded)
     auto& precursor = parts.precursors.at(
@@ -188,9 +194,9 @@ Parts construeParts(
 }
 
 MoleculesResult molecules(
-  const Scine::Utils::ElementTypeCollection& elements,
+  const Utils::ElementTypeCollection& elements,
   const AngstromWrapper& angstromWrapper,
-  const Scine::Utils::BondOrderCollection& bondOrders,
+  const Utils::BondOrderCollection& bondOrders,
   const BondDiscretizationOption discretization,
   const boost::optional<double>& stereopermutatorBondOrderThresholdOptional
 ) {
@@ -234,7 +240,7 @@ MoleculesResult molecules(
 }
 
 MoleculesResult molecules(
-  const Scine::Utils::ElementTypeCollection& elements,
+  const Utils::ElementTypeCollection& elements,
   const AngstromWrapper& angstromWrapper,
   const BondDiscretizationOption discretization,
   const boost::optional<double>& stereopermutatorBondOrderThresholdOptional
@@ -249,8 +255,8 @@ MoleculesResult molecules(
 }
 
 MoleculesResult molecules(
-  const Scine::Utils::AtomCollection& atomCollection,
-  const Scine::Utils::BondOrderCollection& bondOrders,
+  const Utils::AtomCollection& atomCollection,
+  const Utils::BondOrderCollection& bondOrders,
   const BondDiscretizationOption discretization,
   const boost::optional<double>& stereopermutatorBondOrderThresholdOptional
 ) {
@@ -264,7 +270,7 @@ MoleculesResult molecules(
 }
 
 MoleculesResult molecules(
-  const Scine::Utils::AtomCollection& atomCollection,
+  const Utils::AtomCollection& atomCollection,
   const BondDiscretizationOption discretization,
   const boost::optional<double>& stereopermutatorBondOrderThresholdOptional
 ) {

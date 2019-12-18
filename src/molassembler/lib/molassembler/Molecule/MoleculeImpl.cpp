@@ -14,6 +14,7 @@
 #include "Utils/Typenames.h"
 
 #include "molassembler/Cycles.h"
+#include "molassembler/Detail/Cartesian.h"
 #include "molassembler/Graph/Canonicalization.h"
 #include "molassembler/Graph/GraphAlgorithms.h"
 #include "molassembler/Modeling/CommonTrig.h"
@@ -26,7 +27,6 @@
 #include "molassembler/Stereopermutators/FeasiblePermutations.h"
 
 namespace Scine {
-
 namespace molassembler {
 
 Utils::AtomCollection Molecule::Impl::applyCanonicalizationMap(
@@ -302,16 +302,16 @@ void Molecule::Impl::_propagateGraphChange() {
 /* Public members */
 /* Constructors */
 Molecule::Impl::Impl() noexcept
-  : Impl(Scine::Utils::ElementType::H, Scine::Utils::ElementType::H, BondType::Single) {}
+  : Impl(Utils::ElementType::H, Utils::ElementType::H, BondType::Single) {}
 
-Molecule::Impl::Impl(const Scine::Utils::ElementType element) noexcept {
+Molecule::Impl::Impl(const Utils::ElementType element) noexcept {
   InnerGraph& inner = _adjacencies.inner();
   inner.addVertex(element);
 }
 
 Molecule::Impl::Impl(
-  const Scine::Utils::ElementType a,
-  const Scine::Utils::ElementType b,
+  const Utils::ElementType a,
+  const Utils::ElementType b,
   const BondType bondType
 ) noexcept {
   // update _adjacencies
@@ -360,7 +360,7 @@ Molecule::Impl::Impl(
 
 /* Modifiers */
 AtomIndex Molecule::Impl::addAtom(
-  const Scine::Utils::ElementType elementType,
+  const Utils::ElementType elementType,
   const AtomIndex adjacentTo,
   const BondType bondType
 ) {
@@ -753,7 +753,7 @@ bool Molecule::Impl::setBondType(
 
 void Molecule::Impl::setElementType(
   const AtomIndex a,
-  const Scine::Utils::ElementType elementType
+  const Utils::ElementType elementType
 ) {
   if(!_isValidIndex(a)) {
     throw std::out_of_range("Molecule::setElementType: This index is invalid!");
@@ -925,7 +925,6 @@ StereopermutatorList Molecule::Impl::inferStereopermutatorsFromPositions(
   const AtomIndex size = graph().N();
   StereopermutatorList stereopermutators;
 
-
   for(AtomIndex vertex = 0; vertex < size; vertex++) {
     RankingInformation localRanking = rankPriority(vertex, {}, angstromWrapper);
 
@@ -988,10 +987,31 @@ StereopermutatorList Molecule::Impl::inferStereopermutatorsFromPositions(
       tryInstantiateBondStereopermutator(bondIndex);
     }
   } else {
-    // Every bond is a candidate
+    // Every multiple-order bond is a candidate
     for(const BondIndex& bondIndex : boost::make_iterator_range(graph().bonds())) {
       if(_isGraphBasedBondStereopermutatorCandidate(graph().bondType(bondIndex))) {
         tryInstantiateBondStereopermutator(bondIndex);
+      }
+    }
+  }
+
+  // Look through all cycles of the molecule and try to find flat cycles
+  for(const auto& cycleBonds : graph().cycles()) {
+    if(cycleBonds.size() > 3) {
+      const auto& cycleIndices = makeRingIndexSequence(cycleBonds);
+      const double rmsPlaneDeviation = cartesian::rmsPlaneDeviation(
+        angstromWrapper.positions,
+        cycleIndices
+      );
+
+      // Threshold for planarity
+      constexpr double flatRmsPlaneDeviation = 0.05;
+      if(rmsPlaneDeviation <= flatRmsPlaneDeviation) {
+        for(const BondIndex& bond : cycleBonds) {
+          if(!stereopermutators.option(bond)) {
+            tryInstantiateBondStereopermutator(bond);
+          }
+        }
       }
     }
   }
@@ -1158,5 +1178,4 @@ bool Molecule::Impl::operator != (const Impl& other) const {
 }
 
 } // namespace molassembler
-
 } // namespace Scine

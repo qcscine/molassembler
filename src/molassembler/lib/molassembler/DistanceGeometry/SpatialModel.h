@@ -56,7 +56,7 @@ public:
   >;
 
   //! Type used to store fixed positions in angstrom
-  using FixedPositionsMapType = std::unordered_map<AtomIndex, Scine::Utils::Position>;
+  using FixedPositionsMapType = std::unordered_map<AtomIndex, Utils::Position>;
 
   /*!
    * @brief Type used to represent atom-pairwise distance bounds constructed
@@ -399,7 +399,7 @@ public:
     const AtomStereopermutator& permutator,
     const InnerGraph& graph,
     double looseningMultiplier,
-    const std::unordered_map<AtomIndex, Scine::Utils::Position>& fixedAngstromPositions,
+    const std::unordered_map<AtomIndex, Utils::Position>& fixedAngstromPositions,
     bool forceChiralConstraintEmission
   );
 
@@ -421,7 +421,7 @@ public:
     const AtomStereopermutator& stereopermutatorA,
     const AtomStereopermutator& stereopermutatorB,
     double looseningMultiplier,
-    const std::unordered_map<AtomIndex, Scine::Utils::Position>& fixedAngstromPositions
+    const std::unordered_map<AtomIndex, Utils::Position>& fixedAngstromPositions
   );
 //!@}
 

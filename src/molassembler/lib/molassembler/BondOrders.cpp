@@ -15,13 +15,13 @@ namespace Scine {
 
 namespace molassembler {
 
-Scine::Utils::BondOrderCollection uffBondOrders(
-  const Scine::Utils::ElementTypeCollection& elements,
+Utils::BondOrderCollection uffBondOrders(
+  const Utils::ElementTypeCollection& elements,
   const AngstromWrapper& angstromWrapper
 ) {
   const unsigned N = elements.size();
 
-  Scine::Utils::BondOrderCollection bondOrders(N);
+  Utils::BondOrderCollection bondOrders(N);
 
   for(unsigned i = 0; i < N; ++i) {
     for(unsigned j = i + 1; j < N; ++j) {

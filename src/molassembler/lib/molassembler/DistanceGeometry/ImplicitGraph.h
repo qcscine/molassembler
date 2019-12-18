@@ -167,7 +167,7 @@ private:
   const InnerGraph* _innerGraphPtr;
 
   //! Stores the two heaviest element types
-  std::array<Scine::Utils::ElementType, 2> _heaviestAtoms;
+  std::array<Utils::ElementType, 2> _heaviestAtoms;
 
   //! Dense adjacency matrix for O(1) access to fixed distances
   Eigen::MatrixXd _distances;

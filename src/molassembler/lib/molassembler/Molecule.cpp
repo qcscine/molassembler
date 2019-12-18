@@ -6,7 +6,6 @@
 #include "molassembler/Molecule/MoleculeImpl.h"
 
 namespace Scine {
-
 namespace molassembler {
 
 Utils::AtomCollection Molecule::applyCanonicalizationMap(
@@ -247,7 +246,6 @@ bool Molecule::operator != (const Molecule& other) const {
 
 
 } // namespace molassembler
-
 } // namespace Scine
 
 std::ostream& operator << (

@@ -32,7 +32,7 @@ void init_io(pybind11::module& m) {
       The smiles parser is implemented according to the OpenSMILES spec. It
       supports the following features:
       - Arbitrarily many molecules in a string
-      - Isotope markers (as long as they exist in Scine::Utils::ElementType)
+      - Isotope markers (as long as they exist in Utils::ElementType)
       - Valence filling of the organic subset
       - Set shapes from VSEPR using (possibly) supplied charge
       - Ring closures
@@ -62,7 +62,7 @@ void init_io(pybind11::module& m) {
       The smiles parser is implemented according to the OpenSMILES spec. It
       supports the following features:
       - Arbitrarily many molecules in a string
-      - Isotope markers (as long as they exist in Scine::Utils::ElementType)
+      - Isotope markers (as long as they exist in Utils::ElementType)
       - Valence filling of the organic subset
       - Set shapes from VSEPR using (possibly) supplied charge
       - Ring closures

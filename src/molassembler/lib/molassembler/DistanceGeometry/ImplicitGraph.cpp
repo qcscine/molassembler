@@ -74,7 +74,7 @@ ImplicitGraph::ImplicitGraph(
   BoundsMatrix bounds
 ) : _innerGraphPtr(&inner), _distances(std::move(bounds)) {
   // Determine the two heaviest element types in the molecule, O(N)
-  _heaviestAtoms = {{Scine::Utils::ElementType::H, Scine::Utils::ElementType::H}};
+  _heaviestAtoms = {{Utils::ElementType::H, Utils::ElementType::H}};
   const VertexDescriptor N = inner.N();
   for(AtomIndex i = 0; i < N; ++i) {
     auto elementType = inner.elementType(i);

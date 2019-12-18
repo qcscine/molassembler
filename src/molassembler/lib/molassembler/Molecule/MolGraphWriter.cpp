@@ -22,7 +22,7 @@ MolGraphWriter::MolGraphWriter(
 ) : graphPtr(passGraphPtr), stereopermutatorListPtr(passPermutatorListPtr) {}
 
 /* Information */
-Scine::Utils::ElementType MolGraphWriter::getElementType(
+Utils::ElementType MolGraphWriter::getElementType(
   const AtomIndex vertexIndex
 ) const {
   return graphPtr->elementType(vertexIndex);
@@ -97,7 +97,7 @@ void MolGraphWriter::operator() (
   std::ostream& os,
   const AtomIndex vertexIndex
 ) const {
-  const std::string symbolString = Scine::Utils::ElementInfo::symbol(
+  const std::string symbolString = Utils::ElementInfo::symbol(
     graphPtr->elementType(vertexIndex)
   );
 

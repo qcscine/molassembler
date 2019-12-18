@@ -225,7 +225,7 @@ void write(
 void write(
   const std::string& filename,
   const Molecule& molecule,
-  const Scine::Utils::PositionCollection& positions
+  const Utils::PositionCollection& positions
 ) {
   auto data = exchangeFormat(molecule, positions);
 

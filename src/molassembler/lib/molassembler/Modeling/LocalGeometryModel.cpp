@@ -33,7 +33,7 @@ const std::map<BondType, double> bondWeights {
 };
 
 boost::optional<Shapes::Shape> vsepr(
-  const Scine::Utils::ElementType centerAtomType,
+  const Utils::ElementType centerAtomType,
   const std::vector<BindingSiteInformation>& sites,
   const int formalCharge
 ) {
@@ -225,7 +225,7 @@ std::vector<LocalGeometry::BindingSiteInformation> reduceToSiteInformation(
       LocalGeometry::BindingSiteInformation {
         0,
         0,
-        temple::map(ligand, [&](const AtomIndex i) -> Scine::Utils::ElementType {
+        temple::map(ligand, [&](const AtomIndex i) -> Utils::ElementType {
           return molGraph.elementType(i);
         }),
         molGraph.bondType(

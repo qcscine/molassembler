@@ -215,7 +215,7 @@ const std::array<double, 110> bondRadii {
   1.6  // Mt
 };
 
-double bondRadius(const Scine::Utils::ElementType elementType) {
+double bondRadius(const Utils::ElementType elementType) {
   return bondRadii.at(
     Utils::ElementInfo::Z(elementType)
   );
@@ -356,7 +356,7 @@ std::array<ElementInfo, 110> elementData {{
   {0.0, 2u, 0u, 7u, 14u} // Mt
 }};
 
-bool isMainGroupElement(const Scine::Utils::ElementType elementType) {
+bool isMainGroupElement(const Utils::ElementType elementType) {
   unsigned Z = Utils::ElementInfo::Z(elementType);
   return (
     Z <= 20
@@ -367,7 +367,7 @@ bool isMainGroupElement(const Scine::Utils::ElementType elementType) {
   );
 }
 
-boost::optional<unsigned> mainGroupVE(const Scine::Utils::ElementType elementType) {
+boost::optional<unsigned> mainGroupVE(const Utils::ElementType elementType) {
   if(isMainGroupElement(elementType)) {
     return elementData.at(
       Utils::ElementInfo::Z(elementType)
@@ -377,7 +377,7 @@ boost::optional<unsigned> mainGroupVE(const Scine::Utils::ElementType elementTyp
   return {};
 }
 
-unsigned dElectronCount(const Scine::Utils::ElementType elementType) {
+unsigned dElectronCount(const Utils::ElementType elementType) {
   if(isMainGroupElement(elementType)) {
     return 0;
   }
@@ -387,7 +387,7 @@ unsigned dElectronCount(const Scine::Utils::ElementType elementType) {
   ).valenceElectrons('d');
 }
 
-double vdwRadius(const Scine::Utils::ElementType elementType) {
+double vdwRadius(const Utils::ElementType elementType) {
   return elementData.at(
     Utils::ElementInfo::Z(elementType)
   ).vdwRadius();

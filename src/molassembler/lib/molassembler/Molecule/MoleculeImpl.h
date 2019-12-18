@@ -15,7 +15,6 @@
 #include "Utils/Geometry/AtomCollection.h"
 
 namespace Scine {
-
 namespace molassembler {
 
 struct Molecule::Impl {
@@ -324,7 +323,6 @@ struct Molecule::Impl {
 };
 
 } // namespace molassembler
-
 } // namespace Scine
 
 #endif

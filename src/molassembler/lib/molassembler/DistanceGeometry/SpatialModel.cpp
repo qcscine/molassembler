@@ -150,7 +150,7 @@ SpatialModel::SpatialModel(
       double spatialDistance = cartesian::distance(
         indexPositionPairA.second,
         indexPositionPairB.second
-      ) * Scine::Utils::Constants::angstrom_per_bohr ;
+      ) * Utils::Constants::angstrom_per_bohr ;
 
       _constraints.emplace(
         orderedSequence(indexPositionPairA.first, indexPositionPairB.first),
@@ -164,7 +164,7 @@ SpatialModel::SpatialModel(
   for(const auto& fixedPositionPair : configuration.fixedPositions) {
     fixedAngstromPositions.emplace(
       fixedPositionPair.first,
-      fixedPositionPair.second * Scine::Utils::Constants::angstrom_per_bohr
+      fixedPositionPair.second * Utils::Constants::angstrom_per_bohr
     );
   }
 
@@ -267,7 +267,7 @@ void SpatialModel::addAtomStereopermutatorInformation(
   const AtomStereopermutator& permutator,
   const InnerGraph& graph,
   const double looseningMultiplier,
-  const std::unordered_map<AtomIndex, Scine::Utils::Position>& fixedAngstromPositions,
+  const std::unordered_map<AtomIndex, Utils::Position>& fixedAngstromPositions,
   const bool forceChiralConstraintEmission
 ) {
   const auto& feasiblePermutations = permutator.getFeasible();
@@ -511,7 +511,7 @@ void SpatialModel::addBondStereopermutatorInformation(
   const AtomStereopermutator& stereopermutatorA,
   const AtomStereopermutator& stereopermutatorB,
   const double looseningMultiplier,
-  const std::unordered_map<AtomIndex, Scine::Utils::Position>& fixedAngstromPositions
+  const std::unordered_map<AtomIndex, Utils::Position>& fixedAngstromPositions
 ) {
   // Check preconditions and get access to commonly needed things
   assert(permutator.indexOfPermutation());

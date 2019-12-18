@@ -122,10 +122,10 @@ struct Configuration {
    *   constituting a haptic ligand binding site must be either completely
    *   unfixed or fixed and may not be mixed).
    *
-   * @note Remember Scine::Utils::Positions are in bohr length units!
+   * @note Remember Utils::Positions are in bohr length units!
    */
   std::vector<
-    std::pair<AtomIndex, Scine::Utils::Position>
+    std::pair<AtomIndex, Utils::Position>
   > fixedPositions;
 };
 

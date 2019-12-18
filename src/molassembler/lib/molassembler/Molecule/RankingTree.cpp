@@ -67,7 +67,7 @@ public:
   }
 
   void operator() (std::ostream& os, const TreeVertexIndex& vertexIndex) const {
-    auto symbolString = Scine::Utils::ElementInfo::symbol(
+    auto symbolString = Utils::ElementInfo::symbol(
       _baseRef._graph.elementType(
         _baseRef._tree[vertexIndex].molIndex
       )
@@ -2539,7 +2539,7 @@ unsigned RankingTree::_adjacentTerminalHydrogens(const TreeVertexIndex& index) c
     auto edgeTarget = boost::target(*outIterPair.first, _tree);
 
     if(
-      _graph.elementType(_tree[edgeTarget].molIndex) == Scine::Utils::ElementType::H
+      _graph.elementType(_tree[edgeTarget].molIndex) == Utils::ElementType::H
       && boost::out_degree(edgeTarget, _tree) == 0
     ) {
       ++count;

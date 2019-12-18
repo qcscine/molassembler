@@ -19,17 +19,17 @@ namespace Scine {
 namespace molassembler {
 
 /**
- * @brief A wrapper class around Scine::Utils' PositionCollection to emphasize
+ * @brief A wrapper class around Utils' PositionCollection to emphasize
  *   that the positions stored therein are in Angstrom
  */
 class AngstromWrapper {
 public:
-  Scine::Utils::PositionCollection positions;
+  Utils::PositionCollection positions;
 
   AngstromWrapper() = default;
   explicit AngstromWrapper(unsigned N);
   explicit AngstromWrapper(
-    const Scine::Utils::PositionCollection& pos,
+    const Utils::PositionCollection& pos,
     LengthUnit lengthUnit = LengthUnit::Bohr
   );
 
@@ -40,7 +40,7 @@ public:
    * corresponding instance, as the underlying positions have been converted to
    * bohr.
    */
-  Scine::Utils::PositionCollection getBohr() const;
+  Utils::PositionCollection getBohr() const;
 };
 
 } // namespace molassmbler

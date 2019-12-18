@@ -40,7 +40,7 @@ namespace LocalGeometry {
 struct BindingSiteInformation {
   unsigned L, X;
 
-  std::vector<Scine::Utils::ElementType> elements;
+  std::vector<Utils::ElementType> elements;
   /* Only one bond type is needed - If the ligand consists of a single atom,
    * then we only need to store one bond. If the ligand consists of multiple
    * atoms, then the BondType is Eta.
@@ -51,7 +51,7 @@ struct BindingSiteInformation {
   BindingSiteInformation(
     const unsigned passL,
     const unsigned passX,
-    std::vector<Scine::Utils::ElementType> passElements,
+    std::vector<Utils::ElementType> passElements,
     const BondType passBondType
   ) : L(passL), X(passX), elements(std::move(passElements)), bondType(passBondType) {}
 };
@@ -95,7 +95,7 @@ int formalCharge(
  * @complexity{@math{\Theta(1)}}
  */
 boost::optional<Shapes::Shape> vsepr(
-  Scine::Utils::ElementType centerAtomType,
+  Utils::ElementType centerAtomType,
   const std::vector<BindingSiteInformation>& sites,
   int formalCharge
 );

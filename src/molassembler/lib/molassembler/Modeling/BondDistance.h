@@ -29,8 +29,8 @@ constexpr double bondOrderCorrectionLambda = 0.1332;
  * @complexity{@math{\Theta(1)}}
  */
 double calculateBondDistance(
-  Scine::Utils::ElementType a,
-  Scine::Utils::ElementType b,
+  Utils::ElementType a,
+  Utils::ElementType b,
   BondType bondType
 );
 
@@ -39,8 +39,8 @@ double calculateBondDistance(
  * @complexity{@math{\Theta(1)}}
  */
 double calculateBondOrder(
-  Scine::Utils::ElementType a,
-  Scine::Utils::ElementType b,
+  Utils::ElementType a,
+  Utils::ElementType b,
   double distance
 );
 

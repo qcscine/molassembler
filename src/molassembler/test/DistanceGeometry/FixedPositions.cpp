@@ -24,8 +24,8 @@ using namespace molassembler;
 
 BOOST_AUTO_TEST_CASE(FixedPositionsWork) {
   auto checkPositions = [](
-    const Scine::Utils::PositionCollection& positions,
-    const std::vector<std::pair<AtomIndex, Scine::Utils::Position>>& fixedPositions
+    const Utils::PositionCollection& positions,
+    const std::vector<std::pair<AtomIndex, Utils::Position>>& fixedPositions
   ) -> bool {
     bool pass = true;
     for(const auto& fixedPositionPair : fixedPositions) {
@@ -50,7 +50,7 @@ BOOST_AUTO_TEST_CASE(FixedPositionsWork) {
   auto octadecane = IO::read("various/octadecane.mol");
 
   // Start simple: make an arbitrary atom the origin.
-  const Scine::Utils::Position origin(0.0, 0.0, 0.0);
+  const Utils::Position origin(0.0, 0.0, 0.0);
 
   DistanceGeometry::Configuration config;
   config.fixedPositions = {{13, origin}};
@@ -71,8 +71,8 @@ BOOST_AUTO_TEST_CASE(FixedPositionsWork) {
    * adapt.
    */
   config.fixedPositions = {
-    {16, Scine::Utils::Position {-3, 0.0, 0.0}},
-    {17, Scine::Utils::Position {3, 0.0, 0.0}}
+    {16, Utils::Position {-3, 0.0, 0.0}},
+    {17, Utils::Position {3, 0.0, 0.0}}
   };
   conformerResult = generateRandomConformation(octadecane, config);
   BOOST_CHECK_MESSAGE(

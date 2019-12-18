@@ -16,7 +16,7 @@ using namespace LocalGeometry;
 
 using TestCaseType = std::tuple<
   std::string, // a Name for the current compound
-  Scine::Utils::ElementType, // The central atom type
+  Utils::ElementType, // The central atom type
   std::vector<BindingSiteInformation>, // a list of ligand types
   int // charge centered on the central atom
 >;
@@ -29,7 +29,7 @@ void testVsepr(
   std::string complexName;
   int charge;
   std::vector<BindingSiteInformation> ligands;
-  Scine::Utils::ElementType centerAtomType;
+  Utils::ElementType centerAtomType;
 
   for(const auto& testCase : testCases) {
 
@@ -70,7 +70,7 @@ void testVsepr(
 auto makeLigand(
   const unsigned L,
   const unsigned X,
-  const Scine::Utils::ElementType& type,
+  const Utils::ElementType& type,
   const BondType& bty
 ) {
   return BindingSiteInformation {
@@ -105,7 +105,7 @@ std::vector<BindingSiteInformation> merge(
 }
 
 BOOST_AUTO_TEST_CASE(VseprTests) {
-  using Element = Scine::Utils::ElementType;
+  using Element = Utils::ElementType;
 
   testVsepr( // AX2E0
     Shapes::Shape::Line,

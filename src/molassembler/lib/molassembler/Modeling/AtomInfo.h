@@ -68,7 +68,7 @@ private:
  */
 extern const std::array<double, 110> bondRadii;
 
-double bondRadius(Scine::Utils::ElementType elementType);
+double bondRadius(Utils::ElementType elementType);
 
 /*!
  * ElementData instances for each element type. This is populated with the
@@ -83,18 +83,18 @@ double bondRadius(Scine::Utils::ElementType elementType);
  */
 extern std::array<ElementInfo, 110> elementData;
 
-bool isMainGroupElement(Scine::Utils::ElementType elementType);
+bool isMainGroupElement(Utils::ElementType elementType);
 
 /*!
  * Returns a count of valence electrons if the specified element type is a main
  * group element. Otherwise, returns boost::none.
  */
-boost::optional<unsigned> mainGroupVE(Scine::Utils::ElementType elementType);
+boost::optional<unsigned> mainGroupVE(Utils::ElementType elementType);
 
-unsigned dElectronCount(Scine::Utils::ElementType elementType);
+unsigned dElectronCount(Utils::ElementType elementType);
 
 //! Accessor function to fetch the vdw radius directly from elementData
-double vdwRadius(Scine::Utils::ElementType elementType);
+double vdwRadius(Utils::ElementType elementType);
 
 } // namespace AtomInfo
 

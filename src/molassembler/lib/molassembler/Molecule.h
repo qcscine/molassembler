@@ -29,14 +29,7 @@ class AtomCollection;
 } // namespace Utils
 } // namespace Scine
 
-/**
- * @brief Master namespace to which the molassembler project belongs
- */
 namespace Scine {
-
-/**
- * @brief Molecular graph and stereocenter manipulation
- */
 namespace molassembler {
 
 // Forward declarations
@@ -826,7 +819,6 @@ private:
 };
 
 } // namespace molassembler
-
 } // namespace Scine
 
 std::ostream& operator << (

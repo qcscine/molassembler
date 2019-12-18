@@ -33,8 +33,8 @@ class AngstromWrapper;
  * @warning UFF parameter bond order calculation is a very primitive
  *   approximation and carries a high risk of misinterpretation
  */
-Scine::Utils::BondOrderCollection uffBondOrders(
-  const Scine::Utils::ElementTypeCollection& elements,
+Utils::BondOrderCollection uffBondOrders(
+  const Utils::ElementTypeCollection& elements,
   const AngstromWrapper& angstromWrapper
 );
 

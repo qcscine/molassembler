@@ -59,10 +59,10 @@ OuterGraph::OuterGraph(InnerGraph&& inner) : _innerPtr(
   std::make_unique<InnerGraph>(std::move(inner))
 ) {}
 
-Scine::Utils::ElementTypeCollection OuterGraph::elementCollection() const {
+Utils::ElementTypeCollection OuterGraph::elementCollection() const {
   const AtomIndex size = N();
 
-  Scine::Utils::ElementTypeCollection elements;
+  Utils::ElementTypeCollection elements;
   elements.reserve(size);
 
   for(AtomIndex i = 0; i < size; ++i) {
@@ -72,7 +72,7 @@ Scine::Utils::ElementTypeCollection OuterGraph::elementCollection() const {
   return elements;
 }
 
-Scine::Utils::ElementType OuterGraph::elementType(const AtomIndex a) const {
+Utils::ElementType OuterGraph::elementType(const AtomIndex a) const {
   return inner().elementType(a);
 }
 

@@ -12,21 +12,21 @@ namespace Scine {
 namespace molassembler {
 
 AngstromWrapper::AngstromWrapper(const unsigned N)
-  : positions(Scine::Utils::PositionCollection::Zero(N, 3)) {}
+  : positions(Utils::PositionCollection::Zero(N, 3)) {}
 
 AngstromWrapper::AngstromWrapper(
-  const Scine::Utils::PositionCollection& pos,
+  const Utils::PositionCollection& pos,
   const LengthUnit lengthUnit
 ) {
   if(lengthUnit == LengthUnit::Bohr) {
-    positions = Scine::Utils::Constants::angstrom_per_bohr * pos;
+    positions = Utils::Constants::angstrom_per_bohr * pos;
   } else {
     positions = pos;
   }
 }
 
-Scine::Utils::PositionCollection AngstromWrapper::getBohr() const {
-  return positions * Scine::Utils::Constants::bohr_per_angstrom;
+Utils::PositionCollection AngstromWrapper::getBohr() const {
+  return positions * Utils::Constants::bohr_per_angstrom;
 }
 
 } // namespace molassembler
