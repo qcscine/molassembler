@@ -35,6 +35,7 @@ setuptools.setup(
         "Topic :: Scientific/Engineering :: Chemistry"
     ],
     zip_safe=False,
-    test_suite='pytest',
-    tests_require=['pytest']
+    install_requires=["numpy"],
+    test_suite="pytest",
+    tests_require=["pytest"]
 )
