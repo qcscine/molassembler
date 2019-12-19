@@ -233,9 +233,12 @@ manual.\enlargethispage{\baselineskip}
 \chapter{Obtaining the software}
 \label{ch:obtain}
 
-\textsc{Molassembler}  is distributed as open source software in the framework of the SCINE project (\href{https://scine.ethz.ch/}{www.scine.ethz.ch}).
-Visit our website
-(\href{https://scine.ethz.ch/download/molassembler}{www.scine.ethz.ch/download/molassembler}) to obtain the software. 
+\textsc{Molassembler}  is distributed as open source software in the framework
+of the \href{https://scine.ethz.ch/}{SCINE
+Project}\footnote{\texttt{scine.ethz.ch}}.
+Visit our 
+\href{https://scine.ethz.ch/download/molassembler}{website}\footnote{\texttt{scine.ethz.ch/download/molassembler}}
+to obtain the software. 
 
 
 \section{System requirements}
@@ -248,10 +251,28 @@ parallelization in order to reduce wall clock times.
 
 \chapter{Installation}\label{ch:installation}
 
-\section{Conda distribution}
+\section{Conda Forge distribution}
 
-\textsc{Molassembler} is distributed in binary form for Linux, MacOS and Windows
-in the \texttt{conda-forge} channel.
+\textsc{Molassembler} is distributed for Linux, MacOS and Windows on the
+\texttt{conda-forge} channel. If you have not enabled the \texttt{conda-forge}
+channel yet, you can do so with:
+
+\begin{Verbatim}
+conda config --add channels conda-forge
+conda config --set channel_priority strict
+\end{Verbatim}
+
+You can install both the C++ library and its Python bindings with:
+
+\begin{Verbatim}
+conda install scine-molassembler
+\end{Verbatim}
+
+This also installs the \texttt{scine-utilities} library and its Python bindings,
+which define exchange formats for the SCINE project. If you are interested only
+in the C++ library, then you can install just the package
+\texttt{scine-molassembler-cpp}.
+
 
 \section{Python bindings on PyPI}
 
@@ -265,20 +286,21 @@ pip3 upgrade --user pip
 pip3 install --user scine_molassembler
 \end{Verbatim}
 
+
 \section{Building from source code}
 
-\textsc{Molassembler} is distributed as an open source code. In order to compile
-\textsc{Molassembler} from source code, you need
+\textsc{Molassembler} is an open source project. In order to compile
+it from source, you need
 \begin{itemize}
   \item a C++ compiler supporting the C++14 standard\footnote{\texttt{gcc} $\ge$
-    7.3.0, \texttt{clang}~$\ge$~4}
+    7.3.0, \texttt{clang}~$\ge$~4, \texttt{MinGW-w64}, etc.}
   \item \texttt{cmake} $\ge$ 3.9.0
   \item the \texttt{Boost} libraries $\ge$ 1.64.0
   \item the \texttt{Eigen} library $\ge$ 3.3.2
 \end{itemize}
-In order to compile the software, either directly clone the repository with
-\texttt{git} or extract the downloaded tarball, change to the source directory
-and execute the following steps:
+Either directly clone the repository with \texttt{git} or extract a downloaded
+archive, change to the source directory and execute the following:
+
 \begin{Verbatim}
 mkdir build install
 cd build
@@ -303,7 +325,8 @@ For further compile-time options regarding the build of \textsc{Molassembler},
 you can run \texttt{cmake -L ..} in the \texttt{build} directory. Look for
 options prefixed with \texttt{SCINE} or \texttt{MOLASSEMBLER}.
 
-In case you need support with the setup of \textsc{Molassembler}, please contact us by writing to \href{scine@phys.chem.ethz.ch}{scine@phys.chem.ethz.ch}.
+In case you need support with the setup of \textsc{Molassembler}, please contact
+us by writing to \href{mailto:scine@phys.chem.ethz.ch}{scine@phys.chem.ethz.ch}.
 
 
 \chapter{Using the C++ library}
@@ -328,20 +351,24 @@ the Python module in the environment variable \texttt{PYTHONPATH},
 \textit{e.g.}, you might need to run the command 
 
 \begin{Verbatim} 
-export PYTHONPATH=$PYTHONPATH:<source code directory>/install/lib/python<version>/site-packages 
+export PYTHONPATH=$PYTHONPATH:<install directory>/lib/python<version>/site-packages 
 \end{Verbatim} 
 
 where \texttt{<version>} is the Python version you are using (\textit{e.g.},
-3.6). Now, you can simply import the library and use it as any other Python
-library. All functionality available in the Python module is documented with
-examples. You can explore the available functionality using the \texttt{help}
-and \texttt{dir} python functions:
+3.6) and \texttt{<install directory>} is where you installed
+\textsc{Molassembler}. Now you can simply import the module and use it just
+like any other Python module. All functionality available in the Python module
+is documented with examples. You can explore the available functionality using
+the \texttt{help} and \texttt{dir} Python functions:
 
 \begin{Verbatim}
 import scine_molassembler as masm
 dir(masm)
 help(masm)
 \end{Verbatim}
+
+A Sphinx documentation is available 
+\href{https://scine.ethz.ch/download/molassembler}{online}\footnote{\texttt{scine.ethz.ch/download/molassembler}}.
 
 \chapter{Extensions planned in future releases}
 \begin{itemize}
