@@ -31,7 +31,7 @@ test:gcc_debug:
     - default_docker
   image: gitlab.chab.ethz.ch:4567/reiher/docker/scine-gcc:latest
   script:
-    - (cd build_gcc_debug && ctest --output-on-failure)
+    - (cd build_gcc_debug/src && ctest --output-on-failure)
     - python $(which gcovr) -r "$(pwd)/src/" -u --object-directory="$(pwd)/build_gcc_debug/src/" --exclude-dir ".*test.*" --exclude-dir ".*extern.*" --exclude-dir ".*analysis.*" -e ".*extern.*" -e ".*test.*"
   dependencies:
     - build:gcc_debug
@@ -63,7 +63,7 @@ test:gcc_release:
     - default_docker
   image: gitlab.chab.ethz.ch:4567/reiher/docker/scine-gcc:latest
   script:
-    - (cd build_gcc_release && ctest --output-on-failure)
+    - (cd build_gcc_release/src && ctest --output-on-failure)
   dependencies:
     - build:gcc_release
 
@@ -96,7 +96,7 @@ test:clang_release:
   only:
     - master
   script:
-    - (cd build_clang && ctest --output-on-failure)
+    - (cd build_clang/src && ctest --output-on-failure)
   dependencies:
     - build:clang_release
 
