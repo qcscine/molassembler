@@ -676,47 +676,53 @@ std::vector<unsigned> BondStereopermutator::Impl::notObviouslyInfeasibleStereope
     return temple::iota<unsigned>(compositePermutations);
   }
 
+  /* Try to match the shape position of the composite dihedral to the link's
+   * site index pair using the atom stereopermutator shape position maps
+   *
+   * Note that there may be links that are not involved in dihedrals (i.e.
+   * they are not part of the group of shape positions that interact in the
+   * dihedral, e.g. the position trans in a triangle - square combination.)
+   */
   auto getDihedralInformation = [&](
     const std::vector<stereopermutation::Composite::DihedralTuple>& dihedrals,
     const LinkInformation& link
   ) -> boost::optional<std::tuple<AtomIndex, AtomIndex, double>> {
-    unsigned firstSymmetryPosition;
-    unsigned secondSymmetryPosition;
-    double dihedralAngle;
+    const auto& firstSiteIndices = permutatorReferences.first.getRanking().sites.at(link.indexPair.first);
+    const auto& secondSiteIndices = permutatorReferences.second.getRanking().sites.at(link.indexPair.second);
 
-    for(const auto& dihedralTuple : dihedrals) {
-      std::tie(firstSymmetryPosition, secondSymmetryPosition, dihedralAngle) = dihedralTuple;
-
-      const unsigned siteIndexIAtFirst = SymmetryMapHelper::getSiteIndexAt(
-        firstSymmetryPosition,
-        permutatorReferences.first.getShapePositionMap()
-      );
-      if(siteIndexIAtFirst != link.indexPair.first) {
-        continue;
-      }
-
-      const unsigned siteIndexLAtSecond = SymmetryMapHelper::getSiteIndexAt(
-        secondSymmetryPosition,
-        permutatorReferences.second.getShapePositionMap()
-      );
-      if(siteIndexLAtSecond != link.indexPair.second) {
-        continue;
-      }
-
-      const auto& iSite = permutatorReferences.first.getRanking().sites.at(siteIndexIAtFirst);
-      const auto& lSite = permutatorReferences.second.getRanking().sites.at(siteIndexLAtSecond);
-      if(iSite.size() > 1 || lSite.size() > 1) {
-        return boost::none;
-      }
-
-      return std::make_tuple(
-        iSite.front(),
-        lSite.front(),
-        dihedralAngle
-      );
+    // We can't decide a dihedral for haptic sites here
+    if(firstSiteIndices.size() > 1 || secondSiteIndices.size() > 1) {
+      return boost::none;
     }
 
-    return boost::none;
+    const std::pair<unsigned, unsigned> linkShapePositions {
+      permutatorReferences.first.getShapePositionMap().at(link.indexPair.first),
+      permutatorReferences.second.getShapePositionMap().at(link.indexPair.second)
+    };
+
+    // Look for a composite dihedral matching the shape positions
+    auto findIter = std::find_if(
+      std::begin(dihedrals),
+      std::end(dihedrals),
+      [&](const auto& dihedral) -> bool {
+        return (
+          std::get<0>(dihedral) == std::get<0>(linkShapePositions)
+          && std::get<1>(dihedral) == std::get<1>(linkShapePositions)
+        );
+      }
+    );
+
+    // There is no matching dihedral for this link (this is okay!)
+    if(findIter == std::end(dihedrals)) {
+      return boost::none;
+    }
+
+    const double dihedralAngle = std::get<2>(*findIter);
+    return std::make_tuple(
+      firstSiteIndices.front(),
+      secondSiteIndices.front(),
+      dihedralAngle
+    );
   };
 
   std::vector<unsigned> viableStereopermutations;
@@ -735,7 +741,10 @@ std::vector<unsigned> BondStereopermutator::Impl::notObviouslyInfeasibleStereope
           );
 
           if(!dihedralInformationOption) {
-            std::cout << "Could not match dihedral information\n";
+            /* Haptic sites involved, we don't deal with those currently, we
+             * blanket accept them. Or the link is irrelevant to the dihedral,
+             * so it doesn't matter to the viability of the stereopermutation.
+             */
             return false;
           }
 

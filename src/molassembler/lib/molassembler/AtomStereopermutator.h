@@ -345,7 +345,7 @@ public:
    * For instance, if octahedral M[(A-A)3], there are four abstract arrangements
    * - trans-trans-trans
    * - trans-cis-cis
-   * - 2x cis-cis-cis (Δ and Λ isomers, ship propeller-like chirality)
+   * - 2x cis-cis-cis (Δ and Λ isomers, ship propeller-like)
    *
    * However, the number of stereopermutations for a concrete case in which the
    * bridges are too short to allow trans bonding is reduced by all
