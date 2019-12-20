@@ -52,22 +52,51 @@ if(NOT ADD_EIGEN_SEARCHED_EXTERNAL_LINALG_LIBRARIES)
 endif()
 
 function(target_link_eigen target_name mode)
-  # Append the required properties to the passed target
+  # Everything relating to the special case of object libraries can be
+  # simplified down to the target_link_libraries command when the minimum cmake
+  # version is bumped past 3.12.0
+  if("${CMAKE_VERSION}" VERSION_GREATER_EQUAL "3.12.0")
+    set(_CAN_LINK_OBJECT_LIBRARIES TRUE)
+  endif()
   get_target_property(target_type ${target_name} TYPE)
+  if("${target_type}" STREQUAL "OBJECT_LIBRARY")
+    set(_IS_OBJECT_LIBRARY TRUE)
+  endif()
+
+  # Append the required properties to the passed target
   if(MKL_FOUND AND SCINE_USE_INTEL_MKL)
-    target_link_libraries(${target_name} ${mode} Eigen3::Eigen ${MKL_LIBRARIES} OpenMP::OpenMP_CXX)
+    # MKL AND EIGEN_USE_MKL_ALL
+    if(_CAN_LINK_OBJECT_LIBRARIES OR NOT _IS_OBJECT_LIBRARY)
+      target_link_libraries(${target_name} ${mode} Eigen3::Eigen ${MKL_LIBRARIES} OpenMP::OpenMP_CXX)
+    else()
+      target_include_directories(${target_name} ${mode} $<TARGET_PROPERTY:Eigen3::Eigen,INTERFACE_INCLUDE_DIRECTORIES>)
+    endif()
     target_include_directories(${target_name} ${mode} ${MKL_INCLUDE_DIRS})
     target_compile_definitions(${target_name} ${mode} EIGEN_USE_MKL_ALL)
+    target_compile_options(${target_name} PRIVATE $<$<BOOL:${OpenMP_CXX_FOUND}>:${OpenMP_CXX_FLAGS}>)
   else()
     if(LAPACK_FOUND AND SCINE_USE_LAPACK)
-      target_link_libraries(${target_name} ${mode} Eigen3::Eigen ${LAPACK_LIBRARIES})
+      # LAPACK and EIGEN_USE_LAPACK / EIGEN_USE_BLAS
+      if(_CAN_LINK_OBJECT_LIBRARIES OR NOT _IS_OBJECT_LIBRARY)
+        target_link_libraries(${target_name} ${mode} Eigen3::Eigen ${LAPACK_LIBRARIES})
+      endif()
       target_compile_definitions(${target_name} ${mode} EIGEN_USE_LAPACK EIGEN_USE_BLAS)
     else()
       if(BLAS_FOUND AND SCINE_USE_BLAS)
-        target_link_libraries(${target_name} ${mode} Eigen3::Eigen ${BLAS_LIBRARIES})
+        # Blas and EIGEN_USE_BLAS
+        if(_CAN_LINK_OBJECT_LIBRARIES OR NOT _IS_OBJECT_LIBRARY)
+          target_link_libraries(${target_name} ${mode} Eigen3::Eigen ${BLAS_LIBRARIES})
+        else()
+          target_include_directories(${target_name} ${mode} $<TARGET_PROPERTY:Eigen3::Eigen,INTERFACE_INCLUDE_DIRECTORIES>)
+        endif()
         target_compile_definitions(${target_name} ${mode} EIGEN_USE_BLAS)
       else()
-        target_link_libraries(${target_name} ${mode} Eigen3::Eigen)
+        # Just Eigen, no definitions
+        if(_CAN_LINK_OBJECT_LIBRARIES OR NOT _IS_OBJECT_LIBRARY)
+          target_link_libraries(${target_name} ${mode} Eigen3::Eigen)
+        else()
+          target_include_directories(${target_name} ${mode} $<TARGET_PROPERTY:Eigen3::Eigen,INTERFACE_INCLUDE_DIRECTORIES>)
+        endif()
       endif()
     endif()
   endif()
