@@ -13,7 +13,7 @@ set_target_properties(molassembler_python PROPERTIES
 )
 target_include_directories(molassembler_python SYSTEM PRIVATE ${PYBIND11_INCLUDE_DIR})
 target_compile_options(molassembler_python PRIVATE ${MOLASSEMBLER_CXX_FLAGS})
-target_link_libraries(molassembler_python PRIVATE molassembler Eigen3::Eigen)
+target_link_libraries(molassembler_python PRIVATE molassembler_static Eigen3::Eigen)
 
 include(FindPythonModule)
 
