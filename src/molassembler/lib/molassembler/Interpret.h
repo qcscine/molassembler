@@ -10,14 +10,15 @@
 #ifndef INCLUDE_MOLASSEMBLER_INTERPRET_H
 #define INCLUDE_MOLASSEMBLER_INTERPRET_H
 
+#include "molassembler/Export.h"
 #include "boost/optional.hpp"
 #include <vector>
 
 
 namespace Scine {
+namespace Utils {
 
 // External forward-declarations
-namespace Utils {
 enum class ElementType : unsigned;
 class AtomCollection;
 class BondOrderCollection;
@@ -34,7 +35,7 @@ class AngstromWrapper;
 namespace interpret {
 
 //! Specify the algorithm used to discretize floating-point bond orders into bond types
-enum class BondDiscretizationOption : unsigned {
+enum class MASM_EXPORT BondDiscretizationOption : unsigned {
   //! All bond orders >= 0.5 are considered single bonds
   Binary,
   //! Bond orders are rounded to the nearest integer
@@ -45,7 +46,7 @@ enum class BondDiscretizationOption : unsigned {
 using ComponentMap = std::vector<unsigned>;
 
 //! Result type of an interpret call.
-struct MoleculesResult {
+struct MASM_EXPORT MoleculesResult {
   //! The list of individual molecules found in the 3D information
   std::vector<Molecule> molecules;
   //! A map from an index within the AtomCollection to its index in molecules member
@@ -70,7 +71,7 @@ struct MoleculesResult {
  *
  * @returns A list of found molecules and an index mapping to each molecule
  */
-MoleculesResult molecules(
+MASM_EXPORT MoleculesResult molecules(
   const Utils::ElementTypeCollection& elements,
   const AngstromWrapper& angstromWrapper,
   const Utils::BondOrderCollection& bondOrders,
@@ -97,7 +98,7 @@ MoleculesResult molecules(
  *
  * @returns A list of found molecules and an index mapping to each molecule
  */
-MoleculesResult molecules(
+MASM_EXPORT MoleculesResult molecules(
   const Utils::ElementTypeCollection& elements,
   const AngstromWrapper& angstromWrapper,
   BondDiscretizationOption discretization = BondDiscretizationOption::Binary,
@@ -127,7 +128,7 @@ MoleculesResult molecules(
  * @note Assumes that the provided atom collection's positions are in
  *   Bohr units.
  */
-MoleculesResult molecules(
+MASM_EXPORT MoleculesResult molecules(
   const Utils::AtomCollection& atomCollection,
   const Utils::BondOrderCollection& bondOrders,
   BondDiscretizationOption discretization = BondDiscretizationOption::Binary,
@@ -157,7 +158,7 @@ MoleculesResult molecules(
  * @warning UFF parameter bond order calculation is very primitive and carries
  *   a high risk of misinterpretation
  */
-MoleculesResult molecules(
+MASM_EXPORT MoleculesResult molecules(
   const Utils::AtomCollection& atomCollection,
   BondDiscretizationOption discretization = BondDiscretizationOption::Binary,
   const boost::optional<double>& stereopermutatorBondOrderThresholdOptional = 1.4
@@ -172,7 +173,7 @@ MoleculesResult molecules(
  *
  * @return As many atom collections as molecules from interpretation
  */
-std::vector<Utils::AtomCollection> applyInterpretationMap(
+MASM_EXPORT std::vector<Utils::AtomCollection> applyInterpretationMap(
   const ComponentMap& componentMap,
   const Utils::AtomCollection& atomCollection
 );
@@ -185,12 +186,12 @@ std::vector<Utils::AtomCollection> applyInterpretationMap(
  * @return List of flat maps from indices within components to the original
  *   input index
  */
-std::vector<
+MASM_EXPORT std::vector<
   std::vector<unsigned>
 > invertComponentMap(const ComponentMap& componentMap);
 
 //! Result type of a graph interpret call
-struct GraphsResult {
+struct MASM_EXPORT GraphsResult {
   //! Individual graphs found
   std::vector<OuterGraph> graphs;
   //! Mapping from atom collection index to graph component index
@@ -212,7 +213,7 @@ struct GraphsResult {
  *
  * @returns A list of found graphs and an index mapping to each graph
  */
-GraphsResult graphs(
+MASM_EXPORT GraphsResult graphs(
   const Utils::ElementTypeCollection& elements,
   const AngstromWrapper& angstromWrapper,
   const Utils::BondOrderCollection& bondOrders,
@@ -237,7 +238,7 @@ GraphsResult graphs(
  * @note Assumes that the provided atom collection's positions are in
  *   Bohr units.
  */
-GraphsResult graphs(
+MASM_EXPORT GraphsResult graphs(
   const Utils::AtomCollection& atomCollection,
   const Utils::BondOrderCollection& bondOrders,
   BondDiscretizationOption = BondDiscretizationOption::Binary

@@ -7,8 +7,9 @@
 #ifndef INCLUDE_MOLASSEMBLER_DESCRIPTORS_H
 #define INCLUDE_MOLASSEMBLER_DESCRIPTORS_H
 
-namespace Scine {
+#include "molassembler/Export.h"
 
+namespace Scine {
 namespace molassembler {
 
 // Forward-declare molcule
@@ -37,10 +38,9 @@ class Molecule;
  *   information used by this algorithm is accessible from the Molecule
  *   interface, and a custom algorithm can be implemented.
  */
-unsigned numRotatableBonds(const Molecule& mol);
+MASM_EXPORT unsigned numRotatableBonds(const Molecule& mol);
 
 } // namespace molassembler
-
 } // namespace Scine
 
 #endif

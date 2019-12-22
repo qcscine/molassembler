@@ -105,6 +105,7 @@ set(SOURCES_all
   ${_LIBPREFIX}/Interpret.cpp
   ${_LIBPREFIX}/Isomers.cpp
   ${_LIBPREFIX}/IO.cpp
+  ${_LIBPREFIX}/IO/Base64.cpp
   ${_LIBPREFIX}/IO/BinaryHandler.cpp
   ${_LIBPREFIX}/IO/SmilesMoleculeBuilder.cpp
   ${_LIBPREFIX}/IO/SmilesParser.cpp
@@ -150,6 +151,13 @@ add_library(molassembler_obj OBJECT
   ${HEADERS_all}
   ${CMAKE_CURRENT_BINARY_DIR}/molassembler/Version.h
 )
+
+include(GenerateExportHeader)
+generate_export_header(molassembler_obj
+  BASE_NAME masm
+  EXPORT_FILE_NAME ${CMAKE_CURRENT_BINARY_DIR}/molassembler/Export.h
+)
+
 set_target_properties(molassembler_obj PROPERTIES POSITION_INDEPENDENT_CODE ON)
 target_include_directories(molassembler_obj PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
@@ -206,11 +214,16 @@ target_include_directories(molassembler_obj
     $<TARGET_PROPERTY:json,INTERFACE_INCLUDE_DIRECTORIES>
     $<TARGET_PROPERTY:nautyStatic,INTERFACE_INCLUDE_DIRECTORIES>
 )
+set_target_properties(molassembler_obj PROPERTIES
+  CXX_VISIBILITY_PRESET hidden
+  VISIBILITY_INLINES_HIDDEN ON
+)
 
 # Shared library
 add_library(molassembler SHARED
   $<TARGET_OBJECTS:molassembler_obj>
   ${CMAKE_CURRENT_BINARY_DIR}/molassembler/Version.h
+  ${CMAKE_CURRENT_BINARY_DIR}/molassembler/Export.h
 )
 target_include_directories(molassembler
   PUBLIC
@@ -249,11 +262,16 @@ target_link_libraries(molassembler
     $<$<BOOL:${OpenMP_CXX_FOUND}>:OpenMP::OpenMP_CXX>
 )
 target_link_eigen(molassembler PUBLIC)
+set_target_properties(molassembler PROPERTIES
+  CXX_VISIBILITY_PRESET hidden
+  VISIBILITY_INLINES_HIDDEN ON
+)
 
 # Static library
 add_library(molassembler_static STATIC
   $<TARGET_OBJECTS:molassembler_obj>
   ${CMAKE_CURRENT_BINARY_DIR}/molassembler/Version.h
+  ${CMAKE_CURRENT_BINARY_DIR}/molassembler/Export.h
 )
 set_target_properties(molassembler_static PROPERTIES
   OUTPUT_NAME "molassembler"
@@ -299,7 +317,6 @@ target_link_libraries(molassembler_static PRIVATE
   cyclic_polygons
   gor1
   json
-  nautyStatic
 )
 
 # And then reset the libraries listed in INTERFACE_LINK_LIBRARIES (which are
@@ -319,9 +336,14 @@ target_link_libraries(molassembler_static PUBLIC
   stereopermutation
   Boost::filesystem
   Boost::system
+  nautyStatic
   $<$<BOOL:${OpenMP_CXX_FOUND}>:OpenMP::OpenMP_CXX>
 )
 target_link_eigen(molassembler_static PUBLIC)
+set_target_properties(molassembler_static PROPERTIES
+  CXX_VISIBILITY_PRESET hidden
+  VISIBILITY_INLINES_HIDDEN ON
+)
 
 install(
   TARGETS molassembler molassembler_static

@@ -7,11 +7,11 @@
 #ifndef INCLUDE_MOLASSEMBLER_SHARED_TYPES_H
 #define INCLUDE_MOLASSEMBLER_SHARED_TYPES_H
 
+#include "molassembler/Export.h"
 #include <cstddef>
 #include <iterator>
 
 namespace Scine {
-
 namespace molassembler {
 
 /*!
@@ -20,7 +20,7 @@ namespace molassembler {
  * Bond type enumeration. Besides the classic organic single, double and triple
  * bonds, bond orders up to sextuple are explicitly included.
  */
-enum class BondType : unsigned {
+enum class MASM_EXPORT BondType : unsigned {
   Single,
   Double,
   Triple,
@@ -37,7 +37,7 @@ enum class BondType : unsigned {
 
 constexpr unsigned nBondTypes = 7;
 
-enum class LengthUnit {
+enum class MASM_EXPORT LengthUnit {
   Bohr,
   Angstrom
 };
@@ -46,7 +46,7 @@ enum class LengthUnit {
 using AtomIndex = std::size_t;
 
 //! Type used to refer to particular bonds. Orders first < second.
-struct BondIndex {
+struct MASM_EXPORT BondIndex {
   /*! Iterator type is just a pointer to member
    *
    * Since the standard guarantees that struct members are laid out
@@ -82,7 +82,7 @@ struct BondIndex {
  *
  * @complexity{@math{\Theta(1)}}
  */
-std::size_t hash_value(const BondIndex& bond);
+MASM_EXPORT std::size_t hash_value(const BondIndex& bond);
 
 /*!
  * @brief For bitmasks grouping components of immediate atom environments
@@ -92,7 +92,7 @@ std::size_t hash_value(const BondIndex& bond);
  *
  * @warning Setting Stereopermutations without setting Shapes does nothing.
  */
-enum class AtomEnvironmentComponents : unsigned {
+enum class MASM_EXPORT AtomEnvironmentComponents : unsigned {
   Connectivity = 0,
   ElementTypes = (1 << 0),
   BondOrders = (1 << 1),
@@ -102,7 +102,6 @@ enum class AtomEnvironmentComponents : unsigned {
 };
 
 } // namespace molassembler
-
 } // namespace Scine
 
 /* Operators for bitmask-like manipulation of AtomEnvironmentComponents must be

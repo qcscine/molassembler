@@ -20,7 +20,7 @@ namespace patterns {
 
 using PlugType = std::pair<Molecule, std::vector<AtomIndex>>;
 
-PlugType methyl();
+MASM_EXPORT PlugType methyl();
 
 } // namespace patterns
 } // namespace molassembler

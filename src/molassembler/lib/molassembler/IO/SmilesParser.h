@@ -6,6 +6,7 @@
 #ifndef INCLUDE_MOLASSEMBLER_IO_SMILES_PARSER_H
 #define INCLUDE_MOLASSEMBLER_IO_SMILES_PARSER_H
 
+#include "molassembler/Export.h"
 #include <string>
 #include <vector>
 
@@ -42,7 +43,7 @@ namespace experimental {
  *
  * @return A list of molecules
  */
-std::vector<Molecule> parseSmiles(const std::string& smiles);
+MASM_EXPORT std::vector<Molecule> parseSmiles(const std::string& smiles);
 
 /**
  * @brief Parse a smiles string containing only a single molecule
@@ -70,7 +71,7 @@ std::vector<Molecule> parseSmiles(const std::string& smiles);
  *
  * @return A single molecule
  */
-Molecule parseSmilesSingleMolecule(const std::string& smiles);
+MASM_EXPORT Molecule parseSmilesSingleMolecule(const std::string& smiles);
 
 } // namespace experimental
 } // namespace IO

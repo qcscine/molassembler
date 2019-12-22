@@ -14,7 +14,6 @@
 #include "molassembler/AngstromWrapper.h"
 
 namespace Scine {
-
 namespace molassembler {
 
 // Forward-declarations
@@ -33,7 +32,7 @@ class OuterGraph;
  *
  * @warning Do not use this instance in any static object's destructor!
  */
-random::Engine& randomnessEngine();
+MASM_EXPORT random::Engine& randomnessEngine();
 
 /*! @brief Modeling temperature regime enumerator
  *
@@ -45,7 +44,7 @@ random::Engine& randomnessEngine();
  * - whether trigonal- and pentagonal bipyramids without linked ligands can be
  *   stereocenters (Berry pseudorotation and Bartell mechanism)
  */
-enum class TemperatureRegime {
+enum class MASM_EXPORT TemperatureRegime {
   /*! @brief No thermalization of stereopermutations at atom stereopermutators
    *
    * Meaning no pyramidal inversion, Berry pseudorotation or Bartell mechanisms.
@@ -152,7 +151,7 @@ enum class TemperatureRegime {
  *  }
  *   \enddot
  */
-enum class ChiralStatePreservation {
+enum class MASM_EXPORT ChiralStatePreservation {
   //! Don't try to preserve chiral state
   None,
   /*!
@@ -181,7 +180,7 @@ enum class ChiralStatePreservation {
  * @brief Influences the choice of shape in substituent additions and
  *   removals that lead to increases or decreases of ligand size
  */
-enum class ShapeTransition {
+enum class MASM_EXPORT ShapeTransition {
   /*!
    * Try to infer a shape from graph information first. Supplant with best
    * shape for chiral state preservation.
@@ -197,7 +196,7 @@ enum class ShapeTransition {
 /**
  * @brief Contains all global settings for the library
  */
-struct Options {
+struct MASM_EXPORT Options {
   /*!
    * @brief Sets the temperature regime to be used for all Molecules
    *
@@ -221,7 +220,6 @@ struct Options {
 };
 
 } // namespace molassembler
-
 } // namespace Scine
 
 #endif

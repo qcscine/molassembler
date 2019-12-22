@@ -16,7 +16,6 @@
  */
 
 namespace Scine {
-
 namespace molassembler {
 
 // Forward-declare Molecule
@@ -38,7 +37,7 @@ using IndexMap = boost::bimap<AtomIndex, AtomIndex>;
  * Strictness increases with the value of the underlying enum and each
  * successive enum encompasses all previous comparison components.
  */
-enum class VertexStrictness : unsigned {
+enum class MASM_EXPORT VertexStrictness : unsigned {
   //! Element type must be the same
   ElementType,
   /*!
@@ -63,7 +62,7 @@ enum class VertexStrictness : unsigned {
  * Strictness increases with the value of the underlying enum and each
  * successive enum encompasses all previous comparison components.
  */
-enum class EdgeStrictness : unsigned {
+enum class MASM_EXPORT EdgeStrictness : unsigned {
   //! No constraints are set upon vertex matching besides graph topography
   Topographic,
   //! Bond types must match exactly
@@ -92,7 +91,7 @@ enum class EdgeStrictness : unsigned {
  * Stereocenters and Stereopermutations are not graph-local properties suitable
  * to a common substructure matching.
  */
-std::vector<IndexMap> maximum(
+MASM_EXPORT std::vector<IndexMap> maximum(
   const Molecule& a,
   const Molecule& b,
   VertexStrictness vertexStrictness = VertexStrictness::ElementType,
@@ -101,9 +100,7 @@ std::vector<IndexMap> maximum(
 );
 
 } // namespace subgraphs
-
 } // namespace molassembler
-
 } // namespace Scine
 
 #endif

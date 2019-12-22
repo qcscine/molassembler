@@ -7,28 +7,27 @@
 #ifndef INCLUDE_MOLASSEMBLER_LOG_H
 #define INCLUDE_MOLASSEMBLER_LOG_H
 
+#include "molassembler/Export.h"
 #include <set>
 #include <iostream>
 
 namespace Scine {
-
 namespace molassembler {
-
 namespace Log {
 
 namespace detail {
-  class NullBuffer : public std::streambuf {
-  public:
-    int overflow(int c);
-  };
+class NullBuffer : public std::streambuf {
+public:
+  int overflow(int c);
+};
 
-  // Some objects we need
-  extern NullBuffer nullBuffer;
-  extern std::ostream nullStream;
-}
+// Some objects we need
+extern NullBuffer nullBuffer;
+extern std::ostream nullStream;
+} // namespace detail
 
 //! Level of logging
-enum class Level : unsigned {
+enum class MASM_EXPORT Level : unsigned {
   Trace,
   Debug,
   Info,
@@ -39,7 +38,7 @@ enum class Level : unsigned {
 };
 
 //! Particular cases of special logging items that may or may not be desired
-enum class Particulars {
+enum class MASM_EXPORT Particulars {
   /*! In Molecule.cpp, where a fit of AtomStereopermutators against positions is
    * performed when a Molecule is read in, you can have numerical details of
    * the fit logged. Corresponding analysis scripts also exist.
@@ -72,8 +71,8 @@ enum class Particulars {
 
 
 // Log variables
-extern Level level;
-extern std::set<Particulars> particulars;
+MASM_EXPORT extern Level level;
+MASM_EXPORT extern std::set<Particulars> particulars;
 
 // Logging calls
 std::ostream& log(const Level& decisionLevel);
@@ -81,8 +80,6 @@ std::ostream& log(const Particulars& particular);
 bool isSet(Particulars particular);
 
 } // namespace Log
-
 } // namespace molassembler
-
 } // namespace Scine
 #endif

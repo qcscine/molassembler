@@ -39,7 +39,7 @@ foreach(filename ${analysisFiles})
       Boost::regex
       Boost::system
       Boost::filesystem
-      molassembler
+      molassembler_static
       shapes
       gor1
   )

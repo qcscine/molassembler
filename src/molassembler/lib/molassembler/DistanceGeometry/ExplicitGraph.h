@@ -18,6 +18,7 @@
 #include "Eigen/Core"
 #include "Utils/Geometry/ElementInfo.h"
 
+#include "molassembler/Export.h"
 #include "molassembler/DistanceGeometry/ValueBounds.h"
 
 namespace Scine {

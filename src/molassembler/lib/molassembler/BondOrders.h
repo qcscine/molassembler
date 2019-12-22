@@ -7,18 +7,15 @@
 #ifndef INCLUDE_MOLASSEMBLER_BOND_ORDERS_H
 #define INCLUDE_MOLASSEMBLER_BOND_ORDERS_H
 
+#include "molassembler/Export.h"
 #include "Utils/Geometry/ElementTypes.h"
 #include <vector>
 
-// Forward-declarations
 namespace Scine {
 namespace Utils {
 class BondOrderCollection;
 using ElementTypeCollection = std::vector<ElementType>;
 } // namespace Utils
-} // namespace Scine
-
-namespace Scine {
 
 namespace molassembler {
 
@@ -33,13 +30,12 @@ class AngstromWrapper;
  * @warning UFF parameter bond order calculation is a very primitive
  *   approximation and carries a high risk of misinterpretation
  */
-Utils::BondOrderCollection uffBondOrders(
+MASM_EXPORT Utils::BondOrderCollection uffBondOrders(
   const Utils::ElementTypeCollection& elements,
   const AngstromWrapper& angstromWrapper
 );
 
 } // namespace molassembler
-
 } // namespace Scine
 
 #endif

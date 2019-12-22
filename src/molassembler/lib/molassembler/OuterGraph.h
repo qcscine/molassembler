@@ -20,15 +20,13 @@
 #include <experimental/propagate_const>
 #endif
 
-// Forward-declarations
 namespace Scine {
+// Forward-declarations
 namespace Utils {
 using ElementTypeCollection = std::vector<ElementType>;
 class BondOrderCollection;
 } // namespace Utils
-} // namespace Scine
 
-namespace Scine {
 namespace molassembler {
 
 // Forward-declare InnerGraph
@@ -59,7 +57,7 @@ class Cycles;
  * @note This class wraps InnerGraph so that no Boost Graph types are exposed
  *   to library consumers.
  */
-class OuterGraph {
+class MASM_EXPORT OuterGraph {
 public:
 //!@name Member types
 //!@{
@@ -331,7 +329,7 @@ public:
    * @warning This function is not intended for library consumers, merely used
    * for implementation purposes.
    */
-  InnerGraph& inner();
+  MASM_NO_EXPORT InnerGraph& inner();
 
   /*! @brief Const-access to library-internal graph representation class
    *
@@ -340,7 +338,7 @@ public:
    * @warning This function is not intended for library consumers, merely used
    * for implementation purposes.
    */
-  const InnerGraph& inner() const;
+  MASM_NO_EXPORT const InnerGraph& inner() const;
 
 private:
 #ifdef MOLASSEMBLER_ENABLE_PROPAGATE_CONST

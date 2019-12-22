@@ -7,8 +7,9 @@
 #ifndef INCLUDE_MOLASSEMBLER_ISOMERS_H
 #define INCLUDE_MOLASSEMBLER_ISOMERS_H
 
-namespace Scine {
+#include "molassembler/Export.h"
 
+namespace Scine {
 namespace molassembler {
 
 // Forward-declarations
@@ -55,7 +56,7 @@ class Molecule;
  *
  * @returns Whether two Molecules' conformers are enantiomeric
  */
-bool enantiomeric(
+MASM_EXPORT bool enantiomeric(
   const Molecule& a,
   const Molecule& b
 );
@@ -74,10 +75,9 @@ bool enantiomeric(
  *
  * @return The enantiomer to a molecule
  */
-Molecule enantiomer(const Molecule& a);
+MASM_EXPORT Molecule enantiomer(const Molecule& a);
 
 } // namespace molassembler
-
 } // namespace Scine
 
 #endif

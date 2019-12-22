@@ -19,13 +19,12 @@
 #include <unordered_map>
 
 namespace Scine {
-
 namespace molassembler {
 
 /**
  * @brief Manages all stereopermutators that are part of a Molecule
  */
-class StereopermutatorList {
+class MASM_EXPORT StereopermutatorList {
 public:
 //!@name Public types
 //!@{
@@ -226,6 +225,5 @@ private:
 };
 
 } // namespace molassembler
-
 } // namespace Scine
 #endif

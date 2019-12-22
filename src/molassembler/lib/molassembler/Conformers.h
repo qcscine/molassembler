@@ -13,7 +13,6 @@
 #include <vector>
 
 namespace Scine {
-
 namespace molassembler {
 
 namespace outcome = BOOST_OUTCOME_V2_NAMESPACE;
@@ -41,7 +40,7 @@ namespace DistanceGeometry {
  * - Worsens the quality of initial embedded coordinates prior to refinement,
  *   requiring more refinement steps
  */
-enum class Partiality {
+enum class MASM_EXPORT Partiality {
   /*!
    * @brief Perform smoothing for four one-to-all distance choices
    *
@@ -72,7 +71,7 @@ enum class Partiality {
 /**
  * @brief A configuration object for distance geometry runs with sane defaults
  */
-struct Configuration {
+struct MASM_EXPORT Configuration {
   /**
    * @brief Choose for how many atoms to re-smooth the distance bounds after
    *   a distance choice
@@ -188,7 +187,7 @@ struct Configuration {
  * }
  * @endcode{}
  */
-std::vector<
+MASM_EXPORT std::vector<
   outcome::result<Utils::PositionCollection>
 > generateRandomEnsemble(
   const Molecule& molecule,
@@ -235,7 +234,7 @@ std::vector<
  * order to help diagnose possible mistakes made in the molecular graph
  * specification.
  */
-std::vector<
+MASM_EXPORT std::vector<
   outcome::result<Utils::PositionCollection>
 > generateEnsemble(
   const Molecule& molecule,
@@ -264,7 +263,7 @@ std::vector<
  *   in the error case it carries data about the error in order to help
  *   diagnose possible mistakes made in the molecular graph specification.
  */
-outcome::result<Utils::PositionCollection> generateRandomConformation(
+MASM_EXPORT outcome::result<Utils::PositionCollection> generateRandomConformation(
   const Molecule& molecule,
   const DistanceGeometry::Configuration& configuration = DistanceGeometry::Configuration {}
 );
@@ -286,14 +285,13 @@ outcome::result<Utils::PositionCollection> generateRandomConformation(
  *   in the error case it carries data about the error in order to help
  *   diagnose possible mistakes made in the molecular graph specification.
  */
-outcome::result<Utils::PositionCollection> generateConformation(
+MASM_EXPORT outcome::result<Utils::PositionCollection> generateConformation(
   const Molecule& molecule,
   unsigned seed,
   const DistanceGeometry::Configuration& configuration = DistanceGeometry::Configuration {}
 );
 
 } // namespace molassembler
-
 } // namespace Scine
 
 #endif

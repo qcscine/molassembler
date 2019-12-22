@@ -18,7 +18,6 @@
 #include <memory>
 
 namespace Scine {
-
 namespace Utils {
 class AtomCollection;
 } // namespace Utils
@@ -70,7 +69,7 @@ class BondStereopermutator;
  *
  * @note This type is not copyable.
  */
-class DirectedConformerGenerator {
+class MASM_EXPORT DirectedConformerGenerator {
 public:
 //!@name Public types
 //!@{

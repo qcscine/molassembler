@@ -15,14 +15,13 @@
 #include "molassembler/Types.h"
 
 namespace Scine {
-
 namespace molassembler {
 
 /**
  * @brief A wrapper class around Utils' PositionCollection to emphasize
  *   that the positions stored therein are in Angstrom
  */
-class AngstromWrapper {
+class MASM_EXPORT AngstromWrapper {
 public:
   Utils::PositionCollection positions;
 
@@ -44,7 +43,6 @@ public:
 };
 
 } // namespace molassmbler
-
 } // namespace Scine
 
 #endif

@@ -31,7 +31,7 @@ foreach(filename ${testFiles})
       Boost::regex
       Boost::unit_test_framework
       gor1
-      molassembler
+      molassembler_static
       stereopermutation
   )
 

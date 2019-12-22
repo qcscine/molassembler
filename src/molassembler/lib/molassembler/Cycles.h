@@ -19,7 +19,6 @@
 #include <unordered_map>
 
 namespace Scine {
-
 namespace molassembler {
 
 /*!
@@ -34,7 +33,7 @@ namespace molassembler {
  * @note Keep in mind that if a node is part of a URF, that does NOT imply that
  * it is also part of each RC of that URF.
  */
-class Cycles {
+class MASM_EXPORT Cycles {
 public:
   /*!
    * @brief Safe wrapper around RDL's graph and calculated data pointers
@@ -243,7 +242,7 @@ private:
  *
  * @warning Do not use this a lot. Consider makeSmallestCycleMap() instead.
  */
-boost::optional<unsigned> smallestCycleContaining(AtomIndex atom, const Cycles& cycles);
+MASM_EXPORT boost::optional<unsigned> smallestCycleContaining(AtomIndex atom, const Cycles& cycles);
 
 /*!
  * @brief Creates a mapping from atom index to the size of the smallest cycle
@@ -254,7 +253,7 @@ boost::optional<unsigned> smallestCycleContaining(AtomIndex atom, const Cycles& 
  *
  * @note The map does not contain entries for indices not enclosed by a cycle.
  */
-std::unordered_map<AtomIndex, unsigned> makeSmallestCycleMap(const Cycles& cycleData);
+MASM_EXPORT std::unordered_map<AtomIndex, unsigned> makeSmallestCycleMap(const Cycles& cycleData);
 
 /*! @brief Create cycle vertex sequence from unordered edges
  *
@@ -263,7 +262,7 @@ std::unordered_map<AtomIndex, unsigned> makeSmallestCycleMap(const Cycles& cycle
  *
  * @complexity{@math{O(E^2)} worst case}
  */
-std::vector<AtomIndex> makeRingIndexSequence(
+MASM_EXPORT std::vector<AtomIndex> makeRingIndexSequence(
   std::vector<BondIndex> edgeDescriptors
 );
 
@@ -271,7 +270,7 @@ std::vector<AtomIndex> makeRingIndexSequence(
  *
  * @complexity{@math{O(N)}}
  */
-std::vector<AtomIndex> centralizeRingIndexSequence(
+MASM_EXPORT std::vector<AtomIndex> centralizeRingIndexSequence(
   std::vector<AtomIndex> ringIndexSequence,
   AtomIndex center
 );
@@ -283,13 +282,12 @@ std::vector<AtomIndex> centralizeRingIndexSequence(
  *
  * @complexity{@math{O(N)}}
  */
-unsigned countPlanarityEnforcingBonds(
+MASM_EXPORT unsigned countPlanarityEnforcingBonds(
   const std::vector<BondIndex>& edgeSet,
   const OuterGraph& graph
 );
 
 } // namespace molassembler
-
 } // namespace Scine
 
 #endif

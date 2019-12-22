@@ -12,13 +12,12 @@
 #include <vector>
 
 namespace Scine {
-
 namespace molassembler {
 
 /**
  * @brief Information on links between substituents of a central atom
  */
-struct LinkInformation {
+struct MASM_EXPORT LinkInformation {
 //!@name Special member functions
 //!@{
   /*! @brief Default constructor
@@ -76,7 +75,7 @@ struct LinkInformation {
 };
 
 //! Ranking data of substituents around a central vertex
-struct RankingInformation {
+struct MASM_EXPORT RankingInformation {
 //!@name Member types
 //!@{
   template<typename T>
@@ -220,7 +219,6 @@ struct RankingInformation {
 };
 
 } // namespace molassembler
-
 } // namespace Scine
 
 #endif

@@ -27,8 +27,8 @@
 using namespace std::string_literals;
 
 namespace Scine {
-
 namespace molassembler {
+
 /* Forward declarations */
 struct RankingInformation;
 struct AbstractStereopermutations;
@@ -69,7 +69,7 @@ struct ChiralConstraint;
  *   that that atom is a stereocenter. That is only the case if there are
  *   multiple stereopermutations of the ranked substituents / ligands.
  */
-class AtomStereopermutator {
+class MASM_EXPORT AtomStereopermutator {
 public:
   //! Old state dumped upon propagation
   using PropagatedState = std::tuple<
@@ -202,7 +202,7 @@ public:
    * @complexity{@math{L\cdot S!} where @math{L} is the number of links and
    * @math{S} is the size of @p shape}
    */
-  boost::optional<PropagatedState> propagate(
+  MASM_NO_EXPORT boost::optional<PropagatedState> propagate(
     const OuterGraph& graph,
     RankingInformation newRanking,
     boost::optional<Shapes::Shape> shapeOption
@@ -307,14 +307,14 @@ public:
    * @complexity{@math{\Theta(1)}}
    * @note This is library-internal and not part of the public API
    */
-  const AbstractStereopermutations& getAbstract() const;
+  MASM_NO_EXPORT const AbstractStereopermutations& getAbstract() const;
 
   /*!  @brief Returns the underlying feasible stereopermutations object
    *
    * @complexity{@math{\Theta(1)}}
    * @note This is library-internal and not part of the public API
    */
-  const FeasibleStereopermutations& getFeasible() const;
+  MASM_NO_EXPORT const FeasibleStereopermutations& getFeasible() const;
 
   /*! @brief Returns the underlying ranking
    *
@@ -421,7 +421,6 @@ private:
 };
 
 } // namespace molassembler
-
 } // namespace Scine
 
 #endif

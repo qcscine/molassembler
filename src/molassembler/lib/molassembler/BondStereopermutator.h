@@ -25,7 +25,6 @@
 #include <memory>
 
 namespace Scine {
-
 namespace stereopermutation {
 
 class Composite;
@@ -33,7 +32,6 @@ class Composite;
 } // namespace stereopermutation
 
 namespace molassembler {
-
 namespace random {
 class Engine;
 } // namespace random
@@ -59,7 +57,7 @@ struct ChiralConstraint;
  * This class exists to model rotational barriers in bond orders higher than
  * Single that join an arbitrary pair of idealized shapes.
  */
-class BondStereopermutator {
+class MASM_EXPORT BondStereopermutator {
 public:
 //!@name Public types
 //!@{
@@ -349,7 +347,6 @@ private:
 };
 
 } // namespace molassembler
-
 } // namespace Scine
 
 #endif

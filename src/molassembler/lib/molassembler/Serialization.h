@@ -11,8 +11,9 @@
 #include <string>
 #include <memory>
 
-namespace Scine {
+#include "molassembler/Export.h"
 
+namespace Scine {
 namespace molassembler {
 
 // Forward-declarations
@@ -72,7 +73,7 @@ class Molecule;
  * Using lexicographical comparison on serializations does not have the same
  * semantics as calling Molecule's relational operators.
  */
-class JsonSerialization {
+class MASM_EXPORT JsonSerialization {
 public:
 //!@name Public types
 //!@{
@@ -153,7 +154,6 @@ private:
 };
 
 } // namespace molassembler
-
 } // namespace Scine
 
 #endif

@@ -21,9 +21,9 @@
 #include <vector>
 
 namespace Scine {
+namespace Utils {
 
 // Forward declarations
-namespace Utils {
 class AtomCollection;
 class BondOrderCollection;
 } // namespace Utils
@@ -41,7 +41,7 @@ namespace IO {
  * @brief Provides Molecule instances from line notations of molecules such
  *   as SMILES and InChI
  */
-class LineNotation {
+class MASM_EXPORT LineNotation {
 public:
   /*! @brief Checks whether the `obabel` binary is found in your path.
    *
@@ -73,13 +73,13 @@ private:
  *
  * @complexity{@math{\Theta(N + B)}}
  */
-std::pair<Utils::AtomCollection, Utils::BondOrderCollection> exchangeFormat(
+MASM_EXPORT std::pair<Utils::AtomCollection, Utils::BondOrderCollection> exchangeFormat(
   const Molecule& molecule,
   AngstromWrapper angstromWrapper
 );
 
 //! @overload
-std::pair<Utils::AtomCollection, Utils::BondOrderCollection> exchangeFormat(
+MASM_EXPORT std::pair<Utils::AtomCollection, Utils::BondOrderCollection> exchangeFormat(
   const Molecule& molecule,
   const Utils::PositionCollection& positions
 );
@@ -88,7 +88,7 @@ std::pair<Utils::AtomCollection, Utils::BondOrderCollection> exchangeFormat(
  *
  * @complexity{@math{\Theta(N + B)}}
  */
-std::tuple<Utils::AtomCollection, Utils::BondOrderCollection, std::vector<AtomIndex>> shuffle(
+MASM_EXPORT std::tuple<Utils::AtomCollection, Utils::BondOrderCollection, std::vector<AtomIndex>> shuffle(
   const Utils::AtomCollection& ac,
   const Utils::BondOrderCollection& bos
 );
@@ -101,7 +101,7 @@ std::tuple<Utils::AtomCollection, Utils::BondOrderCollection, std::vector<AtomIn
  * @note Interprets file type from extension. mol is a MOLFile, xyz an XYZ file
  *   and cbor/bson/json are serializations of Molecule
  */
-Molecule read(const std::string& filename);
+MASM_EXPORT Molecule read(const std::string& filename);
 
 /*! @brief Read multiple molecules from a file.
  *
@@ -110,7 +110,7 @@ Molecule read(const std::string& filename);
  * @note Serializations of Molecules cannot be split, they always
  *   contain only a single molecule. Use @p read() instead.
  */
-std::vector<Molecule> split(const std::string& filename);
+MASM_EXPORT std::vector<Molecule> split(const std::string& filename);
 
 /*! @brief Writer function for various chemical formats
  *
@@ -122,14 +122,14 @@ std::vector<Molecule> split(const std::string& filename);
  * @note Unless the file format is .json or .masm, canonicalization state of
  * Molecule instances is lost.
  */
-void write(
+MASM_EXPORT void write(
   const std::string& filename,
   const Molecule& molecule,
   const AngstromWrapper& angstromWrapper
 );
 
 //! @overload
-void write(
+MASM_EXPORT void write(
   const std::string& filename,
   const Molecule& molecule,
   const Utils::PositionCollection& positions
@@ -141,15 +141,13 @@ void write(
  * @note Canonicalization state is retained using the molecule serializations.
  * @throws If the file extension does not match .masm or .json
  */
-void write(
+MASM_EXPORT void write(
   const std::string& filename,
   const Molecule& molecule
 );
 
 } // namespace IO
-
 } // namespace molassembler
-
 } // namespace Scine
 
 #endif

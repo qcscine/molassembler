@@ -18,7 +18,7 @@ class Molecule;
 /**
  * @brief Class with static functions providing higher-level molecule operations
  */
-struct Editing {
+struct MASM_EXPORT Editing {
   /*! @brief Splits a molecule along a bridge edge
    *
    * @complexity{@math{\Theta(N)}}

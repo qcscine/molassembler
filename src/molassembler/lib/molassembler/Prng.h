@@ -12,11 +12,11 @@
 #include <experimental/propagate_const>
 #endif
 
+#include "molassembler/Export.h"
 #include <memory>
 #include <vector>
 
 namespace Scine {
-
 namespace molassembler {
 
 /**
@@ -25,7 +25,7 @@ namespace molassembler {
 namespace random {
 
 //! @brief Drives a PRNG
-class Engine {
+class MASM_EXPORT Engine {
 public:
   //! The type this engine generates
   using result_type = uint32_t;
@@ -75,9 +75,7 @@ private:
 };
 
 } // namespace random
-
 } // namespace molassembler
-
 } // namespace Scine
 
 #endif

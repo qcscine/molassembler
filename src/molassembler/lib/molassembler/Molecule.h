@@ -21,15 +21,13 @@
 
 #include <memory>
 
-// External forward declarations
 namespace Scine {
+// External forward declarations
 namespace Utils {
 using ElementTypeCollection = std::vector<ElementType>;
 class AtomCollection;
 } // namespace Utils
-} // namespace Scine
 
-namespace Scine {
 namespace molassembler {
 
 // Forward declarations
@@ -78,7 +76,7 @@ struct RankingInformation;
  *   - @math{\Omega} implies that the function grows asympotically at least as fast as (Knuth definition)
  * @endparblock
  */
-class Molecule {
+class MASM_EXPORT Molecule {
 public:
 
 //!@name Static functions
@@ -183,7 +181,7 @@ public:
    * @warning This function is not intended for library consumers. It is used
    *   internally in implementation details.
    */
-  Molecule(
+  MASM_NO_EXPORT Molecule(
     OuterGraph graph,
     StereopermutatorList stereopermutators,
     boost::optional<AtomEnvironmentComponents> canonicalComponentsOption = boost::none
@@ -821,7 +819,7 @@ private:
 } // namespace molassembler
 } // namespace Scine
 
-std::ostream& operator << (
+MASM_EXPORT std::ostream& operator << (
   std::ostream& os,
   const Scine::molassembler::Molecule& molecule
 );
