@@ -165,6 +165,12 @@ ShapeResult shapeAlternateImplementation(
   Shape shape
 );
 
+//! Like shapeAlternateImplementation, but the centroid is the last position
+ShapeResult shapeAlternateImplementationCentroidLast(
+  const PositionCollection& normalizedPositions,
+  Shape shape
+);
+
 /**
  * @brief Calculates the continuous shape measure of a set of coordinates with
  *   respect to a particular shape using heuristics

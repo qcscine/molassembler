@@ -1,7 +1,7 @@
 Serialization
 =============
 
-.. autoclass:: molassembler.JsonSerialization
+.. autoclass:: scine_molassembler.JsonSerialization
    :members:
    :undoc-members:
 

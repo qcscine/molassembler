@@ -132,6 +132,7 @@ std::pair<Shapes::Shape, std::vector<unsigned>> classifyShape(const Eigen::Matri
     const Shapes::Shape candidateShape = viableShapes[i];
     shapeMeasureResults[i] = Shapes::continuous::shapeCentroidLast(normalized, candidateShape);
 
+    // Bias shape classification against some shapes
     if(candidateShape == Shapes::Shape::TrigonalPyramid) {
       shapeMeasureResults[i].measure *= 4;
     } else if(candidateShape == Shapes::Shape::Seesaw) {
@@ -139,7 +140,18 @@ std::pair<Shapes::Shape, std::vector<unsigned>> classifyShape(const Eigen::Matri
     }
   }
 
-  auto minElementIter = std::min_element(
+  // Ensure centroids are mapped against one another
+  assert(
+    temple::all_of(
+      shapeMeasureResults,
+      [](const auto& shapeResult) -> bool {
+        assert(!shapeResult.mapping.empty());
+        return shapeResult.mapping.back() == shapeResult.mapping.size() - 1;
+      }
+    )
+  );
+
+  const auto minElementIter = std::min_element(
     std::begin(shapeMeasureResults),
     std::end(shapeMeasureResults),
     [](const auto& a, const auto& b) -> bool {
@@ -935,8 +947,6 @@ void AtomStereopermutator::Impl::fit(
   Shapes::Shape fittedShape;
   std::vector<unsigned> matchingMapping;
   std::tie(fittedShape, matchingMapping) = detail::classifyShape(sitePositions);
-  // Ensure centroids are mapped against one another
-  assert(matchingMapping.back() == matchingMapping.size() - 1);
   /* Drop the centroid, making the remaining sequence viable as an index mapping
    * within the set of shape rotations, i.e. for use in stereopermutation
    * functionality

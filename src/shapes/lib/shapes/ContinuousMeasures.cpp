@@ -1034,9 +1034,13 @@ ShapeResult shapeFaithfulPaperImplementation(
   };
 }
 
-ShapeResult shapeAlternateImplementation(
+namespace detail {
+
+template<typename EndFunctor>
+ShapeResult shapeAlternateImplementationBase(
   const PositionCollection& normalizedPositions,
-  const Shape shape
+  const Shape shape,
+  EndFunctor&& endFunctor
 ) {
   /* There is a bit of a conundrum: The paper says
    * - For each index mapping
@@ -1097,7 +1101,7 @@ ShapeResult shapeAlternateImplementation(
       permutationalMinimum = value;
       bestRotationMatrix = rotationMatrix;
     }
-  } while(std::next_permutation(std::begin(permutation), std::end(permutation)));
+  } while(std::next_permutation(std::begin(permutation), endFunctor(permutation)));
 
   for(unsigned i = 0; i < N; ++i) {
     permutedShape.col(i) = shapeCoordinates.col(bestPermutation.at(i));
@@ -1122,6 +1126,45 @@ ShapeResult shapeAlternateImplementation(
     bestPermutation,
     100 * scalingMinimizationResult.second / normalization
   };
+}
+
+struct EndIter {
+  template<typename T>
+  auto operator() (T& t) {
+    return std::end(t);
+  }
+};
+
+struct BackIter {
+  template<typename T>
+  auto operator() (T& t) {
+    assert(!t.empty());
+    return --std::end(t);
+  }
+};
+
+} // namespace detail
+
+ShapeResult shapeAlternateImplementation(
+  const PositionCollection& normalizedPositions,
+  const Shape shape
+) {
+  return detail::shapeAlternateImplementationBase(
+    normalizedPositions,
+    shape,
+    detail::EndIter {}
+  );
+}
+
+ShapeResult shapeAlternateImplementationCentroidLast(
+  const PositionCollection& normalizedPositions,
+  const Shape shape
+) {
+  return detail::shapeAlternateImplementationBase(
+    normalizedPositions,
+    shape,
+    detail::BackIter {}
+  );
 }
 
 using PartialMapping = std::unordered_map<unsigned, unsigned>;
@@ -1533,7 +1576,7 @@ ShapeResult shapeCentroidLast(
     return shapeHeuristicsCentroidLast(normalizedPositions, shape);
   }
 
-  return shapeAlternateImplementation(normalizedPositions, shape);
+  return shapeAlternateImplementationCentroidLast(normalizedPositions, shape);
 }
 
 double minimumDistortionAngle(const Shape a, const Shape b) {
