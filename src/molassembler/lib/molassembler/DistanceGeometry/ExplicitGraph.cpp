@@ -35,9 +35,7 @@
  */
 
 namespace Scine {
-
 namespace molassembler {
-
 namespace DistanceGeometry {
 
 ExplicitGraph::ExplicitGraph(
@@ -557,7 +555,5 @@ outcome::result<Eigen::MatrixXd> ExplicitGraph::makeDistanceMatrix(random::Engin
 }
 
 } // namespace DistanceGeometry
-
 } // namespace molassembler
-
 } // namespace Scine

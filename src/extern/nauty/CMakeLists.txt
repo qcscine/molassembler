@@ -35,13 +35,13 @@ set(NAUTY_CPP
   ${CMAKE_CURRENT_SOURCE_DIR}/nauty/traces.c
 )
 
-add_library(nautyStatic STATIC ${NAUTY_HEADER} ${NAUTY_CPP})
-target_include_directories(nautyStatic PUBLIC
+add_library(nauty STATIC ${NAUTY_HEADER} ${NAUTY_CPP})
+target_include_directories(nauty PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
   $<INSTALL_INTERFACE:$<INSTALL_PREFIX>/include>
 )
-set_target_properties(nautyStatic PROPERTIES POSITION_INDEPENDENT_CODE ON)
-install(TARGETS nautyStatic EXPORT NautyTargets ARCHIVE DESTINATION lib)
+set_target_properties(nauty PROPERTIES POSITION_INDEPENDENT_CODE ON)
+install(TARGETS nauty EXPORT NautyTargets ARCHIVE DESTINATION lib)
 
 molassembler_install_component_cmake_files(
   COMPONENT nauty

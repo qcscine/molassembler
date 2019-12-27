@@ -1,6 +1,6 @@
 include(CMakeFindDependencyMacro)
 
-find_dependency(molassembler COMPONENTS RingDecomposerLib boost_outcome temple chemical_symmetries stereopermutation REQUIRED)
+find_dependency(molassembler COMPONENTS RingDecomposerLib boost_outcome temple shapes stereopermutation nauty REQUIRED)
 find_dependency(Scine COMPONENTS UtilsOS REQUIRED)
 
 if(NOT TARGET Boost::filesystem OR NOT TARGET Boost::system)
@@ -12,7 +12,7 @@ if(NOT "${SCINE_MARCH}" STREQUAL "@SCINE_MARCH@")
   message(FATAL_ERROR "You are trying to use an installed version of molassembler that was compiled with different -march flag values! Current march flags: ${SCINE_MARCH}, installed flags: @SCINE_MARCH@")
 endif()
 
-set(MOLASSEMBLER_VERSION 0.1.0)
+set(MOLASSEMBLER_VERSION @molassembler_VERSION@)
 
 include(${CMAKE_CURRENT_LIST_DIR}/molassemblerTargets.cmake)
 

@@ -12,6 +12,7 @@
 #include "Utils/Geometry/ElementInfo.h"
 #include "Utils/Constants.h"
 #include "CyclicPolygons.h"
+#include "RingDecomposerLib.h"
 
 #include "shapes/PropertyCaching.h"
 #include "stereopermutation/Composites.h"

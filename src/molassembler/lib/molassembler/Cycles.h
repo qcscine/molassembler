@@ -10,7 +10,6 @@
 #ifndef INCLUDE_MOLASSEMBLER_CYCLES_H
 #define INCLUDE_MOLASSEMBLER_CYCLES_H
 
-#include "RingDecomposerLib.h"
 #include "boost/functional/hash.hpp"
 #include "boost/optional/optional_fwd.hpp"
 
@@ -18,6 +17,8 @@
 
 #include <functional>
 #include <unordered_map>
+
+struct RDL_data;
 
 namespace Scine {
 namespace molassembler {

@@ -11,13 +11,12 @@
 #include "temple/TinySet.h"
 #include "temple/Functional.h"
 
+#include "RingDecomposerLib.h"
 #include "boost/range/iterator_range_core.hpp"
 #include "boost/variant.hpp"
 
 namespace Scine {
-
 namespace molassembler {
-
 namespace detail {
 
 inline std::vector<unsigned> intersect(
@@ -904,5 +903,4 @@ unsigned countPlanarityEnforcingBonds(
 }
 
 } // namespace molassembler
-
 } // namespace Scine

@@ -182,7 +182,7 @@ if(${CMAKE_VERSION} VERSION_GREATER_EQUAL "3.12.0")
     json
     Boost::filesystem
     Boost::system
-    nautyStatic
+    nauty
     $<$<BOOL:${OpenMP_CXX_FOUND}>:OpenMP::OpenMP_CXX>
   )
 else()
@@ -212,7 +212,7 @@ target_include_directories(molassembler_obj
     ${RDL_INCLUDE_DIR}
     $<TARGET_PROPERTY:Eigen3::Eigen,INTERFACE_INCLUDE_DIRECTORIES>
     $<TARGET_PROPERTY:json,INTERFACE_INCLUDE_DIRECTORIES>
-    $<TARGET_PROPERTY:nautyStatic,INTERFACE_INCLUDE_DIRECTORIES>
+    $<TARGET_PROPERTY:nauty,INTERFACE_INCLUDE_DIRECTORIES>
 )
 set_target_properties(molassembler_obj PROPERTIES
   CXX_VISIBILITY_PRESET hidden
@@ -232,7 +232,7 @@ target_include_directories(molassembler
     $<INSTALL_INTERFACE:$<INSTALL_PREFIX>/include>
 )
 
-add_library(Scine::molassembler ALIAS molassembler)
+add_library(molassembler::molassembler ALIAS molassembler)
 
 # Linking for the shared version of molassembler is fairly straightforward.
 # Some notes:
@@ -248,7 +248,6 @@ target_link_libraries(molassembler
     Boost::boost
     Scine::UtilsOS
     boost_outcome
-    RingDecomposerLibStatic
     shapes
   PRIVATE
     temple
@@ -258,7 +257,8 @@ target_link_libraries(molassembler
     json
     Boost::filesystem
     Boost::system
-    nautyStatic
+    RingDecomposerLibStatic
+    nauty
     $<$<BOOL:${OpenMP_CXX_FOUND}>:OpenMP::OpenMP_CXX>
 )
 target_link_eigen(molassembler PUBLIC)
@@ -281,7 +281,7 @@ target_include_directories(molassembler_static PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
   $<INSTALL_INTERFACE:$<INSTALL_PREFIX>/include>
 )
-add_library(Scine::molassembler_static ALIAS molassembler_static)
+add_library(molassembler::molassembler_static ALIAS molassembler_static)
 
 # The linking for the static version of molassembler is more complicated.
 #
@@ -336,7 +336,7 @@ target_link_libraries(molassembler_static PUBLIC
   stereopermutation
   Boost::filesystem
   Boost::system
-  nautyStatic
+  nauty
   $<$<BOOL:${OpenMP_CXX_FOUND}>:OpenMP::OpenMP_CXX>
 )
 target_link_eigen(molassembler_static PUBLIC)
@@ -368,8 +368,10 @@ install(
     PATTERN "*.hxx"
 )
 install(
-  FILES ${CMAKE_CURRENT_BINARY_DIR}/molassembler/Version.h
-  DESTINATION ${INCLUDE_INSTALL_DIR}
+  FILES
+    ${CMAKE_CURRENT_BINARY_DIR}/molassembler/Version.h
+    ${CMAKE_CURRENT_BINARY_DIR}/molassembler/Export.h
+  DESTINATION ${INCLUDE_INSTALL_DIR}/molassembler
   COMPONENT molassembler
 )
 
