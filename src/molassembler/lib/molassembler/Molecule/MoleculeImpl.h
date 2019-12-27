@@ -10,7 +10,6 @@
 #include "molassembler/Molecule.h"
 
 #include "molassembler/Graph/InnerGraph.h"
-#include "molassembler/RankingInformation.h"
 #include "molassembler/StereopermutatorList.h"
 #include "Utils/Geometry/AtomCollection.h"
 

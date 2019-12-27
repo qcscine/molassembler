@@ -8,9 +8,7 @@
 #define INCLUDE_MOLASSEMBLER_REFINEMENT_META_H
 
 #include "molassembler/DistanceGeometry/DistanceBoundsMatrix.h"
-#include "molassembler/DistanceGeometry/DistanceGeometry.h"
 #include "molassembler/Log.h"
-#include "molassembler/Types.h"
 
 #include "temple/Stringify.h"
 

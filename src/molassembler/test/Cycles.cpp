@@ -15,6 +15,7 @@
 
 #include "molassembler/IO.h"
 #include "molassembler/Cycles.h"
+#include "molassembler/OuterGraph.h"
 #include "molassembler/Molecule.h"
 #include <iostream>
 #include <array>

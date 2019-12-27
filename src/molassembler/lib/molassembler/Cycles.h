@@ -12,14 +12,19 @@
 
 #include "RingDecomposerLib.h"
 #include "boost/functional/hash.hpp"
+#include "boost/optional/optional_fwd.hpp"
 
-#include "molassembler/OuterGraph.h"
+#include "molassembler/Types.h"
 
 #include <functional>
 #include <unordered_map>
 
 namespace Scine {
 namespace molassembler {
+
+// Forward-declarations
+class OuterGraph;
+class InnerGraph;
 
 /*!
  * @brief Wrapper class to make working with RDL in C++ more pleasant.

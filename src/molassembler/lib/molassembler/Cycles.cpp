@@ -6,6 +6,7 @@
 #include "molassembler/Cycles.h"
 
 #include "molassembler/Graph/InnerGraph.h"
+#include "molassembler/OuterGraph.h"
 
 #include "temple/TinySet.h"
 #include "temple/Functional.h"

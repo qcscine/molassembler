@@ -7,7 +7,6 @@
 #ifndef INCLUDE_MOLASSEMBLER_DISTANCE_GEOMETRY_DISTANCE_BOUNDS_MATRIX_H
 #define INCLUDE_MOLASSEMBLER_DISTANCE_GEOMETRY_DISTANCE_BOUNDS_MATRIX_H
 
-#include "boost_outcome/outcome.hpp"
 #include <Eigen/Core>
 
 #include "molassembler/DistanceGeometry/DistanceGeometry.h"

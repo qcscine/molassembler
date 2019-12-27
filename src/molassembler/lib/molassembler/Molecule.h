@@ -19,8 +19,6 @@
 #include <experimental/propagate_const>
 #endif
 
-#include <memory>
-
 namespace Scine {
 // External forward declarations
 namespace Utils {

@@ -10,9 +10,6 @@
 #ifndef INCLUDE_MOLASSEMBLER_DISTANCE_GEOMETRY_CONFORMER_GENERATION_H
 #define INCLUDE_MOLASSEMBLER_DISTANCE_GEOMETRY_CONFORMER_GENERATION_H
 
-#include "boost_outcome/outcome.hpp"
-
-#include "molassembler/Conformers.h"
 #include "molassembler/DistanceGeometry/SpatialModel.h"
 #include "molassembler/Log.h"
 

@@ -11,8 +11,6 @@
 
 #include "boost/optional.hpp"
 
-#include "temple/OperatorSuppliers.h"
-
 #include "stereopermutation/Composites.h"
 #include "molassembler/DistanceGeometry/DistanceGeometry.h"
 

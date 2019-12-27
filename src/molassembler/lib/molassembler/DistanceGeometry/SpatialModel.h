@@ -17,19 +17,12 @@
 #ifndef INCLUDE_MOLASSEMBLER_DISTANCE_GEOMETRY_SPATIAL_MODEL_H
 #define INCLUDE_MOLASSEMBLER_DISTANCE_GEOMETRY_SPATIAL_MODEL_H
 
-#include "molassembler/Conformers.h"
 #include "molassembler/DistanceGeometry/DistanceBoundsMatrix.h"
 #include "molassembler/Molecule.h"
 #include "molassembler/StereopermutatorList.h"
 
-#include "boost/functional/hash.hpp"
-
-#include <cmath>
-
 namespace Scine {
-
 namespace molassembler {
-
 namespace DistanceGeometry {
 
 /*! @brief Class performing spatial modeling of molecules
@@ -536,9 +529,7 @@ private:
 };
 
 } // namespace DistanceGeometry
-
 } // namespace molassembler
-
 } // namespace Scine
 
 #endif

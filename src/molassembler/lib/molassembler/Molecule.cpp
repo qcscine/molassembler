@@ -4,6 +4,7 @@
  */
 
 #include "molassembler/Molecule/MoleculeImpl.h"
+#include "molassembler/RankingInformation.h"
 
 namespace Scine {
 namespace molassembler {

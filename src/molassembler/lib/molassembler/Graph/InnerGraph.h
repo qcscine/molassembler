@@ -7,12 +7,10 @@
 #ifndef INCLUDE_MOLASSEMBLER_INNER_GRAPH_H
 #define INCLUDE_MOLASSEMBLER_INNER_GRAPH_H
 
-#include "boost/optional/optional_fwd.hpp"
 #include "boost/graph/adjacency_list.hpp"
 #include "Utils/Geometry/ElementTypes.h"
 
 #include "molassembler/Cycles.h"
-#include "molassembler/Types.h"
 
 #include <limits>
 

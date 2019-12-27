@@ -13,8 +13,6 @@
 #include "molassembler/Stereopermutators/AbstractPermutations.h"
 #include "molassembler/Stereopermutators/FeasiblePermutations.h"
 
-#include "temple/OperatorSuppliers.h"
-
 #include "boost/optional.hpp"
 
 namespace Scine {

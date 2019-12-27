@@ -19,7 +19,6 @@
 #include <experimental/propagate_const>
 #endif
 
-#include <cmath>
 #include <vector>
 #include <string>
 #include <memory>

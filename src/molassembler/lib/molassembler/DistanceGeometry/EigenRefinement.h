@@ -7,12 +7,9 @@
 #ifndef INCLUDE_MOLASSEMBLER_DG_EIGEN_REFINEMENT_PROBLEM_H
 #define INCLUDE_MOLASSEMBLER_DG_EIGEN_REFINEMENT_PROBLEM_H
 
-#include <Eigen/Core>
 #include <Eigen/Dense>
 
-#include "molassembler/Types.h"
 #include "molassembler/DistanceGeometry/DistanceBoundsMatrix.h"
-#include "molassembler/DistanceGeometry/DistanceGeometry.h"
 
 namespace Scine {
 namespace molassembler {

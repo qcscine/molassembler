@@ -7,7 +7,6 @@
 #define INCLUDE_MOLASSEMBLER_STEREOPERMUTATORS_CYCLE_FEASIBILITY_H
 
 #include "molassembler/Modeling/CommonTrig.h"
-#include "molassembler/Types.h"
 
 #include "CyclicPolygons.h"
 

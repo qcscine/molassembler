@@ -8,7 +8,6 @@
 #define INCLUDE_MOLASSEMBLER_IO_SMILES_MOLECULE_BUILDER_H
 
 #include "molassembler/IO/SmilesParseData.h"
-#include "molassembler/Types.h"
 #include "molassembler/Graph/InnerGraph.h"
 #include "boost/variant.hpp"
 #include <vector>
