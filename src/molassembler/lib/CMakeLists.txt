@@ -171,7 +171,7 @@ if(${CMAKE_VERSION} VERSION_GREATER_EQUAL "3.12.0")
   target_link_libraries(molassembler_obj PRIVATE
     temple
     Boost::boost
-    Scine::UtilsOS
+    ${MOLASSEMBLER_UTILS_TARGET}
     boost_outcome
     RingDecomposerLibStatic
     stereopermutation
@@ -186,7 +186,7 @@ if(${CMAKE_VERSION} VERSION_GREATER_EQUAL "3.12.0")
 else()
   target_include_directories(molassembler_obj
     PUBLIC
-      $<TARGET_PROPERTY:Scine::UtilsOS,INTERFACE_INCLUDE_DIRECTORIES>
+    $<TARGET_PROPERTY:${MOLASSEMBLER_UTILS_TARGET},INTERFACE_INCLUDE_DIRECTORIES>
       $<TARGET_PROPERTY:boost_outcome,INTERFACE_INCLUDE_DIRECTORIES>
       $<TARGET_PROPERTY:RingDecomposerLibStatic,INTERFACE_INCLUDE_DIRECTORIES>
       $<TARGET_PROPERTY:Boost::boost,INTERFACE_INCLUDE_DIRECTORIES>
@@ -244,7 +244,7 @@ add_library(molassembler::molassembler ALIAS molassembler)
 target_link_libraries(molassembler
   PUBLIC
     Boost::boost
-    Scine::UtilsOS
+    ${MOLASSEMBLER_UTILS_TARGET}
     boost_outcome
     shapes
   PRIVATE
@@ -328,7 +328,7 @@ set_target_properties(molassembler_static PROPERTIES
 # And finally we link in the rest of the public interface libraries
 target_link_libraries(molassembler_static PUBLIC
   Boost::boost
-  Scine::UtilsOS
+  ${MOLASSEMBLER_UTILS_TARGET}
   boost_outcome
   RingDecomposerLibStatic
   stereopermutation
