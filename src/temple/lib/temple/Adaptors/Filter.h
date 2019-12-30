@@ -8,6 +8,7 @@
 #define INCLUDE_MOLASSEMBLER_TEMPLE_FILTER_ADAPTOR_H
 
 #include "temple/ContainerTraits.h"
+#include "temple/Binding.h"
 #include "temple/constexpr/TupleType.h"
 #include <cassert>
 
@@ -20,11 +21,7 @@ struct FilterAdaptor {
 //!@name Types
 //!@{
   // See tricks documentation
-  using BoundContainer = std::conditional_t<
-    std::is_rvalue_reference<Container&&>::value,
-    std::decay_t<Container>,
-    const Container&
-  >;
+  using BoundContainer = typename Binding<Container>::type;
 
   using ContainerValueType = traits::getValueType<Container>;
 

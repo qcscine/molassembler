@@ -8,13 +8,12 @@
 #define INCLUDE_MOLASSEMBLER_TEMPLE_ALL_PAIRS_ADAPTOR_H
 
 #include "temple/ContainerTraits.h"
+#include "temple/Binding.h"
 
 #include <tuple>
 
 namespace temple {
-
 namespace adaptors {
-
 namespace detail {
 
 template<class Base>
@@ -47,11 +46,7 @@ struct SingleContainerPairsGenerator
 //!@name Types
 //!@{
   // See tricks documentation
-  using BoundContainer = std::conditional_t<
-    std::is_rvalue_reference<Container&&>::value,
-    std::decay_t<Container>,
-    const Container&
-  >;
+  using BoundContainer = typename Binding<Container>::type;
 
   using ContainerValueType = decltype(
     *std::begin(
@@ -59,10 +54,7 @@ struct SingleContainerPairsGenerator
     )
   );
 
-  using PairType = std::pair<
-    ContainerValueType,
-    ContainerValueType
-  >;
+  using PairType = std::pair<ContainerValueType, ContainerValueType>;
 
   using ContainerIteratorType = decltype(
     std::begin(std::declval<const Container>())
@@ -171,17 +163,8 @@ struct TwoContainersAllPairsGenerator
 {
 //!@name Types
 //!@{
-  using BoundContainerT = std::conditional_t<
-    std::is_rvalue_reference<ContainerT&&>::value,
-    std::decay_t<ContainerT>,
-    const ContainerT&
-  >;
-
-  using BoundContainerU = std::conditional_t<
-    std::is_rvalue_reference<ContainerU&&>::value,
-    std::decay_t<ContainerU>,
-    const ContainerU&
-  >;
+  using BoundContainerT = typename Binding<ContainerT>::type;
+  using BoundContainerU = typename Binding<ContainerU>::type;
 
   using T = decltype(
     *std::begin(
@@ -319,6 +302,5 @@ auto allPairs(ContainerT&& t, ContainerU&& u) {
 }
 
 } // namespace adaptors
-
 } // namespace temple
 #endif

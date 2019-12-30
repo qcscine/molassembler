@@ -8,6 +8,7 @@
 #define INCLUDE_MOLASSEMBLER_TEMPLE_ZIP_ADAPTOR_H
 
 #include "temple/ContainerTraits.h"
+#include "temple/Binding.h"
 
 namespace temple {
 
@@ -20,17 +21,8 @@ struct Zipper {
 //!@name Types
 //!@{
   // See tricks documentation
-  using BoundContainerT = std::conditional_t<
-    std::is_rvalue_reference<ContainerT&&>::value,
-    std::decay_t<ContainerT>,
-    const ContainerT&
-  >;
-
-  using BoundContainerU = std::conditional_t<
-    std::is_rvalue_reference<ContainerU&&>::value,
-    std::decay_t<ContainerU>,
-    const ContainerU&
-  >;
+  using BoundContainerT = typename Binding<ContainerT>::type;
+  using BoundContainerU = typename Binding<ContainerU>::type;
 
   using T = decltype(
     *std::begin(

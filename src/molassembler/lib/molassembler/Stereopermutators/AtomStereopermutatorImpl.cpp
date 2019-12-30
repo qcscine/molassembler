@@ -17,6 +17,7 @@
 #include "temple/Adaptors/Iota.h"
 #include "temple/Adaptors/Transform.h"
 #include "temple/Functional.h"
+#include "temple/Functor.h"
 #include "temple/Optionals.h"
 #include "temple/OrderedPair.h"
 #include "temple/Random.h"
@@ -342,10 +343,9 @@ void AtomStereopermutator::Impl::applyPermutation(const std::vector<AtomIndex>& 
   // _centerAtom must change
   _centerAtom = permutation.at(_centerAtom);
 
-  // Neither shape nor assignment change
-
-  /* Although ranking and central atom are implicated in its creation,
-   * abstract and feasible's states are independent of atom indices.
+  /* Neither shape nor assignment change. Also, although ranking and central
+   * atom are implicated in their creation, abstract and feasible's states are
+   * independent of atom indices.
    */
 }
 
@@ -561,12 +561,8 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
        * returns boost::none, the whole expression is boost::none.
        */
       auto suitableMappingOption = temple::optionals::flatMap(
-        Shapes::getMapping(
-          _shape,
-          newShape,
-          boost::none
-        ),
-        [&](const auto& mappingOption) {
+        Shapes::getMapping(_shape, newShape, boost::none),
+        [](const auto& mappingOption) {
           return getIndexMapping(
             mappingOption,
             Options::chiralStatePreservation
@@ -601,9 +597,7 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
         // Replace old symmetry positions by their site indices
         sitesAtNewSymmetryPositions = temple::map(
           oldSymmetryPositionsInNewSymmetry,
-          [&oldSymmetryPositionToSiteMap](const unsigned oldSymmetryPosition) -> unsigned {
-            return oldSymmetryPositionToSiteMap.at(oldSymmetryPosition);
-          }
+          temple::functor::at(oldSymmetryPositionToSiteMap)
         );
       }
       /* If no mapping can be found that fits to the preservationOption,
@@ -626,7 +620,7 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
            */
           _shapePositionMap.at(*alteredSiteIndex)
         ),
-        [&](const auto& mappingOptional) {
+        [](const auto& mappingOptional) {
           return getIndexMapping(mappingOptional, Options::chiralStatePreservation);
         }
       );
@@ -665,31 +659,17 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
 
     /* Substituent-level changes */
     if(situation == PropagationSituation::SubstituentAddition) {
-      /* Sort sites' constituting atom indices in both rankings so we can use
-       * lexicographical comparison to create a mapping. Add the
-       * newSubstituentIndex to the old ranking's appropriate site so the
-       * mapping is 1:1.
+      /* Add the newSubstituentIndex to the old ranking's appropriate site so
+       * the mapping is 1:1.
        */
+      RankingInformation::SiteListType oldSites = _ranking.sites;
       temple::TinySet<AtomIndex>::checked_insert(
-        _ranking.sites.at(*alteredSiteIndex),
+        oldSites.at(*alteredSiteIndex),
         *alteredSubstituentIndex
       );
 
       // Generate a flat map of old site indices to new site indices
-      auto siteMapping = temple::map(
-        _ranking.sites,
-        [&newRanking](const auto& siteAtomList) -> unsigned {
-          auto findIter = std::find(
-            newRanking.sites.begin(),
-            newRanking.sites.end(),
-            siteAtomList
-          );
-
-          assert(findIter != newRanking.sites.end());
-
-          return findIter - newRanking.sites.begin();
-        }
-      );
+      auto siteMapping = temple::map(oldSites, temple::functor::indexIn(newRanking.sites));
 
       // Write the found mapping into sitesAtNewSymmetryPositions
       sitesAtNewSymmetryPositions.resize(Shapes::size(newShape));
@@ -698,40 +678,20 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
           _shapePositionMap.at(i)
         );
       }
-
-      /* Revert the change to _ranking from earlier for easy mapping so that
-       * the returned prior state is unchanged.
-       */
-      temple::inplace::remove(
-        _ranking.sites.at(*alteredSiteIndex),
-        *alteredSubstituentIndex
-      );
     }
 
     if(situation == PropagationSituation::SubstituentRemoval) {
       /* Sort sites in the old ranking and new so we can use lexicographical
        * comparison to figure out a mapping
        */
+      RankingInformation::SiteListType oldSites = _ranking.sites;
       temple::inplace::remove(
-        _ranking.sites.at(*alteredSiteIndex),
+        oldSites.at(*alteredSiteIndex),
         *alteredSubstituentIndex
       );
 
       // Calculate the mapping from old sites to new ones
-      auto siteMapping = temple::map(
-        _ranking.sites,
-        [&newRanking](const auto& siteAtomList) -> unsigned {
-          auto findIter = std::find(
-            newRanking.sites.begin(),
-            newRanking.sites.end(),
-            siteAtomList
-          );
-
-          assert(findIter != newRanking.sites.end());
-
-          return findIter - newRanking.sites.begin();
-        }
-      );
+      auto siteMapping = temple::map(oldSites, temple::functor::indexIn(newRanking.sites));
 
       sitesAtNewSymmetryPositions.resize(Shapes::size(newShape));
       // Transfer sites to new mapping
@@ -740,14 +700,6 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
           _shapePositionMap.at(i)
         );
       }
-
-      /* Revert the change to _ranking from earlier for easy mapping so that
-       * the returned prior state is unchanged.
-       */
-      temple::TinySet<AtomIndex>::checked_insert(
-        _ranking.sites.at(*alteredSiteIndex),
-        *alteredSubstituentIndex
-      );
     }
 
     /* Ranking-level change */

@@ -4,13 +4,14 @@
  * @brief Provides an identity functor.
  */
 
-#ifndef INCLUDE_TEMPLE_IDENTITY_H
-#define INCLUDE_TEMPLE_IDENTITY_H
+#ifndef INCLUDE_TEMPLE_FUNCTOR_H
+#define INCLUDE_TEMPLE_FUNCTOR_H
 
-#include <utility>
+#include <algorithm>
+#include <stdexcept>
+#include "temple/Binding.h"
 
 namespace temple {
-
 namespace functor {
 
 /**
@@ -29,26 +30,45 @@ struct Identity {
  * functor, lvalues by reference.
  */
 template<class Container>
-struct At {
-  using BoundContainer = std::conditional_t<
-    std::is_rvalue_reference<Container&&>::value,
-    std::decay_t<Container>,
-    const Container&
-  >;
-
-  BoundContainer bound;
-
-  At(Container&& container) : bound(container) {}
+struct At : public Binding<Container> {
+  using ContainerBinding = Binding<Container>;
+  using ContainerBinding::ContainerBinding;
 
   template<typename T>
   auto operator() (const T& index) const {
-    return bound.at(index);
+    return ContainerBinding::value.at(index);
   }
 };
 
 template<class Container>
 auto at(Container&& container) {
   return At<Container&&> {std::forward<Container>(container)};
+}
+
+template<class Container>
+struct IndexIn : public Binding<Container> {
+  using ContainerBinding = Binding<Container>;
+  using ContainerBinding::ContainerBinding;
+
+  template<typename T>
+  auto operator() (const T& item) const {
+    auto findIter = std::find(
+      std::begin(ContainerBinding::value),
+      std::end(ContainerBinding::value),
+      item
+    );
+
+    if(findIter == std::end(ContainerBinding::value)) {
+      throw std::out_of_range("Item not found in container");
+    }
+
+    return findIter - std::begin(ContainerBinding::value);
+  }
+};
+
+template<class Container>
+auto indexIn(Container&& container) {
+  return IndexIn<Container&&> {std::forward<Container>(container)};
 }
 
 template<unsigned i>
@@ -66,7 +86,6 @@ constexpr Get<0> first;
 constexpr Get<1> second;
 
 } // namespace functor
-
 } // namespace temple
 
 #endif

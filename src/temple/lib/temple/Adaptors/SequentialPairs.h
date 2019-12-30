@@ -8,40 +8,29 @@
 #define INCLUDE_MOLASSEMBLER_TEMPLE_SEQUENTIAL_PAIRS_ADAPTOR_H
 
 #include "temple/ContainerTraits.h"
+#include "temple/Binding.h"
+
+#include <vector>
 
 namespace temple {
-
 namespace adaptors {
-
 namespace detail {
 
 template<class Container>
-struct SequentialPairGenerator {
+struct SequentialPairGenerator : public Binding<Container> {
 //!@name Types
 //!@{
-  // See tricks documentation
-  using BoundContainer = std::conditional_t<
-    std::is_rvalue_reference<Container&&>::value,
-    std::decay_t<Container>,
-    const Container&
-  >;
+  using ContainerBinding = Binding<Container>;
+
+  using ContainerIteratorType = decltype(
+    std::begin(std::declval<std::add_const_t<std::decay_t<Container>>>())
+  );
 
   using ContainerValueType = decltype(
-    *std::begin(
-      std::declval<const Container>()
-    )
+    *std::declval<ContainerIteratorType>()
   );
 
   using PairType = std::pair<ContainerValueType, ContainerValueType>;
-
-  using ContainerIteratorType = decltype(
-    std::begin(std::declval<const Container>())
-  );
-//!@}
-
-//!@name Member variables
-//!@{
-  BoundContainer container;
 //!@}
 
 //!@name Information
@@ -50,18 +39,17 @@ struct SequentialPairGenerator {
     traits::hasSize<Container>::value,
     std::size_t
   > size() const {
-    if(container.size() > 0) {
-      return container.size() - 1;
+    if(ContainerBinding::value.size() > 0) {
+      return ContainerBinding::value.size() - 1;
     }
 
     return 0;
   }
 //!@}
 
-//!@name Special member functions
+//!@name Constructor
 //!@{
-  SequentialPairGenerator(Container&& passContainer)
-    : container(std::forward<Container>(passContainer)) {}
+  using ContainerBinding::ContainerBinding;
 //!@}
 
 //!@name Iterators
@@ -101,10 +89,7 @@ struct SequentialPairGenerator {
     }
 
     PairType operator * () const {
-      return {
-        *_left,
-        *_right
-      };
+      return {*_left, *_right};
     }
 
   private:
@@ -112,24 +97,28 @@ struct SequentialPairGenerator {
   };
 
   Iterator begin() const {
+    const auto& container = ContainerBinding::value;
+
     auto maybeNextToBegin = std::begin(container);
     if(maybeNextToBegin != std::end(container)) {
       ++maybeNextToBegin;
     }
 
-    return {
+    return Iterator {
       std::begin(container),
       std::move(maybeNextToBegin)
     };
   }
 
   Iterator end() const {
+    const auto& container = ContainerBinding::value;
+
     auto maybePriorToEnd = std::end(container);
     if(maybePriorToEnd != std::begin(container)) {
       --maybePriorToEnd;
     }
 
-    return {
+    return Iterator {
       std::move(maybePriorToEnd),
       std::end(container)
     };
@@ -147,7 +136,6 @@ auto sequentialPairs(Container&& container) {
 }
 
 } // namespace adaptors
-
 } // namespace temple
 
 #endif

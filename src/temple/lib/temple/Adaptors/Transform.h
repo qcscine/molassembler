@@ -9,23 +9,17 @@
 
 #include "temple/ContainerTraits.h"
 #include "temple/Invoke.h"
+#include "temple/Binding.h"
 
 namespace temple {
-
 namespace adaptors {
-
 namespace detail {
 
 template<class Container, typename UnaryFunction>
 struct Transformer {
 //!@name Types
 //!@{
-  // See tricks documentation
-  using BoundContainer = std::conditional_t<
-    std::is_rvalue_reference<Container&&>::value,
-    std::decay_t<Container>,
-    const Container&
-  >;
+  using BoundContainer = typename Binding<Container>::type;
 
   using ContainerValueType = decltype(
     *std::begin(
@@ -145,7 +139,6 @@ auto transform(
 }
 
 } // namespace adaptors
-
 } // namespace temple
 
 #endif

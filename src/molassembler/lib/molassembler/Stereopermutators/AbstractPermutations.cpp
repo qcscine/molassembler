@@ -5,6 +5,7 @@
 #include "molassembler/Stereopermutators/AbstractPermutations.h"
 
 #include <algorithm>
+#include <cassert>
 
 namespace Scine {
 
@@ -93,12 +94,14 @@ std::vector<char> AbstractStereopermutations::makeStereopermutationCharacters(
 
   std::vector<char> newStereopermutationCharacters;
 
-  for(const auto& index : sitesAtShapeVertices) {
+  for(const auto& siteIndex : sitesAtShapeVertices) {
     const auto findIter = std::find(
-      flattenedIndices.begin(),
-      flattenedIndices.end(),
-      index
+      std::begin(flattenedIndices),
+      std::end(flattenedIndices),
+      siteIndex
     );
+
+    assert(findIter != std::end(flattenedIndices));
 
     newStereopermutationCharacters.push_back(
       canonicalStereopermutationCharacters.at(

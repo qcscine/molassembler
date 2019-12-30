@@ -8,6 +8,7 @@
 #define INCLUDE_MOLASSEMBLER_TEMPLE_CYCLIC_FRAME_ADAPTOR_H
 
 #include "temple/ContainerTraits.h"
+#include "temple/Binding.h"
 #include "temple/constexpr/TupleType.h"
 #include <array>
 #include <cassert>
@@ -29,16 +30,10 @@ auto splitArray(const std::array<T, size>& arr) {
 }
 
 template<class Container, unsigned frameSize>
-struct CyclicFrameAdaptor {
+struct CyclicFrameAdaptor : public Binding<Container> {
 //!@name Types
 //!@{
-  // See tricks documentation
-  using BoundContainer = std::conditional_t<
-    std::is_rvalue_reference<Container&&>::value,
-    std::decay_t<Container>,
-    const Container&
-  >;
-
+  using ContainerBinding = Binding<Container>;
   using ContainerValueType = traits::getValueType<Container>;
 
   using FrameType = typename TupleType::RepeatType<ContainerValueType, frameSize>::type;
@@ -48,29 +43,23 @@ struct CyclicFrameAdaptor {
   );
 //!@}
 
-//!@name Member variables
-//!@{
-  BoundContainer container;
-//!@}
-
 //!@name Information
 //!@{
   std::enable_if_t<
     traits::hasSize<Container>::value,
     std::size_t
   > size() const {
-    if(container.size() < frameSize) {
+    if(ContainerBinding::value.size() < frameSize) {
       return 0;
     }
 
-    return container.size();
+    return ContainerBinding::value.size();
   }
 //!@}
 
-//!@name Special member functions
+//!@name Constructors
 //!@{
-  CyclicFrameAdaptor(Container&& passContainer)
-    : container(std::forward<Container>(passContainer)) {}
+  using ContainerBinding::ContainerBinding;
 //!@}
 
 //!@name Iterators
@@ -142,20 +131,20 @@ struct CyclicFrameAdaptor {
 
   Iterator begin() const {
     // If the container is not of appropriate size, yield an end iterator
-    if(container.size() < frameSize) {
+    if(ContainerBinding::value.size() < frameSize) {
       return end();
     }
 
     return {
-      std::begin(container),
-      std::end(container)
+      std::begin(ContainerBinding::value),
+      std::end(ContainerBinding::value)
     };
   }
 
   Iterator end() const {
     return {
-      std::end(container),
-      std::end(container)
+      std::end(ContainerBinding::value),
+      std::end(ContainerBinding::value)
     };
   }
 //!@}

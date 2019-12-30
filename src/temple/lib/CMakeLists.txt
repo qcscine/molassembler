@@ -9,6 +9,7 @@ set(HEADERS_All
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/Adaptors/Transform.h
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/Adaptors/Zip.h
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/AddToContainer.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/temple/Binding.h
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/BoundedNodeTrie.h
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/Cache.h
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/constexpr/Array.h

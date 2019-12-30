@@ -12,24 +12,18 @@
 #define INCLUDE_MOLASSEMBLER_TEMPLE_ENUMERATE_ADAPTOR_H
 
 #include "temple/Preprocessor.h"
+#include "temple/Binding.h"
 
 #include <memory>
 
 namespace temple {
-
 namespace adaptors {
-
 namespace detail {
 
 template<class Container>
-class Enumerator {
+class Enumerator : public Binding<Container> {
 public:
-  // See tricks documentation
-  using BoundContainer = std::conditional_t<
-    std::is_rvalue_reference<Container&&>::value,
-    std::decay_t<Container>,
-    const Container&
-  >;
+  using ContainerBinding = Binding<Container>;
 
   // Get the bare Container containing type
   using T = decltype(
@@ -56,12 +50,7 @@ public:
     {}
   };
 
-private:
-  BoundContainer _container;
-
-public:
-  Enumerator(Container&& container)
-    : _container(std::forward<Container>(container)) {}
+  using ContainerBinding::ContainerBinding;
 
   class iterator {
   private:
@@ -112,15 +101,15 @@ public:
 
   iterator begin() const {
     return iterator(
-      std::begin(_container),
+      std::begin(ContainerBinding::value),
       0
     );
   }
 
   iterator end() const {
     return iterator(
-      std::end(_container),
-      _container.size()
+      std::end(ContainerBinding::value),
+      ContainerBinding::value.size()
     );
   }
 };
@@ -146,7 +135,6 @@ detail::Enumerator<Container> enumerate(Container&& container) {
 }
 
 } // namespace adaptors
-
 } // namespace temple
 
 #endif
