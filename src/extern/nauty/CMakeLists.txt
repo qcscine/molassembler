@@ -41,9 +41,9 @@ target_include_directories(nauty PUBLIC
   $<INSTALL_INTERFACE:$<INSTALL_PREFIX>/include>
 )
 set_target_properties(nauty PROPERTIES POSITION_INDEPENDENT_CODE ON)
-install(TARGETS nauty EXPORT NautyTargets ARCHIVE DESTINATION lib)
+install(TARGETS nauty EXPORT nautyTargets ARCHIVE DESTINATION lib)
 
 molassembler_install_component_cmake_files(
   COMPONENT nauty
-  EXPORT_NAME NautyTargets
+  EXPORT_NAME nautyTargets
 )

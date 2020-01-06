@@ -1,4 +1,4 @@
-include(${CMAKE_CURRENT_LIST_DIR}/NautyTargets.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/nautyTargets.cmake)
 
 @PACKAGE_INIT@
 set_and_check(NAUTY_INCLUDE_DIR "@PACKAGE_INCLUDE_INSTALL_DIR@")

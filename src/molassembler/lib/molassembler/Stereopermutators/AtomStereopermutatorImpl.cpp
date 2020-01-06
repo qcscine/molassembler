@@ -552,7 +552,7 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
    */
   if(_assignmentOption && numStereopermutations() > 1) {
     // A flat map of symmetry position to new site index in the new symmetry
-    std::vector<unsigned> sitesAtNewSymmetryPositions;
+    std::vector<unsigned> sitesAtNewShapeVertices;
 
     /* Site-level changes */
     if(situation == PropagationSituation::SiteAddition) {
@@ -595,7 +595,7 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
         oldSymmetryPositionToSiteMap.push_back(_shapePositionMap.size());
 
         // Replace old symmetry positions by their site indices
-        sitesAtNewSymmetryPositions = temple::map(
+        sitesAtNewShapeVertices = temple::map(
           oldSymmetryPositionsInNewSymmetry,
           temple::functor::at(oldSymmetryPositionToSiteMap)
         );
@@ -638,19 +638,19 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
          */
         const auto& symmetryMapping = suitableMappingOptional.value();
 
-        // Invert symmetryPositionMap to get: site = map.at(symmetryPosition)
-        std::vector<unsigned> oldSymmetryPositionToSiteMap(_shapePositionMap.size());
+        // Invert shapePositionMap to get: site = map.at(shapeVertex)
+        std::vector<unsigned> oldShapeVertexToSiteMap(_shapePositionMap.size());
         for(unsigned i = 0 ; i < _shapePositionMap.size(); ++i) {
-          oldSymmetryPositionToSiteMap.at(
+          oldShapeVertexToSiteMap.at(
             _shapePositionMap.at(i)
           ) = i;
         }
 
-        // Transfer indices from current symmetry to new symmetry
-        sitesAtNewSymmetryPositions.resize(Shapes::size(newShape));
+        // Transfer site indices from current shape to new shape
+        sitesAtNewShapeVertices.resize(Shapes::size(newShape));
         for(unsigned i = 0; i < Shapes::size(newShape); ++i) {
           // i is a symmetry position
-          sitesAtNewSymmetryPositions.at(i) = oldSymmetryPositionToSiteMap.at(
+          sitesAtNewShapeVertices.at(i) = oldShapeVertexToSiteMap.at(
             symmetryMapping.at(i)
           );
         }
@@ -671,10 +671,10 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
       // Generate a flat map of old site indices to new site indices
       auto siteMapping = temple::map(oldSites, temple::functor::indexIn(newRanking.sites));
 
-      // Write the found mapping into sitesAtNewSymmetryPositions
-      sitesAtNewSymmetryPositions.resize(Shapes::size(newShape));
+      // Write the found mapping into sitesAtNewShapeVertices
+      sitesAtNewShapeVertices.resize(Shapes::size(newShape));
       for(unsigned i = 0; i < siteMapping.size(); ++i) {
-        sitesAtNewSymmetryPositions.at(i) = siteMapping.at(
+        sitesAtNewShapeVertices.at(i) = siteMapping.at(
           _shapePositionMap.at(i)
         );
       }
@@ -693,10 +693,10 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
       // Calculate the mapping from old sites to new ones
       auto siteMapping = temple::map(oldSites, temple::functor::indexIn(newRanking.sites));
 
-      sitesAtNewSymmetryPositions.resize(Shapes::size(newShape));
+      sitesAtNewShapeVertices.resize(Shapes::size(newShape));
       // Transfer sites to new mapping
       for(unsigned i = 0; i < siteMapping.size(); ++i) {
-        sitesAtNewSymmetryPositions.at(i) = siteMapping.at(
+        sitesAtNewShapeVertices.at(i) = siteMapping.at(
           _shapePositionMap.at(i)
         );
       }
@@ -717,18 +717,18 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
       );
 
       // Replace the characters by their corresponding indices from the old ranking
-      sitesAtNewSymmetryPositions = shapeVertexToSiteIndexMap(
+      sitesAtNewShapeVertices = shapeVertexToSiteIndexMap(
         currentStereopermutation,
         _abstract.canonicalSites
       );
     }
 
-    if(!sitesAtNewSymmetryPositions.empty()) {
+    if(!sitesAtNewShapeVertices.empty()) {
       // Replace the site indices by their new ranking characters
       auto newStereopermutationCharacters = AbstractStereopermutations::makeStereopermutationCharacters(
         newAbstract.canonicalSites,
         newAbstract.symbolicCharacters,
-        sitesAtNewSymmetryPositions
+        sitesAtNewShapeVertices
       );
 
       // Create a new assignment with those characters
