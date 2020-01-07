@@ -233,11 +233,15 @@ void write(
   Utils::ChemicalFileHandler::write(filename, data.first, data.second);
 }
 
-void write(
-  const std::string& filename,
-  const Molecule& molecule
-) {
+void write(const std::string& filename, const Molecule& molecule) {
   boost::filesystem::path filepath {filename};
+
+  if(filepath.extension() == ".dot") {
+    std::ofstream dotfile(filename);
+    dotfile << molecule.dumpGraphviz();
+    dotfile.close();
+    return;
+  }
 
   if(filepath.extension() == ".cbor") {
     BinaryHandler::write(
@@ -263,7 +267,7 @@ void write(
   }
 
   throw std::logic_error(
-    "It makes no sense to write MOL or XYZ files without a PositionCollection"
+    "File suffix cannot be mapped to a valid filetype for this writer"
   );
 }
 

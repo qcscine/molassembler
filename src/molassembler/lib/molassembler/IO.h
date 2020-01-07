@@ -135,16 +135,13 @@ MASM_EXPORT void write(
   const Utils::PositionCollection& positions
 );
 
-/*! @brief Writer function for Molecule serializations
+/*! @brief Writer function for Molecule serializations and graphviz representation
  *
  * @complexity{@math{\Theta(V + E + A + B)}}
  * @note Canonicalization state is retained using the molecule serializations.
- * @throws If the file extension does not match .masm or .json
+ * @throws If the file extension does not match .cbor, .bson, .json or .dot
  */
-MASM_EXPORT void write(
-  const std::string& filename,
-  const Molecule& molecule
-);
+MASM_EXPORT void write(const std::string& filename, const Molecule& molecule);
 
 } // namespace IO
 } // namespace molassembler

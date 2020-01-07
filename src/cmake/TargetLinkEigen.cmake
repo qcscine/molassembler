@@ -73,7 +73,7 @@ function(target_link_eigen target_name mode)
     endif()
     target_include_directories(${target_name} ${mode} ${MKL_INCLUDE_DIRS})
     target_compile_definitions(${target_name} ${mode} EIGEN_USE_MKL_ALL)
-    target_compile_options(${target_name} PRIVATE $<$<BOOL:${OpenMP_CXX_FOUND}>:${OpenMP_CXX_FLAGS}>)
+    target_compile_options(${target_name} ${mode} $<$<BOOL:${OpenMP_CXX_FOUND}>:${OpenMP_CXX_FLAGS}>)
   else()
     if(LAPACK_FOUND AND SCINE_USE_LAPACK)
       # LAPACK and EIGEN_USE_LAPACK / EIGEN_USE_BLAS

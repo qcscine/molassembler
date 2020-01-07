@@ -44,9 +44,9 @@ This library requires the C++14 standard.
 
 Dependencies:
 
-- Boost >= 1.64
-- Eigen >= 3
-- SCINE Utils > 0.1.0
+- Boost (Boost license) >= 1.64
+- Eigen (MPL 2.0 license) >= 3
+- SCINE Utils (BSD-3 license)> 0.1.0
 - (BLAS library, added if detected during compilation)
 
 
@@ -62,10 +62,10 @@ libraries.
 
 Unowned libraries included this distribution:
 
-- RingDecomposerLib[^1]: Unique Ring Family[^2] cycle detection
+- RingDecomposerLib[^1] (BSD-3 license): Unique Ring Family[^2] cycle detection
 - Outcome (until released in boost): Improved error propagation
-- nlohmann/json: JSON serialization
-- nauty[^3]: Graph automorphism determination and canonical labeling
+- nlohmann/json (MIT license): JSON serialization
+- nauty[^3] (Apache 2.0 license): Graph automorphism determination and canonical labeling
 
 This library uses CMake to model dependencies and make builds
 platform-independent.
