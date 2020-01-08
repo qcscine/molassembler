@@ -1,4 +1,9 @@
 from conans import ConanFile, CMake
+from pathlib import Path
+
+
+def conan_paths_path_str(build_folder):
+    return str(Path(build_folder) / "conan_paths.cmake")
 
 
 class MolassemblerConan(ConanFile):
@@ -18,7 +23,7 @@ generate non-superposable stereopermutations as output."""
     settings = "os", "compiler", "build_type", "arch"
     options = {"subsume_dependencies": [True, False]}
     default_options = {"subsume_dependencies": False}
-    generators = "cmake"
+    generators = "cmake_paths"
     exports_sources = "src/*", "CMakeLists.txt"
     build_requires = [("eigen/[~=3.3.7]@conan/stable")]
     requires = [("boost/[~=1.71.0]@conan/stable"),
@@ -30,6 +35,7 @@ generate non-superposable stereopermutations as output."""
             "SCINE_BUILD_DOCS": False,
             "SCINE_BUILD_TESTS": False,
             "SCINE_BUILD_PYTHON_BINDINGS": False,
+            "CMAKE_PROJECT_molassembler_INCLUDE": conan_paths_path_str(self.build_folder)
         }
         cmake.definitions.update(additional_definitions)
         # Mess with cmake definitions, etc.

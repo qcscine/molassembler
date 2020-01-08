@@ -21,6 +21,7 @@ option(MOLASSEMBLER_ADDRESS_SANITIZE "Add address sanitizer" OFF)
 # SCINE options
 option(SCINE_BUILD_TESTS "Build test executables" ON)
 option(SCINE_BUILD_DOCS "Build the documentation" ON)
+option(SCINE_BUILD_PYTHON_BINDINGS "Build python bindings" OFF)
 
 # Set a default build type
 set(default_build_type "Release")
