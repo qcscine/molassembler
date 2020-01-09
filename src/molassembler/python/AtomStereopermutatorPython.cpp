@@ -120,7 +120,7 @@ void init_atom_stereopermutator(pybind11::module& m) {
       >>> permutator = shipscrew.stereopermutators.option(0)
       >>> assert permutator is not None
       >>> permutator.num_stereopermutations # Number of abstract permutations
-      3
+      4
       >>> permutator.num_assignments # Number of spatially feasible permutations
       2
       >>> permutator.index_of_permutation
