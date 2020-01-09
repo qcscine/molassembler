@@ -1,3 +1,9 @@
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ * @brief Manipulations of stereopermutations with shapes
+ */
+
 #ifndef INCLUDE_MOLASSEMBLER_STEREOPERMUTATION_MANIPULATION_H
 #define INCLUDE_MOLASSEMBLER_STEREOPERMUTATION_MANIPULATION_H
 
