@@ -12,7 +12,7 @@
 #include "CyclicPolygons.h"
 #include <Eigen/Dense>
 #include <Eigen/SparseCore>
-#include "stereopermutation/GenerateUniques.h"
+#include "stereopermutation/Manipulation.h"
 #include "temple/Adaptors/AllPairs.h"
 #include "temple/Adaptors/Iota.h"
 #include "temple/Adaptors/Transform.h"
@@ -300,7 +300,7 @@ void AtomStereopermutator::Impl::assign(boost::optional<unsigned> assignment) {
    */
   if(_assignmentOption) {
     _shapePositionMap = siteToShapeVertexMap(
-      _abstract.permutations.stereopermutations.at(
+      _abstract.permutations.list.at(
         _feasible.indices.at(
           _assignmentOption.value()
         )
@@ -706,11 +706,11 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
     if(
       situation == PropagationSituation::RankingChange
       && (
-        newAbstract.permutations.stereopermutations.size()
-        <= _abstract.permutations.stereopermutations.size()
+        newAbstract.permutations.list.size()
+        <= _abstract.permutations.list.size()
       )
     ) {
-      const auto& currentStereopermutation = _abstract.permutations.stereopermutations.at(
+      const auto& currentStereopermutation = _abstract.permutations.list.at(
         _feasible.indices.at(
           _assignmentOption.value()
         )
@@ -738,11 +738,16 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
       );
 
       // Generate all rotations of this trial assignment
-      auto allTrialRotations = trialStereopermutation.generateAllRotations(newShape);
+      auto allTrialRotations = stereopermutation::generateAllRotations(trialStereopermutation, newShape);
 
       // Find out which of the new assignments has a rotational equivalent
-      for(unsigned i = 0; i < newAbstract.permutations.stereopermutations.size(); ++i) {
-        if(allTrialRotations.count(newAbstract.permutations.stereopermutations.at(i)) > 0) {
+      for(unsigned i = 0; i < newAbstract.permutations.list.size(); ++i) {
+        auto findIter = std::find(
+          std::begin(allTrialRotations),
+          std::end(allTrialRotations),
+          newAbstract.permutations.list.at(i)
+        );
+        if(findIter != std::end(allTrialRotations)) {
           newStereopermutationOption = i;
           break;
         }
@@ -923,7 +928,7 @@ void AtomStereopermutator::Impl::fit(
     _abstract.canonicalSites
   );
 
-  auto soughtRotations = soughtStereopermutation.generateAllRotations(fittedShape);
+  auto soughtRotations = stereopermutation::generateAllRotations(soughtStereopermutation, fittedShape);
 
   /* Although the stereopermutations in _abstract are sorted by their index of
    * permutation and we could potentially binary search all of our sought
@@ -933,10 +938,15 @@ void AtomStereopermutator::Impl::fit(
   boost::optional<unsigned> foundStereopermutation;
   const unsigned A = _feasible.indices.size();
   for(unsigned a = 0; a < A; ++a) {
-    const auto& feasiblePermutation = _abstract.permutations.stereopermutations.at(
+    const auto& feasiblePermutation = _abstract.permutations.list.at(
       _feasible.indices.at(a)
     );
-    if(soughtRotations.count(feasiblePermutation) > 0) {
+    auto findIter = std::find(
+      std::begin(soughtRotations),
+      std::end(soughtRotations),
+      feasiblePermutation
+    );
+    if(findIter != std::end(soughtRotations)) {
       foundStereopermutation = a;
       break;
     }
@@ -1030,7 +1040,7 @@ AtomStereopermutator::Impl::minimalChiralConstraints(bool enforce) const {
      *  (position in symmetry) -> atom index
      */
     auto symmetryPositionToSiteIndexMap = shapeVertexToSiteIndexMap(
-      _abstract.permutations.stereopermutations.at(
+      _abstract.permutations.list.at(
         _feasible.indices.at(
           _assignmentOption.value()
         )
@@ -1130,7 +1140,7 @@ unsigned AtomStereopermutator::Impl::numStereopermutations() const {
     return 1;
   }
 
-  return _abstract.permutations.stereopermutations.size();
+  return _abstract.permutations.list.size();
 }
 
 void AtomStereopermutator::Impl::setShape(

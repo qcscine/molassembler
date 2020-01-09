@@ -16,8 +16,9 @@
 #include "shapes/Data.h"
 #include "shapes/Properties.h"
 
-#include "stereopermutation/GenerateUniques.h"
+#include "stereopermutation/Manipulation.h"
 #include "stereopermutation/Composites.h"
+#include "stereopermutation/RotationEnumerator.h"
 
 #include "temple/Functional.h"
 #include "temple/Random.h"
@@ -51,140 +52,53 @@ BOOST_AUTO_TEST_CASE(StereopermutationInstantiation) {
   }
 }
 
-BOOST_AUTO_TEST_CASE(StereopermutationBasics) {
-  // Constructors
-  Stereopermutation instanceWithBondedLigands(
+BOOST_AUTO_TEST_CASE(StereopermutationRotation) {
+  // Octahedron ship-screw like cis-cis-cis
+  const Stereopermutation asymm {
     {'A', 'B', 'C', 'D', 'E', 'F'},
-    {
-      std::make_pair(0,1),
-      std::make_pair(2,3),
-      std::make_pair(4,5)
-    }
-  );
-
-  { // columnSwap
-    auto instanceCopy = instanceWithBondedLigands;
-    instanceCopy.columnSwap(0, 1);
-    BOOST_CHECK(
-      instanceCopy.toString()
-      == "chars {B, A, C, D, E, F}, links {[0, 1], [2, 3], [4, 5]}"
-    );
-
-    instanceCopy.columnSwap(3, 4);
-    BOOST_CHECK(
-      instanceCopy.toString()
-      == "chars {B, A, C, E, D, F}, links {[0, 1], [2, 4], [3, 5]}"
-    );
-
-    instanceCopy.columnSwap(0, 5);
-    BOOST_CHECK(
-      instanceCopy.toString()
-      == "chars {F, A, C, E, D, B}, links {[0, 3], [1, 5], [2, 4]}"
-    );
-  }
-
-  { // columnSmaller
-    const auto& instanceCopy = instanceWithBondedLigands;
-    BOOST_CHECK(
-      instanceCopy.columnSmaller(0, 1)
-      && instanceCopy.columnSmaller(1, 2)
-      && instanceCopy.columnSmaller(2, 3)
-      && instanceCopy.columnSmaller(3, 4)
-      && instanceCopy.columnSmaller(4, 5)
-    );
-  }
-
-  { // reverseColumns
-    auto instanceCopy = instanceWithBondedLigands;
-    instanceCopy.reverseColumns(0, 6);
-    BOOST_CHECK(
-      instanceCopy.toString()
-      == "chars {F, E, D, C, B, A}, links {[0, 1], [2, 3], [4, 5]}"
-    );
-
-    instanceCopy.reverseColumns(2, 6);
-    BOOST_CHECK(
-      instanceCopy.toString()
-      == "chars {F, E, A, B, C, D}, links {[0, 1], [2, 3], [4, 5]}"
-    );
-  }
-}
-
-BOOST_AUTO_TEST_CASE(ColumnComparisonConsistency) {
-  Stereopermutation single {
-    {'A', 'A', 'A', 'A', 'A', 'A'},
-    {
-      std::make_pair(0,1),
-      std::make_pair(2,3),
-      std::make_pair(4,5)
-    }
+    {{0, 1}, {2, 4}, {3, 5}}
   };
 
-  bool pass = true;
+  std::vector<unsigned> C4z {{3, 0, 1, 2, 4, 5}};
 
-  do {
-    for(unsigned i = 0; i < 6 && pass; i++) {
-      for(unsigned j = i + 1; j < 6 && pass; j++) {
-        if(!temple::Math::XOR(
-            single.columnSmaller(i, j),
-            single.columnSmaller(j, i),
-            !single.columnSmaller(i, j) && !single.columnSmaller(j, i)
-        )) {
-          pass = false;
-        }
-      }
-    }
-  } while(single.nextPermutation() && pass);
+  const Stereopermutation expected {
+    {'D', 'A', 'B', 'C', 'E', 'F'},
+    {{0, 5}, {1, 2}, {3, 4}}
+  };
 
-  BOOST_CHECK(pass);
+  const Stereopermutation rotated = asymm.applyPermutation(C4z);
+
+  BOOST_CHECK_MESSAGE(
+    rotated == expected,
+    "Expected rotation of " << asymm.toString() << " with C4z in octahedron to\n"
+    << expected.toString() << ", got\n" << rotated.toString()
+  );
 }
 
-BOOST_AUTO_TEST_CASE( rotationCorrectness ) {
+BOOST_AUTO_TEST_CASE(RotationCorrectness) {
   Stereopermutation testCase {
     {'A', 'A', 'C', 'D', 'B', 'B'},
-    {
-      std::make_pair(0, 5),
-      std::make_pair(1, 4)
-    }
+    {{0, 5}, {1, 4}}
   };
 
   auto isAorB = [](const char& test) -> bool {
-    return (
-      test == 'A'
-      || test == 'B'
-    );
+    return (test == 'A' || test == 'B');
   };
 
-  auto testInstance = [&isAorB](
-    const Stereopermutation& instance
-  ) {
-    return std::accumulate(
-      instance.links.begin(),
-      instance.links.end(),
-      true,
-      [&isAorB, &instance](
-        const bool carry,
-        const std::pair<unsigned, unsigned>& pair
-      ) {
-        return (
-          carry
-          && isAorB(
-            instance.characters.at(
-              pair.first
-            )
-          ) && isAorB(
-            instance.characters.at(
-              pair.second
-            )
-          )
-        );
-      }
+  const auto allRotations = generateAllRotations(testCase, Shapes::Shape::Octahedron);
+  // Make sure the links still refer to A or B characters
+  for(const auto& rotation : allRotations) {
+    BOOST_CHECK(
+      temple::all_of(
+        rotation.links,
+        [&](const auto& link) -> bool {
+          return (
+            isAorB(rotation.characters.at(link.first))
+            && isAorB(rotation.characters.at(link.second))
+          );
+        }
+      )
     );
-  };
-
-  auto allRotations = testCase.generateAllRotations(Shapes::Shape::Octahedron);
-  for(const auto& copy : allRotations) {
-    BOOST_CHECK(testInstance(copy));
   }
 }
 
@@ -193,54 +107,10 @@ BOOST_AUTO_TEST_CASE(OctahedralSymmetryCorrectness) {
     {'A', 'B', 'C', 'D', 'E', 'F'}
   );
 
-  BOOST_CHECK(
-    octahedralInstance.generateAllRotations(Shapes::Shape::Octahedron).size()
-    == 24 // 4 C4 cases on each of 6 A position selections
+  BOOST_CHECK_EQUAL(
+    generateAllRotations(octahedralInstance, Shapes::Shape::Octahedron).size(),
+    24 // 4 C4 cases on each of 6 A position selections
   );
-
-}
-
-void run_tests_with_counts(
-  const Shapes::Shape& shape,
-  const std::vector<
-    std::tuple<
-      std::vector<char>, // characters
-      std::set<
-        std::pair<unsigned, unsigned>
-      >, // pairs
-      unsigned // expectedUnique
-    >
-  >& test_cases
-) {
-  for(const auto& tuple: test_cases) {
-    std::vector<char> characters;
-    std::set<
-      std::pair<unsigned, unsigned>
-    > pairs;
-    unsigned expectedUnique;
-
-    std::tie(characters, pairs, expectedUnique) = tuple;
-
-    // instantiate
-    Stereopermutation stereopermutation = pairs.empty()
-      ? Stereopermutation(characters)
-      : Stereopermutation(characters, pairs);
-
-    // The count of uniques in the tests are all without trans-arranged pairs!
-    auto unique = uniquesWithWeights(
-      stereopermutation,
-      shape,
-      true // remove trans arranged pairs
-    );
-
-    BOOST_CHECK(unique.stereopermutations.size() == expectedUnique );
-
-    if(unique.stereopermutations.size() != expectedUnique) {
-      std::cout << "Mismatch: Expected " << expectedUnique
-        << " stereopermutations for: \n" << stereopermutation << ", got "
-        << unique.stereopermutations.size() << " stereopermutations:" << std::endl;
-    }
-  }
 }
 
 BOOST_AUTO_TEST_CASE(BugfixTests) {
@@ -264,8 +134,8 @@ BOOST_AUTO_TEST_CASE(BugfixTests) {
   // one and only one of the following can be true for any Stereopermutations a and b
   BOOST_CHECK(temple::testLogicalOperators(a, b));
 
-  BOOST_CHECK(a.isRotationallySuperimposable(b, Shapes::Shape::Octahedron));
-  BOOST_CHECK(b.isRotationallySuperimposable(a, Shapes::Shape::Octahedron));
+  BOOST_CHECK(rotationallySuperimposable(a, b, Shapes::Shape::Octahedron));
+  BOOST_CHECK(rotationallySuperimposable(b, a, Shapes::Shape::Octahedron));
 
   /* Contrived example of two that have inconsistent logical operators, just
    * reordered op pairs. Will evaluate == but also < w/ current impl.
@@ -288,104 +158,117 @@ BOOST_AUTO_TEST_CASE(BugfixTests) {
   };
 
   BOOST_CHECK(temple::testLogicalOperators(c, d));
-  BOOST_CHECK(c.isRotationallySuperimposable(d, Shapes::Shape::Octahedron));
-  BOOST_CHECK(d.isRotationallySuperimposable(c, Shapes::Shape::Octahedron));
+  BOOST_CHECK(rotationallySuperimposable(c, d, Shapes::Shape::Octahedron));
+  BOOST_CHECK(rotationallySuperimposable(d, c, Shapes::Shape::Octahedron));
+}
+
+using PairSet = std::vector<
+  std::pair<unsigned, unsigned>
+>;
+
+using Characters = std::vector<char>;
+
+struct TestCase {
+  Characters characters;
+  PairSet pairs;
+  unsigned expectedUnique;
+};
+
+void runTestsWithCounts(
+  const Shapes::Shape& shape,
+  const std::vector<TestCase>& testCases
+) {
+  for(const auto& testCase: testCases) {
+    // instantiate
+    const Stereopermutation stereopermutation {
+      testCase.characters,
+      testCase.pairs
+    };
+
+    // The count of uniques in the tests are all without trans-arranged pairs!
+    const auto unique = uniques(
+      stereopermutation,
+      shape,
+      true // remove trans arranged pairs
+    );
+
+    std::cout << stereopermutation.toString() << " unique weights: " << temple::stringify(unique.weights) << "\n";
+
+    BOOST_CHECK_MESSAGE(
+      unique.list.size() == testCase.expectedUnique,
+      "Mismatch: Expected " << testCase.expectedUnique
+        << " stereopermutations for\n" << stereopermutation.toString() << " in " << Shapes::name(shape) << " shape, got "
+        << unique.list.size() << " stereopermutations\n"
+    );
+  }
 }
 
 /* Tetrahedron tests */
 BOOST_AUTO_TEST_CASE(MonodentateTetrahedral) {
-  run_tests_with_counts(
+  runTestsWithCounts(
     Shapes::Shape::Tetrahedron,
     {
-    // M_A
-    std::make_tuple(
-      std::vector<char>(4, 'A'),
-      std::set<
-        std::pair<unsigned, unsigned>
-      >(),
-      1
-    ),
-    // M_A3B
-    std::make_tuple(
-      std::vector<char>({'A', 'A', 'A', 'B'}),
-      std::set<
-        std::pair<unsigned, unsigned>
-      >(),
-      1
-    ),
-    // M_A2B2
-    std::make_tuple(
-      std::vector<char>({'A', 'A', 'B', 'B'}),
-      std::set<
-        std::pair<unsigned, unsigned>
-      >(),
-      1
-    ),
-    // M_A2BC
-    std::make_tuple(
-      std::vector<char>({'A', 'A', 'B', 'C'}),
-      std::set<
-        std::pair<unsigned, unsigned>
-      >(),
-      1
-    ),
-    // M_ABCD
-    std::make_tuple(
-      std::vector<char>({'A', 'B', 'C', 'D'}),
-      std::set<
-        std::pair<unsigned, unsigned>
-      >(),
-      2
-    )
-  });
+      { // AAAA
+        Characters(4, 'A'),
+        {},
+        1
+      },
+      { // A3B
+        Characters({'A', 'A', 'A', 'B'}),
+        {},
+        1
+      },
+      { // A2B2
+        Characters({'A', 'A', 'B', 'B'}),
+        {},
+        1
+      },
+      { // A2BC
+        Characters({'A', 'A', 'B', 'C'}),
+        {},
+        1
+      },
+      { // ABCD
+        Characters({'A', 'B', 'C', 'D'}),
+        {},
+        2
+      },
+    }
+  );
 }
 
 /* Square Planar tests */
 BOOST_AUTO_TEST_CASE(MonodentateSquarePlanar) {
-  run_tests_with_counts(
+  runTestsWithCounts(
     Shapes::Shape::Square,
     {
-    // M_A
-    std::make_tuple(
-      std::vector<char>(4, 'A'),
-      std::set<
-        std::pair<unsigned, unsigned>
-      >(),
-      1
-    ),
-    // M_A3B
-    std::make_tuple(
-      std::vector<char>({'A', 'A', 'A', 'B'}),
-      std::set<
-        std::pair<unsigned, unsigned>
-      >(),
-      1
-    ),
-    // M_A2B2
-    std::make_tuple(
-      std::vector<char>({'A', 'A', 'B', 'B'}),
-      std::set<
-        std::pair<unsigned, unsigned>
-      >(),
-      2
-    ),
-    // M_A2BC
-    std::make_tuple(
-      std::vector<char>({'A', 'A', 'B', 'C'}),
-      std::set<
-        std::pair<unsigned, unsigned>
-      >(),
-      2
-    ),
-    // M_ABCD
-    std::make_tuple(
-      std::vector<char>({'A', 'B', 'C', 'D'}),
-      std::set<
-        std::pair<unsigned, unsigned>
-      >(),
-      3
-    )
-  });
+      { // M_A
+        Characters(4, 'A'),
+        {},
+        1
+      },
+      { // M_A3B
+        Characters({'A', 'A', 'A', 'B'}),
+        {},
+        1
+      },
+      { // M_A2B2
+        Characters({'A', 'A', 'B', 'B'}),
+        {},
+        2
+      },
+      { // M_A2BC
+        Characters({'A', 'A', 'B', 'C'}),
+        {},
+        2
+      },
+      { // M_ABCD
+        Characters({'A', 'B', 'C', 'D'}),
+        {},
+        3
+      },
+    }
+  );
 }
 
 /* Octahedron tests */
@@ -396,221 +279,133 @@ BOOST_AUTO_TEST_CASE(MonodentateSquarePlanar) {
  * The reference however is useful: WE Bennett, Inorg. Chem. 1969
  */
 BOOST_AUTO_TEST_CASE(MonodentateOctahedron) {
-  run_tests_with_counts(
+  runTestsWithCounts(
     Shapes::Shape::Octahedron,
     {
-      // M_A
-      std::make_tuple(
-        std::vector<char>(6, 'A'),
-        std::set<
-          std::pair<unsigned, unsigned>
-        >(),
+      {
+        Characters(6, 'A'),
+        {},
         1
-      ),
-      // M_AB
-      std::make_tuple(
-        std::vector<char>({'A', 'A', 'A', 'A', 'A', 'B'}),
-        std::set<
-          std::pair<unsigned, unsigned>
-        >(),
+      },
+      {
+        Characters({'A', 'A', 'A', 'A', 'A', 'B'}),
+        {},
         1
-      ),
-      std::make_tuple(
-        std::vector<char>({'A', 'A', 'A', 'A', 'B', 'B'}),
-        std::set<
-          std::pair<unsigned, unsigned>
-        >(),
+      },
+      {
+        Characters({'A', 'A', 'A', 'A', 'B', 'B'}),
+        {},
         2
-      ),
-      std::make_tuple(
-        std::vector<char>({'A', 'A', 'A', 'B', 'B', 'B'}),
-        std::set<
-          std::pair<unsigned, unsigned>
-        >(),
+      },
+      {
+        Characters({'A', 'A', 'A', 'B', 'B', 'B'}),
+        {},
         2
-      ),
-      // M_ABC
-      /* A4 B C
-       * A3 B2 C
-       * not A3 B C2 == A3 B2 C
-       * A2 B2 C2
-       * not A2 B3 C == A3 B2 C
-       */
-      std::make_tuple(
-        std::vector<char>({'A', 'A', 'A', 'A', 'B', 'C'}),
-        std::set<
-          std::pair<unsigned, unsigned>
-        >(),
+      },
+      {
+        Characters({'A', 'A', 'A', 'A', 'B', 'C'}),
+        {},
         2
-      ),
-      std::make_tuple(
-        std::vector<char>({'A', 'A', 'A', 'B', 'B', 'C'}),
-        std::set<
-          std::pair<unsigned, unsigned>
-        >(),
+      },
+      {
+        Characters({'A', 'A', 'A', 'B', 'B', 'C'}),
+        {},
         3
-      ),
-      std::make_tuple(
-        std::vector<char>({'A', 'A', 'B', 'B', 'C', 'C'}),
-        std::set<
-          std::pair<unsigned, unsigned>
-        >(),
+      },
+      {
+        Characters({'A', 'A', 'B', 'B', 'C', 'C'}),
+        {},
         6
-      ),
-      // M_ABCD
-      /* A3 B C D
-       * A2 B2 C D
-       */
-      std::make_tuple(
-        std::vector<char>({'A', 'A', 'A', 'B', 'C', 'D'}),
-        std::set<
-          std::pair<unsigned, unsigned>
-        >(),
+      },
+      {
+        Characters({'A', 'A', 'A', 'B', 'C', 'D'}),
+        {},
         5
-      ),
-      std::make_tuple(
-        std::vector<char>({'A', 'A', 'B', 'B', 'C', 'D'}),
-        std::set<
-          std::pair<unsigned, unsigned>
-        >(),
+      },
+      {
+        Characters({'A', 'A', 'B', 'B', 'C', 'D'}),
+        {},
         8
-      ),
-      // M_ABCDE
-      std::make_tuple(
-        std::vector<char>({'A', 'A', 'B', 'C', 'D', 'E'}),
-        std::set<
-          std::pair<unsigned, unsigned>
-        >(),
+      },
+      {
+        Characters({'A', 'A', 'B', 'C', 'D', 'E'}),
+        {},
         15
-      ),
-      // M_ABCDEF
-      std::make_tuple(
-        std::vector<char>({'A', 'B', 'C', 'D', 'E', 'F'}),
-        std::set<
-          std::pair<unsigned, unsigned>
-        >(),
+      },
+      {
+        Characters({'A', 'B', 'C', 'D', 'E', 'F'}),
+        {},
         30
-      )
+      }
     }
   );
 }
 
 BOOST_AUTO_TEST_CASE(MultidentateOctahedron) {
-  run_tests_with_counts(
+  runTestsWithCounts(
     Shapes::Shape::Octahedron,
     {
-      // M(A-A)_3
-      std::make_tuple(
-        std::vector<char>({'A', 'A', 'A', 'A', 'A', 'A'}),
-        std::set<
-          std::pair<unsigned, unsigned>
-        >({
-          std::make_pair(0, 1),
-          std::make_pair(2, 3),
-          std::make_pair(4, 5)
-        }),
+      { // M(A-A)_3
+        Characters({'A', 'A', 'A', 'A', 'A', 'A'}),
+        PairSet({{0, 1}, {2, 3}, {4, 5}}),
         2
         /* NOTE: besides the two cis-cis-cis enantiomers, there are
          * cis-cis-trans and trans-trans-trans isomers, these are removed by
          * default!
          */
-      ),
-      // M(A-B)_3
-      std::make_tuple(
-        std::vector<char>({'A', 'B', 'A', 'B', 'A', 'B'}),
-        std::set<
-          std::pair<unsigned, unsigned>
-        >({
-          std::make_pair(0, 1),
-          std::make_pair(2, 3),
-          std::make_pair(4, 5)
-        }),
+      },
+      { // M(A-B)_3
+        Characters({'A', 'B', 'A', 'B', 'A', 'B'}),
+        PairSet({{0, 1}, {2, 3}, {4, 5}}),
         4
-      ),
-      // M(A-B)_2 CD
-      std::make_tuple(
-        std::vector<char>({'A', 'B', 'A', 'B', 'C', 'D'}),
-        std::set<
-          std::pair<unsigned, unsigned>
-        >({
-          std::make_pair(0, 1),
-          std::make_pair(2, 3)
-        }),
+      },
+      { // M(A-B)_2 CD
+        Characters({'A', 'B', 'A', 'B', 'C', 'D'}),
+        PairSet({{0, 1}, {2, 3}}),
         11
-      ),
-      // M(A-A)(B-C)DE
-      std::make_tuple(
-        std::vector<char>({'A', 'A', 'B', 'C', 'D', 'E'}),
-        std::set<
-          std::pair<unsigned, unsigned>
-        >({
-          std::make_pair(0, 1),
-          std::make_pair(2, 3)
-        }),
+      },
+      { // M(A-A)(B-C)DE
+        Characters({'A', 'A', 'B', 'C', 'D', 'E'}),
+        PairSet({{0, 1}, {2, 3}}),
         10
-      ),
-      // M(A-B)(C-D)EF
-      std::make_tuple(
-        std::vector<char>({'A', 'B', 'C', 'D', 'E', 'F'}),
-        std::set<
-          std::pair<unsigned, unsigned>
-        >({
-          std::make_pair(0, 1),
-          std::make_pair(2, 3)
-        }),
+      },
+      { // M(A-B)(C-D)EF
+        Characters({'A', 'B', 'C', 'D', 'E', 'F'}),
+        PairSet({{0, 1}, {2, 3}}),
         20
-      ),
-      // M(A-B-A)CDE
-      std::make_tuple(
-        std::vector<char>({'A', 'B', 'A', 'C', 'D', 'E'}),
-        std::set<
-          std::pair<unsigned, unsigned>
-        >({
-          std::make_pair(0, 1),
-          std::make_pair(1, 2)
-        }),
+      },
+      { // M(A-B-A)CDE
+        Characters({'A', 'B', 'A', 'C', 'D', 'E'}),
+        PairSet({{0, 1}, {1, 2}}),
         9
-      ),
-      // M(A-B-C)_2
-      std::make_tuple(
-        std::vector<char>({'A', 'B', 'C', 'A', 'B', 'C'}),
-        std::set<
-          std::pair<unsigned, unsigned>
-        >({
-          std::make_pair(0, 1),
-          std::make_pair(1, 2),
-          std::make_pair(3, 4),
-          std::make_pair(4, 5)
-        }),
+      },
+      { // M(A-B-C)_2
+        Characters({'A', 'B', 'C', 'A', 'B', 'C'}),
+        PairSet({{0, 1}, {1, 2}, {3, 4}, {4, 5}}),
         11
-      ),
-      // M(A-B-B-A)CD
-      std::make_tuple(
-        std::vector<char>({'A', 'B', 'B', 'A', 'C', 'D'}),
-        std::set<
-          std::pair<unsigned, unsigned>
-        >({
-          std::make_pair(0, 1),
-          std::make_pair(1, 2),
-          std::make_pair(2, 3)
-        }),
+      },
+      { // M(A-B-B-A)CD
+        Characters({'A', 'B', 'B', 'A', 'C', 'D'}),
+        PairSet({{0, 1}, {1, 2}, {2, 3}}),
         7
-      ),
-      // M(A-B-C-B-A)D
-      std::make_tuple(
-        std::vector<char>({'A', 'B', 'C', 'B', 'A', 'D'}),
-        std::set<
-          std::pair<unsigned, unsigned>
-        >({
-          std::make_pair(0, 1),
-          std::make_pair(1, 2),
-          std::make_pair(2, 3),
-          std::make_pair(3, 4)
-        }),
+      },
+      { // M(A-B-C-B-A)D
+        Characters({'A', 'B', 'C', 'B', 'A', 'D'}),
+        PairSet({{0, 1}, {1, 2}, {2, 3}, {3, 4}}),
         7
-      )
+      }
     }
   );
+}
+
+BOOST_AUTO_TEST_CASE(OctahedralCaseWithoutTransRemoval) {
+  const auto shape = Shapes::Shape::Octahedron;
+  const auto characters = Characters(6, 'A');
+  const auto pairs = PairSet({{0, 1}, {2, 3}, {4, 5}});
+
+  const Stereopermutation stereopermutation {characters, pairs};
+  const auto unique = uniques(stereopermutation, shape);
+  BOOST_CHECK_EQUAL(unique.list.size(), 4u);
 }
 
 void writeState(const Composite::OrientationState& a) {
@@ -620,7 +415,7 @@ void writeState(const Composite::OrientationState& a) {
     << "  characters: " << temple::stringify(a.characters) << "\n}\n";
 }
 
-bool testOrientationState(const Composite::OrientationState& a) {
+bool testOrientationState(Composite::OrientationState a) {
   // Make a copy and modify that
   auto aCopy = a;
 
@@ -862,7 +657,7 @@ BOOST_AUTO_TEST_CASE(numUnlinkedStereopermutationsTest) {
 
       const Stereopermutation initialStereopermutation {characters};
 
-      const unsigned uniquesCount = uniques(initialStereopermutation, shape).size();
+      const unsigned uniquesCount = uniques(initialStereopermutation, shape).list.size();
 
       // shapes prediction
       const unsigned chemicalSymmetriesCount = Shapes::properties::numUnlinkedStereopermutations(

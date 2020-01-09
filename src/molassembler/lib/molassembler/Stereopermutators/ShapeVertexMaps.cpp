@@ -203,13 +203,11 @@ stereopermutation::Stereopermutation stereopermutationFromSiteToShapeVertexMap(
   }
 
   // Now for the links.
-  stereopermutation::Stereopermutation::LinksSetType selfReferentialLinks;
+  stereopermutation::Stereopermutation::OrderedLinks selfReferentialLinks;
   for(auto linkInformation: links) {
-    selfReferentialLinks.insert(
-      std::make_pair(
-        siteToShapeVertexMap.at(linkInformation.indexPair.first),
-        siteToShapeVertexMap.at(linkInformation.indexPair.second)
-      )
+    selfReferentialLinks.emplace_back(
+      siteToShapeVertexMap.at(linkInformation.indexPair.first),
+      siteToShapeVertexMap.at(linkInformation.indexPair.second)
     );
   }
 

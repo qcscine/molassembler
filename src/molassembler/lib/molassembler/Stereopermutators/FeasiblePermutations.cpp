@@ -19,16 +19,143 @@
 namespace Scine {
 namespace molassembler {
 
-bool FeasibleStereopermutations::isNotObviouslyImpossibleStereopermutation(
+bool FeasibleStereopermutations::linkPossiblyFeasible(
+  const LinkInformation& link,
   const AtomIndex centralIndex,
+  const ConeAngleType& cones,
+  const RankingInformation& ranking,
+  const Shapes::Shape shape,
+  const std::vector<unsigned>& shapeVertexMap,
+  const OuterGraph& graph
+) {
+  // The algorithm below is explained in detail in documents/denticity_feasibility
+  assert(link.cycleSequence.front() != link.cycleSequence.back());
+
+  // Perform no checks if, for either of the sites, no cone angle could be calculated
+  if(!cones.at(link.indexPair.first) || !cones.at(link.indexPair.second)) {
+    return true;
+  }
+
+  const DistanceGeometry::ValueBounds siteIConeAngle = cones.at(link.indexPair.first).value();
+  const DistanceGeometry::ValueBounds siteJConeAngle = cones.at(link.indexPair.second).value();
+
+  const double symmetryAngle = DistanceGeometry::SpatialModel::siteCentralAngle(
+    centralIndex,
+    shape,
+    ranking,
+    shapeVertexMap,
+    link.indexPair,
+    graph.inner()
+  );
+
+  if(link.cycleSequence.size() == 3) {
+    /* Test if the bond gets closer than the central index's bond radius.
+     * It's a pretty arbitrary condition...
+     *
+     * This way, triangles aren't universally allowed (siteCentralAngle will
+     * distort the angle to enable the graph in some situations, and leave
+     * the ideal angle preserved in others)
+     */
+    assert(link.cycleSequence.front() == centralIndex);
+
+    /* TODO maybe it might be better to ask in a very boolean way whether
+     * the shape is willing to distort for this particular link or not
+     * instead of testing the angle in such a roundabout manner...
+     */
+
+    return !Stereopermutators::triangleBondTooClose(
+      DistanceGeometry::SpatialModel::modelDistance(
+        centralIndex,
+        link.cycleSequence[1],
+        graph.inner()
+      ),
+      DistanceGeometry::SpatialModel::modelDistance(
+        centralIndex,
+        link.cycleSequence[2],
+        graph.inner()
+      ),
+      symmetryAngle,
+      AtomInfo::bondRadius(graph.elementType(centralIndex))
+    );
+  }
+
+  /* A link across haptic sites is only obviously impossible if it is
+   * impossible in the best case scenario. In this case, especially for alpha,
+   * site bridge links must be possible only in the best case spatial
+   * arrangement for the haptic site link to be possible. That means
+   * subtracting the upper bound of the respective cone angles.
+   */
+  const double alpha = std::max(
+    0.0,
+    symmetryAngle - siteIConeAngle.upper - siteJConeAngle.upper
+  );
+
+  /* We need to respect the graph as ground truth. If a cycle is of size
+   * three, then angles of whatever shape is present will be distorted if
+   * there is only one group of shape positions (e.g. tetrahedral has
+   * only one group, but square pyramidal has two!) available.
+   *
+   * For symmetries with multiple groups of shape positions, only that
+   * group of shape positions with lower cross-angles is viable for the
+   * link, and will distort accordingly.
+   */
+  auto symmetryGroups = Shapes::properties::positionGroups(shape);
+
+
+  /* First we need to construct the cyclic polygon of the cycle sequence
+   * without the central atom.
+   */
+  assert(link.cycleSequence.front() == centralIndex);
+  auto cycleEdgeLengths = temple::map(
+    temple::adaptors::cyclicFrame<2>(link.cycleSequence),
+    [&](const auto& i, const auto& j) -> double {
+      return DistanceGeometry::SpatialModel::modelDistance(i, j, graph.inner());
+    }
+  );
+
+  /* The first and last cycle edge lengths are from and to the central atom,
+   * and so we remove those by combining alpha with those edge lengths
+   * with the law of cosines
+   */
+  const double a = cycleEdgeLengths.front();
+  const double b = cycleEdgeLengths.back();
+  const double c = CommonTrig::lawOfCosines(a, b, alpha); // B-A
+
+  cycleEdgeLengths.back() = c;
+  cycleEdgeLengths.erase(std::begin(cycleEdgeLengths));
+
+  std::vector<Stereopermutators::BaseAtom> bases (1);
+  auto& base = bases.front();
+  base.elementType = graph.elementType(centralIndex);
+  base.distanceToLeft = a;
+  base.distanceToRight = b;
+
+  auto elementTypes = temple::map(
+    link.cycleSequence,
+    [&](const AtomIndex i) -> Utils::ElementType {
+      return graph.elementType(i);
+    }
+  );
+  // Drop the central index's element type from this map
+  elementTypes.erase(std::begin(elementTypes));
+
+  return !Stereopermutators::cycleModelContradictsGraph(
+    elementTypes,
+    cycleEdgeLengths,
+    bases
+  );
+}
+
+bool FeasibleStereopermutations::possiblyFeasible(
   const stereopermutation::Stereopermutation& stereopermutation,
+  const AtomIndex centralIndex,
   const RankingInformation::RankedSitesType& canonicalSites,
   const ConeAngleType& coneAngles,
   const RankingInformation& ranking,
   const Shapes::Shape shape,
   const OuterGraph& graph
 ) {
-  auto shapeVertexMap = siteToShapeVertexMap(
+  const auto shapeVertexMap = siteToShapeVertexMap(
     stereopermutation,
     canonicalSites
   );
@@ -51,7 +178,7 @@ bool FeasibleStereopermutations::isNotObviouslyImpossibleStereopermutation(
       }
 
       // siteCentralAngle yields undistorted symmetry angles for haptic sites
-      double symmetryAngle = DistanceGeometry::SpatialModel::siteCentralAngle(
+      const double symmetryAngle = DistanceGeometry::SpatialModel::siteCentralAngle(
         centralIndex,
         shape,
         ranking,
@@ -76,136 +203,25 @@ bool FeasibleStereopermutations::isNotObviouslyImpossibleStereopermutation(
     }
   }
 
-  /* Idea: An stereopermutation is unfeasible if any link's cycle cannot be realized
-   * as a flat cyclic polygon, in which the edges from the central atom are
-   * merged using the joint angle calculable from the stereopermutation and shape.
-   *
-   * The algorithm below is explained in detail in
-   * documents/denticity_feasibility/.
+  /* Idea: An stereopermutation is possibly feasible if all links' cycles can
+   * be realized as a flat cyclic polygon, in which the edges from the central
+   * atom are merged using the joint angle calculable from the
+   * stereopermutation and shape.
    */
-  for(const auto& link : ranking.links) {
-    // Ignore cycles of size 3
-    assert(link.cycleSequence.front() != link.cycleSequence.back());
-
-    // Perform no checks if, for either of the sites, no cone angle could be calculated
-    if(!coneAngles.at(link.indexPair.first) || !coneAngles.at(link.indexPair.second)) {
-      continue;
-    }
-
-    const DistanceGeometry::ValueBounds siteIConeAngle = coneAngles.at(link.indexPair.first).value();
-    const DistanceGeometry::ValueBounds siteJConeAngle = coneAngles.at(link.indexPair.second).value();
-
-    const double symmetryAngle = DistanceGeometry::SpatialModel::siteCentralAngle(
-      centralIndex,
-      shape,
-      ranking,
-      shapeVertexMap,
-      link.indexPair,
-      graph.inner()
-    );
-
-    if(link.cycleSequence.size() == 3) {
-      /* Test if the bond gets closer than the central index's bond radius.
-       * It's a pretty arbitrary condition...
-       *
-       * This way, triangles aren't universally allowed (siteCentralAngle will
-       * distort the angle to enable the graph in some situations, and leave
-       * the ideal angle preserved in others)
-       */
-      assert(link.cycleSequence.front() == centralIndex);
-
-      /* TODO maybe it might be better to ask in a very boolean way whether
-       * the shape is willing to distort for this particular link or not
-       * instead of testing the angle in such a roundabout manner...
-       */
-
-      return !Stereopermutators::triangleBondTooClose(
-        DistanceGeometry::SpatialModel::modelDistance(
-          centralIndex,
-          link.cycleSequence[1],
-          graph.inner()
-        ),
-        DistanceGeometry::SpatialModel::modelDistance(
-          centralIndex,
-          link.cycleSequence[2],
-          graph.inner()
-        ),
-        symmetryAngle,
-        AtomInfo::bondRadius(graph.elementType(centralIndex))
+  return temple::all_of(
+    ranking.links,
+    [&](const auto& link) -> bool {
+      return linkPossiblyFeasible(
+        link,
+        centralIndex,
+        coneAngles,
+        ranking,
+        shape,
+        shapeVertexMap,
+        graph
       );
     }
-
-    /* A link across haptic sites is only obviously impossible if it is
-     * impossible in the best case scenario. In this case, especially for alpha,
-     * site bridge links must be possible only in the best case spatial
-     * arrangement for the haptic site link to be possible. That means
-     * subtracting the upper bound of the respective cone angles.
-     */
-    const double alpha = std::max(
-      0.0,
-      symmetryAngle - siteIConeAngle.upper - siteJConeAngle.upper
-    );
-
-    /* We need to respect the graph as ground truth. If a cycle is of size
-     * three, then angles of whatever shape is present will be distorted if
-     * there is only one group of shape positions (e.g. tetrahedral has
-     * only one group, but square pyramidal has two!) available.
-     *
-     * For symmetries with multiple groups of shape positions, only that
-     * group of shape positions with lower cross-angles is viable for the
-     * link, and will distort accordingly.
-     */
-    auto symmetryGroups = Shapes::properties::positionGroups(shape);
-
-
-    /* First we need to construct the cyclic polygon of the cycle sequence
-     * without the central atom.
-     */
-    assert(link.cycleSequence.front() == centralIndex);
-    auto cycleEdgeLengths = temple::map(
-      temple::adaptors::cyclicFrame<2>(link.cycleSequence),
-      [&](const auto& i, const auto& j) -> double {
-        return DistanceGeometry::SpatialModel::modelDistance(i, j, graph.inner());
-      }
-    );
-
-    /* The first and last cycle edge lengths are from and to the central atom,
-     * and so we remove those by combining alpha with those edge lengths
-     * with the law of cosines
-     */
-    const double a = cycleEdgeLengths.front();
-    const double b = cycleEdgeLengths.back();
-    const double c = CommonTrig::lawOfCosines(a, b, alpha); // B-A
-
-    cycleEdgeLengths.back() = c;
-    cycleEdgeLengths.erase(cycleEdgeLengths.begin());
-
-    Stereopermutators::BaseAtom base {
-      graph.elementType(centralIndex),
-      a,
-      b,
-      0.0
-    };
-
-    auto elementTypes = temple::map(
-      link.cycleSequence,
-      [&](const AtomIndex i) -> Utils::ElementType {
-        return graph.elementType(i);
-      }
-    );
-    // Drop the central index's element type from this map
-    elementTypes.erase(elementTypes.begin());
-
-    if(Stereopermutators::cycleModelContradictsGraph(
-      elementTypes,
-      cycleEdgeLengths,
-      {base}
-    )) {
-      return false;
-    }
-  }
-
-  return true;
+  );
 }
 
 FeasibleStereopermutations::FeasibleStereopermutations(
@@ -241,7 +257,7 @@ FeasibleStereopermutations::FeasibleStereopermutations(
   }
 
   // Determine which permutations are feasible and which aren't
-  const unsigned P = abstractPermutations.permutations.stereopermutations.size();
+  const unsigned P = abstractPermutations.permutations.list.size();
   if(
     // Links are present
     !ranking.links.empty()
@@ -262,9 +278,9 @@ FeasibleStereopermutations::FeasibleStereopermutations(
     indices.reserve(P);
     for(unsigned i = 0; i < P; ++i) {
       if(
-        isNotObviouslyImpossibleStereopermutation(
+        possiblyFeasible(
+          abstractPermutations.permutations.list.at(i),
           centralIndex,
-          abstractPermutations.permutations.stereopermutations.at(i),
           abstractPermutations.canonicalSites,
           coneAngles,
           ranking,

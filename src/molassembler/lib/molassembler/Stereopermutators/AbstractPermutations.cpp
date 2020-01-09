@@ -8,7 +8,6 @@
 #include <cassert>
 
 namespace Scine {
-
 namespace molassembler {
 
 RankingInformation::RankedSitesType AbstractStereopermutations::canonicalize(
@@ -44,12 +43,12 @@ std::vector<char> AbstractStereopermutations::transferToSymbolicCharacters(
   return characters;
 }
 
-stereopermutation::Stereopermutation::LinksSetType
+stereopermutation::Stereopermutation::OrderedLinks
 AbstractStereopermutations::selfReferentialTransform(
   const std::vector<LinkInformation>& rankingLinks,
   const RankingInformation::RankedSitesType& canonicalSites
 ) {
-  stereopermutation::Stereopermutation::LinksSetType links;
+  stereopermutation::Stereopermutation::OrderedLinks links;
 
   for(const auto& link : rankingLinks) {
     auto getRankedPosition = [&canonicalSites](const unsigned siteIndex) -> unsigned {
@@ -70,12 +69,13 @@ AbstractStereopermutations::selfReferentialTransform(
     const unsigned a = getRankedPosition(link.indexPair.first);
     const unsigned b = getRankedPosition(link.indexPair.second);
 
-    links.emplace(
+    links.emplace_back(
       std::min(a, b),
       std::max(a, b)
     );
   }
 
+  std::sort(std::begin(links), std::end(links));
   return links;
 }
 
@@ -120,7 +120,7 @@ AbstractStereopermutations::AbstractStereopermutations(
     symbolicCharacters(transferToSymbolicCharacters(canonicalSites)),
     selfReferentialLinks(selfReferentialTransform(ranking.links, canonicalSites)),
     permutations(
-      stereopermutation::uniquesWithWeights(
+      stereopermutation::uniques(
         stereopermutation::Stereopermutation {
           symbolicCharacters,
           selfReferentialLinks
@@ -132,5 +132,4 @@ AbstractStereopermutations::AbstractStereopermutations(
 {}
 
 } // namespace molassembler
-
 } // namespace Scine

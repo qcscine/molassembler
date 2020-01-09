@@ -29,15 +29,34 @@ struct FeasibleStereopermutations {
 
 //!@name Static functions
 //!@{
-  /*!
-   * @brief Determine whether a stereopermutation is not obviously impossible
+  /*! @brief Determine whether a link is possibly feasible
+   *
+   * Catches some obviously impossible links, but does not imply
+   * that the link is truly feasible if the test passes.
+   *
+   * @todo Move this to SpatialModel
+   */
+  static bool linkPossiblyFeasible(
+    const LinkInformation& link,
+    AtomIndex centralIndex,
+    const ConeAngleType& cones,
+    const RankingInformation& ranking,
+    Shapes::Shape shape,
+    const std::vector<unsigned>& shapeVertexMap,
+    const OuterGraph& graph
+  );
+
+  /*! @brief Determine whether a stereopermutation is possibly feasible
+   *
+   * Catches some obviously impossible stereopermutations, but does not
+   * imply that the stereopermutation is truly feasibly if the test passes.
    *
    * @complexity{@math{\Theta(L)}}
    * @todo Move this to SpatialModel
    */
-  static bool isNotObviouslyImpossibleStereopermutation(
-    AtomIndex centralIndex,
+  static bool possiblyFeasible(
     const stereopermutation::Stereopermutation& assignment,
+    AtomIndex centralIndex,
     const RankingInformation::RankedSitesType& canonicalSites,
     const ConeAngleType& coneAngles,
     const RankingInformation& ranking,

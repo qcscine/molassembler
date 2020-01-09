@@ -19,7 +19,6 @@
 #include <vector>
 
 namespace Scine {
-
 namespace stereopermutation {
 
 /**
@@ -316,7 +315,6 @@ private:
 };
 
 } // namespace stereopermutation
-
 } // namespace Scine
 
 #endif

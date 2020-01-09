@@ -432,13 +432,17 @@ void MoleculeBuilder::setAtomStereo(
       permutator.getAbstract().canonicalSites
     );
 
-    auto soughtRotations = soughtStereopermutation.generateAllRotations(chiralData.shape);
+    auto soughtRotations = stereopermutation::generateAllRotations(soughtStereopermutation, chiralData.shape);
     const auto& assignables = permutator.getFeasible().indices;
     auto assignmentIter = temple::find_if(
       assignables,
       [&](const unsigned stereopermutationIndex) -> bool {
-        const auto& stereopermutation = permutator.getAbstract().permutations.stereopermutations.at(stereopermutationIndex);
-        return soughtRotations.count(stereopermutation) > 0;
+        const auto& stereopermutation = permutator.getAbstract().permutations.list.at(stereopermutationIndex);
+        return std::find(
+          std::begin(soughtRotations),
+          std::end(soughtRotations),
+          stereopermutation
+        ) != std::end(soughtRotations);
       }
     );
 

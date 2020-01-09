@@ -1124,7 +1124,7 @@ void BondStereopermutator::Impl::propagateGraphChange(
   );
 
   auto oldSymmetryPositionToSiteMap = shapeVertexToSiteIndexMap(
-    oldAbstract.permutations.stereopermutations.at(
+    oldAbstract.permutations.list.at(
       oldFeasible.indices.at(
         oldAssignment.value()
       )
@@ -1347,5 +1347,4 @@ BondIndex BondStereopermutator::Impl::edge() const {
 }
 
 } // namespace molassembler
-
 } // namespace Scine

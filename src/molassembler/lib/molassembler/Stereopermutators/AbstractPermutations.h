@@ -9,7 +9,7 @@
 
 #include "molassembler/RankingInformation.h"
 
-#include "stereopermutation/GenerateUniques.h"
+#include "stereopermutation/Manipulation.h"
 
 namespace Scine {
 namespace molassembler {
@@ -73,7 +73,7 @@ struct AbstractStereopermutations {
    * selfReferentialTransform(links, canonicalSites) = {3, 4}
    * @endverbatim
    */
-  static stereopermutation::Stereopermutation::LinksSetType selfReferentialTransform(
+  static stereopermutation::Stereopermutation::OrderedLinks selfReferentialTransform(
     const std::vector<LinkInformation>& rankingLinks,
     const RankingInformation::RankedSitesType& canonicalSites
   );
@@ -121,10 +121,10 @@ struct AbstractStereopermutations {
   std::vector<char> symbolicCharacters;
 
   //! Self-referential representation of links
-  stereopermutation::Stereopermutation::LinksSetType selfReferentialLinks;
+  stereopermutation::Stereopermutation::OrderedLinks selfReferentialLinks;
 
   //! Vector of rotationally unique stereopermutations with associated weights
-  stereopermutation::StereopermutationsWithWeights permutations;
+  stereopermutation::Uniques permutations;
 //!@}
 };
 

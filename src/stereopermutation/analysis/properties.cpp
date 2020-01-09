@@ -13,7 +13,7 @@
 #include "temple/Stringify.h"
 #include "shapes/Data.h"
 
-#include "stereopermutation/GenerateUniques.h"
+#include "stereopermutation/Manipulation.h"
 
 std::ostream& nl(std::ostream& os) {
   os << '\n';
@@ -95,7 +95,7 @@ int main(int argc, char* argv[]) {
     );
 
     // Validate links (if present)
-    Stereopermutation::LinksSetType links;
+    Stereopermutation::OrderedLinks links;
     if(options_variables_map.count("l") != 0) {
       /* Naive parse strategy:
        * - remove all opening and closing brackets from the string
@@ -141,7 +141,7 @@ int main(int argc, char* argv[]) {
           return 0;
         }
 
-        links.emplace(
+        links.emplace_back(
           std::min(a, b),
           std::max(a, b)
         );
@@ -149,27 +149,20 @@ int main(int argc, char* argv[]) {
     }
 
     // Generate the assignment
-    Stereopermutation base {
-      charVec,
-      links
-    };
+    Stereopermutation base {charVec, links};
 
-    auto uniques = uniquesWithWeights(
-      base,
-      shape,
-      false
-    );
+    auto unique = uniques(base, shape, false);
 
     std::cout << "Symmetry: " << Shapes::name(shape) << nl
       << "Characters: " << chars << nl
       << "Links: " << temple::stringify(links) << nl << nl;
 
-    for(unsigned i = 0; i < uniques.stereopermutations.size(); ++i) {
-      std::cout << "Weight " << uniques.weights[i] << ": "
-        << uniques.stereopermutations[i]
+    for(unsigned i = 0; i < unique.list.size(); ++i) {
+      std::cout << "Weight " << unique.weights[i] << ": "
+        << unique.list[i].toString()
         << ", link angles: ";
 
-      for(const auto& linkPair : uniques.stereopermutations[i].links) {
+      for(const auto& linkPair : unique.list[i].links) {
         std::cout << (
           180 * Shapes::angleFunction(shape)(linkPair.first, linkPair.second) / M_PI
         ) << " ";
@@ -177,7 +170,7 @@ int main(int argc, char* argv[]) {
       std::cout << nl;
     }
 
-    std::cout << uniques.stereopermutations.size() << " stereopermutations\n";
+    std::cout << unique.list.size() << " stereopermutations\n";
   }
 
   return 0;

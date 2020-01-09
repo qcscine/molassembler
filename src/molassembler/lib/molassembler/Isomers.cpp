@@ -109,15 +109,16 @@ bool enantiomeric(const Molecule& a, const Molecule& b) {
       return false;
     }
 
-    const auto& aPermutation = aPermutator.getAbstract().permutations.stereopermutations.at(
+    const auto& aPermutation = aPermutator.getAbstract().permutations.list.at(
       *aPermutator.indexOfPermutation()
     );
-    const auto& bPermutation = bPermutator.getAbstract().permutations.stereopermutations.at(
+    const auto& bPermutation = bPermutator.getAbstract().permutations.list.at(
       *bPermutator.indexOfPermutation()
     );
 
     // Stereopermutation enantiomerism comparison
-    boost::optional<bool> enantiomericPairOption = aPermutation.isEnantiomer(
+    boost::optional<bool> enantiomericPairOption = stereopermutation::enantiomer(
+      aPermutation,
       bPermutation,
       aPermutator.getShape()
     );
@@ -156,21 +157,22 @@ Molecule enantiomer(const Molecule& a) {
     }
 
     // Find the current permutation
-    auto currentStereopermutation = permutator.getAbstract().permutations.stereopermutations.at(
+    const auto& currentStereopermutation = permutator.getAbstract().permutations.list.at(
       *permutator.indexOfPermutation()
     );
 
     // Apply the mirror
-    currentStereopermutation.applyRotation(mirrorPermutation);
+    auto mirrored = currentStereopermutation.applyPermutation(mirrorPermutation);
 
     // Find an existing permutation that is superposable with the mirror permutation
-    const auto& permutationsList = permutator.getAbstract().permutations.stereopermutations;
+    const auto& permutationsList = permutator.getAbstract().permutations.list;
     auto matchingPermutationIter = std::find_if(
       std::begin(permutationsList),
       std::end(permutationsList),
       [&](const auto& permutation) -> bool {
-        return permutation.isRotationallySuperimposable(
-          currentStereopermutation,
+        return stereopermutation::rotationallySuperimposable(
+          permutation,
+          mirrored,
           permutator.getShape()
         );
       }

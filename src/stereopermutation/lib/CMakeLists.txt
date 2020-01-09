@@ -5,14 +5,16 @@ find_package(shapes REQUIRED)
 
 set(HEADERS_All
   ${CMAKE_CURRENT_SOURCE_DIR}/stereopermutation/Composites.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/stereopermutation/Manipulation.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/stereopermutation/RotationEnumerator.h
   ${CMAKE_CURRENT_SOURCE_DIR}/stereopermutation/Stereopermutation.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/stereopermutation/GenerateUniques.h
 )
 
 set(SOURCES_All
   ${CMAKE_CURRENT_SOURCE_DIR}/stereopermutation/Composites.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/stereopermutation/Manipulation.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/stereopermutation/RotationEnumerator.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/stereopermutation/Stereopermutation.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/stereopermutation/GenerateUniques.cpp
 )
 
 add_library(stereopermutation STATIC ${SOURCES_All} ${HEADERS_all})
