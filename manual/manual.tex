@@ -217,8 +217,7 @@ configuration of multidentate and haptic inorganic molecules from positional
 data and generate non-superposable stereopermutations as output.
 
 SCINE \textsc{Molassembler} consists of a C++ library and a Python module which
-binds parts of the available C++ functionality. \text{Molassembler} enables the
-shape-based construction of molecules while properly treating stereoisomerism.
+binds parts of the available C++ functionality. 
 
 In this manual, we describe the installation of the software, the most important
 functions and options and some explicit examples discussing its
@@ -230,8 +229,7 @@ manual.\enlargethispage{\baselineskip}
 
 
 
-\chapter{Obtaining the software}
-\label{ch:obtain}
+\chapter{Obtaining the software}\label{ch:obtain}
 
 \textsc{Molassembler}  is distributed as open source software in the framework
 of the \href{https://scine.ethz.ch/}{SCINE
@@ -244,53 +242,69 @@ to obtain the software.
 \section{System requirements}
 
 \textsc{Molassembler} has only modest requirements regarding the hardware
-performance. However, if the studied systems are large, it can be worth enabling
+performance, and will chew through small problems on a single thread without
+much trouble. However, if the studied systems are large, it is worth enabling
 parallelization in order to reduce wall clock times.
-
 
 
 \chapter{Installation}\label{ch:installation}
 
-\section{Conda Forge distribution}
-
-\textsc{Molassembler} is distributed for Linux, MacOS and Windows on the
-\texttt{conda-forge} channel. If you have not enabled the \texttt{conda-forge}
-channel yet, you can do so with:
-
-\begin{Verbatim}
-conda config --add channels conda-forge
-conda config --set channel_priority strict
-\end{Verbatim}
-
-You can install both the C++ library and its Python bindings with:
-
-\begin{Verbatim}
-conda install scine-molassembler
-\end{Verbatim}
-
-This also installs the \texttt{scine-utilities} library and its Python bindings,
-which define exchange formats for the SCINE project. If you are interested only
-in the C++ library, then you can install just the package
-\texttt{scine-molassembler-cpp}.
+% \section{Conda Forge distribution}
+% 
+% \textsc{Molassembler} is distributed for Linux, MacOS and Windows on the
+% \texttt{conda-forge} channel. If you have not enabled the \texttt{conda-forge}
+% channel yet, you can do so with:
+% 
+% \begin{Verbatim}
+% conda config --add channels conda-forge
+% conda config --set channel_priority strict
+% \end{Verbatim}
+% 
+% You can install both the C++ library and its Python bindings with:
+% 
+% \begin{Verbatim}
+% conda install scine-molassembler
+% \end{Verbatim}
+% 
+% This also installs the \texttt{scine-utilities} library and its Python bindings,
+% which define exchange formats for the SCINE project. If you are interested only
+% in the C++ library, then you can install just the package
+% \texttt{scine-molassembler-cpp}.
 
 
 \section{Python bindings on PyPI}
 
-The Python bindings of \textsc{Molassembler} are available as a package from
-PyPI for Linux platforms.\footnote{Caveat: Your CPU architecture must be
-x86--64 or i686.} If you are using Linux, then you can install
+If you want to mess with just the Python bindings, those are available as a
+package from PyPI for Linux platforms.\footnote{Caveat: Your CPU architecture
+must be x86--64 or i686.} If you are using Linux, then you can install
 \textsc{Molassembler} with:
 
 \begin{Verbatim}
-pip3 upgrade --user pip
-pip3 install --user scine_molassembler
+python3 -m pip upgrade --user pip
+python3 -m pip install --user scine_molassembler
 \end{Verbatim}
 
+When installed this way, the python bindings are not optimized to your
+particular CPU instruction set and may therefore be slower than if you had
+compiled them yourself.
 
-\section{Building from source code}
+% \section{Conan package}
+% \textsc{Molassembler} packages are distributed on the \texttt{conan-center}
+% channel. If a package is not available for your particular platform,
+% \texttt{conan} will handle the build of \textsc{Molassembler} and its
+% dependencies (if needed). You can see if a pre-built package is available for
+% you by running:
+% 
+% \begin{Verbatim}
+% conan install scine_molassembler
+% \end{Verbatim}
+% 
+% If a prebuilt package is not available, you can follow \texttt{conan}'s
+% instructions to build it locally.
 
-\textsc{Molassembler} is an open source project. In order to compile
-it from source, you need
+
+\section{From source code with CMake}
+In order to compile \textsc{Molassembler} from source, you will need:
 \begin{itemize}
   \item a C++ compiler supporting the C++14 standard\footnote{\texttt{gcc} $\ge$
     7.3.0, \texttt{clang}~$\ge$~4, \texttt{MinGW-w64}, etc.}
@@ -298,6 +312,17 @@ it from source, you need
   \item the \texttt{Boost} libraries $\ge$ 1.64.0
   \item the \texttt{Eigen} library $\ge$ 3.3.2
 \end{itemize}
+
+Check your package manager for the relevant packages. For Ubuntu, for instance,
+you will need:
+
+\begin{Verbatim}
+build-essential
+cmake
+libboost-all-dev
+libeigen3-dev
+\end{Verbatim}
+
 Either directly clone the repository with \texttt{git} or extract a downloaded
 archive, change to the source directory and execute the following:
 
@@ -305,25 +330,30 @@ archive, change to the source directory and execute the following:
 mkdir build install
 cd build
 cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=../install ..
-make
-make test
-make install
 \end{Verbatim}
 
-This will configure everything, compile your software, run the tests, and
-install the software into the \texttt{install} directory.
+This will look through the dependencies to make sure everything needed is there
+and prepare for building. We have specified an installation prefix on the
+command line that we will install into, which you can replace at your leisure.
 
-If you additionally wish to compile and install the python bindings, add the
-following flags to your \texttt{cmake} command:
+If you additionally wish to compile and install the python bindings\footnote{You
+will need to have \texttt{python} installed.}, you can
+rerun \texttt{cmake} with the following flags added:
 
 \begin{Verbatim}
--DSCINE_BUILD_PYTHON_BINDINGS=ON
--DPYTHON_EXECUTABLE=$(which python3)
+cmake -DSCINE_BUILD_PYTHON_BINDINGS=ON -DPYTHON_EXECUTABLE=$(which python3) ..
 \end{Verbatim}
 
 For further compile-time options regarding the build of \textsc{Molassembler},
 you can run \texttt{cmake -L ..} in the \texttt{build} directory. Look for
-options prefixed with \texttt{SCINE} or \texttt{MOLASSEMBLER}.
+options prefixed with \texttt{SCINE} or \texttt{MOLASSEMBLER}. You can then
+build, test and install with:
+
+\begin{Verbatim}
+make
+make test
+make install
+\end{Verbatim}
 
 In case you need support with the setup of \textsc{Molassembler}, please contact
 us by writing to \href{mailto:scine@phys.chem.ethz.ch}{scine@phys.chem.ethz.ch}.
