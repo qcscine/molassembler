@@ -21,10 +21,9 @@
 #include <limits>
 #include <type_traits>
 
+namespace Scine {
 namespace temple {
-
 namespace Math {
-
 namespace traits {
 
 template<typename T, typename U>
@@ -471,7 +470,7 @@ PURITY_STRONG constexpr traits::enableIfFloatingWithReturn<T, T> atan(const T x)
 }
 
 } // namespace Math
-
 } // namespace temple
+} // namespace Scine
 
 #endif

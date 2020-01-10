@@ -36,8 +36,8 @@ std::ostream& nl(std::ostream& os) {
 template<typename TimingCallable, size_t N>
 std::pair<double, double> timeFunctor(
   const Molecule& molecule,
-  const DistanceGeometry::SpatialModel::BoundsMatrix& bounds,
-  DistanceGeometry::Partiality partiality
+  const distance_geometry::SpatialModel::BoundsMatrix& bounds,
+  distance_geometry::Partiality partiality
 ) {
   using namespace std::chrono;
 
@@ -68,8 +68,8 @@ template<class Graph>
 struct Gor1Functor {
   Eigen::MatrixXd operator() (
     const Molecule& molecule,
-    DistanceGeometry::SpatialModel::BoundsMatrix boundsMatrix,
-    DistanceGeometry::Partiality partiality
+    distance_geometry::SpatialModel::BoundsMatrix boundsMatrix,
+    distance_geometry::Partiality partiality
   ) {
 
     Graph graph {molecule.graph().inner(), std::move(boundsMatrix)};
@@ -85,10 +85,10 @@ struct Gor1Functor {
 struct DBM_FW_Functor {
   Eigen::MatrixXd operator() (
     const Molecule& molecule,
-    DistanceGeometry::SpatialModel::BoundsMatrix boundsMatrix,
-    DistanceGeometry::Partiality partiality
+    distance_geometry::SpatialModel::BoundsMatrix boundsMatrix,
+    distance_geometry::Partiality partiality
   ) {
-    DistanceGeometry::DistanceBoundsMatrix bounds {molecule.graph().inner(), std::move(boundsMatrix)};
+    distance_geometry::DistanceBoundsMatrix bounds {molecule.graph().inner(), std::move(boundsMatrix)};
 
     bounds.smooth();
 
@@ -140,15 +140,15 @@ void benchmark(
   const boost::filesystem::path& filePath,
   std::ofstream& benchmarkFile,
   Algorithm algorithmChoice,
-  DistanceGeometry::Partiality partiality
+  distance_geometry::Partiality partiality
 ) {
   using namespace molassembler;
 
-  Molecule sampleMol = IO::read(
+  Molecule sampleMol = io::read(
     filePath.string()
   );
 
-  DistanceGeometry::SpatialModel spatialModel {sampleMol, DistanceGeometry::Configuration {}};
+  distance_geometry::SpatialModel spatialModel {sampleMol, distance_geometry::Configuration {}};
 
   const auto boundsMatrix = spatialModel.makePairwiseBounds();
 
@@ -195,7 +195,7 @@ void benchmark(
 
   if(algorithmChoice == Algorithm::All || algorithmChoice == Algorithm::ExplicitGor) {
     auto timings = timeFunctor<
-      Gor1Functor<DistanceGeometry::ExplicitGraph>,
+      Gor1Functor<distance_geometry::ExplicitGraph>,
       nExperiments
     >(sampleMol, boundsMatrix, partiality);
 
@@ -206,7 +206,7 @@ void benchmark(
 
   if(algorithmChoice == Algorithm::All || algorithmChoice == Algorithm::ImplicitGor) {
     auto timings = timeFunctor<
-      Gor1Functor<DistanceGeometry::ImplicitGraph>,
+      Gor1Functor<distance_geometry::ImplicitGraph>,
       nExperiments
     >(sampleMol, boundsMatrix, partiality);
 
@@ -298,7 +298,7 @@ int main(int argc, char* argv[]) {
     choice = static_cast<Algorithm>(combination);
   }
 
-  DistanceGeometry::Partiality partiality = DistanceGeometry::Partiality::All;
+  distance_geometry::Partiality partiality = distance_geometry::Partiality::All;
   if(options_variables_map.count("p") > 0) {
     unsigned index =  options_variables_map["p"].as<unsigned>();
 
@@ -308,7 +308,7 @@ int main(int argc, char* argv[]) {
       return 0;
     }
 
-    partiality = static_cast<DistanceGeometry::Partiality>(index);
+    partiality = static_cast<distance_geometry::Partiality>(index);
   }
 
   // Benchmark everything

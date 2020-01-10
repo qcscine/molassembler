@@ -16,6 +16,7 @@
 #include <utility>
 #include <iterator>
 
+namespace Scine {
 namespace temple {
 
 /*!
@@ -127,5 +128,6 @@ struct OrderedPair : crtp::LexicographicComparable<OrderedPair<T>> {
 };
 
 } // namespace temple
+} // namespace Scine
 
 #endif

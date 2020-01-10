@@ -12,7 +12,7 @@ namespace molassembler {
 /* AtomStereopermutator implementations */
 AtomStereopermutator::AtomStereopermutator(
   const OuterGraph& graph,
-  const Shapes::Shape shape,
+  const shapes::Shape shape,
   const AtomIndex centerAtom,
   RankingInformation ranking
 ) : _pImpl(
@@ -37,11 +37,11 @@ AtomStereopermutator& AtomStereopermutator::operator = (const AtomStereopermutat
 
 AtomStereopermutator::~AtomStereopermutator() = default;
 
-Shapes::Shape AtomStereopermutator::up(const Shapes::Shape shape) {
+shapes::Shape AtomStereopermutator::up(const shapes::Shape shape) {
   return Impl::up(shape);
 }
 
-Shapes::Shape AtomStereopermutator::down(const Shapes::Shape shape, const unsigned removedShapePosition) {
+shapes::Shape AtomStereopermutator::down(const shapes::Shape shape, const unsigned removedShapePosition) {
   return Impl::down(shape, removedShapePosition);
 }
 
@@ -67,7 +67,7 @@ void AtomStereopermutator::fit(
 boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::propagate(
   const OuterGraph& graph,
   RankingInformation newRanking,
-  boost::optional<Shapes::Shape> shapeOption
+  boost::optional<shapes::Shape> shapeOption
 ) {
   return _pImpl->propagate(
     graph,
@@ -81,7 +81,7 @@ void AtomStereopermutator::propagateVertexRemoval(const AtomIndex removedIndex) 
 }
 
 void AtomStereopermutator::setShape(
-  const Shapes::Shape shape,
+  const shapes::Shape shape,
   const OuterGraph& graph
 ) {
   _pImpl->setShape(shape, graph);
@@ -120,11 +120,11 @@ std::string AtomStereopermutator::rankInfo() const {
   return _pImpl->rankInfo();
 }
 
-const AbstractStereopermutations& AtomStereopermutator::getAbstract() const {
+const stereopermutators::Abstract& AtomStereopermutator::getAbstract() const {
   return _pImpl->getAbstract();
 }
 
-const FeasibleStereopermutations& AtomStereopermutator::getFeasible() const {
+const stereopermutators::Feasible& AtomStereopermutator::getFeasible() const {
   return _pImpl->getFeasible();
 }
 
@@ -132,7 +132,7 @@ const RankingInformation& AtomStereopermutator::getRanking() const {
   return _pImpl->getRanking();
 }
 
-Shapes::Shape AtomStereopermutator::getShape() const {
+shapes::Shape AtomStereopermutator::getShape() const {
   return _pImpl->getShape();
 }
 

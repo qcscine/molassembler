@@ -168,7 +168,7 @@ void Molecule::setElementType(
 
 void Molecule::setShapeAtAtom(
   const AtomIndex a,
-  const Shapes::Shape shape
+  const shapes::Shape shape
 ) {
   _pImpl->setShapeAtAtom(a, shape);
 }
@@ -179,7 +179,7 @@ boost::optional<AtomEnvironmentComponents> Molecule::canonicalComponents() const
   return _pImpl->canonicalComponents();
 }
 
-boost::optional<Shapes::Shape> Molecule::inferShape(
+boost::optional<shapes::Shape> Molecule::inferShape(
   const AtomIndex index,
   const RankingInformation& ranking
 ) const {

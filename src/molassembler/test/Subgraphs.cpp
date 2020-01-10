@@ -17,7 +17,7 @@ using namespace Scine;
 using namespace molassembler;
 
 BOOST_AUTO_TEST_CASE(SubgraphBasic) {
-  const Molecule neopentane = IO::read("isomorphisms/neopentane.mol");
+  const Molecule neopentane = io::read("isomorphisms/neopentane.mol");
   const Molecule methyl = patterns::methyl().first;
 
   const auto mappings = subgraphs::maximum(methyl, neopentane);

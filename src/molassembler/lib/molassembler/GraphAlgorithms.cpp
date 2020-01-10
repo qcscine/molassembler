@@ -22,7 +22,7 @@ std::vector<unsigned> distance(AtomIndex i, const OuterGraph& graph) {
     throw std::out_of_range("Supplied atom index is invalid!");
   }
 
-  return GraphAlgorithms::distance(i, graph.inner());
+  return graph_algorithms::distance(i, graph.inner());
 }
 
 } // namespace molassembler

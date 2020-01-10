@@ -19,7 +19,7 @@
 #include <iostream>
 
 using namespace Scine;
-using namespace Shapes;
+using namespace shapes;
 
 using M = Eigen::Matrix<double, 3, Eigen::Dynamic>;
 

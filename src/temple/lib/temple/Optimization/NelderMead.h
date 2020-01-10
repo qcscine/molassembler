@@ -10,8 +10,14 @@
 #include <Eigen/Core>
 #include "temple/Functional.h"
 
+namespace Scine {
 namespace temple {
 
+/**
+ * @brief Nelder-Mead optimization
+ *
+ * @tparam FloatType Type to represent floating point numbers
+ */
 template<typename FloatType = double>
 struct NelderMead {
   using MatrixType = Eigen::Matrix<FloatType, Eigen::Dynamic, Eigen::Dynamic>;
@@ -213,5 +219,6 @@ struct NelderMead {
 };
 
 } // namespace temple
+} // namespace Scine
 
 #endif

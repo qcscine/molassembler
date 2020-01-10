@@ -39,7 +39,7 @@
  */
 
 using namespace Scine;
-using namespace Shapes;
+using namespace shapes;
 using namespace continuous;
 
 constexpr unsigned factorial(unsigned x) {
@@ -264,7 +264,7 @@ struct Cooling {
 struct Anneal final : OldShapeAlgorithm {
   using Permutation = std::vector<unsigned>;
 
-  temple::jsf::JSF64 prng;
+  temple::JSF64 prng;
   std::ofstream trace {"anneal_trace.csv"};
 
   Anneal() {
@@ -367,7 +367,7 @@ struct Anneal final : OldShapeAlgorithm {
 struct Tunnel final : OldShapeAlgorithm {
   using Permutation = std::vector<unsigned>;
 
-  temple::jsf::JSF64 prng;
+  temple::JSF64 prng;
   std::ofstream trace {"tunnel_trace.csv"};
   double gamma = 0.1;
 
@@ -519,7 +519,7 @@ struct CircularBuffer {
  * Complexity: ???
  */
 struct ThermodynamicAnneal final : OldShapeAlgorithm {
-  temple::jsf::JSF64 prng;
+  temple::JSF64 prng;
   using Permutation = std::vector<unsigned>;
 
   std::unordered_map<unsigned, unsigned> stateIndexReduction;
@@ -768,7 +768,7 @@ struct ThermodynamicAnneal final : OldShapeAlgorithm {
  * space that it might find the minimum.
  */
 struct Greedy final : OldShapeAlgorithm {
-  temple::jsf::JSF64 prng;
+  temple::JSF64 prng;
 
   double shape(const PositionCollection& positions, Shape shape) final {
     const unsigned N = positions.cols();
@@ -855,7 +855,7 @@ struct Greedy final : OldShapeAlgorithm {
  * space that it might find the minimum.
  */
 struct SteepestDescent final : OldShapeAlgorithm {
-  temple::jsf::JSF64 prng;
+  temple::JSF64 prng;
 
   double shape(const PositionCollection& positions, Shape shape) final {
     const unsigned N = positions.cols();
@@ -1304,7 +1304,7 @@ int main(int argc, char* argv[]) {
 
   using namespace std::chrono;
 
-  temple::jsf::JSF64 prng;
+  temple::JSF64 prng;
   if(options_variables_map.count("seed")) {
     const int seed = options_variables_map["seed"].as<int>();
     prng.seed(seed);

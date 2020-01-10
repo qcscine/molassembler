@@ -14,6 +14,7 @@
 
 #include <stdexcept>
 
+namespace Scine {
 namespace temple {
 
 /**
@@ -129,5 +130,6 @@ constexpr Bitmask<EnumType> make_bitmask(EnumType a) {
 }
 
 } // namespace temple
+} // namespace Scine
 
 #endif

@@ -11,8 +11,7 @@
 #include "shapes/Properties.h"
 
 namespace Scine {
-
-namespace Shapes {
+namespace shapes {
 
 //! Precomputed min and max angle values in radians for all symmetries
 extern const temple::Array<std::pair<double, double>, nShapes> symmetryAngleBounds;
@@ -22,7 +21,7 @@ extern const temple::Array<std::pair<double, double>, nShapes> symmetryAngleBoun
  * Calculates the minimum angle between symmetry positions in a symmetry class
  *
  * @complexity{@math{\Theta(S^2)}}
- * @see constexprProperties::calculateSmallestAngle
+ * @see constexpr_properties::calculateSmallestAngle
  */
 double minimumAngle(Shape symmetryName);
 /*! @brief Calculate the maximum angle in a symmetry
@@ -41,9 +40,9 @@ double maximumAngle(Shape symmetryName);
  * @complexity{@math{\Theta(NS^2)} where @math{N} is the number of largest symmetries and @math{S} is the size of the largest symmetry}
  */
 constexpr double smallestAngle [[gnu::unused]]
-= temple::TupleType::unpackToFunction<
+= temple::tuples::unpackToFunction<
   data::allShapeDataTypes,
-  constexprProperties::minAngleFunctor
+  constexpr_properties::minAngleFunctor
 >();
 
 #ifdef USE_CONSTEXPR_TRANSITION_MAPPINGS
@@ -56,7 +55,7 @@ constexpr double smallestAngle [[gnu::unused]]
  * @complexity{@math{\Theta(S!)} where @math{S} is the size of the largest symmetry}
  */
 extern const temple::UpperTriangularMatrix<
-  temple::Optional<constexprProperties::MappingsReturnType>,
+  temple::Optional<constexpr_properties::MappingsReturnType>,
   nShapes * (nShapes - 1) / 2
 > allMappings;
 #endif
@@ -99,7 +98,7 @@ const boost::optional<const properties::SymmetryTransitionGroup&> getMapping(
  * @complexity{@math{\Theta(S!)} where @math{S} is the size of the largest symmetry}
  */
 extern const temple::Array<
-  temple::DynamicArray<bool, constexprProperties::maxShapeSize>,
+  temple::DynamicArray<bool, constexpr_properties::maxShapeSize>,
   nShapes
 > allHasMultipleUnlinkedStereopermutations;
 #endif
@@ -130,8 +129,7 @@ bool hasMultipleUnlinkedStereopermutations(
   unsigned nIdenticalLigands
 );
 
-} // namespace Shapes
-
+} // namespace shapes
 } // namespace Scine
 
 #endif

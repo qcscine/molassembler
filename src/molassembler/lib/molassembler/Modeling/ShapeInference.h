@@ -21,23 +21,20 @@
 #include <map>
 
 namespace Scine {
-
 namespace molassembler {
 
 // Forward-declarations
 class OuterGraph;
 
 /**
- * @brief Methods to determine local geometries of atoms based on limited graph
- *   information
+ * @brief Methods to determine local shapes of atoms based on graph information
  */
-namespace LocalGeometry {
+namespace shape_inference {
 
-/* Typedefs */
 /**
  * @brief Type used to represent minimal binding site information
  */
-struct BindingSiteInformation {
+struct BindingSite {
   unsigned L, X;
 
   std::vector<Utils::ElementType> elements;
@@ -47,8 +44,8 @@ struct BindingSiteInformation {
    */
   BondType bondType;
 
-  BindingSiteInformation() = default;
-  BindingSiteInformation(
+  BindingSite() = default;
+  BindingSite(
     const unsigned passL,
     const unsigned passX,
     std::vector<Utils::ElementType> passElements,
@@ -69,16 +66,16 @@ extern const std::map<BondType, double> bondWeights;
  * @param graph The graph to which the atom index belongs
  * @param index The atom index for which to calculate the formal charge
  *
- * @parblock@warning This is an awful function and should be avoided in any
+ * @parblock@warning This is an awful concept and should be avoided in any
  * sort of important calculation.
  * @endparblock
  *
  * @parblock@warning This will yield nonsense if the bond orders in your graph
- * are unset.
+ * are not correct.
  * @endparblock
  *
- * @parblock@warning This function may work sometimes for organic surroundings.
- * That's how confident we are in this function.
+ * @parblock@warning This function may work sometimes for organic
+ * neighborhoods. That's how confident we are in this function.
  * @endparblock
  *
  * @return 0 for non-main group elements, possibly the formal charge otherwise
@@ -94,37 +91,39 @@ int formalCharge(
  *
  * @complexity{@math{\Theta(1)}}
  */
-boost::optional<Shapes::Shape> vsepr(
+boost::optional<shapes::Shape> vsepr(
   Utils::ElementType centerAtomType,
-  const std::vector<BindingSiteInformation>& sites,
+  const std::vector<BindingSite>& sites,
   int formalCharge
 );
 
 /*! @brief Yields the first shape of required size.
  *
  * @complexity{@math{\Theta(1)}}
- * @throws std::logic_error If no shapes of @p size exist
+ * @throws std::runtime_error If no shapes of @p size exist
  */
-Shapes::Shape firstOfSize(unsigned size);
+shapes::Shape firstOfSize(unsigned size);
 
-
-/* Tiered geometry determination function */
-std::vector<LocalGeometry::BindingSiteInformation> reduceToSiteInformation(
+/*! @brief Reduces a ranking to binding site information
+ */
+std::vector<BindingSite> reduceToSiteInformation(
   const OuterGraph& molGraph,
   AtomIndex index,
   const RankingInformation& ranking
 );
 
-boost::optional<Shapes::Shape> inferShape(
+/*! @brief Forwards inference to appropriate model depending on environment
+ *
+ * Currently just a stub forwarding to VSEPR
+ */
+boost::optional<shapes::Shape> inferShape(
   const OuterGraph& graph,
   AtomIndex index,
   const RankingInformation& ranking
 );
 
-} // namespace LocalGeometry
-
+} // namespace shape_inference
 } // namespace molassembler
-
 } // namespace Scine
 
 #endif

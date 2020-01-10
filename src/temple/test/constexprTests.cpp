@@ -29,7 +29,8 @@
 
 #include <boost/test/results_collector.hpp>
 
-extern temple::jsf::Generator<> generator;
+using namespace Scine;
+extern temple::Generator<> generator;
 
 inline bool lastTestPassed() {
   using namespace boost::unit_test;
@@ -637,7 +638,7 @@ BOOST_AUTO_TEST_CASE(dynamicSetFuzzing) {
   }
 }
 
-namespace TupleTypeTests {
+namespace tuple_type_tests {
 
 struct Apple {
   static constexpr unsigned number = 4;
@@ -727,18 +728,18 @@ struct pairSumValue {
 };
 
 static_assert(
-  temple::TupleType::unpackToFunction<Fruit, sumNumbersValue>() == 57,
+  temple::tuples::unpackToFunction<Fruit, sumNumbersValue>() == 57,
   "Unpacking fruit tuple to valueValue does not yield expected result"
 );
 
 static_assert(
-  temple::TupleType::unpackToFunction<Fruit, sumNumbersFunctor>() == 57,
+  temple::tuples::unpackToFunction<Fruit, sumNumbersFunctor>() == 57,
   "Unpacking fruit tuple to valueFunctor does not yield expected result"
 );
 
 static_assert(
   temple::arraysEqual(
-    temple::TupleType::map<Fruit, getNumberValue>(),
+    temple::tuples::map<Fruit, getNumberValue>(),
     temple::Array<unsigned, 3> {{Apple::number, Banana::number, Cherry::number}}
   ),
   "Mapping with getNumberValue does not yield expected result!"
@@ -746,7 +747,7 @@ static_assert(
 
 static_assert(
   temple::arraysEqual(
-    temple::TupleType::map<Fruit, getNumberFunctor>(),
+    temple::tuples::map<Fruit, getNumberFunctor>(),
     temple::Array<unsigned, 3> {{Apple::number, Banana::number, Cherry::number}}
   ),
   "Mapping with getNumberFunctor does not yield expected result!"
@@ -754,7 +755,7 @@ static_assert(
 
 static_assert(
   temple::arraysEqual(
-    temple::TupleType::mapAllPairs<Fruit, pairSumValue>(),
+    temple::tuples::mapAllPairs<Fruit, pairSumValue>(),
     temple::Array<unsigned, 3> {{
       Apple::number + Banana::number,
       Apple::number + Cherry::number,
@@ -766,7 +767,7 @@ static_assert(
 
 static_assert(
   temple::arraysEqual(
-    temple::TupleType::mapAllPairs<Fruit, pairSumFunctor>(),
+    temple::tuples::mapAllPairs<Fruit, pairSumFunctor>(),
     temple::Array<unsigned, 3> {{
       Apple::number + Banana::number,
       Apple::number + Cherry::number,
@@ -779,11 +780,11 @@ static_assert(
 using countTestType = std::tuple<unsigned, float, double, unsigned, size_t>;
 
 static_assert(
-  temple::TupleType::countType<countTestType, unsigned>() == 2,
+  temple::tuples::countType<countTestType, unsigned>() == 2,
   "Counting unsigned in countTestType does not return two!"
 );
 
-} // namespace TupleTypeTests
+} // namespace tuple_type_tests
 
 namespace FloatingPointComparisonTests {
 

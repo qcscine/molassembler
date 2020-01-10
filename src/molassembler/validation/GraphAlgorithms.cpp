@@ -372,18 +372,18 @@ const std::map<std::string, LinkTestData> linkTestData {
 };
 
 bool testSubstituentLinks(const boost::filesystem::path& filePath) {
-  auto mol = IO::read(filePath.string());
+  auto mol = io::read(filePath.string());
 
   std::cout << mol << nl;
 
   const auto& relevantData = linkTestData.at(filePath.stem().string());
 
-  auto ligands = GraphAlgorithms::ligandSiteGroups(
+  auto ligands = graph_algorithms::ligandSiteGroups(
     mol.graph().inner(),
     relevantData.source
   );
 
-  auto links = GraphAlgorithms::siteLinks(
+  auto links = graph_algorithms::siteLinks(
     mol.graph().inner(),
     relevantData.source,
     ligands,
@@ -570,7 +570,7 @@ bool testHapticBonds(const boost::filesystem::path& filePath) {
     graph.elementType(i) = rawData.first.getElement(i);
   }
 
-  GraphAlgorithms::updateEtaBonds(graph);
+  graph_algorithms::updateEtaBonds(graph);
 
   const auto& relevantData = hapticTestData.at(filePath.stem().string());
 
@@ -618,7 +618,7 @@ bool testHapticBonds(const boost::filesystem::path& filePath) {
   }
 
   // Test ligands classification
-  auto ligands = GraphAlgorithms::ligandSiteGroups(graph, 0);
+  auto ligands = graph_algorithms::ligandSiteGroups(graph, 0);
 
   /* Sort the ligands by size and then by individual atom indices so that we can
    * compare lexicograhically

@@ -15,6 +15,7 @@
 
 #include "boost/dynamic_bitset.hpp"
 
+namespace Scine {
 namespace temple {
 
 /*!
@@ -460,5 +461,6 @@ private:
 };
 
 } // namespace temple
+} // namespace Scine
 
 #endif

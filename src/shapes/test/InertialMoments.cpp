@@ -12,7 +12,7 @@
 #include "shapes/Data.h"
 
 using namespace Scine;
-using namespace Shapes;
+using namespace shapes;
 
 // From ContinuousMeasures.cpp
 extern continuous::PositionCollection addOrigin(const continuous::PositionCollection& vs);
@@ -65,7 +65,7 @@ BOOST_AUTO_TEST_CASE(InertialStandardization) {
       top == nameTopPair.second,
       "Top standardization failed. Expected "
       << topName(nameTopPair.second)
-      << " for shape " << Shapes::name(nameTopPair.first)
+      << " for shape " << shapes::name(nameTopPair.first)
       << ", got " << topName(top) << " instead."
     );
   }

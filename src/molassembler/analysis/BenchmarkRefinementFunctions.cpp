@@ -36,8 +36,8 @@ std::ostream& nl(std::ostream& os) {
 struct TimingFunctor {
   virtual double value(
     const Eigen::MatrixXd& squaredBounds,
-    const std::vector<DistanceGeometry::ChiralConstraint>& chiralConstraints,
-    const std::vector<DistanceGeometry::DihedralConstraint>& dihedralConstraints,
+    const std::vector<distance_geometry::ChiralConstraint>& chiralConstraints,
+    const std::vector<distance_geometry::DihedralConstraint>& dihedralConstraints,
     const Eigen::MatrixXd& positions,
     std::chrono::time_point<std::chrono::steady_clock>& start,
     std::chrono::time_point<std::chrono::steady_clock>& end
@@ -74,14 +74,14 @@ std::vector<FunctorResults> timeFunctors(
 
   for(unsigned n = 0; n < N; ++n) {
     // Prepare new data for the functors in every experiment
-    DistanceGeometry::SpatialModel spatialModel {molecule, DistanceGeometry::Configuration {}};
+    distance_geometry::SpatialModel spatialModel {molecule, distance_geometry::Configuration {}};
 
     const auto boundsList = spatialModel.makePairwiseBounds();
 
     const auto chiralConstraints = spatialModel.getChiralConstraints();
     const auto dihedralConstraints = spatialModel.getDihedralConstraints();
 
-    DistanceGeometry::ExplicitGraph explicitGraph {
+    distance_geometry::ExplicitGraph explicitGraph {
       molecule.graph().inner(),
       boundsList
     };
@@ -96,13 +96,13 @@ std::vector<FunctorResults> timeFunctors(
       throw std::runtime_error("Failure in distance bounds matrix construction: " + distanceBoundsResult.error().message());
     }
 
-    DistanceGeometry::DistanceBoundsMatrix distanceBounds {std::move(distanceBoundsResult.value())};
+    distance_geometry::DistanceBoundsMatrix distanceBounds {std::move(distanceBoundsResult.value())};
 
     Eigen::MatrixXd squaredBounds = distanceBounds.access().cwiseProduct(
       distanceBounds.access()
     );
 
-    auto metricMatrix = DistanceGeometry::MetricMatrix(
+    auto metricMatrix = distance_geometry::MetricMatrix(
       std::move(distancesMatrixResult.value())
     );
 
@@ -148,8 +148,8 @@ template<
 >
 double timeFunctionEvaluation(
   const Eigen::MatrixXd& squaredBounds,
-  const std::vector<DistanceGeometry::ChiralConstraint>& chiralConstraints,
-  const std::vector<DistanceGeometry::DihedralConstraint>& dihedralConstraints,
+  const std::vector<distance_geometry::ChiralConstraint>& chiralConstraints,
+  const std::vector<distance_geometry::DihedralConstraint>& dihedralConstraints,
   const Eigen::MatrixXd& positions,
   std::chrono::time_point<std::chrono::steady_clock>& start,
   std::chrono::time_point<std::chrono::steady_clock>& end
@@ -192,14 +192,14 @@ template<
 struct EigenFunctor final : public TimingFunctor {
   double value(
     const Eigen::MatrixXd& squaredBounds,
-    const std::vector<DistanceGeometry::ChiralConstraint>& chiralConstraints,
-    const std::vector<DistanceGeometry::DihedralConstraint>& dihedralConstraints,
+    const std::vector<distance_geometry::ChiralConstraint>& chiralConstraints,
+    const std::vector<distance_geometry::DihedralConstraint>& dihedralConstraints,
     const Eigen::MatrixXd& positions,
     std::chrono::time_point<std::chrono::steady_clock>& start,
     std::chrono::time_point<std::chrono::steady_clock>& end
   ) final {
     return timeFunctionEvaluation<
-      DistanceGeometry::EigenRefinementProblem,
+      distance_geometry::EigenRefinementProblem,
       dimensionality,
       FloatType,
       SIMD
@@ -214,7 +214,7 @@ struct EigenFunctor final : public TimingFunctor {
   }
 
   std::string name() final {
-    return DistanceGeometry::EigenRefinementProblem<dimensionality, FloatType, SIMD>::name();
+    return distance_geometry::EigenRefinementProblem<dimensionality, FloatType, SIMD>::name();
   }
 };
 
@@ -260,7 +260,7 @@ void benchmark(
 ) {
   using namespace molassembler;
 
-  Molecule molecule = IO::read(
+  Molecule molecule = io::read(
     filePath.string()
   );
 

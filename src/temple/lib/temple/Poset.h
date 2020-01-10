@@ -14,6 +14,7 @@
 #include <algorithm>
 #include <stdexcept>
 
+namespace Scine {
 namespace temple {
 
 /*!
@@ -333,5 +334,6 @@ private:
 };
 
 } // namespace temple
+} // namespace Scine
 
 #endif

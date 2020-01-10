@@ -4,7 +4,7 @@
  */
 
 #include "temple/Optionals.h"
-#include "molassembler/Modeling/LocalGeometryModel.h"
+#include "molassembler/Modeling/ShapeInference.h"
 
 #include "boost/range/iterator_range_core.hpp"
 #include "boost/optional.hpp"
@@ -17,10 +17,8 @@
 #include "molassembler/OuterGraph.h"
 
 namespace Scine {
-
 namespace molassembler {
-
-namespace LocalGeometry {
+namespace shape_inference {
 
 const std::map<BondType, double> bondWeights {
   {BondType::Single, 1.0},
@@ -32,12 +30,12 @@ const std::map<BondType, double> bondWeights {
   {BondType::Eta, 0.0}
 };
 
-boost::optional<Shapes::Shape> vsepr(
+boost::optional<shapes::Shape> vsepr(
   const Utils::ElementType centerAtomType,
-  const std::vector<BindingSiteInformation>& sites,
+  const std::vector<BindingSite>& sites,
   const int formalCharge
 ) {
-  unsigned nSites = sites.size();
+  const unsigned nSites = sites.size();
 
   if(nSites <= 1) {
     throw std::logic_error(
@@ -46,7 +44,7 @@ boost::optional<Shapes::Shape> vsepr(
     );
   }
 
-  if(!AtomInfo::isMainGroupElement(centerAtomType)) {
+  if(!atom_info::isMainGroupElement(centerAtomType)) {
     return boost::none;
   }
 
@@ -66,7 +64,7 @@ boost::optional<Shapes::Shape> vsepr(
   }
 
   // get uncharged VE count, returns none if not a main group element
-  auto veOption = molassembler::AtomInfo::mainGroupVE(centerAtomType);
+  auto veOption = molassembler::atom_info::mainGroupVE(centerAtomType);
 
   if(!veOption) {
     return boost::none;
@@ -75,7 +73,7 @@ boost::optional<Shapes::Shape> vsepr(
   /* calculate X, E (VSEPR parameters). X is the number of connected atoms and E
    * is the number of non-bonding electron pairs
    */
-  const unsigned& X = nSites;
+  const unsigned X = nSites;
   const int E = std::ceil(
     (
       static_cast<double>(veOption.value())
@@ -96,9 +94,9 @@ boost::optional<Shapes::Shape> vsepr(
     return boost::none;
   }
 
-  using Shapes::Shape;
+  using shapes::Shape;
 
-  const auto xeSum = X + E;
+  const unsigned xeSum = X + E;
 
   if(xeSum == 2) {
     return Shape::Line;
@@ -179,24 +177,24 @@ boost::optional<Shapes::Shape> vsepr(
   return boost::none;
 }
 
-Shapes::Shape firstOfSize(const unsigned size) {
+shapes::Shape firstOfSize(const unsigned size) {
   // Pick the first shape of fitting size
   auto findIter = std::find_if(
-    std::begin(Shapes::allShapes),
-    std::end(Shapes::allShapes),
+    std::begin(shapes::allShapes),
+    std::end(shapes::allShapes),
     [&size](const auto shape) -> bool {
-      return Shapes::size(shape) == size;
+      return shapes::size(shape) == size;
     }
   );
 
-  if(findIter == std::end(Shapes::allShapes)) {
-    throw std::logic_error("No shapes of that size!");
+  if(findIter == std::end(shapes::allShapes)) {
+    throw std::runtime_error("No shapes of that size!");
   }
 
   return *findIter;
 }
 
-std::vector<LocalGeometry::BindingSiteInformation> reduceToSiteInformation(
+std::vector<BindingSite> reduceToSiteInformation(
   const OuterGraph& molGraph,
   const AtomIndex index,
   const RankingInformation& ranking
@@ -217,12 +215,12 @@ std::vector<LocalGeometry::BindingSiteInformation> reduceToSiteInformation(
   // first basic stuff for VSEPR, later L and X for transition metals
   // geometry inference does not care if the substituents are somehow
   // connected (unless in later models the entire structure is considered)
-  std::vector<LocalGeometry::BindingSiteInformation> sites;
+  std::vector<BindingSite> sites;
   sites.reserve(ranking.sites.size());
 
   for(const auto& ligand : ranking.sites) {
     sites.emplace_back(
-      LocalGeometry::BindingSiteInformation {
+      BindingSite {
         0,
         0,
         temple::map(ligand, [&](const AtomIndex i) -> Utils::ElementType {
@@ -244,8 +242,8 @@ int formalCharge(
 ) {
   int formalCharge = 0;
 
-  if(AtomInfo::isMainGroupElement(graph.elementType(index))) {
-    int valenceElectrons = AtomInfo::elementData.at(
+  if(atom_info::isMainGroupElement(graph.elementType(index))) {
+    int valenceElectrons = atom_info::elementData.at(
       Utils::ElementInfo::Z(graph.elementType(index))
     ).valenceElectrons();
 
@@ -270,21 +268,19 @@ int formalCharge(
   return formalCharge;
 }
 
-boost::optional<Shapes::Shape> inferShape(
+boost::optional<shapes::Shape> inferShape(
   const OuterGraph& graph,
   const AtomIndex index,
   const RankingInformation& ranking
 ) {
   // So long as only VSEPR is implemented, this function is very simple:
-  return LocalGeometry::vsepr(
+  return vsepr(
     graph.elementType(index),
     reduceToSiteInformation(graph, index, ranking),
     formalCharge(graph, index)
   );
 }
 
-} // namespace LocalGeometry
-
+} // namespace shape_inference
 } // namespace molassembler
-
 } // namespace Scine

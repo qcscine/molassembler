@@ -23,7 +23,7 @@ namespace Scine {
 namespace molassembler {
 
 //! Distance geometry-related classes and functions
-namespace DistanceGeometry {
+namespace distance_geometry {
 
 /**
  * @brief Data struct representing a chiral constraint
@@ -89,7 +89,7 @@ struct DihedralConstraint {
   }
 };
 
-} // namespace DistanceGeometry
+} // namespace distance_geometry
 
 } // namespace molassembler
 

@@ -40,7 +40,7 @@ class BondStereopermutator;
  * many member functions behave differently in those circumstances.
  *
  * @code{cpp}
- * auto mol = IO::read(...);
+ * auto mol = io::read(...);
  * std::vector<Utils::PositionCollection> conformers;
  * DirectedConformerGenerator generator {mol};
  * if(generator.bondList().empty()) {
@@ -324,7 +324,7 @@ public:
    */
   outcome::result<Utils::PositionCollection> generateRandomConformation(
     const DecisionList& decisionList,
-    const DistanceGeometry::Configuration& configuration = DistanceGeometry::Configuration {}
+    const distance_geometry::Configuration& configuration = distance_geometry::Configuration {}
   );
 
   /*! @brief Try to generate a conformer for a particular decision list
@@ -340,7 +340,7 @@ public:
   outcome::result<Utils::PositionCollection> generateConformation(
     const DecisionList& decisionList,
     const unsigned seed,
-    const DistanceGeometry::Configuration& configuration = DistanceGeometry::Configuration {}
+    const distance_geometry::Configuration& configuration = distance_geometry::Configuration {}
   );
 
   /*! @brief Yields a molecule reference for a particular decision list

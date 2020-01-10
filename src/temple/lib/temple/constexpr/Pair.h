@@ -14,6 +14,7 @@
 
 #include <utility>
 
+namespace Scine {
 namespace temple {
 
 /*! @brief Heterogeneous pair type.
@@ -103,5 +104,6 @@ struct Pair {
 };
 
 } // namespace temple
+} // namespace Scine
 
 #endif

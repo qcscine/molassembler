@@ -9,8 +9,10 @@
 
 #include <Eigen/Core>
 
+namespace Scine {
 namespace temple {
 
+//! @brief Functionality common to multiple optimizers
 namespace optimization {
 
 template<typename FloatType>
@@ -148,7 +150,7 @@ auto numericalHessian(
 }
 
 } // namespace optimization
-
 } // namespace temple
+} // namespace Scine
 
 #endif

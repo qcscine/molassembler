@@ -7,6 +7,8 @@
 
 #include "temple/Optimization/NelderMead.h"
 
+using namespace Scine;
+
 struct NelderMeadHimmelblau {
   double operator() (const Eigen::VectorXd& parameters) {
     assert(parameters.size() == 2);

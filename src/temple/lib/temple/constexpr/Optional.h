@@ -11,6 +11,7 @@
 
 #include <utility>
 
+namespace Scine {
 namespace temple {
 
 /*! @brief An Option monadic type
@@ -340,5 +341,6 @@ private:
 };
 
 } // namespace temple
+} // namespace Scine
 
 #endif

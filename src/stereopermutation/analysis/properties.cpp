@@ -64,25 +64,25 @@ int main(int argc, char* argv[]) {
   ) {
     // Validate symmetry argument
     unsigned argSymmetry = options_variables_map["s"].as<unsigned>();
-    if(argSymmetry >= Shapes::allShapes.size()) {
+    if(argSymmetry >= shapes::allShapes.size()) {
       std::cout << "Specified symmetry out of bounds. Valid symmetries are 0-"
-        << (Shapes::allShapes.size() - 1) << ":\n\n";
-      for(unsigned i = 0; i < Shapes::allShapes.size(); i++) {
-        std::cout << "  " << i << " - " << Shapes::name(Shapes::allShapes.at(i)) << "\n";
+        << (shapes::allShapes.size() - 1) << ":\n\n";
+      for(unsigned i = 0; i < shapes::allShapes.size(); i++) {
+        std::cout << "  " << i << " - " << shapes::name(shapes::allShapes.at(i)) << "\n";
       }
       std::cout << std::endl;
       return 0;
     }
 
-    Shapes::Shape shape = Shapes::allShapes[argSymmetry];
+    shapes::Shape shape = shapes::allShapes[argSymmetry];
 
     // Validate characters
     std::string chars = options_variables_map["c"].as<std::string>();
 
-    if(chars.size() != Shapes::size(shape)) {
+    if(chars.size() != shapes::size(shape)) {
       std::cout << "Number of characters does not fit specified symmetry size: "
         << chars.size() << " characters specified, symmetry size is "
-        << Shapes::size(shape) << nl;
+        << shapes::size(shape) << nl;
 
       return 0;
     }
@@ -153,7 +153,7 @@ int main(int argc, char* argv[]) {
 
     auto unique = uniques(base, shape, false);
 
-    std::cout << "Symmetry: " << Shapes::name(shape) << nl
+    std::cout << "Symmetry: " << shapes::name(shape) << nl
       << "Characters: " << chars << nl
       << "Links: " << temple::stringify(links) << nl << nl;
 
@@ -164,7 +164,7 @@ int main(int argc, char* argv[]) {
 
       for(const auto& linkPair : unique.list[i].links) {
         std::cout << (
-          180 * Shapes::angleFunction(shape)(linkPair.first, linkPair.second) / M_PI
+          180 * shapes::angleFunction(shape)(linkPair.first, linkPair.second) / M_PI
         ) << " ";
       }
       std::cout << nl;

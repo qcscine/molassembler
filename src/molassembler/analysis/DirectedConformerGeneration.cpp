@@ -65,7 +65,7 @@ int main(int argc, char* argv[]) {
     return 0;
   }
 
-  DistanceGeometry::Configuration configuration;
+  distance_geometry::Configuration configuration;
   if(options_variables_map.count("partiality") > 0) {
     unsigned index =  options_variables_map["partiality"].as<unsigned>();
 
@@ -75,7 +75,7 @@ int main(int argc, char* argv[]) {
       return 0;
     }
 
-    configuration.partiality = static_cast<DistanceGeometry::Partiality>(index);
+    configuration.partiality = static_cast<distance_geometry::Partiality>(index);
   }
 
   if(options_variables_map.count("steps") > 0) {
@@ -84,7 +84,7 @@ int main(int argc, char* argv[]) {
 
   std::string filename = options_variables_map["file"].as<std::string>();
 
-  Molecule mol = IO::read(filename);
+  Molecule mol = io::read(filename);
 
   std::cout << mol << "\n";
 
@@ -101,7 +101,7 @@ int main(int argc, char* argv[]) {
       auto positionResult = generateRandomConformation(mol);
       if(positionResult) {
         std::cout << "Generated conformation.\n";
-        IO::write(
+        io::write(
           filestem + "-0.mol",
           mol,
           positionResult.value()
@@ -134,7 +134,7 @@ int main(int argc, char* argv[]) {
 
       if(positionResult) {
         std::cout << "Generated conformer #" << (conformerCount + 1) << ", decision list " << temple::stringify(newDecisionList) << "\n";
-        IO::write(
+        io::write(
           filestem + "-"s + std::to_string(conformerCount + 1) + ".mol",
           mol,
           positionResult.value()
@@ -143,7 +143,7 @@ int main(int argc, char* argv[]) {
       }
 
       std::cout << "Could not generate decision list " << temple::stringify(newDecisionList) << ": " << positionResult.error().message() << "\n";
-      IO::write(
+      io::write(
         filestem + "-"s + std::to_string(conformerCount + 1) + ".json",
         confMol
       );

@@ -15,8 +15,8 @@
 
 #include <iostream>
 
+namespace Scine {
 namespace temple {
-
 namespace TypeTests {
 
 /*! @brief For any two types, check consistency of their logical operators
@@ -82,7 +82,7 @@ void explainLogicalOperatorFailures(const T& a, const T& b) {
 }
 
 } // namespace TypeTests
-
 } // namespace temple
+} // namespace Scine
 
 #endif

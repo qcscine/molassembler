@@ -13,8 +13,8 @@
 #include <boost/optional.hpp>
 #include "temple/Traits.h"
 
+namespace Scine {
 namespace temple {
-
 namespace optionals {
 
 /*! @brief Monadic bind with function of signature T -> U
@@ -62,7 +62,7 @@ auto flatMap(const OptionalType<T>& optional, UnaryFunction&& function) {
 }
 
 } // namespace optionals
-
 } // namespace temple
+} // namespace Scine
 
 #endif

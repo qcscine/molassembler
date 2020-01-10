@@ -19,6 +19,7 @@
 #include <algorithm>
 #include <numeric>
 
+namespace Scine {
 namespace temple {
 
 template<
@@ -447,5 +448,6 @@ auto makeContainsPredicate(const Container& container) {
 }
 
 } // namespace temple
+} // namespace Scine
 
 #endif

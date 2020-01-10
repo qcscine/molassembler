@@ -38,7 +38,7 @@ BOOST_AUTO_TEST_CASE(RotatableBondsDescriptorsExamples) {
     const boost::filesystem::path& currentFilePath :
     boost::filesystem::recursive_directory_iterator("descriptor_test_set")
   ) {
-    auto molecule = IO::read(currentFilePath.string());
+    auto molecule = io::read(currentFilePath.string());
 
     std::string moleculeName = currentFilePath.stem().string();
 

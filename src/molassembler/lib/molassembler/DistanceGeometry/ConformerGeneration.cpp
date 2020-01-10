@@ -25,7 +25,7 @@
 
 namespace Scine {
 namespace molassembler {
-namespace DistanceGeometry {
+namespace distance_geometry {
 namespace detail {
 
 Eigen::MatrixXd gather(const Eigen::VectorXd& vectorizedPositions) {
@@ -554,6 +554,6 @@ std::vector<
   return results;
 }
 
-} // namespace DistanceGeometry
+} // namespace distance_geometry
 } // namespace molassembler
 } // namespace Scine

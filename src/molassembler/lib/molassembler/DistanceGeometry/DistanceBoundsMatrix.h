@@ -23,7 +23,7 @@ class Engine;
 
 namespace outcome = BOOST_OUTCOME_V2_NAMESPACE;
 
-namespace DistanceGeometry {
+namespace distance_geometry {
 
 class DistanceBoundsMatrix {
 public:
@@ -88,8 +88,8 @@ public:
         // i < j in all cases -> lower bound is (j, i), upper bound is (i, j)
         if(_matrix(j, i) == 0) {
           _matrix(j, i) = (
-            AtomInfo::vdwRadius(inner.elementType(i))
-            + AtomInfo::vdwRadius(inner.elementType(j))
+            atom_info::vdwRadius(inner.elementType(i))
+            + atom_info::vdwRadius(inner.elementType(j))
           );
         }
 
@@ -195,7 +195,7 @@ private:
 
 };
 
-} // namespace DistanceGeometry
+} // namespace distance_geometry
 
 } // namespace molassembler
 

@@ -18,13 +18,14 @@
 
 namespace Scine {
 namespace molassembler {
+namespace stereopermutators {
 
-bool FeasibleStereopermutations::linkPossiblyFeasible(
+bool Feasible::linkPossiblyFeasible(
   const LinkInformation& link,
   const AtomIndex centralIndex,
   const ConeAngleType& cones,
   const RankingInformation& ranking,
-  const Shapes::Shape shape,
+  const shapes::Shape shape,
   const std::vector<unsigned>& shapeVertexMap,
   const OuterGraph& graph
 ) {
@@ -36,10 +37,10 @@ bool FeasibleStereopermutations::linkPossiblyFeasible(
     return true;
   }
 
-  const DistanceGeometry::ValueBounds siteIConeAngle = cones.at(link.indexPair.first).value();
-  const DistanceGeometry::ValueBounds siteJConeAngle = cones.at(link.indexPair.second).value();
+  const distance_geometry::ValueBounds siteIConeAngle = cones.at(link.indexPair.first).value();
+  const distance_geometry::ValueBounds siteJConeAngle = cones.at(link.indexPair.second).value();
 
-  const double symmetryAngle = DistanceGeometry::SpatialModel::siteCentralAngle(
+  const double symmetryAngle = distance_geometry::SpatialModel::siteCentralAngle(
     centralIndex,
     shape,
     ranking,
@@ -63,19 +64,19 @@ bool FeasibleStereopermutations::linkPossiblyFeasible(
      * instead of testing the angle in such a roundabout manner...
      */
 
-    return !Stereopermutators::triangleBondTooClose(
-      DistanceGeometry::SpatialModel::modelDistance(
+    return !stereopermutators::triangleBondTooClose(
+      distance_geometry::SpatialModel::modelDistance(
         centralIndex,
         link.cycleSequence[1],
         graph.inner()
       ),
-      DistanceGeometry::SpatialModel::modelDistance(
+      distance_geometry::SpatialModel::modelDistance(
         centralIndex,
         link.cycleSequence[2],
         graph.inner()
       ),
       symmetryAngle,
-      AtomInfo::bondRadius(graph.elementType(centralIndex))
+      atom_info::bondRadius(graph.elementType(centralIndex))
     );
   }
 
@@ -99,7 +100,7 @@ bool FeasibleStereopermutations::linkPossiblyFeasible(
    * group of shape positions with lower cross-angles is viable for the
    * link, and will distort accordingly.
    */
-  auto symmetryGroups = Shapes::properties::positionGroups(shape);
+  auto symmetryGroups = shapes::properties::positionGroups(shape);
 
 
   /* First we need to construct the cyclic polygon of the cycle sequence
@@ -109,7 +110,7 @@ bool FeasibleStereopermutations::linkPossiblyFeasible(
   auto cycleEdgeLengths = temple::map(
     temple::adaptors::cyclicFrame<2>(link.cycleSequence),
     [&](const auto& i, const auto& j) -> double {
-      return DistanceGeometry::SpatialModel::modelDistance(i, j, graph.inner());
+      return distance_geometry::SpatialModel::modelDistance(i, j, graph.inner());
     }
   );
 
@@ -124,7 +125,7 @@ bool FeasibleStereopermutations::linkPossiblyFeasible(
   cycleEdgeLengths.back() = c;
   cycleEdgeLengths.erase(std::begin(cycleEdgeLengths));
 
-  std::vector<Stereopermutators::BaseAtom> bases (1);
+  std::vector<stereopermutators::BaseAtom> bases (1);
   auto& base = bases.front();
   base.elementType = graph.elementType(centralIndex);
   base.distanceToLeft = a;
@@ -139,20 +140,20 @@ bool FeasibleStereopermutations::linkPossiblyFeasible(
   // Drop the central index's element type from this map
   elementTypes.erase(std::begin(elementTypes));
 
-  return !Stereopermutators::cycleModelContradictsGraph(
+  return !stereopermutators::cycleModelContradictsGraph(
     elementTypes,
     cycleEdgeLengths,
     bases
   );
 }
 
-bool FeasibleStereopermutations::possiblyFeasible(
+bool Feasible::possiblyFeasible(
   const stereopermutation::Stereopermutation& stereopermutation,
   const AtomIndex centralIndex,
   const RankingInformation::RankedSitesType& canonicalSites,
   const ConeAngleType& coneAngles,
   const RankingInformation& ranking,
-  const Shapes::Shape shape,
+  const shapes::Shape shape,
   const OuterGraph& graph
 ) {
   const auto shapeVertexMap = siteToShapeVertexMap(
@@ -178,7 +179,7 @@ bool FeasibleStereopermutations::possiblyFeasible(
       }
 
       // siteCentralAngle yields undistorted symmetry angles for haptic sites
-      const double symmetryAngle = DistanceGeometry::SpatialModel::siteCentralAngle(
+      const double symmetryAngle = distance_geometry::SpatialModel::siteCentralAngle(
         centralIndex,
         shape,
         ranking,
@@ -224,18 +225,18 @@ bool FeasibleStereopermutations::possiblyFeasible(
   );
 }
 
-FeasibleStereopermutations::FeasibleStereopermutations(
-  const AbstractStereopermutations& abstractPermutations,
-  const Shapes::Shape shape,
+Feasible::Feasible(
+  const Abstract& abstractPermutations,
+  const shapes::Shape shape,
   const AtomIndex centralIndex,
   const RankingInformation& ranking,
   const OuterGraph& graph
 ) {
-  using ModelType = DistanceGeometry::SpatialModel;
+  using ModelType = distance_geometry::SpatialModel;
 
   siteDistances = temple::map(
     ranking.sites,
-    [&](const auto& siteAtomsList) -> DistanceGeometry::ValueBounds {
+    [&](const auto& siteAtomsList) -> distance_geometry::ValueBounds {
       return ModelType::siteDistanceFromCenter(
         siteAtomsList,
         centralIndex,
@@ -297,5 +298,6 @@ FeasibleStereopermutations::FeasibleStereopermutations(
   }
 }
 
+} // namespace stereopermutators
 } // namespace molassembler
 } // namespace Scine

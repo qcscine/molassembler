@@ -12,6 +12,7 @@
 
 #include <vector>
 
+namespace Scine {
 namespace temple {
 namespace adaptors {
 namespace detail {
@@ -137,5 +138,6 @@ auto sequentialPairs(Container&& container) {
 
 } // namespace adaptors
 } // namespace temple
+} // namespace Scine
 
 #endif

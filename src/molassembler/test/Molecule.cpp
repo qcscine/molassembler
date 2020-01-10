@@ -52,7 +52,7 @@ static_assert(
 
 std::tuple<Molecule, Molecule, std::vector<AtomIndex>> readIsomorphism(const boost::filesystem::path& filePath) {
   auto readData = Utils::ChemicalFileHandler::read(filePath.string());
-  auto permutedData = IO::shuffle(readData.first, readData.second);
+  auto permutedData = io::shuffle(readData.first, readData.second);
 
   auto interpretSingle = [](const Utils::AtomCollection& ac, const Utils::BondOrderCollection& boc) -> Molecule {
     interpret::MoleculesResult interpretation;
@@ -113,7 +113,7 @@ BOOST_AUTO_TEST_CASE(MoleculeRuleOfFiveTrivial) {
 using HashArgumentsType = std::tuple<
   Utils::ElementType,
   std::vector<molassembler::hashes::BondInformation>,
-  boost::optional<Shapes::Shape>,
+  boost::optional<shapes::Shape>,
   boost::optional<unsigned>
 >;
 
@@ -141,8 +141,8 @@ std::string repr(const HashArgumentsType& hashArgs) {
   representation += ", s = ";
   representation += temple::optionals::map(
     std::get<2>(hashArgs),
-    [](const Shapes::Shape s) -> std::string {
-      return Shapes::name(s);
+    [](const shapes::Shape s) -> std::string {
+      return shapes::name(s);
     }
   ).value_or("N");
   representation += ", a = ";
@@ -175,10 +175,10 @@ HashArgumentsType randomArguments() {
     };
   };
 
-  boost::optional<Shapes::Shape> shapeOptional;
+  boost::optional<shapes::Shape> shapeOptional;
   boost::optional<unsigned> assignmentOptional;
   if(temple::random::getSingle<bool>(randomnessEngine())) {
-    shapeOptional = static_cast<Shapes::Shape>(
+    shapeOptional = static_cast<shapes::Shape>(
       temple::random::getSingle<unsigned>(0, 15, randomnessEngine())
     );
 
@@ -190,7 +190,7 @@ HashArgumentsType randomArguments() {
   std::vector<molassembler::hashes::BondInformation> bonds;
   unsigned S;
   if(shapeOptional) {
-    S = Shapes::size(*shapeOptional);
+    S = shapes::size(*shapeOptional);
   } else {
     S = temple::random::getSingle<unsigned>(1, 8, randomnessEngine());
   }
@@ -297,7 +297,7 @@ BOOST_AUTO_TEST_CASE(AtomEnvironmentHashesRegular) {
       continue;
     }
 
-    Molecule a = IO::read(currentFilePath.string());
+    Molecule a = io::read(currentFilePath.string());
 
     auto aWideHashes = hashes::generate(a.graph().inner(), a.stereopermutators(), AtomEnvironmentComponents::All);
 
@@ -329,7 +329,7 @@ BOOST_AUTO_TEST_CASE(MoleculeCanonicalizationAtomMap) {
       continue;
     }
 
-    const Molecule m = IO::read(currentFilePath.string());
+    const Molecule m = io::read(currentFilePath.string());
     Molecule n = m;
     auto indexMap = n.canonicalize();
 
@@ -486,7 +486,7 @@ BOOST_AUTO_TEST_CASE(MoleculeBasicRSInequivalency) {
   a.addAtom(Utils::ElementType::F, 0, BondType::Single);
   a.addAtom(Utils::ElementType::Cl, 0, BondType::Single);
   a.addAtom(Utils::ElementType::Br, 0, BondType::Single);
-  a.setShapeAtAtom(0, Shapes::Shape::Tetrahedron);
+  a.setShapeAtAtom(0, shapes::Shape::Tetrahedron);
 
   // Make sure it's recognized as asymmetric
   auto centralStereopermutatorOption = a.stereopermutators().option(0);
@@ -513,8 +513,8 @@ BOOST_AUTO_TEST_CASE(MoleculeBasicEZInequivalency) {
   a.addAtom(Utils::ElementType::F, 1, BondType::Single);
 
   // Set the shapes
-  a.setShapeAtAtom(0, Shapes::Shape::EquilateralTriangle);
-  a.setShapeAtAtom(1, Shapes::Shape::EquilateralTriangle);
+  a.setShapeAtAtom(0, shapes::Shape::EquilateralTriangle);
+  a.setShapeAtAtom(1, shapes::Shape::EquilateralTriangle);
 
   // Progression must recognize the new stereopermutator
   auto stereopermutatorOption = a.stereopermutators().option(
@@ -553,7 +553,7 @@ BOOST_AUTO_TEST_CASE(PropagateGraphChangeTests) {
   boost::filesystem::path filePath("ranking_tree_molecules");
   filePath /= "(2R,3r,4S)-pentane-2,3,4-trithiol.mol";
 
-  auto pseudocenter = IO::read(
+  auto pseudocenter = io::read(
     filePath.string()
   );
 
@@ -584,15 +584,15 @@ BOOST_AUTO_TEST_CASE(PropagateGraphChangeTests) {
    * to original abstract site case after forcing cut-tetrahedral shapes
    * for each nitrogen.
    */
-  auto complex = IO::read("various/propagation-test-case-1.json");
+  auto complex = io::read("various/propagation-test-case-1.json");
 
   for(AtomIndex i = 0; i < complex.graph().N(); ++i) {
     if(
       complex.graph().elementType(i) == Utils::ElementType::N
       && complex.stereopermutators().option(i)
-      && Shapes::size(complex.stereopermutators().option(i)->getShape()) == 3
+      && shapes::size(complex.stereopermutators().option(i)->getShape()) == 3
     ) {
-      complex.setShapeAtAtom(i, Shapes::Shape::VacantTetrahedron);
+      complex.setShapeAtAtom(i, shapes::Shape::VacantTetrahedron);
     }
   }
 
@@ -610,15 +610,15 @@ BOOST_AUTO_TEST_CASE(PropagateGraphChangeTests) {
 BOOST_AUTO_TEST_CASE(MoleculeSplitRecognition) {
   std::vector<Molecule> molSplat, xyzSplat;
 
-  BOOST_REQUIRE_NO_THROW(molSplat = IO::split("multiple_molecules/multi_interpret.mol"));
-  BOOST_REQUIRE_NO_THROW(xyzSplat = IO::split("multiple_molecules/multi_interpret.xyz"));
+  BOOST_REQUIRE_NO_THROW(molSplat = io::split("multiple_molecules/multi_interpret.mol"));
+  BOOST_REQUIRE_NO_THROW(xyzSplat = io::split("multiple_molecules/multi_interpret.xyz"));
 
   // Each file contains one ethane, four water, and a potassium
 
   Molecule water {Utils::ElementType::O};
   water.addAtom(Utils::ElementType::H, 0, BondType::Single);
   water.addAtom(Utils::ElementType::H, 0, BondType::Single);
-  water.setShapeAtAtom(0, Shapes::Shape::Bent);
+  water.setShapeAtAtom(0, shapes::Shape::Bent);
 
   Molecule ethane {Utils::ElementType::C};
   ethane.addAtom(Utils::ElementType::H, 0, BondType::Single);
@@ -628,8 +628,8 @@ BOOST_AUTO_TEST_CASE(MoleculeSplitRecognition) {
   ethane.addAtom(Utils::ElementType::H, otherCarbon, BondType::Single);
   ethane.addAtom(Utils::ElementType::H, otherCarbon, BondType::Single);
   ethane.addAtom(Utils::ElementType::H, otherCarbon, BondType::Single);
-  ethane.setShapeAtAtom(0, Shapes::Shape::Tetrahedron);
-  ethane.setShapeAtAtom(otherCarbon, Shapes::Shape::Tetrahedron);
+  ethane.setShapeAtAtom(0, shapes::Shape::Tetrahedron);
+  ethane.setShapeAtAtom(otherCarbon, shapes::Shape::Tetrahedron);
 
   Molecule potassium {Utils::ElementType::K};
 
@@ -676,7 +676,7 @@ BOOST_AUTO_TEST_CASE(MoleculeGeometryChoices) {
   BOOST_REQUIRE(stereocenterOption);
 
   if(auto suggestedShapeOption = testMol.inferShape(1u, stereocenterOption->getRanking())) {
-    BOOST_CHECK(suggestedShapeOption.value() == Shapes::Shape::VacantTetrahedron);
+    BOOST_CHECK(suggestedShapeOption.value() == shapes::Shape::VacantTetrahedron);
     testMol.setShapeAtAtom(1u, suggestedShapeOption.value());
   }
 
@@ -684,15 +684,15 @@ BOOST_AUTO_TEST_CASE(MoleculeGeometryChoices) {
 
   BOOST_CHECK(
     testMol.stereopermutators().option(1u)
-    && testMol.stereopermutators().option(1u)->getShape() == Shapes::Shape::Tetrahedron
+    && testMol.stereopermutators().option(1u)->getShape() == shapes::Shape::Tetrahedron
   );
 }
 
 // Isomer predicates work as expected
 BOOST_AUTO_TEST_CASE(IsomerPredicateTests) {
   Molecule a, b;
-  BOOST_REQUIRE_NO_THROW(a = molassembler::IO::read("isomers/enantiomers/Citalopram-R.mol"));
-  BOOST_REQUIRE_NO_THROW(b = molassembler::IO::read("isomers/enantiomers/Citalopram-S.mol"));
+  BOOST_REQUIRE_NO_THROW(a = molassembler::io::read("isomers/enantiomers/Citalopram-R.mol"));
+  BOOST_REQUIRE_NO_THROW(b = molassembler::io::read("isomers/enantiomers/Citalopram-S.mol"));
 
   constexpr auto bitmask = AtomEnvironmentComponents::ElementTypes
     | AtomEnvironmentComponents::BondOrders
@@ -706,8 +706,8 @@ BOOST_AUTO_TEST_CASE(IsomerPredicateTests) {
     "Citalopram-R and -S are falsely determined not to be enantiomers."
   );
 
-  BOOST_REQUIRE_NO_THROW(a = molassembler::IO::read("isomers/enantiomers/Isoleucine-RS.mol"));
-  BOOST_REQUIRE_NO_THROW(b = molassembler::IO::read("isomers/enantiomers/Isoleucine-SR.mol"));
+  BOOST_REQUIRE_NO_THROW(a = molassembler::io::read("isomers/enantiomers/Isoleucine-RS.mol"));
+  BOOST_REQUIRE_NO_THROW(b = molassembler::io::read("isomers/enantiomers/Isoleucine-SR.mol"));
 
   a.canonicalize(bitmask);
   b.canonicalize(bitmask);
@@ -741,7 +741,7 @@ BOOST_AUTO_TEST_CASE(EtaBondDynamism) {
 void checkAtomStereopermutator(
   const Molecule& m,
   const AtomIndex i,
-  const Shapes::Shape shape
+  const shapes::Shape shape
 ) {
   BOOST_CHECK_MESSAGE(
     temple::optionals::map(
@@ -753,9 +753,9 @@ void checkAtomStereopermutator(
     temple::optionals::map(
       m.stereopermutators().option(i),
       [&](const AtomStereopermutator& permutator) {
-        return Shapes::name(permutator.getShape());
+        return shapes::name(permutator.getShape());
       }
-    ).value_or("No") << " atom stereopermutator on " << i << ", expected a(n) " << Shapes::name(shape) << " stereopermutator"
+    ).value_or("No") << " atom stereopermutator on " << i << ", expected a(n) " << shapes::name(shape) << " stereopermutator"
   );
 }
 
@@ -763,14 +763,14 @@ BOOST_AUTO_TEST_CASE(ShapeClassification) {
   // Particular cases from issues that reveal shape classification needs.
 
   // This is a huge system with octahedral iron centers (#90)
-  auto interconnected = IO::read("shape_classification/interconnected.mol");
+  auto interconnected = io::read("shape_classification/interconnected.mol");
   for(const AtomIndex i : boost::make_iterator_range(interconnected.graph().atoms())) {
     if(interconnected.graph().elementType(i) == Utils::ElementType::Fe) {
-      checkAtomStereopermutator(interconnected, i, Shapes::Shape::Octahedron);
+      checkAtomStereopermutator(interconnected, i, shapes::Shape::Octahedron);
     }
   }
 
   // Trigonal bipyramidal transition metal center (#99)
-  auto trigbipy = IO::read("shape_classification/trig_bipy.mol");
-  checkAtomStereopermutator(trigbipy, 0, Shapes::Shape::TrigonalBipyramid);
+  auto trigbipy = io::read("shape_classification/trig_bipy.mol");
+  checkAtomStereopermutator(trigbipy, 0, shapes::Shape::TrigonalBipyramid);
 }

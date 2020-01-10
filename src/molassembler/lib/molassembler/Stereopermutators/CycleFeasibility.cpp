@@ -5,9 +5,11 @@
 
 #include "molassembler/Stereopermutators/CycleFeasibility.h"
 
+#include "CyclicPolygons.h"
+
 namespace Scine {
 namespace molassembler {
-namespace Stereopermutators {
+namespace stereopermutators {
 
 namespace detail {
 
@@ -125,7 +127,7 @@ bool cycleModelContradictsGraph(
   const std::vector<double>& cycleEdgeLengths,
   const std::vector<BaseAtom>& bases
 ) {
-  if(!CyclicPolygons::exists(cycleEdgeLengths)) {
+  if(!cyclic_polygons::exists(cycleEdgeLengths)) {
     return true;
   }
 
@@ -140,7 +142,7 @@ bool cycleModelContradictsGraph(
    * cycleEdgeLengths: A-I, ..., X-B, B-A
    * phis: A-I-J, ..., X-B-A, B-A-I
    */
-  const auto phis = CyclicPolygons::internalAngles(cycleEdgeLengths);
+  const auto phis = cyclic_polygons::internalAngles(cycleEdgeLengths);
 
   return temple::any_of(
     bases,
@@ -172,6 +174,6 @@ bool triangleBondTooClose(
   return altitude <= bondRadius;
 }
 
-} // namespace Stereopermutators
+} // namespace stereopermutators
 } // namespace molassembler
 } // namespace Scine

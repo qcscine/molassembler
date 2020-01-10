@@ -20,9 +20,7 @@
 #include <unordered_set>
 
 namespace Scine {
-
-namespace Shapes {
-
+namespace shapes {
 namespace detail {
 
 /*!
@@ -79,7 +77,7 @@ std::vector<unsigned> applyRotation(
 
   for(
     const auto& index :
-    Shapes::rotations(shape).at(rotationFunctionIndex)
+    shapes::rotations(shape).at(rotationFunctionIndex)
   ) {
     retv.push_back(
       indices.at(index)
@@ -90,12 +88,12 @@ std::vector<unsigned> applyRotation(
 }
 
 unsigned rotationPeriodicity(
-  const Shapes::Shape shape,
+  const shapes::Shape shape,
   const std::vector<unsigned>& rotation
 ) {
-  assert(rotation.size() == Shapes::size(shape));
+  assert(rotation.size() == shapes::size(shape));
 
-  const auto initialIndices = temple::iota<unsigned>(Shapes::size(shape));
+  const auto initialIndices = temple::iota<unsigned>(shapes::size(shape));
 
   std::vector<unsigned> modified = applyRotation(initialIndices, rotation);
 
@@ -114,7 +112,7 @@ bool isRotation(const std::vector<unsigned>& rotation) {
   return temple::sort(rotation) == temple::iota<unsigned>(rotation.size());
 }
 
-std::vector<char> positionGroups(const Shapes::Shape shape) {
+std::vector<char> positionGroups(const shapes::Shape shape) {
   /* The idea behind this algorithm is that an individual rotation (which is
    * really just an index permutation) could be interpreted as a directed graph
    * whose connected components represent sets of indices that can be
@@ -123,7 +121,7 @@ std::vector<char> positionGroups(const Shapes::Shape shape) {
    * Then all that is necessary is to somehow combine multiple rotations into
    * another rotation in which overlapping connected components are merged.
    */
-  const unsigned S = Shapes::size(shape);
+  const unsigned S = shapes::size(shape);
 
   using IndexGroups = std::vector<
     std::vector<unsigned>
@@ -293,11 +291,11 @@ std::vector<unsigned> inverseRotation(const std::vector<unsigned>& rotation) {
 }
 
 Eigen::Vector3d getCoordinates(
-  const Shapes::Shape shape,
+  const shapes::Shape shape,
   const boost::optional<unsigned>& indexInShapeOption
 ) {
   if(indexInShapeOption) {
-    assert(indexInShapeOption.value() < Shapes::size(shape));
+    assert(indexInShapeOption.value() < shapes::size(shape));
 
     return shapeData().at(shape).coordinates.col(
       indexInShapeOption.value()
@@ -319,19 +317,19 @@ double getTetrahedronVolume(
 }
 
 double calculateAngleDistortion(
-  const Shapes::Shape from,
-  const Shapes::Shape to,
+  const shapes::Shape from,
+  const shapes::Shape to,
   const std::vector<unsigned>& indexMapping
 ) {
   const unsigned mappingIndexLimit = std::min(
-    Shapes::size(from),
-    Shapes::size(to)
+    shapes::size(from),
+    shapes::size(to)
   );
 
   assert(indexMapping.size() >= mappingIndexLimit);
   assert(
     std::abs(
-      static_cast<int>(Shapes::size(from)) - static_cast<int>(Shapes::size(to))
+      static_cast<int>(shapes::size(from)) - static_cast<int>(shapes::size(to))
     ) <= 1
   );
 
@@ -340,8 +338,8 @@ double calculateAngleDistortion(
   for(unsigned i = 0; i < mappingIndexLimit; ++i) {
     for(unsigned j = i + 1; j < mappingIndexLimit; ++j) {
       angularDistortion += std::fabs(
-        Shapes::angleFunction(from)(i, j)
-        - Shapes::angleFunction(to)(
+        shapes::angleFunction(from)(i, j)
+        - shapes::angleFunction(to)(
           indexMapping.at(i),
           indexMapping.at(j)
         )
@@ -366,21 +364,21 @@ boost::optional<unsigned> propagateIndexOptionalThroughMapping(
 
 
 double calculateChiralDistortion(
-  const Shapes::Shape from,
-  const Shapes::Shape to,
+  const shapes::Shape from,
+  const shapes::Shape to,
   const std::vector<unsigned>& indexMapping
 ) {
 
   assert(
     indexMapping.size() >= std::min(
-      Shapes::size(from),
-      Shapes::size(to)
+      shapes::size(from),
+      shapes::size(to)
     )
   );
 
   double chiralDistortion = 0;
 
-  for(const auto& tetrahedron : Shapes::tetrahedra(from)) {
+  for(const auto& tetrahedron : shapes::tetrahedra(from)) {
     chiralDistortion += std::fabs(
       getTetrahedronVolume(
         getCoordinates(from, tetrahedron.at(0)),
@@ -415,14 +413,14 @@ double calculateChiralDistortion(
 std::set<
   std::vector<unsigned>
 > generateAllRotations(
-  const Shapes::Shape shape,
+  const shapes::Shape shape,
   const std::vector<unsigned>& indices
 ) {
   /* Replacing set here with unordered_set does not yield any speed
    * improvements. The hash function is comparatively too expensive for the
    * small number of elements in the set to set it apart from the tree.
    */
-  assert(Shapes::size(shape) == indices.size());
+  assert(shapes::size(shape) == indices.size());
 
   // Idea: Tree-like expansion of all possible combinations of rotations.
   using IndicesList = std::vector<unsigned>;
@@ -431,9 +429,9 @@ std::set<
 
   /* We keep a chain of all applied rotations that led to a specific index
    * sequence.  The upper limit for every link in the chain is the number of
-   * rotations in the symmetry
+   * rotations in the shape
    */
-  unsigned linkLimit = Shapes::rotations(shape).size();
+  unsigned linkLimit = shapes::rotations(shape).size();
 
   std::vector<unsigned> chain = {0};
   /* It's also necessary to keep the structures themselves since we may
@@ -481,13 +479,13 @@ std::set<
 }
 
 std::vector<unsigned> applyIndexMapping(
-  const Shapes::Shape to,
+  const shapes::Shape to,
   const std::vector<unsigned>& mapping
 ) {
-  /* Creates the list of indices in the target symmetry. Why is this necessary?
+  /* Creates the list of indices in the target shape. Why is this necessary?
    *
    * E.g. An index mapping from linear to T-shaped. The individual
-   * symmetry-internal numbering schemes are shown for the symmetry positions.
+   * shape-internal numbering schemes are shown for the shape positions.
    *
    *  1  –▶  0
    *  |      |
@@ -499,7 +497,7 @@ std::vector<unsigned> applyIndexMapping(
    * This mapping is represented as {2, 0, 1}.
    *
    * This function writes the indices of original mapping into the target
-   * symmetry's indexing scheme.
+   * shape's indexing scheme.
    *
    * For this example, this returns {1, 2, 0}:
    *
@@ -513,7 +511,7 @@ std::vector<unsigned> applyIndexMapping(
    *
    * The closely related mapping {0, 2, 1} yields target indices {0, 2, 1}.
    *
-   * Which of these properties are related by target symmetry rotations?
+   * Which of these properties are related by target shape rotations?
    *
    *
    *     mapping       target indices
@@ -521,21 +519,21 @@ std::vector<unsigned> applyIndexMapping(
    *    {2, 0, 1}   =>   {1, 2, 0}
    *        ▲                ▲
    *        |                |
-   *        X                | C2 rotation in T-shape symmetry
+   *        X                | C2 rotation in T-shape shape
    *        |                |
    *        ▼                ▼
    *    {0, 2, 1}   =>   {0, 2, 1}
    *
    */
-  std::vector<unsigned> symmetryPositions (Shapes::size(to));
+  std::vector<unsigned> shapeVertices (shapes::size(to));
 
-  for(unsigned i = 0; i < Shapes::size(to); ++i) {
-    symmetryPositions.at(
+  for(unsigned i = 0; i < shapes::size(to); ++i) {
+    shapeVertices.at(
       mapping.at(i)
     ) = i;
   }
 
-  return symmetryPositions;
+  return shapeVertices;
 }
 
 DistortionInfo::DistortionInfo(
@@ -552,8 +550,8 @@ std::size_t hash_value(const std::vector<unsigned>& permutation) {
 }
 
 std::vector<DistortionInfo> symmetryTransitionMappings(
-  const Shapes::Shape from,
-  const Shapes::Shape to
+  const Shape from,
+  const Shape to
 ) {
 
   /* Symmetries must be adjacent in size (0 = rearrangement,
@@ -562,8 +560,8 @@ std::vector<DistortionInfo> symmetryTransitionMappings(
    */
   assert(
     (std::set<int> {0, 1}).count(
-      static_cast<int>(Shapes::size(to))
-      - static_cast<int>(Shapes::size(from))
+      static_cast<int>(shapes::size(to))
+      - static_cast<int>(shapes::size(from))
     ) == 1
   );
 
@@ -586,8 +584,8 @@ std::vector<DistortionInfo> symmetryTransitionMappings(
    */
 
   const unsigned largerSize = std::max(
-    Shapes::size(from),
-    Shapes::size(to)
+    shapes::size(from),
+    shapes::size(to)
   );
 
   auto indexMapping = temple::iota<unsigned>(largerSize);
@@ -647,13 +645,13 @@ std::vector<DistortionInfo> symmetryTransitionMappings(
 }
 
 std::vector<DistortionInfo> ligandLossTransitionMappings(
-  const Shapes::Shape from,
-  const Shapes::Shape to,
+  const shapes::Shape from,
+  const shapes::Shape to,
   const unsigned positionInSourceShape
 ) {
   // Ensure we are dealing with ligand loss
-  assert(Shapes::size(to) + 1 == Shapes::size(from));
-  assert(positionInSourceShape < Shapes::size(from));
+  assert(shapes::size(to) + 1 == shapes::size(from));
+  assert(positionInSourceShape < shapes::size(from));
 
   /* Generate the index mapping specific to this position loss in the target
    * symmetry.
@@ -668,7 +666,7 @@ std::vector<DistortionInfo> ligandLossTransitionMappings(
    */
   std::vector<unsigned> indexMapping = temple::variadic::concatenate(
     temple::iota<unsigned>(positionInSourceShape),
-    detail::range(positionInSourceShape + 1, Shapes::size(from))
+    detail::range(positionInSourceShape + 1, shapes::size(from))
   );
 
   /* NOTE: From here the algorithm is identical to symmetryTransitionMappings
@@ -763,12 +761,12 @@ SymmetryTransitionGroup selectBestTransitionMappings(
 }
 
 unsigned numUnlinkedStereopermutations(
-  const Shapes::Shape symmetry,
+  const shapes::Shape symmetry,
   const unsigned nIdenticalLigands
 ) {
   unsigned count = 1;
 
-  auto indices = detail::range(0u, Shapes::size(symmetry));
+  auto indices = detail::range(0u, shapes::size(symmetry));
 
   for(unsigned i = 0; i < nIdenticalLigands; ++i) {
     indices.at(i) = 0;
@@ -796,14 +794,14 @@ unsigned numUnlinkedStereopermutations(
 }
 
 bool hasMultipleUnlinkedStereopermutations(
-  const Shapes::Shape symmetry,
+  const shapes::Shape symmetry,
   const unsigned nIdenticalLigands
 ) {
-  if(nIdenticalLigands == Shapes::size(symmetry)) {
+  if(nIdenticalLigands == shapes::size(symmetry)) {
     return false;
   }
 
-  auto indices = detail::range(0u, Shapes::size(symmetry));
+  auto indices = detail::range(0u, shapes::size(symmetry));
 
   for(unsigned i = 0; i < nIdenticalLigands; ++i) {
     indices.at(i) = 0;
@@ -843,12 +841,12 @@ Shape mostSymmetric(std::vector<Shape> selection) {
   return selection.back();
 }
 
-Shape mostSymmetric(const unsigned symmetrySize) {
+Shape mostSymmetric(const unsigned shapeSize) {
   std::vector<Shape> propositions;
   propositions.reserve(8);
 
   for(const Shape proposition : allShapes) {
-    if(size(proposition) == symmetrySize) {
+    if(size(proposition) == shapeSize) {
       propositions.push_back(proposition);
     }
   }
@@ -857,7 +855,5 @@ Shape mostSymmetric(const unsigned symmetrySize) {
 }
 
 } // namespace properties
-
-} // namespace Shapes
-
+} // namespace shapes
 } // namespace Scine

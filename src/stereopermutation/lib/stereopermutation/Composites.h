@@ -52,7 +52,7 @@ public:
    */
   struct OrientationState : public temple::crtp::LexicographicComparable<OrientationState> {
     //! The shape of either positional shape
-    Shapes::Shape shape;
+    shapes::Shape shape;
     //! The shape vertex of the local shape that the other is fused at
     unsigned fusedVertex;
     //! Abstract ranking-characters of the sites at their shape vertices
@@ -68,7 +68,7 @@ public:
 
     //! Member initializing constructor
     OrientationState(
-      Shapes::Shape passShape,
+      shapes::Shape passShape,
       unsigned passFusedVertex,
       std::vector<char> passCharacters,
       std::size_t passIdentifier
@@ -193,13 +193,13 @@ public:
    *   sought rotation
    */
   static std::vector<unsigned> generateRotation(
-    Shapes::Shape shape,
+    shapes::Shape shape,
     unsigned fixedVertex,
     const std::vector<unsigned>& changedVertices
   );
 
   static std::vector<unsigned> rotation(
-    Shapes::Shape shape,
+    shapes::Shape shape,
     unsigned fixedVertex,
     const std::vector<unsigned>& perpendicularPlaneVertices
   );
@@ -207,7 +207,7 @@ public:
   //! Creates sets of within-group cross angles in the perpendicular plane
   static PerpendicularAngleGroups inGroupAngles(
     const AngleGroup& angleGroup,
-    Shapes::Shape shape
+    shapes::Shape shape
   );
 //!@}
 

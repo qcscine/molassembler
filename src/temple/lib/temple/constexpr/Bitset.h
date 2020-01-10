@@ -12,6 +12,7 @@
 #include "temple/constexpr/Math.h"
 #include "temple/constexpr/Array.h"
 
+namespace Scine {
 namespace temple {
 
 /**
@@ -124,5 +125,6 @@ private:
 };
 
 } // namespace temple
+} // namespace Scine
 
 #endif

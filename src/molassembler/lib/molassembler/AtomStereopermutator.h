@@ -31,15 +31,18 @@ namespace molassembler {
 
 /* Forward declarations */
 struct RankingInformation;
-struct AbstractStereopermutations;
-struct FeasibleStereopermutations;
 
-namespace DistanceGeometry {
+namespace stereopermutators {
+struct Abstract;
+struct Feasible;
+} // namespace stereopermutators
+
+namespace distance_geometry {
 
 class SpatialModel;
 struct ChiralConstraint;
 
-} // namespace DistanceGeometry
+} // namespace distance_geometry
 
 /**
  * @brief Handles the steric permutation of substituents of a non-terminal
@@ -74,8 +77,8 @@ public:
   //! Old state dumped upon propagation
   using PropagatedState = std::tuple<
     RankingInformation,
-    AbstractStereopermutations,
-    FeasibleStereopermutations,
+    stereopermutators::Abstract,
+    stereopermutators::Feasible,
     boost::optional<unsigned>
   >;
 
@@ -109,7 +112,7 @@ public:
    */
   AtomStereopermutator(
     const OuterGraph& graph,
-    Shapes::Shape shape,
+    shapes::Shape shape,
     AtomIndex centerAtom,
     RankingInformation ranking
   );
@@ -123,7 +126,7 @@ public:
    * @complexity{@math{O(S!)} if uncached, @math{\Theta(1)} otherwise}
    * @throws std::logic_error If there are no larger shapes
    */
-  static Shapes::Shape up(Shapes::Shape shape);
+  static shapes::Shape up(shapes::Shape shape);
 
   /*!
    * @brief Picks a shape retaining as much chiral state as possible on a
@@ -132,7 +135,7 @@ public:
    * @complexity{@math{O(S!)} if uncached, @math{\Theta(1)} otherwise}
    * @throws std::logic_error If there are no smaller shapes
    */
-  static Shapes::Shape down(Shapes::Shape shape, unsigned removedShapePosition);
+  static shapes::Shape down(shapes::Shape shape, unsigned removedShapePosition);
 //!@}
 
 //!@name Modifiers
@@ -205,7 +208,7 @@ public:
   MASM_NO_EXPORT boost::optional<PropagatedState> propagate(
     const OuterGraph& graph,
     RankingInformation newRanking,
-    boost::optional<Shapes::Shape> shapeOption
+    boost::optional<shapes::Shape> shapeOption
   );
 
   /*! @brief Adapts atom indices in the internal state to the removal of an atom
@@ -226,7 +229,7 @@ public:
    * @post The permutator is unassigned (chiral state is discarded)
    */
   void setShape(
-    Shapes::Shape shape,
+    shapes::Shape shape,
     const OuterGraph& graph
   );
 //!@}
@@ -307,14 +310,14 @@ public:
    * @complexity{@math{\Theta(1)}}
    * @note This is library-internal and not part of the public API
    */
-  MASM_NO_EXPORT const AbstractStereopermutations& getAbstract() const;
+  MASM_NO_EXPORT const stereopermutators::Abstract& getAbstract() const;
 
   /*!  @brief Returns the underlying feasible stereopermutations object
    *
    * @complexity{@math{\Theta(1)}}
    * @note This is library-internal and not part of the public API
    */
-  MASM_NO_EXPORT const FeasibleStereopermutations& getFeasible() const;
+  MASM_NO_EXPORT const stereopermutators::Feasible& getFeasible() const;
 
   /*! @brief Returns the underlying ranking
    *
@@ -326,7 +329,7 @@ public:
    *
    * @complexity{@math{\Theta(1)}}
    */
-  Shapes::Shape getShape() const;
+  shapes::Shape getShape() const;
 
   /*! @brief Yields the mapping from site indices to shape positions
    *

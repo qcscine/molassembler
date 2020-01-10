@@ -10,7 +10,7 @@
 
 using namespace Scine;
 using namespace molassembler;
-using namespace DistanceGeometry;
+using namespace distance_geometry;
 
 
 

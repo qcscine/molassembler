@@ -49,7 +49,7 @@ int main(int argc, char* argv[]) {
     // This can throw in lots of cases
     auto readData = Utils::ChemicalFileHandler::read(filepath.string());
 
-    auto shuffledData = IO::shuffle(readData.first, readData.second);
+    auto shuffledData = io::shuffle(readData.first, readData.second);
 
     Utils::ChemicalFileHandler::write(
       filepath.stem().string() + "_isomorphism.mol",

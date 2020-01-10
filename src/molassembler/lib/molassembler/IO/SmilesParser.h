@@ -15,7 +15,7 @@ namespace molassembler {
 
 class Molecule;
 
-namespace IO {
+namespace io {
 namespace experimental {
 
 /**
@@ -30,10 +30,10 @@ namespace experimental {
  * - Ring closures
  * - Stereo markers
  *   - Double bond
- *   - Tetrahedral (@ / @@ / @TH1 / @TH2)
- *   - Square planar (@SP1 - @SP3)
- *   - Trigonal bipyramidal (@TB1 - @TB20)
- *   - Octahedral (@OH1 - @OH30)
+ *   - Tetrahedral (\@ / \@\@ / \@TH1 / \@TH2)
+ *   - Square planar (\@SP1 - \@SP3)
+ *   - Trigonal bipyramidal (\@TB1 - \@TB20)
+ *   - Octahedral (\@OH1 - \@OH30)
  *
  * @warning Currently unsupported are: allene stereo markers and aromaticity.
  *
@@ -57,10 +57,10 @@ MASM_EXPORT std::vector<Molecule> parseSmiles(const std::string& smiles);
  * - Ring closures
  * - Stereo markers
  *   - Double bond
- *   - Tetrahedral (@ / @@ / @TH1 / @TH2)
- *   - Square planar (@SP1 - @SP3)
- *   - Trigonal bipyramidal (@TB1 - @TB20)
- *   - Octahedral (@OH1 - @OH30)
+ *   - Tetrahedral (\@ / \@\@ / \@TH1 / \@TH2)
+ *   - Square planar (\@SP1 - \@SP3)
+ *   - Trigonal bipyramidal (\@TB1 - \@TB20)
+ *   - Octahedral (\@OH1 - \@OH30)
  *
  * @warning Currently unsupported are: allene stereo markers and aromaticity.
  *
@@ -74,8 +74,7 @@ MASM_EXPORT std::vector<Molecule> parseSmiles(const std::string& smiles);
 MASM_EXPORT Molecule parseSmilesSingleMolecule(const std::string& smiles);
 
 } // namespace experimental
-} // namespace IO
-
+} // namespace io
 } // namespace molassembler
 } // namespace Scine
 

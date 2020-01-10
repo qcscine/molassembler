@@ -8,11 +8,9 @@
 
 #include "molassembler/Modeling/CommonTrig.h"
 
-#include "CyclicPolygons.h"
-
 namespace Scine {
 namespace molassembler {
-namespace Stereopermutators {
+namespace stereopermutators {
 
 //! Data class for cycleModelContradictsGraph() input
 struct BaseAtom {
@@ -62,7 +60,7 @@ bool triangleBondTooClose(
   const double bondRadius
 );
 
-} // namespace Stereopermutators
+} // namespace stereopermutators
 } // namespace molassembler
 } // namespace Scine
 

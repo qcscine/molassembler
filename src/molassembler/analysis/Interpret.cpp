@@ -159,8 +159,8 @@ int main(int argc, char* argv[]) {
       graphFile << interpretation.molecules.front().dumpGraphviz();
       graphFile.close();
 
-      IO::write("interpreted.json", interpretation.molecules.front());
-      IO::write("interpreted.mol", interpretation.molecules.front(), positions.front().getPositions());
+      io::write("interpreted.json", interpretation.molecules.front());
+      io::write("interpreted.mol", interpretation.molecules.front(), positions.front().getPositions());
     } else {
       for(unsigned i = 0; i < interpretation.molecules.size(); ++i) {
         const auto& mol = interpretation.molecules[i];
@@ -170,8 +170,8 @@ int main(int argc, char* argv[]) {
         graphFile << mol.dumpGraphviz();
         graphFile.close();
 
-        IO::write(filebase + ".json", mol);
-        IO::write(filebase + ".mol", mol, positions.at(i).getPositions());
+        io::write(filebase + ".json", mol);
+        io::write(filebase + ".mol", mol, positions.at(i).getPositions());
       }
     }
 

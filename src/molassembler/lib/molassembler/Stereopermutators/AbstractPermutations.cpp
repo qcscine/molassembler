@@ -9,8 +9,9 @@
 
 namespace Scine {
 namespace molassembler {
+namespace stereopermutators {
 
-RankingInformation::RankedSitesType AbstractStereopermutations::canonicalize(
+RankingInformation::RankedSitesType Abstract::canonicalize(
   RankingInformation::RankedSitesType rankedSites
 ) {
   std::stable_sort(
@@ -26,7 +27,7 @@ RankingInformation::RankedSitesType AbstractStereopermutations::canonicalize(
 }
 
 // Transform canonical ranked sites to canonical characters
-std::vector<char> AbstractStereopermutations::transferToSymbolicCharacters(
+std::vector<char> Abstract::transferToSymbolicCharacters(
   const RankingInformation::RankedSitesType& canonicalSites
 ) {
   std::vector<char> characters;
@@ -44,7 +45,7 @@ std::vector<char> AbstractStereopermutations::transferToSymbolicCharacters(
 }
 
 stereopermutation::Stereopermutation::OrderedLinks
-AbstractStereopermutations::selfReferentialTransform(
+Abstract::selfReferentialTransform(
   const std::vector<LinkInformation>& rankingLinks,
   const RankingInformation::RankedSitesType& canonicalSites
 ) {
@@ -79,7 +80,7 @@ AbstractStereopermutations::selfReferentialTransform(
   return links;
 }
 
-std::vector<char> AbstractStereopermutations::makeStereopermutationCharacters(
+std::vector<char> Abstract::makeStereopermutationCharacters(
   const RankingInformation::RankedSitesType& canonicalSites,
   const std::vector<char>& canonicalStereopermutationCharacters,
   const std::vector<unsigned>& sitesAtShapeVertices
@@ -113,9 +114,9 @@ std::vector<char> AbstractStereopermutations::makeStereopermutationCharacters(
   return newStereopermutationCharacters;
 }
 
-AbstractStereopermutations::AbstractStereopermutations(
+Abstract::Abstract(
   const RankingInformation& ranking,
-  const Shapes::Shape shape
+  const shapes::Shape shape
 ) : canonicalSites(canonicalize(ranking.siteRanking)),
     symbolicCharacters(transferToSymbolicCharacters(canonicalSites)),
     selfReferentialLinks(selfReferentialTransform(ranking.links, canonicalSites)),
@@ -131,5 +132,6 @@ AbstractStereopermutations::AbstractStereopermutations(
     )
 {}
 
+} // namespace stereopermutators
 } // namespace molassembler
 } // namespace Scine

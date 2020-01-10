@@ -12,6 +12,8 @@
 #include <iterator>
 
 namespace Scine {
+
+//! @brief Central library namespace
 namespace molassembler {
 
 /*!

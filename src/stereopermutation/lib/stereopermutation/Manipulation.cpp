@@ -29,19 +29,19 @@ inline unsigned gcd(const std::vector<unsigned>& c) {
   return result;
 }
 
-inline void checkArguments(const Stereopermutation& s, const Shapes::Shape shape) {
-  if(s.characters.size() != Shapes::size(shape)) {
+inline void checkArguments(const Stereopermutation& s, const shapes::Shape shape) {
+  if(s.characters.size() != shapes::size(shape)) {
     throw std::invalid_argument("Stereopermutation character count does not match shape size");
   }
 }
 
-std::vector<Stereopermutation> generateAllRotations(Stereopermutation s, const Shapes::Shape shape) {
+std::vector<Stereopermutation> generateAllRotations(Stereopermutation s, const shapes::Shape shape) {
   checkArguments(s, shape);
   RotationEnumerator enumerator {std::move(s), shape};
   return enumerator.all();
 }
 
-bool rotationallySuperimposable(Stereopermutation a, const Stereopermutation& b, const Shapes::Shape shape) {
+bool rotationallySuperimposable(Stereopermutation a, const Stereopermutation& b, const shapes::Shape shape) {
   checkArguments(a, shape);
   checkArguments(b, shape);
 
@@ -63,7 +63,7 @@ bool rotationallySuperimposable(Stereopermutation a, const Stereopermutation& b,
 boost::optional<bool> enantiomer(
   const Stereopermutation& a,
   const Stereopermutation& b,
-  const Shapes::Shape shape
+  const shapes::Shape shape
 ) {
   checkArguments(a, shape);
   checkArguments(b, shape);
@@ -71,7 +71,7 @@ boost::optional<bool> enantiomer(
   /* Generate the mirror image of *this and check whether it is rotationally
    * superimposable with other.
    */
-  const auto& mirrorPermutation = Shapes::mirror(shape);
+  const auto& mirrorPermutation = shapes::mirror(shape);
 
   /* If the mirror were to yield an identity permutation, it is represented
    * as an empty constexpr array (now a vector, so:)
@@ -89,26 +89,26 @@ boost::optional<bool> enantiomer(
 
 bool hasTransArrangedLinks(
   const Stereopermutation& s,
-  const Shapes::Shape shape
+  const shapes::Shape shape
 ) {
   checkArguments(s, shape);
 
   return temple::any_of(
     s.links,
     [shape](const auto& link) {
-      return Shapes::angleFunction(shape)(link.first, link.second) == M_PI;
+      return shapes::angleFunction(shape)(link.first, link.second) == M_PI;
     }
   );
 }
 
 Uniques uniques(
   const Stereopermutation& base,
-  const Shapes::Shape shape,
+  const shapes::Shape shape,
   const bool removeTransSpanningGroups
 ) {
   checkArguments(base, shape);
 
-  const unsigned S = Shapes::size(shape);
+  const unsigned S = shapes::size(shape);
   auto permutation = temple::iota<unsigned>(S);
   auto stereopermutation = base;
 

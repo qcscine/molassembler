@@ -14,13 +14,11 @@
 #include "molassembler/Log.h"
 
 namespace Scine {
-
 namespace molassembler {
 
 namespace outcome = BOOST_OUTCOME_V2_NAMESPACE;
 
-namespace DistanceGeometry {
-
+namespace distance_geometry {
 namespace detail {
 
 /*! @brief Collects four-dimensional linear positions into three-dimensional matrix
@@ -120,10 +118,8 @@ std::vector<
   const boost::optional<unsigned> seedOption
 );
 
-} // namespace DistanceGeometry
-
+} // namespace distance_geometry
 } // namespace molassembler
-
 } // namespace Scine
 
 #endif

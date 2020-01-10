@@ -22,7 +22,7 @@ namespace molassembler {
 
 namespace CommonTrig {
 
-using ValueBounds = DistanceGeometry::ValueBounds;
+using ValueBounds = distance_geometry::ValueBounds;
 
 /*! @brief Calculates the law of cosines
  *

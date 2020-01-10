@@ -16,6 +16,8 @@
 #include <boost/range/numeric.hpp>
 #include <boost/range/algorithm/transform.hpp>
 
+using namespace Scine;
+
 PURITY_STRONG double divByThree (unsigned a) {
   return static_cast<double>(a) / 3.0;
 }

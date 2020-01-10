@@ -32,7 +32,7 @@
 
 namespace Scine {
 namespace molassembler {
-namespace DistanceGeometry {
+namespace distance_geometry {
 
 /**
  * @brief Debug class containing a step from refinement
@@ -150,8 +150,8 @@ MoleculeDGInformation gatherDGInformation(
 
         if(lower == 0.0 && upper == 0.0) {
           double vdwLowerBound = (
-            AtomInfo::vdwRadius(molecule.graph().elementType(i))
-            + AtomInfo::vdwRadius(molecule.graph().elementType(j))
+            atom_info::vdwRadius(molecule.graph().elementType(i))
+            + atom_info::vdwRadius(molecule.graph().elementType(j))
           );
 
           lower = vdwLowerBound;
@@ -600,7 +600,7 @@ std::list<RefinementData> debugRefinement(
 }
 
 
-} // namespace DistanceGeometry
+} // namespace distance_geometry
 } // namespace molassembler
 } // namespace Scine
 
@@ -615,16 +615,16 @@ void writeProgressFile(
   const Eigen::VectorXd& positions
 ) {
   const std::string filename = baseFilename + "-" + std::to_string(index) + ".mol";
-  AngstromWrapper angstromWrapper = DistanceGeometry::detail::convertToAngstromWrapper(
-    DistanceGeometry::detail::gather(positions)
+  AngstromWrapper angstromWrapper = distance_geometry::detail::convertToAngstromWrapper(
+    distance_geometry::detail::gather(positions)
   );
-  IO::write(filename, mol, angstromWrapper);
+  io::write(filename, mol, angstromWrapper);
 }
 
 void writeProgressFiles(
   const Molecule& mol,
   const std::string& baseFilename,
-  const DistanceGeometry::RefinementData& refinementData
+  const distance_geometry::RefinementData& refinementData
 ) {
   /* Write the progress file */
   std::string progressFilename = baseFilename + "-progress.csv"s;
@@ -773,7 +773,7 @@ int main(int argc, char* argv[]) {
     nStructures = argN;
   }
 
-  DistanceGeometry::Partiality metrizationOption = DistanceGeometry::Partiality::All;
+  distance_geometry::Partiality metrizationOption = distance_geometry::Partiality::All;
   if(options_variables_map.count("partiality") > 0) {
     unsigned index =  options_variables_map["partiality"].as<unsigned>();
 
@@ -783,7 +783,7 @@ int main(int argc, char* argv[]) {
       return 0;
     }
 
-    metrizationOption = static_cast<DistanceGeometry::Partiality>(index);
+    metrizationOption = static_cast<distance_geometry::Partiality>(index);
   }
 
   Log::particulars.insert(Log::Particulars::DgStructureAcceptanceFailures);
@@ -810,12 +810,12 @@ int main(int argc, char* argv[]) {
       return 1;
     }
 
-    mol = IO::read(filename);
+    mol = io::read(filename);
 
     boost::filesystem::path filepath {filename};
     baseName = filepath.stem().string();
   } else if(options_variables_map.count("line_notation") == 1) {
-    mol = IO::experimental::parseSmilesSingleMolecule(
+    mol = io::experimental::parseSmilesSingleMolecule(
       options_variables_map["line_notation"].as<std::string>()
     );
     baseName = "smiles";
@@ -830,12 +830,12 @@ int main(int argc, char* argv[]) {
   graphFile << mol.dumpGraphviz();
   graphFile.close();
 
-  DistanceGeometry::Configuration DgConfiguration;
+  distance_geometry::Configuration DgConfiguration;
   DgConfiguration.partiality = metrizationOption;
   DgConfiguration.refinementStepLimit = nSteps;
 
 #ifndef NDEBUG
-  auto debugData = DistanceGeometry::debugRefinement(
+  auto debugData = distance_geometry::debugRefinement(
     mol,
     nStructures,
     DgConfiguration,
@@ -855,11 +855,11 @@ int main(int argc, char* argv[]) {
       refinementData
     );
 
-    IO::write(
+    io::write(
       structBaseName + "-last.mol"s,
       mol,
-      DistanceGeometry::detail::convertToAngstromWrapper(
-        DistanceGeometry::detail::gather(refinementData.steps.back().positions)
+      distance_geometry::detail::convertToAngstromWrapper(
+        distance_geometry::detail::gather(refinementData.steps.back().positions)
       )
     );
   }
@@ -877,7 +877,7 @@ int main(int argc, char* argv[]) {
     std::cout << "WARNING: " << failures << " refinements failed.\n";
   }
 #else
-  auto conformers = DistanceGeometry::run(
+  auto conformers = distance_geometry::run(
     mol,
     nStructures,
     DgConfiguration,
@@ -888,7 +888,7 @@ int main(int argc, char* argv[]) {
   unsigned failures = 0;
   for(const auto& conformerResult : conformers) {
     if(conformerResult) {
-      IO::write(
+      io::write(
         baseName + "-"s + std::to_string(i) + "-last.mol"s,
         mol,
         conformerResult.value()

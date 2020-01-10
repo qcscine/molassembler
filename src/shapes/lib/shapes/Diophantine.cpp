@@ -12,6 +12,7 @@
 #include <cassert>
 
 namespace Scine {
+namespace shapes {
 namespace diophantine {
 
 bool has_solution(
@@ -128,4 +129,5 @@ bool first_solution(
 }
 
 } // namespace diophantine
+} // namespace shapes
 } // namespace Scine

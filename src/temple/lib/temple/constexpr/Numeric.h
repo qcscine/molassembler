@@ -22,6 +22,7 @@
 #include <functional>
 #include <cassert>
 
+namespace Scine {
 namespace temple {
 
 /*! @brief Summation with zero-initialization
@@ -199,5 +200,6 @@ constexpr auto max(const ContainerType& container) {
 }
 
 } // namespace temple
+} // namespace Scine
 
 #endif

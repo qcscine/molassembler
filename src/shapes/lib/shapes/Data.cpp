@@ -6,9 +6,7 @@
 #include "shapes/Data.h"
 
 namespace Scine {
-
-namespace Shapes {
-
+namespace shapes {
 namespace data {
 
 Eigen::Vector3d toEigen(const temple::Vector& cVector) {
@@ -33,7 +31,7 @@ Eigen::Vector3d toEigen(const temple::Vector& cVector) {
  *   deinitialization is random.
  */
 const ShapeDataMapType& shapeData() {
-  static const auto dataMap = temple::TupleType::unpackToFunction<
+  static const auto dataMap = temple::tuples::unpackToFunction<
     data::allShapeDataTypes,
     data::shapeInformationFunctor
   >();
@@ -62,6 +60,5 @@ unsigned nameIndex(const Shape shape) {
   ) - allShapes.begin();
 }
 
-} // namespace Shapes
-
+} // namespace shapes
 } // namespace Scine

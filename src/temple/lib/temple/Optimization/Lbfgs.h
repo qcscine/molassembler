@@ -13,8 +13,8 @@
  * - Detect ill-conditioning of LBFGS? Doesn't do well at all near maxima
  */
 
+namespace Scine {
 namespace temple {
-
 namespace detail {
 
 template<typename FloatType> constexpr FloatType cfabs(FloatType x) noexcept {
@@ -119,9 +119,15 @@ void adjustDirection(
 }
 
 } // namespace boxes
-
 } // namespace detail
 
+/**
+ * @brief LBFGS optimizer with optional boxing
+ *
+ * @tparam FloatType Type to represent floating point numbers
+ * @tparam ringBufferSize Number of gradients to use in Hessian approximation,
+ *   this is akin to memory
+ */
 template<typename FloatType = double, unsigned ringBufferSize = 16>
 class Lbfgs {
 public:
@@ -821,5 +827,6 @@ private:
 };
 
 } // namespace temple
+} // namespace Scine
 
 #endif

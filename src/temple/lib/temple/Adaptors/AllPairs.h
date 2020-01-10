@@ -12,6 +12,7 @@
 
 #include <tuple>
 
+namespace Scine {
 namespace temple {
 namespace adaptors {
 namespace detail {
@@ -303,4 +304,6 @@ auto allPairs(ContainerT&& t, ContainerU&& u) {
 
 } // namespace adaptors
 } // namespace temple
+} // namespace Scine
+
 #endif

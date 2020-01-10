@@ -23,7 +23,7 @@
 
 namespace Scine {
 
-namespace Shapes {
+namespace shapes {
 
 /* Typedefs */
 //! The type to store shape rotations
@@ -282,7 +282,7 @@ struct shapeInformationFunctor {
 };
 
 //! An array containing pointers to all shape data types' angle function
-constexpr auto angleFunctions = temple::TupleType::unpackToFunction<
+constexpr auto angleFunctions = temple::tuples::unpackToFunction<
   allShapeDataTypes,
   angleFunctionFunctor
 >();
@@ -388,7 +388,7 @@ inline bool threeDimensional(const Shape shape) {
   return shapeData().at(shape).threeDimensional;
 }
 
-} // namespace Shapes
+} // namespace shapes
 
 } // namespace Scine
 

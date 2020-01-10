@@ -25,7 +25,7 @@
 
 using namespace Scine;
 using namespace molassembler;
-using namespace DistanceGeometry;
+using namespace distance_geometry;
 
 Eigen::MatrixXd reorder(
   const Eigen::MatrixXd& sourceMatrix,
@@ -176,9 +176,9 @@ BOOST_AUTO_TEST_CASE(MetricMatrixConstructionIsInvariantUnderOrderingSwap) {
     const boost::filesystem::path& currentFilePath :
     boost::filesystem::recursive_directory_iterator("ez_stereocenters")
   ) {
-    auto molecule = IO::read(currentFilePath.string());
+    auto molecule = io::read(currentFilePath.string());
 
-    auto DgData = DistanceGeometry::gatherDGInformation(molecule, DistanceGeometry::Configuration {});
+    auto DgData = distance_geometry::gatherDGInformation(molecule, distance_geometry::Configuration {});
 
     DistanceBoundsMatrix distanceBounds {
       molecule.graph().inner(),

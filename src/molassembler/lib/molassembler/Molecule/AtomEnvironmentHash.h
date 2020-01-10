@@ -74,7 +74,7 @@ WideHashType hash(
   AtomEnvironmentComponents bitmask,
   Utils::ElementType elementType,
   const std::vector<BondInformation>& sortedBonds,
-  const boost::optional<Shapes::Shape>& shapeOptional,
+  const boost::optional<shapes::Shape>& shapeOptional,
   const boost::optional<unsigned>& assignedOptional
 );
 

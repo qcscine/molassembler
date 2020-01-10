@@ -21,6 +21,8 @@
 #include <vector>
 #include <array>
 
+using namespace Scine;
+
 template<typename T>
 std::ostream& operator << (std::ostream& os, const boost::optional<T>& valueOptional) {
   if(valueOptional) {
@@ -206,7 +208,7 @@ BOOST_AUTO_TEST_CASE(FunctorSafety) {
 BOOST_AUTO_TEST_CASE(JSF) {
   const int fixedSeed = 1042;
 
-  temple::jsf::JSF64 engine;
+  temple::JSF64 engine;
   engine.seed(fixedSeed);
   auto engineStateCopy = engine;
   for(unsigned i = 0; i < 10; ++i) {
@@ -215,10 +217,10 @@ BOOST_AUTO_TEST_CASE(JSF) {
   engine.seed(fixedSeed);
   BOOST_CHECK(engine == engineStateCopy);
 
-  temple::jsf::JSF64 directlySeededEngine {fixedSeed};
+  temple::JSF64 directlySeededEngine {fixedSeed};
   BOOST_CHECK(engine == directlySeededEngine);
 
   std::seed_seq sequence {fixedSeed};
-  directlySeededEngine = temple::jsf::JSF64 {sequence};
+  directlySeededEngine = temple::JSF64 {sequence};
   BOOST_CHECK(engine == directlySeededEngine);
 }

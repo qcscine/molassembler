@@ -19,10 +19,10 @@
 // Forward-declare ImplicitGraph
 namespace Scine {
 namespace molassembler {
-namespace DistanceGeometry {
+namespace distance_geometry {
 class ImplicitGraph;
 class ExplicitGraph;
-} // namespace DistanceGeometry
+} // namespace distance_geometry
 } // namespace molassembler
 } // namespace Scine
 
@@ -70,7 +70,7 @@ template<
   class ColorMap
 >
 std::enable_if_t<
-  std::is_same<IncidenceGraph, Scine::molassembler::DistanceGeometry::ImplicitGraph>::value,
+  std::is_same<IncidenceGraph, Scine::molassembler::distance_geometry::ImplicitGraph>::value,
   void
 > gor1_ig_scan(
   const VertexDescriptor& vertex,
@@ -158,7 +158,7 @@ template<
   typename VertexDescriptor
 >
 std::enable_if_t<
-  std::is_same<IncidenceGraph, Scine::molassembler::DistanceGeometry::ImplicitGraph>::value,
+  std::is_same<IncidenceGraph, Scine::molassembler::distance_geometry::ImplicitGraph>::value,
   bool
 > gor1_ig_shortest_paths(
   const IncidenceGraph& graph,
@@ -355,7 +355,7 @@ template<
   typename VertexDescriptor
 >
 std::enable_if_t<
-  std::is_same<GraphClass, Scine::molassembler::DistanceGeometry::ExplicitGraph>::value,
+  std::is_same<GraphClass, Scine::molassembler::distance_geometry::ExplicitGraph>::value,
   bool
 > gor1_eg_shortest_paths(
   const GraphClass& graphWrapper,

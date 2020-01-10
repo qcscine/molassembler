@@ -11,6 +11,7 @@
 #include "temple/Invoke.h"
 #include "temple/Binding.h"
 
+namespace Scine {
 namespace temple {
 namespace adaptors {
 namespace detail {
@@ -140,5 +141,6 @@ auto transform(
 
 } // namespace adaptors
 } // namespace temple
+} // namespace Scine
 
 #endif

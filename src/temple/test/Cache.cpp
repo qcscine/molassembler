@@ -7,6 +7,8 @@
 
 #include "temple/Cache.h"
 
+using namespace Scine;
+
 unsigned int ackermann(unsigned int m, unsigned int n) {
   if (m == 0) {
     return n + 1;

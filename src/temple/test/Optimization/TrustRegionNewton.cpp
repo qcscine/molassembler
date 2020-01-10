@@ -6,6 +6,7 @@
 #include <boost/test/unit_test.hpp>
 
 #include "temple/Optimization/TrustRegion.h"
+using namespace Scine;
 
 struct Himmelblau {
   double operator() (const Eigen::VectorXd& parameters) {

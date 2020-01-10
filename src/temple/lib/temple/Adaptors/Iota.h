@@ -9,10 +9,9 @@
 
 #include "temple/Traits.h"
 
+namespace Scine {
 namespace temple {
-
 namespace adaptors {
-
 namespace detail {
 
 template<typename T>
@@ -156,8 +155,7 @@ auto range(IntegerType upper) {
 }
 
 } // namespace adaptors
-
 } // namespace temple
-
+} // namespace Scine
 
 #endif

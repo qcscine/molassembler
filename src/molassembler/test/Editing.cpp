@@ -27,8 +27,8 @@
  * - multidentate_ligand: "CC(C)(C)P(CC1=NC(=CC=C1)CP(C(C)(C)C)C(C)(C)C)C(C)(C)C"
  * - haptic_ligand: "CC(C)(C)N[Si](C)(C)C1=C[C+]C=C1"
  *
- * The .cbor are just IO::LineNotation::fromCanonicalSMILES and directly
- * exported using IO::write(str, mol).
+ * The .cbor are just io::LineNotation::fromCanonicalSMILES and directly
+ * exported using io::write(str, mol).
  */
 
 using namespace Scine;
@@ -108,7 +108,7 @@ BOOST_AUTO_TEST_CASE(EditingCleave) {
     };
   };
 
-  Molecule caffeine = IO::read("cbor/caffeine.cbor");
+  Molecule caffeine = io::read("cbor/caffeine.cbor");
   caffeine.canonicalize();
 
   // Find a N-Me bridge bond to cleave
@@ -159,7 +159,7 @@ BOOST_AUTO_TEST_CASE(EditingCleave) {
 
 BOOST_AUTO_TEST_CASE(EditingInsert) {
   // Set up the test and make sure the canonical indices still match expectations
-  Molecule biphenyl = IO::read("cbor/biphenyl.cbor");
+  Molecule biphenyl = io::read("cbor/biphenyl.cbor");
   biphenyl.canonicalize();
 
   // Find the C-C bridge edge
@@ -179,7 +179,7 @@ BOOST_AUTO_TEST_CASE(EditingInsert) {
     "Selected bridge edge does not split biphenyl equally in two"
   );
 
-  Molecule pyrimidine = IO::read("cbor/pyrimidine.cbor");
+  Molecule pyrimidine = io::read("cbor/pyrimidine.cbor");
   pyrimidine.canonicalize();
 
   auto pyrimidineNitrogens = detail::findMultiple(pyrimidine, Utils::ElementType::N);
@@ -210,13 +210,13 @@ BOOST_AUTO_TEST_CASE(EditingInsert) {
 }
 
 BOOST_AUTO_TEST_CASE(EditingSuperpose) {
-  Molecule pyridine = IO::read("cbor/pyridine.cbor");
+  Molecule pyridine = io::read("cbor/pyridine.cbor");
   pyridine.canonicalize();
 
   auto pyridineNitrogenOption = detail::findSingle(pyridine, Utils::ElementType::N);
   BOOST_REQUIRE_MESSAGE(pyridineNitrogenOption, "Could not find N in pyridine");
 
-  Molecule methane = IO::read("cbor/methane.cbor");
+  Molecule methane = io::read("cbor/methane.cbor");
   methane.canonicalize();
 
   auto methaneHydrogenOption = detail::findSingle(methane, Utils::ElementType::H);
@@ -233,7 +233,7 @@ BOOST_AUTO_TEST_CASE(EditingSuperpose) {
 }
 
 BOOST_AUTO_TEST_CASE(EditingSubstitute) {
-  Molecule chlorobenzene = IO::read("cbor/chlorobenzene.cbor");
+  Molecule chlorobenzene = io::read("cbor/chlorobenzene.cbor");
   chlorobenzene.canonicalize();
 
   auto chlorobenzeneBridgeOption = detail::findEdge(
@@ -249,7 +249,7 @@ BOOST_AUTO_TEST_CASE(EditingSubstitute) {
   );
   BOOST_REQUIRE_MESSAGE(chlorobenzeneBridgeOption, "Could not find C-Cl bridge edge in chlorobenzene");
 
-  Molecule phenole = IO::read("cbor/phenole.cbor");
+  Molecule phenole = io::read("cbor/phenole.cbor");
   phenole.canonicalize();
   auto phenoleBridgeOption = detail::findEdge(
     phenole,
@@ -271,7 +271,7 @@ BOOST_AUTO_TEST_CASE(EditingSubstitute) {
     *phenoleBridgeOption
   );
 
-  Molecule biphenyl = IO::read("cbor/biphenyl.cbor");
+  Molecule biphenyl = io::read("cbor/biphenyl.cbor");
   BOOST_CHECK_MESSAGE(
     substituted == biphenyl,
     "Result of substitution not recognized as biphenyl prior to canonicalization"
@@ -286,7 +286,7 @@ BOOST_AUTO_TEST_CASE(EditingSubstitute) {
 }
 
 BOOST_AUTO_TEST_CASE(EditingConnect) {
-  Molecule pyridine = IO::read("cbor/pyridine.cbor");
+  Molecule pyridine = io::read("cbor/pyridine.cbor");
   pyridine.canonicalize();
   auto pyridineNitrogenOption = detail::findSingle(pyridine, Utils::ElementType::N);
   BOOST_REQUIRE_MESSAGE(pyridineNitrogenOption, "Could not find N in pyridine");
@@ -303,7 +303,7 @@ BOOST_AUTO_TEST_CASE(EditingConnect) {
 }
 
 BOOST_AUTO_TEST_CASE(EditingBugfixMesityleneSubstitution) {
-  Molecule mesitylene = IO::read("cbor/mesitylene.cbor");
+  Molecule mesitylene = io::read("cbor/mesitylene.cbor");
   mesitylene.canonicalize();
 
   const auto mesityleneSubstitutionEdgeOption = detail::findEdge(
@@ -322,7 +322,7 @@ BOOST_AUTO_TEST_CASE(EditingBugfixMesityleneSubstitution) {
     "Could not find C-C bridge edge in mesitylene"
   );
 
-  Molecule nhc = IO::read("cbor/nhc.cbor");
+  Molecule nhc = io::read("cbor/nhc.cbor");
   nhc.canonicalize();
 
   Molecule pattern {
@@ -374,7 +374,7 @@ BOOST_AUTO_TEST_CASE(EditingBugfixHapticLigands) {
 }
 
 BOOST_AUTO_TEST_CASE(EditingAddMultidentateLigand) {
-  Molecule ligand = IO::read("cbor/multidentate_ligand.cbor");
+  Molecule ligand = io::read("cbor/multidentate_ligand.cbor");
   ligand.canonicalize();
 
   auto NOption = detail::findSingle(ligand, Utils::ElementType::N);
@@ -396,7 +396,7 @@ BOOST_AUTO_TEST_CASE(EditingAddMultidentateLigand) {
 }
 
 BOOST_AUTO_TEST_CASE(EditingAddHapticLigand) {
-  auto ligand = IO::read("cbor/haptic_ligand.cbor");
+  auto ligand = io::read("cbor/haptic_ligand.cbor");
 
   std::vector<AtomIndex> ligandCycle;
   for(const auto& cycle : ligand.graph().cycles()) {

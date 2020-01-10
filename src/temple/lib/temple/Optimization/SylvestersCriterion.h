@@ -10,6 +10,7 @@
 
 #include <Eigen/Core>
 
+namespace Scine {
 namespace temple {
 
 /**
@@ -154,5 +155,6 @@ bool positiveSemidefinite(const Eigen::MatrixBase<Derived>& matrix) {
 }
 
 } // namespace temple
+} // namespace Scine
 
 #endif

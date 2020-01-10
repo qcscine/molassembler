@@ -29,7 +29,7 @@ namespace Scine {
 
 namespace molassembler {
 
-namespace DistanceGeometry {
+namespace distance_geometry {
 
 /* Class Implementation */
 
@@ -471,14 +471,14 @@ double ImplicitGraph::maximalImplicitLowerBound(const VertexDescriptor i) const 
   auto elementType = _innerGraphPtr->elementType(a);
 
   if(elementType == _heaviestAtoms.front()) {
-    return AtomInfo::vdwRadius(
+    return atom_info::vdwRadius(
       _heaviestAtoms.back()
-    ) + AtomInfo::vdwRadius(elementType);
+    ) + atom_info::vdwRadius(elementType);
   }
 
-  return AtomInfo::vdwRadius(
+  return atom_info::vdwRadius(
     _heaviestAtoms.front()
-  ) + AtomInfo::vdwRadius(elementType);
+  ) + atom_info::vdwRadius(elementType);
 }
 
 /* Nested classes */
@@ -499,9 +499,9 @@ double ImplicitGraph::EdgeWeightMap::operator [] (const EdgeDescriptor& e) const
     }
 
     return -(
-      AtomInfo::vdwRadius(
+      atom_info::vdwRadius(
         _basePtr->_innerGraphPtr->elementType(a)
-      ) + AtomInfo::vdwRadius(
+      ) + atom_info::vdwRadius(
         _basePtr->_innerGraphPtr->elementType(b)
       )
     );
@@ -646,9 +646,9 @@ double ImplicitGraph::edge_iterator::weight() const {
     }
 
     return -(
-      AtomInfo::vdwRadius(
+      atom_info::vdwRadius(
         _basePtr->_innerGraphPtr->elementType(a)
-      ) + AtomInfo::vdwRadius(
+      ) + atom_info::vdwRadius(
         _basePtr->_innerGraphPtr->elementType(_b)
       )
     );
@@ -826,7 +826,7 @@ ImplicitGraph::in_group_edge_iterator::in_group_edge_iterator(
   }
 }
 
-} // namespace DistanceGeometry
+} // namespace distance_geometry
 
 } // namespace molassembler
 

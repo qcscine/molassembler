@@ -17,6 +17,7 @@
 #include <type_traits>
 #include <utility>
 
+namespace Scine {
 namespace temple {
 
 template<typename T, size_t nItems>
@@ -490,5 +491,6 @@ constexpr auto makeArray(T head, Tail... tail) -> Array<T, 1 + sizeof...(Tail)> 
 }
 
 } // namespace temple
+} // namespace Scine
 
 #endif

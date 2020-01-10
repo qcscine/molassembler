@@ -18,8 +18,8 @@
 
 #include <sstream>
 
+namespace Scine {
 namespace temple {
-
 namespace BTreeProperties {
 
 /*!
@@ -1195,5 +1195,6 @@ private:
 };
 
 } // namespace temple
+} // namespace Scine
 
 #endif

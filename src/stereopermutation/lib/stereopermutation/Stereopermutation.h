@@ -20,6 +20,8 @@
 #include <map>
 
 namespace Scine {
+
+//! @brief Data classes for permutational spatial arrangement modeling
 namespace stereopermutation {
 
 /*! @brief Represent abstract stereopermutation around atom center

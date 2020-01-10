@@ -1,12 +1,12 @@
 /*!@file
  * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
  *   See LICENSE.txt
- * @brief Compile-time symmetry property calculations
+ * @brief Compile-time shape property calculations
  *
  * Constexpr parallel to Properties.h. Contains a slew of computations on the
- * base symmetry data to compute derived properties. You can e.g. apply
+ * base shape data to compute derived properties. You can e.g. apply
  * rotations, extract rotation multiplicities, calculate angular and chiral
- * distortions between pairs of symmetries, etc.
+ * distortions between pairs of shapes, etc.
  *
  * @todo I don't think the constexpr ligand loss mappings are instantiated or
  * tested ANYWHERE
@@ -24,32 +24,31 @@
 #include "temple/Cache.h"
 
 namespace Scine {
-
-namespace Shapes {
+namespace shapes {
 
 /**
- * @brief Compile-time amenable calculation of symmetry classes' properties
+ * @brief Compile-time calculation of shape classes' properties
  *
- * Here we calculate various properties of symmetry classes (i.e. classes that
+ * Here we calculate various properties of shape classes (i.e. classes that
  * fulfill the concepts::ShapeClass concept). Also, transition mappings can
  * be calculated at compile time using functions in this namespace.
  *
- * Data from Primitives.h takes two paths through this library: Symmetry classes,
+ * Data from Primitives.h takes two paths through this library: Shape classes,
  * whose equivalent data members may have different type signatures, can be
- * processed directly here and transformed. The data available in the symmetry
+ * processed directly here and transformed. The data available in the shape
  * classes is made available to runtime functions by smoothing over the type
  * signatures, which are merely differences in array lengths, into static
  * runtime datatypes such as vectors. Then, runtime functions can calculate
- * the same properties as these available here, but by referring to symmetries
- * by their Name, not by the symmetry class type itself.
+ * the same properties as these available here, but by referring to shapes
+ * by their Name, not by the shape class type itself.
  */
-namespace constexprProperties {
+namespace constexpr_properties {
 
 constexpr double floatingPointEqualityTolerance = 1e-4;
 
-/*! @brief Calculates the minimum angle returned in a symmetry class
+/*! @brief Calculates the minimum angle returned in a shape class
  *
- * @tparam ShapeClass A Symmetry class
+ * @tparam ShapeClass A shape class
  *
  * @complexity{@math{\Theta(S^2)}}
  */
@@ -71,7 +70,7 @@ constexpr double calculateSmallestAngle() {
 
 /**
  * @brief Metafunction calculating the smallest and largest angle that exist in
- *   a symmetry
+ *   a shape
  *
  * @tparam ShapeClass A class fulfilling concepts::ShapeClass
  */
@@ -103,16 +102,16 @@ struct AngleBoundsFunctor {
 };
 
 /*!
- * @brief Functor to find out the minimum angle among all symmetry class
+ * @brief Functor to find out the minimum angle among all shape class
  *   types passed as template arguments
  *
  * @tparam ShapeClass pack of classes fulfilling concepts::ShapeClass
  */
 template<typename ... ShapeClass>
 struct minAngleFunctor {
-  /*! @brief Minimum angle among all symmetry classes
+  /*! @brief Minimum angle among all shape classes
    *
-   * @complexity{@math{\Theta(N S^2)}} where @math{N} is the number of symmetry classes and @math{S} the largest symmetry size
+   * @complexity{@math{\Theta(N S^2)}} where @math{N} is the number of shape classes and @math{S} the largest shape size
    */
   static constexpr double value() {
     const std::array<double, sizeof...(ShapeClass)> smallestAngles {{
@@ -160,7 +159,7 @@ constexpr ArrayType<unsigned, ShapeClass::size> applyRotationImpl(
   };
 }
 
-/*! @brief Applies a symmetry group rotation to an array of indices
+/*! @brief Applies a shape group rotation to an array of indices
  *
  * @complexity{@math{\Theta(S)}}
  */
@@ -200,13 +199,13 @@ constexpr unsigned rotationPeriodicityImpl(
   );
 }
 
-/*! @brief Determines the multiplicity of a symmetry group rotation
+/*! @brief Determines the multiplicity of a shape group rotation
  *
- * Calculates the multiplicity of a symmetry group's rotation specified via an
- * index in that symmetry's list of rotations
+ * Calculates the multiplicity of a shape group's rotation specified via an
+ * index in that shape's list of rotations
  *
  * @complexity{@math{\Theta(M S)} where @math{M} is the multiplicity of the
- * rotation and @math{S} is the symmetry size}
+ * rotation and @math{S} is the shape size}
  *
  * @tparam ShapeClass a model of concepts::ShapeClass
  */
@@ -228,7 +227,7 @@ rotationPeriodicitiesImpl(std::index_sequence<Inds...> /* inds */) {
   return { rotationPeriodicity<ShapeClass, Inds>()... };
 }
 
-//! Calculates all multiplicities of a symmetry group's rotations.
+//! Calculates all multiplicities of a shape group's rotations.
 template<typename ShapeClass>
 constexpr ArrayType<unsigned, ShapeClass::rotations.size()> rotationPeriodicities() {
   return rotationPeriodicitiesImpl<ShapeClass>(
@@ -236,14 +235,14 @@ constexpr ArrayType<unsigned, ShapeClass::rotations.size()> rotationPeriodicitie
   );
 }
 
-/*! @brief Calculate the multiplicities of all rotations of a symmetry
+/*! @brief Calculate the multiplicities of all rotations of a shape
  *
  * Template metafunction generating all rotation multiplicities for a specified
- * symmetry group type
+ * shape group type
  *
  * @complexity{@math{\Theta(R M S)} where @math{R} is the number of rotations
- * of the symmetry, @math{M} is the largest multiplicity of those rotations and
- * @math{S} is the size of the symmetry}
+ * of the shape, @math{M} is the largest multiplicity of those rotations and
+ * @math{S} is the size of the shape}
  *
  * @tparam ShapeClass a model of concepts::ShapeClass
  */
@@ -269,15 +268,15 @@ struct maxShapeSizeFunctor {
   }
 };
 
-//! The largest symmetry size defined in the library
-constexpr unsigned maxShapeSize = temple::TupleType::unpackToFunction<
-  Shapes::data::allShapeDataTypes,
+//! The largest shape size defined in the library
+constexpr unsigned maxShapeSize = temple::tuples::unpackToFunction<
+  shapes::data::allShapeDataTypes,
   maxShapeSizeFunctor
 >();
 
-/*! @brief Fetches the coordinates of an index in a Symmetry
+/*! @brief Fetches the coordinates of an index in a shape
  *
- * Fetches the coordinates of an index in a Symmetry, properly handling the
+ * Fetches the coordinates of an index in a shape, properly handling the
  * boost::none -> origin mapping.
  *
  * @complexity{@math{\Theta(1)}}
@@ -307,15 +306,15 @@ constexpr double getTetrahedronVolume(
   );
 }
 
-/*! @brief Calculates angular distortion caused by a symmetry transition mapping
+/*! @brief Calculates angular distortion caused by a shape transition mapping
  *
  * @complexity{@math{\Theta(S^2)}}
  *
  * @param indexMapping An integer sequence specifying how indices from the
- *   source symmetry are mapped to the target symmetry
- * @param sourceSymmetrySize The size of the source symmetry
- * @param sourceAngleFunction A pointer to the source symmetry's angle function
- * @param targetAngleFunction A pointer to the target symmetry's angle function
+ *   source shape are mapped to the target shape
+ * @param sourceSymmetrySize The size of the source shape
+ * @param sourceAngleFunction A pointer to the source shape's angle function
+ * @param targetAngleFunction A pointer to the target shape's angle function
  */
 template<size_t size>
 constexpr double calculateAngularDistortion(
@@ -341,16 +340,16 @@ constexpr double calculateAngularDistortion(
   return distortionSum;
 }
 
-/*! @brief Propagates symmetry positions trhough an index mapping
+/*! @brief Propagates shape positions trhough an index mapping
  *
- * Propagates a source symmetry position through an index mapping, properly
+ * Propagates a source shape position through an index mapping, properly
  * handling the origin placeholder special unsigned value.
  *
  * @complexity{@math{\Theta(S)}}
  *
- * @param symmetryPosition The symmetry position to be mapped
+ * @param symmetryPosition The shape position to be mapped
  * @param indexMapping The index mapping that specifies how indices are mapped
- *   from a source symmetry to a target symmetry
+ *   from a source shape to a target shape
  */
 template<size_t size>
 constexpr unsigned propagateSymmetryPosition(
@@ -364,16 +363,16 @@ constexpr unsigned propagateSymmetryPosition(
   return ORIGIN_PLACEHOLDER;
 }
 
-/*! @brief Calculates the chiral distortion caused by a symmetry transition
+/*! @brief Calculates the chiral distortion caused by a shape transition
  *
- * Calculate the chiral distortion between the source symmetry and the target
- * symmetry specified by an index mapping.
+ * Calculate the chiral distortion between the source shape and the target
+ * shape specified by an index mapping.
  *
  * @complexity{@math{\Theta(T)} where @math{T} is the number of tetrahedra for
- * the symmetry, typically small}
+ * the shape, typically small}
  *
  * @param indexMapping The index mapping that specifies how indices are mapped
- *   from a source symmetry to a target symmetry
+ *   from a source shape to a target shape
  */
 template<typename ShapeClassFrom, typename ShapeClassTo>
 constexpr double calculateChiralDistortion(
@@ -418,24 +417,24 @@ constexpr double calculateChiralDistortion(
   return chiralDistortion;
 }
 
-/*! @brief Transform symmetry positions through a mapping
+/*! @brief Transform shape positions through a mapping
  *
- * Writes the indices of the original symmetry in the mapping into the target
- * symmetry's indexing scheme.
+ * Writes the indices of the original shape in the mapping into the target
+ * shape's indexing scheme.
  *
  * @complexity{@math{\Theta(S)}}
  *
  * @param mapping An index mapping that specifies how indices are mapped
- *   from a source symmetry to a target symmetry
+ *   from a source shape to a target shape
  */
 template<size_t size>
 constexpr ArrayType<unsigned, size> symPosMapping(
   const ArrayType<unsigned, size>& mapping
 ) {
-  /* Creates the list of indices in the target symmetry. Why is this necessary?
+  /* Creates the list of indices in the target shape. Why is this necessary?
    *
    * E.g. An index mapping from linear to T-shaped. The individual
-   * symmetry-internal numbering schemes are shown for the symmetry positions.
+   * shape-internal numbering schemes are shown for the shape positions.
    *
    *  1  –▶  0
    *  |      |
@@ -447,7 +446,7 @@ constexpr ArrayType<unsigned, size> symPosMapping(
    * This mapping is represented as {2, 0, 1}.
    *
    * This function writes the indices of original mapping into the target
-   * symmetry's indexing scheme.
+   * shape's indexing scheme.
    *
    * For this example, this returns {1, 2, 0}:
    *
@@ -459,7 +458,7 @@ constexpr ArrayType<unsigned, size> symPosMapping(
    *
    * The closely related mapping {0, 2, 1} yields target indices {0, 2, 1}.
    *
-   * Which of these properties are related by target symmetry rotations?
+   * Which of these properties are related by target shape rotations?
    *
    *
    *     mapping       target indices
@@ -485,14 +484,14 @@ constexpr ArrayType<unsigned, size> symPosMapping(
 }
 
 /*!
- * Calculate a lower bound on non-superimposable rotations a symmetry
+ * Calculate a lower bound on non-superimposable rotations a shape
  * class can produce for entirely unequal indices
  *
  * @complexity{@math{\Theta(R M S)} where @math{R} is the number of rotations
- * of the symmetry, @math{M} is the largest multiplicity of those rotations and
- * @math{S} is the size of the symmetry}
+ * of the shape, @math{M} is the largest multiplicity of those rotations and
+ * @math{S} is the size of the shape}
  *
- * @tparam ShapeClass A Symmetry class as defined in Primitives.h
+ * @tparam ShapeClass A shape class as defined in Primitives.h
  */
 template<typename ShapeClass>
 constexpr unsigned maxRotations() {
@@ -523,7 +522,7 @@ using ChainArrayType = temple::DynamicArray<
   maxRotations<ShapeClass>() * 2 // factor is entirely arbitrary
 >;
 
-/*! @brief Generates all rotations of a sequence of indices within a symmetry group
+/*! @brief Generates all rotations of a sequence of indices within a shape group
  *
  * @tparam ShapeClass a model of concepts::ShapeClass
  *
@@ -619,7 +618,7 @@ struct MappingsReturnType {
 /*! @brief Calculates ideal index mappings for +1, 0 size transitions
  *
  * Calculates the ideal index mappings for transitions in which a ligand is
- * added or the symmetry size stays the same.
+ * added or the shape size stays the same.
  *
  * @complexity{@math{\Theta(S!)}}
  *
@@ -633,7 +632,7 @@ constexpr auto symmetryTransitionMappings() {
       ShapeClassTo::size == ShapeClassFrom::size + 1
       || ShapeClassTo::size == ShapeClassFrom::size
     ),
-    "This function can handle only cases of equal or increasing symmetry size"
+    "This function can handle only cases of equal or increasing shape size"
   );
 
   typename MappingsReturnType::MappingsList bestMappings;
@@ -732,7 +731,7 @@ constexpr auto ligandLossMappings(const unsigned deletedSymmetryPosition) {
 
   static_assert(
     ShapeClassFrom::size == ShapeClassTo::size + 1,
-    "Ligand loss pathway calculation must involve symmetry size decrease"
+    "Ligand loss pathway calculation must involve shape size decrease"
   );
 
   assert(deletedSymmetryPosition < ShapeClassFrom::size);
@@ -823,7 +822,7 @@ constexpr auto ligandLossMappings(const unsigned deletedSymmetryPosition) {
 }
 
 /* Pre-compute all ligand gain situations */
-//! If symmetries are adjacent, calculate their symmetry transition mapping
+//! If symmetries are adjacent, calculate their shape transition mapping
 template<typename SymmetrySource, typename SymmetryTarget>
 constexpr
 std::enable_if_t<
@@ -858,7 +857,7 @@ std::enable_if_t<
 }
 
 /*!
- * @brief Calculate stereopermutations for an unlinked symmetry
+ * @brief Calculate stereopermutations for an unlinked shape
  *
  * @complexity{@math{\Theta(S!)}}
  *
@@ -900,11 +899,11 @@ constexpr unsigned numUnlinkedStereopermutations(
   return count;
 }
 
-/*! @brief Calculates whether a symmetry has multiple stereopermutations
+/*! @brief Calculates whether a shape has multiple stereopermutations
  *
  * @complexity{@math{\Theta(S!)}}
  *
- * @tparam Symmetry The symmetry for which to calculate this property.
+ * @tparam ShapeClass The shape for which to calculate this property.
  * @param nIdenticalLigands The number of ligands whose ranking is identical.
  *   E.g. 0 generates ABCDEF, 3 generates AAABCD, etc. for octahedral.
  */
@@ -937,10 +936,8 @@ constexpr bool hasMultipleUnlinkedStereopermutations(const unsigned nIdenticalLi
   return false;
 }
 
-} // namespace constexprProperties
-
-} // namespace Shapes
-
+} // namespace constexpr_properties
+} // namespace shapes
 } // namespace Scine
 
 #endif

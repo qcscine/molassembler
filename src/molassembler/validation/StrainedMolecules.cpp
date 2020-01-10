@@ -21,7 +21,7 @@ using namespace Scine;
 using namespace molassembler;
 
 BOOST_AUTO_TEST_CASE(transSpanningImpossibilitiesRemoved) {
-  auto mol = IO::read("inorganics/multidentate/Co(ox)3.mol");
+  auto mol = io::read("inorganics/multidentate/Co(ox)3.mol");
 
   const auto stereopermutatorOption = mol.stereopermutators().option(0);
   BOOST_REQUIRE(stereopermutatorOption);
@@ -46,9 +46,9 @@ void readFileGenConformationAndWriteFile(const boost::filesystem::path& filePath
   std::cout << "Processing " << filePath.stem().string() << std::endl;
 
   // Read the file
-  auto mol = IO::read(filePath.string());
+  auto mol = io::read(filePath.string());
 
-  DistanceGeometry::SpatialModel spatialModel {mol, DistanceGeometry::Configuration {}, randomnessEngine()};
+  distance_geometry::SpatialModel spatialModel {mol, distance_geometry::Configuration {}, randomnessEngine()};
 
   spatialModel.writeGraphviz(filePath.stem().string() + ".dot"s);
 
@@ -56,7 +56,7 @@ void readFileGenConformationAndWriteFile(const boost::filesystem::path& filePath
     // Generate a conformation
     if(auto positionsResult = generateConformation(mol)) {
       // Write the generated conformation to file
-      IO::write(
+      io::write(
         filePath.stem().string() + "-generated.mol"s,
         mol,
         positionsResult.value()

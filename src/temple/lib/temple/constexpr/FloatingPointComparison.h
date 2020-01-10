@@ -17,8 +17,10 @@
 #include <tuple>
 #include <cassert>
 
+namespace Scine {
 namespace temple {
 
+//! @brief Floating-point comparison helpers
 namespace floating {
 
 // Floating point comparison helpers
@@ -263,7 +265,7 @@ public:
 };
 
 } // namespace floating
-
 } // namespace temple
+} // namespace Scine
 
 #endif

@@ -25,7 +25,7 @@
 #include <iomanip>
 
 using namespace Scine;
-using namespace Shapes;
+using namespace shapes;
 
 template<typename PRNG>
 Eigen::Vector3d randomVectorOnSphere(const double radius, PRNG& prng) {
@@ -148,20 +148,20 @@ struct RScriptWriter {
 
   void writeHeader() {
     file << "symmetryNames <- c(\"" << temple::condense(
-      temple::map(Shapes::allShapes, [](auto name) { return Shapes::name(name); }),
+      temple::map(shapes::allShapes, [](auto name) { return shapes::name(name); }),
       "\",\""
     ) << "\")\n";
     file << "symmetrySizes <- c(" << temple::condense(
-      temple::map(Shapes::allShapes, [](auto name) { return Shapes::size(name); })
+      temple::map(shapes::allShapes, [](auto name) { return shapes::size(name); })
     ) << ")\n";
-    file << "results <- array(numeric(), c(" << Shapes::allShapes.size() << ", " << nExperiments << "))\n";
+    file << "results <- array(numeric(), c(" << shapes::allShapes.size() << ", " << nExperiments << "))\n";
   }
 
   void writeSeed(int seed) {
     file << "seed <- " << seed << "\n";
   }
 
-  void addResults(const Shapes::Shape name, const std::vector<double>& results) {
+  void addResults(const shapes::Shape name, const std::vector<double>& results) {
     const unsigned symmetryIndex = nameIndex(name) + 1;
     file << "results[" << symmetryIndex << ",] <- c(" << results << ")\n";
   }
@@ -178,7 +178,7 @@ struct RScriptWriter {
 
 #pragma omp parallel for
     for(unsigned N = 2; N <= 8; ++N) {
-      temple::jsf::JSF64 localPrng {seeds.at(N - 2)};
+      temple::JSF64 localPrng {seeds.at(N - 2)};
       const auto values = averageRandomCsm(N, localPrng, std::forward<F>(f));
 
 #pragma omp critical
@@ -231,7 +231,7 @@ int main(int argc, char* argv[]) {
   RScriptWriter writer {
     showElements ? "elements.R" : "point_groups_data.R"
   };
-  temple::jsf::JSF64 prng;
+  temple::JSF64 prng;
   if(options_variables_map.count("seed")) {
     const int seed = options_variables_map["seed"].as<int>();
     prng.seed(seed);

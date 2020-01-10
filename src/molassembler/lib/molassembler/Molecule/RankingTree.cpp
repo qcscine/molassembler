@@ -18,7 +18,7 @@
 
 #include "molassembler/Graph/GraphAlgorithms.h"
 #include "molassembler/Graph/InnerGraph.h"
-#include "molassembler/Modeling/LocalGeometryModel.h"
+#include "molassembler/Modeling/ShapeInference.h"
 #include "molassembler/Molecule/MolGraphWriter.h"
 #include "molassembler/Options.h"
 #include "molassembler/StereopermutatorList.h"
@@ -432,8 +432,8 @@ public:
       std::is_same<std::decay_t<T>, AtomStereopermutator>::value,
       boost::optional<bool>
     > permutatorSpecificComparison(const T& a, const T& b) const {
-      unsigned aShapeIndex = Shapes::nameIndex(a.getShape());
-      unsigned bShapeIndex = Shapes::nameIndex(b.getShape());
+      unsigned aShapeIndex = shapes::nameIndex(a.getShape());
+      unsigned bShapeIndex = shapes::nameIndex(b.getShape());
 
       if(aShapeIndex < bShapeIndex) {
         return true;
@@ -800,7 +800,7 @@ void RankingTree::_applySequenceRules(
       _adjacents(targetIndex),
       [&](const TreeVertexIndex nodeIndex) -> bool {
         return (
-          AtomInfo::isMainGroupElement(
+          atom_info::isMainGroupElement(
             _graph.elementType(_tree[targetIndex].molIndex)
           ) && _graph.bondType(
             BondIndex {
@@ -839,7 +839,7 @@ void RankingTree::_applySequenceRules(
     /* Group substituents into sites using the graph only, excluding the eta
      * adjacents yet again.
      */
-    centerRanking.sites = GraphAlgorithms::ligandSiteGroups(
+    centerRanking.sites = graph_algorithms::ligandSiteGroups(
       _graph.inner(),
       molSourceIndex,
       temple::map(etaAdjacents, [&](const TreeVertexIndex i) { return _tree[i].molIndex; })
@@ -859,10 +859,10 @@ void RankingTree::_applySequenceRules(
 
 
     /* Figure out the shape the stereopermutator should have */
-    Shapes::Shape localShape;
+    shapes::Shape localShape;
     if(
       existingStereopermutatorOption
-      && Shapes::size(
+      && shapes::size(
         existingStereopermutatorOption->getShape()
       ) == centerRanking.sites.size()
     ) {
@@ -872,12 +872,12 @@ void RankingTree::_applySequenceRules(
        */
       localShape = existingStereopermutatorOption->getShape();
     } else {
-      localShape = LocalGeometry::inferShape(
+      localShape = shape_inference::inferShape(
         _graph,
         molSourceIndex,
         centerRanking
       ).value_or_eval(
-        [&]() { return LocalGeometry::firstOfSize(centerRanking.sites.size()); }
+        [&]() { return shape_inference::firstOfSize(centerRanking.sites.size()); }
       );
     }
 

@@ -24,7 +24,7 @@ namespace molassembler {
 
 class Molecule;
 
-namespace IO {
+namespace io {
 
 /**
  * @brief Semantic interpreter of the smiles grammar, constructs molecules
@@ -148,7 +148,7 @@ private:
 //!@}
 };
 
-} // namespace IO
+} // namespace io
 } // namespace molassembler
 } // namespace Scine
 

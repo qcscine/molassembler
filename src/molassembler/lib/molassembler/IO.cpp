@@ -30,7 +30,7 @@ namespace Scine {
 
 namespace molassembler {
 
-namespace IO {
+namespace io {
 
 const bool& LineNotation::enabled() {
   static bool enable = Utils::OpenBabelStreamHandler::checkForBinary();
@@ -271,7 +271,7 @@ void write(const std::string& filename, const Molecule& molecule) {
   );
 }
 
-} // namespace IO
+} // namespace io
 
 } // namespace molassembler
 

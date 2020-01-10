@@ -14,7 +14,7 @@
 
 namespace Scine {
 namespace molassembler {
-namespace DistanceGeometry {
+namespace distance_geometry {
 
 struct LU {
   Eigen::Matrix4d L = Eigen::Matrix4d::Zero();
@@ -827,7 +827,7 @@ double lowerTetrangleLimit(
 }
 
 struct TetrangleLimits {
-  DistanceGeometry::ValueBounds klLimits;
+  distance_geometry::ValueBounds klLimits;
   bool boundViolation;
 
   TetrangleLimits(
@@ -928,6 +928,6 @@ unsigned tetrangleSmooth(Eigen::Ref<Eigen::MatrixXd> bounds) {
   return iterations;
 }
 
-} // namespace DistanceGeometry
+} // namespace distance_geometry
 } // namespace molassembler
 } // namespace Scine

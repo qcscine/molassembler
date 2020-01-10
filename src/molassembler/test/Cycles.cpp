@@ -24,6 +24,10 @@
 /* TODO add further tests for free functions
  */
 
+using namespace Scine;
+using namespace molassembler;
+
+
 struct ExpectationData {
   std::vector<unsigned> cycleSizes;
 
@@ -71,14 +75,11 @@ std::map<std::string, ExpectationData> decompositionData {
 };
 
 void readAndDecompose(const boost::filesystem::path& filePath) {
-  using namespace Scine;
-  using namespace molassembler;
-
   auto findIter = decompositionData.find(filePath.stem().string());
 
   if(findIter != decompositionData.end()) {
     // Read the file
-    auto mol = IO::read(filePath.string());
+    auto mol = io::read(filePath.string());
 
     const Cycles& cycles = mol.graph().cycles();
 
@@ -114,9 +115,6 @@ BOOST_AUTO_TEST_CASE(ringDecomposition) {
 }
 
 BOOST_AUTO_TEST_CASE(cycleIterators) {
-  using namespace Scine;
-  using namespace molassembler;
-
   std::vector<
     std::tuple<std::string, AtomIndex, unsigned>
   > tests {
@@ -131,7 +129,7 @@ BOOST_AUTO_TEST_CASE(cycleIterators) {
 
     Molecule mol;
 
-    BOOST_REQUIRE_NO_THROW(mol = IO::read(file));
+    BOOST_REQUIRE_NO_THROW(mol = io::read(file));
 
     const Cycles& cycles = mol.graph().cycles();
 

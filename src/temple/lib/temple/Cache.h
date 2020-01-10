@@ -18,6 +18,7 @@
 #include <cassert>
 #include <vector>
 
+namespace Scine {
 namespace temple {
 
 //! A minimal wrapper around a map class with cache semantics
@@ -234,5 +235,6 @@ private:
 };
 
 } //  namespace temple
+} // namespace Scine
 
 #endif

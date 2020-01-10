@@ -15,6 +15,7 @@
 #include <vector>
 #include <map>
 
+namespace Scine {
 namespace temple {
 
 /*!
@@ -101,5 +102,6 @@ std::vector<
 }
 
 } // namespace temple
+} // namespace Scine
 
 #endif

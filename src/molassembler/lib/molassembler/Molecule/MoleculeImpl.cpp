@@ -18,7 +18,7 @@
 #include "molassembler/Graph/Canonicalization.h"
 #include "molassembler/Graph/GraphAlgorithms.h"
 #include "molassembler/Modeling/CommonTrig.h"
-#include "molassembler/Modeling/LocalGeometryModel.h"
+#include "molassembler/Modeling/ShapeInference.h"
 #include "molassembler/Molecule/AtomEnvironmentHash.h"
 #include "molassembler/Molecule/MolGraphWriter.h"
 #include "molassembler/Molecule/RankingTree.h"
@@ -60,8 +60,8 @@ void Molecule::Impl::_tryAddAtomStereopermutator(
     return;
   }
 
-  Shapes::Shape shape = inferShape(candidateIndex, localRanking).value_or_eval(
-    [&]() {return LocalGeometry::firstOfSize(localRanking.sites.size());}
+  shapes::Shape shape = inferShape(candidateIndex, localRanking).value_or_eval(
+    [&]() {return shape_inference::firstOfSize(localRanking.sites.size());}
   );
 
 
@@ -194,7 +194,7 @@ void Molecule::Impl::_propagateGraphChange() {
    * assignments and assign the stereopermutator to that.
    */
 
-  GraphAlgorithms::updateEtaBonds(_adjacencies.inner());
+  graph_algorithms::updateEtaBonds(_adjacencies.inner());
 
   // All graph access after this point must be const for thread safety
   const InnerGraph& inner = _adjacencies.inner();
@@ -231,7 +231,7 @@ void Molecule::Impl::_propagateGraphChange() {
       }
 
       // Suggest a shape if desired
-      boost::optional<Shapes::Shape> newShapeOption;
+      boost::optional<shapes::Shape> newShapeOption;
       if(Options::shapeTransition == ShapeTransition::PrioritizeInferenceFromGraph) {
         newShapeOption = inferShape(vertex, localRanking);
       }
@@ -325,7 +325,7 @@ Molecule::Impl::Impl(OuterGraph graph)
   : _adjacencies(std::move(graph))
 {
   // Initialization
-  GraphAlgorithms::updateEtaBonds(_adjacencies.inner());
+  graph_algorithms::updateEtaBonds(_adjacencies.inner());
   _stereopermutators = _detectStereopermutators();
   _ensureModelInvariants();
 }
@@ -338,7 +338,7 @@ Molecule::Impl::Impl(
   >& bondStereopermutatorCandidatesOptional
 ) : _adjacencies(std::move(graph))
 {
-  GraphAlgorithms::updateEtaBonds(_adjacencies.inner());
+  graph_algorithms::updateEtaBonds(_adjacencies.inner());
   _stereopermutators = inferStereopermutatorsFromPositions(
     positions,
     bondStereopermutatorCandidatesOptional
@@ -613,7 +613,7 @@ void Molecule::Impl::removeAtom(const AtomIndex a) {
         continue;
       }
 
-      boost::optional<Shapes::Shape> newShapeOption;
+      boost::optional<shapes::Shape> newShapeOption;
       if(Options::shapeTransition == ShapeTransition::PrioritizeInferenceFromGraph) {
         newShapeOption = inferShape(indexToUpdate, localRanking);
       }
@@ -685,7 +685,7 @@ void Molecule::Impl::removeBond(
         return;
       }
 
-      boost::optional<Shapes::Shape> newShapeOption;
+      boost::optional<shapes::Shape> newShapeOption;
       if(Options::shapeTransition == ShapeTransition::PrioritizeInferenceFromGraph) {
         newShapeOption = inferShape(indexToUpdate, localRanking);
       }
@@ -766,7 +766,7 @@ void Molecule::Impl::setElementType(
 
 void Molecule::Impl::setShapeAtAtom(
   const AtomIndex a,
-  const Shapes::Shape shape
+  const shapes::Shape shape
 ) {
   if(!_isValidIndex(a)) {
     throw std::out_of_range("Molecule::setShapeAtAtom: Supplied atom index is invalid");
@@ -778,7 +778,7 @@ void Molecule::Impl::setShapeAtAtom(
   if(!stereopermutatorOption) {
     RankingInformation localRanking = rankPriority(a);
 
-    if(localRanking.sites.size() != Shapes::size(shape)) {
+    if(localRanking.sites.size() != shapes::size(shape)) {
       throw std::logic_error(
         "Molecule::setShapeAtAtom: The size of the supplied shape is not "
         " the same as the number of determined sites"
@@ -806,8 +806,8 @@ void Molecule::Impl::setShapeAtAtom(
   }
 
   if(
-    Shapes::size(stereopermutatorOption->getShape())
-    != Shapes::size(shape)
+    shapes::size(stereopermutatorOption->getShape())
+    != shapes::size(shape)
   ) {
     throw std::logic_error(
       "Molecule::setShapeAtAtom: The size of the supplied shape is "
@@ -839,7 +839,7 @@ boost::optional<AtomEnvironmentComponents> Molecule::Impl::canonicalComponents()
   return _canonicalComponentsOption;
 }
 
-boost::optional<Shapes::Shape> Molecule::Impl::inferShape(
+boost::optional<shapes::Shape> Molecule::Impl::inferShape(
   const AtomIndex index,
   const RankingInformation& ranking
 ) const {
@@ -853,7 +853,7 @@ boost::optional<Shapes::Shape> Molecule::Impl::inferShape(
     );
   }
 
-  return LocalGeometry::inferShape(
+  return shape_inference::inferShape(
     _adjacencies,
     index,
     ranking
@@ -933,7 +933,7 @@ StereopermutatorList Molecule::Impl::inferStereopermutatorsFromPositions(
       continue;
     }
 
-    Shapes::Shape dummyShape = LocalGeometry::firstOfSize(localRanking.sites.size());
+    shapes::Shape dummyShape = shape_inference::firstOfSize(localRanking.sites.size());
 
     // Construct it
     auto stereopermutator = AtomStereopermutator {
@@ -1121,7 +1121,7 @@ RankingInformation Molecule::Impl::rankPriority(
   RankingInformation rankingResult;
 
   // Expects that bond types are set properly, complains otherwise
-  rankingResult.sites = GraphAlgorithms::ligandSiteGroups(
+  rankingResult.sites = graph_algorithms::ligandSiteGroups(
     _adjacencies.inner(),
     a,
     excludeAdjacent
@@ -1152,7 +1152,7 @@ RankingInformation Molecule::Impl::rankPriority(
   );
 
   // Find links between sites
-  rankingResult.links = GraphAlgorithms::siteLinks(
+  rankingResult.links = graph_algorithms::siteLinks(
     _adjacencies.inner(),
     a,
     rankingResult.sites,

@@ -19,6 +19,7 @@
 
 #include "boost/optional.hpp"
 
+namespace Scine {
 namespace temple {
 
 /*!
@@ -299,5 +300,6 @@ std::string stringifyTuple(
 }
 
 } // namespace temple
+} // namespace Scine
 
 #endif

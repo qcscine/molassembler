@@ -547,7 +547,7 @@ public:
    */
   void setShapeAtAtom(
     AtomIndex a,
-    Shapes::Shape shape
+    shapes::Shape shape
   );
 //!@}
 
@@ -587,7 +587,7 @@ public:
    *   not a transition metal, and returns the first shape of appropriate
    *   size otherwise.
    */
-  boost::optional<Shapes::Shape> inferShape(
+  boost::optional<shapes::Shape> inferShape(
     AtomIndex index,
     const RankingInformation& ranking
   ) const;

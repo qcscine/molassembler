@@ -35,7 +35,7 @@ class Molecule;
 class AngstromWrapper;
 
 //! Input and output
-namespace IO {
+namespace io {
 
 /**
  * @brief Provides Molecule instances from line notations of molecules such
@@ -143,7 +143,7 @@ MASM_EXPORT void write(
  */
 MASM_EXPORT void write(const std::string& filename, const Molecule& molecule);
 
-} // namespace IO
+} // namespace io
 } // namespace molassembler
 } // namespace Scine
 

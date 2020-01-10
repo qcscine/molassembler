@@ -13,6 +13,7 @@
 #include "temple/STL17.h"
 #include <iostream>
 
+namespace Scine {
 namespace temple {
 
 /**
@@ -164,5 +165,6 @@ struct NewtonRaphson {
 };
 
 } // namespace temple
+} // namespace Scine
 
 #endif

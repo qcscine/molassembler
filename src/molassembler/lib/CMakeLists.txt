@@ -54,7 +54,7 @@ set(HEADERS_all
   ${_LIBPREFIX}/Modeling/AtomInfo.h
   ${_LIBPREFIX}/Modeling/BondDistance.h
   ${_LIBPREFIX}/Modeling/CommonTrig.h
-  ${_LIBPREFIX}/Modeling/LocalGeometryModel.h
+  ${_LIBPREFIX}/Modeling/ShapeInference.h
   ${_LIBPREFIX}/Molecule.h
   ${_LIBPREFIX}/Molecule/AtomEnvironmentHash.h
   ${_LIBPREFIX}/Molecule/MolGraphWriter.h
@@ -113,7 +113,7 @@ set(SOURCES_all
   ${_LIBPREFIX}/Modeling/AtomInfo.cpp
   ${_LIBPREFIX}/Modeling/BondDistance.cpp
   ${_LIBPREFIX}/Modeling/CommonTrig.cpp
-  ${_LIBPREFIX}/Modeling/LocalGeometryModel.cpp
+  ${_LIBPREFIX}/Modeling/ShapeInference.cpp
   ${_LIBPREFIX}/Molecule.cpp
   ${_LIBPREFIX}/Molecule/AtomEnvironmentHash.cpp
   ${_LIBPREFIX}/Molecule/MolGraphWriter.cpp

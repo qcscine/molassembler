@@ -9,6 +9,7 @@
 
 #include <utility>
 
+namespace Scine {
 namespace temple {
 
 /**
@@ -49,5 +50,6 @@ struct Binding {
 };
 
 } // namespace temple
+} // namespace Scine
 
 #endif

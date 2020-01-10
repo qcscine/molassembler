@@ -17,7 +17,7 @@
 
 namespace Scine {
 namespace molassembler {
-namespace IO {
+namespace io {
 
 struct ElementData {
   unsigned Z = 0;
@@ -34,7 +34,7 @@ struct ElementData {
 };
 
 struct ChiralData {
-  Shapes::Shape shape;
+  shapes::Shape shape;
   unsigned chiralIndex;
 };
 
@@ -67,36 +67,36 @@ struct BondData {
   boost::optional<unsigned> ringNumber;
 };
 
-} // namespace IO
+} // namespace io
 } // namespace molassembler
 } // namespace Scine
 
 BOOST_FUSION_ADAPT_STRUCT(
-  Scine::molassembler::IO::ElementData,
+  Scine::molassembler::io::ElementData,
   (unsigned, Z),
   (bool, aromatic)
 )
 
 BOOST_FUSION_ADAPT_STRUCT(
-  Scine::molassembler::IO::ChiralData,
-  (Scine::Shapes::Shape, shape),
+  Scine::molassembler::io::ChiralData,
+  (Scine::shapes::Shape, shape),
   (unsigned, chiralIndex)
 )
 
 BOOST_FUSION_ADAPT_STRUCT(
-  Scine::molassembler::IO::AtomData,
+  Scine::molassembler::io::AtomData,
   (unsigned, A),
-  (Scine::molassembler::IO::ElementData, partialElement),
-  (boost::optional<Scine::molassembler::IO::ChiralData>, chiralOptional),
+  (Scine::molassembler::io::ElementData, partialElement),
+  (boost::optional<Scine::molassembler::io::ChiralData>, chiralOptional),
   (boost::optional<unsigned>, hCount),
   (boost::optional<int>, chargeOptional),
   (bool, atomBracket)
 )
 
 BOOST_FUSION_ADAPT_STRUCT(
-  Scine::molassembler::IO::BondData,
+  Scine::molassembler::io::BondData,
   (boost::optional<Scine::molassembler::BondType>, type),
-  (boost::optional<Scine::molassembler::IO::BondData::StereoMarker>, ezStereo)
+  (boost::optional<Scine::molassembler::io::BondData::StereoMarker>, ezStereo)
   (boost::optional<unsigned>, ringNumber)
 )
 

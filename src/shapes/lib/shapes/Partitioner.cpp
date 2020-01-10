@@ -10,7 +10,7 @@
 #include <cassert>
 
 namespace Scine {
-namespace Shapes {
+namespace shapes {
 
 Partitioner::Partitioner(const unsigned s, const unsigned e) : S(s), E(e), mapping(S * E) {
   assert(s != 0 && e != 0);
@@ -164,5 +164,5 @@ bool Partitioner::isOrderedMapping(const std::vector<unsigned>& mapping) {
   return true;
 }
 
-} // namespace Shapes
+} // namespace shapes
 } // namespace Scine

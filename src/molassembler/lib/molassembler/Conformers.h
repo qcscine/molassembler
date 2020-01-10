@@ -20,7 +20,7 @@ namespace outcome = BOOST_OUTCOME_V2_NAMESPACE;
 // Forward-declarations
 class Molecule;
 
-namespace DistanceGeometry {
+namespace distance_geometry {
 
 /**
  * @brief Limit triangle inequality bounds smoothing to a subset of all atoms
@@ -128,7 +128,7 @@ struct MASM_EXPORT Configuration {
   > fixedPositions;
 };
 
-} // namespace DistanceGeometry
+} // namespace distance_geometry
 
 /*! @brief Generate multiple sets of positional data for a Molecule
  *
@@ -174,7 +174,7 @@ struct MASM_EXPORT Configuration {
  * unsigned conformerIndex = 0;
  * for(auto& conformerResult : ensemble) {
  *   if(conformerResult) {
- *     IO::write(
+ *     io::write(
  *       std::to_string(conformerIndex) + ".mol",
  *       mol,
  *       conformerResult.value()
@@ -192,7 +192,7 @@ MASM_EXPORT std::vector<
 > generateRandomEnsemble(
   const Molecule& molecule,
   unsigned numStructures,
-  const DistanceGeometry::Configuration& configuration = DistanceGeometry::Configuration {}
+  const distance_geometry::Configuration& configuration = distance_geometry::Configuration {}
 );
 
 /*! @brief Generate multiple sets of positional data for a Molecule
@@ -240,7 +240,7 @@ MASM_EXPORT std::vector<
   const Molecule& molecule,
   unsigned numStructures,
   unsigned seed,
-  const DistanceGeometry::Configuration& configuration = DistanceGeometry::Configuration {}
+  const distance_geometry::Configuration& configuration = distance_geometry::Configuration {}
 );
 
 /*! @brief Generate a 3D structure of a Molecule
@@ -265,7 +265,7 @@ MASM_EXPORT std::vector<
  */
 MASM_EXPORT outcome::result<Utils::PositionCollection> generateRandomConformation(
   const Molecule& molecule,
-  const DistanceGeometry::Configuration& configuration = DistanceGeometry::Configuration {}
+  const distance_geometry::Configuration& configuration = distance_geometry::Configuration {}
 );
 
 /*! @brief Generate a 3D structure of a Molecule
@@ -273,6 +273,8 @@ MASM_EXPORT outcome::result<Utils::PositionCollection> generateRandomConformatio
  * @param molecule The molecule for which to generate three-dimensional
  *   positions. This molecule may not contain stereopermutators with zero
  *   assignments.
+ * @param seed A number to seed the pseudo-random number generator used in
+ *   conformer generation with
  * @param configuration The configuration object to control Distance Geometry
  *   in detail. The defaults are usually fine.
  *
@@ -288,7 +290,7 @@ MASM_EXPORT outcome::result<Utils::PositionCollection> generateRandomConformatio
 MASM_EXPORT outcome::result<Utils::PositionCollection> generateConformation(
   const Molecule& molecule,
   unsigned seed,
-  const DistanceGeometry::Configuration& configuration = DistanceGeometry::Configuration {}
+  const distance_geometry::Configuration& configuration = distance_geometry::Configuration {}
 );
 
 } // namespace molassembler

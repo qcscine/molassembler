@@ -13,6 +13,7 @@
 #include <array>
 #include <cassert>
 
+namespace Scine {
 namespace temple {
 namespace adaptors {
 namespace detail {
@@ -36,7 +37,7 @@ struct CyclicFrameAdaptor : public Binding<Container> {
   using ContainerBinding = Binding<Container>;
   using ContainerValueType = traits::getValueType<Container>;
 
-  using FrameType = typename TupleType::RepeatType<ContainerValueType, frameSize>::type;
+  using FrameType = typename tuples::RepeatType<ContainerValueType, frameSize>::type;
 
   using ContainerIteratorType = decltype(
     std::begin(std::declval<const Container>())
@@ -161,5 +162,6 @@ auto cyclicFrame(Container&& container) {
 
 } // namespace adaptors
 } // namespace temple
+} // namespace Scine
 
 #endif

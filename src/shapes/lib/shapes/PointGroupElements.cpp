@@ -10,7 +10,7 @@
 #include <Eigen/Geometry>
 
 namespace Scine {
-namespace Shapes {
+namespace shapes {
 namespace elements {
 
 template<typename EnumType>
@@ -899,5 +899,5 @@ NpGroupingsMapType npGroupings(
 }
 
 } // namespace elements
-} // namespace Shapes
+} // namespace shapes
 } // namespace Scine

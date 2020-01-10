@@ -15,8 +15,8 @@
 #include <array>
 #include <random>
 
+namespace Scine {
 namespace temple {
-
 namespace random {
 
 //! Generate N floating point values in the range [lower, upper)
@@ -140,7 +140,7 @@ void shuffle(
 }
 
 } // namespace random
-
 } // namespace temple
+} // namespace Scine
 
 #endif

@@ -26,7 +26,7 @@ namespace Scine {
 
 namespace molassembler {
 
-namespace GraphAlgorithms {
+namespace graph_algorithms {
 
 std::vector<LinkInformation> siteLinks(
   const InnerGraph& graph,
@@ -274,7 +274,7 @@ bool isHapticSite(
         siteAtoms,
         0u,
         [&](const unsigned carry, const AtomIndex adjacent) -> unsigned {
-          if(!AtomInfo::isMainGroupElement(graph.elementType(adjacent))) {
+          if(!atom_info::isMainGroupElement(graph.elementType(adjacent))) {
             return carry + 1;
           }
 
@@ -347,7 +347,7 @@ std::vector<
   AtomIndex centralIndex,
   const std::vector<AtomIndex>& excludeAdjacents
 ) {
-  if(AtomInfo::isMainGroupElement(graph.elementType(centralIndex))) {
+  if(atom_info::isMainGroupElement(graph.elementType(centralIndex))) {
     std::vector<
       std::vector<AtomIndex>
     > adjacents;
@@ -368,7 +368,7 @@ std::vector<
          * We determine whether the edge is mislabeled: Is the other vertex a
          * non-main-group element?
          */
-        if(AtomInfo::isMainGroupElement(graph.elementType(centralAdjacent))) {
+        if(atom_info::isMainGroupElement(graph.elementType(centralAdjacent))) {
           std::string error = "Two main group elements are connected by an eta bond! ";
           error += std::to_string(centralAdjacent);
           error += " and ";
@@ -460,7 +460,7 @@ void updateEtaBonds(InnerGraph& graph) {
   const AtomIndex N = graph.N();
   for(AtomIndex centralIndex = 0; centralIndex < N; ++centralIndex) {
     // Skip any main group element types, none of these should be eta bonded
-    if(AtomInfo::isMainGroupElement(graph.elementType(centralIndex))) {
+    if(atom_info::isMainGroupElement(graph.elementType(centralIndex))) {
       continue;
     }
 
@@ -507,7 +507,7 @@ std::vector<unsigned> distance(AtomIndex a, const InnerGraph& graph) {
   return distances;
 }
 
-} // namespace GraphAlgorithms
+} // namespace graph_algorithms
 
 } // namespace molassembler
 

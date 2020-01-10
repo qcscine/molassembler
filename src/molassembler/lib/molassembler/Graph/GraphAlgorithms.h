@@ -25,7 +25,7 @@ struct LinkInformation;
 class AtomStereopermutator;
 
 //! Core graph-level algorithms (not requiring stereopermutator information)
-namespace GraphAlgorithms {
+namespace graph_algorithms {
 
 /*! @brief Find links between two adjacent stereopermutators, returns unordered links
  *
@@ -126,7 +126,7 @@ void updateEtaBonds(InnerGraph& graph);
  */
 std::vector<unsigned> distance(AtomIndex a, const InnerGraph& graph);
 
-} // namespace GraphAlgorithms
+} // namespace graph_algorithms
 
 } // namespace molassembler
 

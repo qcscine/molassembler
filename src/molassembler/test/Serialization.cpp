@@ -56,7 +56,7 @@ BOOST_AUTO_TEST_CASE(MoleculeSerializationReversibility) {
     const boost::filesystem::path& currentFilePath :
     boost::filesystem::recursive_directory_iterator("ranking_tree_molecules")
   ) {
-    auto molecule = IO::read(currentFilePath.string());
+    auto molecule = io::read(currentFilePath.string());
 
     std::string json = JsonSerialization(molecule);
     Molecule decoded = JsonSerialization(json);
@@ -84,7 +84,7 @@ BOOST_AUTO_TEST_CASE(MoleculeCanonicalSerialization) {
     }
 
     auto readData = Utils::ChemicalFileHandler::read(currentFilePath.string());
-    auto permutedData = IO::shuffle(readData.first, readData.second);
+    auto permutedData = io::shuffle(readData.first, readData.second);
 
     auto interpretSingle = [](const Utils::AtomCollection& ac, const Utils::BondOrderCollection& boc) -> Molecule {
       interpret::MoleculesResult interpretation;

@@ -24,7 +24,7 @@ using UnorderedStereopermutations = std::unordered_set<Stereopermutation, boost:
  * @complexity{@math{O(\prod_i^Rm_i)} where @math{R} is the set of rotations and
  * @math{m_i} is the multiplicity of rotation @math{i}}
  */
-std::vector<Stereopermutation> generateAllRotations(Stereopermutation s, const Shapes::Shape shape);
+std::vector<Stereopermutation> generateAllRotations(Stereopermutation s, const shapes::Shape shape);
 
 /*! @brief whether this Stereopermutation is rotationally superimposable with another.
  *
@@ -33,7 +33,7 @@ std::vector<Stereopermutation> generateAllRotations(Stereopermutation s, const S
 bool rotationallySuperimposable(
   Stereopermutation a,
   const Stereopermutation& b,
-  const Shapes::Shape shape
+  const shapes::Shape shape
 );
 
 /*!
@@ -51,7 +51,7 @@ bool rotationallySuperimposable(
 boost::optional<bool> enantiomer(
   const Stereopermutation& a,
   const Stereopermutation& b,
-  const Shapes::Shape shape
+  const shapes::Shape shape
 );
 
 /*! @brief Whether a stereopermutation has trans arranged linked substituents
@@ -60,7 +60,7 @@ boost::optional<bool> enantiomer(
  */
 bool hasTransArrangedLinks(
   const Stereopermutation& s,
-  Shapes::Shape shape
+  shapes::Shape shape
 );
 
 struct Uniques {
@@ -91,7 +91,7 @@ struct Uniques {
  */
 Uniques uniques(
   const Stereopermutation& stereopermutation,
-  Shapes::Shape shape,
+  shapes::Shape shape,
   bool removeTransSpanningGroups = false
 );
 

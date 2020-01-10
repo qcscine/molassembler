@@ -14,8 +14,8 @@
 #include <array>
 #include <limits>
 
+namespace Scine {
 namespace temple {
-
 namespace traits {
 
 //! Figure out the return type of calling a function
@@ -779,5 +779,6 @@ template<
 }
 
 } // namespace temple
+} // namespace Scine
 
 #endif

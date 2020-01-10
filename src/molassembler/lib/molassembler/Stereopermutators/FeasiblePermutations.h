@@ -15,15 +15,16 @@
 
 namespace Scine {
 namespace molassembler {
+namespace stereopermutators {
 
 // Forward-declarations
-struct AbstractStereopermutations;
+struct Abstract;
 
-struct FeasibleStereopermutations {
+struct Feasible {
 //!@name Public types
 //!@{
   using ConeAngleType = std::vector<
-    boost::optional<DistanceGeometry::ValueBounds>
+    boost::optional<distance_geometry::ValueBounds>
   >;
 //!@}
 
@@ -41,7 +42,7 @@ struct FeasibleStereopermutations {
     AtomIndex centralIndex,
     const ConeAngleType& cones,
     const RankingInformation& ranking,
-    Shapes::Shape shape,
+    shapes::Shape shape,
     const std::vector<unsigned>& shapeVertexMap,
     const OuterGraph& graph
   );
@@ -60,7 +61,7 @@ struct FeasibleStereopermutations {
     const RankingInformation::RankedSitesType& canonicalSites,
     const ConeAngleType& coneAngles,
     const RankingInformation& ranking,
-    Shapes::Shape shape,
+    shapes::Shape shape,
     const OuterGraph& graph
   );
 //!@}
@@ -68,7 +69,7 @@ struct FeasibleStereopermutations {
 //!@name Constructors
 //!@{
   //! Empty initializer, all data members are null objects
-  FeasibleStereopermutations() = default;
+  Feasible() = default;
 
   /**
    * @brief Determines the subset of stereopermutations that are feasible in
@@ -84,9 +85,9 @@ struct FeasibleStereopermutations {
    * @complexity{@math{\Theta(P\cdot L)} where @math{P} is the number of
    * abstract stereopermutations and @math{L} is the number of links}
    */
-  FeasibleStereopermutations(
-    const AbstractStereopermutations& abstractPermutations,
-    Shapes::Shape shape,
+  Feasible(
+    const Abstract& abstractPermutations,
+    shapes::Shape shape,
     AtomIndex centralIndex,
     const RankingInformation& ranking,
     const OuterGraph& graph
@@ -96,7 +97,7 @@ struct FeasibleStereopermutations {
 //!@name Data members
 //!@{
   //! Mapping from site index to modeled site plane distance
-  std::vector<DistanceGeometry::ValueBounds> siteDistances;
+  std::vector<distance_geometry::ValueBounds> siteDistances;
 
   //! Mapping from site index to cone angle optional
   ConeAngleType coneAngles;
@@ -106,6 +107,7 @@ struct FeasibleStereopermutations {
 //!@}
 };
 
+} // namespace stereopermutators
 } // namespace molassembler
 } // namespace Scine
 

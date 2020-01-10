@@ -33,9 +33,9 @@ struct vertex_and_edge_list_plus_incidence_graph_tag
     virtual incidence_graph_tag {};
 
 template<>
-struct graph_traits<const Scine::molassembler::DistanceGeometry::ImplicitGraph> {
+struct graph_traits<const Scine::molassembler::distance_geometry::ImplicitGraph> {
   // Shortcut typedef
-  using T = Scine::molassembler::DistanceGeometry::ImplicitGraph;
+  using T = Scine::molassembler::distance_geometry::ImplicitGraph;
 
   using vertex_descriptor = T::VertexDescriptor;
   using edge_descriptor = T::EdgeDescriptor;
@@ -58,9 +58,9 @@ struct graph_traits<const Scine::molassembler::DistanceGeometry::ImplicitGraph> 
 };
 
 template<>
-struct graph_traits<Scine::molassembler::DistanceGeometry::ImplicitGraph> {
+struct graph_traits<Scine::molassembler::distance_geometry::ImplicitGraph> {
   // Shortcut typedef
-  using T = Scine::molassembler::DistanceGeometry::ImplicitGraph;
+  using T = Scine::molassembler::distance_geometry::ImplicitGraph;
 
   using vertex_descriptor = T::VertexDescriptor;
   using edge_descriptor = T::EdgeDescriptor;
@@ -85,16 +85,16 @@ struct graph_traits<Scine::molassembler::DistanceGeometry::ImplicitGraph> {
 /* edge_weight_t property_map */
 
 template<>
-struct property_map<Scine::molassembler::DistanceGeometry::ImplicitGraph, edge_weight_t> {
-  using T = Scine::molassembler::DistanceGeometry::ImplicitGraph;
+struct property_map<Scine::molassembler::distance_geometry::ImplicitGraph, edge_weight_t> {
+  using T = Scine::molassembler::distance_geometry::ImplicitGraph;
 
   using type = T::EdgeWeightMap;
   using const_type = const T::EdgeWeightMap;
 };
 
 template<>
-struct property_traits<Scine::molassembler::DistanceGeometry::ImplicitGraph::EdgeWeightMap> {
-  using T = Scine::molassembler::DistanceGeometry::ImplicitGraph;
+struct property_traits<Scine::molassembler::distance_geometry::ImplicitGraph::EdgeWeightMap> {
+  using T = Scine::molassembler::distance_geometry::ImplicitGraph;
 
   using value_type = double;
   using reference = double;
@@ -103,8 +103,8 @@ struct property_traits<Scine::molassembler::DistanceGeometry::ImplicitGraph::Edg
 };
 
 template<>
-struct property_traits<const Scine::molassembler::DistanceGeometry::ImplicitGraph::EdgeWeightMap> {
-  using T = Scine::molassembler::DistanceGeometry::ImplicitGraph;
+struct property_traits<const Scine::molassembler::distance_geometry::ImplicitGraph::EdgeWeightMap> {
+  using T = Scine::molassembler::distance_geometry::ImplicitGraph;
 
   using value_type = double;
   using reference = double;
@@ -115,16 +115,16 @@ struct property_traits<const Scine::molassembler::DistanceGeometry::ImplicitGrap
 /* vertex_index_t property map */
 
 template<>
-struct property_map<Scine::molassembler::DistanceGeometry::ImplicitGraph, vertex_index_t> {
-  using T = Scine::molassembler::DistanceGeometry::ImplicitGraph;
+struct property_map<Scine::molassembler::distance_geometry::ImplicitGraph, vertex_index_t> {
+  using T = Scine::molassembler::distance_geometry::ImplicitGraph;
 
   using type = T::VertexIndexMap;
   using const_type = const T::VertexIndexMap;
 };
 
 template<>
-struct property_traits<Scine::molassembler::DistanceGeometry::ImplicitGraph::VertexIndexMap> {
-  using T = Scine::molassembler::DistanceGeometry::ImplicitGraph;
+struct property_traits<Scine::molassembler::distance_geometry::ImplicitGraph::VertexIndexMap> {
+  using T = Scine::molassembler::distance_geometry::ImplicitGraph;
 
   using value_type = graph_traits<T>::vertex_descriptor;
   using reference = graph_traits<T>::vertex_descriptor;
@@ -133,8 +133,8 @@ struct property_traits<Scine::molassembler::DistanceGeometry::ImplicitGraph::Ver
 };
 
 template<>
-struct property_traits<const Scine::molassembler::DistanceGeometry::ImplicitGraph::VertexIndexMap> {
-  using T = Scine::molassembler::DistanceGeometry::ImplicitGraph;
+struct property_traits<const Scine::molassembler::distance_geometry::ImplicitGraph::VertexIndexMap> {
+  using T = Scine::molassembler::distance_geometry::ImplicitGraph;
 
   using value_type = graph_traits<T>::vertex_descriptor;
   using reference = graph_traits<T>::vertex_descriptor;

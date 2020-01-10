@@ -15,7 +15,9 @@
 #include <algorithm>
 #include <random>
 
-extern temple::jsf::Generator<> generator;
+using namespace Scine;
+
+extern temple::Generator<> generator;
 
 BOOST_AUTO_TEST_CASE(OrderedPairTests) {
   temple::OrderedPair<unsigned> a {14u, 3u};

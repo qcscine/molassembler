@@ -106,10 +106,10 @@ permutation for stereocenters.
 
 IO            | Description
 ------------- | -----------
-<code>\link Scine::molassembler::IO::read(const std::string&) IO::read(...)\endlink</code> | Extract a single \masm{Molecule} from an XYZ, MOL or MASM file
-<code>\link Scine::molassembler::IO::split(const std::string&) IO::split(...)\endlink</code> | Extract multiple \masm{Molecule, Molecules} from an XYZ, MOL or MASM file
-<code>\link Scine::molassembler::IO::write(const std::string&, const Molecule&) IO::write(...)\endlink</code> | Write a single \masm{Molecule} to XYZ, MOL or MASM
-<code>\link Scine::molassembler::interpret(const Utils::AtomCollection &, const Utils::BondOrderCollection &, BondDiscretizationOption discretization, const boost::optional< double > &) interpret(...)\endlink</code> | Find (possibly multiple) \masm{Molecule, Molecules} in various input data types
+<code>\link Scine::molassembler::io::read(const std::string&) io::read(...)\endlink</code> | Extract a single \masm{Molecule} from an XYZ, MOL or MASM file
+<code>\link Scine::molassembler::io::split(const std::string&) io::split(...)\endlink</code> | Extract multiple \masm{Molecule, Molecules} from an XYZ, MOL or MASM file
+<code>\link Scine::molassembler::io::write(const std::string&, const Molecule&) io::write(...)\endlink</code> | Write a single \masm{Molecule} to XYZ, MOL or MASM
+<code>\link Scine::molassembler::interpret::molecules(const Utils::AtomCollection &, BondDiscretizationOption, const boost::optional< double > &) interpret::molecules(...)\endlink</code> | Find (possibly multiple) \masm{Molecule, Molecules} in various input data types
 
 
 Information           | Description
@@ -139,22 +139,22 @@ Molecule manipulation  | Description
 
 Temple is a data structure and algorithm library that consists of
 - Constexpr containers (of which upper bounds on sizes must still be set)
-  - <code>\link temple::Array Array\endlink</code>: like std::array, fixed-size 
-  - <code>\link temple::Bitmask Bitmask\endlink</code>: Composition helper from an enum
-  - <code>\link temple::DynamicArray DynamicArray\endlink</code>: managed array with fixed-size maximal number of elements, more
+  - <code>\link Scine::temple::Array Array\endlink</code>: like std::array, fixed-size 
+  - <code>\link Scine::temple::Bitmask Bitmask\endlink</code>: Composition helper from an enum
+  - <code>\link Scine::temple::DynamicArray DynamicArray\endlink</code>: managed array with fixed-size maximal number of elements, more
     like std::vector but without reallocation on exceeding reserved size
-  - <code>\link temple::DynamicSet DynamicSet\endlink</code>: fixed-maximum-size managed set
-  - <code>\link temple::DynamicMap DynamicMap\endlink</code>: fixed-maximum-size associative container
-  - <code>\link temple::jsf::Generator JSF\endlink</code>: A PRNG
-  - <code>\link temple::BTree BTree\endlink</code>: A B-tree that stores merely values, not key-value pairs
-  - <code>\link temple::Vector Vector\endlink</code>: 3D cartesian coordinate system constexpr class with basic
+  - <code>\link Scine::temple::DynamicSet DynamicSet\endlink</code>: fixed-maximum-size managed set
+  - <code>\link Scine::temple::DynamicMap DynamicMap\endlink</code>: fixed-maximum-size associative container
+  - <code>\link Scine::temple::Generator JSF\endlink</code>: A good PRNG
+  - <code>\link Scine::temple::BTree BTree\endlink</code>: A B-tree that stores merely values, not key-value pairs
+  - <code>\link Scine::temple::Vector Vector\endlink</code>: 3D cartesian coordinate system constexpr class with basic
     computations
-  - <code>\link temple::UpperTriangularMatrix UpperTriangularMatrix\endlink</code>: stores data of an upper triangular matrix in a linear
+  - <code>\link Scine::temple::UpperTriangularMatrix UpperTriangularMatrix\endlink</code>: stores data of an upper triangular matrix in a linear
     array
-  - <code>\link temple::Optional Optional\endlink</code>: To represent operations that may frequently return no result
-  - <code>\link temple::Pair Pair\endlink</code>: Minimal replacement for std::pair, where some member functions are not 
+  - <code>\link Scine::temple::Optional Optional\endlink</code>: To represent operations that may frequently return no result
+  - <code>\link Scine::temple::Pair Pair\endlink</code>: Minimal replacement for std::pair, where some member functions are not 
     yet marked constexpr
-- <code>\link temple::TinySet TinySet\endlink</code>, <code>\link temple::TinyUnorderedSet TinyUnorderedSet\endlink</code>: Set-like use of linear memory for very few
+- <code>\link Scine::temple::TinySet TinySet\endlink</code>, <code>\link Scine::temple::TinyUnorderedSet TinyUnorderedSet\endlink</code>: Set-like use of linear memory for very few
   elements
 - CRTP base classes that supply comparison operators
 - A collection of pseudo-functional-style composable range manipulation

@@ -8,4 +8,4 @@
 
 #include "temple/constexpr/Jsf.h"
 
-temple::jsf::Generator<> generator;
+Scine::temple::Generator<> generator;

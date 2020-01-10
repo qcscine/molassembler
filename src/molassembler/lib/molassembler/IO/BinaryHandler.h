@@ -19,7 +19,7 @@ namespace molassembler {
 // Forward-declarations
 class Molecule;
 
-namespace IO {
+namespace io {
 
 //! Binary file IO
 struct BinaryHandler {
@@ -44,7 +44,7 @@ struct BinaryHandler {
   static BinaryType read(const std::string& filename);
 };
 
-} // namespace IO
+} // namespace io
 
 } // namespace molassembler
 

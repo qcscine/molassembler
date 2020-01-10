@@ -31,7 +31,7 @@ void writeExpandedTree(
   const std::string& fileName,
   const AtomIndex expandOnIndex
 ) {
-  auto molecule = IO::read(
+  auto molecule = io::read(
     "../tests/mol_files/ranking_tree_molecules/"s
     + fileName
   );
@@ -98,7 +98,7 @@ int main(int argc, char* argv[]) {
     }
 
     // This triggers all debug messages during tree instantiations and ranking
-    auto mol = IO::read(filename);
+    auto mol = io::read(filename);
 
     std::cout << mol << std::endl;
 

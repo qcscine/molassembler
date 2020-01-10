@@ -14,7 +14,7 @@
 
 namespace Scine {
 namespace molassembler {
-namespace DistanceGeometry {
+namespace distance_geometry {
 
 /**
  * @brief Decides whether the final structure from a refinement is acceptable
@@ -174,7 +174,7 @@ void explainFinalContributions(
   );
 }
 
-} // namespace DistanceGeometry
+} // namespace distance_geometry
 } // namespace molassembler
 } // namespace Scine
 

@@ -75,8 +75,8 @@ public:
   }
 };
 
-std::string getGraphvizNodeName(const Shapes::Shape shape) {
-  auto stringName = Shapes::name(shape);
+std::string getGraphvizNodeName(const shapes::Shape shape) {
+  auto stringName = shapes::name(shape);
 
   stringName.erase(
     std::remove_if(
@@ -103,7 +103,7 @@ void writeSymmetryTransitionDotFile(
   const bool showEdgesWithHighMultiplicity = true,
   const bool explainTransitions = false
 ) {
-  using namespace Shapes::properties;
+  using namespace shapes::properties;
 
   std::ofstream dotFile(filename.c_str());
 
@@ -116,26 +116,26 @@ void writeSymmetryTransitionDotFile(
     << R"(  node [fontname = "Arial", style = "filled", fillcolor="white"];)" << br
     << R"(  edge [fontname = "Arial", penwidth=2, labelfontsize="10"];)" << br;
 
-  std::set<Shapes::Shape> redNodes {
-    Shapes::Shape::Line,
-    Shapes::Shape::Bent,
-    Shapes::Shape::EquilateralTriangle
+  std::set<shapes::Shape> redNodes {
+    shapes::Shape::Line,
+    shapes::Shape::Bent,
+    shapes::Shape::EquilateralTriangle
   };
 
   // Write clusters for every symmetry name node
   unsigned currentSize = 1;
-  for(const auto& shape : Shapes::allShapes) {
-    if(Shapes::size(shape) > currentSize) {
+  for(const auto& shape : shapes::allShapes) {
+    if(shapes::size(shape) > currentSize) {
       if(currentSize > 1) {
         dotFile << "  }" << br;
       }
-      currentSize = Shapes::size(shape);
+      currentSize = shapes::size(shape);
       dotFile << "  subgraph cluster_size" << currentSize << " {" << br;
       dotFile << R"(    color="white";)" << br;
     }
 
     dotFile << "    " << getGraphvizNodeName(shape) << R"( [label=")"
-      << Shapes::name(shape) << R"(")";
+      << shapes::name(shape) << R"(")";
 
 
     if(redNodes.count(shape) == 1) {
@@ -148,13 +148,13 @@ void writeSymmetryTransitionDotFile(
   // Final cluster closing bracket
   dotFile << "  }" << br << br;
 
-  for(const auto& sourceSymmetry : Shapes::allShapes) {
+  for(const auto& sourceSymmetry : shapes::allShapes) {
     std::map<
-      Shapes::Shape,
-      Shapes::properties::SymmetryTransitionGroup
+      shapes::Shape,
+      shapes::properties::SymmetryTransitionGroup
     > distortionsMap;
 
-    for(const auto& targetSymmetry : Shapes::allShapes) {
+    for(const auto& targetSymmetry : shapes::allShapes) {
       if(predicate(sourceSymmetry, targetSymmetry)) { // Ligand gain
         distortionsMap[targetSymmetry] = selectBestTransitionMappings(
           symmetryTransitionMappings(
@@ -200,8 +200,8 @@ void writeSymmetryTransitionDotFile(
               mappingData.angularDistortion
               + mappingData.chiralDistortion
             ) << " from "
-            << Shapes::name(sourceSymmetry)
-            << " to " << Shapes::name(targetSymmetry) << ":\n";
+            << shapes::name(sourceSymmetry)
+            << " to " << shapes::name(targetSymmetry) << ":\n";
 
           for(const auto& mapping : mappingData.indexMappings) {
             std::cout << "mapping {"
@@ -266,7 +266,7 @@ void writeLigandLossDotFile(
   const bool showEdgesWithHighMultiplicity = true,
   const bool explainTransitions = false
 ) {
-  using namespace Shapes::properties;
+  using namespace shapes::properties;
 
   std::ofstream dotFile(filename.c_str());
 
@@ -280,26 +280,26 @@ void writeLigandLossDotFile(
     << R"(  edge [fontname = "Arial", penwidth=2, labelfontsize="10"];)" << br
     << R"(  rankdir="LR";)" << br;
 
-  std::set<Shapes::Shape> redNodes {
-    Shapes::Shape::Line,
-    Shapes::Shape::Bent,
-    Shapes::Shape::EquilateralTriangle
+  std::set<shapes::Shape> redNodes {
+    shapes::Shape::Line,
+    shapes::Shape::Bent,
+    shapes::Shape::EquilateralTriangle
   };
 
   // Write clusters for every symmetry name node
   unsigned currentSize = 1;
-  for(const Shapes::Shape shape : Shapes::allShapes) {
-    if(Shapes::size(shape) > currentSize) {
+  for(const shapes::Shape shape : shapes::allShapes) {
+    if(shapes::size(shape) > currentSize) {
       if(currentSize > 1) {
         dotFile << "  }" << br;
       }
-      currentSize = Shapes::size(shape);
+      currentSize = shapes::size(shape);
       dotFile << "  subgraph cluster_size" << currentSize << " {" << br;
       dotFile << R"(    color="white";)" << br;
     }
 
     dotFile << "    " << getGraphvizNodeName(shape) << R"( [label=")"
-      << Shapes::name(shape) << R"(")";
+      << shapes::name(shape) << R"(")";
 
 
     if(redNodes.count(shape) == 1) {
@@ -312,19 +312,19 @@ void writeLigandLossDotFile(
   // Final cluster closing bracket
   dotFile << "  }" << br << br;
 
-  for(const auto& sourceSymmetry : Shapes::allShapes) {
-    for(const auto& targetSymmetry : Shapes::allShapes) {
+  for(const auto& sourceSymmetry : shapes::allShapes) {
+    for(const auto& targetSymmetry : shapes::allShapes) {
 
-      if(Shapes::size(sourceSymmetry) == Shapes::size(targetSymmetry) + 1) {
+      if(shapes::size(sourceSymmetry) == shapes::size(targetSymmetry) + 1) {
 
         std::vector<
           std::pair<
             unsigned,
-            Shapes::properties::SymmetryTransitionGroup
+            shapes::properties::SymmetryTransitionGroup
           >
         > allMappings;
 
-        for(unsigned i = 0; i < Shapes::size(sourceSymmetry); ++i) {
+        for(unsigned i = 0; i < shapes::size(sourceSymmetry); ++i) {
           allMappings.emplace_back(
             i,
             selectBestTransitionMappings(
@@ -345,11 +345,11 @@ void writeLigandLossDotFile(
               temple::floating::isCloseRelative(
                 firstMappingPair.second.angularDistortion,
                 secondMappingPair.second.angularDistortion,
-                Shapes::properties::floatingPointEqualityThreshold
+                shapes::properties::floatingPointEqualityThreshold
               ) && temple::floating::isCloseRelative(
                 firstMappingPair.second.chiralDistortion,
                 secondMappingPair.second.chiralDistortion,
-                Shapes::properties::floatingPointEqualityThreshold
+                shapes::properties::floatingPointEqualityThreshold
               )
             );
           }
@@ -374,8 +374,8 @@ void writeLigandLossDotFile(
                 mappingData.angularDistortion
                 + mappingData.chiralDistortion
               ) << " from "
-              << Shapes::name(sourceSymmetry)
-              << " to " << Shapes::name(targetSymmetry) << ":\n";
+              << shapes::name(sourceSymmetry)
+              << " to " << shapes::name(targetSymmetry) << ":\n";
 
             for(const auto& mapping : mappingData.indexMappings) {
               std::cout << "mapping {"
@@ -442,7 +442,7 @@ int main() {
     "ligand_gain_pathways.dot",
     [](const auto& sourceSymmetry, const auto& targetSymmetry) -> bool {
       return (
-        Shapes::size(sourceSymmetry) + 1 == Shapes::size(targetSymmetry)
+        shapes::size(sourceSymmetry) + 1 == shapes::size(targetSymmetry)
       );
     }
   );
@@ -450,7 +450,7 @@ int main() {
     "ligand_rearrangement_pathways.dot",
     [](const auto& sourceSymmetry, const auto& targetSymmetry) -> bool {
       return (
-        Shapes::size(sourceSymmetry) == Shapes::size(targetSymmetry)
+        shapes::size(sourceSymmetry) == shapes::size(targetSymmetry)
         && sourceSymmetry != targetSymmetry
       );
     }

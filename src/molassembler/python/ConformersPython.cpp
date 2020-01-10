@@ -16,7 +16,7 @@ using VariantType = boost::variant<
 std::vector<VariantType> generateRandomEnsemble(
   const Scine::molassembler::Molecule& molecule,
   unsigned numStructures,
-  const Scine::molassembler::DistanceGeometry::Configuration& config
+  const Scine::molassembler::distance_geometry::Configuration& config
 ) {
   auto ensemble = Scine::molassembler::generateRandomEnsemble(
     molecule,
@@ -46,7 +46,7 @@ std::vector<VariantType> generateEnsemble(
   const Scine::molassembler::Molecule& molecule,
   const unsigned numStructures,
   const unsigned seed,
-  const Scine::molassembler::DistanceGeometry::Configuration& config
+  const Scine::molassembler::distance_geometry::Configuration& config
 ) {
   auto ensemble = Scine::molassembler::generateEnsemble(
     molecule,
@@ -75,7 +75,7 @@ std::vector<VariantType> generateEnsemble(
 
 VariantType generateRandomConformation(
   const Scine::molassembler::Molecule& molecule,
-  const Scine::molassembler::DistanceGeometry::Configuration& config
+  const Scine::molassembler::distance_geometry::Configuration& config
 ) {
   auto conformerResult = Scine::molassembler::generateRandomConformation(
     molecule,
@@ -92,7 +92,7 @@ VariantType generateRandomConformation(
 VariantType generateConformation(
   const Scine::molassembler::Molecule& molecule,
   const unsigned seed,
-  const Scine::molassembler::DistanceGeometry::Configuration& config
+  const Scine::molassembler::distance_geometry::Configuration& config
 ) {
   auto conformerResult = Scine::molassembler::generateConformation(
     molecule,
@@ -132,15 +132,15 @@ void init_conformers(pybind11::module& m) {
        sites.
   )delim";
 
-  pybind11::enum_<DistanceGeometry::Partiality>(
+  pybind11::enum_<distance_geometry::Partiality>(
     dg,
     "Partiality",
     "Limit triangle inequality bounds smoothing to a subset of all atoms"
-  ).value("FourAtom", DistanceGeometry::Partiality::FourAtom, "Resmooth only after each of the first four atom choices")
-    .value("TenPercent", DistanceGeometry::Partiality::TenPercent, "Resmooth for the first 10% of all atoms")
-    .value("All", DistanceGeometry::Partiality::All, "Resmooth after each distance choice");
+  ).value("FourAtom", distance_geometry::Partiality::FourAtom, "Resmooth only after each of the first four atom choices")
+    .value("TenPercent", distance_geometry::Partiality::TenPercent, "Resmooth for the first 10% of all atoms")
+    .value("All", distance_geometry::Partiality::All, "Resmooth after each distance choice");
 
-  pybind11::class_<DistanceGeometry::Configuration> configuration(
+  pybind11::class_<distance_geometry::Configuration> configuration(
     dg,
     "Configuration",
     "A configuration object for distance geometry runs with sane defaults"
@@ -153,32 +153,32 @@ void init_conformers(pybind11::module& m) {
 
   configuration.def_readwrite(
     "partiality",
-    &DistanceGeometry::Configuration::partiality,
+    &distance_geometry::Configuration::partiality,
     "Choose for how many atoms to re-smooth the distance bounds after a "
     "distance choice. Defaults to four-atom partiality."
   );
 
   configuration.def_readwrite(
     "refinement_step_limit",
-    &DistanceGeometry::Configuration::refinementStepLimit,
+    &distance_geometry::Configuration::refinementStepLimit,
     "Sets the maximum number of refinement steps. Defaults to 10'000."
   );
 
   configuration.def_readwrite(
     "refinement_gradient_target",
-    &DistanceGeometry::Configuration::refinementGradientTarget,
+    &distance_geometry::Configuration::refinementGradientTarget,
     "Sets the gradient at which a refinement is considered complete. Defaults to 1e-5."
   );
 
   configuration.def_readwrite(
     "spatial_model_loosening",
-    &DistanceGeometry::Configuration::spatialModelLoosening,
+    &distance_geometry::Configuration::spatialModelLoosening,
     "Set loosening factor for spatial model (1.0 is no loosening, 2.0 is strong loosening). Defaults to 1.0."
   );
 
   configuration.def_readwrite(
     "fixed_positions",
-    &DistanceGeometry::Configuration::fixedPositions,
+    &distance_geometry::Configuration::fixedPositions,
     R"delim(
       Set fixed positions for a subset of atoms in bohr units. Defaults to no fixed positions.
 
@@ -194,7 +194,7 @@ void init_conformers(pybind11::module& m) {
     &::generateRandomEnsemble,
     pybind11::arg("molecule"),
     pybind11::arg("num_structures"),
-    pybind11::arg("configuration") = DistanceGeometry::Configuration {},
+    pybind11::arg("configuration") = distance_geometry::Configuration {},
     R"delim(
       Generate a set of 3D positions for a molecule.
 
@@ -239,7 +239,7 @@ void init_conformers(pybind11::module& m) {
     pybind11::arg("molecule"),
     pybind11::arg("num_structures"),
     pybind11::arg("seed"),
-    pybind11::arg("configuration") = DistanceGeometry::Configuration {},
+    pybind11::arg("configuration") = distance_geometry::Configuration {},
     R"delim(
       Generate a set of 3D positions for a molecule.
 
@@ -280,7 +280,7 @@ void init_conformers(pybind11::module& m) {
     "generate_random_conformation",
     &::generateRandomConformation,
     pybind11::arg("molecule"),
-    pybind11::arg("configuration") = DistanceGeometry::Configuration {},
+    pybind11::arg("configuration") = distance_geometry::Configuration {},
     R"delim(
       Generate 3D positions for a molecule.
 
@@ -318,7 +318,7 @@ void init_conformers(pybind11::module& m) {
     &::generateConformation,
     pybind11::arg("molecule"),
     pybind11::arg("seed"),
-    pybind11::arg("configuration") = DistanceGeometry::Configuration {},
+    pybind11::arg("configuration") = distance_geometry::Configuration {},
     R"delim(
       Generate 3D positions for a molecule.
 

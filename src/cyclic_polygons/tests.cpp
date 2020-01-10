@@ -15,7 +15,8 @@
 #include <iostream>
 #include <fstream>
 
-temple::jsf::Generator<> generator;
+using namespace Scine;
+temple::Generator<> generator;
 
 using namespace std::string_literals;
 
@@ -23,7 +24,7 @@ void writeAngleAnalysisFiles(
   const std::vector<double>& edgeLengths,
   const std::string& baseName
 ) {
-  using namespace CyclicPolygons;
+  using namespace cyclic_polygons;
 
   const double longestEdge = temple::max(edgeLengths);
 
@@ -56,7 +57,7 @@ void writeAngleAnalysisFiles(
   double circumradius;
   bool circumcenterInside;
 
-  std::tie(circumradius, circumcenterInside) = CyclicPolygons::detail::convexCircumradius(edgeLengths);
+  std::tie(circumradius, circumcenterInside) = cyclic_polygons::detail::convexCircumradius(edgeLengths);
 
   std::ofstream scanFile(baseName + ".csv"s);
   scanFile << std::fixed << std::setprecision(8);
@@ -98,7 +99,7 @@ BOOST_AUTO_TEST_CASE(centralAngleRootFinding) {
   for(unsigned nSides = 3; nSides < 10; ++nSides) {
     for(unsigned testNumber = 0; testNumber < nTests; testNumber++) {
       std::vector<double> edgeLengths = temple::random::getN<double>(lowerLimit, upperLimit, nSides, generator.engine);
-      while(!CyclicPolygons::exists(edgeLengths)) {
+      while(!cyclic_polygons::exists(edgeLengths)) {
         edgeLengths = temple::random::getN<double>(lowerLimit, upperLimit, nSides, generator.engine);
       }
 
@@ -106,7 +107,7 @@ BOOST_AUTO_TEST_CASE(centralAngleRootFinding) {
       bool circumcenterInside = false;
 
       auto assignCircumradius = [&]() -> void {
-        std::tie(circumradius, circumcenterInside) = CyclicPolygons::detail::convexCircumradius(
+        std::tie(circumradius, circumcenterInside) = cyclic_polygons::detail::convexCircumradius(
           edgeLengths
         );
       };
@@ -116,12 +117,12 @@ BOOST_AUTO_TEST_CASE(centralAngleRootFinding) {
 
       double deviation;
       if(circumcenterInside) {
-        deviation = CyclicPolygons::detail::circumcenterInside::centralAnglesDeviation(
+        deviation = cyclic_polygons::detail::circumcenterInside::centralAnglesDeviation(
           circumradius,
           edgeLengths
         );
       } else {
-        deviation = CyclicPolygons::detail::circumcenterOutside::centralAnglesDeviation(
+        deviation = cyclic_polygons::detail::circumcenterOutside::centralAnglesDeviation(
           circumradius,
           edgeLengths,
           temple::max(edgeLengths)
@@ -137,7 +138,7 @@ BOOST_AUTO_TEST_CASE(centralAngleRootFinding) {
       );
 
       auto internalAngleSumDeviation = temple::sum(
-        CyclicPolygons::detail::generalizedInternalAngles(edgeLengths, circumradius, circumcenterInside)
+        cyclic_polygons::detail::generalizedInternalAngles(edgeLengths, circumradius, circumcenterInside)
       ) - (nSides - 2) * M_PI;
 
       pass = pass && (std::fabs(internalAngleSumDeviation) < 1e-5);

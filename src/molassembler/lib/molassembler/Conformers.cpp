@@ -15,9 +15,9 @@ std::vector<
 > generateRandomEnsemble(
   const Molecule& molecule,
   const unsigned numStructures,
-  const DistanceGeometry::Configuration& configuration
+  const distance_geometry::Configuration& configuration
 ) {
-  auto result = DistanceGeometry::run(molecule, numStructures, configuration, boost::none);
+  auto result = distance_geometry::run(molecule, numStructures, configuration, boost::none);
 
   /* Convert the AngstromWrappers into PositionCollections */
   std::vector<
@@ -44,9 +44,9 @@ std::vector<
   const Molecule& molecule,
   const unsigned numStructures,
   const unsigned seed,
-  const DistanceGeometry::Configuration& configuration
+  const distance_geometry::Configuration& configuration
 ) {
-  auto result = DistanceGeometry::run(molecule, numStructures, configuration, seed);
+  auto result = distance_geometry::run(molecule, numStructures, configuration, seed);
 
   /* Convert the AngstromWrappers into PositionCollections */
   std::vector<
@@ -69,9 +69,9 @@ std::vector<
 
 outcome::result<Utils::PositionCollection> generateRandomConformation(
   const Molecule& molecule,
-  const DistanceGeometry::Configuration& configuration
+  const distance_geometry::Configuration& configuration
 ) {
-  auto result = DistanceGeometry::run(molecule, 1, configuration, boost::none);
+  auto result = distance_geometry::run(molecule, 1, configuration, boost::none);
 
   assert(result.size() == 1);
   auto& wrapperResult = result.front();
@@ -86,9 +86,9 @@ outcome::result<Utils::PositionCollection> generateRandomConformation(
 outcome::result<Utils::PositionCollection> generateConformation(
   const Molecule& molecule,
   const unsigned seed,
-  const DistanceGeometry::Configuration& configuration
+  const distance_geometry::Configuration& configuration
 ) {
-  auto result = DistanceGeometry::run(molecule, 1, configuration, seed);
+  auto result = distance_geometry::run(molecule, 1, configuration, seed);
 
   assert(result.size() == 1);
   auto& wrapperResult = result.front();

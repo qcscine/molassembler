@@ -35,7 +35,7 @@ namespace Scine {
 
 namespace molassembler {
 
-namespace DistanceGeometry {
+namespace distance_geometry {
 
 struct WriterState {
   using Graph = ImplicitGraph;
@@ -326,7 +326,7 @@ public:
   }
 };
 
-} // namespace DistanceGeometry
+} // namespace distance_geometry
 
 } // namespace molassembler
 
@@ -377,17 +377,17 @@ int main(int argc, char* argv[]) {
       return 1;
     }
 
-    auto mol = IO::read(filename);
+    auto mol = io::read(filename);
 
-    DistanceGeometry::SpatialModel spatialModel {mol, DistanceGeometry::Configuration {}};
+    distance_geometry::SpatialModel spatialModel {mol, distance_geometry::Configuration {}};
 
-    DistanceGeometry::ImplicitGraph shortestPathsGraph {
+    distance_geometry::ImplicitGraph shortestPathsGraph {
       mol.graph().inner(),
       spatialModel.makePairwiseBounds()
     };
 
     /* Prep */
-    using Vertex = typename boost::graph_traits<DistanceGeometry::ImplicitGraph>::vertex_descriptor;
+    using Vertex = typename boost::graph_traits<distance_geometry::ImplicitGraph>::vertex_descriptor;
 
     unsigned N = boost::num_vertices(shortestPathsGraph);
     std::vector<double> distances(N);
@@ -413,14 +413,14 @@ int main(int argc, char* argv[]) {
     using ColorMapType = boost::two_bit_color_map<>;
     ColorMapType color_map {N};
 
-    DistanceGeometry::GraphvizWriter writer {
+    distance_geometry::GraphvizWriter writer {
       shortestPathsGraph,
       distances,
       predecessors,
       color_map
     };
 
-    DistanceGeometry::VisualizationVisitor visitor {
+    distance_geometry::VisualizationVisitor visitor {
       predecessors,
       writer
     };

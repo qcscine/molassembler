@@ -11,7 +11,10 @@
 #include <stdexcept>
 #include "temple/Binding.h"
 
+namespace Scine {
 namespace temple {
+
+//! @brief Functors for transformations
 namespace functor {
 
 /**
@@ -87,5 +90,6 @@ constexpr Get<1> second;
 
 } // namespace functor
 } // namespace temple
+} // namespace Scine
 
 #endif

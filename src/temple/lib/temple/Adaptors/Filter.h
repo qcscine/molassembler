@@ -12,6 +12,7 @@
 #include "temple/constexpr/TupleType.h"
 #include <cassert>
 
+namespace Scine {
 namespace temple {
 namespace adaptors {
 namespace detail {
@@ -133,5 +134,6 @@ auto filter(Container&& container, UnaryPredicate&& predicate) {
 
 } // namespace adaptors
 } // namespace temple
+} // namespace Scine
 
 #endif

@@ -11,9 +11,8 @@
 #include <random>
 #include <array>
 
+namespace Scine {
 namespace temple {
-
-namespace jsf {
 
 /* Heavily modified from:
  *
@@ -39,7 +38,8 @@ namespace jsf {
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
  * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ * IN THE SOFTWARE.
  */
 
 /*!
@@ -310,8 +310,7 @@ struct Generator {
   }
 };
 
-} // namespace jsf
-
 } // namespace temple
+} // namespace Scine
 
-#endif // INCLUDE_MOLASSEMBLER_TEMPLE_CONSTEXPR_JSF
+#endif

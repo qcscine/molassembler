@@ -43,7 +43,7 @@ std::ostream& nl(std::ostream& os) {
 
 using namespace Scine;
 using namespace molassembler;
-using namespace DistanceGeometry;
+using namespace distance_geometry;
 
 template<class Graph>
 struct BfFunctor {
@@ -109,9 +109,9 @@ struct Gor1Functor {
 };
 
 // Use specialized GOR1 implementation for ImplicitGraph
-std::vector<double> Gor1IG (const molassembler::DistanceGeometry::ImplicitGraph& graph, unsigned sourceVertex) {
+std::vector<double> Gor1IG (const molassembler::distance_geometry::ImplicitGraph& graph, unsigned sourceVertex) {
   /* Prep */
-  using Graph = molassembler::DistanceGeometry::ImplicitGraph;
+  using Graph = molassembler::distance_geometry::ImplicitGraph;
   using Vertex = typename boost::graph_traits<Graph>::vertex_descriptor;
 
   unsigned N = boost::num_vertices(graph);
@@ -145,11 +145,11 @@ std::vector<double> Gor1IG (const molassembler::DistanceGeometry::ImplicitGraph&
 }
 
 struct DBM_FW_Functor {
-  const molassembler::DistanceGeometry::DistanceBoundsMatrix& boundsRef;
+  const molassembler::distance_geometry::DistanceBoundsMatrix& boundsRef;
 
-  DBM_FW_Functor(const molassembler::DistanceGeometry::DistanceBoundsMatrix& bounds) : boundsRef(bounds) {}
+  DBM_FW_Functor(const molassembler::distance_geometry::DistanceBoundsMatrix& bounds) : boundsRef(bounds) {}
 
-  molassembler::DistanceGeometry::DistanceBoundsMatrix operator() () {
+  molassembler::distance_geometry::DistanceBoundsMatrix operator() () {
     auto boundsCopy = boundsRef;
 
     boundsCopy.smooth();
@@ -174,13 +174,13 @@ BOOST_AUTO_TEST_CASE(ShortestPathsGraphConcepts) {
     const boost::filesystem::path& currentFilePath :
     boost::filesystem::recursive_directory_iterator("stereocenter_detection_molecules")
   ) {
-    Molecule molecule = IO::read(
+    Molecule molecule = io::read(
       currentFilePath.string()
     );
 
-    DistanceGeometry::SpatialModel spatialModel {molecule, DistanceGeometry::Configuration {}};
+    distance_geometry::SpatialModel spatialModel {molecule, distance_geometry::Configuration {}};
 
-    using EG = DistanceGeometry::ExplicitGraph;
+    using EG = distance_geometry::ExplicitGraph;
     using Vertex = EG::GraphType::vertex_descriptor;
 
     EG eg {
@@ -378,9 +378,9 @@ bool shortestGraphsAlgorithmsResultsMatch(
   bool pass = true;
   for(unsigned outerVertex = 0; outerVertex < N; ++outerVertex) {
     // ImplicitGraph without implicit bounds should be consistent with ExplicitGraph
-    auto BF_IG_distances = BfFunctor<DistanceGeometry::ImplicitGraph> {implicitGraph} (2 * outerVertex);
+    auto BF_IG_distances = BfFunctor<distance_geometry::ImplicitGraph> {implicitGraph} (2 * outerVertex);
 
-    auto Gor_IG_distances = Gor1Functor<DistanceGeometry::ImplicitGraph> {implicitGraph} (2 * outerVertex);
+    auto Gor_IG_distances = Gor1Functor<distance_geometry::ImplicitGraph> {implicitGraph} (2 * outerVertex);
 
     if(
       !temple::all_of(
@@ -531,17 +531,17 @@ BOOST_AUTO_TEST_CASE(GraphShortestDistancesCorrectness) {
     const boost::filesystem::path& currentFilePath :
     boost::filesystem::recursive_directory_iterator("stereocenter_detection_molecules")
   ) {
-    Molecule sampleMol = IO::read(
+    Molecule sampleMol = io::read(
       currentFilePath.string()
     );
     const unsigned N = sampleMol.graph().N();
 
-    DistanceGeometry::SpatialModel spatialModel {sampleMol, DistanceGeometry::Configuration {}};
+    distance_geometry::SpatialModel spatialModel {sampleMol, distance_geometry::Configuration {}};
 
     const auto boundsList = spatialModel.makePairwiseBounds();
 
-    DistanceGeometry::ExplicitGraph explicitGraph {sampleMol.graph().inner(), boundsList};
-    DistanceGeometry::DistanceBoundsMatrix spatialModelBounds {sampleMol.graph().inner(), boundsList};
+    distance_geometry::ExplicitGraph explicitGraph {sampleMol.graph().inner(), boundsList};
+    distance_geometry::DistanceBoundsMatrix spatialModelBounds {sampleMol.graph().inner(), boundsList};
 
     // This conforms to the triangle inequality bounds
     auto boundsMatrix = DBM_FW_Functor {spatialModelBounds} ();
@@ -564,7 +564,7 @@ BOOST_AUTO_TEST_CASE(GraphShortestDistancesCorrectness) {
      * perhaps direct access to the emerging distance matrix is necessary to
      * ensure O(1) bounds access!
      */
-    DistanceGeometry::ImplicitGraph implicitGraph {sampleMol.graph().inner(), boundsList};
+    distance_geometry::ImplicitGraph implicitGraph {sampleMol.graph().inner(), boundsList};
 
     BOOST_REQUIRE_MESSAGE(
       graphsIdentical(explicitGraph, implicitGraph),

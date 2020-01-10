@@ -13,6 +13,7 @@
 #include <vector>
 #include <algorithm>
 
+namespace Scine {
 namespace temple {
 
 /*!
@@ -551,5 +552,6 @@ struct TinySet {
 };
 
 } // namespace temple
+} // namespace Scine
 
 #endif

@@ -256,7 +256,7 @@ struct Molecule::Impl {
    */
   void setShapeAtAtom(
     AtomIndex a,
-    Shapes::Shape shape
+    shapes::Shape shape
   );
 //!@}
 
@@ -269,7 +269,7 @@ struct Molecule::Impl {
    * Returns the expected shape name at a non-terminal atom.
    * \throws if the supplied atomic index is invalid
    */
-  boost::optional<Shapes::Shape> inferShape(
+  boost::optional<shapes::Shape> inferShape(
     AtomIndex index,
     const RankingInformation& ranking
   ) const;

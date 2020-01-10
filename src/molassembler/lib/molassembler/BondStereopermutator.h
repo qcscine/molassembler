@@ -41,13 +41,16 @@ class InnerGraph;
 struct RankingInformation;
 class AtomStereopermutator;
 class StereopermutatorList;
-struct AbstractStereopermutations;
-struct FeasibleStereopermutations;
 
-namespace DistanceGeometry {
+namespace stereopermutators {
+struct Abstract;
+struct Feasible;
+} // namespace stereopermutators
+
+namespace distance_geometry {
 class SpatialModel;
 struct ChiralConstraint;
-} // namespace DistanceGeometry
+} // namespace distance_geometry
 
 /**
  * @brief Handles specific relative arrangements of two atom stereopermutators
@@ -63,8 +66,8 @@ public:
   //! Type yielded by atom stereopermutator on propagation
   using AtomStereopermutatorPropagatedState = std::tuple<
     RankingInformation,
-    AbstractStereopermutations,
-    FeasibleStereopermutations,
+    stereopermutators::Abstract,
+    stereopermutators::Feasible,
     boost::optional<unsigned>
   >;
 

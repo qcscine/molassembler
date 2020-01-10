@@ -27,7 +27,7 @@
 #include <iomanip>
 
 using namespace Scine;
-using namespace Shapes;
+using namespace shapes;
 
 template<typename EnumType>
 constexpr inline auto underlying(const EnumType e) {
@@ -53,15 +53,15 @@ std::vector<unsigned> rotate(
 template<typename ShapeClass>
 struct LockstepTest {
   static bool value() {
-    return Shapes::nameIndex(ShapeClass::shape) == underlying(ShapeClass::shape);
+    return shapes::nameIndex(ShapeClass::shape) == underlying(ShapeClass::shape);
   }
 };
 
 BOOST_AUTO_TEST_CASE(SymmetryTypeAndPositionInEnumLockstep) {
   BOOST_CHECK_MESSAGE(
     temple::all_of(
-      temple::TupleType::map<
-        Shapes::data::allShapeDataTypes,
+      temple::tuples::map<
+        shapes::data::allShapeDataTypes,
         LockstepTest
       >()
     ),
@@ -364,7 +364,7 @@ std::enable_if_t<
 
 using IndexAndMappingsPairType = std::pair<
   unsigned,
-  Shapes::constexprProperties::MappingsReturnType
+  shapes::constexpr_properties::MappingsReturnType
 >;
 
 constexpr bool pairEqualityComparator(
@@ -372,7 +372,7 @@ constexpr bool pairEqualityComparator(
   const IndexAndMappingsPairType& b
 ) {
   temple::floating::ExpandedRelativeEqualityComparator<double> comparator {
-    Shapes::properties::floatingPointEqualityThreshold
+    shapes::properties::floatingPointEqualityThreshold
   };
 
   return (
@@ -392,7 +392,7 @@ std::enable_if_t<
   temple::Array<
     std::pair<
       unsigned,
-      Shapes::constexprProperties::MappingsReturnType
+      shapes::constexpr_properties::MappingsReturnType
     >,
     ShapeClassFrom::size
   > constexprMappings;
@@ -400,7 +400,7 @@ std::enable_if_t<
   for(unsigned i = 0; i < ShapeClassFrom::size; ++i) {
     constexprMappings.at(i) = std::make_pair(
       i,
-      Shapes::constexprProperties::ligandLossMappings<
+      shapes::constexpr_properties::ligandLossMappings<
         ShapeClassFrom,
         ShapeClassTo
       >(i)
@@ -417,7 +417,7 @@ std::enable_if_t<
   std::vector<
     std::pair<
       unsigned,
-      Shapes::properties::SymmetryTransitionGroup
+      shapes::properties::SymmetryTransitionGroup
     >
   > dynamicMappings;
 
@@ -442,11 +442,11 @@ std::enable_if_t<
         temple::floating::isCloseRelative(
           firstMappingPair.second.angularDistortion,
           secondMappingPair.second.angularDistortion,
-          Shapes::properties::floatingPointEqualityThreshold
+          shapes::properties::floatingPointEqualityThreshold
         ) && temple::floating::isCloseRelative(
           firstMappingPair.second.chiralDistortion,
           secondMappingPair.second.chiralDistortion,
-          Shapes::properties::floatingPointEqualityThreshold
+          shapes::properties::floatingPointEqualityThreshold
         )
       );
     }
@@ -498,8 +498,8 @@ struct RotationGenerationTest {
   static bool value() {
 
     // This is a DynamicSet of ShapeClass-sized Arrays
-    auto constexprRotations = constexprProperties::generateAllRotations<ShapeClass>(
-      constexprProperties::startingIndexSequence<ShapeClass>()
+    auto constexprRotations = constexpr_properties::generateAllRotations<ShapeClass>(
+      constexpr_properties::startingIndexSequence<ShapeClass>()
     );
 
     // This is a std::set of ShapeClass-sized std::vectors
@@ -545,7 +545,7 @@ struct RotationGenerationTest {
         << " shape: Sizes of generated sets are different. "
         << "constexpr - " << convertedRotations.size() << " != "
         << dynamicRotations.size() << " - dynamic" << std::endl;
-      std::cout << " Maximum #rotations: " << constexprProperties::maxRotations<ShapeClass>()
+      std::cout << " Maximum #rotations: " << constexpr_properties::maxRotations<ShapeClass>()
         << std::endl;
 
       std::cout << " Converted constexpr:" << std::endl;
@@ -585,8 +585,8 @@ struct RotationGenerationTest {
  */
 };
 
-std::string getGraphvizNodeName(const Shapes::Shape shape) {
-  auto stringName = Shapes::name(shape);
+std::string getGraphvizNodeName(const shapes::Shape shape) {
+  auto stringName = shapes::name(shape);
 
   stringName.erase(
     std::remove_if(
@@ -604,12 +604,12 @@ std::string getGraphvizNodeName(const Shapes::Shape shape) {
   return stringName;
 }
 
-BOOST_AUTO_TEST_CASE(constexprPropertiesTests) {
+BOOST_AUTO_TEST_CASE(constexpr_propertiesTests) {
   // Full test of rotation algorithm equivalency for all symmetries
   BOOST_CHECK_MESSAGE(
     temple::all_of(
-      temple::TupleType::map<
-        Shapes::data::allShapeDataTypes,
+      temple::tuples::map<
+        shapes::data::allShapeDataTypes,
         RotationGenerationTest
       >()
     ),
@@ -620,8 +620,8 @@ BOOST_AUTO_TEST_CASE(constexprPropertiesTests) {
   // Test transitions generation/evaluation algorithm equivalency for all
   BOOST_CHECK_MESSAGE(
     temple::all_of(
-      temple::TupleType::mapAllPairs<
-        Shapes::data::allShapeDataTypes,
+      temple::tuples::mapAllPairs<
+        shapes::data::allShapeDataTypes,
         LigandGainTest
       >()
     ),
@@ -635,21 +635,21 @@ template<typename ShapeClass>
 struct NumUnlinkedTestFunctor {
   static bool value() {
     for(unsigned i = 1; i < ShapeClass::size; ++i) {
-      unsigned constexprResult = constexprProperties::numUnlinkedStereopermutations<ShapeClass>(i);
+      unsigned constexprResult = constexpr_properties::numUnlinkedStereopermutations<ShapeClass>(i);
 
       unsigned dynamicResult = properties::numUnlinkedStereopermutations(ShapeClass::shape, i);
 
       if(constexprResult != dynamicResult) {
-        std::cout << "Mismatch for " << Shapes::name(ShapeClass::shape) << " and " << i << " identical ligands between constexpr and dynamic number of unlinked: " << constexprResult << " vs. " << dynamicResult << "\n";
+        std::cout << "Mismatch for " << shapes::name(ShapeClass::shape) << " and " << i << " identical ligands between constexpr and dynamic number of unlinked: " << constexprResult << " vs. " << dynamicResult << "\n";
         return false;
       }
 
       // Cross-check with constexpr hasMultiple
-      bool constexprHasMultiple = constexprProperties::hasMultipleUnlinkedStereopermutations<ShapeClass>(i);
+      bool constexprHasMultiple = constexpr_properties::hasMultipleUnlinkedStereopermutations<ShapeClass>(i);
       if((constexprResult > 1) != constexprHasMultiple) {
         std::cout << "Mismatch between constexpr count and constexpr "
           << "hasMultiple unlinked ligands for "
-          << Shapes::name(ShapeClass::shape) << " and "
+          << shapes::name(ShapeClass::shape) << " and "
           << i << " identical ligands: " << constexprResult << " and "
           << std::boolalpha << constexprHasMultiple << "\n";
         return false;
@@ -660,7 +660,7 @@ struct NumUnlinkedTestFunctor {
       if((constexprResult > 1) != dynamicHasMultiple) {
         std::cout << "Mismatch between constexpr count and dynamic "
           << "hasMultiple unlinked ligands for "
-          << Shapes::name(ShapeClass::shape) << " and "
+          << shapes::name(ShapeClass::shape) << " and "
           << i << " identical ligands: " << constexprResult << " and "
           << std::boolalpha << dynamicHasMultiple << "\n";
         return false;
@@ -693,17 +693,17 @@ BOOST_AUTO_TEST_CASE(numUnlinkedAlgorithms) {
 
   BOOST_CHECK_MESSAGE(
     temple::all_of(
-      temple::TupleType::map<TestTypes, NumUnlinkedTestFunctor>()
+      temple::tuples::map<TestTypes, NumUnlinkedTestFunctor>()
     ),
     "Not all numbers of unlinked stereopermutations match across constexpr "
     " and dynamic algorithms"
   );
 
-  BOOST_CHECK(properties::numUnlinkedStereopermutations(Shapes::Shape::Line, 0) == 1);
-  BOOST_CHECK(properties::numUnlinkedStereopermutations(Shapes::Shape::Bent, 0) == 1);
-  BOOST_CHECK(properties::numUnlinkedStereopermutations(Shapes::Shape::EquilateralTriangle, 0) == 1);
-  BOOST_CHECK(properties::numUnlinkedStereopermutations(Shapes::Shape::Tetrahedron, 0) == 2);
-  BOOST_CHECK(properties::numUnlinkedStereopermutations(Shapes::Shape::Octahedron, 0) == 30);
+  BOOST_CHECK(properties::numUnlinkedStereopermutations(shapes::Shape::Line, 0) == 1);
+  BOOST_CHECK(properties::numUnlinkedStereopermutations(shapes::Shape::Bent, 0) == 1);
+  BOOST_CHECK(properties::numUnlinkedStereopermutations(shapes::Shape::EquilateralTriangle, 0) == 1);
+  BOOST_CHECK(properties::numUnlinkedStereopermutations(shapes::Shape::Tetrahedron, 0) == 2);
+  BOOST_CHECK(properties::numUnlinkedStereopermutations(shapes::Shape::Octahedron, 0) == 30);
 }
 
 static_assert(
@@ -718,15 +718,15 @@ BOOST_AUTO_TEST_CASE(mappingsAreAvailable) {
    * a some optional
    */
   bool pass = true;
-  for(const auto& fromShape : Shapes::allShapes) {
+  for(const auto& fromShape : shapes::allShapes) {
     auto i = static_cast<unsigned>(fromShape);
-    for(const auto& toShape : Shapes::allShapes) {
+    for(const auto& toShape : shapes::allShapes) {
       auto j = static_cast<unsigned>(toShape);
       if(
         i < j
         && allMappings.at(i, j).hasValue()
           != static_cast<bool>(
-            Shapes::getMapping(fromShape, toShape)
+            shapes::getMapping(fromShape, toShape)
           )
       ) {
         pass = false;
@@ -743,17 +743,17 @@ BOOST_AUTO_TEST_CASE(mappingsAreAvailable) {
 #endif
 
 BOOST_AUTO_TEST_CASE(angleBoundsTests) {
-  BOOST_CHECK(Shapes::minimumAngle(Shapes::Shape::T) == M_PI / 2);
-  BOOST_CHECK(Shapes::maximumAngle(Shapes::Shape::T) == M_PI);
+  BOOST_CHECK(shapes::minimumAngle(shapes::Shape::T) == M_PI / 2);
+  BOOST_CHECK(shapes::maximumAngle(shapes::Shape::T) == M_PI);
 
-  BOOST_CHECK(Shapes::minimumAngle(Shapes::Shape::Octahedron) == M_PI / 2);
-  BOOST_CHECK(Shapes::maximumAngle(Shapes::Shape::Octahedron) == M_PI);
+  BOOST_CHECK(shapes::minimumAngle(shapes::Shape::Octahedron) == M_PI / 2);
+  BOOST_CHECK(shapes::maximumAngle(shapes::Shape::Octahedron) == M_PI);
 
-  BOOST_CHECK(Shapes::minimumAngle(Shapes::Shape::TrigonalBipyramid) == M_PI / 2);
-  BOOST_CHECK(Shapes::maximumAngle(Shapes::Shape::TrigonalBipyramid) == M_PI);
+  BOOST_CHECK(shapes::minimumAngle(shapes::Shape::TrigonalBipyramid) == M_PI / 2);
+  BOOST_CHECK(shapes::maximumAngle(shapes::Shape::TrigonalBipyramid) == M_PI);
 
   BOOST_CHECK(
-    Shapes::minimumAngle(Shapes::Shape::Tetrahedron) == Shapes::maximumAngle(Shapes::Shape::Tetrahedron)
+    shapes::minimumAngle(shapes::Shape::Tetrahedron) == shapes::maximumAngle(shapes::Shape::Tetrahedron)
   );
 }
 

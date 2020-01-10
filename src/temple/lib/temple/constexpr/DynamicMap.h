@@ -13,6 +13,7 @@
 #include "temple/constexpr/DynamicSet.h"
 #include "temple/constexpr/Pair.h"
 
+namespace Scine {
 namespace temple {
 
 /*! @brief A constexpr associative container with reasonably fast key-based lookup.
@@ -199,7 +200,7 @@ public:
 //!@}
 };
 
-
 } // namespace temple
+} // namespace Scine
 
 #endif

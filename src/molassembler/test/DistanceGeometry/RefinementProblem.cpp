@@ -33,7 +33,7 @@
 using namespace std::string_literals;
 using namespace Scine;
 using namespace molassembler;
-using namespace DistanceGeometry;
+using namespace distance_geometry;
 
 struct RefinementBaseData {
   DistanceBoundsMatrix distanceBounds;
@@ -57,9 +57,9 @@ struct RefinementBaseData {
   RefinementBaseData() = default;
 
   RefinementBaseData(const std::string& filename) {
-    Molecule molecule = IO::read(filename);
+    Molecule molecule = io::read(filename);
 
-    auto DgInfo = gatherDGInformation(molecule, DistanceGeometry::Configuration {});
+    auto DgInfo = gatherDGInformation(molecule, distance_geometry::Configuration {});
 
     distanceBounds = DistanceBoundsMatrix {
       molecule.graph().inner(),
@@ -426,7 +426,7 @@ BOOST_AUTO_TEST_CASE(RefinementProblemRotationalTranslationalInvariance) {
     // "EigenRefinementProblem<4, float, true>"
   };
 
-  auto passes = temple::TupleType::map<EigenRefinementTypeVariations, RotationalTranslationalInvarianceTest>();
+  auto passes = temple::tuples::map<EigenRefinementTypeVariations, RotationalTranslationalInvarianceTest>();
 
   for(unsigned i = 0; i < variations; ++i) {
     BOOST_CHECK_MESSAGE(
@@ -588,7 +588,7 @@ BOOST_AUTO_TEST_CASE(RefinementProblemEquivalence) {
     EigenRefinementProblem<4, double, true>
   >;
 
-  auto doublePasses = temple::TupleType::mapAllPairs<DoubleRefinementTypeVariations, CompareImplementations>();
+  auto doublePasses = temple::tuples::mapAllPairs<DoubleRefinementTypeVariations, CompareImplementations>();
 
   BOOST_CHECK_MESSAGE(
     temple::all_of(doublePasses),
@@ -600,7 +600,7 @@ BOOST_AUTO_TEST_CASE(RefinementProblemEquivalence) {
     EigenRefinementProblem<4, float, true>
   >;
 
-  auto floatPasses = temple::TupleType::mapAllPairs<FloatRefinementTypeVariations, CompareImplementations>();
+  auto floatPasses = temple::tuples::mapAllPairs<FloatRefinementTypeVariations, CompareImplementations>();
 
   BOOST_CHECK_MESSAGE(
     temple::all_of(floatPasses),

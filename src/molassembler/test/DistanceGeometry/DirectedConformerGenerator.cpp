@@ -40,7 +40,7 @@ BOOST_AUTO_TEST_CASE(DirectedConformerGeneration) {
     const unsigned numConsideredBonds,
     const unsigned idealEnsembleSize
   ) {
-    auto mol = IO::read(filename);
+    auto mol = io::read(filename);
     DirectedConformerGenerator generator(mol);
 
     BOOST_CHECK_MESSAGE(
@@ -63,7 +63,7 @@ BOOST_AUTO_TEST_CASE(DirectedConformerGeneration) {
     }
 
     // Make a strict configuration. 2000 steps should be enough, even for testosterone
-    DistanceGeometry::Configuration configuration {};
+    distance_geometry::Configuration configuration {};
     configuration.refinementStepLimit = 2000;
 
     /* Ensure we can make generate all conformers we have hypothesized exist */

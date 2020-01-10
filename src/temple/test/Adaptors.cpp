@@ -12,6 +12,8 @@
 
 #include <iostream>
 
+using namespace Scine;
+
 template<class Container>
 std::size_t iteratorDistance(const Container& container) {
   return std::distance(std::begin(container), std::end(container));

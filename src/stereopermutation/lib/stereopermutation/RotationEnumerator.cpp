@@ -12,9 +12,9 @@ namespace stereopermutation {
 
 RotationEnumerator::Link::Link(unsigned i, Stereopermutation s) : rotationIndex(i), permutation(std::move(s)) {}
 
-RotationEnumerator::RotationEnumerator(Stereopermutation initial, const Shapes::Shape s)
+RotationEnumerator::RotationEnumerator(Stereopermutation initial, const shapes::Shape s)
   : shape(s),
-    linkLimit(Shapes::rotations(shape).size())
+    linkLimit(shapes::rotations(shape).size())
 {
   chain.emplace_back(
     0u,
@@ -49,7 +49,7 @@ boost::optional<const Stereopermutation&> RotationEnumerator::next() {
   while(incrementable()) {
     const Link& lastLink = chain.back();
     Stereopermutation rotation = lastLink.permutation.applyPermutation(
-      Shapes::rotations(shape).at(lastLink.rotationIndex)
+      shapes::rotations(shape).at(lastLink.rotationIndex)
     );
 
     if(!contains(rotations, rotation)) {
@@ -72,7 +72,7 @@ const RotationEnumerator::RotationSetType& RotationEnumerator::all() {
   while(incrementable()) {
     const Link& lastLink = chain.back();
     Stereopermutation rotation = lastLink.permutation.applyPermutation(
-      Shapes::rotations(shape).at(lastLink.rotationIndex)
+      shapes::rotations(shape).at(lastLink.rotationIndex)
     );
 
     if(!contains(rotations, rotation)) {

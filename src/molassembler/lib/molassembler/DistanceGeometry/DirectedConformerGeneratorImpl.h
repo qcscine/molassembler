@@ -58,13 +58,13 @@ public:
 
   outcome::result<Utils::PositionCollection> generateRandomConformation(
     const DecisionList& decisionList,
-    const DistanceGeometry::Configuration& configuration
+    const distance_geometry::Configuration& configuration
   );
 
   outcome::result<Utils::PositionCollection> generateConformation(
     const DecisionList& decisionList,
     unsigned seed,
-    const DistanceGeometry::Configuration& configuration
+    const distance_geometry::Configuration& configuration
   );
 
   DecisionList getDecisionList(

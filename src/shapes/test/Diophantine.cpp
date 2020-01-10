@@ -7,7 +7,7 @@
 
 #include "shapes/Diophantine.h"
 
-using namespace Scine;
+using namespace Scine::shapes;
 
 BOOST_AUTO_TEST_CASE(Diophantine) {
   std::vector<unsigned> x;

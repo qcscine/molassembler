@@ -9,7 +9,6 @@
 #include "shapes/Properties.h"
 #include "shapes/PropertyCaching.h"
 #include "shapes/ContinuousMeasures.h"
-#include "CyclicPolygons.h"
 #include <Eigen/Dense>
 #include <Eigen/SparseCore>
 #include "stereopermutation/Manipulation.h"
@@ -45,17 +44,17 @@ namespace molassembler {
 
 namespace detail {
 
-Shapes::Shape pickTransition(
-  const Shapes::Shape shape,
+shapes::Shape pickTransition(
+  const shapes::Shape shape,
   const unsigned T,
   boost::optional<unsigned> removedSymmetryPositionOptional
 ) {
-  boost::optional<Shapes::properties::SymmetryTransitionGroup> bestTransition;
-  std::vector<Shapes::Shape> propositions;
+  boost::optional<shapes::properties::SymmetryTransitionGroup> bestTransition;
+  std::vector<shapes::Shape> propositions;
 
   auto replaceOrAdd = [&](
-    Shapes::Shape newName,
-    const Shapes::properties::SymmetryTransitionGroup& transitionGroup
+    shapes::Shape newName,
+    const shapes::properties::SymmetryTransitionGroup& transitionGroup
   ) {
     if(bestTransition){
       if(transitionGroup.angularDistortion < bestTransition->angularDistortion) {
@@ -73,12 +72,12 @@ Shapes::Shape pickTransition(
   };
 
   // Populate the list of shape with candidates
-  for(const Shapes::Shape propositionalShape : Shapes::allShapes) {
-    if(Shapes::size(propositionalShape) != T) {
+  for(const shapes::Shape propositionalShape : shapes::allShapes) {
+    if(shapes::size(propositionalShape) != T) {
       continue;
     }
 
-    if(auto transitionOptional = Shapes::getMapping(shape, propositionalShape, removedSymmetryPositionOptional)) {
+    if(auto transitionOptional = shapes::getMapping(shape, propositionalShape, removedSymmetryPositionOptional)) {
       if(transitionOptional->indexMappings.empty()) {
         continue;
       }
@@ -109,34 +108,34 @@ Shapes::Shape pickTransition(
    * preservation criteria.
    */
   if(propositions.empty()) {
-    return Shapes::properties::mostSymmetric(T);
+    return shapes::properties::mostSymmetric(T);
   }
 
-  return Shapes::properties::mostSymmetric(std::move(propositions));
+  return shapes::properties::mostSymmetric(std::move(propositions));
 }
 
-std::pair<Shapes::Shape, std::vector<unsigned>> classifyShape(const Eigen::Matrix<double, 3, Eigen::Dynamic>& sitePositions) {
+std::pair<shapes::Shape, std::vector<unsigned>> classifyShape(const Eigen::Matrix<double, 3, Eigen::Dynamic>& sitePositions) {
   const unsigned S = sitePositions.cols() - 1;
-  auto normalized = Shapes::continuous::normalize(sitePositions);
+  auto normalized = shapes::continuous::normalize(sitePositions);
 
-  std::vector<Shapes::Shape> viableShapes;
-  for(const Shapes::Shape shape : Shapes::allShapes) {
-    if(Shapes::size(shape) == S) {
+  std::vector<shapes::Shape> viableShapes;
+  for(const shapes::Shape shape : shapes::allShapes) {
+    if(shapes::size(shape) == S) {
       viableShapes.push_back(shape);
     }
   }
   const unsigned shapesCount = viableShapes.size();
-  std::vector<Shapes::continuous::ShapeResult> shapeMeasureResults (shapesCount);
+  std::vector<shapes::continuous::ShapeResult> shapeMeasureResults (shapesCount);
 
 #pragma omp parallel for
   for(unsigned i = 0; i < shapesCount; ++i) {
-    const Shapes::Shape candidateShape = viableShapes[i];
-    shapeMeasureResults[i] = Shapes::continuous::shapeCentroidLast(normalized, candidateShape);
+    const shapes::Shape candidateShape = viableShapes[i];
+    shapeMeasureResults[i] = shapes::continuous::shapeCentroidLast(normalized, candidateShape);
 
     // Bias shape classification against some shapes
-    if(candidateShape == Shapes::Shape::TrigonalPyramid) {
+    if(candidateShape == shapes::Shape::TrigonalPyramid) {
       shapeMeasureResults[i].measure *= 4;
-    } else if(candidateShape == Shapes::Shape::Seesaw) {
+    } else if(candidateShape == shapes::Shape::Seesaw) {
       shapeMeasureResults[i].measure *= 2;
     }
   }
@@ -161,7 +160,7 @@ std::pair<Shapes::Shape, std::vector<unsigned>> classifyShape(const Eigen::Matri
   );
 
   const unsigned minimalShapeIndex = minElementIter - std::begin(shapeMeasureResults);
-  const Shapes::Shape minimalShape = viableShapes.at(minimalShapeIndex);
+  const shapes::Shape minimalShape = viableShapes.at(minimalShapeIndex);
   return std::make_pair(
     minimalShape,
     std::move(minElementIter->mapping)
@@ -170,16 +169,16 @@ std::pair<Shapes::Shape, std::vector<unsigned>> classifyShape(const Eigen::Matri
 
 } // namespace detail
 
-Shapes::Shape AtomStereopermutator::Impl::up(const Shapes::Shape shape) {
-  return detail::pickTransition(shape, Shapes::size(shape) + 1, boost::none);
+shapes::Shape AtomStereopermutator::Impl::up(const shapes::Shape shape) {
+  return detail::pickTransition(shape, shapes::size(shape) + 1, boost::none);
 }
 
-Shapes::Shape AtomStereopermutator::Impl::down(const Shapes::Shape shape, const unsigned removedShapePosition) {
-  return detail::pickTransition(shape, Shapes::size(shape) - 1, removedShapePosition);
+shapes::Shape AtomStereopermutator::Impl::down(const shapes::Shape shape, const unsigned removedShapePosition) {
+  return detail::pickTransition(shape, shapes::size(shape) - 1, removedShapePosition);
 }
 
 boost::optional<std::vector<unsigned>> AtomStereopermutator::Impl::getIndexMapping(
-  const Shapes::properties::SymmetryTransitionGroup& mappingsGroup,
+  const shapes::properties::SymmetryTransitionGroup& mappingsGroup,
   const ChiralStatePreservation& preservationOption
 ) {
   if(mappingsGroup.indexMappings.empty()) {
@@ -217,7 +216,7 @@ boost::optional<std::vector<unsigned>> AtomStereopermutator::Impl::getIndexMappi
 bool AtomStereopermutator::Impl::thermalized(
   const OuterGraph& graph,
   const AtomIndex centerAtom,
-  const Shapes::Shape shape,
+  const shapes::Shape shape,
   const RankingInformation& ranking,
   const TemperatureRegime temperature
 ) {
@@ -231,7 +230,7 @@ bool AtomStereopermutator::Impl::thermalized(
 
   if(
     isNitrogenIsotope
-    && shape == Shapes::Shape::VacantTetrahedron
+    && shape == shapes::Shape::VacantTetrahedron
   ) {
     // Generally thermalized, except if in a small cycle
     if(
@@ -251,8 +250,8 @@ bool AtomStereopermutator::Impl::thermalized(
   // Berry pseudorotation and Bartell mechanism
   if(
     ranking.links.empty() && (
-      shape == Shapes::Shape::PentagonalBipyramid
-      || shape == Shapes::Shape::TrigonalBipyramid
+      shape == shapes::Shape::PentagonalBipyramid
+      || shape == shapes::Shape::TrigonalBipyramid
     )
   ) {
     return true;
@@ -265,7 +264,7 @@ bool AtomStereopermutator::Impl::thermalized(
 AtomStereopermutator::Impl::Impl(
   const OuterGraph& graph,
   // The symmetry of this Stereopermutator
-  const Shapes::Shape shape,
+  const shapes::Shape shape,
   // The atom this Stereopermutator is centered on
   const AtomIndex centerAtom,
   // Ranking information of substituents
@@ -352,7 +351,7 @@ void AtomStereopermutator::Impl::applyPermutation(const std::vector<AtomIndex>& 
 boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Impl::propagate(
   const OuterGraph& graph,
   RankingInformation newRanking,
-  boost::optional<Shapes::Shape> shapeOption
+  boost::optional<shapes::Shape> shapeOption
 ) {
   // If nothing changes, nothing changes, and you don't get any internal state
   if(newRanking == _ranking) {
@@ -493,7 +492,7 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
   }
 
   /* Decide the new shape */
-  Shapes::Shape newShape = shapeOption.value_or_eval(
+  shapes::Shape newShape = shapeOption.value_or_eval(
     [&]() {
       if(siteCountChange == +1) {
         return up(_shape);
@@ -518,19 +517,19 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
       }
 
       // Just return the most symmetric symmetry of the target size
-      return Shapes::properties::mostSymmetric(
+      return shapes::properties::mostSymmetric(
         newRanking.sites.size()
       );
     }
   );
 
   /* Generate new assignments */
-  AbstractStereopermutations newAbstract {
+  stereopermutators::Abstract newAbstract {
     newRanking,
     newShape
   };
 
-  FeasibleStereopermutations newFeasible {
+  stereopermutators::Feasible newFeasible {
     newAbstract,
     newShape,
     _centerAtom,
@@ -561,7 +560,7 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
        * returns boost::none, the whole expression is boost::none.
        */
       auto suitableMappingOption = temple::optionals::flatMap(
-        Shapes::getMapping(_shape, newShape, boost::none),
+        shapes::getMapping(_shape, newShape, boost::none),
         [](const auto& mappingOption) {
           return getIndexMapping(
             mappingOption,
@@ -577,7 +576,7 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
         const auto& symmetryMapping = suitableMappingOption.value();
 
         // Apply the mapping to get old symmetry positions at their places in the new symmetry
-        auto oldSymmetryPositionsInNewSymmetry = Shapes::properties::applyIndexMapping(
+        auto oldSymmetryPositionsInNewSymmetry = shapes::properties::applyIndexMapping(
           newShape,
           symmetryMapping
         );
@@ -612,7 +611,7 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
        * returns boost::none, the whole expression is boost::none.
        */
       auto suitableMappingOptional = temple::optionals::flatMap(
-        Shapes::getMapping(
+        shapes::getMapping(
           _shape,
           newShape,
           /* Last parameter is the deleted symmetry position, which is the
@@ -647,8 +646,8 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
         }
 
         // Transfer site indices from current shape to new shape
-        sitesAtNewShapeVertices.resize(Shapes::size(newShape));
-        for(unsigned i = 0; i < Shapes::size(newShape); ++i) {
+        sitesAtNewShapeVertices.resize(shapes::size(newShape));
+        for(unsigned i = 0; i < shapes::size(newShape); ++i) {
           // i is a symmetry position
           sitesAtNewShapeVertices.at(i) = oldShapeVertexToSiteMap.at(
             symmetryMapping.at(i)
@@ -672,7 +671,7 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
       auto siteMapping = temple::map(oldSites, temple::functor::indexIn(newRanking.sites));
 
       // Write the found mapping into sitesAtNewShapeVertices
-      sitesAtNewShapeVertices.resize(Shapes::size(newShape));
+      sitesAtNewShapeVertices.resize(shapes::size(newShape));
       for(unsigned i = 0; i < siteMapping.size(); ++i) {
         sitesAtNewShapeVertices.at(i) = siteMapping.at(
           _shapePositionMap.at(i)
@@ -693,7 +692,7 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
       // Calculate the mapping from old sites to new ones
       auto siteMapping = temple::map(oldSites, temple::functor::indexIn(newRanking.sites));
 
-      sitesAtNewShapeVertices.resize(Shapes::size(newShape));
+      sitesAtNewShapeVertices.resize(shapes::size(newShape));
       // Transfer sites to new mapping
       for(unsigned i = 0; i < siteMapping.size(); ++i) {
         sitesAtNewShapeVertices.at(i) = siteMapping.at(
@@ -725,7 +724,7 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
 
     if(!sitesAtNewShapeVertices.empty()) {
       // Replace the site indices by their new ranking characters
-      auto newStereopermutationCharacters = AbstractStereopermutations::makeStereopermutationCharacters(
+      auto newStereopermutationCharacters = stereopermutators::Abstract::makeStereopermutationCharacters(
         newAbstract.canonicalSites,
         newAbstract.symbolicCharacters,
         sitesAtNewShapeVertices
@@ -854,11 +853,11 @@ void AtomStereopermutator::Impl::propagateVertexRemoval(const AtomIndex removedI
   }
 }
 
-const AbstractStereopermutations& AtomStereopermutator::Impl::getAbstract() const {
+const stereopermutators::Abstract& AtomStereopermutator::Impl::getAbstract() const {
   return _abstract;
 }
 
-const FeasibleStereopermutations& AtomStereopermutator::Impl::getFeasible() const {
+const stereopermutators::Feasible& AtomStereopermutator::Impl::getFeasible() const {
   return _feasible;
 }
 
@@ -866,7 +865,7 @@ const RankingInformation& AtomStereopermutator::Impl::getRanking() const {
   return _ranking;
 }
 
-Shapes::Shape AtomStereopermutator::Impl::getShape() const {
+shapes::Shape AtomStereopermutator::Impl::getShape() const {
   return _shape;
 }
 
@@ -885,11 +884,11 @@ void AtomStereopermutator::Impl::fit(
   const OuterGraph& graph,
   const AngstromWrapper& angstromWrapper
 ) {
-  const unsigned S = Shapes::size(_shape);
+  const unsigned S = shapes::size(_shape);
   assert(S == _ranking.sites.size());
 
   // Save stereopermutator state to return to if no fit is viable
-  const Shapes::Shape priorShape = _shape;
+  const shapes::Shape priorShape = _shape;
   const boost::optional<unsigned> priorStereopermutation  = _assignmentOption;
 
   // For all atoms making up a site, decide on the spatial average position
@@ -901,7 +900,7 @@ void AtomStereopermutator::Impl::fit(
   sitePositions.col(S) = angstromWrapper.positions.row(_centerAtom);
 
   // Classify the shape and set it
-  Shapes::Shape fittedShape;
+  shapes::Shape fittedShape;
   std::vector<unsigned> matchingMapping;
   std::tie(fittedShape, matchingMapping) = detail::classifyShape(sitePositions);
   /* Drop the centroid, making the remaining sequence viable as an index mapping
@@ -979,7 +978,7 @@ double AtomStereopermutator::Impl::angle(
   assert(i != j);
   assert(!_shapePositionMap.empty());
 
-  return Shapes::angleFunction(_shape)(
+  return shapes::angleFunction(_shape)(
     _shapePositionMap.at(i),
     _shapePositionMap.at(j)
   );
@@ -1049,7 +1048,7 @@ AtomStereopermutator::Impl::minimalChiralConstraints(bool enforce) const {
     );
 
     // Get list of tetrahedra from symmetry
-    const auto& tetrahedraList = Shapes::tetrahedra(_shape);
+    const auto& tetrahedraList = shapes::tetrahedra(_shape);
 
     precursors.reserve(tetrahedraList.size());
     for(const auto& tetrahedron : tetrahedraList) {
@@ -1080,7 +1079,7 @@ AtomStereopermutator::Impl::minimalChiralConstraints(bool enforce) const {
 
 std::string AtomStereopermutator::Impl::info() const {
   std::string returnString = "A on "s
-    + std::to_string(_centerAtom) + " ("s + Shapes::name(_shape) +", "s;
+    + std::to_string(_centerAtom) + " ("s + shapes::name(_shape) +", "s;
 
   const auto& characters = _abstract.symbolicCharacters;
   std::copy(
@@ -1144,7 +1143,7 @@ unsigned AtomStereopermutator::Impl::numStereopermutations() const {
 }
 
 void AtomStereopermutator::Impl::setShape(
-  const Shapes::Shape shape,
+  const shapes::Shape shape,
   const OuterGraph& graph
 ) {
   if(_shape == shape) {
@@ -1154,12 +1153,12 @@ void AtomStereopermutator::Impl::setShape(
 
   _shape = shape;
 
-  _abstract = AbstractStereopermutations {
+  _abstract = stereopermutators::Abstract {
     _ranking,
     _shape
   };
 
-  _feasible = FeasibleStereopermutations {
+  _feasible = stereopermutators::Feasible {
     _abstract,
     _shape,
     _centerAtom,

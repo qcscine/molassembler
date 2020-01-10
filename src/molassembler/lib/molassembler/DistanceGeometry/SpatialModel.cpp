@@ -32,7 +32,7 @@
 #include "molassembler/Graph/InnerGraph.h"
 #include "molassembler/Log.h"
 #include "molassembler/Modeling/CommonTrig.h"
-#include "molassembler/Modeling/LocalGeometryModel.h"
+#include "molassembler/Modeling/ShapeInference.h"
 #include "molassembler/Molecule/MolGraphWriter.h"
 #include "molassembler/RankingInformation.h"
 #include "molassembler/Stereopermutators/FeasiblePermutations.h"
@@ -74,7 +74,7 @@ struct SymmetryMapHelper {
   }
 };
 
-namespace DistanceGeometry {
+namespace distance_geometry {
 
 // General availability of static constexpr members
 constexpr double SpatialModel::bondRelativeVariance;
@@ -394,7 +394,7 @@ void SpatialModel::addAtomStereopermutatorInformation(
         [&](const AtomIndex i, const AtomIndex j) {
           setAngleBoundsIfEmpty(
             orderedSequence(i, centerAtom, j),
-            DistanceGeometry::ValueBounds {
+            distance_geometry::ValueBounds {
               0,
               std::min(M_PI, 2 * coneAngleBounds.upper)
             }
@@ -480,9 +480,9 @@ void SpatialModel::addAtomStereopermutatorInformation(
   /* Add weak (low weight) planarity-enforcing chiral constraints if the shape
    * is planar and has more than two vertices
    */
-  const Shapes::Shape shape = permutator.getShape();
-  const unsigned S = Shapes::size(shape);
-  if(!Shapes::threeDimensional(shape) && S > 2) {
+  const shapes::Shape shape = permutator.getShape();
+  const unsigned S = shapes::size(shape);
+  if(!shapes::threeDimensional(shape) && S > 2) {
     constexpr double tolerance = 0.1;
     constexpr double weight = 0.01;
 
@@ -839,7 +839,7 @@ SpatialModel::BoundsMatrix SpatialModel::makePairwiseBounds(
 
 double SpatialModel::siteCentralAngle(
   const AtomIndex centralIndex,
-  const Shapes::Shape& shape,
+  const shapes::Shape& shape,
   const RankingInformation& ranking,
   const std::vector<unsigned>& shapeVertexMap,
   const std::pair<unsigned, unsigned>& sites,
@@ -849,7 +849,7 @@ double SpatialModel::siteCentralAngle(
    * shape angle towards lower angles for small cycles under specific
    * circumstances.
    */
-  const double idealAngle = Shapes::angleFunction(shape)(
+  const double idealAngle = shapes::angleFunction(shape)(
     shapeVertexMap.at(sites.first),
     shapeVertexMap.at(sites.second)
   );
@@ -866,7 +866,7 @@ double SpatialModel::siteCentralAngle(
   if(
     ranking.sites.at(sites.first).size() > 1
     || ranking.sites.at(sites.second).size() > 1
-    || idealAngle != Shapes::minimumAngle(shape)
+    || idealAngle != shapes::minimumAngle(shape)
   ) {
     return idealAngle;
   }
@@ -945,7 +945,7 @@ double SpatialModel::siteCentralAngle(
   }
 
   // Model the cyclic polygon
-  auto internalAngles = CyclicPolygons::internalAngles(
+  auto internalAngles = cyclic_polygons::internalAngles(
     temple::map(
       minimalCycle,
       [&](const BondIndex& bond) -> double {
@@ -983,7 +983,7 @@ ValueBounds SpatialModel::modelSiteAngleBounds(
 ) {
   assert(permutator.assigned());
 
-  const FeasibleStereopermutations& feasiblePermutations = permutator.getFeasible();
+  const stereopermutators::Feasible& feasiblePermutations = permutator.getFeasible();
 
   /* The idealized shape angles are modified by the upper (!) cone angles
    * at each site, not split between lower and upper.
@@ -1064,7 +1064,7 @@ ChiralConstraint SpatialModel::makeChiralConstraint(
    * definition sequence. boost::none means the central atom.
    */
   for(unsigned i = 0; i < 4; ++i) {
-    boost::optional<DistanceGeometry::ValueBounds> iBounds;
+    boost::optional<distance_geometry::ValueBounds> iBounds;
     if(minimalConstraint.at(i)) {
       iBounds = feasiblePermutations.siteDistances.at(
         minimalConstraint.at(i).value()
@@ -1072,7 +1072,7 @@ ChiralConstraint SpatialModel::makeChiralConstraint(
     }
 
     for(unsigned j = i + 1; j < 4; ++j) {
-      boost::optional<DistanceGeometry::ValueBounds> jBounds;
+      boost::optional<distance_geometry::ValueBounds> jBounds;
       if(minimalConstraint.at(j)) {
         jBounds = feasiblePermutations.siteDistances.at(
           minimalConstraint.at(j).value()
@@ -1081,7 +1081,7 @@ ChiralConstraint SpatialModel::makeChiralConstraint(
 
       assert(iBounds || jBounds);
 
-      DistanceGeometry::ValueBounds oneThreeDistanceBounds;
+      distance_geometry::ValueBounds oneThreeDistanceBounds;
       if(iBounds && jBounds) {
         /* If neither index is the central atom, we can calculate an
          * expected one-three distance
@@ -1174,11 +1174,11 @@ SpatialModel::BoundsMatrix SpatialModel::makePairwiseBounds() const {
   );
 }
 
-std::vector<DistanceGeometry::ChiralConstraint> SpatialModel::getChiralConstraints() const {
+std::vector<distance_geometry::ChiralConstraint> SpatialModel::getChiralConstraints() const {
   return _chiralConstraints;
 }
 
-std::vector<DistanceGeometry::DihedralConstraint> SpatialModel::getDihedralConstraints() const {
+std::vector<distance_geometry::DihedralConstraint> SpatialModel::getDihedralConstraints() const {
   return _dihedralConstraints;
 }
 
@@ -1210,7 +1210,7 @@ struct SpatialModel::ModelGraphWriter final : public MolGraphWriter {
     const AtomStereopermutator& permutator
   ) const final {
     std::vector<std::string> tooltips;
-    tooltips.emplace_back(Shapes::name(permutator.getShape()));
+    tooltips.emplace_back(shapes::name(permutator.getShape()));
     tooltips.emplace_back(permutator.info());
 
     for(const auto& angleIterPair : spatialModel._angleBounds) {
@@ -1430,7 +1430,7 @@ boost::optional<ValueBounds> SpatialModel::coneAngle(
       }
     );
 
-    auto lowerCircumradiusResult = CyclicPolygons::detail::convexCircumradius(
+    auto lowerCircumradiusResult = cyclic_polygons::detail::convexCircumradius(
       temple::map(
         distances,
         [&](const double distance) -> double {
@@ -1439,7 +1439,7 @@ boost::optional<ValueBounds> SpatialModel::coneAngle(
       )
     );
 
-    auto upperCircumradiusResult = CyclicPolygons::detail::convexCircumradius(
+    auto upperCircumradiusResult = cyclic_polygons::detail::convexCircumradius(
       temple::map(
         distances,
         [&](const double distance) -> double {
@@ -1634,7 +1634,7 @@ void SpatialModel::checkFixedPositionsPreconditions(
         }
       );
 
-      if(1 < numFixedSites && numFixedSites < Shapes::size(stereopermutatorOption->getShape())) {
+      if(1 < numFixedSites && numFixedSites < shapes::size(stereopermutatorOption->getShape())) {
         throw std::runtime_error(
           "DG preconditions for fixed atoms are not met: A non-terminal atom "
           "does not have 0, 1 or all binding sites fixed."
@@ -1814,7 +1814,7 @@ void SpatialModel::_modelFlatCycles(
       /* First, we fetch the angles that maximize the cycle area using the
        * cyclic polygon library.
        */
-      const auto cycleInternalAngles = CyclicPolygons::internalAngles(
+      const auto cycleInternalAngles = cyclic_polygons::internalAngles(
         // Map sequential index pairs to their purported bond length
         temple::map(
           temple::adaptors::cyclicFrame<2>(indexSequence),
@@ -1902,7 +1902,7 @@ void SpatialModel::_modelSpirocenters(
 
     // Skip any stereopermutators that do not match our conditions
     if(
-      stereopermutator.getShape() != Shapes::Shape::Tetrahedron
+      stereopermutator.getShape() != shapes::Shape::Tetrahedron
       || cycleData.numCycleFamilies(i) != 2
     ) {
       continue;
@@ -2054,6 +2054,6 @@ void SpatialModel::_modelSpirocenters(
   }
 }
 
-} // namespace DistanceGeometry
+} // namespace distance_geometry
 } // namespace molassembler
 } // namespace Scine

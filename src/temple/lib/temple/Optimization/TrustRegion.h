@@ -15,8 +15,8 @@
 
 #include <iostream>
 
+namespace Scine {
 namespace temple {
-
 namespace detail {
 
 template<typename Derived>
@@ -323,5 +323,6 @@ private:
 };
 
 } // namespace temple
+} // namespace Scine
 
 #endif

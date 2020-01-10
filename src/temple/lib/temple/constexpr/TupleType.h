@@ -11,10 +11,11 @@
 
 #include <tuple>
 
+namespace Scine {
 namespace temple {
 
-namespace TupleType {
-
+//! @brief template metaprogramming metafunctions on tuple types
+namespace tuples {
 namespace detail {
 
 //! Value variant handler for functions, returns the function call result.
@@ -194,8 +195,8 @@ struct RepeatType {
   );
 };
 
-} // namespace TupleType
-
+} // namespace tuples
 } // namespace temple
+} // namespace Scine
 
 #endif

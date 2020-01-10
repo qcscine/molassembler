@@ -7,35 +7,35 @@
 
 #include <iostream>
 
-#include "molassembler/Modeling/LocalGeometryModel.h"
+#include "molassembler/Modeling/ShapeInference.h"
 #include "shapes/Data.h"
 
 using namespace Scine;
 using namespace molassembler;
-using namespace LocalGeometry;
+using namespace shape_inference;
 
 using TestCaseType = std::tuple<
   std::string, // a Name for the current compound
   Utils::ElementType, // The central atom type
-  std::vector<BindingSiteInformation>, // a list of ligand types
+  std::vector<BindingSite>, // a list of ligand types
   int // charge centered on the central atom
 >;
 
 // Runs a specific test case type
 void testVsepr(
-  const Shapes::Shape& expectedShapeName,
+  const shapes::Shape& expectedShapeName,
   const std::vector<TestCaseType>& testCases
 ) {
   std::string complexName;
   int charge;
-  std::vector<BindingSiteInformation> ligands;
+  std::vector<BindingSite> ligands;
   Utils::ElementType centerAtomType;
 
   for(const auto& testCase : testCases) {
 
     std::tie(complexName, centerAtomType, ligands, charge) = testCase;
 
-    boost::optional<Shapes::Shape> shape;
+    boost::optional<shapes::Shape> shape;
 
     try {
       shape = vsepr(
@@ -58,9 +58,9 @@ void testVsepr(
       BOOST_CHECK_MESSAGE(
         shape.value() == expectedShapeName,
         complexName << " has been determined as "
-          << Shapes::name(shape.value())
+          << shapes::name(shape.value())
           << ", expected: "
-          << Shapes::name(expectedShapeName)
+          << shapes::name(expectedShapeName)
       );
     }
   }
@@ -73,7 +73,7 @@ auto makeLigand(
   const Utils::ElementType& type,
   const BondType& bty
 ) {
-  return BindingSiteInformation {
+  return BindingSite {
     L,
     X,
     {type},
@@ -82,19 +82,19 @@ auto makeLigand(
 }
 
 // Helper function to compose ligand situations
-std::vector<BindingSiteInformation> repeat(
-  const BindingSiteInformation& ligand,
+std::vector<BindingSite> repeat(
+  const BindingSite& ligand,
   const unsigned N
 ) {
-  return std::vector<BindingSiteInformation> (N, ligand);
+  return std::vector<BindingSite> (N, ligand);
 }
 
 // Helper function to compose ligand situations
-std::vector<BindingSiteInformation> merge(
-  const std::vector<BindingSiteInformation>& a,
-  const std::vector<BindingSiteInformation>& b
+std::vector<BindingSite> merge(
+  const std::vector<BindingSite>& a,
+  const std::vector<BindingSite>& b
 ) {
-  std::vector<BindingSiteInformation> ret = a;
+  std::vector<BindingSite> ret = a;
   std::copy(
     b.begin(),
     b.end(),
@@ -108,7 +108,7 @@ BOOST_AUTO_TEST_CASE(VseprTests) {
   using Element = Utils::ElementType;
 
   testVsepr( // AX2E0
-    Shapes::Shape::Line,
+    shapes::Shape::Line,
     {
       TestCaseType {
         "CO2",
@@ -141,7 +141,7 @@ BOOST_AUTO_TEST_CASE(VseprTests) {
   );
 
   testVsepr( // AX3E0
-    Shapes::Shape::EquilateralTriangle,
+    shapes::Shape::EquilateralTriangle,
     {
       TestCaseType {
         "BCl3",
@@ -175,7 +175,7 @@ BOOST_AUTO_TEST_CASE(VseprTests) {
   );
 
   testVsepr( // AX2E1 (V-shape / Bent)
-    Shapes::Shape::Bent,
+    shapes::Shape::Bent,
     {
       TestCaseType {
         "SO2",
@@ -222,7 +222,7 @@ BOOST_AUTO_TEST_CASE(VseprTests) {
   );
 
   testVsepr( // AX4E0
-    Shapes::Shape::Tetrahedron,
+    shapes::Shape::Tetrahedron,
     {
       TestCaseType {
         "CH4",
@@ -268,7 +268,7 @@ BOOST_AUTO_TEST_CASE(VseprTests) {
   );
 
   testVsepr( // AX3E1
-    Shapes::Shape::VacantTetrahedron,
+    shapes::Shape::VacantTetrahedron,
     {
       TestCaseType {
         "NH3",
@@ -292,7 +292,7 @@ BOOST_AUTO_TEST_CASE(VseprTests) {
   );
 
   testVsepr( // AX2E2
-    Shapes::Shape::Bent,
+    shapes::Shape::Bent,
     {
       TestCaseType {
         "OH2",
@@ -307,7 +307,7 @@ BOOST_AUTO_TEST_CASE(VseprTests) {
   );
 
   testVsepr(
-    Shapes::Shape::TrigonalBipyramid,
+    shapes::Shape::TrigonalBipyramid,
     {
       TestCaseType {
         "PCl5",
@@ -322,7 +322,7 @@ BOOST_AUTO_TEST_CASE(VseprTests) {
   );
 
   testVsepr(
-    Shapes::Shape::Seesaw,
+    shapes::Shape::Seesaw,
     {
       TestCaseType {
         "SF4",
@@ -337,7 +337,7 @@ BOOST_AUTO_TEST_CASE(VseprTests) {
   );
 
   testVsepr(
-    Shapes::Shape::T,
+    shapes::Shape::T,
     {
       TestCaseType {
         "ClF3",
@@ -352,7 +352,7 @@ BOOST_AUTO_TEST_CASE(VseprTests) {
   );
 
   testVsepr( // AX2E3
-    Shapes::Shape::Line,
+    shapes::Shape::Line,
     {
       TestCaseType {
         "I3-",
@@ -376,7 +376,7 @@ BOOST_AUTO_TEST_CASE(VseprTests) {
   );
 
   testVsepr(
-    Shapes::Shape::Octahedron,
+    shapes::Shape::Octahedron,
     {
       TestCaseType {
         "SF6",
@@ -391,7 +391,7 @@ BOOST_AUTO_TEST_CASE(VseprTests) {
   );
 
   testVsepr(
-    Shapes::Shape::SquarePyramid,
+    shapes::Shape::SquarePyramid,
     {
       TestCaseType {
         "BrF5",
@@ -406,7 +406,7 @@ BOOST_AUTO_TEST_CASE(VseprTests) {
   );
 
   testVsepr(
-    Shapes::Shape::Square,
+    shapes::Shape::Square,
     {
       TestCaseType {
         "XeF4",
@@ -421,7 +421,7 @@ BOOST_AUTO_TEST_CASE(VseprTests) {
   );
 
   testVsepr(
-    Shapes::Shape::PentagonalBipyramid,
+    shapes::Shape::PentagonalBipyramid,
     {
       TestCaseType {
         "IF7",
@@ -436,7 +436,7 @@ BOOST_AUTO_TEST_CASE(VseprTests) {
   );
 
   testVsepr(
-    Shapes::Shape::PentagonalPyramid,
+    shapes::Shape::PentagonalPyramid,
     {
       TestCaseType {
         "XeOF5^-",
@@ -457,7 +457,7 @@ BOOST_AUTO_TEST_CASE(VseprTests) {
   );
 
   testVsepr(
-    Shapes::Shape::Pentagon,
+    shapes::Shape::Pentagon,
     {
       TestCaseType {
         "XeF5-",
@@ -472,7 +472,7 @@ BOOST_AUTO_TEST_CASE(VseprTests) {
   );
 
   testVsepr(
-    Shapes::Shape::SquareAntiprism,
+    shapes::Shape::SquareAntiprism,
     {
       TestCaseType {
         "XeF8^2-",
@@ -496,7 +496,7 @@ BOOST_AUTO_TEST_CASE(VseprTests) {
 
   // dative bonding
   testVsepr(
-    Shapes::Shape::Tetrahedron,
+    shapes::Shape::Tetrahedron,
     {
       TestCaseType {
         "H3N -> BF3, on N",

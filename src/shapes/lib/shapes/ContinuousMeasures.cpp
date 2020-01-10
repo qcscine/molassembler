@@ -19,7 +19,7 @@
 #include <Eigen/Eigenvalues>
 
 namespace Scine {
-namespace Shapes {
+namespace shapes {
 namespace continuous {
 
 using Matrix = Eigen::Matrix<double, 3, Eigen::Dynamic>;
@@ -1622,5 +1622,5 @@ double minimalDistortionPathDeviation(
 }
 
 } // namespace continuous
-} // namespace Shapes
+} // namespace shapes
 } // namespace Scine

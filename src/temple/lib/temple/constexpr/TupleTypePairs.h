@@ -10,10 +10,9 @@
 #include "temple/constexpr/UpperTriangularMatrix.h"
 #include "temple/constexpr/TupleType.h"
 
+namespace Scine {
 namespace temple {
-
-namespace TupleType {
-
+namespace tuples {
 namespace detail {
 
 /*!
@@ -80,8 +79,8 @@ template<
   );
 }
 
-} // namespace TupleType
-
+} // namespace tuples
 } // namespace temple
+} // namespace Scine
 
 #endif

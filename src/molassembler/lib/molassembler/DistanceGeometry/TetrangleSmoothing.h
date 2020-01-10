@@ -11,7 +11,7 @@
 
 namespace Scine {
 namespace molassembler {
-namespace DistanceGeometry {
+namespace distance_geometry {
 
 /**
  * @brief Smoothes the bounds matrix using tetrangle inequalities
@@ -28,7 +28,7 @@ namespace DistanceGeometry {
  */
 unsigned tetrangleSmooth(Eigen::Ref<Eigen::MatrixXd> bounds);
 
-} // namespace DistanceGeometry
+} // namespace distance_geometry
 } // namespace molassembler
 } // namespace Scine
 

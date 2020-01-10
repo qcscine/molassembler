@@ -47,12 +47,12 @@ BOOST_AUTO_TEST_CASE(FixedPositionsWork) {
     return pass;
   };
 
-  auto octadecane = IO::read("various/octadecane.mol");
+  auto octadecane = io::read("various/octadecane.mol");
 
   // Start simple: make an arbitrary atom the origin.
   const Utils::Position origin(0.0, 0.0, 0.0);
 
-  DistanceGeometry::Configuration config;
+  distance_geometry::Configuration config;
   config.fixedPositions = {{13, origin}};
 
   auto conformerResult = generateRandomConformation(octadecane, config);

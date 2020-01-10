@@ -7,14 +7,12 @@
 #include <vector>
 
 namespace Scine {
+namespace shapes {
 
 /*! @brief Functions to help treat a particular linear diophantine equation
  *
- * Here we want to treat a special case of the linear diophantine equation:
- *
- * sum_i a_i * x_i = b
- *
- * with a_i > 0 and x_i >= 0.
+ * Here we want to treat a special case of the linear diophantine equation
+ * @math{\sum_i a_i x_i = b} with @math{a_i > 0} and @math{x_i >= 0}.
  */
 namespace diophantine {
 
@@ -24,7 +22,7 @@ namespace diophantine {
  *   value constraints. The list may not be empty, though.
  * @param b The sought inner product result.
  *
- * @returns whether gcd(a_1, ..., a_n) is a divisor of b. If so, the diophantine
+ * @returns whether `gcd(a_1, ..., a_n)` is a divisor of b. If so, the diophantine
  *   has a solution.
  */
 bool has_solution(
@@ -53,11 +51,11 @@ bool has_solution(
  * @warning Solutions to diophantines, even particularly easy ones like this
  * constrained, linear diophantine, are generally complex. The approach taken
  * here is more or less brute-force enumeration and does not scale well for
- * many coefficients @p a! See https://arxiv.org/pdf/math/0010134.pdf for a
- * sketch on how this would be properly solved.
+ * many coefficients `a`! See https://arxiv.org/pdf/math/0010134.pdf for a
+ * sketch on how this could be properly solved.
  *
  * @param x Filled coefficient vector of equal size as a, whose values
- *   represent a solution to the diophantine (i.e. inner_product(a, x) == b)
+ *   represent a solution to the diophantine (i.e. `inner_product(a, x) == b`)
  * @param a The constant coefficients, strictly descending (no duplicate
  *   values) and non-zero.
  * @param b The sought inner product result
@@ -89,8 +87,8 @@ bool next_solution(
  * @warning Solutions to diophantines, even particularly easy ones like this
  * constrained, linear diophantine, are generally complex. The approach taken
  * here is more or less brute-force enumeration and does not scale well for
- * many coefficients @p a! See https://arxiv.org/pdf/math/0010134.pdf for a
- * sketch on how this would be properly solved.
+ * many coefficients @p `a`! See https://arxiv.org/pdf/math/0010134.pdf for a
+ * sketch on how this could be properly solved.
  *
  * @param x Vector to store the first solution into (resize and fill is handled
  *   by this function)
@@ -105,4 +103,5 @@ bool first_solution(
 );
 
 } // namespace diophantine
+} // namespace shapes
 } // namespace Scine

@@ -14,11 +14,14 @@
 namespace Scine {
 namespace molassembler {
 
+//! @brief Stereopermutator implementation details
+namespace stereopermutators {
+
 /**
  * @brief Class to compute the set of abstract permutations from ranking
  *   and shape
  */
-struct AbstractStereopermutations {
+struct Abstract {
 //!@name Static functions
 //!@{
   /*!
@@ -94,7 +97,7 @@ struct AbstractStereopermutations {
 //!@name Constructors
 //!@{
   //! Empty initializer, all data members are nulled
-  AbstractStereopermutations() = default;
+  Abstract() = default;
 
   /**
    * @brief Generates the set of abstract stereopermutations and intermediate
@@ -106,9 +109,9 @@ struct AbstractStereopermutations {
    *    substituents and sites
    * @param shape Shape name
    */
-  AbstractStereopermutations(
+  Abstract(
     const RankingInformation& ranking,
-    Shapes::Shape shape
+    shapes::Shape shape
   );
 //!@}
 
@@ -128,6 +131,7 @@ struct AbstractStereopermutations {
 //!@}
 };
 
+} // namespace stereopermutators
 } // namespace molassembler
 } // namespace Scine
 

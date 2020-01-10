@@ -13,7 +13,7 @@
 
 namespace Scine {
 namespace molassembler {
-namespace DistanceGeometry {
+namespace distance_geometry {
 
 /**
  * @brief Eigen-based refinement error function
@@ -922,7 +922,7 @@ struct RefinementTraits {
   using SimdConstant = std::tuple_element_t<2, TemplateArgumentsTuple>;
 };
 
-} // namespace DistanceGeometry
+} // namespace distance_geometry
 } // namespace molassembler
 } // namespace Scine
 

@@ -11,6 +11,7 @@
 #include <sstream>
 #include <vector>
 
+namespace Scine {
 namespace temple {
 
 inline std::vector<std::string> split(const std::string& s, char delimiter) {
@@ -28,5 +29,6 @@ inline std::vector<std::string> split(const std::string& s, char delimiter) {
 }
 
 } // namespace temple
+} // namespace Scine
 
 #endif

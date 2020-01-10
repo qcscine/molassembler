@@ -239,7 +239,7 @@ std::pair<Molecule, Molecule> Editing::cleave(const Molecule& a, const BondIndex
         return;
       }
 
-      boost::optional<Shapes::Shape> shapeOption;
+      boost::optional<shapes::Shape> shapeOption;
       if(Options::shapeTransition == ShapeTransition::PrioritizeInferenceFromGraph) {
         shapeOption = molecule.inferShape(notifyIndex, localRanking);
       }
@@ -363,7 +363,7 @@ Molecule Editing::insert(
     if(auto permutatorOption = logStereopermutators.option(newWedgeIndex)) {
       auto localRanking = log.rankPriority(newWedgeIndex);
 
-      boost::optional<Shapes::Shape> shapeOption;
+      boost::optional<shapes::Shape> shapeOption;
       if(Options::shapeTransition == ShapeTransition::PrioritizeInferenceFromGraph) {
         shapeOption = log.inferShape(newWedgeIndex, localRanking);
       }
@@ -473,7 +473,7 @@ Molecule Editing::superpose(
     if(topPermutatorOption) {
       auto localRanking = top.rankPriority(topAtom);
 
-      boost::optional<Shapes::Shape> shapeOption;
+      boost::optional<shapes::Shape> shapeOption;
       if(Options::shapeTransition == ShapeTransition::PrioritizeInferenceFromGraph) {
         shapeOption = top.inferShape(topAtom, localRanking);
       }

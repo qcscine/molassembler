@@ -14,9 +14,8 @@
 
 #include <utility>
 
+namespace Scine {
 namespace temple {
-
-// We need four custom traits that check for each of the members we want.
 namespace traits {
 
 /*! Template base class for SFINAE expression validity checking
@@ -146,7 +145,7 @@ template<class Container>
 struct hasReserve : decltype(detail::testHasReserve<Container>(0)){};
 
 } // namespace traits
-
 } // namespace temple
+} // namespace Scine
 
 #endif

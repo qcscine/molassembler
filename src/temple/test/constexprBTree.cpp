@@ -17,7 +17,9 @@
 #include <set>
 #include <iostream>
 
-extern temple::jsf::Generator<> generator;
+using namespace Scine;
+
+extern temple::Generator<> generator;
 
 inline bool lastTestPassed() {
   using namespace boost::unit_test;

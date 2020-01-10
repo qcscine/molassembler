@@ -7,7 +7,7 @@
 #include <Eigen/Core>
 
 namespace Scine {
-namespace Shapes {
+namespace shapes {
 
 using InertialPositionsType = Eigen::Matrix<double, 3, Eigen::Dynamic>;
 
@@ -67,5 +67,5 @@ Top standardizeTop(Eigen::Ref<InertialPositionsType> normalizedPositions);
  */
 unsigned reorientAsymmetricTop(Eigen::Ref<InertialPositionsType> normalizedPositions);
 
-} // namespace Shapes
+} // namespace shapes
 } // namespace Scine

@@ -13,7 +13,7 @@ namespace Scine {
 
 namespace molassembler {
 
-namespace AtomInfo {
+namespace atom_info {
 
 ElementInfo::ElementInfo(
   const double passVdwRadius,
@@ -393,7 +393,7 @@ double vdwRadius(const Utils::ElementType elementType) {
   ).vdwRadius();
 }
 
-} // namespace AtomInfo
+} // namespace atom_info
 
 } // namespace molassembler
 

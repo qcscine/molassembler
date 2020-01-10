@@ -17,6 +17,7 @@
 #include <type_traits>
 #include <utility>
 
+namespace Scine {
 namespace temple {
 
 template<typename T, std::size_t nItems>
@@ -787,5 +788,6 @@ DynamicArray<T, N> merge(
 }
 
 } // namespace temple
+} // namespace Scine
 
 #endif

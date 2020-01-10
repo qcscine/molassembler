@@ -23,7 +23,7 @@
 
 namespace Scine {
 namespace molassembler {
-namespace DistanceGeometry {
+namespace distance_geometry {
 
 /*! @brief Class performing spatial modeling of molecules
  *
@@ -222,7 +222,7 @@ public:
    */
   static double siteCentralAngle(
     AtomIndex centralIndex,
-    const Shapes::Shape& shape,
+    const shapes::Shape& shape,
     const RankingInformation& ranking,
     const std::vector<unsigned>& shapeVertexMap,
     const std::pair<unsigned, unsigned>& sites,
@@ -528,7 +528,7 @@ private:
 //!@}
 };
 
-} // namespace DistanceGeometry
+} // namespace distance_geometry
 } // namespace molassembler
 } // namespace Scine
 

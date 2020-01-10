@@ -430,7 +430,7 @@ nlohmann::json serialize(const Molecule& molecule) {
       json s;
 
       s["c"] = stereopermutator.centralIndex();
-      s["s"] = Shapes::nameIndex(stereopermutator.getShape());
+      s["s"] = shapes::nameIndex(stereopermutator.getShape());
       s["r"] = stereopermutator.getRanking();
 
       if(stereopermutator.assigned()) {
@@ -491,7 +491,7 @@ Molecule deserialize(const nlohmann::json& m) {
   // Atom stereopermutators
   if(m.count(atomStereopermutatorKey) > 0) {
     for(const auto& j : m[atomStereopermutatorKey]) {
-      Shapes::Shape shape = Shapes::allShapes.at(j["s"]);
+      shapes::Shape shape = shapes::allShapes.at(j["s"]);
       AtomIndex centralIndex = j["c"];
 
       auto stereopermutator = AtomStereopermutator {

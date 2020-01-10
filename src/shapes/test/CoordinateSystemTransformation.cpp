@@ -8,7 +8,7 @@
 #include "shapes/CoordinateSystemTransformation.h"
 
 using namespace Scine;
-using namespace Shapes;
+using namespace shapes;
 
 BOOST_AUTO_TEST_CASE(CoordinateSystemTransformation) {
   for(unsigned i = 0; i < 20; ++i) {

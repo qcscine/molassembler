@@ -32,13 +32,14 @@ class Molecule;
 class OuterGraph;
 class AngstromWrapper;
 
+//! @brief Given Cartesian coordinates, construct graphs or molecules
 namespace interpret {
 
-//! Specify the algorithm used to discretize floating-point bond orders into bond types
-enum class MASM_EXPORT BondDiscretizationOption : unsigned {
-  //! All bond orders >= 0.5 are considered single bonds
+//! @brief How floating-point bond orders are discretized into bond types
+enum class MASM_EXPORT BondDiscretizationOption {
+  //! @brief All bond orders >= 0.5 are considered single bonds
   Binary,
-  //! Bond orders are rounded to the nearest integer
+  //! @brief Bond orders are rounded to the nearest integer
   RoundToNearest
 };
 
@@ -178,7 +179,7 @@ MASM_EXPORT std::vector<Utils::AtomCollection> applyInterpretationMap(
   const Utils::AtomCollection& atomCollection
 );
 
-/**
+/*!
  * @brief Yields mapping from indices in components to original input indices
  *
  * @param componentMap Component mapping from an interpret call
@@ -198,7 +199,8 @@ struct MASM_EXPORT GraphsResult {
   ComponentMap componentMap;
 };
 
-/*! @brief The function that actually does all the work with the library-internal wrapper
+/*!
+ * @brief The function that actually does all the work with the library-internal wrapper
  *
  * @complexity{@math{\Theta(M)} graph instantiations for each connected
  * component found of at least linear complexity each}
@@ -241,7 +243,7 @@ MASM_EXPORT GraphsResult graphs(
 MASM_EXPORT GraphsResult graphs(
   const Utils::AtomCollection& atomCollection,
   const Utils::BondOrderCollection& bondOrders,
-  BondDiscretizationOption = BondDiscretizationOption::Binary
+  BondDiscretizationOption discretization = BondDiscretizationOption::Binary
 );
 
 } // namespace interpret

@@ -10,6 +10,7 @@
 #include <algorithm>
 #include <set>
 
+namespace Scine {
 namespace temple {
 
 template<
@@ -82,5 +83,6 @@ std::set<T, Comparator<T>, Allocator<T>> set_symmetric_difference(
 }
 
 } // namespace temple
+} // namespace Scine
 
 #endif

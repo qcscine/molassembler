@@ -97,7 +97,7 @@ struct VertexComparator {
    * use lookups
    */
   struct LowEffortMappingCache {
-    static constexpr std::size_t upperTrigSize = Shapes::nShapes * (Shapes::nShapes - 1) / 2;
+    static constexpr std::size_t upperTrigSize = shapes::nShapes * (shapes::nShapes - 1) / 2;
 
     static std::array<bool, upperTrigSize> defaultMatrixData() {
       std::array<bool, upperTrigSize> data;
@@ -108,13 +108,13 @@ struct VertexComparator {
     //! Constructor establishing the matrix elements
     LowEffortMappingCache() : mappingMatrix(defaultMatrixData()) {
       // Populate with immediately adjacent information from symmetry mapping cache
-      for(const auto from : Shapes::allShapes) {
-        for(const auto to : Shapes::allShapes) {
+      for(const auto from : shapes::allShapes) {
+        for(const auto to : shapes::allShapes) {
           /* Smaller and equal sized to symmetries are always false and not stored
            * in the matrix at all. We can only anser directly adjacent cases,
            * so we skip everything else.
            */
-          if(Shapes::size(from) + 1 != Shapes::size(to)) {
+          if(shapes::size(from) + 1 != shapes::size(to)) {
             continue;
           }
 
@@ -124,7 +124,7 @@ struct VertexComparator {
             underlying(to)
           );
 
-          auto mappingOptional = Shapes::getMapping(from, to);
+          auto mappingOptional = shapes::getMapping(from, to);
 
           // These should always be a Some type
           assert(mappingOptional);
@@ -143,10 +143,10 @@ struct VertexComparator {
       /* auto copyIn = [
 
       // Add transferability information
-      for(const auto from : Shapes::allShapes) {
-        for(const auto to : Shapes::allShapes) {
+      for(const auto from : shapes::allShapes) {
+        for(const auto to : shapes::allShapes) {
           // Skip smaller and equal-size target symmetries
-          if(Shapes::size(to) <= Shapes::size(from)) {
+          if(shapes::size(to) <= shapes::size(from)) {
             continue;
           }
 
@@ -155,7 +155,7 @@ struct VertexComparator {
       }*/
     }
 
-    bool subsumes(const Shapes::Shape from, const Shapes::Shape to) const {
+    bool subsumes(const shapes::Shape from, const shapes::Shape to) const {
       if(from == to) {
         return true;
       }
@@ -170,8 +170,8 @@ struct VertexComparator {
   };
 
   static bool lowEffortMapping(
-    const Shapes::Shape from,
-    const Shapes::Shape to
+    const shapes::Shape from,
+    const shapes::Shape to
   ) {
     static LowEffortMappingCache subsumptionMatrix;
     return subsumptionMatrix.subsumes(from, to);
@@ -199,12 +199,12 @@ struct VertexComparator {
       auto jAtomStereocenterOption = b.stereopermutators().option(j);
 
       if(iAtomStereocenterOption && jAtomStereocenterOption) {
-        Shapes::Shape iShape = iAtomStereocenterOption->getShape();
-        Shapes::Shape jShape = jAtomStereocenterOption->getShape();
+        shapes::Shape iShape = iAtomStereocenterOption->getShape();
+        shapes::Shape jShape = jAtomStereocenterOption->getShape();
 
         if(iShape != jShape) {
           // Establish ordering for the call to lowEffortMapping
-          if(Shapes::size(iShape) > Shapes::size(jShape)) {
+          if(shapes::size(iShape) > shapes::size(jShape)) {
             std::swap(iShape, jShape);
           }
 

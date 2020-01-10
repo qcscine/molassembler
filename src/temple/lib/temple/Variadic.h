@@ -15,15 +15,14 @@
 
 #include <algorithm>
 
+namespace Scine {
 namespace temple {
-
 namespace variadic {
-
 namespace detail {
 
 template<typename Container>
 std::enable_if_t<
-  ::temple::traits::hasSize<Container>::value,
+  ::Scine::temple::traits::hasSize<Container>::value,
   Optional<std::size_t>
 > size(const Container& container) {
   return Optional<std::size_t> {container.size()};
@@ -31,7 +30,7 @@ std::enable_if_t<
 
 template<typename Container>
 std::enable_if_t<
-  !::temple::traits::hasSize<Container>::value,
+  !::Scine::temple::traits::hasSize<Container>::value,
   Optional<std::size_t>
 > size(const Container& /* container */) {
   return {};
@@ -102,7 +101,7 @@ auto concatenate(const Containers& ... containers) {
   using T = std::tuple_element_t<0, ValueTypes>;
 
   static_assert(
-    TupleType::countType<
+    tuples::countType<
       ValueTypes,
       T
     >() == std::tuple_size<ValueTypes>::value,
@@ -117,7 +116,7 @@ auto concatenate(const Containers& ... containers) {
 }
 
 } // namespace variadic
-
 } // namespace temple
+} // namespace Scine
 
 #endif

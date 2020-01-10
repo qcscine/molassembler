@@ -9,8 +9,10 @@
 
 #include <vector>
 
+namespace Scine {
 namespace temple {
 
+//! @brief Compile-time reflective trait objects
 namespace traits {
 
 // Get the base type a container holds via the begin iterator
@@ -50,7 +52,7 @@ struct FunctionPointerReturnType<ReturnType (*)(Args...)> {
 };
 
 } // namespace traits
-
 } // namespace temple
+} // namespace Scine
 
 #endif

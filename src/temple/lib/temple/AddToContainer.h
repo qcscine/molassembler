@@ -18,6 +18,7 @@
 #include "temple/ContainerTraits.h"
 #include "temple/Functor.h"
 
+namespace Scine {
 namespace temple {
 
 /*!
@@ -208,5 +209,6 @@ template<
 }
 
 } // namespace temple
+} // namespace Scine
 
 #endif

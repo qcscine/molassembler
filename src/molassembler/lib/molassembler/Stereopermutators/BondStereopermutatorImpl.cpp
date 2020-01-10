@@ -9,6 +9,7 @@
 
 #include "temple/Adaptors/AllPairs.h"
 #include "temple/Adaptors/CyclicFrame.h"
+#include "temple/Adaptors/SequentialPairs.h"
 #include "temple/constexpr/Math.h"
 #include "temple/constexpr/Numeric.h"
 #include "temple/Functional.h"
@@ -296,7 +297,7 @@ bool BondStereopermutator::Impl::cycleObviouslyInfeasible(
   const double b = modelDistance(j, k);
   const double c = modelDistance(k, l);
 
-  const double alpha = DistanceGeometry::SpatialModel::siteCentralAngle(
+  const double alpha = distance_geometry::SpatialModel::siteCentralAngle(
     firstStereopermutator,
     {
       firstStereopermutator.getRanking().getSiteIndexOf(i),
@@ -305,7 +306,7 @@ bool BondStereopermutator::Impl::cycleObviouslyInfeasible(
     graph
   );
 
-  const double beta = DistanceGeometry::SpatialModel::siteCentralAngle(
+  const double beta = distance_geometry::SpatialModel::siteCentralAngle(
     secondStereopermutator,
     {
       secondStereopermutator.getRanking().getSiteIndexOf(j),
@@ -398,16 +399,16 @@ bool BondStereopermutator::Impl::cycleObviouslyInfeasible(
   const Eigen::Vector3d projectedC = d_Cf * planeNormal + C;
 
   /* Create input types for cycle feasibility test */
-  std::vector<Stereopermutators::BaseAtom> bases {
+  std::vector<stereopermutators::BaseAtom> bases {
     // Base of B
-    Stereopermutators::BaseAtom {
+    stereopermutators::BaseAtom {
       graph.elementType(j),
       (A - projectedB).norm(),
       (D - projectedB).norm(),
       std::fabs(d_Bf)
     },
     // Base of C
-    Stereopermutators::BaseAtom {
+    stereopermutators::BaseAtom {
       graph.elementType(k),
       (A - projectedC).norm(),
       (D - projectedC).norm(),
@@ -460,7 +461,7 @@ bool BondStereopermutator::Impl::cycleObviouslyInfeasible(
   //   << "(a, b, c) = (" << a << ", " << b << ", " << c << "), "
   //   << "(alpha, beta, phi) = (" << temple::Math::toDegrees(alpha) << ", " << temple::Math::toDegrees(beta) << ", " << temple::Math::toDegrees(phi) << ") contradicts graph: " << fail << "\n";
 
-  return Stereopermutators::cycleModelContradictsGraph(
+  return stereopermutators::cycleModelContradictsGraph(
     elementTypes,
     cycleEdgeLengths,
     bases
@@ -519,7 +520,7 @@ bool BondStereopermutator::Impl::cycleObviouslyInfeasible(
 //
 //   /* Build a spatial model */
 //   // Model all bond distances
-//   DistanceGeometry::SpatialModel::BoundsMapType<2> bondBounds;
+//   distance_geometry::SpatialModel::BoundsMapType<2> bondBounds;
 //   temple::forEach(
 //     temple::adaptors::cyclicFrame<2>(link.cycleSequence),
 //     [&](const AtomIndex i, const AtomIndex j) {
@@ -533,10 +534,10 @@ bool BondStereopermutator::Impl::cycleObviouslyInfeasible(
 //         bondType
 //       );
 //
-//       double absoluteVariance = bondDistance * DistanceGeometry::SpatialModel::bondRelativeVariance;
+//       double absoluteVariance = bondDistance * distance_geometry::SpatialModel::bondRelativeVariance;
 //       bondBounds.emplace(
 //         detail::orderMappedSequence(indexReductionMap, i, j),
-//         DistanceGeometry::SpatialModel::makeBoundsFromCentralValue(
+//         distance_geometry::SpatialModel::makeBoundsFromCentralValue(
 //           bondDistance,
 //           absoluteVariance
 //         )
@@ -545,13 +546,13 @@ bool BondStereopermutator::Impl::cycleObviouslyInfeasible(
 //   );
 //
 //   // Model all angles
-//   DistanceGeometry::SpatialModel::BoundsMapType<3> angleBounds;
+//   distance_geometry::SpatialModel::BoundsMapType<3> angleBounds;
 //   temple::forEach(
 //     temple::adaptors::cyclicFrame<3>(link.cycleSequence),
 //     [&](const AtomIndex i, const AtomIndex j, const AtomIndex k) {
 //       // Is there an AtomStereopermutator here?
-//       DistanceGeometry::ValueBounds angleValueBounds {
-//         Shapes::smallestAngle,
+//       distance_geometry::ValueBounds angleValueBounds {
+//         shapes::smallestAngle,
 //         M_PI
 //       };
 //
@@ -567,14 +568,14 @@ bool BondStereopermutator::Impl::cycleObviouslyInfeasible(
 //           && ranking.sites.at(siteOfK).size() == 1
 //         ) {
 //           if(permutatorOption->assigned()) {
-//             angleValueBounds = DistanceGeometry::SpatialModel::makeBoundsFromCentralValue(
+//             angleValueBounds = distance_geometry::SpatialModel::makeBoundsFromCentralValue(
 //               permutatorOption->angle(siteOfI, siteOfK),
-//               DistanceGeometry::SpatialModel::angleAbsoluteVariance
+//               distance_geometry::SpatialModel::angleAbsoluteVariance
 //             );
 //           } else {
 //             angleValueBounds = {
-//               Shapes::minimumAngle(permutatorOption->getShape()),
-//               Shapes::maximumAngle(permutatorOption->getShape())
+//               shapes::minimumAngle(permutatorOption->getShape()),
+//               shapes::maximumAngle(permutatorOption->getShape())
 //             };
 //           }
 //         }
@@ -588,11 +589,11 @@ bool BondStereopermutator::Impl::cycleObviouslyInfeasible(
 //   );
 //
 //   // Model dihedrals
-//   DistanceGeometry::SpatialModel::BoundsMapType<4> dihedralBounds;
+//   distance_geometry::SpatialModel::BoundsMapType<4> dihedralBounds;
 //   const double dihedralAngle = std::get<2>(dihedral);
-//   auto dihedralValueBounds = DistanceGeometry::SpatialModel::makeBoundsFromCentralValue(
+//   auto dihedralValueBounds = distance_geometry::SpatialModel::makeBoundsFromCentralValue(
 //     dihedralAngle,
-//     DistanceGeometry::SpatialModel::dihedralAbsoluteVariance
+//     distance_geometry::SpatialModel::dihedralAbsoluteVariance
 //   );
 //
 //   const AtomIndex i = std::get<0>(dihedral);
@@ -609,16 +610,16 @@ bool BondStereopermutator::Impl::cycleObviouslyInfeasible(
 //   );
 //
 //   // Create pairwise bounds from internal coordinates
-//   auto pairwiseBounds = DistanceGeometry::SpatialModel::makePairwiseBounds(
+//   auto pairwiseBounds = distance_geometry::SpatialModel::makePairwiseBounds(
 //     C,
-//     DistanceGeometry::SpatialModel::BoundsMapType<2> {},
+//     distance_geometry::SpatialModel::BoundsMapType<2> {},
 //     bondBounds,
 //     angleBounds,
 //     dihedralBounds
 //   );
 //
 //   // Model in a bounds matrix
-//   DistanceGeometry::ExplicitGraph boundsGraph {
+//   distance_geometry::ExplicitGraph boundsGraph {
 //     minimalInner,
 //     pairwiseBounds
 //   };
@@ -663,7 +664,7 @@ std::vector<unsigned> BondStereopermutator::Impl::notObviouslyInfeasibleStereope
    * if substituents of both stereopermutators are fused somehow, i.e. if there
    * are cycles involving the bond between A and B.
    */
-  auto links = GraphAlgorithms::siteLinks(
+  auto links = graph_algorithms::siteLinks(
     graph,
     permutatorReferences.first,
     permutatorReferences.second
@@ -880,7 +881,7 @@ void BondStereopermutator::Impl::fit(
 
   auto makeSitePositions = [&angstromWrapper](const AtomStereopermutator& permutator) -> Eigen::Matrix<double, 3, Eigen::Dynamic> {
     const unsigned S = permutator.getRanking().sites.size();
-    assert(S == Shapes::size(permutator.getShape()));
+    assert(S == shapes::size(permutator.getShape()));
     Eigen::Matrix<double, 3, Eigen::Dynamic> sitePositions(3, S);
     for(unsigned i = 0; i < S; ++i) {
       sitePositions.col(i) = cartesian::averagePosition(
@@ -1003,8 +1004,8 @@ void BondStereopermutator::Impl::propagateGraphChange(
   const StereopermutatorList& permutators
 ) {
   const RankingInformation& oldRanking = std::get<0>(oldPermutatorState);
-  const AbstractStereopermutations& oldAbstract = std::get<1>(oldPermutatorState);
-  const FeasibleStereopermutations& oldFeasible = std::get<2>(oldPermutatorState);
+  const stereopermutators::Abstract& oldAbstract = std::get<1>(oldPermutatorState);
+  const stereopermutators::Feasible& oldFeasible = std::get<2>(oldPermutatorState);
   const boost::optional<unsigned>& oldAssignment = std::get<3>(oldPermutatorState);
 
   // We assume that the supplied permutators (or their state) were assigned

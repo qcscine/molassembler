@@ -14,13 +14,14 @@
 #include "temple/Functional.h"
 #include "temple/Stringify.h"
 
-using namespace Scine::molassembler;
+using namespace Scine;
+using namespace molassembler;
 
 BOOST_AUTO_TEST_CASE(ReproducibleConformers) {
   const unsigned seed = 6564;
   auto& prng = randomnessEngine();
 
-  Molecule mol = IO::read("stereocenter_detection_molecules/RSs-halogenated-propane.mol");
+  Molecule mol = io::read("stereocenter_detection_molecules/RSs-halogenated-propane.mol");
   prng.seed(seed);
   const auto prngStatePriorGeneration = randomnessEngine();
   const auto a = generateRandomConformation(mol);
@@ -53,7 +54,7 @@ BOOST_AUTO_TEST_CASE(ReproducibleEnsembles) {
   const unsigned ensembleSize = 10;
   auto& prng = randomnessEngine();
 
-  Molecule mol = IO::read("stereocenter_detection_molecules/RSs-halogenated-propane.mol");
+  Molecule mol = io::read("stereocenter_detection_molecules/RSs-halogenated-propane.mol");
   prng.seed(seed);
   const auto prngStatePriorGeneration = randomnessEngine();
   const auto a = generateRandomEnsemble(mol, ensembleSize);

@@ -16,12 +16,11 @@
 #include "boost/optional.hpp"
 
 namespace Scine {
-
-namespace Shapes {
+namespace shapes {
 namespace properties {
 struct SymmetryTransitionGroup;
 } // namespace properties
-} // namespace Shapes
+} // namespace shapes
 
 namespace molassembler {
 
@@ -38,7 +37,7 @@ public:
    * @throws std::logic_error If there are no larger shapes
    * @note Behavior is dependent on ChiralStatePreservation option
    */
-  static Shapes::Shape up(Shapes::Shape shape);
+  static shapes::Shape up(shapes::Shape shape);
 
   /*!
    * @brief Picks a shape retaining as much chiral state as possible on a
@@ -46,14 +45,14 @@ public:
    * @throws std::logic_error If there are no smaller shapes
    * @note Behavior is dependent on ChiralStatePreservation option
    */
-  static Shapes::Shape down(Shapes::Shape shape, unsigned removedShapePosition);
+  static shapes::Shape down(shapes::Shape shape, unsigned removedShapePosition);
 
   /*!
    * @brief Generates an shape position index mapping from a shape
    *   transition group
    */
   static boost::optional<std::vector<unsigned>> getIndexMapping(
-    const Shapes::properties::SymmetryTransitionGroup& mappingsGroup,
+    const shapes::properties::SymmetryTransitionGroup& mappingsGroup,
     const ChiralStatePreservation& preservationOption
   );
 
@@ -61,7 +60,7 @@ public:
   static bool thermalized(
     const OuterGraph& graph,
     AtomIndex centerAtom,
-    const Shapes::Shape shape,
+    const shapes::Shape shape,
     const RankingInformation& ranking,
     const TemperatureRegime temperature
   );
@@ -72,7 +71,7 @@ public:
     // The base graph
     const OuterGraph& graph,
     // The shape of this Stereopermutator
-    Shapes::Shape shape,
+    shapes::Shape shape,
     // The atom this Stereopermutator is centered on
     AtomIndex centerAtom,
     // Ranking information of substituents
@@ -111,7 +110,7 @@ public:
   boost::optional<PropagatedState> propagate(
     const OuterGraph& graph,
     RankingInformation newRanking,
-    boost::optional<Shapes::Shape> shapeOption
+    boost::optional<shapes::Shape> shapeOption
   );
 
   /*!
@@ -122,7 +121,7 @@ public:
 
   //! If the shape is changed, we must adapt
   void setShape(
-    Shapes::Shape shape,
+    shapes::Shape shape,
     const OuterGraph& graph
   );
 
@@ -176,19 +175,19 @@ public:
    * @brief Returns the underlying AbstractStereopermutation
    * @note This is library-internal and not part of the public API
    */
-  const AbstractStereopermutations& getAbstract() const;
+  const stereopermutators::Abstract& getAbstract() const;
 
   /*!
    * @brief Returns the underlying FeasibleStereopermutation
    * @note This is library-internal and not part of the public API
    */
-  const FeasibleStereopermutations& getFeasible() const;
+  const stereopermutators::Feasible& getFeasible() const;
 
   //! Returns the underlying ranking
   const RankingInformation& getRanking() const;
 
   //! Returns the underlying shape
-  Shapes::Shape getShape() const;
+  shapes::Shape getShape() const;
 
   /*!
    * @brief Yields the mapping from site indices to shape positions
@@ -225,16 +224,16 @@ private:
   AtomIndex _centerAtom;
 
   //! The shape the stereopermutator represents
-  Shapes::Shape _shape;
+  shapes::Shape _shape;
 
   //! Ranking information of substituents
   RankingInformation _ranking;
 
   //! Abstract stereopermutations and intermediate state
-  AbstractStereopermutations _abstract;
+  stereopermutators::Abstract _abstract;
 
   //! Models abstract stereopermutations and decides three-dimensional feasibility
-  FeasibleStereopermutations _feasible;
+  stereopermutators::Feasible _feasible;
 
   //! The current state of assignment (if or not, and if so, which)
   boost::optional<unsigned> _assignmentOption;

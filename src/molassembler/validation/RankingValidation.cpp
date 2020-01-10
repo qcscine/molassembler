@@ -491,7 +491,7 @@ BOOST_AUTO_TEST_CASE(CipValidationSuiteTests) {
 
     // Some IO will fail due to unsanitized disconnected ions
     try {
-      molecule = IO::read(currentFilePath.string());
+      molecule = io::read(currentFilePath.string());
     } catch(const std::exception& e) {
       BOOST_ERROR(
         "Exception in IO for " << currentFilePath.string()

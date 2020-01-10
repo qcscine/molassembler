@@ -9,13 +9,11 @@
 #include <random>
 
 namespace Scine {
-
 namespace molassembler {
-
 namespace random {
 
 struct Engine::Impl {
-  temple::jsf::JSF32 engine;
+  temple::JSF32 engine;
 
   void seed(int x) {
     engine.seed(x);
@@ -82,7 +80,5 @@ bool Engine::operator == (const Engine& other) const {
 }
 
 } // namespace random
-
 } // namespace molassembler
-
 } // namespace Scine

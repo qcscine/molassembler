@@ -17,6 +17,7 @@
 #include <map>
 #include <set>
 
+namespace Scine {
 namespace temple {
 
 //! Converts an Array into a std::array
@@ -50,13 +51,7 @@ std::set<T> toSTL(const DynamicSet<T, size>& dynamicSet) {
   return returnSet;
 }
 
-/*template<typename T, typename U, size_t size>
-std::map<T, U> toSTL(const DynamicMap<T, U, size>& dynamicMap) {
-  std::map<T, U> returnMap;
-
-  for(
-}*/
-
 } // namespace temple
+} // namespace Scine
 
 #endif

@@ -15,8 +15,10 @@
 #include <tuple>
 #include <functional>
 
-namespace temple {
+namespace Scine {
 
+//! @brief Template shorthands, optimizers and constexpr data types
+namespace temple {
 namespace detail {
 
 template<typename TupleType, typename Function, size_t ... Inds>
@@ -174,7 +176,7 @@ noexcept(noexcept(std::mem_fn(f)(std::forward<Args>(args)...)))
   return std::mem_fn(f)(std::forward<Args>(args)...);
 }
 
-/*
+/*!
  * @brief If a callable is not a member pointer, invoke it with forwarded
  *   arguments
  *
@@ -217,7 +219,7 @@ auto make_tuple_callable(Functor&& functor) {
   return detail::Invoker<Functor>(std::forward<Functor>(functor));
 }
 
-
 } // namespace temple
+} // namespace Scine
 
 #endif

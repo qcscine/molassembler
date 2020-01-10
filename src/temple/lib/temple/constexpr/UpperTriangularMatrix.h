@@ -13,8 +13,8 @@
 #include "temple/constexpr/Array.h"
 #include "temple/constexpr/FloatingPointComparison.h"
 
+namespace Scine {
 namespace temple {
-
 namespace UpperTriangularMatrixImpl {
 
 /*! @brief Underlying type of the upper triangular matrix.
@@ -178,5 +178,6 @@ template<
 }
 
 } // namespace temple
+} // namespace Scine
 
 #endif

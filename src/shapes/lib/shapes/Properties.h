@@ -18,9 +18,9 @@
 #include <vector>
 
 namespace Scine {
+namespace shapes {
 
-namespace Shapes {
-
+//! @brief Runtime-computed properties of shapes
 namespace properties {
 
 constexpr double floatingPointEqualityThreshold [[gnu::unused]] = 1e-4;
@@ -198,7 +198,7 @@ struct DistortionInfo {
  * @param from Transition source shape
  * @param to Transition target shape
  *
- * @pre Shapes::size(from) + {0, 1} == Shapes::size(to)
+ * @pre shapes::size(from) + {0, 1} == shapes::size(to)
  */
 std::vector<DistortionInfo> symmetryTransitionMappings(
   Shape from,
@@ -216,7 +216,7 @@ std::vector<DistortionInfo> symmetryTransitionMappings(
  * @param to Transition target shape
  * @param positionInSourceShape position lost in source shape
  *
- * @pre Shapes::size(from) == Shapes::size(to) + 1
+ * @pre shapes::size(from) == shapes::size(to) + 1
  */
 std::vector<DistortionInfo> ligandLossTransitionMappings(
   Shape from,
@@ -291,12 +291,10 @@ Shape mostSymmetric(std::vector<Shape> selection);
  *
  * @complexity{@math{\Theta(1)}}
  */
-Shape mostSymmetric(unsigned symmetrySize);
+Shape mostSymmetric(unsigned shapeSize);
 
 } // namespace properties
-
-} // namespace Shapes
-
+} // namespace shapes
 } // namespace Scine
 
 #endif

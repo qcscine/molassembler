@@ -91,7 +91,7 @@ void checkExpectations(const boost::filesystem::path& filePath) {
   std::string moleculeName = filePath.stem().string();
 
   // Read the file
-  auto mol = IO::read(filePath.string());
+  auto mol = io::read(filePath.string());
 
   // Check if expectations are met
   auto findIter = recognitionExpectations.find(filePath.stem().string());
@@ -178,7 +178,7 @@ BOOST_AUTO_TEST_CASE(stereopermutatorExpectationTests) {
 BOOST_AUTO_TEST_CASE(BondStatePropagationTests) {
   using namespace molassembler;
 
-  auto mol = IO::read("ez_stereocenters/but-2E-ene.mol");
+  auto mol = io::read("ez_stereocenters/but-2E-ene.mol");
 
   // Alter a hydrogen at the bond stereopermutator
   const StereopermutatorList& stereopermutators = mol.stereopermutators();
@@ -249,7 +249,7 @@ BOOST_AUTO_TEST_CASE(StereocentersInSmallCycles) {
 
     // Set geometries
     for(unsigned i = 0; i < cycleSize; ++i) {
-      mol.setShapeAtAtom(i, Shapes::Shape::Bent);
+      mol.setShapeAtAtom(i, shapes::Shape::Bent);
     }
 
     auto bondStereopermutatorOption = mol.stereopermutators().option(BondIndex {0, 1});

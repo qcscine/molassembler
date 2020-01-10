@@ -17,7 +17,7 @@ namespace Scine {
 
 namespace molassembler {
 
-namespace DistanceGeometry {
+namespace distance_geometry {
 
 constexpr double DistanceBoundsMatrix::defaultLower;
 constexpr double DistanceBoundsMatrix::defaultUpper;
@@ -229,7 +229,7 @@ unsigned DistanceBoundsMatrix::N() const {
   return _matrix.cols();
 }
 
-} // namespace DistanceGeometry
+} // namespace distance_geometry
 
 } // namespace molassembler
 

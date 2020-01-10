@@ -21,7 +21,7 @@ class RotationEnumerator {
 public:
   using RotationSetType = std::vector<Stereopermutation>;
 
-  RotationEnumerator(Stereopermutation initial, Shapes::Shape s);
+  RotationEnumerator(Stereopermutation initial, shapes::Shape s);
 
   boost::optional<const Stereopermutation&> next();
   const RotationSetType& all();
@@ -37,7 +37,7 @@ private:
     Link(unsigned i, Stereopermutation s);
   };
 
-  Shapes::Shape shape;
+  shapes::Shape shape;
   unsigned linkLimit;
   std::vector<Link> chain;
   RotationSetType rotations;

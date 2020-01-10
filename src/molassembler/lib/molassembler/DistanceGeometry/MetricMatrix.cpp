@@ -12,7 +12,7 @@ namespace Scine {
 
 namespace molassembler {
 
-namespace DistanceGeometry {
+namespace distance_geometry {
 
 void MetricMatrix::_constructFromTemporary(Eigen::MatrixXd&& distances) {
   /* We have to be a little careful since only strict upper triangle of
@@ -155,7 +155,7 @@ bool MetricMatrix::operator == (const MetricMatrix& other) const {
   return _matrix == other._matrix;
 }
 
-} // namespace DistanceGeometry
+} // namespace distance_geometry
 
 } // namespace molassembler
 

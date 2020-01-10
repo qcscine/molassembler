@@ -7,6 +7,8 @@
 
 #include "temple/Optimization/Lbfgs.h"
 
+using namespace Scine;
+
 template<typename FloatType>
 struct GradientBasedChecker {
   unsigned iterLimit = 100;

@@ -166,7 +166,7 @@ void init_directed_conformer_generator(pybind11::module& m) {
     [](
       DirectedConformerGenerator& generator,
       const DirectedConformerGenerator::DecisionList& decisionList,
-      const DistanceGeometry::Configuration& configuration
+      const distance_geometry::Configuration& configuration
     ) -> VariantType {
       auto result = generator.generateRandomConformation(
         decisionList,
@@ -180,7 +180,7 @@ void init_directed_conformer_generator(pybind11::module& m) {
       return result.error().message();
     },
     pybind11::arg("decision_list"),
-    pybind11::arg("configuration") = DistanceGeometry::Configuration {},
+    pybind11::arg("configuration") = distance_geometry::Configuration {},
     R"delim(
       Try to generate a conformer for a particular decision list.
 
@@ -199,7 +199,7 @@ void init_directed_conformer_generator(pybind11::module& m) {
       DirectedConformerGenerator& generator,
       const DirectedConformerGenerator::DecisionList& decisionList,
       const unsigned seed,
-      const DistanceGeometry::Configuration& configuration
+      const distance_geometry::Configuration& configuration
     ) -> VariantType {
       auto result = generator.generateConformation(
         decisionList,
@@ -215,7 +215,7 @@ void init_directed_conformer_generator(pybind11::module& m) {
     },
     pybind11::arg("decision_list"),
     pybind11::arg("seed"),
-    pybind11::arg("configuration") = DistanceGeometry::Configuration {},
+    pybind11::arg("configuration") = distance_geometry::Configuration {},
     R"delim(
       Try to generate a conformer for a particular decision list.
 

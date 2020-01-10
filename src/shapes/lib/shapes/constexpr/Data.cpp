@@ -19,9 +19,7 @@
   constexpr decltype(ShapeClass::angleLookupTable) ShapeClass::angleLookupTable;
 
 namespace Scine {
-
-namespace Shapes {
-
+namespace shapes {
 namespace concepts {
 
 /**
@@ -148,7 +146,7 @@ namespace data {
 /* Static property correctness checking */
 
 static_assert(
-  temple::TupleType::allOf<allShapeDataTypes, concepts::ShapeClass>(),
+  temple::tuples::allOf<allShapeDataTypes, concepts::ShapeClass>(),
   "Not all shape data types fulfill the ShapeClass concept"
 );
 
@@ -158,17 +156,17 @@ static_assert(
 );
 
 static_assert(
-  temple::TupleType::allOf<allShapeDataTypes, concepts::ValidRotations>(),
+  temple::tuples::allOf<allShapeDataTypes, concepts::ValidRotations>(),
   "Not all shape data types' rotations are valid"
 );
 
 static_assert(
-  temple::TupleType::allOf<allShapeDataTypes, concepts::ValidMirror>(),
+  temple::tuples::allOf<allShapeDataTypes, concepts::ValidMirror>(),
   "Not all shape data types' mirrors are valid"
 );
 
 static_assert(
-  temple::TupleType::allOf<allShapeDataTypes, concepts::ValidCoordinates>(),
+  temple::tuples::allOf<allShapeDataTypes, concepts::ValidCoordinates>(),
   "Not all shape data types' coordinates are valid"
 );
 
@@ -235,7 +233,5 @@ DECLARE_CONSTEXPR_ANGLE_LOOKUP(Icosahedron)
 DECLARE_CONSTEXPR_ANGLE_LOOKUP(Cuboctahedron)
 
 } // namespace data
-
-} // namespace Shapes
-
+} // namespace shapes
 } // namespace Scine

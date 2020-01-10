@@ -8,7 +8,7 @@
 #include <Eigen/Core>
 
 namespace Scine {
-namespace Shapes {
+namespace shapes {
 
 /**
  * @brief Coordinate system axis data class
@@ -51,5 +51,5 @@ struct CoordinateSystem {
  */
 Eigen::Matrix3d rotationMatrix(const CoordinateSystem& a, const CoordinateSystem& b);
 
-} // namespace Shapes
+} // namespace shapes
 } // namespace Scine

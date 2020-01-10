@@ -10,10 +10,9 @@
 #include "temple/ContainerTraits.h"
 #include "temple/Binding.h"
 
+namespace Scine {
 namespace temple {
-
 namespace adaptors {
-
 namespace detail {
 
 template<class ContainerT, class ContainerU>
@@ -172,7 +171,7 @@ auto zip(ContainerT&& containerT, ContainerU&& containerU) {
 }
 
 } // namespace adaptors
-
 } // namespace temple
+} // namespace Scine
 
 #endif

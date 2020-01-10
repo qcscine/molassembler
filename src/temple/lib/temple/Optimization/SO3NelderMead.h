@@ -13,8 +13,14 @@
 #include "temple/Adaptors/AllPairs.h"
 #include "temple/Functional.h"
 
+namespace Scine {
 namespace temple {
 
+/**
+ * @brief Nelder-Mead optimization on SO(3) manifold
+ *
+ * @tparam FloatType Type to represent floating point numbers
+ */
 template<typename FloatType = double>
 struct SO3NelderMead {
   using Matrix = Eigen::Matrix<FloatType, 3, 3>;
@@ -369,5 +375,6 @@ struct SO3NelderMead {
 };
 
 } // namespace temple
+} // namespace Scine
 
 #endif

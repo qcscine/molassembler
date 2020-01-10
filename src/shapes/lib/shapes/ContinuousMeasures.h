@@ -11,7 +11,9 @@
 #include "shapes/Shapes.h"
 
 namespace Scine {
-namespace Shapes {
+namespace shapes {
+
+//! @brief Symmetry element, point group, and polyhedral shape continuous metrics
 namespace continuous {
 
 using PositionCollection = Eigen::Matrix<double, 3, Eigen::Dynamic>;
@@ -23,6 +25,7 @@ using PositionCollection = Eigen::Matrix<double, 3, Eigen::Dynamic>;
  */
 PositionCollection normalize(const PositionCollection& positions);
 
+//! @brief Continuous symmetry measures for fixed symmetry elements
 namespace fixed {
 
 /**
@@ -277,7 +280,7 @@ double minimalDistortionPathDeviation(const PositionCollection& positions, Shape
 
 
 } // namespace continuous
-} // namespace Shapes
+} // namespace shapes
 } // namespace Scine
 
 #endif

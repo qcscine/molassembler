@@ -11,11 +11,11 @@
 
 namespace Scine {
 
-namespace Shapes {
+namespace shapes {
 
-constexpr temple::Array<std::pair<double, double>, nShapes> symmetryAngleBounds = temple::TupleType::map<
+constexpr temple::Array<std::pair<double, double>, nShapes> symmetryAngleBounds = temple::tuples::map<
   data::allShapeDataTypes,
-  constexprProperties::AngleBoundsFunctor
+  constexpr_properties::AngleBoundsFunctor
 >();
 
 double minimumAngle(const Shape shape) {
@@ -38,16 +38,16 @@ double maximumAngle(const Shape shape) {
 template<typename SymmetrySource, typename SymmetryTarget>
 struct mappingCalculationFunctor {
   static constexpr auto value() {
-    return constexprProperties::calculateMapping<SymmetrySource, SymmetryTarget>();
+    return constexpr_properties::calculateMapping<SymmetrySource, SymmetryTarget>();
   }
 };
 
 // Calculate the symmetryMapping for all possible combinations of symmetries
 constexpr temple::UpperTriangularMatrix<
-  temple::Optional<constexprProperties::MappingsReturnType>,
+  temple::Optional<constexpr_properties::MappingsReturnType>,
   nShapes * (nShapes - 1) / 2
 > allMappings = temple::makeUpperTriangularMatrix(
-  temple::TupleType::mapAllPairs<
+  temple::tuples::mapAllPairs<
     data::allShapeDataTypes,
     mappingCalculationFunctor
   >()
@@ -74,7 +74,7 @@ const boost::optional<const properties::SymmetryTransitionGroup&> getMapping(
     return mappingsCache.getOption(cacheKey);
   }
 
-  int sizeDiff = static_cast<int>(Shapes::size(b)) - static_cast<int>(Shapes::size(a));
+  int sizeDiff = static_cast<int>(shapes::size(b)) - static_cast<int>(shapes::size(a));
 
   if(sizeDiff == 1 || sizeDiff == 0) {
 #ifdef USE_CONSTEXPR_TRANSITION_MAPPINGS
@@ -151,15 +151,15 @@ const boost::optional<const properties::SymmetryTransitionGroup&> getMapping(
 template<typename Symmetry>
 struct makeAllHasUnlinkedStereopermutationsFunctor {
   static constexpr auto value() {
-    temple::DynamicArray<bool, constexprProperties::maxShapeSize> nums;
+    temple::DynamicArray<bool, constexpr_properties::maxShapeSize> nums;
 
     /* Value for 0 is equal to value for 1, so calculate one less. When all
      * are equal, there is obviously only one stereopermutation, so there is no
      * need to calculate.
      */
-    for(unsigned i = 0; i < Shapes::size - 1; ++i) {
+    for(unsigned i = 0; i < shapes::size - 1; ++i) {
       nums.push_back(
-        constexprProperties::hasMultipleUnlinkedStereopermutations<Symmetry>(i + 1)
+        constexpr_properties::hasMultipleUnlinkedStereopermutations<Symmetry>(i + 1)
       );
     }
 
@@ -168,9 +168,9 @@ struct makeAllHasUnlinkedStereopermutationsFunctor {
 };
 
 constexpr temple::Array<
-  temple::DynamicArray<bool, constexprProperties::maxShapeSize>,
+  temple::DynamicArray<bool, constexpr_properties::maxShapeSize>,
   nShapes
-> allHasMultipleUnlinkedStereopermutations = temple::TupleType::map<
+> allHasMultipleUnlinkedStereopermutations = temple::tuples::map<
   data::allShapeDataTypes,
   makeAllHasUnlinkedStereopermutationsFunctor
 >();
@@ -185,7 +185,7 @@ bool hasMultipleUnlinkedStereopermutations(
   const Shape shape,
   unsigned nIdenticalLigands
 ) {
-  if(nIdenticalLigands == Shapes::size(shape)) {
+  if(nIdenticalLigands == shapes::size(shape)) {
     return false;
   }
 
@@ -215,7 +215,7 @@ bool hasMultipleUnlinkedStereopermutations(
 #else
   // Generate the cache element using dynamic properties
   std::vector<bool> unlinkedStereopermutations;
-  for(unsigned i = 0; i < Shapes::size(shape) - 1; ++i) {
+  for(unsigned i = 0; i < shapes::size(shape) - 1; ++i) {
     unlinkedStereopermutations.push_back(
       properties::hasMultipleUnlinkedStereopermutations(
         shape,
@@ -233,6 +233,6 @@ bool hasMultipleUnlinkedStereopermutations(
 #endif
 }
 
-} // namespace Shapes
+} // namespace shapes
 
 } // namespace Scine

@@ -15,6 +15,7 @@
 
 #include <iostream>
 
+namespace Scine {
 namespace temple {
 
 //! For any two types, check consistency of their logical operators
@@ -79,7 +80,7 @@ void explainLogicalOperatorFailures(const T& a, const T& b) {
 }
 
 } // namespace dynamic
-
 } // namespace temple
+} // namespace Scine
 
 #endif

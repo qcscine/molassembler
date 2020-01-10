@@ -8,7 +8,7 @@
 #include "shapes/Partitioner.h"
 
 using namespace Scine;
-using namespace Shapes;
+using namespace shapes;
 
 BOOST_AUTO_TEST_CASE(Partitions) {
   for(unsigned i = 1; i < 4; ++i) {

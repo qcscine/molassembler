@@ -16,6 +16,7 @@
 
 #include <memory>
 
+namespace Scine {
 namespace temple {
 namespace adaptors {
 namespace detail {
@@ -136,5 +137,6 @@ detail::Enumerator<Container> enumerate(Container&& container) {
 
 } // namespace adaptors
 } // namespace temple
+} // namespace Scine
 
 #endif

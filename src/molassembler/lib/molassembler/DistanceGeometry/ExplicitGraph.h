@@ -34,7 +34,7 @@ namespace outcome = BOOST_OUTCOME_V2_NAMESPACE;
 // Forward-declare InnerGraph
 class InnerGraph;
 
-namespace DistanceGeometry {
+namespace distance_geometry {
 
 // Forward-declarations
 enum class Partiality;
@@ -224,7 +224,7 @@ private:
   );
 };
 
-} // namespace DistanceGeometry
+} // namespace distance_geometry
 
 } // namespace molassembler
 

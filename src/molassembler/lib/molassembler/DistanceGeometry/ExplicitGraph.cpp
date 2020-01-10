@@ -36,7 +36,7 @@
 
 namespace Scine {
 namespace molassembler {
-namespace DistanceGeometry {
+namespace distance_geometry {
 
 ExplicitGraph::ExplicitGraph(
   const InnerGraph& inner,
@@ -58,8 +58,8 @@ ExplicitGraph::ExplicitGraph(
          * distance is sum of vdw radii) is explicit in this graph variant.
         */
         double vdwLowerBound = (
-          AtomInfo::vdwRadius(inner.elementType(a))
-          + AtomInfo::vdwRadius(inner.elementType(b))
+          atom_info::vdwRadius(inner.elementType(a))
+          + atom_info::vdwRadius(inner.elementType(b))
         );
 
         boost::add_edge(left(a), right(b), -vdwLowerBound, _graph);
@@ -119,8 +119,8 @@ ExplicitGraph::ExplicitGraph(
         boost::add_edge(left(b), right(a), -lower, _graph);
       } else {
         const double vdwLowerBound = (
-          AtomInfo::vdwRadius(_inner.elementType(a))
-          + AtomInfo::vdwRadius(_inner.elementType(b))
+          atom_info::vdwRadius(_inner.elementType(a))
+          + atom_info::vdwRadius(_inner.elementType(b))
         );
 
         // Implicit lower bound on distance between the vertices
@@ -271,14 +271,14 @@ double ExplicitGraph::maximalImplicitLowerBound(const VertexDescriptor i) const 
   Utils::ElementType elementType = _inner.elementType(a);
 
   if(elementType == _heaviestAtoms.front()) {
-    return AtomInfo::vdwRadius(
+    return atom_info::vdwRadius(
       _heaviestAtoms.back()
-    ) + AtomInfo::vdwRadius(elementType);
+    ) + atom_info::vdwRadius(elementType);
   }
 
-  return AtomInfo::vdwRadius(
+  return atom_info::vdwRadius(
     _heaviestAtoms.front()
-  ) + AtomInfo::vdwRadius(elementType);
+  ) + atom_info::vdwRadius(elementType);
 }
 
 const ExplicitGraph::GraphType& ExplicitGraph::graph() const {
@@ -554,6 +554,6 @@ outcome::result<Eigen::MatrixXd> ExplicitGraph::makeDistanceMatrix(random::Engin
   return distancesMatrix;
 }
 
-} // namespace DistanceGeometry
+} // namespace distance_geometry
 } // namespace molassembler
 } // namespace Scine

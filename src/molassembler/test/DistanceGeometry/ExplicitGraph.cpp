@@ -30,13 +30,13 @@ BOOST_AUTO_TEST_CASE(ExplicitGraphStructure) {
     const boost::filesystem::path& currentFilePath :
     boost::filesystem::recursive_directory_iterator("stereocenter_detection_molecules")
   ) {
-    Molecule molecule = IO::read(
+    Molecule molecule = io::read(
       currentFilePath.string()
     );
 
-    using EG = DistanceGeometry::ExplicitGraph;
+    using EG = distance_geometry::ExplicitGraph;
 
-    DistanceGeometry::SpatialModel spatialModel {molecule, DistanceGeometry::Configuration {}};
+    distance_geometry::SpatialModel spatialModel {molecule, distance_geometry::Configuration {}};
 
     EG explicitGraph {
       molecule.graph().inner(),

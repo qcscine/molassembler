@@ -14,7 +14,8 @@
 #include <cmath>
 
 BOOST_AUTO_TEST_CASE(dihedralTests) {
-  using namespace Scine::molassembler;
+  using namespace Scine;
+  using namespace molassembler;
 
   Scine::Utils::PositionCollection positions(4, 3);
   positions.row(0) = Scine::Utils::Position {1, 0, 0};

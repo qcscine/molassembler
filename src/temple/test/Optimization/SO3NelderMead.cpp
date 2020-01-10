@@ -9,6 +9,8 @@
 
 #include <iostream>
 
+using namespace Scine;
+
 BOOST_AUTO_TEST_CASE(SO3NelderMead) {
   struct EigenValueDecomposition {
     static inline double square(double x) noexcept {
