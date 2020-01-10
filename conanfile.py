@@ -1,5 +1,6 @@
 from conans import ConanFile, CMake
 from pathlib import Path
+from textwrap import wrap
 
 
 def conan_paths_path_str(build_folder):
@@ -61,3 +62,20 @@ generate non-superposable stereopermutations as output."""
 
     def package_info(self):
         self.cpp_info.libs = ["molassembler"]
+
+
+if __name__ == "__main__":
+    print("Molassembler conan recipe options and default values:\n")
+
+    explanations = {
+        "subsume_dependencies": "Use static dependencies in order to get libraries and binaries with minimal runtime dependencies."
+    }
+
+    recipe = MolassemblerConan
+    for key in recipe.options.keys():
+        print("- " + str(key) + ": " + str(recipe.default_options[key]))
+        if key in explanations.keys():
+            for line in wrap(explanations[key], initial_indent="  ", subsequent_indent="  "):
+                print(line)
+
+            print()
