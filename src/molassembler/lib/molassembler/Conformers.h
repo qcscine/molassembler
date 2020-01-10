@@ -148,7 +148,7 @@ struct MASM_EXPORT Configuration {
  *   this means that the molecule is not representable in three dimensions.
  * @pre @p configuration's preconditions must be met
  *
- * @complexity{Roughly @math{O(C \cdot N^3) where @math{C} is the number of
+ * @complexity{Roughly @math{O(C \cdot N^3)} where @math{C} is the number of
  * conformers and @math{N} is the number of atoms in @p molecule}
  *
  * @parblock @note The Distance Geometry procedure can fail stochastically
@@ -215,7 +215,7 @@ MASM_EXPORT std::vector<
  *   this means that the molecule is not representable in three dimensions.
  * @pre @p configuration's preconditions must be met
  *
- * @complexity{Roughly @math{O(C \cdot N^3) where @math{C} is the number of
+ * @complexity{Roughly @math{O(C \cdot N^3)} where @math{C} is the number of
  * conformers and @math{N} is the number of atoms in @p molecule}
  *
  * @parblock @note The Distance Geometry procedure can fail stochastically
@@ -251,7 +251,7 @@ MASM_EXPORT std::vector<
  * @param configuration The configuration object to control Distance Geometry
  *   in detail. The defaults are usually fine.
  *
- * @complexity{Roughly @math{O(N^3)}
+ * @complexity{Roughly @math{O(N^3)}}
  *
  * @parblock @note This function advances the state of the global PRNG.
  * @endparblock
@@ -278,7 +278,7 @@ MASM_EXPORT outcome::result<Utils::PositionCollection> generateRandomConformatio
  * @param configuration The configuration object to control Distance Geometry
  *   in detail. The defaults are usually fine.
  *
- * @complexity{Roughly @math{O(N^3)}
+ * @complexity{Roughly @math{O(N^3)}}
  *
  * @see generateEnsemble
  *

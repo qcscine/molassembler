@@ -104,7 +104,7 @@ outcome::result<AngstromWrapper> generateConformer(
 /** @brief Main and parallel implementation of Distance Geometry. Generates an
  *   ensemble of 3D structures of a given Molecule
  *
- * @complexity{Roughly @math{O(C \cdot N^3) where @math{C} is the number of
+ * @complexity{Roughly @math{O(C \cdot N^3)} where @math{C} is the number of
  * conformers and @math{N} is the number of atoms in @p molecule}
  *
  * @see generateEnsemble
