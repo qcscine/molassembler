@@ -41,7 +41,7 @@ struct SubgraphCallback {
   std::reference_wrapper<IndexMapVector> mappingsRef;
 
   SubgraphCallback(
-    const OuterGraph& a,
+    const Graph& a,
     IndexMapVector& mappings
   ) : N {a.N()},
       mappingsRef(mappings)
@@ -53,7 +53,7 @@ struct SubgraphCallback {
 
     for(AtomIndex i = 0; i < N; ++i) {
       AtomIndex t = boost::get(m, i);
-      if(t != boost::graph_traits<InnerGraph::BglType>::null_vertex()) {
+      if(t != boost::graph_traits<PrivateGraph::BglType>::null_vertex()) {
         bimap.insert(
           IndexMap::value_type(i, t)
         );
@@ -246,8 +246,8 @@ struct EdgeComparator {
     EdgeStrictness passStrictness
   ) : a(passA), b(passB), strictness(passStrictness) {}
 
-  bool operator () (const InnerGraph::Edge i, const InnerGraph::Edge j) const {
-    /*auto bondStr = [](const InnerGraph& g, const InnerGraph::Edge& e) -> std::string {
+  bool operator () (const PrivateGraph::Edge i, const PrivateGraph::Edge j) const {
+    /*auto bondStr = [](const PrivateGraph& g, const PrivateGraph::Edge& e) -> std::string {
       AtomIndex source = g.source(e);
       AtomIndex target = g.target(e);
 

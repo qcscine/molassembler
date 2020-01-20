@@ -8,7 +8,7 @@
 #define INCLUDE_MOLASSEMBLER_IO_SMILES_MOLECULE_BUILDER_H
 
 #include "molassembler/IO/SmilesParseData.h"
-#include "molassembler/Graph/InnerGraph.h"
+#include "molassembler/Graph/PrivateGraph.h"
 #include "boost/variant.hpp"
 #include <vector>
 #include <stack>
@@ -99,21 +99,21 @@ private:
   void setShapes(
     std::vector<Molecule>& molecules,
     const std::vector<unsigned>& componentMap,
-    const std::vector<InnerGraph::Vertex>& indexInComponentMap
+    const std::vector<PrivateGraph::Vertex>& indexInComponentMap
   );
 
   //! @brief Set atom stereo post-parse and conversion to molecules
   void setAtomStereo(
     std::vector<Molecule>& molecules,
     const std::vector<unsigned>& componentMap,
-    const std::vector<InnerGraph::Vertex>& indexInComponentMap
+    const std::vector<PrivateGraph::Vertex>& indexInComponentMap
   );
 
   //! @brief Set bond stereo post-parse and conversion to molecules
   void setBondStereo(
     std::vector<Molecule>& molecules,
     const std::vector<unsigned>& componentMap,
-    const std::vector<InnerGraph::Vertex>& indexInComponentMap
+    const std::vector<PrivateGraph::Vertex>& indexInComponentMap
   );
 //!@}
 
@@ -128,19 +128,19 @@ private:
   boost::variant<SimpleLastBondData, BondData> lastBondData = SimpleLastBondData::Unbonded;
 
   //! Possibly disconnected tracking graph
-  InnerGraph graph;
+  PrivateGraph graph;
 
   //! State to track the vertex a new vertex is bound to
-  std::stack<InnerGraph::Vertex> vertexStack;
+  std::stack<PrivateGraph::Vertex> vertexStack;
 
   //! Storage for bonds marked with stereo indicators ("/" and "\")
-  using StereoMarkedBondTuple = std::tuple<InnerGraph::Vertex, InnerGraph::Vertex, BondData::StereoMarker>;
+  using StereoMarkedBondTuple = std::tuple<PrivateGraph::Vertex, PrivateGraph::Vertex, BondData::StereoMarker>;
   std::vector<StereoMarkedBondTuple> stereoMarkedBonds;
 
   //! Storage for ring closure bond indicators
   std::unordered_map<
     unsigned,
-    std::pair<InnerGraph::Vertex, boost::optional<BondType>>
+    std::pair<PrivateGraph::Vertex, boost::optional<BondType>>
   > ringClosures;
 
   //! AtomData for each created vertex

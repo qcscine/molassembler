@@ -29,8 +29,8 @@ class BondOrderCollection;
 
 namespace molassembler {
 
-// Forward-declare InnerGraph
-class InnerGraph;
+// Forward-declare PrivateGraph
+class PrivateGraph;
 class Cycles;
 
 /**
@@ -54,15 +54,15 @@ class Cycles;
  * - Disconnecting a molecule into two logical molecules by removing a
  *   particular bond or atom is also disallowed.
  *
- * @note This class wraps InnerGraph so that no Boost Graph types are exposed
+ * @note This class wraps PrivateGraph so that no Boost Graph types are exposed
  *   to library consumers.
  */
-class MASM_EXPORT OuterGraph {
+class MASM_EXPORT Graph {
 public:
 //!@name Member types
 //!@{
   /*!
-   * @brief Templated iterator facade based on InnerGraph to provide iterative
+   * @brief Templated iterator facade based on PrivateGraph to provide iterative
    *   access to atom indices and edge indices
    *
    * @tparam T The type the iterator should yield
@@ -72,7 +72,7 @@ public:
    * @note Although this is templated, there is no implementation in the header
    *   in order to hide the underlying Boost Graph types from library consumers.
    *   The required template specializations for the type defintions below are
-   *   supplied in OuterGraphIterators.cpp. Any other instantiations will fail.
+   *   supplied in GraphIterators.cpp. Any other instantiations will fail.
    */
   template<typename T, bool isVertexInitialized>
   class InnerBasedIterator {
@@ -114,14 +114,14 @@ public:
      * @brief Construct an iterator from a graph and a boolean indicating
      *   begin/end
      *
-     * @param inner The InnerGraph (wrapper around BGL Types)
+     * @param inner The PrivateGraph (wrapper around BGL Types)
      * @param begin Whether this iterator denotes a begin or end iterator
      *
      * @note This constructor is enabled if the template parameter
      *   isVertexInitialized is false
      */
     template<bool Dependent = isVertexInitialized, std::enable_if_t<!Dependent, int>...>
-    InnerBasedIterator(const InnerGraph& inner, bool begin);
+    InnerBasedIterator(const PrivateGraph& inner, bool begin);
 
     /*!
      * @brief Construct an iterator from an atom index, a graph and a boolean
@@ -129,14 +129,14 @@ public:
      *
      * @param a An atom index around which adjacent vertices or incident edges
      *   are to be iterated over (depending on @p T)
-     * @param inner The InnerGraph (wrapper around BGL Types)
+     * @param inner The PrivateGraph (wrapper around BGL Types)
      * @param begin Whether this iterator denotes a begin or end iterator
      *
      * @note This constructor is enabled if the template parameter
      *   isVertexInitialized is false
      */
     template<bool Dependent = isVertexInitialized, std::enable_if_t<Dependent, int>...>
-    InnerBasedIterator(AtomIndex a, const InnerGraph& inner, bool begin);
+    InnerBasedIterator(AtomIndex a, const PrivateGraph& inner, bool begin);
 
     //! Prefix increment
     InnerBasedIterator& operator ++ ();
@@ -177,18 +177,18 @@ public:
 
 //!@name Special member functions
 //!@{
-  OuterGraph(OuterGraph&& other) noexcept;
-  OuterGraph& operator = (OuterGraph&& other) noexcept;
-  OuterGraph(const OuterGraph& other);
-  OuterGraph& operator = (const OuterGraph& other);
-  ~OuterGraph();
+  Graph(Graph&& other) noexcept;
+  Graph& operator = (Graph&& other) noexcept;
+  Graph(const Graph& other);
+  Graph& operator = (const Graph& other);
+  ~Graph();
 //!@{
 
 //!@name Constructors
 //!@{
-  OuterGraph();
+  Graph();
   //! Wrapping constructor
-  explicit OuterGraph(InnerGraph&& inner);
+  explicit Graph(PrivateGraph&& inner);
 //!@}
 
 //!@name Information
@@ -329,7 +329,7 @@ public:
    * @warning This function is not intended for library consumers, merely used
    * for implementation purposes.
    */
-  MASM_NO_EXPORT InnerGraph& inner();
+  MASM_NO_EXPORT PrivateGraph& inner();
 
   /*! @brief Const-access to library-internal graph representation class
    *
@@ -338,15 +338,15 @@ public:
    * @warning This function is not intended for library consumers, merely used
    * for implementation purposes.
    */
-  MASM_NO_EXPORT const InnerGraph& inner() const;
+  MASM_NO_EXPORT const PrivateGraph& inner() const;
 
 private:
 #ifdef MOLASSEMBLER_ENABLE_PROPAGATE_CONST
   std::experimental::propagate_const<
-    std::unique_ptr<InnerGraph>
+    std::unique_ptr<PrivateGraph>
   > _innerPtr;
 #else
-  std::unique_ptr<InnerGraph> _innerPtr;
+  std::unique_ptr<PrivateGraph> _innerPtr;
 #endif
 };
 

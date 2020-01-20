@@ -27,7 +27,7 @@ bool Feasible::linkPossiblyFeasible(
   const RankingInformation& ranking,
   const shapes::Shape shape,
   const std::vector<unsigned>& shapeVertexMap,
-  const OuterGraph& graph
+  const Graph& graph
 ) {
   // The algorithm below is explained in detail in documents/denticity_feasibility
   assert(link.cycleSequence.front() != link.cycleSequence.back());
@@ -154,7 +154,7 @@ bool Feasible::possiblyFeasible(
   const ConeAngleType& coneAngles,
   const RankingInformation& ranking,
   const shapes::Shape shape,
-  const OuterGraph& graph
+  const Graph& graph
 ) {
   const auto shapeVertexMap = siteToShapeVertexMap(
     stereopermutation,
@@ -230,7 +230,7 @@ Feasible::Feasible(
   const shapes::Shape shape,
   const AtomIndex centralIndex,
   const RankingInformation& ranking,
-  const OuterGraph& graph
+  const Graph& graph
 ) {
   using ModelType = distance_geometry::SpatialModel;
 

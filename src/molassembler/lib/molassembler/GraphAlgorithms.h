@@ -14,7 +14,7 @@ namespace Scine {
 namespace molassembler {
 
 // Forward-declarations
-class OuterGraph;
+class Graph;
 
 /*! @brief Calculates the graph distance from a single atom index to all others
  *
@@ -28,7 +28,7 @@ class OuterGraph;
  * @returns A vector containing the distances of all vertices to the supplied
  *   index
  */
-MASM_EXPORT std::vector<unsigned> distance(AtomIndex i, const OuterGraph& graph);
+MASM_EXPORT std::vector<unsigned> distance(AtomIndex i, const Graph& graph);
 
 } // namespace molassembler
 } // namespace Scine

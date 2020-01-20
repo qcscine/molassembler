@@ -29,7 +29,7 @@ class AtomCollection;
 namespace molassembler {
 
 // Forward declarations
-class OuterGraph;
+class Graph;
 class StereopermutatorList;
 struct RankingInformation;
 
@@ -139,7 +139,7 @@ public:
    * @throws std::logic_error If the supplied graph has multiple connected
    *   components or there are less than 2 atoms
    */
-  explicit Molecule(OuterGraph graph);
+  explicit Molecule(Graph graph);
 
   /*! @brief Construct from connectivity and positions
    *
@@ -162,7 +162,7 @@ public:
    *   components or there are less than 2 atoms
    */
   Molecule(
-    OuterGraph graph,
+    Graph graph,
     const AngstromWrapper& positions,
     const boost::optional<
       std::vector<BondIndex>
@@ -180,7 +180,7 @@ public:
    *   internally in implementation details.
    */
   MASM_NO_EXPORT Molecule(
-    OuterGraph graph,
+    Graph graph,
     StereopermutatorList stereopermutators,
     boost::optional<AtomEnvironmentComponents> canonicalComponentsOption = boost::none
   );
@@ -609,7 +609,7 @@ public:
    *
    * @complexity{@math{\Theta(1)}}
    */
-  const OuterGraph& graph() const;
+  const Graph& graph() const;
 
   /**
    * @brief Hash function for the molecule

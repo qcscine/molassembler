@@ -16,14 +16,14 @@
  * The iterators giving easy access to atoms, bonds, adjacents and incidents
  * have to be declared in the header, these are all template specializations of
  * the InnerBasedIterator facade, which are themselves pImpl-ed. Their
- * implementations are in OuterGraphIterators.cpp.
+ * implementations are in GraphIterators.cpp.
  *
- * The InnerGraph type is the Impl struct of OuterGraph, except it's not a
- * OuterGraph-local type, but a free type that many implementation details of
+ * The PrivateGraph type is the Impl struct of Graph, except it's not a
+ * Graph-local type, but a free type that many implementation details of
  * other molassembler components expect to be passed.
  */
 
-#include "molassembler/OuterGraph.h"
+#include "molassembler/Graph.h"
 
 #include "Utils/Bonds/BondOrderCollection.h"
 #include "Utils/Typenames.h"
@@ -36,30 +36,30 @@ namespace Scine {
 namespace molassembler {
 
 static_assert(
-  std::is_same<AtomIndex, InnerGraph::Vertex>::value,
+  std::is_same<AtomIndex, PrivateGraph::Vertex>::value,
   "Atomic index types are mismatched!"
 );
 
-OuterGraph::OuterGraph(OuterGraph&& other) noexcept = default;
-OuterGraph& OuterGraph::operator = (OuterGraph&& other) noexcept = default;
-OuterGraph::OuterGraph(const OuterGraph& other) : _innerPtr(
-  std::make_unique<InnerGraph>(*other._innerPtr)
+Graph::Graph(Graph&& other) noexcept = default;
+Graph& Graph::operator = (Graph&& other) noexcept = default;
+Graph::Graph(const Graph& other) : _innerPtr(
+  std::make_unique<PrivateGraph>(*other._innerPtr)
 ) {}
-OuterGraph& OuterGraph::operator = (const OuterGraph& other) {
+Graph& Graph::operator = (const Graph& other) {
   *_innerPtr = *other._innerPtr;
   return *this;
 }
-OuterGraph::~OuterGraph() = default;
+Graph::~Graph() = default;
 
-OuterGraph::OuterGraph() : _innerPtr(
-  std::make_unique<InnerGraph>()
+Graph::Graph() : _innerPtr(
+  std::make_unique<PrivateGraph>()
 ) {}
 
-OuterGraph::OuterGraph(InnerGraph&& inner) : _innerPtr(
-  std::make_unique<InnerGraph>(std::move(inner))
+Graph::Graph(PrivateGraph&& inner) : _innerPtr(
+  std::make_unique<PrivateGraph>(std::move(inner))
 ) {}
 
-Utils::ElementTypeCollection OuterGraph::elementCollection() const {
+Utils::ElementTypeCollection Graph::elementCollection() const {
   const AtomIndex size = N();
 
   Utils::ElementTypeCollection elements;
@@ -72,15 +72,15 @@ Utils::ElementTypeCollection OuterGraph::elementCollection() const {
   return elements;
 }
 
-Utils::ElementType OuterGraph::elementType(const AtomIndex a) const {
+Utils::ElementType Graph::elementType(const AtomIndex a) const {
   return inner().elementType(a);
 }
 
-AtomIndex OuterGraph::N() const {
+AtomIndex Graph::N() const {
   return inner().N();
 }
 
-unsigned OuterGraph::B() const {
+unsigned Graph::B() const {
   return inner().B();
 }
 
@@ -88,19 +88,19 @@ unsigned OuterGraph::B() const {
 std::pair<
   std::vector<AtomIndex>,
   std::vector<AtomIndex>
-> OuterGraph::splitAlongBridge(BondIndex bridge) const {
+> Graph::splitAlongBridge(BondIndex bridge) const {
   return inner().splitAlongBridge(
     toInner(bridge, inner())
   );
 }
 
-bool OuterGraph::adjacent(const AtomIndex a, const AtomIndex b) const {
+bool Graph::adjacent(const AtomIndex a, const AtomIndex b) const {
   return static_cast<bool>(
     inner().edgeOption(a, b)
   );
 }
 
-std::vector<AtomIndex> OuterGraph::atomsOfElement(const Utils::ElementType e) const {
+std::vector<AtomIndex> Graph::atomsOfElement(const Utils::ElementType e) const {
   std::vector<AtomIndex> matches;
   for(AtomIndex i : boost::make_iterator_range(inner().vertices())) {
     if(inner().elementType(i) == e) {
@@ -110,7 +110,7 @@ std::vector<AtomIndex> OuterGraph::atomsOfElement(const Utils::ElementType e) co
   return matches;
 }
 
-boost::optional<BondIndex> OuterGraph::bond(const AtomIndex a, const AtomIndex b) const {
+boost::optional<BondIndex> Graph::bond(const AtomIndex a, const AtomIndex b) const {
   if(auto edgeOption = inner().edgeOption(a, b)) {
     return toOuter(edgeOption.value(), inner());
   }
@@ -118,7 +118,7 @@ boost::optional<BondIndex> OuterGraph::bond(const AtomIndex a, const AtomIndex b
   return boost::none;
 }
 
-Utils::BondOrderCollection OuterGraph::bondOrders() const {
+Utils::BondOrderCollection Graph::bondOrders() const {
   Utils::BondOrderCollection BOs(inner().N());
 
   for(const auto edge : boost::make_iterator_range(inner().edges())) {
@@ -136,58 +136,58 @@ Utils::BondOrderCollection OuterGraph::bondOrders() const {
   return BOs;
 }
 
-BondType OuterGraph::bondType(const BondIndex& edge) const {
+BondType Graph::bondType(const BondIndex& edge) const {
   return inner().bondType(toInner(edge, inner()));
 }
 
-bool OuterGraph::canRemove(const AtomIndex a) const {
+bool Graph::canRemove(const AtomIndex a) const {
   return inner().canRemove(a);
 }
 
-bool OuterGraph::canRemove(const BondIndex& edge) const {
+bool Graph::canRemove(const BondIndex& edge) const {
   return inner().canRemove(
     toInner(edge, inner())
   );
 }
 
-const Cycles& OuterGraph::cycles() const {
+const Cycles& Graph::cycles() const {
   return inner().cycles();
 }
 
-InnerGraph& OuterGraph::inner() {
+PrivateGraph& Graph::inner() {
   return *_innerPtr;
 }
 
-const InnerGraph& OuterGraph::inner() const {
+const PrivateGraph& Graph::inner() const {
   return *_innerPtr;
 }
 
-unsigned OuterGraph::degree(const AtomIndex a) const {
+unsigned Graph::degree(const AtomIndex a) const {
   return inner().degree(a);
 }
 
-OuterGraph::Range<OuterGraph::AtomIterator> OuterGraph::atoms() const {
+Graph::Range<Graph::AtomIterator> Graph::atoms() const {
   return {
     AtomIterator(inner(), true),
     AtomIterator(inner(), false)
   };
 }
 
-OuterGraph::Range<OuterGraph::BondIterator> OuterGraph::bonds() const {
+Graph::Range<Graph::BondIterator> Graph::bonds() const {
   return {
     BondIterator(inner(), true),
     BondIterator(inner(), false)
   };
 }
 
-OuterGraph::Range<OuterGraph::AdjacencyIterator> OuterGraph::adjacents(const AtomIndex a) const {
+Graph::Range<Graph::AdjacencyIterator> Graph::adjacents(const AtomIndex a) const {
   return {
     AdjacencyIterator(a, inner(), true),
     AdjacencyIterator(a, inner(), false)
   };
 }
 
-OuterGraph::Range<OuterGraph::IncidentEdgesIterator> OuterGraph::bonds(const AtomIndex a) const {
+Graph::Range<Graph::IncidentEdgesIterator> Graph::bonds(const AtomIndex a) const {
   return {
     IncidentEdgesIterator(a, inner(), true),
     IncidentEdgesIterator(a, inner(), false)

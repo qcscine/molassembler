@@ -17,7 +17,7 @@
 #include "temple/Stringify.h"
 
 #include "molassembler/Graph/GraphAlgorithms.h"
-#include "molassembler/Graph/InnerGraph.h"
+#include "molassembler/Graph/PrivateGraph.h"
 #include "molassembler/Modeling/ShapeInference.h"
 #include "molassembler/Molecule/MolGraphWriter.h"
 #include "molassembler/Options.h"
@@ -2427,7 +2427,7 @@ std::vector<RankingTree::TreeVertexIndex> RankingTree::_expand(
   }
 
   for(
-    const InnerGraph::Vertex& molAdjacentIndex :
+    const PrivateGraph::Vertex& molAdjacentIndex :
     boost::make_iterator_range(
       _graph.inner().adjacents(_tree[index].molIndex)
     )
@@ -2957,7 +2957,7 @@ std::unordered_set<RankingTree::TreeVertexIndex> RankingTree::_collectSeeds(
 }
 
 RankingTree::RankingTree(
-  const OuterGraph& graph,
+  const Graph& graph,
   const StereopermutatorList& stereopermutators,
   std::string molGraphviz,
   const AtomIndex atomToRank,

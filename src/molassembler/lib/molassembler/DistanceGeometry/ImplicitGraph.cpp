@@ -9,7 +9,7 @@
 #include "molassembler/DistanceGeometry/DistanceBoundsMatrix.h"
 #include "molassembler/DistanceGeometry/DistanceGeometry.h"
 #include "molassembler/DistanceGeometry/Error.h"
-#include "molassembler/Graph/InnerGraph.h"
+#include "molassembler/Graph/PrivateGraph.h"
 #include "molassembler/Log.h"
 #include "molassembler/Modeling/AtomInfo.h"
 #include "molassembler/Options.h"
@@ -70,7 +70,7 @@ void ImplicitGraph::_explainContradictionPaths(
 }
 
 ImplicitGraph::ImplicitGraph(
-  const InnerGraph& inner,
+  const PrivateGraph& inner,
   BoundsMatrix bounds
 ) : _innerGraphPtr(&inner), _distances(std::move(bounds)) {
   // Determine the two heaviest element types in the molecule, O(N)

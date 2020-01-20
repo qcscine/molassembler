@@ -10,7 +10,7 @@
 #include "molassembler/Editing.h"
 #include "molassembler/IO.h"
 #include "molassembler/Molecule.h"
-#include "molassembler/OuterGraph.h"
+#include "molassembler/Graph.h"
 #include "molassembler/Patterns.h"
 #include "molassembler/Subgraphs.h"
 
@@ -44,7 +44,7 @@ auto makeIsBridgePredicate(const Molecule& mol) {
 
 auto makeBondElementsPredicate(const Molecule& mol, const Utils::ElementType e1, const Utils::ElementType e2) {
   return [&mol, e1, e2](const BondIndex& bond) -> bool {
-    const OuterGraph& g = mol.graph();
+    const Graph& g = mol.graph();
     return (
       (g.elementType(bond.first) == e1 && g.elementType(bond.second) == e2)
       || (g.elementType(bond.first) == e2 && g.elementType(bond.second) == e1)

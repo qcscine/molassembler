@@ -10,7 +10,7 @@
 #include "shapes/PropertyCaching.h"
 
 #include "molassembler/StereopermutatorList.h"
-#include "molassembler/Graph/InnerGraph.h"
+#include "molassembler/Graph/PrivateGraph.h"
 
 #include "temple/Functional.h"
 #include "temple/Adaptors/Iota.h"
@@ -193,7 +193,7 @@ WideHashType hash(
 }
 
 std::vector<BondInformation> gatherBonds(
-  const InnerGraph& inner,
+  const PrivateGraph& inner,
   const StereopermutatorList& stereopermutators,
   const AtomEnvironmentComponents componentsBitmask,
   const AtomIndex i
@@ -203,7 +203,7 @@ std::vector<BondInformation> gatherBonds(
 
   if(componentsBitmask & AtomEnvironmentComponents::Stereopermutations) {
     for(
-      const InnerGraph::Edge& edge :
+      const PrivateGraph::Edge& edge :
       boost::make_iterator_range(inner.edges(i))
     ) {
       const BondIndex bond {
@@ -236,7 +236,7 @@ std::vector<BondInformation> gatherBonds(
     }
   } else {
     for(
-      const InnerGraph::Edge& edge :
+      const PrivateGraph::Edge& edge :
       boost::make_iterator_range(inner.edges(i))
     ) {
       bonds.emplace_back(
@@ -256,7 +256,7 @@ std::vector<BondInformation> gatherBonds(
 }
 
 WideHashType atomEnvironment(
-  const InnerGraph& inner,
+  const PrivateGraph& inner,
   const StereopermutatorList& stereopermutators,
   AtomEnvironmentComponents bitmask,
   AtomIndex i
@@ -284,7 +284,7 @@ WideHashType atomEnvironment(
 }
 
 std::vector<WideHashType> generate(
-  const InnerGraph& inner,
+  const PrivateGraph& inner,
   const StereopermutatorList& stereopermutators,
   const AtomEnvironmentComponents bitmask
 ) {
@@ -305,9 +305,9 @@ std::vector<WideHashType> generate(
 }
 
 bool identityCompare(
-  const InnerGraph& aGraph,
+  const PrivateGraph& aGraph,
   const StereopermutatorList& aStereopermutators,
-  const InnerGraph& bGraph,
+  const PrivateGraph& bGraph,
   const StereopermutatorList& bStereopermutators,
   AtomEnvironmentComponents componentBitmask
 ) {

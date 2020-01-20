@@ -1,26 +1,26 @@
 /*!@file
  * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
  *   See LICENSE.txt
- * @brief OuterGraph and InnerGraph vertex- & edge descriptor conversions
+ * @brief Graph and PrivateGraph vertex- & edge descriptor conversions
  */
 
 #ifndef INCLUDE_MOLASSEMBLER_GRAPH_BRIDGE_H
 #define INCLUDE_MOLASSEMBLER_GRAPH_BRIDGE_H
 
-#include "molassembler/OuterGraph.h"
-#include "molassembler/Graph/InnerGraph.h"
+#include "molassembler/Graph.h"
+#include "molassembler/Graph/PrivateGraph.h"
 
 namespace Scine {
 
 namespace molassembler {
 
-//! Transform BondIndex to InnerGraph::Edge
-inline InnerGraph::Edge toInner(const BondIndex& bondIndex, const InnerGraph& graph) {
+//! Transform BondIndex to PrivateGraph::Edge
+inline PrivateGraph::Edge toInner(const BondIndex& bondIndex, const PrivateGraph& graph) {
   return graph.edge(bondIndex.first, bondIndex.second);
 }
 
-//! Transform InnerGraph::Edge to BondIndex
-inline BondIndex toOuter(const InnerGraph::Edge& edge, const InnerGraph& graph) {
+//! Transform PrivateGraph::Edge to BondIndex
+inline BondIndex toOuter(const PrivateGraph::Edge& edge, const PrivateGraph& graph) {
   return { graph.source(edge), graph.target(edge) };
 }
 

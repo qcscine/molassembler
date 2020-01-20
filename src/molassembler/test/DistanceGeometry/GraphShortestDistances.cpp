@@ -23,7 +23,7 @@
 #include "molassembler/DistanceGeometry/DistanceBoundsMatrix.h"
 #include "molassembler/DistanceGeometry/ExplicitGraph.h"
 #include "molassembler/DistanceGeometry/SpatialModel.h"
-#include "molassembler/Graph/InnerGraph.h"
+#include "molassembler/Graph/PrivateGraph.h"
 #include "molassembler/IO.h"
 #include "molassembler/Molecule.h"
 

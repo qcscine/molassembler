@@ -24,8 +24,8 @@ namespace Scine {
 namespace molassembler {
 
 // Forward-declarations
-class OuterGraph;
-class InnerGraph;
+class Graph;
+class PrivateGraph;
 
 /*!
  * @brief Wrapper class to make working with RDL in C++ more pleasant.
@@ -163,9 +163,9 @@ public:
    *
    * @complexity{Approximately linear in the number of bonds in cycles}
    */
-  Cycles(const OuterGraph& sourceGraph, bool ignoreEtaBonds = true);
+  Cycles(const Graph& sourceGraph, bool ignoreEtaBonds = true);
   //! @overload
-  Cycles(const InnerGraph& innerGraph, bool ignoreEtaBonds = true);
+  Cycles(const PrivateGraph& innerGraph, bool ignoreEtaBonds = true);
 //!@}
 
 //!@name Information
@@ -290,7 +290,7 @@ MASM_EXPORT std::vector<AtomIndex> centralizeRingIndexSequence(
  */
 MASM_EXPORT unsigned countPlanarityEnforcingBonds(
   const std::vector<BondIndex>& edgeSet,
-  const OuterGraph& graph
+  const Graph& graph
 );
 
 } // namespace molassembler

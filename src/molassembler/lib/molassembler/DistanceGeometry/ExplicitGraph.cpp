@@ -14,7 +14,7 @@
 #include "molassembler/Modeling/AtomInfo.h"
 #include "molassembler/Molecule.h"
 #include "molassembler/Options.h"
-#include "molassembler/Graph/InnerGraph.h"
+#include "molassembler/Graph/PrivateGraph.h"
 
 #include "temple/Random.h"
 
@@ -39,7 +39,7 @@ namespace molassembler {
 namespace distance_geometry {
 
 ExplicitGraph::ExplicitGraph(
-  const InnerGraph& inner,
+  const PrivateGraph& inner,
   const BoundsMatrix& bounds
 ) : _graph {2 * inner.N()},
     _inner {inner}
@@ -102,7 +102,7 @@ ExplicitGraph::ExplicitGraph(
 }
 
 ExplicitGraph::ExplicitGraph(
-  const InnerGraph& inner,
+  const PrivateGraph& inner,
   const DistanceBoundsMatrix& bounds
 ) : _graph {2 * inner.N()},
     _inner {inner}

@@ -546,7 +546,7 @@ bool testHapticBonds(const boost::filesystem::path& filePath) {
   auto rawData = Utils::ChemicalFileHandler::read(filePath.string());
 
   const unsigned N = rawData.first.size();
-  InnerGraph graph (N);
+  PrivateGraph graph (N);
 
   // Basically a UFF bond discretization scheme
   for(unsigned i = 0; i < N; ++i) {
@@ -576,7 +576,7 @@ bool testHapticBonds(const boost::filesystem::path& filePath) {
 
   // Test Eta edge classification correctness
   bool pass = true;
-  temple::TinyUnorderedSet<InnerGraph::Edge> expectedEtaBonds;
+  temple::TinyUnorderedSet<PrivateGraph::Edge> expectedEtaBonds;
   for(const auto& expectedEtaBond : relevantData) {
     AtomIndex i = expectedEtaBond.front(),
                   j = expectedEtaBond.back();
@@ -592,7 +592,7 @@ bool testHapticBonds(const boost::filesystem::path& filePath) {
   }
 
   for(
-    const InnerGraph::Edge edge :
+    const PrivateGraph::Edge edge :
     boost::make_iterator_range(
       graph.edges()
     )

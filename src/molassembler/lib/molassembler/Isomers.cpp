@@ -7,7 +7,7 @@
 
 #include "molassembler/Molecule.h"
 #include "molassembler/Molecule/AtomEnvironmentHash.h"
-#include "molassembler/OuterGraph.h"
+#include "molassembler/Graph.h"
 #include "molassembler/StereopermutatorList.h"
 #include "molassembler/Stereopermutators/AbstractPermutations.h"
 #include "molassembler/Stereopermutators/FeasiblePermutations.h"

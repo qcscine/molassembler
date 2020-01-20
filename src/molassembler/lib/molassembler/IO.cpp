@@ -12,7 +12,7 @@
 #include "molassembler/Interpret.h"
 #include "molassembler/Molecule.h"
 #include "molassembler/Options.h"
-#include "molassembler/OuterGraph.h"
+#include "molassembler/Graph.h"
 #include "molassembler/Serialization.h"
 
 #include "Utils/Geometry/AtomCollection.h"

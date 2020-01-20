@@ -23,7 +23,7 @@ namespace molassembler {
 
 // Forward-declarations
 class StereopermutatorList;
-class InnerGraph;
+class PrivateGraph;
 
 /**
  * @brief Classes and methods to compute hashes of atom environments
@@ -84,7 +84,7 @@ WideHashType hash(
  * fixed small number because molecules are sparse.}
  */
 std::vector<BondInformation> gatherBonds(
-  const InnerGraph& inner,
+  const PrivateGraph& inner,
   const StereopermutatorList& stereopermutators,
   AtomEnvironmentComponents componentsBitmask,
   AtomIndex i
@@ -95,7 +95,7 @@ std::vector<BondInformation> gatherBonds(
  * @complexity{@math{\Theta(1)}}
  */
 WideHashType atomEnvironment(
-  const InnerGraph& inner,
+  const PrivateGraph& inner,
   const StereopermutatorList& stereopermutators,
   AtomEnvironmentComponents bitmask,
   AtomIndex i
@@ -106,7 +106,7 @@ WideHashType atomEnvironment(
  * @complexity{@math{\Theta(N)}}
  */
 std::vector<WideHashType> generate(
-  const InnerGraph& inner,
+  const PrivateGraph& inner,
   const StereopermutatorList& stereopermutators,
   AtomEnvironmentComponents bitmask
 );
@@ -116,9 +116,9 @@ std::vector<WideHashType> generate(
  * @complexity{@math{O(N)}}
  */
 bool identityCompare(
-  const InnerGraph& aGraph,
+  const PrivateGraph& aGraph,
   const StereopermutatorList& aStereopermutators,
-  const InnerGraph& bGraph,
+  const PrivateGraph& bGraph,
   const StereopermutatorList& bStereopermutators,
   AtomEnvironmentComponents componentBitmask
 );
@@ -151,9 +151,9 @@ std::pair<
   std::vector<HashType>,
   std::vector<HashType>
 > generate(
-  const InnerGraph& aGraph,
+  const PrivateGraph& aGraph,
   const StereopermutatorList& aStereopermutators,
-  const InnerGraph& bGraph,
+  const PrivateGraph& bGraph,
   const StereopermutatorList& bStereopermutators,
   AtomEnvironmentComponents bitmask
 );

@@ -17,7 +17,7 @@ namespace molassembler {
 
 /* Constructor */
 MolGraphWriter::MolGraphWriter(
-  const InnerGraph* passGraphPtr,
+  const PrivateGraph* passGraphPtr,
   const StereopermutatorList* passPermutatorListPtr
 ) : graphPtr(passGraphPtr), stereopermutatorListPtr(passPermutatorListPtr) {}
 
@@ -152,9 +152,9 @@ void MolGraphWriter::operator() (
 // Edge options
 void MolGraphWriter::operator() (
   std::ostream& os,
-  const InnerGraph::Edge& edgeIndex
+  const PrivateGraph::Edge& edgeIndex
 ) const {
-  const InnerGraph& inner = *graphPtr;
+  const PrivateGraph& inner = *graphPtr;
   os << "[";
 
   // Bond Type display options

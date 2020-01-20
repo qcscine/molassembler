@@ -10,7 +10,7 @@
 
 #include "molassembler/IO.h"
 #include "molassembler/Interpret.h"
-#include "molassembler/OuterGraph.h"
+#include "molassembler/Graph.h"
 #include "molassembler/Molecule.h"
 
 #include "Utils/Geometry/AtomCollection.h"

@@ -58,7 +58,7 @@ public:
 
   //! @brief Whether the stereopermutations interconvert rapidly at selected temp
   static bool thermalized(
-    const OuterGraph& graph,
+    const Graph& graph,
     AtomIndex centerAtom,
     const shapes::Shape shape,
     const RankingInformation& ranking,
@@ -69,7 +69,7 @@ public:
 /* Constructors */
   Impl(
     // The base graph
-    const OuterGraph& graph,
+    const Graph& graph,
     // The shape of this Stereopermutator
     shapes::Shape shape,
     // The atom this Stereopermutator is centered on
@@ -98,7 +98,7 @@ public:
    * shapes.
    */
   void fit(
-    const OuterGraph& graph,
+    const Graph& graph,
     const AngstromWrapper& angstromWrapper
   );
 
@@ -108,7 +108,7 @@ public:
    * stereopermutator and if so, which assignment corresponds to the previous one.
    */
   boost::optional<PropagatedState> propagate(
-    const OuterGraph& graph,
+    const Graph& graph,
     RankingInformation newRanking,
     boost::optional<shapes::Shape> shapeOption
   );
@@ -122,7 +122,7 @@ public:
   //! If the shape is changed, we must adapt
   void setShape(
     shapes::Shape shape,
-    const OuterGraph& graph
+    const Graph& graph
   );
 
 /* Information */

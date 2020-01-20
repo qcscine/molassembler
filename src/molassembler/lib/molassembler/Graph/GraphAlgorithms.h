@@ -10,7 +10,7 @@
 #ifndef INCLUDE_MOLASSEMBLER_GRAPH_ALGORITHMS_H
 #define INCLUDE_MOLASSEMBLER_GRAPH_ALGORITHMS_H
 
-#include "molassembler/Graph/InnerGraph.h"
+#include "molassembler/Graph/PrivateGraph.h"
 
 #include <tuple>
 #include <vector>
@@ -33,7 +33,7 @@ namespace graph_algorithms {
  * containing both stereopermutators' central indices}
  */
 std::vector<LinkInformation> siteLinks(
-  const InnerGraph& graph,
+  const PrivateGraph& graph,
   const AtomStereopermutator& stereopermutatorA,
   const AtomStereopermutator& stereopermutatorB
 );
@@ -44,7 +44,7 @@ std::vector<LinkInformation> siteLinks(
  * central vertex}
  */
 std::vector<LinkInformation> siteLinks(
-  const InnerGraph& graph,
+  const PrivateGraph& graph,
   AtomIndex source,
   const std::vector<
     std::vector<AtomIndex>
@@ -61,7 +61,7 @@ namespace detail {
  */
 bool isHapticSite(
   const std::vector<AtomIndex>& siteAtoms,
-  const InnerGraph& graph
+  const PrivateGraph& graph
 );
 
 /*! @brief Implementation of ligand site grouping algorithm
@@ -70,7 +70,7 @@ bool isHapticSite(
  * the central vertex}
  */
 void findSites(
-  const InnerGraph& graph,
+  const PrivateGraph& graph,
   AtomIndex centralIndex,
   const std::function<void(const std::vector<AtomIndex>&)>& callback
 );
@@ -98,7 +98,7 @@ void findSites(
 std::vector<
   std::vector<AtomIndex>
 > ligandSiteGroups(
-  const InnerGraph& graph,
+  const PrivateGraph& graph,
   AtomIndex centralIndex,
   const std::vector<AtomIndex>& excludeAdjacents = {}
 );
@@ -111,7 +111,7 @@ std::vector<
  *
  * @complexity{@math{\Theta(N)}}
  */
-void updateEtaBonds(InnerGraph& graph);
+void updateEtaBonds(PrivateGraph& graph);
 
 /**
  * @brief Calculates the graph distance from an atom to all other atoms of the
@@ -124,7 +124,7 @@ void updateEtaBonds(InnerGraph& graph);
  *
  * @return A list of graph distances for each atom of the graph
  */
-std::vector<unsigned> distance(AtomIndex a, const InnerGraph& graph);
+std::vector<unsigned> distance(AtomIndex a, const PrivateGraph& graph);
 
 } // namespace graph_algorithms
 

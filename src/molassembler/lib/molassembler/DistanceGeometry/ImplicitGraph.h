@@ -34,8 +34,8 @@ class Engine;
 
 namespace outcome = BOOST_OUTCOME_V2_NAMESPACE;
 
-// Forward-declare InnerGraph
-class InnerGraph;
+// Forward-declare PrivateGraph
+class PrivateGraph;
 
 namespace distance_geometry {
 
@@ -164,7 +164,7 @@ public:
 
 private:
   //! Pointer to molecule from which the bounds come from
-  const InnerGraph* _innerGraphPtr;
+  const PrivateGraph* _innerGraphPtr;
 
   //! Stores the two heaviest element types
   std::array<Utils::ElementType, 2> _heaviestAtoms;
@@ -183,7 +183,7 @@ public:
   using BoundsMatrix = Eigen::MatrixXd;
 
   ImplicitGraph(
-    const InnerGraph& inner,
+    const PrivateGraph& inner,
     BoundsMatrix bounds
   );
 

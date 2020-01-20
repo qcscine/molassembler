@@ -29,7 +29,7 @@ Element types  | Atomic element type information
 Bonds          | Graph connectivity between atoms, discretized as integer bonds
 Positions      | Cartesian coordinates of atoms
 
-Conceptually, molecules are composed of a \masm{OuterGraph, Graph} and a
+Conceptually, molecules are composed of a \masm{Graph} and a
 \masm{StereopermutatorList, list of stereopermutators}. Stereopermutators are
 objects representing a distinct permutation of the spatial arrangement of
 substituents around either an atom or a bond. Those types are named
@@ -53,13 +53,13 @@ which are concepts, some of which are concrete types:
 
 Data type               | Description
 -----------------       | -----------
-\masm{OuterGraph,Graph} | Element types and bond orders
+\masm{Graph} | Element types and bond orders
 \link Scine::shapes::Shape Shape \endlink | Idealization of spatial arrangement of atoms around a centroid
 Binding site            | Contiguous atom set, all connected to the central atom
 Ranked binding site     | All binding sites at an atom, sorted using IUPAC ranking rules
 Stereopermutation       | Abstract representation of an absolute configuration of (possibly bridged) ligand sites around an atom
 Stereopermutator        | Object managing absolute configuration of ligand sites around an atom (\masm{AtomStereopermutator}) or bond (\masm{BondStereopermutator})
-\masm{Molecule}         | Product type of a \masm{OuterGraph,Graph} and a \masm{StereopermutatorList,list of stereopermutators}
+\masm{Molecule}         | Product type of a \masm{Graph} and a \masm{StereopermutatorList,list of stereopermutators}
 
 @note Stereopermutators are not called stereocenters - which might seem the more
 natural choice - because these objects also manage shape and ranking
@@ -105,7 +105,7 @@ IO            | Description
 
 Information           | Description
 --------------------- | -----------
-<code>\link Scine::molassembler::Molecule::graph() mol.graph()\endlink</code> | Yields the molecular \masm{OuterGraph, graph} (purely connectivity and element type data)
+<code>\link Scine::molassembler::Molecule::graph() mol.graph()\endlink</code> | Yields the molecular \masm{Graph} (purely connectivity and element type data)
 <code>\link Scine::molassembler::Molecule::stereopermutators() mol.stereopermutators()\endlink</code> | Yields \masm{StereopermutatorList, list of stereopermutators}
 <code>\link Scine::molassembler::Molecule::dumpGraphviz() mol.dumpGraphviz()\endlink</code> | Yields a graphviz string of the molecule representation
 <code>\link Scine::molassembler::Molecule::modularCompare() mol.modularCompare(...)\endlink</code> | Compare two molecules, choosing which parts are to be compared

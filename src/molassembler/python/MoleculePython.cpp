@@ -8,7 +8,7 @@
 #include "OptionalPython.h"
 
 #include "molassembler/Molecule.h"
-#include "molassembler/OuterGraph.h"
+#include "molassembler/Graph.h"
 #include "molassembler/StereopermutatorList.h"
 #include "molassembler/Serialization.h"
 
@@ -125,7 +125,7 @@ void init_molecule(pybind11::module& m) {
   );
 
   molecule.def(
-    pybind11::init<OuterGraph>(),
+    pybind11::init<Graph>(),
     pybind11::arg("graph"),
     R"delim(
       Initialize a molecule from connectivity alone, inferring shapes and

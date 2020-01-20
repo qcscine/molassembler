@@ -37,7 +37,7 @@ class Engine;
 
 // Forward-declarations
 class AngstromWrapper;
-class InnerGraph;
+class PrivateGraph;
 struct RankingInformation;
 class AtomStereopermutator;
 class StereopermutatorList;
@@ -113,7 +113,7 @@ public:
    * in the underlying composite}
    */
   static std::vector<unsigned> notObviouslyInfeasibleStereopermutations(
-    const InnerGraph& graph,
+    const PrivateGraph& graph,
     const AtomStereopermutator& stereopermutatorA,
     const AtomStereopermutator& stereopermutatorB,
     const stereopermutation::Composite& composite
@@ -153,7 +153,7 @@ public:
    * shape}
    */
   BondStereopermutator(
-    const InnerGraph& graph,
+    const PrivateGraph& graph,
     const StereopermutatorList& stereopermutators,
     const BondIndex& edge,
     Alignment alignment = Alignment::Eclipsed
@@ -233,7 +233,7 @@ public:
   void propagateGraphChange(
     const AtomStereopermutatorPropagatedState& oldPermutator,
     const AtomStereopermutator& newPermutator,
-    const InnerGraph& inner,
+    const PrivateGraph& inner,
     const StereopermutatorList& permutators
   );
 //!@}

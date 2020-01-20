@@ -5,7 +5,7 @@
 #include "molassembler/Patterns.h"
 
 #include "molassembler/Molecule.h"
-#include "molassembler/OuterGraph.h"
+#include "molassembler/Graph.h"
 
 namespace Scine {
 namespace molassembler {

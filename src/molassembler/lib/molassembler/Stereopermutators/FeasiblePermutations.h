@@ -44,7 +44,7 @@ struct Feasible {
     const RankingInformation& ranking,
     shapes::Shape shape,
     const std::vector<unsigned>& shapeVertexMap,
-    const OuterGraph& graph
+    const Graph& graph
   );
 
   /*! @brief Determine whether a stereopermutation is possibly feasible
@@ -62,7 +62,7 @@ struct Feasible {
     const ConeAngleType& coneAngles,
     const RankingInformation& ranking,
     shapes::Shape shape,
-    const OuterGraph& graph
+    const Graph& graph
   );
 //!@}
 
@@ -90,7 +90,7 @@ struct Feasible {
     shapes::Shape shape,
     AtomIndex centralIndex,
     const RankingInformation& ranking,
-    const OuterGraph& graph
+    const Graph& graph
   );
 //!@}
 

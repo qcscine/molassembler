@@ -28,7 +28,7 @@
 namespace Scine {
 namespace molassembler {
 
-class InnerGraph;
+class PrivateGraph;
 
 namespace hashes {
 using WideHashType = boost::multiprecision::uint128_t;
@@ -57,7 +57,7 @@ using WideHashType = boost::multiprecision::uint128_t;
  * @return The canonical labeling sequence of atom indices into @p mol.
  */
 std::vector<int> canonicalAutomorphism(
-  const InnerGraph& inner,
+  const PrivateGraph& inner,
   const std::vector<hashes::WideHashType>& hashes
 );
 

@@ -43,7 +43,7 @@ BondStereopermutator::BondStereopermutator(
 }
 
 BondStereopermutator::BondStereopermutator(
-  const InnerGraph& graph,
+  const PrivateGraph& graph,
   const StereopermutatorList& stereopermutators,
   const BondIndex& edge,
   const Alignment alignment
@@ -85,7 +85,7 @@ void BondStereopermutator::fit(
 void BondStereopermutator::propagateGraphChange(
   const AtomStereopermutatorPropagatedState& oldPermutator,
   const AtomStereopermutator& newPermutator,
-  const InnerGraph& inner,
+  const PrivateGraph& inner,
   const StereopermutatorList& permutators
 ) {
   _pImpl -> propagateGraphChange(

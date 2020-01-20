@@ -245,7 +245,7 @@ BondStereopermutator::Impl::_makeOrientationState(
 }
 
 bool BondStereopermutator::Impl::cycleObviouslyInfeasible(
-  const InnerGraph& graph,
+  const PrivateGraph& graph,
   const StereopermutatorList& stereopermutators,
   const AtomStereopermutator& firstStereopermutator,
   const AtomStereopermutator& secondStereopermutator,
@@ -469,7 +469,7 @@ bool BondStereopermutator::Impl::cycleObviouslyInfeasible(
 }
 
 // bool BondStereopermutator::Impl::cycleObviouslyInfeasible(
-//   const InnerGraph& graph,
+//   const PrivateGraph& graph,
 //   const StereopermutatorList& stereopermutators,
 //   const AtomStereopermutator& firstStereopermutator,
 //   const AtomStereopermutator& secondStereopermutator,
@@ -496,7 +496,7 @@ bool BondStereopermutator::Impl::cycleObviouslyInfeasible(
 //   }
 //
 //   /* Build an inner graph representing only the cycle */
-//   InnerGraph minimalInner(C);
+//   PrivateGraph minimalInner(C);
 //   // Copy element types
 //   for(const AtomIndex i : link.cycleSequence) {
 //     minimalInner.elementType(
@@ -644,7 +644,7 @@ bool BondStereopermutator::Impl::cycleObviouslyInfeasible(
 // }
 
 std::vector<unsigned> BondStereopermutator::Impl::notObviouslyInfeasibleStereopermutations(
-  const InnerGraph& graph,
+  const PrivateGraph& graph,
   const StereopermutatorList& stereopermutators,
   const stereopermutation::Composite& composite
 ) {
@@ -786,7 +786,7 @@ BondStereopermutator::Impl::Impl(
 {}
 
 BondStereopermutator::Impl::Impl(
-  const InnerGraph& graph,
+  const PrivateGraph& graph,
   const StereopermutatorList& stereopermutators,
   const BondIndex edge,
   Alignment alignment
@@ -1000,7 +1000,7 @@ void BondStereopermutator::Impl::fit(
 void BondStereopermutator::Impl::propagateGraphChange(
   const AtomStereopermutatorPropagatedState& oldPermutatorState,
   const AtomStereopermutator& newPermutator,
-  const InnerGraph& graph,
+  const PrivateGraph& graph,
   const StereopermutatorList& permutators
 ) {
   const RankingInformation& oldRanking = std::get<0>(oldPermutatorState);

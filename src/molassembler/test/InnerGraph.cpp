@@ -5,19 +5,19 @@
 
 #include <boost/test/unit_test.hpp>
 
-#include "molassembler/Graph/InnerGraph.h"
+#include "molassembler/Graph/PrivateGraph.h"
 
 #include "temple/Functional.h"
 
 #include "molassembler/IO/SmilesParser.h"
 #include "molassembler/Molecule.h"
-#include "molassembler/OuterGraph.h"
+#include "molassembler/Graph.h"
 
 using namespace Scine;
 using namespace molassembler;
 
 BOOST_AUTO_TEST_CASE(SplitGraph) {
-  InnerGraph methane(4);
+  PrivateGraph methane(4);
   methane.elementType(0) = Utils::ElementType::C;
   methane.elementType(1) = Utils::ElementType::H;
   methane.elementType(2) = Utils::ElementType::H;
@@ -46,7 +46,7 @@ BOOST_AUTO_TEST_CASE(SplitGraph) {
 }
 
 BOOST_AUTO_TEST_CASE(BridgeEdges) {
-  InnerGraph ethane(8);
+  PrivateGraph ethane(8);
   ethane.elementType(0) = Utils::ElementType::C;
   ethane.elementType(1) = Utils::ElementType::C;
   ethane.addEdge(0, 1, BondType::Single);

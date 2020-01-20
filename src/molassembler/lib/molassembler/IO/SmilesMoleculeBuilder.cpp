@@ -9,7 +9,7 @@
 #include "molassembler/Stereopermutators/FeasiblePermutations.h"
 #include "molassembler/Stereopermutators/ShapeVertexMaps.h"
 #include "molassembler/RankingInformation.h"
-#include "molassembler/Graph/InnerGraph.h"
+#include "molassembler/Graph/PrivateGraph.h"
 #include "molassembler/Graph/GraphAlgorithms.h"
 #include "molassembler/Modeling/BondDistance.h"
 #include "molassembler/Modeling/ShapeInference.h"
@@ -201,7 +201,7 @@ std::vector<unsigned> MoleculeBuilder::shapeMap(const ChiralData& chiralData) {
 }
 
 void MoleculeBuilder::addAtom(const AtomData& atom) {
-  InnerGraph::Vertex newVertex = graph.addVertex(atom.getElement());
+  PrivateGraph::Vertex newVertex = graph.addVertex(atom.getElement());
 
   if(atom.partialElement.Z == 1 && atom.hCount && atom.hCount.value() != 0) {
     throw std::runtime_error("Hydrogen atoms cannot have hydrogen counts!");
@@ -261,8 +261,8 @@ void MoleculeBuilder::addRingClosure(const BondData& bond) {
     );
   } else {
     // Add the edge to the graph now and remove the map entry
-    InnerGraph::Vertex a = findIter->second.first;
-    InnerGraph::Vertex b = vertexStack.top();
+    PrivateGraph::Vertex a = findIter->second.first;
+    PrivateGraph::Vertex b = vertexStack.top();
 
     if(a == b) {
       throw std::runtime_error("Same-atom ring-closing bond!");
@@ -288,7 +288,7 @@ void MoleculeBuilder::addRingClosure(const BondData& bond) {
 void MoleculeBuilder::setShapes(
   std::vector<Molecule>& molecules,
   const std::vector<unsigned>& componentMap,
-  const std::vector<InnerGraph::Vertex>& indexInComponentMap
+  const std::vector<PrivateGraph::Vertex>& indexInComponentMap
 ) {
   const unsigned N = vertexData.size();
   for(unsigned i = 0; i < N; ++i) {
@@ -350,7 +350,7 @@ void MoleculeBuilder::setShapes(
 void MoleculeBuilder::setAtomStereo(
   std::vector<Molecule>& molecules,
   const std::vector<unsigned>& componentMap,
-  const std::vector<InnerGraph::Vertex>& indexInComponentMap
+  const std::vector<PrivateGraph::Vertex>& indexInComponentMap
 ) {
   const unsigned N = vertexData.size();
   for(unsigned i = 0; i < N; ++i) {
@@ -457,7 +457,7 @@ void MoleculeBuilder::setAtomStereo(
 void MoleculeBuilder::setBondStereo(
   std::vector<Molecule>& molecules,
   const std::vector<unsigned>& componentMap,
-  const std::vector<InnerGraph::Vertex>& indexInComponentMap
+  const std::vector<PrivateGraph::Vertex>& indexInComponentMap
 ) {
   /* Setting the bond stereo from the forward and backward markers is tricky
    * for several reasons.
@@ -498,17 +498,17 @@ void MoleculeBuilder::setBondStereo(
    * crossed sides of the bond.
    */
   struct BondStereo {
-    boost::optional<InnerGraph::Vertex> left;
-    InnerGraph::Vertex right;
-    boost::optional<InnerGraph::Vertex> upOfLeft;
-    boost::optional<InnerGraph::Vertex> downOfLeft;
-    boost::optional<InnerGraph::Vertex> upOfRight;
-    boost::optional<InnerGraph::Vertex> downOfRight;
+    boost::optional<PrivateGraph::Vertex> left;
+    PrivateGraph::Vertex right;
+    boost::optional<PrivateGraph::Vertex> upOfLeft;
+    boost::optional<PrivateGraph::Vertex> downOfLeft;
+    boost::optional<PrivateGraph::Vertex> upOfRight;
+    boost::optional<PrivateGraph::Vertex> downOfRight;
 
     unsigned findAssignment(
       BondStereopermutator stereopermutator,
       const Molecule& mol,
-      const std::vector<InnerGraph::Vertex>& indexInComponentMap
+      const std::vector<PrivateGraph::Vertex>& indexInComponentMap
     ) const {
       auto first = mol.stereopermutators().option(stereopermutator.edge().first).value();
       auto second = mol.stereopermutators().option(stereopermutator.edge().second).value();
@@ -517,10 +517,10 @@ void MoleculeBuilder::setBondStereo(
         std::swap(first, second);
       }
 
-      auto getSiteIndexLeft = [&](const InnerGraph::Vertex i) -> unsigned {
+      auto getSiteIndexLeft = [&](const PrivateGraph::Vertex i) -> unsigned {
         return first.getRanking().getSiteIndexOf(indexInComponentMap.at(i));
       };
-      auto getSiteIndexRight = [&](const InnerGraph::Vertex i) -> unsigned {
+      auto getSiteIndexRight = [&](const PrivateGraph::Vertex i) -> unsigned {
         return second.getRanking().getSiteIndexOf(indexInComponentMap.at(i));
       };
 
@@ -576,8 +576,8 @@ void MoleculeBuilder::setBondStereo(
   while(start != end) {
     BondStereo state;
 
-    InnerGraph::Vertex A = first(*start);
-    InnerGraph::Vertex B = second(*start);
+    PrivateGraph::Vertex A = first(*start);
+    PrivateGraph::Vertex B = second(*start);
 
     // We assume that all vertices are in the same component
     Molecule& mol = molecules.at(componentMap.at(A));
@@ -596,7 +596,7 @@ void MoleculeBuilder::setBondStereo(
 
     // Check for second marker left of bond
     {
-      InnerGraph::Vertex X = first(*explorer);
+      PrivateGraph::Vertex X = first(*explorer);
 
       if(A == X) {
         // Two markers left of bond, C(\F)(/[H]) pattern
@@ -616,7 +616,7 @@ void MoleculeBuilder::setBondStereo(
       throw std::runtime_error("Missing right side of stereo-marked double bond");
     }
 
-    auto bondTypeOption = [&](const InnerGraph::Vertex a, const InnerGraph::Vertex b) {
+    auto bondTypeOption = [&](const PrivateGraph::Vertex a, const PrivateGraph::Vertex b) {
       return temple::optionals::map(
         mol.graph().bond(
           indexInComponentMap.at(a),
@@ -666,7 +666,7 @@ void MoleculeBuilder::setBondStereo(
       bool firstIsLeft = (first(*leftMarker) == state.left.value());
       bool markerIsForward = (marker(*leftMarker) == BondData::StereoMarker::Forward);
       bool up = (firstIsLeft == markerIsForward);
-      InnerGraph::Vertex which = (firstIsLeft ? second(*leftMarker) : first(*leftMarker));
+      PrivateGraph::Vertex which = (firstIsLeft ? second(*leftMarker) : first(*leftMarker));
 
       if(up) {
         if(state.upOfLeft) {
@@ -732,23 +732,23 @@ std::vector<Molecule> MoleculeBuilder::interpret() {
   std::vector<unsigned> componentMap;
   const unsigned M = graph.connectedComponents(componentMap);
 
-  std::vector<InnerGraph> precursors;
+  std::vector<PrivateGraph> precursors;
   precursors.resize(M);
 
   const unsigned N = graph.N();
 
-  std::vector<InnerGraph::Vertex> indexInComponentMap(N);
+  std::vector<PrivateGraph::Vertex> indexInComponentMap(N);
   // Copy vertices
   for(unsigned i = 0; i < N; ++i) {
     auto& precursor = precursors.at(componentMap.at(i));
-    InnerGraph::Vertex newIndex = precursor.addVertex(graph.elementType(i));
+    PrivateGraph::Vertex newIndex = precursor.addVertex(graph.elementType(i));
     indexInComponentMap.at(i) = newIndex;
   }
 
   /* Copy edges into the separate components */
-  for(const InnerGraph::Edge& edge : boost::make_iterator_range(graph.edges())) {
-    const InnerGraph::Vertex source = graph.source(edge);
-    const InnerGraph::Vertex target = graph.target(edge);
+  for(const PrivateGraph::Edge& edge : boost::make_iterator_range(graph.edges())) {
+    const PrivateGraph::Vertex source = graph.source(edge);
+    const PrivateGraph::Vertex target = graph.target(edge);
 
     // Both vertices must be in the same component
     auto& precursor = precursors.at(componentMap.at(source));
@@ -770,19 +770,19 @@ std::vector<Molecule> MoleculeBuilder::interpret() {
   for(unsigned i = 0; i < N; ++i) {
     const AtomData& data = vertexData.at(i);
     auto& precursor = precursors.at(componentMap.at(i));
-    InnerGraph::Vertex vertexInPrecursor = indexInComponentMap.at(i);
+    PrivateGraph::Vertex vertexInPrecursor = indexInComponentMap.at(i);
 
     if(data.hCount) {
       // Fill with specified number of hydrogen atoms
       for(unsigned j = 0; j < data.hCount.value(); ++j) {
-        InnerGraph::Vertex newHydrogenVertex = precursor.addVertex(Utils::ElementType::H);
+        PrivateGraph::Vertex newHydrogenVertex = precursor.addVertex(Utils::ElementType::H);
         precursor.addEdge(vertexInPrecursor, newHydrogenVertex, BondType::Single);
       }
     } else if(!data.atomBracket && isValenceFillElement(precursor.elementType(vertexInPrecursor))) {
       // Figure out current valence.
       int currentValence = 0;
       for(
-        const InnerGraph::Edge edge :
+        const PrivateGraph::Edge edge :
         boost::make_iterator_range(precursor.edges(vertexInPrecursor))
       ) {
         currentValence += Bond::bondOrderMap.at(
@@ -798,7 +798,7 @@ std::vector<Molecule> MoleculeBuilder::interpret() {
       );
 
       for(unsigned j = 0; j < fillCount; ++j) {
-        InnerGraph::Vertex newHydrogenVertex = precursor.addVertex(Utils::ElementType::H);
+        PrivateGraph::Vertex newHydrogenVertex = precursor.addVertex(Utils::ElementType::H);
         precursor.addEdge(vertexInPrecursor, newHydrogenVertex, BondType::Single);
       }
     }
@@ -809,7 +809,7 @@ std::vector<Molecule> MoleculeBuilder::interpret() {
   molecules.reserve(M);
   for(auto&& precursor : precursors) {
     molecules.emplace_back(
-      OuterGraph(std::move(precursor))
+      Graph(std::move(precursor))
     );
   }
 

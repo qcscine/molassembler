@@ -15,7 +15,7 @@
 #include "molassembler/DistanceGeometry/Gor1.h"
 #include "molassembler/DistanceGeometry/ImplicitGraphBoost.h"
 #include "molassembler/DistanceGeometry/SpatialModel.h"
-#include "molassembler/Graph/InnerGraph.h"
+#include "molassembler/Graph/PrivateGraph.h"
 #include "molassembler/IO.h"
 #include "temple/Functional.h"
 #include "temple/constexpr/Numeric.h"

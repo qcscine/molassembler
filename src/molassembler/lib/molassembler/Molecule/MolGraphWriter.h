@@ -10,7 +10,7 @@
 #ifndef INCLUDE_MOLASSEMBLER_MOL_GRAPH_WRITER_H
 #define INCLUDE_MOLASSEMBLER_MOL_GRAPH_WRITER_H
 
-#include "molassembler/Graph/InnerGraph.h"
+#include "molassembler/Graph/PrivateGraph.h"
 
 namespace Scine {
 
@@ -31,19 +31,19 @@ struct MolGraphWriter {
 
 //!@name Members
 //!@{
-  const InnerGraph* const graphPtr;
+  const PrivateGraph* const graphPtr;
   const StereopermutatorList* const stereopermutatorListPtr;
 //!@}
 
   MolGraphWriter(
-    const InnerGraph* passGraphPtr,
+    const PrivateGraph* passGraphPtr,
     const StereopermutatorList* passPermutatorListPtr
   );
 
   virtual ~MolGraphWriter() = default;
 
   /* Information */
-  Utils::ElementType getElementType(InnerGraph::Vertex vertexIndex) const;
+  Utils::ElementType getElementType(PrivateGraph::Vertex vertexIndex) const;
 
   void writeBondStereopermutatorNodes(std::ostream& os) const;
 
@@ -51,10 +51,10 @@ struct MolGraphWriter {
   void operator() (std::ostream& os) const;
 
   // Vertex options
-  void operator() (std::ostream& os, InnerGraph::Vertex vertexIndex) const;
+  void operator() (std::ostream& os, PrivateGraph::Vertex vertexIndex) const;
 
   // Edge options
-  void operator() (std::ostream& os, const InnerGraph::Edge& edgeIndex) const;
+  void operator() (std::ostream& os, const PrivateGraph::Edge& edgeIndex) const;
 
   virtual std::vector<std::string> edgeTooltips(AtomIndex source, AtomIndex target) const;
 

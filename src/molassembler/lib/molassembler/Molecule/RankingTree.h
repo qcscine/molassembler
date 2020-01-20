@@ -202,7 +202,7 @@ private:
   OrderDiscoveryHelper<TreeVertexIndex> _branchOrderingHelper;
 
   // Closures
-  const OuterGraph& _graph;
+  const Graph& _graph;
   const StereopermutatorList& _stereopermutatorsRef;
   const std::string _adaptedMolGraphviz;
 
@@ -1074,7 +1074,7 @@ public:
    * constant-time.}
    */
   RankingTree(
-    const OuterGraph& graph,
+    const Graph& graph,
     const StereopermutatorList& stereopermutators,
     std::string molGraphviz,
     AtomIndex atomToRank,

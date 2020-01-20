@@ -12,8 +12,8 @@
 
 #include "molassembler/BondOrders.h"
 #include "molassembler/Molecule.h"
-#include "molassembler/OuterGraph.h"
-#include "molassembler/Graph/InnerGraph.h"
+#include "molassembler/Graph.h"
+#include "molassembler/Graph/PrivateGraph.h"
 
 #include "temple/Functional.h"
 
@@ -35,7 +35,7 @@ Utils::PositionCollection paste(const std::vector<Utils::Position>& positions) {
 } // namespace detail
 
 struct MoleculeParts {
-  InnerGraph graph;
+  PrivateGraph graph;
   std::vector<Utils::Position> angstromPositions;
   boost::optional<
     std::vector<BondIndex>
@@ -49,12 +49,12 @@ struct Parts {
 };
 
 // Yields a graph structure without element type annotations
-InnerGraph discretize(
+PrivateGraph discretize(
   const Utils::BondOrderCollection& bondOrders,
   const BondDiscretizationOption discretization
 ) {
-  const InnerGraph::Vertex N = bondOrders.getSystemSize();
-  InnerGraph graph {N};
+  const PrivateGraph::Vertex N = bondOrders.getSystemSize();
+  PrivateGraph graph {N};
 
   if(discretization == BondDiscretizationOption::Binary) {
     for(unsigned i = 0; i < N; ++i) {
@@ -111,7 +111,7 @@ Parts construeParts(
     );
   }
 
-  InnerGraph atomCollectionGraph = discretize(bondOrders, discretization);
+  PrivateGraph atomCollectionGraph = discretize(bondOrders, discretization);
 
   Parts parts;
   const unsigned numComponents = atomCollectionGraph.connectedComponents(parts.componentMap);
@@ -125,11 +125,11 @@ Parts construeParts(
   }
 
   // Map from original index to component index
-  std::vector<InnerGraph::Vertex> indexInComponentMap (N);
+  std::vector<PrivateGraph::Vertex> indexInComponentMap (N);
 
   /* Maybe
    * - filtered_graph using predicate of componentMap number
-   * - copy_graph to new OuterGraph keeping element types and bond orders
+   * - copy_graph to new Graph keeping element types and bond orders
    *
    * - alternately, must keep a map of atomcollection index to precursor index
    *   and new precursor atom index in order to transfer edges too
@@ -141,7 +141,7 @@ Parts construeParts(
     );
 
     // Add a new vertex with element information
-    InnerGraph::Vertex newIndex = precursor.graph.addVertex(elements.at(i));
+    PrivateGraph::Vertex newIndex = precursor.graph.addVertex(elements.at(i));
 
     // Save new index in precursor graph
     indexInComponentMap.at(i) = newIndex;
@@ -158,13 +158,13 @@ Parts construeParts(
 
   // Copy over edges and bond orders
   for(
-    const InnerGraph::Edge& edge :
+    const PrivateGraph::Edge& edge :
     boost::make_iterator_range(
       atomCollectionGraph.edges()
     )
   ) {
-    const InnerGraph::Vertex source = atomCollectionGraph.source(edge);
-    const InnerGraph::Vertex target = atomCollectionGraph.target(edge);
+    const PrivateGraph::Vertex source = atomCollectionGraph.source(edge);
+    const PrivateGraph::Vertex target = atomCollectionGraph.target(edge);
 
     // Both source and target are part of the same component (since they are bonded)
     auto& precursor = parts.precursors.at(
@@ -220,7 +220,7 @@ MoleculesResult molecules(
     result.molecules.reserve(parts.precursors.size());
     for(auto& precursor : parts.precursors) {
       result.molecules.emplace_back(
-        OuterGraph {std::move(precursor.graph)},
+        Graph {std::move(precursor.graph)},
         AngstromWrapper(detail::paste(precursor.angstromPositions), LengthUnit::Angstrom),
         precursor.bondStereopermutatorCandidatesOptional
       );
@@ -229,7 +229,7 @@ MoleculesResult molecules(
     result.molecules.reserve(parts.precursors.size());
     for(auto& precursor : parts.precursors) {
       result.molecules.emplace_back(
-        OuterGraph {std::move(precursor.graph)}
+        Graph {std::move(precursor.graph)}
       );
     }
   }

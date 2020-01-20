@@ -11,9 +11,9 @@
 
 #include "molassembler/Graph/Canonicalization.h"
 
-#include "molassembler/Graph/InnerGraph.h"
+#include "molassembler/Graph/PrivateGraph.h"
 #include "molassembler/Molecule/AtomEnvironmentHash.h"
-#include "molassembler/OuterGraph.h"
+#include "molassembler/Graph.h"
 
 #include "temple/Adaptors/SequentialPairs.h"
 #include "temple/Adaptors/Iota.h"
@@ -94,7 +94,7 @@ struct NautySparseGraph {
   std::vector<int> lab, ptn;
 
   NautySparseGraph(
-    const InnerGraph& inner,
+    const PrivateGraph& inner,
     const std::vector<hashes::WideHashType>& hashes
   ) {
     /* Sparse graph data structure:
@@ -197,7 +197,7 @@ struct NautySparseGraph {
 } // namespace detail
 
 std::vector<int> canonicalAutomorphism(
-  const InnerGraph& inner,
+  const PrivateGraph& inner,
   const std::vector<hashes::WideHashType>& hashes
 ) {
   detail::NautySparseGraph nautyGraph(inner, hashes);

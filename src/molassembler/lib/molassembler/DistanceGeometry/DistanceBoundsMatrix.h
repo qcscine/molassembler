@@ -76,9 +76,9 @@ public:
    *
    * Replaces default lower bounds with the sum of the elements' vdw radii.
    */
-  template<typename InnerGraph>
+  template<typename PrivateGraph>
   DistanceBoundsMatrix(
-    const InnerGraph& inner,
+    const PrivateGraph& inner,
     BoundsMatrix bounds
   ) : _matrix(std::move(bounds)) {
     // Populate the lower bounds if no explicit information is present

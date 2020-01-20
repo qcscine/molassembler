@@ -197,14 +197,14 @@ void Molecule::Impl::_propagateGraphChange() {
   graph_algorithms::updateEtaBonds(_adjacencies.inner());
 
   // All graph access after this point must be const for thread safety
-  const InnerGraph& inner = _adjacencies.inner();
+  const PrivateGraph& inner = _adjacencies.inner();
 
   /*! @todo
    * Need state propagation for BondStereopermutators, anything else is madness
    */
 
   for(
-    const InnerGraph::Vertex vertex :
+    const PrivateGraph::Vertex vertex :
     boost::make_iterator_range(inner.vertices())
   ) {
     auto stereopermutatorOption = _stereopermutators.option(vertex);
@@ -305,7 +305,7 @@ Molecule::Impl::Impl() noexcept
   : Impl(Utils::ElementType::H, Utils::ElementType::H, BondType::Single) {}
 
 Molecule::Impl::Impl(const Utils::ElementType element) noexcept {
-  InnerGraph& inner = _adjacencies.inner();
+  PrivateGraph& inner = _adjacencies.inner();
   inner.addVertex(element);
 }
 
@@ -315,13 +315,13 @@ Molecule::Impl::Impl(
   const BondType bondType
 ) noexcept {
   // update _adjacencies
-  InnerGraph& inner = _adjacencies.inner();
-  InnerGraph::Vertex i = inner.addVertex(a);
-  InnerGraph::Vertex j = inner.addVertex(b);
+  PrivateGraph& inner = _adjacencies.inner();
+  PrivateGraph::Vertex i = inner.addVertex(a);
+  PrivateGraph::Vertex j = inner.addVertex(b);
   inner.addEdge(i, j, bondType);
 }
 
-Molecule::Impl::Impl(OuterGraph graph)
+Molecule::Impl::Impl(Graph graph)
   : _adjacencies(std::move(graph))
 {
   // Initialization
@@ -331,7 +331,7 @@ Molecule::Impl::Impl(OuterGraph graph)
 }
 
 Molecule::Impl::Impl(
-  OuterGraph graph,
+  Graph graph,
   const AngstromWrapper& positions,
   const boost::optional<
     std::vector<BondIndex>
@@ -347,7 +347,7 @@ Molecule::Impl::Impl(
 }
 
 Molecule::Impl::Impl(
-  OuterGraph graph,
+  Graph graph,
   StereopermutatorList stereopermutators,
   boost::optional<AtomEnvironmentComponents> canonicalComponentsOption
 ) : _adjacencies(std::move(graph)),
@@ -390,7 +390,7 @@ BondIndex Molecule::Impl::addBond(
     throw std::logic_error("Molecule::addBond: Cannot add a bond between identical indices!");
   }
 
-  InnerGraph& inner = _adjacencies.inner();
+  PrivateGraph& inner = _adjacencies.inner();
 
   inner.addEdge(a, b, bondType);
 
@@ -564,7 +564,7 @@ void Molecule::Impl::removeAtom(const AtomIndex a) {
     throw std::logic_error("Removing this atom disconnects the graph!");
   }
 
-  InnerGraph& inner = _adjacencies.inner();
+  PrivateGraph& inner = _adjacencies.inner();
 
   std::vector<AtomIndex> previouslyAdjacentVertices;
   auto adjacencyIterators = inner.adjacents(a);
@@ -651,7 +651,7 @@ void Molecule::Impl::removeBond(
     throw std::out_of_range("Molecule::removeBond: Supplied index is invalid!");
   }
 
-  InnerGraph& inner = _adjacencies.inner();
+  PrivateGraph& inner = _adjacencies.inner();
 
   auto edgeOption = inner.edgeOption(a, b);
 
@@ -659,7 +659,7 @@ void Molecule::Impl::removeBond(
     throw std::out_of_range("That bond does not exist!");
   }
 
-  InnerGraph::Edge edgeToRemove = edgeOption.value();
+  PrivateGraph::Edge edgeToRemove = edgeOption.value();
 
   if(!inner.canRemove(edgeToRemove)) {
     throw std::logic_error("Removing this bond separates the molecule into two pieces!");
@@ -737,7 +737,7 @@ bool Molecule::Impl::setBondType(
     );
   }
 
-  InnerGraph& inner = _adjacencies.inner();
+  PrivateGraph& inner = _adjacencies.inner();
 
   auto edgeOption = inner.edgeOption(a, b);
   if(!edgeOption) {
@@ -876,7 +876,7 @@ std::string Molecule::Impl::dumpGraphviz() const {
   return graphvizStream.str();
 }
 
-const OuterGraph& Molecule::Impl::graph() const {
+const Graph& Molecule::Impl::graph() const {
   return _adjacencies;
 }
 

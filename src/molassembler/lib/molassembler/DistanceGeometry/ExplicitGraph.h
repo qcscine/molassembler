@@ -31,8 +31,8 @@ class Engine;
 
 namespace outcome = BOOST_OUTCOME_V2_NAMESPACE;
 
-// Forward-declare InnerGraph
-class InnerGraph;
+// Forward-declare PrivateGraph
+class PrivateGraph;
 
 namespace distance_geometry {
 
@@ -83,7 +83,7 @@ public:
    * @complexity{@math{\Theta(N^2)}}
    */
   ExplicitGraph(
-    const InnerGraph& inner,
+    const PrivateGraph& inner,
     const DistanceBoundsMatrix& bounds
   );
 
@@ -92,7 +92,7 @@ public:
    * @complexity{@math{\Theta(N^2)}}
    */
   ExplicitGraph(
-    const InnerGraph& inner,
+    const PrivateGraph& inner,
     const BoundsMatrix& bounds
   );
 //!@}
@@ -207,7 +207,7 @@ public:
 
 private:
   GraphType _graph;
-  const InnerGraph& _inner;
+  const PrivateGraph& _inner;
   //! Stores the two heaviest element types
   std::array<Utils::ElementType, 2> _heaviestAtoms;
 

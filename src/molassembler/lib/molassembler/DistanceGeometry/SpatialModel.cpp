@@ -29,7 +29,7 @@
 #include "molassembler/Cycles.h"
 #include "molassembler/Detail/Cartesian.h"
 #include "molassembler/DistanceGeometry/DistanceGeometry.h"
-#include "molassembler/Graph/InnerGraph.h"
+#include "molassembler/Graph/PrivateGraph.h"
 #include "molassembler/Log.h"
 #include "molassembler/Modeling/CommonTrig.h"
 #include "molassembler/Modeling/ShapeInference.h"
@@ -266,7 +266,7 @@ void SpatialModel::setDihedralBoundsIfEmpty(
 
 void SpatialModel::addAtomStereopermutatorInformation(
   const AtomStereopermutator& permutator,
-  const InnerGraph& graph,
+  const PrivateGraph& graph,
   const double looseningMultiplier,
   const std::unordered_map<AtomIndex, Utils::Position>& fixedAngstromPositions,
   const bool forceChiralConstraintEmission
@@ -843,7 +843,7 @@ double SpatialModel::siteCentralAngle(
   const RankingInformation& ranking,
   const std::vector<unsigned>& shapeVertexMap,
   const std::pair<unsigned, unsigned>& sites,
-  const InnerGraph& inner
+  const PrivateGraph& inner
 ) {
   /* We need to respect the graph as ground truth and distort an ideal
    * shape angle towards lower angles for small cycles under specific
@@ -963,7 +963,7 @@ double SpatialModel::siteCentralAngle(
 double SpatialModel::siteCentralAngle(
   const AtomStereopermutator& permutator,
   const std::pair<unsigned, unsigned>& sites,
-  const InnerGraph& inner
+  const PrivateGraph& inner
 ) {
   return siteCentralAngle(
     permutator.centralIndex(),
@@ -979,7 +979,7 @@ ValueBounds SpatialModel::modelSiteAngleBounds(
   const AtomStereopermutator& permutator,
   const std::pair<unsigned, unsigned>& sites,
   const double looseningMultiplier,
-  const InnerGraph& inner
+  const PrivateGraph& inner
 ) {
   assert(permutator.assigned());
 
@@ -1187,7 +1187,7 @@ struct SpatialModel::ModelGraphWriter final : public MolGraphWriter {
   const SpatialModel& spatialModel;
 
 /* Constructor */
-  ModelGraphWriter(const InnerGraph& inner, const SpatialModel& passSpatialModel)
+  ModelGraphWriter(const PrivateGraph& inner, const SpatialModel& passSpatialModel)
     : MolGraphWriter(&inner, &passSpatialModel._molecule.stereopermutators()),
       spatialModel(passSpatialModel) {}
 
@@ -1314,7 +1314,7 @@ void SpatialModel::writeGraphviz(const std::string& filename) const {
 double SpatialModel::modelDistance(
   const AtomIndex i,
   const AtomIndex j,
-  const InnerGraph& graph
+  const PrivateGraph& graph
 ) {
   return Bond::calculateBondDistance(
     graph.elementType(i),
@@ -1327,14 +1327,14 @@ double SpatialModel::modelDistance(
 
 double SpatialModel::modelDistance(
   const BondIndex& bond,
-  const InnerGraph& graph
+  const PrivateGraph& graph
 ) {
   return modelDistance(bond.first, bond.second, graph);
 }
 
 std::vector<BondIndex> SpatialModel::cycleConsistingOfExactly(
   const std::vector<AtomIndex>& atoms,
-  const InnerGraph& graph
+  const PrivateGraph& graph
 ) {
   std::vector<BondIndex> possibleCycleEdges;
 
@@ -1376,7 +1376,7 @@ std::vector<BondIndex> SpatialModel::cycleConsistingOfExactly(
 boost::optional<ValueBounds> SpatialModel::coneAngle(
   const std::vector<AtomIndex>& baseConstituents,
   const ValueBounds& coneHeightBounds,
-  const OuterGraph& graph
+  const Graph& graph
 ) {
   /* Have to decide cone base radius in order to calculate this. There are some
    * simple cases to get out of the way first:
@@ -1493,7 +1493,7 @@ double SpatialModel::spiroCrossAngle(const double alpha, const double beta) {
 ValueBounds SpatialModel::siteDistanceFromCenter(
   const std::vector<AtomIndex>& siteAtomList,
   const AtomIndex centralIndex,
-  const OuterGraph& graph
+  const Graph& graph
 ) {
   assert(!siteAtomList.empty());
 
@@ -1645,7 +1645,7 @@ void SpatialModel::checkFixedPositionsPreconditions(
 }
 
 void SpatialModel::_addDefaultAngles() {
-  const InnerGraph& inner = _molecule.graph().inner();
+  const PrivateGraph& inner = _molecule.graph().inner();
   /* If no explicit angle can be provided for a triple of bonded atoms, we need
    * to at least specify the range of possible angles so that no implicit
    * minimimum distance (sum of vdw radii) is used instead. This is important
@@ -1672,7 +1672,7 @@ void SpatialModel::_addDefaultAngles() {
 }
 
 void SpatialModel::_addDefaultDihedrals() {
-  const InnerGraph& inner = _molecule.graph().inner();
+  const PrivateGraph& inner = _molecule.graph().inner();
 
   for(const auto& edgeDescriptor : boost::make_iterator_range(inner.edges())) {
     const AtomIndex sourceIndex = inner.source(edgeDescriptor);
@@ -1711,7 +1711,7 @@ void SpatialModel::_modelBondDistances(
   const FixedPositionsMapType& fixedAngstromPositions,
   const double looseningFactor
 ) {
-  const InnerGraph& inner = _molecule.graph().inner();
+  const PrivateGraph& inner = _molecule.graph().inner();
 
   for(const auto& edge: boost::make_iterator_range(inner.edges())) {
     BondType bondType = inner.bondType(edge);
@@ -1721,8 +1721,8 @@ void SpatialModel::_modelBondDistances(
       continue;
     }
 
-    InnerGraph::Vertex i = inner.source(edge);
-    InnerGraph::Vertex j = inner.target(edge);
+    PrivateGraph::Vertex i = inner.source(edge);
+    PrivateGraph::Vertex j = inner.target(edge);
 
     if(fixedAngstromPositions.count(i) > 0 && fixedAngstromPositions.count(j) > 0) {
       // If both atoms are fixed, their mutual bond distance is known exactly
@@ -1756,7 +1756,7 @@ void SpatialModel::_modelFlatCycles(
   const FixedPositionsMapType& fixedAngstromPositions,
   const double looseningFactor
 ) {
-  const InnerGraph& inner = _molecule.graph().inner();
+  const PrivateGraph& inner = _molecule.graph().inner();
   const Cycles& cycleData = inner.cycles();
 
   for(auto cycleEdges : cycleData) {
@@ -1883,7 +1883,7 @@ void SpatialModel::_modelFlatCycles(
 void SpatialModel::_modelSpirocenters(
   const FixedPositionsMapType& fixedAngstromPositions
 ) {
-  const InnerGraph& inner = _molecule.graph().inner();
+  const PrivateGraph& inner = _molecule.graph().inner();
   const Cycles& cycleData = inner.cycles();
 
   /* For an atom to be a spiro center, it needs to be contained in exactly two

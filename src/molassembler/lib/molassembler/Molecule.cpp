@@ -49,12 +49,12 @@ Molecule::Molecule(
   std::make_unique<Impl>(a, b, bondType)
 ) {}
 
-Molecule::Molecule(OuterGraph graph) : _pImpl(
+Molecule::Molecule(Graph graph) : _pImpl(
   std::make_unique<Impl>(std::move(graph))
 ) {}
 
 Molecule::Molecule(
-  OuterGraph graph,
+  Graph graph,
   const AngstromWrapper& positions,
   const boost::optional<
     std::vector<BondIndex>
@@ -68,7 +68,7 @@ Molecule::Molecule(
 ) {}
 
 Molecule::Molecule(
-  OuterGraph graph,
+  Graph graph,
   StereopermutatorList stereopermutators,
   boost::optional<AtomEnvironmentComponents> canonicalComponentsOption
 ) : _pImpl(
@@ -190,7 +190,7 @@ std::string Molecule::dumpGraphviz() const {
   return _pImpl->dumpGraphviz();
 }
 
-const OuterGraph& Molecule::graph() const {
+const Graph& Molecule::graph() const {
   return _pImpl->graph();
 }
 

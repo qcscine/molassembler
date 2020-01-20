@@ -6,7 +6,7 @@
 
 #include "molassembler/Cycles.h"
 #include "molassembler/Molecule/MoleculeImpl.h"
-#include "molassembler/OuterGraph.h"
+#include "molassembler/Graph.h"
 #include "molassembler/StereopermutatorList.h"
 
 #include "stereopermutation/Composites.h"

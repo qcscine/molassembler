@@ -17,7 +17,7 @@
 #define INCLUDE_MOLASSEMBLER_ATOM_STEREOPERMUTATOR_H
 
 #include "molassembler/Options.h"
-#include "molassembler/OuterGraph.h"
+#include "molassembler/Graph.h"
 
 #if __cpp_lib_experimental_propagate_const >= 201505
 #define MOLASSEMBLER_ENABLE_PROPAGATE_CONST
@@ -111,7 +111,7 @@ public:
    * @math{S} is the size of @p shape}
    */
   AtomStereopermutator(
-    const OuterGraph& graph,
+    const Graph& graph,
     shapes::Shape shape,
     AtomIndex centerAtom,
     RankingInformation ranking
@@ -192,7 +192,7 @@ public:
    *   criteria.
    */
   void fit(
-    const OuterGraph& graph,
+    const Graph& graph,
     const AngstromWrapper& angstromWrapper
   );
 
@@ -206,7 +206,7 @@ public:
    * @math{S} is the size of @p shape}
    */
   MASM_NO_EXPORT boost::optional<PropagatedState> propagate(
-    const OuterGraph& graph,
+    const Graph& graph,
     RankingInformation newRanking,
     boost::optional<shapes::Shape> shapeOption
   );
@@ -230,7 +230,7 @@ public:
    */
   void setShape(
     shapes::Shape shape,
-    const OuterGraph& graph
+    const Graph& graph
   );
 //!@}
 

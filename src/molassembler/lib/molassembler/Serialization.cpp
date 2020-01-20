@@ -180,11 +180,11 @@ struct adl_serializer<Scine::molassembler::RankingInformation> {
 };
 
 template<>
-struct adl_serializer<Scine::molassembler::OuterGraph> {
-  using Type = Scine::molassembler::OuterGraph;
+struct adl_serializer<Scine::molassembler::Graph> {
+  using Type = Scine::molassembler::Graph;
 
   static void to_json(json& j, const Type& graph) {
-    const Scine::molassembler::InnerGraph& inner = graph.inner();
+    const Scine::molassembler::PrivateGraph& inner = graph.inner();
 
     j["Z"] = json::array();
     auto& elements = j["Z"];
@@ -200,7 +200,7 @@ struct adl_serializer<Scine::molassembler::OuterGraph> {
     auto& edges = j["E"];
 
     for(
-      const Scine::molassembler::InnerGraph::Edge& edgeDescriptor :
+      const Scine::molassembler::PrivateGraph::Edge& edgeDescriptor :
       boost::make_iterator_range(inner.edges())
     ) {
       json e = json::array();
@@ -227,7 +227,7 @@ struct adl_serializer<Scine::molassembler::OuterGraph> {
   static void from_json(const json& j, Type& graph) {
     const unsigned N = j["Z"].size();
 
-    Scine::molassembler::InnerGraph inner (N);
+    Scine::molassembler::PrivateGraph inner (N);
 
     for(unsigned i = 0; i < N; ++i) {
       inner.elementType(i) = j["Z"].at(i);
@@ -484,7 +484,7 @@ Molecule deserialize(const nlohmann::json& m) {
    */
   // std::vector<unsigned> version = m[versionKey];
 
-  OuterGraph graph = m.at(graphKey);
+  Graph graph = m.at(graphKey);
 
   StereopermutatorList stereopermutators;
 

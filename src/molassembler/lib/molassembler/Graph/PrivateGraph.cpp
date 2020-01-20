@@ -3,7 +3,7 @@
  *   See LICENSE.txt
  */
 
-#include "molassembler/Graph/InnerGraph.h"
+#include "molassembler/Graph/PrivateGraph.h"
 
 #include "boost/graph/breadth_first_search.hpp"
 #include "boost/graph/biconnected_components.hpp"
@@ -20,9 +20,9 @@ namespace detail {
 
 //! Visitor to help split a graph along a bridge edge
 struct BridgeSplittingBFSVisitor {
-  using Graph = InnerGraph::BglType;
-  using Vertex = InnerGraph::Vertex;
-  using Edge = InnerGraph::Edge;
+  using Graph = PrivateGraph::BglType;
+  using Vertex = PrivateGraph::Vertex;
+  using Edge = PrivateGraph::Edge;
 
   AtomIndex left, right;
   using BitsetPtr = std::shared_ptr<
@@ -64,11 +64,11 @@ struct BridgeSplittingBFSVisitor {
 
 } // namespace detail
 
-constexpr InnerGraph::Vertex InnerGraph::removalPlaceholder;
+constexpr PrivateGraph::Vertex PrivateGraph::removalPlaceholder;
 
 /* Constructors */
-InnerGraph::InnerGraph() = default;
-InnerGraph::InnerGraph(const InnerGraph::Vertex N) : _graph {N} {}
+PrivateGraph::PrivateGraph() = default;
+PrivateGraph::PrivateGraph(const PrivateGraph::Vertex N) : _graph {N} {}
 
 /* Rule of five members */
 /* Implementation note
@@ -80,22 +80,22 @@ InnerGraph::InnerGraph(const InnerGraph::Vertex N) : _graph {N} {}
  * Moving the graph does not invalidate descriptors since the graph does
  * not change location in memory.
  */
-InnerGraph::InnerGraph(const InnerGraph& other) : _graph(other._graph) {}
-InnerGraph::InnerGraph(InnerGraph&& other) = default;
-InnerGraph& InnerGraph::operator = (const InnerGraph& other) {
+PrivateGraph::PrivateGraph(const PrivateGraph& other) : _graph(other._graph) {}
+PrivateGraph::PrivateGraph(PrivateGraph&& other) = default;
+PrivateGraph& PrivateGraph::operator = (const PrivateGraph& other) {
   _graph = other._graph;
   _properties.invalidate();
   return *this;
 }
-InnerGraph& InnerGraph::operator = (InnerGraph&& other) {
+PrivateGraph& PrivateGraph::operator = (PrivateGraph&& other) {
   _graph = std::move(other._graph);
   _properties = std::move(other._properties);
   return *this;
 }
-InnerGraph::~InnerGraph() = default;
+PrivateGraph::~PrivateGraph() = default;
 
 /* Modifiers */
-InnerGraph::Edge InnerGraph::addEdge(const Vertex a, const Vertex b, const BondType bondType) {
+PrivateGraph::Edge PrivateGraph::addEdge(const Vertex a, const Vertex b, const BondType bondType) {
   /* We have to be careful here since the edge list for a vector is not a set
    * (see BglType).  Check if there is already such an edge before adding it.
    */
@@ -116,16 +116,16 @@ InnerGraph::Edge InnerGraph::addEdge(const Vertex a, const Vertex b, const BondT
   return newBondPair.first;
 }
 
-InnerGraph::Vertex InnerGraph::addVertex(const Utils::ElementType elementType) {
+PrivateGraph::Vertex PrivateGraph::addVertex(const Utils::ElementType elementType) {
   // Invalidate the cache values
   _properties.invalidate();
 
-  InnerGraph::Vertex newVertex = boost::add_vertex(_graph);
+  PrivateGraph::Vertex newVertex = boost::add_vertex(_graph);
   _graph[newVertex].elementType = elementType;
   return newVertex;
 }
 
-void InnerGraph::applyPermutation(const std::vector<Vertex>& permutation) {
+void PrivateGraph::applyPermutation(const std::vector<Vertex>& permutation) {
   // Invalidate the cache
   _properties.invalidate();
 
@@ -151,42 +151,42 @@ void InnerGraph::applyPermutation(const std::vector<Vertex>& permutation) {
   std::swap(_graph, transformedGraph);
 }
 
-BondType& InnerGraph::bondType(const InnerGraph::Edge& edge) {
+BondType& PrivateGraph::bondType(const PrivateGraph::Edge& edge) {
   // Invalidate the cache values
   _properties.invalidate();
 
   return _graph[edge].bondType;
 }
 
-void InnerGraph::clearVertex(Vertex a) {
+void PrivateGraph::clearVertex(Vertex a) {
   // Invalidate the cache values
   _properties.invalidate();
 
   boost::clear_vertex(a, _graph);
 }
 
-void InnerGraph::removeEdge(const Edge& e) {
+void PrivateGraph::removeEdge(const Edge& e) {
   // Invalidate the cache values
   _properties.invalidate();
 
   boost::remove_edge(e, _graph);
 }
 
-void InnerGraph::removeVertex(Vertex a) {
+void PrivateGraph::removeVertex(Vertex a) {
   // Invalidate the cache values
   _properties.invalidate();
 
   boost::remove_vertex(a, _graph);
 }
 
-Utils::ElementType& InnerGraph::elementType(const Vertex a) {
+Utils::ElementType& PrivateGraph::elementType(const Vertex a) {
   // Invalidate the cache values
   _properties.invalidate();
 
   return _graph[a].elementType;
 }
 
-InnerGraph::BglType& InnerGraph::bgl() {
+PrivateGraph::BglType& PrivateGraph::bgl() {
   // Invalidate the cache values
   _properties.invalidate();
 
@@ -195,7 +195,7 @@ InnerGraph::BglType& InnerGraph::bgl() {
 
 /* Information */
 
-bool InnerGraph::canRemove(const Vertex a) const {
+bool PrivateGraph::canRemove(const Vertex a) const {
   assert(a < N());
 
   /* A molecule is at least one atom. Conceptually, a molecule should consist
@@ -209,7 +209,7 @@ bool InnerGraph::canRemove(const Vertex a) const {
   return removalSafetyData().articulationVertices.count(a) == 0;
 }
 
-bool InnerGraph::canRemove(const Edge& edge) const {
+bool PrivateGraph::canRemove(const Edge& edge) const {
   // Make sure the edge exists in the first place
   assert(
     boost::edge(
@@ -226,12 +226,12 @@ bool InnerGraph::canRemove(const Edge& edge) const {
 }
 
 /* Information */
-unsigned InnerGraph::connectedComponents() const {
+unsigned PrivateGraph::connectedComponents() const {
   std::vector<unsigned> componentMap(N());
   return boost::connected_components(_graph, &componentMap[0]);
 }
 
-unsigned InnerGraph::connectedComponents(std::vector<unsigned>& componentMap) const {
+unsigned PrivateGraph::connectedComponents(std::vector<unsigned>& componentMap) const {
   const Vertex size = N();
 
   if(componentMap.size() != size) {
@@ -240,15 +240,15 @@ unsigned InnerGraph::connectedComponents(std::vector<unsigned>& componentMap) co
   return boost::connected_components(_graph, &componentMap[0]);
 }
 
-BondType InnerGraph::bondType(const InnerGraph::Edge& edge) const {
+BondType PrivateGraph::bondType(const PrivateGraph::Edge& edge) const {
   return _graph[edge].bondType;
 }
 
-Utils::ElementType InnerGraph::elementType(const Vertex a) const {
+Utils::ElementType PrivateGraph::elementType(const Vertex a) const {
   return _graph[a].elementType;
 }
 
-InnerGraph::Edge InnerGraph::edge(const Vertex a, const Vertex b) const {
+PrivateGraph::Edge PrivateGraph::edge(const Vertex a, const Vertex b) const {
   auto edge = boost::edge(a, b, _graph);
 
   if(!edge.second) {
@@ -258,7 +258,7 @@ InnerGraph::Edge InnerGraph::edge(const Vertex a, const Vertex b) const {
   return edge.first;
 }
 
-boost::optional<InnerGraph::Edge> InnerGraph::edgeOption(const Vertex a, const Vertex b) const {
+boost::optional<PrivateGraph::Edge> PrivateGraph::edgeOption(const Vertex a, const Vertex b) const {
   auto edge = boost::edge(a, b, _graph);
 
   if(edge.second) {
@@ -268,27 +268,27 @@ boost::optional<InnerGraph::Edge> InnerGraph::edgeOption(const Vertex a, const V
   return boost::none;
 }
 
-InnerGraph::Vertex InnerGraph::source(const InnerGraph::Edge& edge) const {
+PrivateGraph::Vertex PrivateGraph::source(const PrivateGraph::Edge& edge) const {
   return boost::source(edge, _graph);
 }
 
-InnerGraph::Vertex InnerGraph::target(const InnerGraph::Edge& edge) const {
+PrivateGraph::Vertex PrivateGraph::target(const PrivateGraph::Edge& edge) const {
   return boost::target(edge, _graph);
 }
 
-InnerGraph::Vertex InnerGraph::degree(const InnerGraph::Vertex a) const {
+PrivateGraph::Vertex PrivateGraph::degree(const PrivateGraph::Vertex a) const {
   return boost::out_degree(a, _graph);
 }
 
-InnerGraph::Vertex InnerGraph::N() const {
+PrivateGraph::Vertex PrivateGraph::N() const {
   return boost::num_vertices(_graph);
 }
 
-InnerGraph::Vertex InnerGraph::B() const {
+PrivateGraph::Vertex PrivateGraph::B() const {
   return boost::num_edges(_graph);
 }
 
-bool InnerGraph::identicalGraph(const InnerGraph& other) const {
+bool PrivateGraph::identicalGraph(const PrivateGraph& other) const {
   assert(N() == other.N() && B() == other.B());
 
   // Make sure topology matches
@@ -311,7 +311,7 @@ bool InnerGraph::identicalGraph(const InnerGraph& other) const {
 std::pair<
   std::vector<AtomIndex>,
   std::vector<AtomIndex>
-> InnerGraph::splitAlongBridge(Edge bridge) const {
+> PrivateGraph::splitAlongBridge(Edge bridge) const {
   if(removalSafetyData().bridges.count(bridge) == 0) {
     throw std::invalid_argument("The supplied edge is not a bridge edge");
   }
@@ -349,27 +349,27 @@ std::pair<
   );
 }
 
-InnerGraph::VertexRange InnerGraph::vertices() const {
+PrivateGraph::VertexRange PrivateGraph::vertices() const {
   return boost::vertices(_graph);
 }
 
-InnerGraph::EdgeRange InnerGraph::edges() const {
+PrivateGraph::EdgeRange PrivateGraph::edges() const {
   return boost::edges(_graph);
 }
 
-InnerGraph::AdjacentVertexRange InnerGraph::adjacents(const Vertex a) const {
+PrivateGraph::AdjacentVertexRange PrivateGraph::adjacents(const Vertex a) const {
   return boost::adjacent_vertices(a, _graph);
 }
 
-InnerGraph::IncidentEdgeRange InnerGraph::edges(const Vertex a) const {
+PrivateGraph::IncidentEdgeRange PrivateGraph::edges(const Vertex a) const {
   return boost::out_edges(a, _graph);
 }
 
-const InnerGraph::BglType& InnerGraph::bgl() const {
+const PrivateGraph::BglType& PrivateGraph::bgl() const {
   return _graph;
 }
 
-void InnerGraph::populateProperties() const {
+void PrivateGraph::populateProperties() const {
   if(!_properties.removalSafetyDataOption) {
     _properties.removalSafetyDataOption = _generateRemovalSafetyData();
   }
@@ -378,7 +378,7 @@ void InnerGraph::populateProperties() const {
   }
 }
 
-const InnerGraph::RemovalSafetyData& InnerGraph::removalSafetyData() const {
+const PrivateGraph::RemovalSafetyData& PrivateGraph::removalSafetyData() const {
   if(!_properties.removalSafetyDataOption) {
     _properties.removalSafetyDataOption = _generateRemovalSafetyData();
   }
@@ -386,7 +386,7 @@ const InnerGraph::RemovalSafetyData& InnerGraph::removalSafetyData() const {
   return *_properties.removalSafetyDataOption;
 }
 
-const Cycles& InnerGraph::cycles() const {
+const Cycles& PrivateGraph::cycles() const {
   if(!_properties.cyclesOption) {
     _properties.cyclesOption = _generateCycles();
   }
@@ -394,7 +394,7 @@ const Cycles& InnerGraph::cycles() const {
   return *_properties.cyclesOption;
 }
 
-const Cycles& InnerGraph::etaPreservedCycles() const {
+const Cycles& PrivateGraph::etaPreservedCycles() const {
   if(!_properties.etaPreservedCyclesOption) {
     _properties.etaPreservedCyclesOption = _generateEtaPreservedCycles();
   }
@@ -402,12 +402,12 @@ const Cycles& InnerGraph::etaPreservedCycles() const {
   return *_properties.etaPreservedCyclesOption;
 }
 
-InnerGraph::RemovalSafetyData InnerGraph::_generateRemovalSafetyData() const {
+PrivateGraph::RemovalSafetyData PrivateGraph::_generateRemovalSafetyData() const {
   RemovalSafetyData safetyData;
 
-  std::vector<InnerGraph::Vertex> articulationVertices;
+  std::vector<PrivateGraph::Vertex> articulationVertices;
 
-  using ComponentMapBase = std::map<InnerGraph::Edge, std::size_t>;
+  using ComponentMapBase = std::map<PrivateGraph::Edge, std::size_t>;
 
   ComponentMapBase componentMapData;
   boost::associative_property_map<ComponentMapBase> componentMap(componentMapData);
@@ -429,7 +429,7 @@ InnerGraph::RemovalSafetyData InnerGraph::_generateRemovalSafetyData() const {
    * biconnected component contains only a single edge, that edge is a bridge
    */
   std::vector<
-    std::set<InnerGraph::Edge>
+    std::set<PrivateGraph::Edge>
   > componentSets (numComponents);
 
   for(const auto& mapIterPair : componentMapData) {
@@ -450,11 +450,11 @@ InnerGraph::RemovalSafetyData InnerGraph::_generateRemovalSafetyData() const {
   return safetyData;
 }
 
-Cycles InnerGraph::_generateCycles() const {
+Cycles PrivateGraph::_generateCycles() const {
   return Cycles(*this);
 }
 
-Cycles InnerGraph::_generateEtaPreservedCycles() const {
+Cycles PrivateGraph::_generateEtaPreservedCycles() const {
   return Cycles(*this, false);
 }
 

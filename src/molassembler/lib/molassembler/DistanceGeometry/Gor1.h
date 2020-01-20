@@ -364,7 +364,7 @@ std::enable_if_t<
   ColorMap& color_map,
   DistanceMap& distance_map
 ) {
-  using IncidenceGraph = typename GraphClass::OuterGraph;
+  using IncidenceGraph = typename GraphClass::Graph;
   const auto& graph = graphWrapper.graph();
 
   BOOST_CONCEPT_ASSERT(( IncidenceGraphConcept<IncidenceGraph> ));

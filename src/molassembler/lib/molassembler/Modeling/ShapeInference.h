@@ -24,7 +24,7 @@ namespace Scine {
 namespace molassembler {
 
 // Forward-declarations
-class OuterGraph;
+class Graph;
 
 /**
  * @brief Methods to determine local shapes of atoms based on graph information
@@ -81,7 +81,7 @@ extern const std::map<BondType, double> bondWeights;
  * @return 0 for non-main group elements, possibly the formal charge otherwise
  */
 int formalCharge(
-  const OuterGraph& graph,
+  const Graph& graph,
   AtomIndex index
 );
 
@@ -107,7 +107,7 @@ shapes::Shape firstOfSize(unsigned size);
 /*! @brief Reduces a ranking to binding site information
  */
 std::vector<BindingSite> reduceToSiteInformation(
-  const OuterGraph& molGraph,
+  const Graph& molGraph,
   AtomIndex index,
   const RankingInformation& ranking
 );
@@ -117,7 +117,7 @@ std::vector<BindingSite> reduceToSiteInformation(
  * Currently just a stub forwarding to VSEPR
  */
 boost::optional<shapes::Shape> inferShape(
-  const OuterGraph& graph,
+  const Graph& graph,
   AtomIndex index,
   const RankingInformation& ranking
 );

@@ -11,7 +11,7 @@ namespace molassembler {
 
 /* AtomStereopermutator implementations */
 AtomStereopermutator::AtomStereopermutator(
-  const OuterGraph& graph,
+  const Graph& graph,
   const shapes::Shape shape,
   const AtomIndex centerAtom,
   RankingInformation ranking
@@ -58,14 +58,14 @@ void AtomStereopermutator::applyPermutation(const std::vector<AtomIndex>& permut
 }
 
 void AtomStereopermutator::fit(
-  const OuterGraph& graph,
+  const Graph& graph,
   const AngstromWrapper& angstromWrapper
 ) {
   _pImpl->fit(graph, angstromWrapper);
 }
 
 boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::propagate(
-  const OuterGraph& graph,
+  const Graph& graph,
   RankingInformation newRanking,
   boost::optional<shapes::Shape> shapeOption
 ) {
@@ -82,7 +82,7 @@ void AtomStereopermutator::propagateVertexRemoval(const AtomIndex removedIndex) 
 
 void AtomStereopermutator::setShape(
   const shapes::Shape shape,
-  const OuterGraph& graph
+  const Graph& graph
 ) {
   _pImpl->setShape(shape, graph);
 }

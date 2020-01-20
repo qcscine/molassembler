@@ -6,7 +6,7 @@
 #include "boost/test/unit_test.hpp"
 
 #include "molassembler/Molecule.h"
-#include "molassembler/OuterGraph.h"
+#include "molassembler/Graph.h"
 #include "molassembler/IO/SmilesParser.h"
 
 #include "temple/Functional.h"

@@ -9,7 +9,7 @@
 
 #include "molassembler/Molecule.h"
 
-#include "molassembler/Graph/InnerGraph.h"
+#include "molassembler/Graph/PrivateGraph.h"
 #include "molassembler/StereopermutatorList.h"
 #include "Utils/Geometry/AtomCollection.h"
 
@@ -22,7 +22,7 @@ struct Molecule::Impl {
     const Utils::AtomCollection& atomCollection
   );
 
-  OuterGraph _adjacencies;
+  Graph _adjacencies;
   StereopermutatorList _stereopermutators;
   boost::optional<AtomEnvironmentComponents> _canonicalComponentsOption;
 
@@ -69,11 +69,11 @@ struct Molecule::Impl {
   ) noexcept;
 
   //! Graph-only constructor
-  explicit Impl(OuterGraph graph);
+  explicit Impl(Graph graph);
 
   //! Graph and positions constructor
   Impl(
-    OuterGraph graph,
+    Graph graph,
     const AngstromWrapper& positions,
     const boost::optional<
       std::vector<BondIndex>
@@ -82,7 +82,7 @@ struct Molecule::Impl {
 
   //! Graph and stereopermutators constructor
   Impl(
-    OuterGraph graph,
+    Graph graph,
     StereopermutatorList stereopermutators,
     boost::optional<AtomEnvironmentComponents> canonicalComponentsOption
   );
@@ -278,7 +278,7 @@ struct Molecule::Impl {
   std::string dumpGraphviz() const;
 
   //! Provides read-only access to the graph member
-  const OuterGraph& graph() const;
+  const Graph& graph() const;
 
   //! Convolutional hash
   std::size_t hash() const;

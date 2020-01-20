@@ -29,7 +29,7 @@ namespace molassembler {
 
 // Forward-declarations
 class Molecule;
-class OuterGraph;
+class Graph;
 class AngstromWrapper;
 
 //! @brief Given Cartesian coordinates, construct graphs or molecules
@@ -194,7 +194,7 @@ MASM_EXPORT std::vector<
 //! Result type of a graph interpret call
 struct MASM_EXPORT GraphsResult {
   //! Individual graphs found
-  std::vector<OuterGraph> graphs;
+  std::vector<Graph> graphs;
   //! Mapping from atom collection index to graph component index
   ComponentMap componentMap;
 };

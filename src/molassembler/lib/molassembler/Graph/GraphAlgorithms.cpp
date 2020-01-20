@@ -29,7 +29,7 @@ namespace molassembler {
 namespace graph_algorithms {
 
 std::vector<LinkInformation> siteLinks(
-  const InnerGraph& graph,
+  const PrivateGraph& graph,
   const AtomStereopermutator& stereopermutatorA,
   const AtomStereopermutator& stereopermutatorB
 ) {
@@ -140,7 +140,7 @@ std::vector<LinkInformation> siteLinks(
 }
 
 std::vector<LinkInformation> siteLinks(
-  const InnerGraph& graph,
+  const PrivateGraph& graph,
   const AtomIndex source,
   const std::vector<
     std::vector<AtomIndex>
@@ -255,7 +255,7 @@ namespace detail {
 
 bool isHapticSite(
   const std::vector<AtomIndex>& siteAtoms,
-  const InnerGraph& graph
+  const PrivateGraph& graph
 ) {
   /* A site is haptic if:
    * - The number of co-bonded atoms constituting direct bonds is more than one
@@ -286,16 +286,16 @@ bool isHapticSite(
 }
 
 void findSites(
-  const InnerGraph& graph,
+  const PrivateGraph& graph,
   const AtomIndex centralIndex,
   const std::function<void(const std::vector<AtomIndex>&)>& callback
 ) {
   const unsigned A = graph.degree(centralIndex);
-  temple::TinySet<InnerGraph::Vertex> centralAdjacents;
+  temple::TinySet<PrivateGraph::Vertex> centralAdjacents;
   centralAdjacents.reserve(A);
 
   for(
-    const InnerGraph::Vertex adjacent :
+    const PrivateGraph::Vertex adjacent :
     boost::make_iterator_range(graph.adjacents(centralIndex))
   ) {
     centralAdjacents.insert(adjacent);
@@ -305,10 +305,10 @@ void findSites(
 
   temple::TinySet<AtomIndex> site;
 
-  std::function<void(const InnerGraph::Vertex)> recursiveDiscover
-  = [&](const InnerGraph::Vertex seed) {
+  std::function<void(const PrivateGraph::Vertex)> recursiveDiscover
+  = [&](const PrivateGraph::Vertex seed) {
     for(
-      const InnerGraph::Vertex adjacent :
+      const PrivateGraph::Vertex adjacent :
       boost::make_iterator_range(graph.adjacents(seed))
     ) {
       if(centralAdjacents.count(adjacent) > 0 && site.count(adjacent) == 0) {
@@ -343,7 +343,7 @@ void findSites(
 std::vector<
   std::vector<AtomIndex>
 > ligandSiteGroups(
-  const InnerGraph& graph,
+  const PrivateGraph& graph,
   AtomIndex centralIndex,
   const std::vector<AtomIndex>& excludeAdjacents
 ) {
@@ -456,7 +456,7 @@ std::vector<
   return groupedLigands;
 }
 
-void updateEtaBonds(InnerGraph& graph) {
+void updateEtaBonds(PrivateGraph& graph) {
   const AtomIndex N = graph.N();
   for(AtomIndex centralIndex = 0; centralIndex < N; ++centralIndex) {
     // Skip any main group element types, none of these should be eta bonded
@@ -489,7 +489,7 @@ void updateEtaBonds(InnerGraph& graph) {
   }
 }
 
-std::vector<unsigned> distance(AtomIndex a, const InnerGraph& graph) {
+std::vector<unsigned> distance(AtomIndex a, const PrivateGraph& graph) {
   assert(a < graph.N());
 
   std::vector<unsigned> distances (graph.N(), 0);

@@ -87,9 +87,9 @@ public:
    * @complexity{@math{\Theta(1)}}
    * @pre @p i and @p j are bonded
    */
-  static double modelDistance(AtomIndex i, AtomIndex j, const InnerGraph& graph);
+  static double modelDistance(AtomIndex i, AtomIndex j, const PrivateGraph& graph);
   //! @overload
-  static double modelDistance(const BondIndex& bond, const InnerGraph& graph);
+  static double modelDistance(const BondIndex& bond, const PrivateGraph& graph);
 
   /*! @brief Tries to find a cycle that consists of a particular set of atoms
    *
@@ -104,7 +104,7 @@ public:
    */
   static std::vector<BondIndex> cycleConsistingOfExactly(
     const std::vector<AtomIndex>& atoms,
-    const InnerGraph& graph
+    const PrivateGraph& graph
   );
 
   /** @brief Tries to calculate the cone angle for a possibly haptic ligand site
@@ -122,7 +122,7 @@ public:
   static boost::optional<ValueBounds> coneAngle(
     const std::vector<AtomIndex>& baseConstituents,
     const ValueBounds& coneHeightBounds,
-    const OuterGraph& graph
+    const Graph& graph
   );
 
   /** @brief Calculates the cross angle between opposite cycle atoms in a spirocenter
@@ -151,7 +151,7 @@ public:
   static ValueBounds siteDistanceFromCenter(
     const std::vector<AtomIndex>& siteAtomList,
     AtomIndex centralIndex,
-    const OuterGraph& graph
+    const Graph& graph
   );
 
   /** @brief Yields central value plus/minus some absolute variance bounds
@@ -226,14 +226,14 @@ public:
     const RankingInformation& ranking,
     const std::vector<unsigned>& shapeVertexMap,
     const std::pair<unsigned, unsigned>& sites,
-    const InnerGraph& inner
+    const PrivateGraph& inner
   );
 
   //! @overload
   static double siteCentralAngle(
     const AtomStereopermutator& permutator,
     const std::pair<unsigned, unsigned>& sites,
-    const InnerGraph& inner
+    const PrivateGraph& inner
   );
 
   /** @brief Models bounds on the angle between AtomStereopermutator sites
@@ -251,7 +251,7 @@ public:
     const AtomStereopermutator& permutator,
     const std::pair<unsigned, unsigned>& sites,
     const double looseningMultiplier,
-    const InnerGraph& inner
+    const PrivateGraph& inner
   );
 
   /** @brief Creates a volume-specific chiral constraint from a list of
@@ -390,7 +390,7 @@ public:
    */
   void addAtomStereopermutatorInformation(
     const AtomStereopermutator& permutator,
-    const InnerGraph& graph,
+    const PrivateGraph& graph,
     double looseningMultiplier,
     const std::unordered_map<AtomIndex, Utils::Position>& fixedAngstromPositions,
     bool forceChiralConstraintEmission

@@ -21,7 +21,7 @@ namespace molassembler {
 /**
  * @brief Library internal graph class wrapping BGL types
  */
-class InnerGraph {
+class PrivateGraph {
 public:
 //!@name Member types
 //!@{
@@ -85,27 +85,27 @@ public:
    */
   struct RemovalSafetyData {
     //! Articulation vertices cannot be removed without disconnecting the graph
-    std::unordered_set<InnerGraph::Vertex> articulationVertices;
+    std::unordered_set<PrivateGraph::Vertex> articulationVertices;
     //! Bridges are edges that cannot be removed without disconnecting the graph
-    std::set<InnerGraph::Edge> bridges;
+    std::set<PrivateGraph::Edge> bridges;
   };
 //!@}
 
 //!@name Constructors
 //!@{
   //! Empty constructor
-  InnerGraph();
+  PrivateGraph();
   //! Preallocating constructor
-  InnerGraph(Vertex N);
+  PrivateGraph(Vertex N);
 //!@}
 
 //!@name Rule of five members
 //!@{
-  InnerGraph(const InnerGraph& other);
-  InnerGraph(InnerGraph&& other);
-  InnerGraph& operator = (const InnerGraph& other);
-  InnerGraph& operator = (InnerGraph&& other);
-  ~InnerGraph();
+  PrivateGraph(const PrivateGraph& other);
+  PrivateGraph(PrivateGraph&& other);
+  PrivateGraph& operator = (const PrivateGraph& other);
+  PrivateGraph& operator = (PrivateGraph&& other);
+  ~PrivateGraph();
 //!@}
 
 //!@name Static members
@@ -253,7 +253,7 @@ public:
    *
    * @complexity{@math{O(B)}}
    */
-  bool identicalGraph(const InnerGraph& other) const;
+  bool identicalGraph(const PrivateGraph& other) const;
 
   /*! @brief Determine which vertices belong to which side of a bridge edge
    *

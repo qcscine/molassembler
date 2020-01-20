@@ -48,7 +48,7 @@ struct BondStereopermutator::Impl : public temple::crtp::LexicographicComparable
    * @complexity{@math{\Theta(1)}, but not instant, either}
    */
   static bool cycleObviouslyInfeasible(
-    const InnerGraph& graph,
+    const PrivateGraph& graph,
     const StereopermutatorList& stereopermutators,
     const AtomStereopermutator& firstStereopermutator,
     const AtomStereopermutator& secondStereopermutator,
@@ -57,7 +57,7 @@ struct BondStereopermutator::Impl : public temple::crtp::LexicographicComparable
   );
 
   static std::vector<unsigned> notObviouslyInfeasibleStereopermutations(
-    const InnerGraph& graph,
+    const PrivateGraph& graph,
     const StereopermutatorList& stereopermutators,
     const stereopermutation::Composite& composite
   );
@@ -79,7 +79,7 @@ struct BondStereopermutator::Impl : public temple::crtp::LexicographicComparable
    * This constructor checks whether its stereopermutations are feasible!
    */
   Impl(
-    const InnerGraph& graph,
+    const PrivateGraph& graph,
     const StereopermutatorList& stereopermutators,
     BondIndex edge,
     Alignment alignment
@@ -101,7 +101,7 @@ struct BondStereopermutator::Impl : public temple::crtp::LexicographicComparable
   void propagateGraphChange(
     const AtomStereopermutatorPropagatedState& oldPermutatorState,
     const AtomStereopermutator& newPermutator,
-    const InnerGraph& graph,
+    const PrivateGraph& graph,
     const StereopermutatorList& permutators
   );
 

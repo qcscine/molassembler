@@ -37,19 +37,20 @@ set(HEADERS_all
   ${_LIBPREFIX}/DistanceGeometry/TetrangleSmoothing.h
   ${_LIBPREFIX}/DistanceGeometry/ValueBounds.h
   ${_LIBPREFIX}/Editing.h
+  ${_LIBPREFIX}/Graph.h
   ${_LIBPREFIX}/Graph/Bridge.h
   ${_LIBPREFIX}/Graph/Canonicalization.h
   ${_LIBPREFIX}/Graph/GraphAlgorithms.h
-  ${_LIBPREFIX}/Graph/InnerGraph.h
+  ${_LIBPREFIX}/Graph/PrivateGraph.h
   ${_LIBPREFIX}/GraphAlgorithms.h
-  ${_LIBPREFIX}/Interpret.h
-  ${_LIBPREFIX}/Isomers.h
+  ${_LIBPREFIX}/IO.h
   ${_LIBPREFIX}/IO/Base64.h
   ${_LIBPREFIX}/IO/BinaryHandler.h
   ${_LIBPREFIX}/IO/SmilesMoleculeBuilder.h
   ${_LIBPREFIX}/IO/SmilesParseData.h
   ${_LIBPREFIX}/IO/SmilesParser.h
-  ${_LIBPREFIX}/IO.h
+  ${_LIBPREFIX}/Interpret.h
+  ${_LIBPREFIX}/Isomers.h
   ${_LIBPREFIX}/Log.h
   ${_LIBPREFIX}/Modeling/AtomInfo.h
   ${_LIBPREFIX}/Modeling/BondDistance.h
@@ -61,7 +62,6 @@ set(HEADERS_all
   ${_LIBPREFIX}/Molecule/MoleculeImpl.h
   ${_LIBPREFIX}/Molecule/RankingTree.h
   ${_LIBPREFIX}/Options.h
-  ${_LIBPREFIX}/OuterGraph.h
   ${_LIBPREFIX}/Patterns.h
   ${_LIBPREFIX}/Prng.h
   ${_LIBPREFIX}/RankingInformation.h
@@ -98,17 +98,19 @@ set(SOURCES_all
   ${_LIBPREFIX}/DistanceGeometry/TetrangleSmoothing.cpp
   ${_LIBPREFIX}/DistanceGeometry/ValueBounds.cpp
   ${_LIBPREFIX}/Editing.cpp
+  ${_LIBPREFIX}/Graph.cpp
   ${_LIBPREFIX}/Graph/Canonicalization.cpp
   ${_LIBPREFIX}/Graph/GraphAlgorithms.cpp
-  ${_LIBPREFIX}/Graph/InnerGraph.cpp
+  ${_LIBPREFIX}/Graph/PrivateGraph.cpp
   ${_LIBPREFIX}/GraphAlgorithms.cpp
-  ${_LIBPREFIX}/Interpret.cpp
-  ${_LIBPREFIX}/Isomers.cpp
+  ${_LIBPREFIX}/GraphIterators.cpp
   ${_LIBPREFIX}/IO.cpp
   ${_LIBPREFIX}/IO/Base64.cpp
   ${_LIBPREFIX}/IO/BinaryHandler.cpp
   ${_LIBPREFIX}/IO/SmilesMoleculeBuilder.cpp
   ${_LIBPREFIX}/IO/SmilesParser.cpp
+  ${_LIBPREFIX}/Interpret.cpp
+  ${_LIBPREFIX}/Isomers.cpp
   ${_LIBPREFIX}/Log.cpp
   ${_LIBPREFIX}/Modeling/AtomInfo.cpp
   ${_LIBPREFIX}/Modeling/BondDistance.cpp
@@ -120,8 +122,6 @@ set(SOURCES_all
   ${_LIBPREFIX}/Molecule/MoleculeImpl.cpp
   ${_LIBPREFIX}/Molecule/RankingTree.cpp
   ${_LIBPREFIX}/Options.cpp
-  ${_LIBPREFIX}/OuterGraph.cpp
-  ${_LIBPREFIX}/OuterGraphIterators.cpp
   ${_LIBPREFIX}/Patterns.cpp
   ${_LIBPREFIX}/Prng.cpp
   ${_LIBPREFIX}/RankingInformation.cpp

@@ -17,7 +17,7 @@ namespace Scine {
 namespace molassembler {
 
 // Forward-declarations
-class OuterGraph;
+class Graph;
 
 /*! @brief Randomness source for the entire library
  *

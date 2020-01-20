@@ -5,8 +5,8 @@
 
 #include "molassembler/Cycles.h"
 
-#include "molassembler/Graph/InnerGraph.h"
-#include "molassembler/OuterGraph.h"
+#include "molassembler/Graph/PrivateGraph.h"
+#include "molassembler/Graph.h"
 
 #include "temple/TinySet.h"
 #include "temple/Functional.h"
@@ -52,7 +52,7 @@ struct Cycles::RdlDataPtrs {
   RDL_data* dataPtr;
 
   RdlDataPtrs() = delete;
-  RdlDataPtrs(const InnerGraph& sourceGraph, bool ignoreEtaBonds);
+  RdlDataPtrs(const PrivateGraph& sourceGraph, bool ignoreEtaBonds);
 
   RdlDataPtrs(const RdlDataPtrs& other) = delete;
   RdlDataPtrs(RdlDataPtrs&& other) = delete;
@@ -63,11 +63,11 @@ struct Cycles::RdlDataPtrs {
   bool bondExists(const BondIndex& bond) const;
 };
 
-Cycles::Cycles(const OuterGraph& sourceGraph, const bool ignoreEtaBonds)
+Cycles::Cycles(const Graph& sourceGraph, const bool ignoreEtaBonds)
   : Cycles {sourceGraph.inner(), ignoreEtaBonds}
 {}
 
-Cycles::Cycles(const InnerGraph& sourceGraph, const bool ignoreEtaBonds)
+Cycles::Cycles(const PrivateGraph& sourceGraph, const bool ignoreEtaBonds)
   : _rdlPtr(std::make_shared<RdlDataPtrs>(sourceGraph, ignoreEtaBonds))
 {
   unsigned U = RDL_getNofURF(_rdlPtr->dataPtr);
@@ -303,7 +303,7 @@ bool Cycles::operator != (const Cycles& other) const {
 
 /* Cycles::RdlDataPtrs */
 Cycles::RdlDataPtrs::RdlDataPtrs(
-  const InnerGraph& sourceGraph,
+  const PrivateGraph& sourceGraph,
   const bool ignoreEtaBonds
 ) {
   // Initialize a new graph
@@ -886,7 +886,7 @@ std::vector<AtomIndex> centralizeRingIndexSequence(
 
 unsigned countPlanarityEnforcingBonds(
   const std::vector<BondIndex>& edgeSet,
-  const OuterGraph& graph
+  const Graph& graph
 ) {
   return std::accumulate(
     std::begin(edgeSet),

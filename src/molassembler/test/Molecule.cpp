@@ -20,7 +20,7 @@
 #include "temple/Stringify.h"
 #include "temple/Optionals.h"
 
-#include "molassembler/Graph/InnerGraph.h"
+#include "molassembler/Graph/PrivateGraph.h"
 #include "molassembler/IO.h"
 #include "molassembler/Interpret.h"
 #include "molassembler/Isomers.h"

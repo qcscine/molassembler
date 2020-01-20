@@ -6,7 +6,7 @@
 #include "pybind11/stl.h"
 
 #include "molassembler/Cycles.h"
-#include "molassembler/OuterGraph.h"
+#include "molassembler/Graph.h"
 
 #include "Utils/Bonds/BondOrderCollection.h"
 #include "Utils/Geometry/FormulaGenerator.h"
@@ -14,7 +14,7 @@
 
 void init_outer_graph(pybind11::module& m) {
   using namespace Scine::molassembler;
-  pybind11::class_<OuterGraph> outerGraph(
+  pybind11::class_<Graph> outerGraph(
     m,
     "Graph",
     R"delim(
@@ -45,7 +45,7 @@ void init_outer_graph(pybind11::module& m) {
 
   outerGraph.def(
     "adjacent",
-    &OuterGraph::adjacent,
+    &Graph::adjacent,
     pybind11::arg("first_atom"),
     pybind11::arg("second_atom"),
     R"delim(
@@ -62,7 +62,7 @@ void init_outer_graph(pybind11::module& m) {
 
   outerGraph.def(
     "atoms_of_element",
-    &OuterGraph::atomsOfElement,
+    &Graph::atomsOfElement,
     pybind11::arg("element_type"),
     R"delim(
       Returns atoms matching an element type
@@ -79,7 +79,7 @@ void init_outer_graph(pybind11::module& m) {
 
   outerGraph.def(
     "bond_orders",
-    &OuterGraph::bondOrders,
+    &Graph::bondOrders,
     R"delim(
       Generates a BondOrderCollection representation of the molecule connectivity
 
@@ -99,7 +99,7 @@ void init_outer_graph(pybind11::module& m) {
 
   outerGraph.def(
     "bond_type",
-    &OuterGraph::bondType,
+    &Graph::bondType,
     pybind11::arg("bond_index"),
     R"delim(
       Fetches the :class:`BondType` at a particular :class:`BondIndex`
@@ -120,7 +120,7 @@ void init_outer_graph(pybind11::module& m) {
 
   outerGraph.def(
     "can_remove",
-    pybind11::overload_cast<AtomIndex>(&OuterGraph::canRemove, pybind11::const_),
+    pybind11::overload_cast<AtomIndex>(&Graph::canRemove, pybind11::const_),
     pybind11::arg("atom"),
     R"delim(
       Returns whether an atom can be removed without disconnecting the graph
@@ -137,7 +137,7 @@ void init_outer_graph(pybind11::module& m) {
 
   outerGraph.def(
     "can_remove",
-    pybind11::overload_cast<const BondIndex&>(&OuterGraph::canRemove, pybind11::const_),
+    pybind11::overload_cast<const BondIndex&>(&Graph::canRemove, pybind11::const_),
     pybind11::arg("bond_index"),
     R"delim(
       Returns whether a bond can be removed without disconnecting the graph
@@ -160,13 +160,13 @@ void init_outer_graph(pybind11::module& m) {
 
   outerGraph.def_property_readonly(
     "cycles",
-    &OuterGraph::cycles,
+    &Graph::cycles,
     "Fetch a reference to cycles information"
   );
 
   outerGraph.def(
     "degree",
-    &OuterGraph::degree,
+    &Graph::degree,
     pybind11::arg("atom"),
     R"delim(
       Returns the number of bonds incident upon an atom.
@@ -182,7 +182,7 @@ void init_outer_graph(pybind11::module& m) {
   // TODO rename to elements
   outerGraph.def(
     "element_collection",
-    &OuterGraph::elementCollection,
+    &Graph::elementCollection,
     R"delim(
       Generates an ElementCollection representation of the molecule's atoms' element types
 
@@ -197,7 +197,7 @@ void init_outer_graph(pybind11::module& m) {
 
   outerGraph.def(
     "element_type",
-    &OuterGraph::elementType,
+    &Graph::elementType,
     pybind11::arg("atom"),
     R"delim(
       Fetch the element type of an atom
@@ -215,12 +215,12 @@ void init_outer_graph(pybind11::module& m) {
     )delim"
   );
 
-  outerGraph.def_property_readonly("N", &OuterGraph::N, "The number of atoms in the graph");
-  outerGraph.def_property_readonly("B", &OuterGraph::B, "The number of bonds in the graph");
+  outerGraph.def_property_readonly("N", &Graph::N, "The number of atoms in the graph");
+  outerGraph.def_property_readonly("B", &Graph::B, "The number of bonds in the graph");
 
   outerGraph.def(
     "split_along_bridge",
-    &OuterGraph::splitAlongBridge,
+    &Graph::splitAlongBridge,
     pybind11::arg("bridge_bond"),
     R"delim(
       Determine which atoms belong to either side of a bond
@@ -235,7 +235,7 @@ void init_outer_graph(pybind11::module& m) {
 
   outerGraph.def(
     "atoms",
-    [](const OuterGraph& graph) {
+    [](const Graph& graph) {
       auto atomsRange = graph.atoms();
       return pybind11::make_iterator(
         std::move(atomsRange.first),
@@ -251,7 +251,7 @@ void init_outer_graph(pybind11::module& m) {
 
   outerGraph.def(
     "bonds",
-    [](const OuterGraph& graph) {
+    [](const Graph& graph) {
       auto bondsRange = graph.bonds();
       return pybind11::make_iterator(
         std::move(bondsRange.first),
@@ -271,7 +271,7 @@ void init_outer_graph(pybind11::module& m) {
 
   outerGraph.def(
     "adjacents",
-    [](const OuterGraph& graph, AtomIndex a) {
+    [](const Graph& graph, AtomIndex a) {
       auto adjacentsRange = graph.adjacents(a);
       return pybind11::make_iterator(
         std::move(adjacentsRange.first),
@@ -295,7 +295,7 @@ void init_outer_graph(pybind11::module& m) {
 
   outerGraph.def(
     "bonds",
-    [](const OuterGraph& graph, AtomIndex a) {
+    [](const Graph& graph, AtomIndex a) {
       auto bondsRange = graph.bonds(a);
       return pybind11::make_iterator(
         std::move(bondsRange.first),
@@ -316,7 +316,7 @@ void init_outer_graph(pybind11::module& m) {
 
   outerGraph.def(
     "__repr__",
-    [](const OuterGraph& graph) {
+    [](const Graph& graph) {
       return (
         "Graph of elemental composition "
         + Scine::Utils::generateChemicalFormula(graph.elementCollection())
@@ -326,14 +326,14 @@ void init_outer_graph(pybind11::module& m) {
 
   outerGraph.def(
     "__getitem__",
-    [](const OuterGraph& g, const AtomIndex i) -> Scine::Utils::ElementType {
+    [](const Graph& g, const AtomIndex i) -> Scine::Utils::ElementType {
       return g.elementType(i);
     }
   );
 
   outerGraph.def(
     "__getitem__",
-    [](const OuterGraph& g, const BondIndex i) -> BondType {
+    [](const Graph& g, const BondIndex i) -> BondType {
       return g.bondType(i);
     }
   );

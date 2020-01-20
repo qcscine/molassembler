@@ -14,7 +14,7 @@
 #include "temple/Functional.h"
 
 #include "molassembler/Modeling/AtomInfo.h"
-#include "molassembler/OuterGraph.h"
+#include "molassembler/Graph.h"
 
 namespace Scine {
 namespace molassembler {
@@ -195,7 +195,7 @@ shapes::Shape firstOfSize(const unsigned size) {
 }
 
 std::vector<BindingSite> reduceToSiteInformation(
-  const OuterGraph& molGraph,
+  const Graph& molGraph,
   const AtomIndex index,
   const RankingInformation& ranking
 ) {
@@ -237,7 +237,7 @@ std::vector<BindingSite> reduceToSiteInformation(
 }
 
 int formalCharge(
-  const OuterGraph& graph,
+  const Graph& graph,
   const AtomIndex index
 ) {
   int formalCharge = 0;
@@ -269,7 +269,7 @@ int formalCharge(
 }
 
 boost::optional<shapes::Shape> inferShape(
-  const OuterGraph& graph,
+  const Graph& graph,
   const AtomIndex index,
   const RankingInformation& ranking
 ) {

@@ -6,7 +6,7 @@
 
 #include "molassembler/Interpret.h"
 #include "molassembler/Molecule.h"
-#include "molassembler/OuterGraph.h"
+#include "molassembler/Graph.h"
 
 #include "Utils/Bonds/BondOrderCollection.h"
 #include "Utils/Geometry/AtomCollection.h"
@@ -188,7 +188,7 @@ void init_interpret(pybind11::module& m) {
     R"delim(
       Individual graphs found in the 3D information.
 
-      :rtype: ``List`` of :class:`OuterGraph`
+      :rtype: ``List`` of :class:`Graph`
     )delim"
   );
 

@@ -6,7 +6,7 @@
 #include "molassembler/Editing.h"
 
 #include "molassembler/Graph/Bridge.h"
-#include "molassembler/Graph/InnerGraph.h"
+#include "molassembler/Graph/PrivateGraph.h"
 #include "molassembler/Molecule/MoleculeImpl.h"
 #include "molassembler/Stereopermutators/AbstractPermutations.h"
 #include "molassembler/Stereopermutators/FeasiblePermutations.h"
@@ -30,8 +30,8 @@ namespace detail {
  * @return An unordered map of source atom indices to target atom indices
  */
 std::unordered_map<AtomIndex, AtomIndex> transferGraph(
-  const InnerGraph& source,
-  InnerGraph& target,
+  const PrivateGraph& source,
+  PrivateGraph& target,
   const std::vector<AtomIndex>& copyVertices
 ) {
   /* Copy over element types, creating the new vertices in target, collecting
@@ -59,7 +59,7 @@ std::unordered_map<AtomIndex, AtomIndex> transferGraph(
   }
 
   for(
-    const InnerGraph::Edge& e :
+    const PrivateGraph::Edge& e :
     boost::make_iterator_range(source.edges())
   ) {
     auto findSourceIter = copyVertexTargetIndices.find(
@@ -98,7 +98,7 @@ std::unordered_map<AtomIndex, AtomIndex> transferGraph(
  * @param sourceN Number of vertices in the molecule of which @p source is part:
  *   This is necessary to construct the index permutation that is applied to
  *   each stereopermutator. All vertices that are not contained in vertexMapping
- *   are mapped to InnerGraph::removalPlaceholder.
+ *   are mapped to PrivateGraph::removalPlaceholder.
  * @param doNotCopyVertices Vertex indices that are part of vertexMapping but
  *   of which stereopermutators should not be copied.
  *
@@ -127,7 +127,7 @@ void transferStereopermutators(
   /* Construct a permutation that resolves atom indices from sources using the
    * vertex mapping
    */
-  std::vector<AtomIndex> permutation (sourceN, InnerGraph::removalPlaceholder);
+  std::vector<AtomIndex> permutation (sourceN, PrivateGraph::removalPlaceholder);
   for(const auto& iterPair : vertexMapping) {
     permutation.at(iterPair.first) = iterPair.second;
   }
@@ -180,7 +180,7 @@ std::pair<Molecule, Molecule> Editing::cleave(const Molecule& a, const BondIndex
   assert(!sides.first.empty() && !sides.second.empty());
 
   // Construct separate OuterGraphs for each component of the disconnected graph
-  std::pair<InnerGraph, InnerGraph> graphs;
+  std::pair<PrivateGraph, PrivateGraph> graphs;
   auto vertexMappings = std::make_pair(
     detail::transferGraph(
       a.graph().inner(),
@@ -214,11 +214,11 @@ std::pair<Molecule, Molecule> Editing::cleave(const Molecule& a, const BondIndex
   // Make molecules out of the components
   auto molecules = std::make_pair<Molecule, Molecule>(
     Molecule(
-      OuterGraph(std::move(graphs.first)),
+      Graph(std::move(graphs.first)),
       std::move(stereopermutatorLists.first)
     ),
     Molecule(
-      OuterGraph(std::move(graphs.second)),
+      Graph(std::move(graphs.second)),
       std::move(stereopermutatorLists.second)
     )
   );
@@ -295,7 +295,7 @@ Molecule Editing::insert(
    *   internal state
    * - Call notifyGraphChange and return log
    */
-  InnerGraph& logInner = log._pImpl->_adjacencies.inner();
+  PrivateGraph& logInner = log._pImpl->_adjacencies.inner();
 
   // Copy all vertices from wedge into log
   auto vertexMapping = detail::transferGraph(
@@ -305,7 +305,7 @@ Molecule Editing::insert(
   );
 
   // Disconnect log at logBond
-  InnerGraph::Edge logEdge = toInner(logBond, logInner);
+  PrivateGraph::Edge logEdge = toInner(logBond, logInner);
   BondType bondType = logInner.bondType(logEdge);
   logInner.removeEdge(logEdge);
 
@@ -423,7 +423,7 @@ Molecule Editing::superpose(
     bottomAtom + 1
   );
 
-  InnerGraph& topInner = top._pImpl->_adjacencies.inner();
+  PrivateGraph& topInner = top._pImpl->_adjacencies.inner();
 
   auto vertexMapping = detail::transferGraph(
     bottom.graph().inner(),
@@ -452,7 +452,7 @@ Molecule Editing::superpose(
   /* Copy in adjacencies of bottomAtom manually and notify the stereopermutator
    * on top each time
    */
-  const InnerGraph& bottomInner = bottom.graph().inner();
+  const PrivateGraph& bottomInner = bottom.graph().inner();
 
   auto topPermutatorOption = topStereopermutators.option(topAtom);
 
@@ -506,7 +506,7 @@ Molecule Editing::substitute(
   const BondIndex leftBond,
   const BondIndex rightBond
 ) {
-  InnerGraph innerGraph;
+  PrivateGraph innerGraph;
   StereopermutatorList stereopermutators;
 
   // Identify sides of each bond
@@ -617,7 +617,7 @@ Molecule Editing::substitute(
 
   // Make a molecule out of the components
   Molecule compound {
-    OuterGraph(std::move(innerGraph)),
+    Graph(std::move(innerGraph)),
     std::move(stereopermutators)
   };
 
@@ -633,7 +633,7 @@ Molecule Editing::connect(
   const AtomIndex bConnectAtom,
   const BondType bondType
 ) {
-  InnerGraph& aInnerGraph = a._pImpl->_adjacencies.inner();
+  PrivateGraph& aInnerGraph = a._pImpl->_adjacencies.inner();
   StereopermutatorList& aStereopermutators = a._pImpl->_stereopermutators;
 
   // Copy b's graph into a
@@ -663,7 +663,7 @@ Molecule Editing::addLigand(
   AtomIndex complexatingAtom,
   const std::vector<AtomIndex>& ligandBindingAtoms
 ) {
-  InnerGraph& aInnerGraph = a._pImpl->_adjacencies.inner();
+  PrivateGraph& aInnerGraph = a._pImpl->_adjacencies.inner();
   StereopermutatorList& aStereopermutators = a._pImpl->_stereopermutators;
 
   auto vertexMapping = detail::transferGraph(

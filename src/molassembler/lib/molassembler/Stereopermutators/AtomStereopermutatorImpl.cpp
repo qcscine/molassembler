@@ -29,7 +29,7 @@
 #include "molassembler/Detail/Cartesian.h"
 #include "molassembler/DistanceGeometry/SpatialModel.h"
 #include "molassembler/DistanceGeometry/ValueBounds.h"
-#include "molassembler/Graph/InnerGraph.h"
+#include "molassembler/Graph/PrivateGraph.h"
 #include "molassembler/Log.h"
 #include "molassembler/Modeling/CommonTrig.h"
 #include "molassembler/Stereopermutators/ShapeVertexMaps.h"
@@ -214,7 +214,7 @@ boost::optional<std::vector<unsigned>> AtomStereopermutator::Impl::getIndexMappi
 }
 
 bool AtomStereopermutator::Impl::thermalized(
-  const OuterGraph& graph,
+  const Graph& graph,
   const AtomIndex centerAtom,
   const shapes::Shape shape,
   const RankingInformation& ranking,
@@ -262,7 +262,7 @@ bool AtomStereopermutator::Impl::thermalized(
 
 /* Constructors */
 AtomStereopermutator::Impl::Impl(
-  const OuterGraph& graph,
+  const Graph& graph,
   // The symmetry of this Stereopermutator
   const shapes::Shape shape,
   // The atom this Stereopermutator is centered on
@@ -349,7 +349,7 @@ void AtomStereopermutator::Impl::applyPermutation(const std::vector<AtomIndex>& 
 }
 
 boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Impl::propagate(
-  const OuterGraph& graph,
+  const Graph& graph,
   RankingInformation newRanking,
   boost::optional<shapes::Shape> shapeOption
 ) {
@@ -816,7 +816,7 @@ void AtomStereopermutator::Impl::propagateVertexRemoval(const AtomIndex removedI
     if(index > removedIndex) {
       --index;
     } else if(index == removedIndex) {
-      index = InnerGraph::removalPlaceholder;
+      index = PrivateGraph::removalPlaceholder;
     }
   };
 
@@ -826,7 +826,7 @@ void AtomStereopermutator::Impl::propagateVertexRemoval(const AtomIndex removedI
     }
 
     if(index == removedIndex) {
-      return InnerGraph::removalPlaceholder;
+      return PrivateGraph::removalPlaceholder;
     }
 
     return index;
@@ -881,7 +881,7 @@ const std::vector<unsigned>& AtomStereopermutator::Impl::getShapePositionMap() c
 }
 
 void AtomStereopermutator::Impl::fit(
-  const OuterGraph& graph,
+  const Graph& graph,
   const AngstromWrapper& angstromWrapper
 ) {
   const unsigned S = shapes::size(_shape);
@@ -1144,7 +1144,7 @@ unsigned AtomStereopermutator::Impl::numStereopermutations() const {
 
 void AtomStereopermutator::Impl::setShape(
   const shapes::Shape shape,
-  const OuterGraph& graph
+  const Graph& graph
 ) {
   if(_shape == shape) {
     // If the symmetry doesn't actually change, then nothing does
