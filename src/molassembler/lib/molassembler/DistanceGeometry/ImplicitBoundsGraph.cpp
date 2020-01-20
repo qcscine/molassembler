@@ -3,7 +3,7 @@
  *   See LICENSE.txt
  */
 
-#include "molassembler/DistanceGeometry/ImplicitGraphBoost.h"
+#include "molassembler/DistanceGeometry/ImplicitBoundsGraphBoost.h"
 #include "boost/graph/two_bit_color_map.hpp"
 
 #include "molassembler/DistanceGeometry/DistanceBoundsMatrix.h"
@@ -33,7 +33,7 @@ namespace distance_geometry {
 
 /* Class Implementation */
 
-void ImplicitGraph::_explainContradictionPaths(
+void ImplicitBoundsGraph::_explainContradictionPaths(
   const VertexDescriptor a,
   const VertexDescriptor b,
   const std::vector<VertexDescriptor>& predecessors,
@@ -69,7 +69,7 @@ void ImplicitGraph::_explainContradictionPaths(
   }
 }
 
-ImplicitGraph::ImplicitGraph(
+ImplicitBoundsGraph::ImplicitBoundsGraph(
   const PrivateGraph& inner,
   BoundsMatrix bounds
 ) : _innerGraphPtr(&inner), _distances(std::move(bounds)) {
@@ -94,11 +94,11 @@ ImplicitGraph::ImplicitGraph(
   }
 }
 
-ImplicitGraph::VertexDescriptor ImplicitGraph::num_vertices() const {
+ImplicitBoundsGraph::VertexDescriptor ImplicitBoundsGraph::num_vertices() const {
   return 2 * _distances.outerSize();
 }
 
-ImplicitGraph::VertexDescriptor ImplicitGraph::num_edges() const {
+ImplicitBoundsGraph::VertexDescriptor ImplicitBoundsGraph::num_edges() const {
   /* Every entry in the upper triangle indicates a bound
    * For every upper bound, there are 4 edges
    * For every lower bound, there are 2 edges
@@ -119,7 +119,7 @@ ImplicitGraph::VertexDescriptor ImplicitGraph::num_edges() const {
   return 4 * count + N * (N - 1);
 }
 
-std::pair<ImplicitGraph::EdgeDescriptor, bool> ImplicitGraph::edge(const VertexDescriptor i, const VertexDescriptor j) const {
+std::pair<ImplicitBoundsGraph::EdgeDescriptor, bool> ImplicitBoundsGraph::edge(const VertexDescriptor i, const VertexDescriptor j) const {
   const auto a = internal(i);
   const auto b = internal(j);
 
@@ -154,13 +154,13 @@ std::pair<ImplicitGraph::EdgeDescriptor, bool> ImplicitGraph::edge(const VertexD
   };
 }
 
-bool ImplicitGraph::hasExplicit(const EdgeDescriptor& edge) const {
+bool ImplicitBoundsGraph::hasExplicit(const EdgeDescriptor& edge) const {
   assert(isLeft(edge.first) && !isLeft(edge.second));
 
   return _distances(internal(edge.first), internal(edge.second)) != 0;
 }
 
-outcome::result<Eigen::MatrixXd> ImplicitGraph::makeDistanceBounds() const noexcept {
+outcome::result<Eigen::MatrixXd> ImplicitBoundsGraph::makeDistanceBounds() const noexcept {
   Eigen::MatrixXd bounds;
 
   unsigned N = _distances.outerSize();
@@ -227,11 +227,11 @@ outcome::result<Eigen::MatrixXd> ImplicitGraph::makeDistanceBounds() const noexc
   return bounds;
 }
 
-outcome::result<Eigen::MatrixXd> ImplicitGraph::makeDistanceMatrix(random::Engine& engine) noexcept {
+outcome::result<Eigen::MatrixXd> ImplicitBoundsGraph::makeDistanceMatrix(random::Engine& engine) noexcept {
   return makeDistanceMatrix(engine, Partiality::All);
 }
 
-outcome::result<Eigen::MatrixXd> ImplicitGraph::makeDistanceMatrix(random::Engine& engine, Partiality partiality) noexcept {
+outcome::result<Eigen::MatrixXd> ImplicitBoundsGraph::makeDistanceMatrix(random::Engine& engine, Partiality partiality) noexcept {
   const unsigned N = _innerGraphPtr->N();
 
   std::vector<AtomIndex> indices(N);
@@ -420,7 +420,7 @@ outcome::result<Eigen::MatrixXd> ImplicitGraph::makeDistanceMatrix(random::Engin
   return _distances;
 }
 
-ImplicitGraph::VertexDescriptor ImplicitGraph::out_degree(VertexDescriptor i) const {
+ImplicitBoundsGraph::VertexDescriptor ImplicitBoundsGraph::out_degree(VertexDescriptor i) const {
   unsigned count = 0;
   unsigned N = _distances.outerSize();
   VertexDescriptor a = internal(i);
@@ -437,35 +437,35 @@ ImplicitGraph::VertexDescriptor ImplicitGraph::out_degree(VertexDescriptor i) co
   return count;
 }
 
-double& ImplicitGraph::lowerBound(const VertexDescriptor a, const VertexDescriptor b) {
+double& ImplicitBoundsGraph::lowerBound(const VertexDescriptor a, const VertexDescriptor b) {
   return _distances(
     std::max(a, b),
     std::min(a, b)
   );
 }
 
-double& ImplicitGraph::upperBound(const VertexDescriptor a, const VertexDescriptor b) {
+double& ImplicitBoundsGraph::upperBound(const VertexDescriptor a, const VertexDescriptor b) {
   return _distances(
     std::min(a, b),
     std::max(a, b)
   );
 }
 
-double ImplicitGraph::lowerBound(const VertexDescriptor a, const VertexDescriptor b) const {
+double ImplicitBoundsGraph::lowerBound(const VertexDescriptor a, const VertexDescriptor b) const {
   return _distances(
     std::max(a, b),
     std::min(a, b)
   );
 }
 
-double ImplicitGraph::upperBound(const VertexDescriptor a, const VertexDescriptor b) const {
+double ImplicitBoundsGraph::upperBound(const VertexDescriptor a, const VertexDescriptor b) const {
   return _distances(
     std::min(a, b),
     std::max(a, b)
   );
 }
 
-double ImplicitGraph::maximalImplicitLowerBound(const VertexDescriptor i) const {
+double ImplicitBoundsGraph::maximalImplicitLowerBound(const VertexDescriptor i) const {
   assert(isLeft(i));
   auto a = internal(i);
   auto elementType = _innerGraphPtr->elementType(a);
@@ -483,11 +483,11 @@ double ImplicitGraph::maximalImplicitLowerBound(const VertexDescriptor i) const 
 
 /* Nested classes */
 /* Edge weight property map */
-ImplicitGraph::EdgeWeightMap::EdgeWeightMap(const ImplicitGraph& base)
+ImplicitBoundsGraph::EdgeWeightMap::EdgeWeightMap(const ImplicitBoundsGraph& base)
   : _basePtr(&base)
 {}
 
-double ImplicitGraph::EdgeWeightMap::operator [] (const EdgeDescriptor& e) const {
+double ImplicitBoundsGraph::EdgeWeightMap::operator [] (const EdgeDescriptor& e) const {
   auto a = internal(e.first);
   auto b = internal(e.second);
 
@@ -510,82 +510,82 @@ double ImplicitGraph::EdgeWeightMap::operator [] (const EdgeDescriptor& e) const
   return _basePtr->upperBound(a, b);
 }
 
-double ImplicitGraph::EdgeWeightMap::operator () (const EdgeDescriptor& e) const {
+double ImplicitBoundsGraph::EdgeWeightMap::operator () (const EdgeDescriptor& e) const {
   return this->operator[](e);
 }
 
-ImplicitGraph::EdgeWeightMap ImplicitGraph::getEdgeWeightPropertyMap() const {
+ImplicitBoundsGraph::EdgeWeightMap ImplicitBoundsGraph::getEdgeWeightPropertyMap() const {
   return {*this};
 }
 
 /* Vertex iterator */
-ImplicitGraph::vertex_iterator::vertex_iterator() = default;
-ImplicitGraph::vertex_iterator::vertex_iterator(ImplicitGraph::VertexDescriptor i) : index(i) {}
-ImplicitGraph::vertex_iterator::vertex_iterator(const ImplicitGraph::vertex_iterator& other) = default;
-ImplicitGraph::vertex_iterator::vertex_iterator(ImplicitGraph::vertex_iterator&& other) noexcept = default;
-ImplicitGraph::vertex_iterator& ImplicitGraph::vertex_iterator::operator = (const ImplicitGraph::vertex_iterator& other) = default;
-ImplicitGraph::vertex_iterator& ImplicitGraph::vertex_iterator::operator = (ImplicitGraph::vertex_iterator&& other) noexcept = default;
+ImplicitBoundsGraph::vertex_iterator::vertex_iterator() = default;
+ImplicitBoundsGraph::vertex_iterator::vertex_iterator(ImplicitBoundsGraph::VertexDescriptor i) : index(i) {}
+ImplicitBoundsGraph::vertex_iterator::vertex_iterator(const ImplicitBoundsGraph::vertex_iterator& other) = default;
+ImplicitBoundsGraph::vertex_iterator::vertex_iterator(ImplicitBoundsGraph::vertex_iterator&& other) noexcept = default;
+ImplicitBoundsGraph::vertex_iterator& ImplicitBoundsGraph::vertex_iterator::operator = (const ImplicitBoundsGraph::vertex_iterator& other) = default;
+ImplicitBoundsGraph::vertex_iterator& ImplicitBoundsGraph::vertex_iterator::operator = (ImplicitBoundsGraph::vertex_iterator&& other) noexcept = default;
 
-bool ImplicitGraph::vertex_iterator::operator == (const ImplicitGraph::vertex_iterator& other) const {
+bool ImplicitBoundsGraph::vertex_iterator::operator == (const ImplicitBoundsGraph::vertex_iterator& other) const {
   return index == other.index;
 }
 
-bool ImplicitGraph::vertex_iterator::operator != (const ImplicitGraph::vertex_iterator& other) const {
+bool ImplicitBoundsGraph::vertex_iterator::operator != (const ImplicitBoundsGraph::vertex_iterator& other) const {
   return index != other.index;
 }
 
-ImplicitGraph::vertex_iterator& ImplicitGraph::vertex_iterator::operator ++ () {
+ImplicitBoundsGraph::vertex_iterator& ImplicitBoundsGraph::vertex_iterator::operator ++ () {
   ++index;
   return *this;
 }
 
-ImplicitGraph::vertex_iterator ImplicitGraph::vertex_iterator::operator ++ (int) {
+ImplicitBoundsGraph::vertex_iterator ImplicitBoundsGraph::vertex_iterator::operator ++ (int) {
   vertex_iterator copy = *this;
   ++index;
   return copy;
 }
 
-ImplicitGraph::vertex_iterator& ImplicitGraph::vertex_iterator::operator -- () {
+ImplicitBoundsGraph::vertex_iterator& ImplicitBoundsGraph::vertex_iterator::operator -- () {
   --index;
   return *this;
 }
 
-ImplicitGraph::vertex_iterator ImplicitGraph::vertex_iterator::operator -- (int) {
+ImplicitBoundsGraph::vertex_iterator ImplicitBoundsGraph::vertex_iterator::operator -- (int) {
   vertex_iterator copy = *this;
   --index;
   return copy;
 }
 
-ImplicitGraph::vertex_iterator& ImplicitGraph::vertex_iterator::operator + (unsigned i) {
+ImplicitBoundsGraph::vertex_iterator& ImplicitBoundsGraph::vertex_iterator::operator + (unsigned i) {
   index += i;
   return *this;
 }
 
-ImplicitGraph::vertex_iterator& ImplicitGraph::vertex_iterator::operator - (unsigned i) {
+ImplicitBoundsGraph::vertex_iterator& ImplicitBoundsGraph::vertex_iterator::operator - (unsigned i) {
   index -= i;
   return *this;
 }
 
-ImplicitGraph::VertexDescriptor ImplicitGraph::vertex_iterator::operator * () const {
+ImplicitBoundsGraph::VertexDescriptor ImplicitBoundsGraph::vertex_iterator::operator * () const {
   return index;
 }
 
-int ImplicitGraph::vertex_iterator::operator - (const vertex_iterator& other) const {
+int ImplicitBoundsGraph::vertex_iterator::operator - (const vertex_iterator& other) const {
   return static_cast<int>(index) - static_cast<int>(other.index);
 }
 
-ImplicitGraph::vertex_iterator ImplicitGraph::vbegin() const {
+ImplicitBoundsGraph::vertex_iterator ImplicitBoundsGraph::vbegin() const {
   return {};
 }
 
-ImplicitGraph::vertex_iterator ImplicitGraph::vend() const {
+ImplicitBoundsGraph::vertex_iterator ImplicitBoundsGraph::vend() const {
   return {num_vertices()};
 }
 
 /* Edge iterator */
-ImplicitGraph::edge_iterator::edge_iterator() = default;
-ImplicitGraph::edge_iterator::edge_iterator(
-  const ImplicitGraph& base,
+ImplicitBoundsGraph::edge_iterator::edge_iterator() = default;
+ImplicitBoundsGraph::edge_iterator::edge_iterator(
+  const ImplicitBoundsGraph& base,
   VertexDescriptor i
 ) : _basePtr {&base},
     _i {i}
@@ -607,23 +607,23 @@ ImplicitGraph::edge_iterator::edge_iterator(
   }
 }
 
-ImplicitGraph::edge_iterator::edge_iterator(const ImplicitGraph::edge_iterator& other) = default;
-ImplicitGraph::edge_iterator::edge_iterator(ImplicitGraph::edge_iterator&& other) noexcept = default;
-ImplicitGraph::edge_iterator& ImplicitGraph::edge_iterator::operator = (const ImplicitGraph::edge_iterator& other) = default;
-ImplicitGraph::edge_iterator& ImplicitGraph::edge_iterator::operator = (ImplicitGraph::edge_iterator&& other) noexcept = default;
+ImplicitBoundsGraph::edge_iterator::edge_iterator(const ImplicitBoundsGraph::edge_iterator& other) = default;
+ImplicitBoundsGraph::edge_iterator::edge_iterator(ImplicitBoundsGraph::edge_iterator&& other) noexcept = default;
+ImplicitBoundsGraph::edge_iterator& ImplicitBoundsGraph::edge_iterator::operator = (const ImplicitBoundsGraph::edge_iterator& other) = default;
+ImplicitBoundsGraph::edge_iterator& ImplicitBoundsGraph::edge_iterator::operator = (ImplicitBoundsGraph::edge_iterator&& other) noexcept = default;
 
-ImplicitGraph::edge_iterator& ImplicitGraph::edge_iterator::operator ++ () {
+ImplicitBoundsGraph::edge_iterator& ImplicitBoundsGraph::edge_iterator::operator ++ () {
   _increment();
   return *this;
 }
 
-ImplicitGraph::edge_iterator ImplicitGraph::edge_iterator::operator ++ (int) {
+ImplicitBoundsGraph::edge_iterator ImplicitBoundsGraph::edge_iterator::operator ++ (int) {
   edge_iterator copy = *this;
   ++(*this);
   return copy;
 }
 
-bool ImplicitGraph::edge_iterator::operator == (const edge_iterator& other) const {
+bool ImplicitBoundsGraph::edge_iterator::operator == (const edge_iterator& other) const {
   return (
     _crossGroup == other._crossGroup
     && _b == other._b
@@ -632,11 +632,11 @@ bool ImplicitGraph::edge_iterator::operator == (const edge_iterator& other) cons
   );
 }
 
-bool ImplicitGraph::edge_iterator::operator != (const edge_iterator& other) const {
+bool ImplicitBoundsGraph::edge_iterator::operator != (const edge_iterator& other) const {
   return !(*this == other);
 }
 
-double ImplicitGraph::edge_iterator::weight() const {
+double ImplicitBoundsGraph::edge_iterator::weight() const {
   auto a = internal(_i);
   if(_crossGroup) {
     double data = _basePtr->lowerBound(a, _b);
@@ -657,7 +657,7 @@ double ImplicitGraph::edge_iterator::weight() const {
   return _basePtr->upperBound(a, _b);
 }
 
-ImplicitGraph::VertexDescriptor ImplicitGraph::edge_iterator::target() const {
+ImplicitBoundsGraph::VertexDescriptor ImplicitBoundsGraph::edge_iterator::target() const {
   if(_crossGroup) {
     return right(_b);
   }
@@ -669,14 +669,14 @@ ImplicitGraph::VertexDescriptor ImplicitGraph::edge_iterator::target() const {
   return right(_b);
 }
 
-ImplicitGraph::EdgeDescriptor ImplicitGraph::edge_iterator::operator * () const {
+ImplicitBoundsGraph::EdgeDescriptor ImplicitBoundsGraph::edge_iterator::operator * () const {
   return {
     _i,
     target()
   };
 }
 
-void ImplicitGraph::edge_iterator::_increment() {
+void ImplicitBoundsGraph::edge_iterator::_increment() {
   unsigned N = _basePtr->_distances.outerSize();
   auto a = internal(_i);
 
@@ -740,7 +740,7 @@ void ImplicitGraph::edge_iterator::_increment() {
   }
 }
 
-std::string ImplicitGraph::edge_iterator::state() const {
+std::string ImplicitBoundsGraph::edge_iterator::state() const {
   using namespace std::string_literals;
 
   return std::to_string(_i) + " "s
@@ -748,14 +748,14 @@ std::string ImplicitGraph::edge_iterator::state() const {
     + std::to_string(static_cast<int>(_crossGroup));
 }
 
-ImplicitGraph::edge_iterator ImplicitGraph::ebegin() const {
+ImplicitBoundsGraph::edge_iterator ImplicitBoundsGraph::ebegin() const {
   return {
     *this,
     0
   };
 }
 
-ImplicitGraph::edge_iterator ImplicitGraph::eend() const {
+ImplicitBoundsGraph::edge_iterator ImplicitBoundsGraph::eend() const {
   return {
     *this,
     num_vertices()
@@ -764,36 +764,36 @@ ImplicitGraph::edge_iterator ImplicitGraph::eend() const {
 
 
 /* Out edge iterator */
-ImplicitGraph::edge_iterator ImplicitGraph::obegin(VertexDescriptor i) const {
+ImplicitBoundsGraph::edge_iterator ImplicitBoundsGraph::obegin(VertexDescriptor i) const {
   return {
     *this,
     i
   };
 }
 
-ImplicitGraph::edge_iterator ImplicitGraph::oend(VertexDescriptor i) const {
+ImplicitBoundsGraph::edge_iterator ImplicitBoundsGraph::oend(VertexDescriptor i) const {
   return {
     *this,
     i + 1
   };
 }
 
-ImplicitGraph::in_group_edge_iterator::in_group_edge_iterator() = default;
-ImplicitGraph::in_group_edge_iterator::in_group_edge_iterator(
-  const ImplicitGraph::in_group_edge_iterator& other
+ImplicitBoundsGraph::in_group_edge_iterator::in_group_edge_iterator() = default;
+ImplicitBoundsGraph::in_group_edge_iterator::in_group_edge_iterator(
+  const ImplicitBoundsGraph::in_group_edge_iterator& other
 ) = default;
-ImplicitGraph::in_group_edge_iterator::in_group_edge_iterator(
-  ImplicitGraph::in_group_edge_iterator&& other
+ImplicitBoundsGraph::in_group_edge_iterator::in_group_edge_iterator(
+  ImplicitBoundsGraph::in_group_edge_iterator&& other
 ) noexcept = default;
-ImplicitGraph::in_group_edge_iterator& ImplicitGraph::in_group_edge_iterator::operator = (
-  ImplicitGraph::in_group_edge_iterator&& other
+ImplicitBoundsGraph::in_group_edge_iterator& ImplicitBoundsGraph::in_group_edge_iterator::operator = (
+  ImplicitBoundsGraph::in_group_edge_iterator&& other
 ) noexcept = default;
-ImplicitGraph::in_group_edge_iterator& ImplicitGraph::in_group_edge_iterator::operator = (
-  const ImplicitGraph::in_group_edge_iterator& other
+ImplicitBoundsGraph::in_group_edge_iterator& ImplicitBoundsGraph::in_group_edge_iterator::operator = (
+  const ImplicitBoundsGraph::in_group_edge_iterator& other
 ) = default;
 
-ImplicitGraph::in_group_edge_iterator::in_group_edge_iterator(
-  const ImplicitGraph& base,
+ImplicitBoundsGraph::in_group_edge_iterator::in_group_edge_iterator(
+  const ImplicitBoundsGraph& base,
   const VertexDescriptor i
 ) : _basePtr{&base},
     _i {i},
@@ -812,8 +812,8 @@ ImplicitGraph::in_group_edge_iterator::in_group_edge_iterator(
   }
 }
 
-ImplicitGraph::in_group_edge_iterator::in_group_edge_iterator(
-  const ImplicitGraph& base,
+ImplicitBoundsGraph::in_group_edge_iterator::in_group_edge_iterator(
+  const ImplicitBoundsGraph& base,
   const VertexDescriptor i,
   bool /* tag */
 ) : _basePtr{&base},

@@ -9,7 +9,7 @@
 #include "boost/program_options.hpp"
 
 #include "molassembler/DistanceGeometry/DistanceBoundsMatrix.h"
-#include "molassembler/DistanceGeometry/ExplicitGraph.h"
+#include "molassembler/DistanceGeometry/ExplicitBoundsGraph.h"
 #include "molassembler/DistanceGeometry/MetricMatrix.h"
 #include "molassembler/DistanceGeometry/EigenRefinement.h"
 #include "molassembler/DistanceGeometry/ConformerGeneration.h"
@@ -81,7 +81,7 @@ std::vector<FunctorResults> timeFunctors(
     const auto chiralConstraints = spatialModel.getChiralConstraints();
     const auto dihedralConstraints = spatialModel.getDihedralConstraints();
 
-    distance_geometry::ExplicitGraph explicitGraph {
+    distance_geometry::ExplicitBoundsGraph explicitGraph {
       molecule.graph().inner(),
       boundsList
     };

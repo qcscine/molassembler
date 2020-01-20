@@ -11,9 +11,9 @@
 
 #include "gor1/Gor1.h"
 #include "molassembler/DistanceGeometry/DistanceBoundsMatrix.h"
-#include "molassembler/DistanceGeometry/ExplicitGraph.h"
+#include "molassembler/DistanceGeometry/ExplicitBoundsGraph.h"
 #include "molassembler/DistanceGeometry/Gor1.h"
-#include "molassembler/DistanceGeometry/ImplicitGraphBoost.h"
+#include "molassembler/DistanceGeometry/ImplicitBoundsGraphBoost.h"
 #include "molassembler/DistanceGeometry/SpatialModel.h"
 #include "molassembler/Graph/PrivateGraph.h"
 #include "molassembler/IO.h"
@@ -109,8 +109,8 @@ void writeHeaders(
     "N",
     "E",
     "Floyd-Warshall & DBM",
-    "Gor & ExplicitGraph",
-    "Gor & ImplicitGraph"
+    "Gor & ExplicitBoundsGraph",
+    "Gor & ImplicitBoundsGraph"
   };
 
   for(unsigned i = 0; i < 2; ++i) {
@@ -155,17 +155,17 @@ void benchmark(
   /*
    * Can calculate shortest paths with either:
    * - Floyd-Warshall in DistanceBoundsMatrix
-   * - Bellman-Ford (like in ExplicitGraph)
+   * - Bellman-Ford (like in ExplicitBoundsGraph)
    * - Gor1 (graph-independent implementation
    *
    * On either:
-   * - BGL ExplicitGraph type (can access from ExplicitGraph)
+   * - BGL ExplicitBoundsGraph type (can access from ExplicitBoundsGraph)
    * - SPG type
    *
    * Time and compare correctness:
    * - DistanceBoundsMatrix  + Floyd-Warshall (currently ONLY correct impl)
-   * - ExplicitGraph BGL graph + Bellman-Ford
-   * - ExplicitGraph BGL graph + Gor1
+   * - ExplicitBoundsGraph BGL graph + Bellman-Ford
+   * - ExplicitBoundsGraph BGL graph + Gor1
    * - SPG w/out implicit   + Bellman-Ford
    * - SPG w/out implicit   + Gor1
    *
@@ -195,7 +195,7 @@ void benchmark(
 
   if(algorithmChoice == Algorithm::All || algorithmChoice == Algorithm::ExplicitGor) {
     auto timings = timeFunctor<
-      Gor1Functor<distance_geometry::ExplicitGraph>,
+      Gor1Functor<distance_geometry::ExplicitBoundsGraph>,
       nExperiments
     >(sampleMol, boundsMatrix, partiality);
 
@@ -206,7 +206,7 @@ void benchmark(
 
   if(algorithmChoice == Algorithm::All || algorithmChoice == Algorithm::ImplicitGor) {
     auto timings = timeFunctor<
-      Gor1Functor<distance_geometry::ImplicitGraph>,
+      Gor1Functor<distance_geometry::ImplicitBoundsGraph>,
       nExperiments
     >(sampleMol, boundsMatrix, partiality);
 
@@ -244,8 +244,8 @@ void benchmark(
 using namespace std::string_literals;
 const std::string algorithmChoices =
   "  0 - Matrix Floyd-Warshall\n"
-  "  1 - Gor1 with ImplicitGraph\n"
-  "  2 - Gor1 with ExplicitGraph\n";
+  "  1 - Gor1 with ImplicitBoundsGraph\n"
+  "  2 - Gor1 with ExplicitBoundsGraph\n";
 
 const std::string partialityChoices =
   "  0 - Four-Atom Metrization\n"

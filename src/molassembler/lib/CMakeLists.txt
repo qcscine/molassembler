@@ -26,11 +26,11 @@ set(HEADERS_all
   ${_LIBPREFIX}/DistanceGeometry/DistanceBoundsMatrix.h
   ${_LIBPREFIX}/DistanceGeometry/DistanceGeometry.h
   ${_LIBPREFIX}/DistanceGeometry/Error.h
-  ${_LIBPREFIX}/DistanceGeometry/ExplicitGraph.h
+  ${_LIBPREFIX}/DistanceGeometry/ExplicitBoundsGraph.h
   ${_LIBPREFIX}/DistanceGeometry/Gor1.h
-  ${_LIBPREFIX}/DistanceGeometry/ImplicitGraphBoost.h
-  ${_LIBPREFIX}/DistanceGeometry/ImplicitGraph.h
-  ${_LIBPREFIX}/DistanceGeometry/ImplicitGraphHelpers.h
+  ${_LIBPREFIX}/DistanceGeometry/ImplicitBoundsGraphBoost.h
+  ${_LIBPREFIX}/DistanceGeometry/ImplicitBoundsGraph.h
+  ${_LIBPREFIX}/DistanceGeometry/ImplicitBoundsGraphHelpers.h
   ${_LIBPREFIX}/DistanceGeometry/MetricMatrix.h
   ${_LIBPREFIX}/DistanceGeometry/RefinementMeta.h
   ${_LIBPREFIX}/DistanceGeometry/SpatialModel.h
@@ -91,8 +91,8 @@ set(SOURCES_all
   ${_LIBPREFIX}/DistanceGeometry/ConformerGeneration.cpp
   ${_LIBPREFIX}/DistanceGeometry/DirectedConformerGeneratorImpl.cpp
   ${_LIBPREFIX}/DistanceGeometry/DistanceBoundsMatrix.cpp
-  ${_LIBPREFIX}/DistanceGeometry/ExplicitGraph.cpp
-  ${_LIBPREFIX}/DistanceGeometry/ImplicitGraph.cpp
+  ${_LIBPREFIX}/DistanceGeometry/ExplicitBoundsGraph.cpp
+  ${_LIBPREFIX}/DistanceGeometry/ImplicitBoundsGraph.cpp
   ${_LIBPREFIX}/DistanceGeometry/MetricMatrix.cpp
   ${_LIBPREFIX}/DistanceGeometry/SpatialModel.cpp
   ${_LIBPREFIX}/DistanceGeometry/TetrangleSmoothing.cpp

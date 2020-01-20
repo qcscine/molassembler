@@ -9,7 +9,7 @@
 #include "boost/graph/graph_concepts.hpp"
 #include "boost/test/unit_test.hpp"
 
-#include "molassembler/DistanceGeometry/ExplicitGraph.h"
+#include "molassembler/DistanceGeometry/ExplicitBoundsGraph.h"
 #include "molassembler/DistanceGeometry/SpatialModel.h"
 #include "molassembler/IO.h"
 #include "ShortestPathsGraphTests.h"
@@ -22,7 +22,7 @@ inline std::ostream& nl(std::ostream& os) {
   return os;
 }
 
-BOOST_AUTO_TEST_CASE(ExplicitGraphStructure) {
+BOOST_AUTO_TEST_CASE(ExplicitBoundsGraphStructure) {
   using namespace Scine;
   using namespace molassembler;
 
@@ -34,7 +34,7 @@ BOOST_AUTO_TEST_CASE(ExplicitGraphStructure) {
       currentFilePath.string()
     );
 
-    using EG = distance_geometry::ExplicitGraph;
+    using EG = distance_geometry::ExplicitBoundsGraph;
 
     distance_geometry::SpatialModel spatialModel {molecule, distance_geometry::Configuration {}};
 

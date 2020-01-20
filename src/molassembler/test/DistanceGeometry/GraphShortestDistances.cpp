@@ -18,10 +18,10 @@
 #include "temple/Stringify.h"
 
 // DO NOT CHANGE THIS INCLUDE ORDER (implicit graph needs to go first)
-#include "molassembler/DistanceGeometry/ImplicitGraphBoost.h"
+#include "molassembler/DistanceGeometry/ImplicitBoundsGraphBoost.h"
 
 #include "molassembler/DistanceGeometry/DistanceBoundsMatrix.h"
-#include "molassembler/DistanceGeometry/ExplicitGraph.h"
+#include "molassembler/DistanceGeometry/ExplicitBoundsGraph.h"
 #include "molassembler/DistanceGeometry/SpatialModel.h"
 #include "molassembler/Graph/PrivateGraph.h"
 #include "molassembler/IO.h"
@@ -108,10 +108,10 @@ struct Gor1Functor {
   }
 };
 
-// Use specialized GOR1 implementation for ImplicitGraph
-std::vector<double> Gor1IG (const molassembler::distance_geometry::ImplicitGraph& graph, unsigned sourceVertex) {
+// Use specialized GOR1 implementation for ImplicitBoundsGraph
+std::vector<double> Gor1IG (const molassembler::distance_geometry::ImplicitBoundsGraph& graph, unsigned sourceVertex) {
   /* Prep */
-  using Graph = molassembler::distance_geometry::ImplicitGraph;
+  using Graph = molassembler::distance_geometry::ImplicitBoundsGraph;
   using Vertex = typename boost::graph_traits<Graph>::vertex_descriptor;
 
   unsigned N = boost::num_vertices(graph);
@@ -180,7 +180,7 @@ BOOST_AUTO_TEST_CASE(ShortestPathsGraphConcepts) {
 
     distance_geometry::SpatialModel spatialModel {molecule, distance_geometry::Configuration {}};
 
-    using EG = distance_geometry::ExplicitGraph;
+    using EG = distance_geometry::ExplicitBoundsGraph;
     using Vertex = EG::GraphType::vertex_descriptor;
 
     EG eg {
@@ -261,14 +261,14 @@ BOOST_AUTO_TEST_CASE(ShortestPathsGraphConcepts) {
 }
 
 bool shortestPathsRepresentInequalities(
-  const ExplicitGraph& limits,
+  const ExplicitBoundsGraph& limits,
   const DistanceBoundsMatrix& boundsMatrix,
   const unsigned N
 ) {
   bool pass = true;
   for(unsigned outerVertex = 0; outerVertex < N; ++outerVertex) {
-    auto BF_EG_distances = BfFunctor<ExplicitGraph::GraphType> {limits.graph()} (2 * outerVertex);
-    auto Gor_EG_distances = Gor1Functor<ExplicitGraph::GraphType> {limits.graph()} (2 * outerVertex);
+    auto BF_EG_distances = BfFunctor<ExplicitBoundsGraph::GraphType> {limits.graph()} (2 * outerVertex);
+    auto Gor_EG_distances = Gor1Functor<ExplicitBoundsGraph::GraphType> {limits.graph()} (2 * outerVertex);
 
     if(
       !temple::all_of(
@@ -282,7 +282,7 @@ bool shortestPathsRepresentInequalities(
       )
     ) {
       pass = false;
-      std::cout << "Not all pairs of Bellmann-Ford and Gor1 shortest-paths-distances on the ExplicitGraph are within 1e-8 relative tolerance!" << nl;
+      std::cout << "Not all pairs of Bellmann-Ford and Gor1 shortest-paths-distances on the ExplicitBoundsGraph are within 1e-8 relative tolerance!" << nl;
       break;
     }
 
@@ -328,7 +328,7 @@ bool shortestPathsRepresentInequalities(
       )
     ) {
       pass = false;
-      std::cout << "Bellman-Ford ExplicitGraph shortest paths do not represent triangle inequality bounds!" << nl;
+      std::cout << "Bellman-Ford ExplicitBoundsGraph shortest paths do not represent triangle inequality bounds!" << nl;
       std::cout << "Failed on outerVertex = " << outerVertex << nl;
       std::cout << "Distances:" << nl << temple::condense(BF_EG_distances) << nl << boundsMatrix.access() << nl;
       break;
@@ -337,8 +337,8 @@ bool shortestPathsRepresentInequalities(
   return pass;
 }
 
-bool graphsIdentical(const ExplicitGraph& explicitGraph, const ImplicitGraph& implicitGraph) {
-  using IgVertex = ImplicitGraph::VertexDescriptor;
+bool graphsIdentical(const ExplicitBoundsGraph& explicitGraph, const ImplicitBoundsGraph& implicitGraph) {
+  using IgVertex = ImplicitBoundsGraph::VertexDescriptor;
   IgVertex N = boost::num_vertices(implicitGraph);
 
   // Check that both graphs are 1:1 identical
@@ -372,15 +372,15 @@ bool graphsIdentical(const ExplicitGraph& explicitGraph, const ImplicitGraph& im
 
 bool shortestGraphsAlgorithmsResultsMatch(
   const unsigned N,
-  const ImplicitGraph& implicitGraph,
+  const ImplicitBoundsGraph& implicitGraph,
   const DistanceBoundsMatrix& boundsMatrix
 ) {
   bool pass = true;
   for(unsigned outerVertex = 0; outerVertex < N; ++outerVertex) {
-    // ImplicitGraph without implicit bounds should be consistent with ExplicitGraph
-    auto BF_IG_distances = BfFunctor<distance_geometry::ImplicitGraph> {implicitGraph} (2 * outerVertex);
+    // ImplicitBoundsGraph without implicit bounds should be consistent with ExplicitBoundsGraph
+    auto BF_IG_distances = BfFunctor<distance_geometry::ImplicitBoundsGraph> {implicitGraph} (2 * outerVertex);
 
-    auto Gor_IG_distances = Gor1Functor<distance_geometry::ImplicitGraph> {implicitGraph} (2 * outerVertex);
+    auto Gor_IG_distances = Gor1Functor<distance_geometry::ImplicitBoundsGraph> {implicitGraph} (2 * outerVertex);
 
     if(
       !temple::all_of(
@@ -391,7 +391,7 @@ bool shortestGraphsAlgorithmsResultsMatch(
       )
     ) {
       pass = false;
-      std::cout << "Not all pairs of Bellmann-Ford and Gor1 shortest-paths-distances on the ImplicitGraph are within 1e-8 relative tolerance!" << nl;
+      std::cout << "Not all pairs of Bellmann-Ford and Gor1 shortest-paths-distances on the ImplicitBoundsGraph are within 1e-8 relative tolerance!" << nl;
       break;
     }
 
@@ -406,7 +406,7 @@ bool shortestGraphsAlgorithmsResultsMatch(
       )
     ) {
       pass = false;
-      std::cout << "Not all pairs of specialized and unspecialized Gor1 shortest-paths-distances on the ImplicitGraph are within 1e-8 relative tolerance!" << nl;
+      std::cout << "Not all pairs of specialized and unspecialized Gor1 shortest-paths-distances on the ImplicitBoundsGraph are within 1e-8 relative tolerance!" << nl;
       std::cout << temple::condense(spec_Gor_IG_distances) << nl << nl
         << temple::condense(Gor_IG_distances) << nl << nl;
       break;
@@ -462,7 +462,7 @@ bool shortestGraphsAlgorithmsResultsMatch(
       )
     ) {
       pass = false;
-      std::cout << "Bellman-Ford ImplicitGraph shortest paths do not represent triangle inequality bounds!" << nl;
+      std::cout << "Bellman-Ford ImplicitBoundsGraph shortest paths do not represent triangle inequality bounds!" << nl;
       std::cout << "Failed on outerVertex = " << outerVertex << ", j = {";
       for(unsigned j = 0; j < BF_IG_distances.size(); ++j) {
         if(j / 2 != outerVertex) {
@@ -507,15 +507,15 @@ BOOST_AUTO_TEST_CASE(GraphShortestDistancesCorrectness) {
    * - Simplified Gor1
    *
    * On either:
-   * - ExplicitGraph (Underlying fully explicit BGL graph)
-   * - ImplicitGraph (underlying ValueBounds, but BGL interface)
+   * - ExplicitBoundsGraph (Underlying fully explicit BGL graph)
+   * - ImplicitBoundsGraph (underlying ValueBounds, but BGL interface)
    *
    * Time and compare correctness:
    * - DistanceBoundsMatrix  + Floyd-Warshall (currently ONLY correct impl)
-   * - ExplicitGraph + Bellman-Ford
-   * - ExplicitGraph + Gor1
-   * - ImplicitGraph + Bellman-Ford
-   * - ImplicitGraph + Gor1
+   * - ExplicitBoundsGraph + Bellman-Ford
+   * - ExplicitBoundsGraph + Gor1
+   * - ImplicitBoundsGraph + Bellman-Ford
+   * - ImplicitBoundsGraph + Gor1
    *
    * The bottom four combinations should yield equal shortest paths distances,
    * although they are not consistent with the triangle inequalities. One such
@@ -540,7 +540,7 @@ BOOST_AUTO_TEST_CASE(GraphShortestDistancesCorrectness) {
 
     const auto boundsList = spatialModel.makePairwiseBounds();
 
-    distance_geometry::ExplicitGraph explicitGraph {sampleMol.graph().inner(), boundsList};
+    distance_geometry::ExplicitBoundsGraph explicitGraph {sampleMol.graph().inner(), boundsList};
     distance_geometry::DistanceBoundsMatrix spatialModelBounds {sampleMol.graph().inner(), boundsList};
 
     // This conforms to the triangle inequality bounds
@@ -548,7 +548,7 @@ BOOST_AUTO_TEST_CASE(GraphShortestDistancesCorrectness) {
 
     BOOST_CHECK_MESSAGE(
       shortestPathsRepresentInequalities(explicitGraph, boundsMatrix, N),
-      "Bellman-Ford and/or Gor1 ExplicitGraph shortest-paths fails consistency tests with Floyd-Warshall DistanceBoundsMatrix."
+      "Bellman-Ford and/or Gor1 ExplicitBoundsGraph shortest-paths fails consistency tests with Floyd-Warshall DistanceBoundsMatrix."
     );
 
     /* If the shortest paths calculation can yield the full upper and lower
@@ -564,7 +564,7 @@ BOOST_AUTO_TEST_CASE(GraphShortestDistancesCorrectness) {
      * perhaps direct access to the emerging distance matrix is necessary to
      * ensure O(1) bounds access!
      */
-    distance_geometry::ImplicitGraph implicitGraph {sampleMol.graph().inner(), boundsList};
+    distance_geometry::ImplicitBoundsGraph implicitGraph {sampleMol.graph().inner(), boundsList};
 
     BOOST_REQUIRE_MESSAGE(
       graphsIdentical(explicitGraph, implicitGraph),
@@ -573,7 +573,7 @@ BOOST_AUTO_TEST_CASE(GraphShortestDistancesCorrectness) {
 
     BOOST_CHECK_MESSAGE(
       shortestGraphsAlgorithmsResultsMatch(N, implicitGraph, boundsMatrix),
-      "Bellman-Ford and Gor ImplicitGraph shortest paths distances fail consistency checks with Floyd-Warshall DistanceBoundsMatrix."
+      "Bellman-Ford and Gor ImplicitBoundsGraph shortest paths distances fail consistency checks with Floyd-Warshall DistanceBoundsMatrix."
     );
   }
 }

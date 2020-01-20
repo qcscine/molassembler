@@ -1,10 +1,10 @@
 /*!@file
  * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
  *   See LICENSE.txt
- * @brief GOR1 specializations for use with ImplicitGraph and ExplicitGraph
+ * @brief GOR1 specializations for use with ImplicitBoundsGraph and ExplicitBoundsGraph
  *
- * Contains specializations of the Gor1 algorithm for use with ImplicitGraph
- * and ExplicitGraph
+ * Contains specializations of the Gor1 algorithm for use with ImplicitBoundsGraph
+ * and ExplicitBoundsGraph
  */
 
 #ifndef INCLUDE_MOLASSEMBLER_DG_GOR_SPECIALIZATION_H
@@ -16,12 +16,12 @@
 #include "boost/graph/graph_traits.hpp"
 #include "boost/graph/graph_concepts.hpp"
 
-// Forward-declare ImplicitGraph
+// Forward-declare ImplicitBoundsGraph
 namespace Scine {
 namespace molassembler {
 namespace distance_geometry {
-class ImplicitGraph;
-class ExplicitGraph;
+class ImplicitBoundsGraph;
+class ExplicitBoundsGraph;
 } // namespace distance_geometry
 } // namespace molassembler
 } // namespace Scine
@@ -70,7 +70,7 @@ template<
   class ColorMap
 >
 std::enable_if_t<
-  std::is_same<IncidenceGraph, Scine::molassembler::distance_geometry::ImplicitGraph>::value,
+  std::is_same<IncidenceGraph, Scine::molassembler::distance_geometry::ImplicitBoundsGraph>::value,
   void
 > gor1_ig_scan(
   const VertexDescriptor& vertex,
@@ -158,7 +158,7 @@ template<
   typename VertexDescriptor
 >
 std::enable_if_t<
-  std::is_same<IncidenceGraph, Scine::molassembler::distance_geometry::ImplicitGraph>::value,
+  std::is_same<IncidenceGraph, Scine::molassembler::distance_geometry::ImplicitBoundsGraph>::value,
   bool
 > gor1_ig_shortest_paths(
   const IncidenceGraph& graph,
@@ -355,7 +355,7 @@ template<
   typename VertexDescriptor
 >
 std::enable_if_t<
-  std::is_same<GraphClass, Scine::molassembler::distance_geometry::ExplicitGraph>::value,
+  std::is_same<GraphClass, Scine::molassembler::distance_geometry::ExplicitBoundsGraph>::value,
   bool
 > gor1_eg_shortest_paths(
   const GraphClass& graphWrapper,

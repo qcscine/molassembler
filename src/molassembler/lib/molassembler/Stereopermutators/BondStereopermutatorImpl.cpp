@@ -21,7 +21,7 @@
 #include "molassembler/AtomStereopermutator.h"
 #include "molassembler/Detail/Cartesian.h"
 #include "molassembler/DistanceGeometry/SpatialModel.h"
-#include "molassembler/DistanceGeometry/ExplicitGraph.h"
+#include "molassembler/DistanceGeometry/ExplicitBoundsGraph.h"
 #include "molassembler/Graph/GraphAlgorithms.h"
 #include "molassembler/Modeling/BondDistance.h"
 #include "molassembler/Modeling/CommonTrig.h"
@@ -480,7 +480,7 @@ bool BondStereopermutator::Impl::cycleObviouslyInfeasible(
 //    * - Build a spatial model of each cycle including bond distances and angles
 //    *   using SpatialModel's methods
 //    * - Extract a BoundsList from it
-//    * - Populate an ExplicitGraph
+//    * - Populate an ExplicitBoundsGraph
 //    * - Smooth it and check for triangle inequality violations
 //    */
 //
@@ -619,7 +619,7 @@ bool BondStereopermutator::Impl::cycleObviouslyInfeasible(
 //   );
 //
 //   // Model in a bounds matrix
-//   distance_geometry::ExplicitGraph boundsGraph {
+//   distance_geometry::ExplicitBoundsGraph boundsGraph {
 //     minimalInner,
 //     pairwiseBounds
 //   };

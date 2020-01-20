@@ -19,7 +19,7 @@ set(MainTestFiles
   ${CMAKE_CURRENT_SOURCE_DIR}/Descriptors.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/Editing.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/Fixtures.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/InnerGraph.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/PrivateGraph.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/Molecule.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/OrderDiscoveryHelper.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/RankingInformation.cpp
@@ -32,10 +32,10 @@ set(MainTestFiles
 
 set(DGTestFiles
   ${CMAKE_CURRENT_SOURCE_DIR}/DistanceGeometry/DirectedConformerGenerator.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/DistanceGeometry/ExplicitGraph.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/DistanceGeometry/ExplicitBoundsGraph.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/DistanceGeometry/FixedPositions.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/DistanceGeometry/GraphShortestDistances.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/DistanceGeometry/ImplicitGraph.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/DistanceGeometry/ImplicitBoundsGraph.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/DistanceGeometry/MetricMatrix.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/DistanceGeometry/RefinementProblem.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/DistanceGeometry/Smoothing.cpp

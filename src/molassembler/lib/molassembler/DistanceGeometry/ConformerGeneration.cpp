@@ -11,7 +11,7 @@
 
 #include "molassembler/DistanceGeometry/EigenRefinement.h"
 #include "molassembler/DistanceGeometry/Error.h"
-#include "molassembler/DistanceGeometry/ExplicitGraph.h"
+#include "molassembler/DistanceGeometry/ExplicitBoundsGraph.h"
 #include "molassembler/DistanceGeometry/MetricMatrix.h"
 #include "molassembler/DistanceGeometry/RefinementMeta.h"
 #include "molassembler/Graph/GraphAlgorithms.h"
@@ -397,7 +397,7 @@ outcome::result<AngstromWrapper> generateConformer(
     );
   }
 
-  ExplicitGraph explicitGraph {
+  ExplicitBoundsGraph explicitGraph {
     molecule.graph().inner(),
     DgDataPtr->bounds
   };

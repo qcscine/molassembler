@@ -8,7 +8,7 @@
 #include "boost/filesystem.hpp"
 #include "boost/test/unit_test.hpp"
 
-#include "molassembler/DistanceGeometry/ImplicitGraphBoost.h"
+#include "molassembler/DistanceGeometry/ImplicitBoundsGraphBoost.h"
 #include "molassembler/DistanceGeometry/SpatialModel.h"
 
 #include "boost/graph/graph_concepts.hpp"
@@ -23,11 +23,11 @@ inline std::ostream& nl(std::ostream& os) {
   return os;
 }
 
-BOOST_AUTO_TEST_CASE(ImplicitGraphConcepts) {
+BOOST_AUTO_TEST_CASE(ImplicitBoundsGraphConcepts) {
   using namespace Scine;
   using namespace molassembler;
 
-  using GraphType = molassembler::distance_geometry::ImplicitGraph;
+  using GraphType = molassembler::distance_geometry::ImplicitBoundsGraph;
 
   BOOST_CONCEPT_ASSERT(( boost::VertexListGraphConcept<GraphType> ));
   BOOST_CONCEPT_ASSERT(( boost::EdgeListGraphConcept<GraphType> ));
@@ -50,7 +50,7 @@ BOOST_AUTO_TEST_CASE(ImplicitGraphConcepts) {
   BOOST_CONCEPT_ASSERT(( boost::IncidenceGraphConcept<GraphType> ));
 }
 
-BOOST_AUTO_TEST_CASE(ImplicitGraphStructure) {
+BOOST_AUTO_TEST_CASE(ImplicitBoundsGraphStructure) {
   using namespace Scine;
   using namespace molassembler;
 
@@ -62,7 +62,7 @@ BOOST_AUTO_TEST_CASE(ImplicitGraphStructure) {
       currentFilePath.string()
     );
 
-    using IG = distance_geometry::ImplicitGraph;
+    using IG = distance_geometry::ImplicitBoundsGraph;
 
     distance_geometry::SpatialModel spatialModel {molecule, distance_geometry::Configuration {}};
 

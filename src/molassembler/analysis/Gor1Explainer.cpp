@@ -10,7 +10,7 @@
 #include "boost/program_options.hpp"
 #include "boost/regex.hpp"
 
-#include "molassembler/DistanceGeometry/ImplicitGraphBoost.h"
+#include "molassembler/DistanceGeometry/ImplicitBoundsGraphBoost.h"
 #include "molassembler/DistanceGeometry/SpatialModel.h"
 #include "molassembler/IO.h"
 #include "molassembler/Molecule.h"
@@ -38,7 +38,7 @@ namespace molassembler {
 namespace distance_geometry {
 
 struct WriterState {
-  using Graph = ImplicitGraph;
+  using Graph = ImplicitBoundsGraph;
   using Vertex = typename boost::graph_traits<Graph>::vertex_descriptor;
   using Edge = typename boost::graph_traits<Graph>::edge_descriptor;
 
@@ -48,7 +48,7 @@ struct WriterState {
 
 class GraphvizWriter {
 public:
-  using Graph = ImplicitGraph;
+  using Graph = ImplicitBoundsGraph;
   using Vertex = typename boost::graph_traits<Graph>::vertex_descriptor;
   using Edge = typename boost::graph_traits<Graph>::edge_descriptor;
   using ColorMapType = boost::two_bit_color_map<>;
@@ -231,9 +231,9 @@ void write_predecessor_graphviz(std::ostream& os, const std::vector<Vertex>& pre
 
 class VisualizationVisitor {
 public:
-  using Graph = ImplicitGraph;
-  using Vertex = typename boost::graph_traits<ImplicitGraph>::vertex_descriptor;
-  using Edge = typename boost::graph_traits<ImplicitGraph>::edge_descriptor;
+  using Graph = ImplicitBoundsGraph;
+  using Vertex = typename boost::graph_traits<ImplicitBoundsGraph>::vertex_descriptor;
+  using Edge = typename boost::graph_traits<ImplicitBoundsGraph>::edge_descriptor;
 
 private:
   const std::vector<Vertex>& _predecessors;
@@ -381,13 +381,13 @@ int main(int argc, char* argv[]) {
 
     distance_geometry::SpatialModel spatialModel {mol, distance_geometry::Configuration {}};
 
-    distance_geometry::ImplicitGraph shortestPathsGraph {
+    distance_geometry::ImplicitBoundsGraph shortestPathsGraph {
       mol.graph().inner(),
       spatialModel.makePairwiseBounds()
     };
 
     /* Prep */
-    using Vertex = typename boost::graph_traits<distance_geometry::ImplicitGraph>::vertex_descriptor;
+    using Vertex = typename boost::graph_traits<distance_geometry::ImplicitBoundsGraph>::vertex_descriptor;
 
     unsigned N = boost::num_vertices(shortestPathsGraph);
     std::vector<double> distances(N);

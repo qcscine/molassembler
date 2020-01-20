@@ -14,7 +14,7 @@
 
 #include "molassembler/Graph/PrivateGraph.h"
 #include "molassembler/DistanceGeometry/DistanceBoundsMatrix.h"
-#include "molassembler/DistanceGeometry/ExplicitGraph.h"
+#include "molassembler/DistanceGeometry/ExplicitBoundsGraph.h"
 #include "molassembler/DistanceGeometry/MetricMatrix.h"
 #include "molassembler/DistanceGeometry/ConformerGeneration.h"
 #include "molassembler/IO.h"

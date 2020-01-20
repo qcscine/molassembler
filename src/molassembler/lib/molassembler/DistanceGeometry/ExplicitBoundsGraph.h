@@ -58,7 +58,7 @@ class DistanceBoundsMatrix;
  * The underlying data structure is a fully explicit BGL graph containing all
  * edges and edge weights.
  */
-class ExplicitGraph {
+class ExplicitBoundsGraph {
 public:
 //!@name Member types
 //!@{
@@ -82,7 +82,7 @@ public:
    *
    * @complexity{@math{\Theta(N^2)}}
    */
-  ExplicitGraph(
+  ExplicitBoundsGraph(
     const PrivateGraph& inner,
     const DistanceBoundsMatrix& bounds
   );
@@ -91,7 +91,7 @@ public:
    *
    * @complexity{@math{\Theta(N^2)}}
    */
-  ExplicitGraph(
+  ExplicitBoundsGraph(
     const PrivateGraph& inner,
     const BoundsMatrix& bounds
   );

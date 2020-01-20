@@ -3,7 +3,7 @@
  *   See LICENSE.txt
  */
 
-#include "molassembler/DistanceGeometry/ExplicitGraph.h"
+#include "molassembler/DistanceGeometry/ExplicitBoundsGraph.h"
 
 #include "boost/graph/two_bit_color_map.hpp"
 
@@ -38,7 +38,7 @@ namespace Scine {
 namespace molassembler {
 namespace distance_geometry {
 
-ExplicitGraph::ExplicitGraph(
+ExplicitBoundsGraph::ExplicitBoundsGraph(
   const PrivateGraph& inner,
   const BoundsMatrix& bounds
 ) : _graph {2 * inner.N()},
@@ -101,7 +101,7 @@ ExplicitGraph::ExplicitGraph(
   }
 }
 
-ExplicitGraph::ExplicitGraph(
+ExplicitBoundsGraph::ExplicitBoundsGraph(
   const PrivateGraph& inner,
   const DistanceBoundsMatrix& bounds
 ) : _graph {2 * inner.N()},
@@ -160,7 +160,7 @@ ExplicitGraph::ExplicitGraph(
   }
 }
 
-void ExplicitGraph::addBound(
+void ExplicitBoundsGraph::addBound(
   const VertexDescriptor a,
   const VertexDescriptor b,
   const ValueBounds& bound
@@ -178,7 +178,7 @@ void ExplicitGraph::addBound(
   boost::add_edge(left(b), right(a), -bound.lower, _graph);
 }
 
-void ExplicitGraph::explainContradictionPaths(
+void ExplicitBoundsGraph::explainContradictionPaths(
   const VertexDescriptor a,
   const VertexDescriptor b,
   const std::vector<VertexDescriptor>& predecessors,
@@ -214,7 +214,7 @@ void ExplicitGraph::explainContradictionPaths(
   }
 }
 
-void ExplicitGraph::_updateOrAddEdge(
+void ExplicitBoundsGraph::_updateOrAddEdge(
   const VertexDescriptor i,
   const VertexDescriptor j,
   const double edgeWeight
@@ -227,7 +227,7 @@ void ExplicitGraph::_updateOrAddEdge(
   }
 }
 
-void ExplicitGraph::_updateGraphWithFixedDistance(
+void ExplicitBoundsGraph::_updateGraphWithFixedDistance(
   const VertexDescriptor a,
   const VertexDescriptor b,
   const double fixedDistance
@@ -242,7 +242,7 @@ void ExplicitGraph::_updateGraphWithFixedDistance(
   _updateOrAddEdge(left(b), right(a), -fixedDistance);
 }
 
-double ExplicitGraph::lowerBound(
+double ExplicitBoundsGraph::lowerBound(
   const VertexDescriptor a,
   const VertexDescriptor b
 ) const {
@@ -254,7 +254,7 @@ double ExplicitGraph::lowerBound(
   return -boost::get(boost::edge_weight, _graph, edgeSearchPair.first);
 }
 
-double ExplicitGraph::upperBound(
+double ExplicitBoundsGraph::upperBound(
   const VertexDescriptor a,
   const VertexDescriptor b
 ) const {
@@ -265,7 +265,7 @@ double ExplicitGraph::upperBound(
   return boost::get(boost::edge_weight, _graph, edgeSearchPair.first);
 }
 
-double ExplicitGraph::maximalImplicitLowerBound(const VertexDescriptor i) const {
+double ExplicitBoundsGraph::maximalImplicitLowerBound(const VertexDescriptor i) const {
   assert(isLeft(i));
   AtomIndex a = i / 2;
   Utils::ElementType elementType = _inner.elementType(a);
@@ -281,11 +281,11 @@ double ExplicitGraph::maximalImplicitLowerBound(const VertexDescriptor i) const 
   ) + atom_info::vdwRadius(elementType);
 }
 
-const ExplicitGraph::GraphType& ExplicitGraph::graph() const {
+const ExplicitBoundsGraph::GraphType& ExplicitBoundsGraph::graph() const {
   return _graph;
 }
 
-outcome::result<Eigen::MatrixXd> ExplicitGraph::makeDistanceBounds() const noexcept {
+outcome::result<Eigen::MatrixXd> ExplicitBoundsGraph::makeDistanceBounds() const noexcept {
   unsigned N = _inner.N();
 
   Eigen::MatrixXd bounds;
@@ -357,11 +357,11 @@ outcome::result<Eigen::MatrixXd> ExplicitGraph::makeDistanceBounds() const noexc
   return bounds;
 }
 
-outcome::result<Eigen::MatrixXd> ExplicitGraph::makeDistanceMatrix(random::Engine& engine) noexcept {
+outcome::result<Eigen::MatrixXd> ExplicitBoundsGraph::makeDistanceMatrix(random::Engine& engine) noexcept {
   return makeDistanceMatrix(engine, Partiality::All);
 }
 
-outcome::result<Eigen::MatrixXd> ExplicitGraph::makeDistanceMatrix(random::Engine& engine, Partiality partiality) noexcept {
+outcome::result<Eigen::MatrixXd> ExplicitBoundsGraph::makeDistanceMatrix(random::Engine& engine, Partiality partiality) noexcept {
   const unsigned N = _inner.N();
 
   Eigen::MatrixXd distancesMatrix;

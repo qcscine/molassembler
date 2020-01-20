@@ -13,7 +13,7 @@
 
 #include "molassembler/DistanceGeometry/ConformerGeneration.h"
 #include "molassembler/DistanceGeometry/EigenRefinement.h"
-#include "molassembler/DistanceGeometry/ExplicitGraph.h"
+#include "molassembler/DistanceGeometry/ExplicitBoundsGraph.h"
 #include "molassembler/DistanceGeometry/MetricMatrix.h"
 #include "molassembler/DistanceGeometry/RefinementMeta.h"
 #include "molassembler/DistanceGeometry/TetrangleSmoothing.h"
@@ -268,7 +268,7 @@ std::list<RefinementData> debugRefinement(
 
     std::list<RefinementStepData> refinementSteps;
 
-    ExplicitGraph explicitGraph {
+    ExplicitBoundsGraph explicitGraph {
       molecule.graph().inner(),
       DgData.bounds
     };
@@ -294,7 +294,7 @@ std::list<RefinementData> debugRefinement(
 
     DistanceBoundsMatrix distanceBounds {std::move(distanceBoundsResult.value())};
 
-    /* No need to smooth the distance bounds, ExplicitGraph creates it
+    /* No need to smooth the distance bounds, ExplicitBoundsGraph creates it
      * so that the triangle inequalities are fulfilled
      */
 

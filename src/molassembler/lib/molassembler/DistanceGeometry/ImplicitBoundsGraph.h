@@ -84,11 +84,11 @@ class DistanceBoundsMatrix;
  * specialized shortest-paths algorithm that is used in makeDistanceMatrix(),
  * which is the main purpose of the class, but exist to allow this graph to
  * integrate with boost::graph in order to easily benchmark it with other
- * algorithms like Bellman-Ford and compare it with ExplicitGraph, which uses a
+ * algorithms like Bellman-Ford and compare it with ExplicitBoundsGraph, which uses a
  * fully-explicit boost::graph class as its underlying datastructure.
  *
  * Why is the implicit nature of the bonds on the basis of an underlying matrix
- * so much faster than ExplicitGraph when it comes to generating distance
+ * so much faster than ExplicitBoundsGraph when it comes to generating distance
  * matrices?
  * - The GOR and Bellman-Ford shortest-paths algorithms have a complexity of
  *   O(V * E), where V is the number of vertices and E the number of edges.
@@ -105,9 +105,9 @@ class DistanceBoundsMatrix;
  *   number of possible paths and thus heavily accelerates the shortest paths
  *   calculation.
  * - Less memory use is perhaps also a factor. In the generation of distance
- *   bounds, ExplicitGraph requires memory for its underlying BGL graph and edge
+ *   bounds, ExplicitBoundsGraph requires memory for its underlying BGL graph and edge
  *   weight map, which are heavily redundant, plus an N² double matrix for
- *   storing the resulting distance matrix. ImplicitGraph requires only
+ *   storing the resulting distance matrix. ImplicitBoundsGraph requires only
  *   the N² double matrix.
  *
  * Notes for reading the implementation:
@@ -128,7 +128,7 @@ class DistanceBoundsMatrix;
  * A fully dynamic algorithm can deal with any of those (albeit only a singular
  * one at a time). A fully batch dynamic algorithm can deal with an arbitrary
  * number of any type of graph changes. You need one of those, since fixing
- * a distance in ImplicitGraph either entails changing six edge weights
+ * a distance in ImplicitBoundsGraph either entails changing six edge weights
  * or changing one and adding five new edges.
  *
  * These algorithms already have a really hard time getting to better bounds
@@ -143,7 +143,7 @@ class DistanceBoundsMatrix;
  * as creating a batch dynamic SSSP algorithm that can deal with negative edge
  * weights, so: really hard.
  */
-class ImplicitGraph {
+class ImplicitBoundsGraph {
 public:
   using VertexDescriptor = unsigned long;
   using EdgeDescriptor = std::pair<VertexDescriptor, VertexDescriptor>;
@@ -182,7 +182,7 @@ private:
 public:
   using BoundsMatrix = Eigen::MatrixXd;
 
-  ImplicitGraph(
+  ImplicitBoundsGraph(
     const PrivateGraph& inner,
     BoundsMatrix bounds
   );
@@ -251,7 +251,7 @@ public:
    * to determine the triangle inequality limits between a and b. A random
    * distance is chosen between these limits and added to the underlying graph.
    *
-   * The generation procedure is destructive, i.e. the same ImplicitGraph
+   * The generation procedure is destructive, i.e. the same ImplicitBoundsGraph
    * cannot be reused to generate multiple distance matrices.
    *
    * @complexity{@math{\Theta(V^3 \cdot E)}. Benchmarked by analysis/BenchmarkGraphAlgorithms}
@@ -313,9 +313,9 @@ public:
     using reference = double;
     using key_type = EdgeDescriptor;
 
-    const ImplicitGraph* _basePtr;
+    const ImplicitBoundsGraph* _basePtr;
 
-    EdgeWeightMap(const ImplicitGraph& base);
+    EdgeWeightMap(const ImplicitBoundsGraph& base);
     double operator [] (const EdgeDescriptor& e) const;
     double operator () (const EdgeDescriptor& e) const;
   };
@@ -380,7 +380,7 @@ public:
 
   //! An iterator to enumerate all edges in a graph.
   class edge_iterator {
-    const ImplicitGraph* _basePtr;
+    const ImplicitBoundsGraph* _basePtr;
 
     VertexDescriptor _i, _b;
     bool _crossGroup;
@@ -396,7 +396,7 @@ public:
 
     edge_iterator();
     edge_iterator(
-      const ImplicitGraph& base,
+      const ImplicitBoundsGraph& base,
       VertexDescriptor i
     );
     edge_iterator(const edge_iterator& other);
@@ -434,7 +434,7 @@ public:
 
   //! An iterator to enumerate only edges to the same part of the graph from specific vertices
   class in_group_edge_iterator {
-    const ImplicitGraph* _basePtr;
+    const ImplicitBoundsGraph* _basePtr;
     VertexDescriptor _i;
     VertexDescriptor _b;
     bool _isLeft;
@@ -449,10 +449,10 @@ public:
     // Default constructor
     in_group_edge_iterator();
     // Constructor for the begin iterator
-    in_group_edge_iterator(const ImplicitGraph& base, VertexDescriptor i);
+    in_group_edge_iterator(const ImplicitBoundsGraph& base, VertexDescriptor i);
     // Constructor for the end iterator
     in_group_edge_iterator(
-      const ImplicitGraph& base,
+      const ImplicitBoundsGraph& base,
       VertexDescriptor i,
       bool /* tag */
     );
