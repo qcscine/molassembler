@@ -25,8 +25,11 @@ class MASM_EXPORT AngstromWrapper {
 public:
   Utils::PositionCollection positions;
 
+  //! @brief Default ctor
   AngstromWrapper() = default;
+  //! @brief Preallocate space for N positions
   explicit AngstromWrapper(unsigned N);
+  //! @brief Convert from a Utils::PositionCollection
   explicit AngstromWrapper(
     const Utils::PositionCollection& pos,
     LengthUnit lengthUnit = LengthUnit::Bohr
@@ -34,10 +37,6 @@ public:
 
   /*!
    * @brief Fetch a bohr representation of the wrapped positions
-   *
-   * @warning After calling this function, you should not reuse the
-   * corresponding instance, as the underlying positions have been converted to
-   * bohr.
    */
   Utils::PositionCollection getBohr() const;
 };

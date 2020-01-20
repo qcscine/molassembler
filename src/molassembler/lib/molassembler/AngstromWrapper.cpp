@@ -8,7 +8,6 @@
 #include "Utils/Constants.h"
 
 namespace Scine {
-
 namespace molassembler {
 
 AngstromWrapper::AngstromWrapper(const unsigned N)
@@ -30,5 +29,4 @@ Utils::PositionCollection AngstromWrapper::getBohr() const {
 }
 
 } // namespace molassembler
-
 } // namespace Scine

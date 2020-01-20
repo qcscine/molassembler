@@ -4,9 +4,6 @@
  
 @tableofcontents
 
-@section manual-description Description
-
---------------------------------------------------------------------------------
 Molassembler is a C++ library that aims to facilitate conversions between
 Cartesian and graph representations of molecules. It provides the necessary
 functionality to represent a molecule as a graph, modify it in graph space, and
@@ -16,32 +13,6 @@ generate non-superposable stereopermutations as output.
 
 This is the documentation for molassembler's C++ code. 
 
-
-@section manual-installation Prerequisites and installation
-
---------------------------------------------------------------------------------
-Molassembler depends on the following libraries not shipped along as external code:
-
-- SCINE Utils >= 1.0.0
-- Boost >= 1.64
-- Eigen >= 3
-
-Molassembler is coded in the C++14 standard and makes heavy use of `constexpr`
-algorithms. As a result, fairly modern compilers are needed to build the
-library:
-
-Compiler   | Status
----------- | -------------
-Clang >= 4 | Fully working
-GCC >= 7   | Fully working
-VS2017     | Not working
-
-Regarding VS2017, an effort needs to be made to make the library compatible.
-Perhaps the `constexpr` code can yet be made palatable to it.
-
-@section manual-introduction Introduction
-
---------------------------------------------------------------------------------
 
 @section manual-quickstart Quick start
 
@@ -56,16 +27,36 @@ Data type      | Description
 Bond orders    | Fractional bond order matrix from a quantum chemical calculation
 Element types  | Atomic element type information
 Bonds          | Graph connectivity between atoms, discretized as integer bonds
-Positions      | Three-dimensional spatial positions of atoms
+Positions      | Cartesian coordinates of atoms
 
-The representation of a \masm{Molecule} is composed of further types:
+Conceptually, molecules are composed of a \masm{OuterGraph, Graph} and a
+\masm{StereopermutatorList, list of stereopermutators}. Stereopermutators are
+objects representing a distinct permutation of the spatial arrangement of
+substituents around either an atom or a bond. Those types are named
+\masm{AtomStereopermutator} and \masm{BondStereopermutator}.
+
+@note Stereopermutators are not called stereocenters - which might seem the more
+natural choice - because these objects also manage shape and ranking
+combinations in which there is only one possible arrangement and its central
+atom is consequentially not a stereocenter.
+
+Enumeration of distinct arrangements is only possible as a result of
+Molassembler classifying the local shape of an atom's substituents into a
+polyhedral shape.
+
+Since we want to be able to deal with inorganic molecules and possibly haptic
+ligands, we need to add an abstraction allowing multiple atoms to bind at a
+single vertex of the local shape, like so:
+
+The representation of a \masm{Molecule} is composed of smaller parts, some of
+which are concepts, some of which are concrete types:
 
 Data type               | Description
 -----------------       | -----------
-\masm{OuterGraph,Graph} | Product type of element types and connectivity
-Shape                   | Idealization of spatial arrangement of substituents around a central atom
-Ligand site             | Contiguous atom set, all connected to the central atom
-Ranked ligand sites     | All ligand sites at an atom, sorted using IUPAC ranking rules
+\masm{OuterGraph,Graph} | Element types and bond orders
+\link Scine::shapes::Shape Shape \endlink | Idealization of spatial arrangement of atoms around a centroid
+Binding site            | Contiguous atom set, all connected to the central atom
+Ranked binding site     | All binding sites at an atom, sorted using IUPAC ranking rules
 Stereopermutation       | Abstract representation of an absolute configuration of (possibly bridged) ligand sites around an atom
 Stereopermutator        | Object managing absolute configuration of ligand sites around an atom (\masm{AtomStereopermutator}) or bond (\masm{BondStereopermutator})
 \masm{Molecule}         | Product type of a \masm{OuterGraph,Graph} and a \masm{StereopermutatorList,list of stereopermutators}
@@ -174,7 +165,7 @@ Temple is a data structure and algorithm library that consists of
   - get function return type
 - boost::optional composition functions
 
-@subsection manual-sublibraries-shapes Local shapes
+@subsection manual-sublibraries-shapes Shapes
 
 Non-terminal atoms in molecules often adopt nearly ideal local shapes when
 no strain is placed upon its substituents due to small cycles. The local

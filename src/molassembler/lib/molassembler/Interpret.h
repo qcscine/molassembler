@@ -63,7 +63,7 @@ struct MASM_EXPORT MoleculesResult {
  * @param angstromWrapper Positional information in Angstrom units
  * @param bondOrders Bond orders
  * @param discretization How to discretize fractional bond orders
- * @param stereopermutatorBondOrderThresholdOptional From which fractional bond
+ * @param stereopermutatorThreshold From which fractional bond
  *   order on to try the interpretation of bond stereopermutator. If set as
  *   @p boost::none, no bond stereopermutators are interpreted.
  *
@@ -77,7 +77,7 @@ MASM_EXPORT MoleculesResult molecules(
   const AngstromWrapper& angstromWrapper,
   const Utils::BondOrderCollection& bondOrders,
   BondDiscretizationOption discretization = BondDiscretizationOption::Binary,
-  const boost::optional<double>& stereopermutatorBondOrderThresholdOptional = 1.4
+  const boost::optional<double>& stereopermutatorThreshold = 1.4
 );
 
 /*! @brief Interpret a molecule from positional information only. Calculates
@@ -86,7 +86,7 @@ MASM_EXPORT MoleculesResult molecules(
  * @param elements Element type collection
  * @param angstromWrapper Positional information in Angstrom units
  * @param discretization How to discretize fractional bond orders
- * @param stereopermutatorBondOrderThresholdOptional From which fractional bond
+ * @param stereopermutatorThreshold From which fractional bond
  *   order on to try the interpretation of bond stereopermutator. If set as
  *   @p boost::none, no bond stereopermutators are interpreted.
  *
@@ -103,7 +103,7 @@ MASM_EXPORT MoleculesResult molecules(
   const Utils::ElementTypeCollection& elements,
   const AngstromWrapper& angstromWrapper,
   BondDiscretizationOption discretization = BondDiscretizationOption::Binary,
-  const boost::optional<double>& stereopermutatorBondOrderThresholdOptional = 1.4
+  const boost::optional<double>& stereopermutatorThreshold = 1.4
 );
 
 /*!
@@ -119,7 +119,7 @@ MASM_EXPORT MoleculesResult molecules(
  * @param atomCollection Element types and positional information in Bohr units.
  * @param bondOrders Fractional bond orders
  * @param discretization Decide how bond orders are discretized into bond types
- * @param stereopermutatorBondOrderThresholdOptional If specified, limits the
+ * @param stereopermutatorThreshold If specified, limits the
  *   instantiation of BondStereopermutators onto edges whose fractional bond orders
  *   exceed the provided threshold. If this is not desired, specify boost::none.
  *
@@ -133,7 +133,7 @@ MASM_EXPORT MoleculesResult molecules(
   const Utils::AtomCollection& atomCollection,
   const Utils::BondOrderCollection& bondOrders,
   BondDiscretizationOption discretization = BondDiscretizationOption::Binary,
-  const boost::optional<double>& stereopermutatorBondOrderThresholdOptional = 1.4
+  const boost::optional<double>& stereopermutatorThreshold = 1.4
 );
 
 /*!
@@ -149,7 +149,7 @@ MASM_EXPORT MoleculesResult molecules(
  *
  * @param atomCollection Element types and positional information in Bohr units.
  * @param discretization Decide how bond orders are discretized into bond types
- * @param stereopermutatorBondOrderThresholdOptional If specified, limits the
+ * @param stereopermutatorThreshold If specified, limits the
  *   instantiation of BondStereopermutators onto edges whose fractional bond orders
  *   exceed the provided threshold
  *
@@ -162,7 +162,7 @@ MASM_EXPORT MoleculesResult molecules(
 MASM_EXPORT MoleculesResult molecules(
   const Utils::AtomCollection& atomCollection,
   BondDiscretizationOption discretization = BondDiscretizationOption::Binary,
-  const boost::optional<double>& stereopermutatorBondOrderThresholdOptional = 1.4
+  const boost::optional<double>& stereopermutatorThreshold = 1.4
 );
 
 /**

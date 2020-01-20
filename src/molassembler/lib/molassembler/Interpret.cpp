@@ -94,7 +94,7 @@ Parts construeParts(
   const AngstromWrapper& angstromWrapper,
   const Utils::BondOrderCollection& bondOrders,
   const BondDiscretizationOption discretization,
-  const boost::optional<double>& stereopermutatorBondOrderThresholdOptional
+  const boost::optional<double>& stereopermutatorThreshold
 ) {
   const unsigned N = elements.size();
 
@@ -117,7 +117,7 @@ Parts construeParts(
   const unsigned numComponents = atomCollectionGraph.connectedComponents(parts.componentMap);
   parts.precursors.resize(numComponents);
 
-  if(stereopermutatorBondOrderThresholdOptional) {
+  if(stereopermutatorThreshold) {
     for(auto& precursor : parts.precursors) {
       // Empty-vector-initialize the candidate optionals
       precursor.bondStereopermutatorCandidatesOptional = std::vector<BondIndex> {};
@@ -180,8 +180,8 @@ Parts construeParts(
 
     // If the edge's bond order exceeds the threshold optional
     if(
-      stereopermutatorBondOrderThresholdOptional
-      && bondOrders.getOrder(source, target) >= *stereopermutatorBondOrderThresholdOptional
+      stereopermutatorThreshold
+      && bondOrders.getOrder(source, target) >= *stereopermutatorThreshold
     ) {
       precursor.bondStereopermutatorCandidatesOptional->emplace_back(
         indexInComponentMap.at(source),
@@ -198,14 +198,14 @@ MoleculesResult molecules(
   const AngstromWrapper& angstromWrapper,
   const Utils::BondOrderCollection& bondOrders,
   const BondDiscretizationOption discretization,
-  const boost::optional<double>& stereopermutatorBondOrderThresholdOptional
+  const boost::optional<double>& stereopermutatorThreshold
 ) {
   Parts parts = construeParts(
     elements,
     angstromWrapper,
     bondOrders,
     discretization,
-    stereopermutatorBondOrderThresholdOptional
+    stereopermutatorThreshold
   );
 
   // Collect results
@@ -243,14 +243,14 @@ MoleculesResult molecules(
   const Utils::ElementTypeCollection& elements,
   const AngstromWrapper& angstromWrapper,
   const BondDiscretizationOption discretization,
-  const boost::optional<double>& stereopermutatorBondOrderThresholdOptional
+  const boost::optional<double>& stereopermutatorThreshold
 ) {
   return molecules(
     elements,
     angstromWrapper,
     uffBondOrders(elements, angstromWrapper),
     discretization,
-    stereopermutatorBondOrderThresholdOptional
+    stereopermutatorThreshold
   );
 }
 
@@ -258,21 +258,21 @@ MoleculesResult molecules(
   const Utils::AtomCollection& atomCollection,
   const Utils::BondOrderCollection& bondOrders,
   const BondDiscretizationOption discretization,
-  const boost::optional<double>& stereopermutatorBondOrderThresholdOptional
+  const boost::optional<double>& stereopermutatorThreshold
 ) {
   return molecules(
     atomCollection.getElements(),
     AngstromWrapper {atomCollection.getPositions(), LengthUnit::Bohr},
     bondOrders,
     discretization,
-    stereopermutatorBondOrderThresholdOptional
+    stereopermutatorThreshold
   );
 }
 
 MoleculesResult molecules(
   const Utils::AtomCollection& atomCollection,
   const BondDiscretizationOption discretization,
-  const boost::optional<double>& stereopermutatorBondOrderThresholdOptional
+  const boost::optional<double>& stereopermutatorThreshold
 ) {
   AngstromWrapper angstromWrapper {atomCollection.getPositions(), LengthUnit::Bohr};
 
@@ -281,7 +281,7 @@ MoleculesResult molecules(
     angstromWrapper,
     uffBondOrders(atomCollection.getElements(), angstromWrapper),
     discretization,
-    stereopermutatorBondOrderThresholdOptional
+    stereopermutatorThreshold
   );
 }
 
