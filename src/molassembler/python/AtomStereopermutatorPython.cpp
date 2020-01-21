@@ -38,16 +38,15 @@ void init_atom_stereopermutator(pybind11::module& m) {
 
       >>> # Enantiomeric pair of asymmetric tetrahedral carbon atoms
       >>> import scine_utilities as utils
-      >>> import scine_molassembler as masm
-      >>> asym_carbon = masm.io.experimental.from_smiles("N[C@](Br)(O)F")
+      >>> asym_carbon = io.experimental.from_smiles("N[C@](Br)(O)F")
       >>> carbon_index = asym_carbon.graph.atoms_of_element(utils.ElementType.C)[0]
       >>> carbon_stereopermutator = asym_carbon.stereopermutators.option(carbon_index)
       >>> assert carbon_stereopermutator is not None
-      >>> carbon_stereopermutator.shape == masm.shapes.Shape.Tetrahedron
+      >>> carbon_stereopermutator.shape == shapes.Shape.Tetrahedron
       True
       >>> carbon_stereopermutator.assigned is not None
       True
-      >>> enantiomer = masm.io.experimental.from_smiles("N[C@@](Br)(O)F")
+      >>> enantiomer = io.experimental.from_smiles("N[C@@](Br)(O)F")
       >>> assert enantiomer.graph.element_type(carbon_index) == utils.ElementType.C
       >>> enantiomer_stereopermutator = enantiomer.stereopermutators.option(carbon_index)
       >>> enantiomer_stereopermutator.assigned is not None
@@ -68,8 +67,7 @@ void init_atom_stereopermutator(pybind11::module& m) {
       >>> # The tetrahedron angle
       >>> import math
       >>> tetrahedron_angle = 2 * math.atan(math.sqrt(2))
-      >>> import scine_molassembler as masm
-      >>> methane = masm.io.experimental.from_smiles("C")
+      >>> methane = io.experimental.from_smiles("C")
       >>> a = methane.stereopermutators.option(0)
       >>> math.isclose(a.angle(0, 1), tetrahedron_angle)
       True
@@ -84,8 +82,7 @@ void init_atom_stereopermutator(pybind11::module& m) {
 
       >>> # A stereo-unspecified tetrahedral asymmetric carbon atom
       >>> import scine_utilities as utils
-      >>> import scine_molassembler as masm
-      >>> asymmetric_carbon = masm.io.experimental.from_smiles("NC(Br)(O)F")
+      >>> asymmetric_carbon = io.experimental.from_smiles("NC(Br)(O)F")
       >>> carbon_index = asymmetric_carbon.graph.atoms_of_element(utils.ElementType.C)[0]
       >>> stereopermutator = asymmetric_carbon.stereopermutators.option(carbon_index)
       >>> assert stereopermutator is not None
@@ -114,9 +111,8 @@ void init_atom_stereopermutator(pybind11::module& m) {
       :example:
 
       >>> # The shipscrew lambda and delta isomers where trans-ligation is impossible
-      >>> import scine_molassembler as masm
       >>> shipscrew_smiles = "[Fe@OH1+3]123(OC(=O)C(=O)O1)(OC(=O)C(=O)O2)OC(=O)C(=O)O3"
-      >>> shipscrew = masm.io.experimental.from_smiles(shipscrew_smiles)
+      >>> shipscrew = io.experimental.from_smiles(shipscrew_smiles)
       >>> permutator = shipscrew.stereopermutators.option(0)
       >>> assert permutator is not None
       >>> permutator.num_stereopermutations # Number of abstract permutations

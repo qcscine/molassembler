@@ -5,7 +5,7 @@ Molassembler is a C++ library that aims to facilitate conversions between
 Cartesian and graph representations of molecules. It provides the necessary
 functionality to represent a molecule as a graph, modify it in graph space, and
 generate coordinates from graphs. It can capture the absolute configuration
-of multidentate and haptic inorganic molecules from positional data and
+of molecules with multidentate and haptic ligands from positional data and
 generate non-superposable stereopermutations as output.
 
 This is the documentation for molassembler's Python bindings which bind the core

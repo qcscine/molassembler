@@ -65,14 +65,13 @@ void init_serialization(pybind11::module& m) {
       Class representing a compact JSON serialization of a molecule
 
       >>> # Demonstrate a serialize-deserialize loop
-      >>> import scine_molassembler as masm
-      >>> spiro = masm.io.experimental.from_smiles("C12(CCCC1)CCC2")
-      >>> serializer = masm.JsonSerialization(spiro)
-      >>> bson_format = masm.JsonSerialization.BinaryFormat.BSON
+      >>> spiro = io.experimental.from_smiles("C12(CCCC1)CCC2")
+      >>> serializer = JsonSerialization(spiro)
+      >>> bson_format = JsonSerialization.BinaryFormat.BSON
       >>> spiro_as_bson = serializer.to_binary(bson_format)
       >>> bson_in_b64 = serializer.base_64_encode(spiro_as_bson)
-      >>> reverted_bson = masm.JsonSerialization.base_64_decode(bson_in_b64)
-      >>> serializer = masm.JsonSerialization(reverted_bson, bson_format)
+      >>> reverted_bson = JsonSerialization.base_64_decode(bson_in_b64)
+      >>> serializer = JsonSerialization(reverted_bson, bson_format)
       >>> reverted = serializer.to_molecule()
       >>> reverted == spiro # Compare the deserialized molecule
       True

@@ -21,10 +21,9 @@ void init_bond_stereopermutator(pybind11::module& m) {
       bonds.
 
       >>> # The bond stereopermutator in but-2z-ene
-      >>> import scine_molassembler as masm
-      >>> z_butene = masm.io.experimental.from_smiles("C/C=C\C")
-      >>> bond_index = masm.BondIndex(1, 2)
-      >>> assert z_butene.graph.bond_type(bond_index) == masm.BondType.Double
+      >>> z_butene = io.experimental.from_smiles("C/C=C\C")
+      >>> bond_index = BondIndex(1, 2)
+      >>> assert z_butene.graph.bond_type(bond_index) == BondType.Double
       >>> permutator = z_butene.stereopermutators.option(bond_index)
       >>> assert permutator is not None
       >>> permutator.assigned is not None
@@ -59,10 +58,9 @@ void init_bond_stereopermutator(pybind11::module& m) {
       if the stereopermutator is unassigned.
 
       >>> # An unassigned bond stereopermutator
-      >>> import scine_molassembler as masm
-      >>> butene = masm.io.experimental.from_smiles("CC=CC")
-      >>> bond_index = masm.BondIndex(1, 2)
-      >>> assert butene.graph.bond_type(bond_index) == masm.BondType.Double
+      >>> butene = io.experimental.from_smiles("CC=CC")
+      >>> bond_index = BondIndex(1, 2)
+      >>> assert butene.graph.bond_type(bond_index) == BondType.Double
       >>> permutator = butene.stereopermutators.option(bond_index)
       >>> assert permutator is not None
       >>> permutator.assigned is None
@@ -82,8 +80,7 @@ void init_bond_stereopermutator(pybind11::module& m) {
 
       >>> # A case in which the number of abstract and feasible permutations
       >>> # differ: bond stereopermutators in small cycles (<= 6)
-      >>> import scine_molassembler as masm
-      >>> benzene = masm.io.experimental.from_smiles("C1=CC=CC=C1")
+      >>> benzene = io.experimental.from_smiles("C1=CC=CC=C1")
       >>> permutators = benzene.stereopermutators.bond_stereopermutators()
       >>> has_two_stereopermutations = lambda p: p.num_stereopermutations == 2
       >>> has_one_assignment = lambda p: p.num_assignments == 1

@@ -18,9 +18,7 @@
 #include "Utils/Geometry/ElementInfo.h"
 
 namespace Scine {
-
 namespace molassembler {
-
 namespace hashes {
 
 BondInformation::BondInformation(
@@ -381,7 +379,5 @@ BOOST_CONCEPT_ASSERT((
 ));
 
 } // namespace hashes
-
 } // namespace molassembler
-
 } // namespace Scine

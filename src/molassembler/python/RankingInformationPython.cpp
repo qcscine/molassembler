@@ -21,9 +21,8 @@ void init_ranking_information(pybind11::module& m) {
       being ranked and its sites are in.
 
       >>> # Simple example of links between substituents
-      >>> import scine_molassembler as masm
       >>> import scine_utilities as utils
-      >>> cyclopropane = masm.io.experimental.from_smiles("C1CC1")
+      >>> cyclopropane = io.experimental.from_smiles("C1CC1")
       >>> p = cyclopropane.stereopermutators.option(0)
       >>> # Sites are single-index, non-haptic
       >>> site_is_single_index = lambda s: len(s) == 1
@@ -74,9 +73,8 @@ void init_ranking_information(pybind11::module& m) {
       Ranking data of substituents around a central vertex
 
       >>> # Model compound with a haptically bonded ethene
-      >>> import scine_molassembler as masm
       >>> compound_smiles = "[Co]1(C#O)(C#O)(C#O)(C#O)(C#O)C=C1"
-      >>> compound = masm.io.experimental.from_smiles(compound_smiles)
+      >>> compound = io.experimental.from_smiles(compound_smiles)
       >>> cobalt_index = 0
       >>> p = compound.stereopermutators.option(cobalt_index)
       >>> is_haptic_site = lambda s: len(s) > 1

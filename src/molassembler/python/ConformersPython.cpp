@@ -223,8 +223,7 @@ void init_conformers(pybind11::module& m) {
         string explaining why conformer generation failed.
 
       >>> # Generate a conformational ensemble
-      >>> import scine_molassembler as masm
-      >>> butane = masm.io.experimental.from_smiles("CCCC")
+      >>> butane = io.experimental.from_smiles("CCCC")
       >>> results = generate_random_ensemble(butane, 10)
       >>> # Each element in the list can be either a string or a positions matrix
       >>> # So let's see how many failed:
@@ -265,8 +264,7 @@ void init_conformers(pybind11::module& m) {
         string explaining why conformer generation failed.
 
       >>> # Generate a conformational ensemble
-      >>> import scine_molassembler as masm
-      >>> butane = masm.io.experimental.from_smiles("CCCC")
+      >>> butane = io.experimental.from_smiles("CCCC")
       >>> seed = 1010
       >>> results = generate_ensemble(butane, 10, seed)
       >>> # Each element in the list can be either a string or a positions matrix
@@ -303,8 +301,7 @@ void init_conformers(pybind11::module& m) {
          This function advances ``molassembler``'s global PRNG state.
 
       >>> # Generate a single conformation
-      >>> import scine_molassembler as masm
-      >>> mol = masm.io.experimental.from_smiles("N[C@](Br)(O)F")
+      >>> mol = io.experimental.from_smiles("N[C@](Br)(O)F")
       >>> conformation = generate_random_conformation(mol)
       >>> isinstance(conformation, str) # Did the conformer generation fail?
       False
@@ -340,8 +337,7 @@ void init_conformers(pybind11::module& m) {
         conformer generation failed.
 
       >>> # Generate a single conformation
-      >>> import scine_molassembler as masm
-      >>> mol = masm.io.experimental.from_smiles("N[C@](Br)(O)F")
+      >>> mol = io.experimental.from_smiles("N[C@](Br)(O)F")
       >>> conformation = generate_conformation(mol, 110)
       >>> isinstance(conformation, str) # Did the conformer generation fail?
       False

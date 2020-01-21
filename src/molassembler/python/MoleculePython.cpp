@@ -132,8 +132,7 @@ void init_molecule(pybind11::module& m) {
       stereopermutators from the graph.
 
       >>> # Rebuild a molecule with an assigned stereopermutator from just the graph
-      >>> import scine_molassembler as masm
-      >>> a = masm.io.experimental.from_smiles("[C@](F)(Cl)(C)[H]")
+      >>> a = io.experimental.from_smiles("[C@](F)(Cl)(C)[H]")
       >>> a.stereopermutators.has_unassigned_permutators()
       False
       >>> b = Molecule(a.graph)
@@ -151,14 +150,13 @@ void init_molecule(pybind11::module& m) {
       not comparable.
 
       >>> # Show that hash values differ at various levels of canonicity
-      >>> import scine_molassembler as masm
       >>> from copy import copy
-      >>> spiro = masm.io.experimental.from_smiles("C12(CCC1)CCC2")
+      >>> spiro = io.experimental.from_smiles("C12(CCC1)CCC2")
       >>> # We make two variants of the molecule that have different canonicalization states
       >>> # to demonstrate that their hashes are unequal. We discard the mappings
       >>> # we get from canonicalize()
       >>> partially_canonical = copy(spiro)
-      >>> _ = partially_canonical.canonicalize(masm.AtomEnvironmentComponents.ElementsAndBonds)
+      >>> _ = partially_canonical.canonicalize(AtomEnvironmentComponents.ElementsAndBonds)
       >>> fully_canonical = copy(spiro)
       >>> _ = fully_canonical.canonicalize()
       >>> partially_canonical == fully_canonical
@@ -247,8 +245,7 @@ void init_molecule(pybind11::module& m) {
         is to be assigned or ``None`` if the stereopermutator is to be dis-assigned.
 
       >>> # Assign an unspecified asymmetric carbon atom and then dis-assign it
-      >>> import scine_molassembler as masm
-      >>> mol = masm.io.experimental.from_smiles("F[CH1](Br)C")
+      >>> mol = io.experimental.from_smiles("F[CH1](Br)C")
       >>> asymmetric_carbon_index = 1
       >>> mol.assign_stereopermutator(asymmetric_carbon_index, 0)
       >>> mol.stereopermutators.option(asymmetric_carbon_index).assigned
@@ -275,10 +272,9 @@ void init_molecule(pybind11::module& m) {
         dis-assigned.
 
       >>> # Dis-assign an assigned bond stereopermutator
-      >>> import scine_molassembler as masm
-      >>> ethene = masm.io.experimental.from_smiles("C/C=C\C")
-      >>> double_bond_index = masm.BondIndex(1, 2)
-      >>> assert ethene.graph.bond_type(double_bond_index) == masm.BondType.Double
+      >>> ethene = io.experimental.from_smiles("C/C=C\C")
+      >>> double_bond_index = BondIndex(1, 2)
+      >>> assert ethene.graph.bond_type(double_bond_index) == BondType.Double
       >>> ethene.stereopermutators.option(double_bond_index).assigned is not None
       True
       >>> ethene.assign_stereopermutator(double_bond_index, None)
@@ -303,8 +299,7 @@ void init_molecule(pybind11::module& m) {
          This function advances ``molassembler``'s global PRNG state.
 
       >>> # Assign an unspecified chiral center
-      >>> import scine_molassembler as masm
-      >>> mol = masm.io.experimental.from_smiles("S[As](F)(Cl)(Br)(N)[H]")
+      >>> mol = io.experimental.from_smiles("S[As](F)(Cl)(Br)(N)[H]")
       >>> as_index = 1
       >>> mol.stereopermutators.option(as_index).assigned is None
       True
@@ -329,10 +324,9 @@ void init_molecule(pybind11::module& m) {
          This function advances ``molassembler``'s global PRNG state.
 
       >>> # Assign an unspecified double bond randomly
-      >>> import scine_molassembler as masm
-      >>> mol = masm.io.experimental.from_smiles("CC=CC")
-      >>> double_bond_index = masm.BondIndex(1, 2)
-      >>> assert mol.graph.bond_type(double_bond_index) == masm.BondType.Double
+      >>> mol = io.experimental.from_smiles("CC=CC")
+      >>> double_bond_index = BondIndex(1, 2)
+      >>> assert mol.graph.bond_type(double_bond_index) == BondType.Double
       >>> mol.stereopermutators.option(double_bond_index).assigned is None
       True
       >>> mol.assign_stereopermutator_randomly(double_bond_index)
@@ -375,9 +369,8 @@ void init_molecule(pybind11::module& m) {
       :return: Flat index mapping/permutation from old indices to new
 
       >>> # Create two different representations of the same molecule
-      >>> import scine_molassembler as masm
-      >>> a = masm.io.experimental.from_smiles("N[C@](Br)(O)C")
-      >>> b = masm.io.experimental.from_smiles("Br[C@](O)(N)C")
+      >>> a = io.experimental.from_smiles("N[C@](Br)(O)C")
+      >>> b = io.experimental.from_smiles("Br[C@](O)(N)C")
       >>> # a and be represent the same molecule, but have different vertex order
       >>> a == b # Equality operators perform an isomorphism for non-canonical pairs
       True
@@ -427,14 +420,13 @@ void init_molecule(pybind11::module& m) {
       :param first_atom: First atom of the bond to be removed
       :param second_atom: Second atom of the bond to be removed
 
-      >>> import scine_molassembler as masm
-      >>> cyclopropane = masm.io.experimental.from_smiles("C1CC1")
+      >>> cyclopropane = io.experimental.from_smiles("C1CC1")
       >>> # In cyclopropane, we can remove a C-C bond without disconnecting the graph
-      >>> cyclopropane.graph.can_remove(masm.BondIndex(0, 1))
+      >>> cyclopropane.graph.can_remove(BondIndex(0, 1))
       True
       >>> N_before = cyclopropane.graph.N
       >>> B_before = cyclopropane.graph.B
-      >>> cyclopropane.remove_bond(masm.BondIndex(0, 1))
+      >>> cyclopropane.remove_bond(BondIndex(0, 1))
       >>> N_before - cyclopropane.graph.N # The number of atoms is unchanged
       0
       >>> B_before - cyclopropane.graph.B # We really only removed a bond
@@ -478,9 +470,8 @@ void init_molecule(pybind11::module& m) {
       :return: Whether the bond already existed
 
       >>> # You really do have full freedom when it comes to your graphs:
-      >>> import scine_molassembler as masm
-      >>> h2 = masm.Molecule()
-      >>> _ = h2.set_bond_type(0, 1, masm.BondType.Double) # Double bonded hydrogen atoms!
+      >>> h2 = Molecule()
+      >>> _ = h2.set_bond_type(0, 1, BondType.Double) # Double bonded hydrogen atoms!
     )delim"
   );
 
@@ -496,10 +487,9 @@ void init_molecule(pybind11::module& m) {
       :param element: New element type to set
 
       >>> # Transform H2 into HF
-      >>> import scine_molassembler as masm
       >>> import scine_utilities as utils
       >>> from copy import copy
-      >>> H2 = masm.Molecule()
+      >>> H2 = Molecule()
       >>> HF = copy(H2)
       >>> HF.set_element_type(0, utils.ElementType.F)
       >>> HF == H2
@@ -524,11 +514,10 @@ void init_molecule(pybind11::module& m) {
       assignment.
 
       >>> # Make methane square planar
-      >>> import scine_molassembler as masm
       >>> from copy import copy
-      >>> methane = masm.io.experimental.from_smiles("C")
+      >>> methane = io.experimental.from_smiles("C")
       >>> square_planar_methane = copy(methane)
-      >>> square_planar_methane.set_shape_at_atom(0, masm.shapes.Shape.Square)
+      >>> square_planar_methane.set_shape_at_atom(0, shapes.Shape.Square)
       >>> methane == square_planar_methane
       False
     )delim"
@@ -572,8 +561,7 @@ void init_molecule(pybind11::module& m) {
       :rtype: :class:`AtomEnvironmentComponents` or ``None``
 
       >>> # Canonicalize something and retrieve its canonical components
-      >>> import scine_molassembler as masm
-      >>> mol = masm.io.experimental.from_smiles("C12(CCC1)COCC2")
+      >>> mol = io.experimental.from_smiles("C12(CCC1)COCC2")
       >>> mol.canonical_components is None
       True
       >>> _ = mol.canonicalize()
@@ -606,13 +594,12 @@ void init_molecule(pybind11::module& m) {
         to use a bitmask with fewer components, but certainly not one with more.
 
       >>> # Bring two molecules into a partial canonical form and compare them
-      >>> import scine_molassembler as masm
-      >>> a = masm.io.experimental.from_smiles("OCC")
-      >>> b = masm.io.experimental.from_smiles("SCC")
+      >>> a = io.experimental.from_smiles("OCC")
+      >>> b = io.experimental.from_smiles("SCC")
       >>> a == b
       False
       >>> # A and B are identical when considered purely by their graph
-      >>> part = masm.AtomEnvironmentComponents.Connectivity
+      >>> part = AtomEnvironmentComponents.Connectivity
       >>> _ = a.canonicalize(part)
       >>> _ = b.canonicalize(part)
       >>> a.canonical_compare(b, part)
@@ -620,11 +607,11 @@ void init_molecule(pybind11::module& m) {
       >>> a == b # Partial canonicalization does not change the meaning of strict equality
       False
       >>> # Another pair that is identical save for a stereopermutation
-      >>> c = masm.io.experimental.from_smiles("N[C@](Br)(O)C")
-      >>> d = masm.io.experimental.from_smiles("N[C@@](Br)(O)C")
+      >>> c = io.experimental.from_smiles("N[C@](Br)(O)C")
+      >>> d = io.experimental.from_smiles("N[C@@](Br)(O)C")
       >>> c == d # Strict equality includes stereopermutation
       False
-      >>> part = masm.AtomEnvironmentComponents.ElementsBondsAndShapes
+      >>> part = AtomEnvironmentComponents.ElementsBondsAndShapes
       >>> _ = c.canonicalize(part)
       >>> _ = d.canonicalize(part)
       >>> c.canonical_compare(d, part) # Limited comparison yields equality
@@ -663,20 +650,19 @@ void init_molecule(pybind11::module& m) {
       :param components_bitmask: The components of the molecule to use in the
         comparison
 
-      >>> import scine_molassembler as masm
-      >>> a = masm.io.experimental.from_smiles("OCC")
-      >>> b = masm.io.experimental.from_smiles("SCC")
+      >>> a = io.experimental.from_smiles("OCC")
+      >>> b = io.experimental.from_smiles("SCC")
       >>> a == b
       False
       >>> # A and B are identical when considered purely by their graph
-      >>> a.partial_compare(b, masm.AtomEnvironmentComponents.Connectivity)
+      >>> a.partial_compare(b, AtomEnvironmentComponents.Connectivity)
       True
       >>> # Another pair that is identical save for a stereopermutation
-      >>> c = masm.io.experimental.from_smiles("N[C@](Br)(O)C")
-      >>> d = masm.io.experimental.from_smiles("N[C@@](Br)(O)C")
+      >>> c = io.experimental.from_smiles("N[C@](Br)(O)C")
+      >>> d = io.experimental.from_smiles("N[C@@](Br)(O)C")
       >>> c == d # Strict equality includes stereopermutation
       False
-      >>> c.partial_compare(d, masm.AtomEnvironmentComponents.ElementsBondsAndShapes)
+      >>> c.partial_compare(d, AtomEnvironmentComponents.ElementsBondsAndShapes)
       True
     )delim"
   );

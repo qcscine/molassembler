@@ -834,7 +834,6 @@ int main(int argc, char* argv[]) {
   DgConfiguration.partiality = metrizationOption;
   DgConfiguration.refinementStepLimit = nSteps;
 
-#ifndef NDEBUG
   auto debugData = distance_geometry::debugRefinement(
     mol,
     nStructures,
@@ -876,31 +875,4 @@ int main(int argc, char* argv[]) {
   if(failures > 0) {
     std::cout << "WARNING: " << failures << " refinements failed.\n";
   }
-#else
-  auto conformers = distance_geometry::run(
-    mol,
-    nStructures,
-    DgConfiguration,
-    boost::none
-  );
-
-  unsigned i = 0;
-  unsigned failures = 0;
-  for(const auto& conformerResult : conformers) {
-    if(conformerResult) {
-      io::write(
-        baseName + "-"s + std::to_string(i) + "-last.mol"s,
-        mol,
-        conformerResult.value()
-      );
-    } else {
-      std::cout << "Conformer " << i << " failed: " << conformerResult.error().message() << "\n";
-      ++failures;
-    }
-
-    ++i;
-  }
-
-  std::cout << "WARNING: " << failures << " refinement(s) failed.\n";
-#endif
 }
