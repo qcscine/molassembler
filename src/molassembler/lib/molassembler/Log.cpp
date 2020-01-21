@@ -6,16 +6,15 @@
 #include "molassembler/Log.h"
 
 namespace Scine {
-
 namespace molassembler {
-
 namespace Log {
-
 namespace detail {
-  int NullBuffer::overflow(int c) { return c; }
 
-  NullBuffer nullBuffer {};
-  std::ostream nullStream(&nullBuffer);
+int NullBuffer::overflow(int c) { return c; }
+
+NullBuffer nullBuffer {};
+std::ostream nullStream(&nullBuffer);
+
 } // namespace detail
 
 std::ostream& log(const Level& decisionLevel) {
@@ -39,10 +38,8 @@ bool isSet(const Particulars particular) {
 }
 
 Level level = Level::Trace;
-std::set<Particulars> particulars {};
+std::unordered_set<Particulars> particulars {};
 
 } // namespace Log
-
 } // namespace molassembler
-
 } // namespace Scine

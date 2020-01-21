@@ -8,7 +8,7 @@
 #define INCLUDE_MOLASSEMBLER_LOG_H
 
 #include "molassembler/Export.h"
-#include <set>
+#include <unordered_set>
 #include <iostream>
 
 namespace Scine {
@@ -70,13 +70,26 @@ enum class MASM_EXPORT Particulars {
 };
 
 
-// Log variables
+//! Library logging level
 MASM_EXPORT extern Level level;
-MASM_EXPORT extern std::set<Particulars> particulars;
+//! Library logging particulars
+MASM_EXPORT extern std::unordered_set<Particulars> particulars;
 
-// Logging calls
+/**
+ * @brief Fetch a log handle with a logging level
+ * @param decisionLevel logging level of a message to write to a stream
+ * @return std::cout if level is greater or equal to the library logging level,
+ *   a null-stream otherwise
+ */
 std::ostream& log(const Level& decisionLevel);
+/**
+ * @brief Fetch a log handle with a particular
+ * @param particular The particular to which the message pertains
+ * @return std::cout if the particular is part of the current library
+ *   particulars, a null-stream otherwise
+ */
 std::ostream& log(const Particulars& particular);
+//! Checks whether a particular is part of the current library particulars
 bool isSet(Particulars particular);
 
 } // namespace Log

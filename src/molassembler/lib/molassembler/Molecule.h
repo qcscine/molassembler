@@ -817,6 +817,7 @@ private:
 } // namespace molassembler
 } // namespace Scine
 
+//! @brief Writes some information about a molecule to a stream
 MASM_EXPORT std::ostream& operator << (
   std::ostream& os,
   const Scine::molassembler::Molecule& molecule

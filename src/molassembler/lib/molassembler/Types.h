@@ -37,8 +37,10 @@ enum class MASM_EXPORT BondType : unsigned {
   Eta
 };
 
+//! Number of distinct bond types present in the library
 constexpr unsigned nBondTypes = 7;
 
+//! Length units
 enum class MASM_EXPORT LengthUnit {
   Bohr,
   Angstrom
@@ -58,9 +60,14 @@ struct MASM_EXPORT BondIndex {
    */
   using const_iterator = const AtomIndex*;
 
-  AtomIndex first, second;
+  //! Smaller atom index
+  AtomIndex first;
+  //! Larger atom index
+  AtomIndex second;
 
+  //! Default constructor, leaves members uninitialized
   BondIndex();
+  //! Component constructor, establishes ordering
   BondIndex(AtomIndex a, AtomIndex b) noexcept;
 
   //! Whether first or second is @p a
@@ -71,10 +78,12 @@ struct MASM_EXPORT BondIndex {
   //! Lexicographic comparison
   bool operator == (const BondIndex& other) const;
 
+  //! Returns the address of first
   const_iterator begin() const {
     return &first;
   }
 
+  //! Returns the address past second
   const_iterator end() const {
     return std::next(&second);
   }
@@ -109,9 +118,13 @@ enum class MASM_EXPORT AtomEnvironmentComponents : unsigned {
 /* Operators for bitmask-like manipulation of AtomEnvironmentComponents must be
  * at global scope, otherwise they can interfere with name lookup.
  */
+/**
+ * @brief Test whether two atom environment bitmasks share components
+ * @return Whether the bitmasks share components
+ */
 constexpr inline bool operator & (
-  Scine::molassembler::AtomEnvironmentComponents a,
-  Scine::molassembler::AtomEnvironmentComponents b
+  const Scine::molassembler::AtomEnvironmentComponents a,
+  const Scine::molassembler::AtomEnvironmentComponents b
 ) {
   using T = Scine::molassembler::AtomEnvironmentComponents;
   return (
@@ -120,9 +133,12 @@ constexpr inline bool operator & (
   ) != 0;
 }
 
+/**
+ * @brief Compose an atom environment components bitmask from parts
+ */
 constexpr inline Scine::molassembler::AtomEnvironmentComponents operator | (
-  Scine::molassembler::AtomEnvironmentComponents a,
-  Scine::molassembler::AtomEnvironmentComponents b
+  const Scine::molassembler::AtomEnvironmentComponents a,
+  const Scine::molassembler::AtomEnvironmentComponents b
 ) {
   using T = Scine::molassembler::AtomEnvironmentComponents;
 

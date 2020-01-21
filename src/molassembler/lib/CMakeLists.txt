@@ -62,7 +62,6 @@ set(HEADERS_all
   ${_LIBPREFIX}/Molecule/MoleculeImpl.h
   ${_LIBPREFIX}/Molecule/RankingTree.h
   ${_LIBPREFIX}/Options.h
-  ${_LIBPREFIX}/Patterns.h
   ${_LIBPREFIX}/Prng.h
   ${_LIBPREFIX}/RankingInformation.h
   ${_LIBPREFIX}/Serialization.h
@@ -122,7 +121,6 @@ set(SOURCES_all
   ${_LIBPREFIX}/Molecule/MoleculeImpl.cpp
   ${_LIBPREFIX}/Molecule/RankingTree.cpp
   ${_LIBPREFIX}/Options.cpp
-  ${_LIBPREFIX}/Patterns.cpp
   ${_LIBPREFIX}/Prng.cpp
   ${_LIBPREFIX}/RankingInformation.cpp
   ${_LIBPREFIX}/Serialization.cpp

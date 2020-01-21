@@ -9,9 +9,9 @@
 #include "molassembler/Cycles.h"
 #include "molassembler/Editing.h"
 #include "molassembler/IO.h"
+#include "molassembler/IO/SmilesParser.h"
 #include "molassembler/Molecule.h"
 #include "molassembler/Graph.h"
-#include "molassembler/Patterns.h"
 #include "molassembler/Subgraphs.h"
 
 /* SMILES for molecules imported here
@@ -96,10 +96,9 @@ boost::optional<BondIndex> findEdge(const Molecule& mol, UnaryPredicate&& predic
 
 BOOST_AUTO_TEST_CASE(EditingCleave) {
   auto makeNMe = []() -> std::pair<Molecule, BondIndex> {
-    Molecule methyl;
-    std::vector<AtomIndex> methylPlugAtoms;
+    Molecule methyl = io::experimental::parseSmilesSingleMolecule("[CH3]");
+    std::vector<AtomIndex> methylPlugAtoms(1, 0);
 
-    std::tie(methyl, methylPlugAtoms) = patterns::methyl();
     const AtomIndex CIndex = methylPlugAtoms.front();
     const AtomIndex NIndex = methyl.addAtom(Utils::ElementType::N, CIndex);
     return {

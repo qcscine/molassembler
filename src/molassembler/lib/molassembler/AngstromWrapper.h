@@ -23,21 +23,20 @@ namespace molassembler {
  */
 class MASM_EXPORT AngstromWrapper {
 public:
+  //! Positions in angstrom units
   Utils::PositionCollection positions;
 
-  //! @brief Default ctor
+  //! Default ctor
   AngstromWrapper() = default;
-  //! @brief Preallocate space for N positions
+  //! Preallocate space for N positions
   explicit AngstromWrapper(unsigned N);
-  //! @brief Convert from a Utils::PositionCollection
+  //! Convert from a Utils::PositionCollection
   explicit AngstromWrapper(
     const Utils::PositionCollection& pos,
     LengthUnit lengthUnit = LengthUnit::Bohr
   );
 
-  /*!
-   * @brief Fetch a bohr representation of the wrapped positions
-   */
+  //! Fetch a bohr representation of the wrapped positions
   Utils::PositionCollection getBohr() const;
 };
 
