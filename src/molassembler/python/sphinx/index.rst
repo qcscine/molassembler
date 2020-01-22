@@ -66,7 +66,8 @@ Core features
 .. toctree::
    :hidden:
    :maxdepth: 1
-   :caption: Appendix
+   :caption: Other
 
    changelog
    genindex
+   C++ Documentation <https://scine.ethz.ch/download/molassembler/doc-cpp/index.html>

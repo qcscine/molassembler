@@ -14,158 +14,61 @@ generate non-superposable stereopermutations as output.
 This is the documentation for molassembler's C++ code. 
 
 
-@section manual-quickstart Quick start
+@section manual-introduction Introduction
 
---------------------------------------------------------------------------------
+This section aims to be a fast introduction to the concepts necessary to get
+productive with this library.
 
-@subsection manual-quickstart-data Basic data types
+@subsection manual-introduction-model Molecule model
 
-The following types of data are instrumental as input to the library:
-
-Data type      | Description
--------------- | -----------
-Bond orders    | Fractional bond order matrix from a quantum chemical calculation
-Element types  | Atomic element type information
-Bonds          | Graph connectivity between atoms, discretized as integer bonds
-Positions      | Cartesian coordinates of atoms
-
-Conceptually, molecules are composed of a \masm{Graph} and a
-\masm{StereopermutatorList, list of stereopermutators}. Stereopermutators are
-objects representing a distinct permutation of the spatial arrangement of
-substituents around either an atom or a bond. Those types are named
-\masm{AtomStereopermutator} and \masm{BondStereopermutator}.
-
-@note Stereopermutators are not called stereocenters - which might seem the more
-natural choice - because these objects also manage shape and ranking
-combinations in which there is only one possible arrangement and its central
-atom is consequentially not a stereocenter.
-
-Enumeration of distinct arrangements is only possible as a result of
-Molassembler classifying the local shape of an atom's substituents into a
-polyhedral shape.
-
-Since we want to be able to deal with inorganic molecules and possibly haptic
-ligands, we need to add an abstraction allowing multiple atoms to bind at a
-single vertex of the local shape, like so:
-
-The representation of a \masm{Molecule} is composed of smaller parts, some of
-which are concepts, some of which are concrete types:
-
-Data type               | Description
------------------       | -----------
-\masm{Graph} | Element types and bond orders
-\link Scine::shapes::Shape Shape \endlink | Idealization of spatial arrangement of atoms around a centroid
-Binding site            | Contiguous atom set, all connected to the central atom
-Ranked binding site     | All binding sites at an atom, sorted using IUPAC ranking rules
-Stereopermutation       | Abstract representation of an absolute configuration of (possibly bridged) ligand sites around an atom
-Stereopermutator        | Object managing absolute configuration of ligand sites around an atom (\masm{AtomStereopermutator}) or bond (\masm{BondStereopermutator})
-\masm{Molecule}         | Product type of a \masm{Graph} and a \masm{StereopermutatorList,list of stereopermutators}
+\masm{Molecule} instances are composed of a \masm{Graph} and a
+\masm{StereopermutatorList}. The \masm{Graph} represents atoms as vertices and
+bonds as edges in a mathematical graph. The \masm{StereopermutatorList} is a
+container for stereopermutators, which are objects to handle the relative
+spatial arrangement of atoms. \masm{AtomStereopermutator, Atom stereopermutators}
+are responsible for classifying the local shape of its substituents and
+allowing permutation through distinct non-rotationally superimposable
+arrangements of its substituents. One of the simpler stereogenic cases it
+manages is that of an asymmetric tetrahedron, where its two stereopermutations
+represent the R and S arrangements. Atom stereopermutators 
+ manage such arrangements in
+distinct shapes that range from two substituents (linear and bent) up to twelve
+(icosahedron and cuboctahedron).
+\masm{BondStereopermutator, Bond stereopermutators} are responsible for
+the relative arrangement of two
+\masm{AtomStereopermutator, atom stereopermutator} instances fused at arbitrary
+vertices of their shapes. They manage, for instance, the E and Z arrangements
+at asymmetric double bonds.
 
 @note Stereopermutators are not called stereocenters - which might seem the more
 natural choice - because these objects also manage shape and ranking
 combinations in which there is only one possible arrangement and its central
 atom is consequentially not a stereocenter.
 
-@subsection manual-quickstart-flow Dataflow & conversions
 
-@image html records.svg "Data flow paths in molassembler"
+@subsection manual-introduction-ctor Construction from Cartesian coordinates
 
-Solid lines indicate default information flow paths, while dashed lines
-indicate optional information flow paths. In brief, the algorithms employed in
-data conversions are the following: 
+When Molecules are constructed from a \masm{Graph} and Cartesian coordinates,
+the following individual steps occur: At each non-terminal atom in the graph,
+substituents are grouped into binding sites, where sites constituted by
+multiple substituents are haptic. These sites are then ranked according to
+extended IUPAC sequence rules. Then, the positions of these binding sites in
+the coordinates are classified into a distinct shape.
 
--# From positional data, atom-pairwise distances can be used to approximate fractional bond orders using e.g. UFF parameters
--# Integer bonds are obtained from fractional bond orders by rounding to the nearest integer (see @ref manual-algorithms-discretization)
--# From a fully specified molecular graph, VSEPR or LFT may be applied to guess local shapes (see @ref manual-algorithms-shape-det)
--# Ligands are ranked using an algorithm implementing IUPAC sequence rules (see @ref manual-algorithms-ranking)
--# Shape and ranked ligands are combined in a symbolic permutation that determines which stereopermutations exist (see @ref manual-algorithms-symbolic-perm)
--# Positional data is used to fit idealized shapes directly (see @ref manual-algorithms-shape-fit)
--# Positional data is used to find the realized permutation within the set of possible stereopermutations via fitting (see @ref manual-algorithms-shape-fit)
+@image html molecule_shapes.png "Octahedron, tetrahedron and equilateral triangle shapes shown in a sample molecule."
 
-Depending on the type of information you supply when constructing
-\masm{Molecule} instances, molecules will have varying levels of stored
-information. For correctness, it is preferable to supply positional
-information, since fitting idealized shapes to positions is more accurate
-(in particular for transition metals, since LFT is not implemented) and does
-not require the graph to be absolutely correct. Additionally, only supplying
-positional information allows you to determine the currently realized index of
-permutation for stereocenters.
+When it comes to haptic ligands, the set of haptically bonded atoms' centroid
+is taken as a putative vertex position.
 
-@subsection manual-quickstart-examples Examples
+@image html haptic_shape.png "The centroid of the benzene in is shown as a gray sphere in the center of the carbocycle. The shape of the iron center is then closest to an equilateral triangle."
 
-@section manual-cheatsheet Cheatsheet
-
-IO            | Description
-------------- | -----------
-<code>\link Scine::molassembler::io::read(const std::string&) io::read(...)\endlink</code> | Extract a single \masm{Molecule} from an XYZ, MOL or MASM file
-<code>\link Scine::molassembler::io::split(const std::string&) io::split(...)\endlink</code> | Extract multiple \masm{Molecule, Molecules} from an XYZ, MOL or MASM file
-<code>\link Scine::molassembler::io::write(const std::string&, const Molecule&) io::write(...)\endlink</code> | Write a single \masm{Molecule} to XYZ, MOL or MASM
-<code>\link Scine::molassembler::interpret::molecules(const Utils::AtomCollection &, BondDiscretizationOption, const boost::optional< double > &) interpret::molecules(...)\endlink</code> | Find (possibly multiple) \masm{Molecule, Molecules} in various input data types
+Alternatively, when molecules are constructed by a graph only, this part of the
+construction is replaced by a shape inference algorithm that tries to guess
+reasonable shapes based only on graph information (which never contains charge
+information, and is hence limited in its usefulness).
 
 
-Information           | Description
---------------------- | -----------
-<code>\link Scine::molassembler::Molecule::graph() mol.graph()\endlink</code> | Yields the molecular \masm{Graph} (purely connectivity and element type data)
-<code>\link Scine::molassembler::Molecule::stereopermutators() mol.stereopermutators()\endlink</code> | Yields \masm{StereopermutatorList, list of stereopermutators}
-<code>\link Scine::molassembler::Molecule::dumpGraphviz() mol.dumpGraphviz()\endlink</code> | Yields a graphviz string of the molecule representation
-<code>\link Scine::molassembler::Molecule::modularCompare() mol.modularCompare(...)\endlink</code> | Compare two molecules, choosing which parts are to be compared
-
-Molecule manipulation  | Description
----------------------- | -----------
-<code>\link Scine::molassembler::Molecule::addAtom() mol.addAtom(...)\endlink</code> | Adds an atom to the molecule, attaching it to an existing one
-<code>\link Scine::molassembler::Molecule::addBond() mol.addBond(...)\endlink</code> | Adds a bond between two existing atoms
-<code>\link Scine::molassembler::Molecule::assignStereopermutator() mol.assignStereopermutator(...)\endlink</code> | Changes the assignment of a sterepermutator
-<code>\link Scine::molassembler::Molecule::removeAtom() mol.removeAtom(...)\endlink</code> | Removes a removable (!) atom
-<code>\link Scine::molassembler::Molecule::removeBond() mol.removeBond(...)\endlink</code> | Removes a removable (!) bond
-<code>\link Scine::molassembler::Molecule::setBondType() mol.setBondType(...)\endlink</code> | Changes the bond type between two atoms
-<code>\link Scine::molassembler::Molecule::setElementType() mol.setElementType(...)\endlink</code> | Changes an atom element type
-<code>\link Scine::molassembler::Molecule::setShapeAtAtom() mol.setShapeAtAtom(...)\endlink</code> | Changes the local idealized shape at an atom
-
-
-@section manual-sublibraries Sub-libraries
-
---------------------------------------------------------------------------------
-
-@subsection manual-sublibraries-temple Temple
-
-Temple is a data structure and algorithm library that consists of
-- Constexpr containers (of which upper bounds on sizes must still be set)
-  - <code>\link Scine::temple::Array Array\endlink</code>: like std::array, fixed-size 
-  - <code>\link Scine::temple::Bitmask Bitmask\endlink</code>: Composition helper from an enum
-  - <code>\link Scine::temple::DynamicArray DynamicArray\endlink</code>: managed array with fixed-size maximal number of elements, more
-    like std::vector but without reallocation on exceeding reserved size
-  - <code>\link Scine::temple::DynamicSet DynamicSet\endlink</code>: fixed-maximum-size managed set
-  - <code>\link Scine::temple::DynamicMap DynamicMap\endlink</code>: fixed-maximum-size associative container
-  - <code>\link Scine::temple::Generator JSF\endlink</code>: A good PRNG
-  - <code>\link Scine::temple::BTree BTree\endlink</code>: A B-tree that stores merely values, not key-value pairs
-  - <code>\link Scine::temple::Vector Vector\endlink</code>: 3D cartesian coordinate system constexpr class with basic
-    computations
-  - <code>\link Scine::temple::UpperTriangularMatrix UpperTriangularMatrix\endlink</code>: stores data of an upper triangular matrix in a linear
-    array
-  - <code>\link Scine::temple::Optional Optional\endlink</code>: To represent operations that may frequently return no result
-  - <code>\link Scine::temple::Pair Pair\endlink</code>: Minimal replacement for std::pair, where some member functions are not 
-    yet marked constexpr
-- <code>\link Scine::temple::TinySet TinySet\endlink</code>, <code>\link Scine::temple::TinyUnorderedSet TinyUnorderedSet\endlink</code>: Set-like use of linear memory for very few
-  elements
-- CRTP base classes that supply comparison operators
-- A collection of pseudo-functional-style composable range manipulation
-  functions
-  - map (= transform)
-  - reduce / accumulate
-  - variadic concatenate
-  - condense an iterable to a delimiter-separated string of its values
-  - group values of a container by mapping value or equality
-  - all of, any of
-  - composable set union, intersection, difference
-- Range adaptors: zip, unary and binary allPairs, unary sequentialPairs
-- Some SFINAE container and function traits
-  - test for insert / push back / emplace / emplace back members
-  - C++14 is callable implementation (in lieu of C++17's standardization)
-  - get container value type
-  - get function return type
-- boost::optional composition functions
-
-@subsection manual-sublibraries-shapes Shapes
+@subsection manual-introduction-shapes Shapes
 
 Non-terminal atoms in molecules often adopt nearly ideal local shapes when
 no strain is placed upon its substituents due to small cycles. The local
@@ -173,34 +76,40 @@ shapes currently provided by this library are:
 
 Size | Name
 ---- | ----
-2    | Linear, bent
-3    | Trigonal planar, cut tetrahedral, T-shaped
-4    | Tetrahedral, trigonal pyramidal, square planar, seesaw
-5    | Square pyramidal, trigonal bipyramidal, pentagonal planar
-6    | Octahedral, trigonal prismatic, pentagonal pyramidal
-7    | Pentagonal bipyramidal
-8    | Square antiprismatic
+2    | Line, bent
+3    | Equatorial triangle, monovacant tetrahedron, T-shape
+4    | Tetrahedron, square, seesaw, trigonal pyramid
+5    | Square pyramid, trigonal bipyramid, pentagon
+6    | Octahedron, trigonal prism, pentagonal pyramid, hexagon
+7    | Pentagonal bipyramid, capped octahedron, capped trigonal prism
+8    | Square antiprism, cube, trigonal dodecahedron, hexagonal bipyramid
+9    | Tricapped trigonal prism, capped square antiprism, heptagonal bipyramid
+10   | Bicapped square antiprism
+11   | Edge contracted icosahedron
+12   | Icosahedron, cuboctahedron
 
 Data provided per shape:
 - Number of vertices
-- String representation
-- Angle function returning idealized angles between vertices
-- Idealized coordinates
+- String name
+- Angle function returning angles between vertices
+- Spherical coordinates
+- Point group
 - A minimal set of rotations to allow the generation of all superimposable
   sequences of binding site mapping indices
 - A set of tetrahedra whose signed volumes permit the distinction of chiral
   elements within the shape
+- A mirror permutation
 
-In addition, this libraries can compute site addition and site loss
+In addition, this library can compute site addition and site loss
 transitions between shapes at compile-time.
 
 
-@subsection manual-sublibraries-stereopermutation Stereopermutation
+@subsection manual-introduction-stereopermutation Stereopermutation
 
 Figuring out all non-superimposable arrangements of substituents around the
-idealized shapes is a permutational problem and is the core task of this
-library. It builds upon the definitions provided by the chemical shapes
-library to achieve its task.
+idealized shapes is a permutational problem and is the core task of a
+sub-library of molassembler. It builds upon the definitions provided by the
+shapes library to achieve its task.
 
 Most of organic chemistry can be composed of linear, bent, equilateral triangle
 and tetrahedron shapes. The most common source of chiral information in
@@ -208,18 +117,18 @@ organic chemistry is an asymmetric tetrahedral carbon, where its four
 subtituents are all different (i.e. have different ranking according to the
 IUPAC rules). From a local shape and the information that all substituents
 are distinct ranking-wise, we know that there are two non-superimposable
-permutations of ligands. 
+permutations of ligands known by their stereodescriptors R and S. 
 
-Stereopermutations of any shape can be computed symbolically 
-@cite bennett1969computation , including cases in which substituents are
-mutually linked, such as in multidentate ligands. Special care is taken in
-order to reduce haptically bonded ligands to the correct local shapes and
-ranking. 
+Stereopermutations of any shape can be computed symbolically @cite
+bennett1969computation , including cases in which substituents are mutually
+linked, such as in multidentate ligands.
+
+@subsection manual-introduction-examples Examples
+
 
 
 @section manual-algorithms Important algorithms
 
---------------------------------------------------------------------------------
 
 @subsection manual-algorithms-discretization Bond discretization
 
@@ -422,8 +331,6 @@ bool isomorphic = (a == b);
 
 @section manual-molecules Working with Molecules
 
---------------------------------------------------------------------------------
-
 @subsection manual-molecules-stereopermutators Stereopermutators
 
 Currently, this library models two types of stereocenters: The first models the
@@ -582,8 +489,6 @@ running any more precise calculations.
 
 @section known-issues Known issues
 
---------------------------------------------------------------------------------
-
 @subsection ranking-deficiencies Ranking algorithm deficiencies
 No regularization of Mancude rings and rings systems is performed in sequence
 rule 1. This can lead to false differences between substituents when they are
@@ -611,6 +516,39 @@ systems would require special care in the following places:
 
 @section manual-glossary Glossary
 
---------------------------------------------------------------------------------
+
+@page public-interface API
+
+v1.0.0
+------
+All headers in the top-level library directory of molassembler and files
+included from there form the public interface. None of the files in deeper
+directories are part of the public interface.
+
+The auxiliary library headers that are by inclusion also part of the public
+interface are currently:
+
+@verbatim
+- shapes/
+  - Shapes
+@endverbatim
+
+In general, API types follow the private implementation pattern and do not
+expose implementation types. All top-level include headers comprise the library
+API and have shallow include dependency trees. Types and functions
+exposed in these headers are intended for consumers. 
+
+@warning It is inadvisable to include the listed files directly and make use of
+their functionality since the types therein may be moved around or deleted in
+future versions. Any molassembler headers that use types from these files
+include them, and there are no forward declarations.
+
+@note Additionally, some (very few) functions in the top-level headers are not
+meant for consumers. These are annotated \c MASM_NO_EXPORT, carry an explicit
+warning that they exist solely for library-internal purporses, and typcially
+yield incomplete types. It is advisable not to use these functions or create
+functionality dependent on possibly forward-declared types involved. They do
+not form part of the public interface and are thus subject to free
+developmental flux.
 
 */

@@ -219,13 +219,10 @@ data and generate non-superposable stereopermutations as output.
 SCINE \textsc{Molassembler} consists of a C++ library and a Python module which
 binds parts of the available C++ functionality. 
 
-In this manual, we describe the installation of the software, the most important
-functions and options and some explicit examples discussing its
-limitations.\footnote{Throughout this manual, the most important information is
-displayed in the main text, whereas useful additional information is given as a
-side note like this one.} A prospect on features in future releases and
-references for further reading are added at the end of this
-manual.\enlargethispage{\baselineskip}
+In this manual, we describe the installation of the software and how to
+integrate it into any derivative projects. A prospect on
+features in future releases and references for further reading are added at the
+end of this manual.\enlargethispage{\baselineskip}
 
 
 
@@ -233,8 +230,8 @@ manual.\enlargethispage{\baselineskip}
 
 \textsc{Molassembler}  is distributed as open source software in the framework
 of the \href{https://scine.ethz.ch/}{SCINE
-Project}\footnote{\texttt{scine.ethz.ch}}.
-Visit our 
+Project}\footnote{\texttt{scine.ethz.ch}}. It is licensed under the BSD-3 clause
+license. Visit our
 \href{https://scine.ethz.ch/download/molassembler}{website}\footnote{\texttt{scine.ethz.ch/download/molassembler}}
 to obtain the software. 
 
@@ -323,8 +320,18 @@ libboost-all-dev
 libeigen3-dev
 \end{Verbatim}
 
+\textsc{Molassembler} depends on further libraries that are distributed along or
+downloaded at configure time.
+
+\begin{itemize}
+  \item RingDecomposerLib~\cite{Flachsenberg2017, Kolodzik2012} 
+  \item nauty~\cite{McKay2014}
+  \item JSON For Modern C++~\cite{Lohmann2013} 
+  \item SCINE Utilities~\cite{Brunken2019}
+\end{itemize}
+  
 Either directly clone the repository with \texttt{git} or extract a downloaded
-archive, change to the source directory and execute the following:
+archive. Navigate to the source directory and execute the following:
 
 \begin{Verbatim}
 mkdir build install
@@ -361,22 +368,32 @@ us by writing to \href{mailto:scine@phys.chem.ethz.ch}{scine@phys.chem.ethz.ch}.
 
 \chapter{Using the C++ library}
 
-\textsc{Molassembler} provides a \texttt{Doxygen} technical documentation which
-documents the available functions in detail. Here, we will give a top-down
-overview of the available functionality in distinct categories and discuss the
-challenges of working with the library.
+\textsc{Molassembler} provides a
+\href{https://scine.ethz.ch/download/molassembler/doc-cpp}{\texttt{Doxygen}
+technical
+documentation}\footnote{\texttt{scine.ethz.ch/download/molassembler/doc-cpp}}
+which documents the available functions in detail and also provides an overview
+of the available functionality. Here, we will only go into detail in how to link
+\textsc{Molassembler} into a new project with \texttt{CMake}.
 
-In general, API types follow the private implementation pattern and do not
-expose implementation types. All top-level include headers comprise the library
-API and have shallow include dependency trees. Nearly all types and functions
-exposed in these headers are intended for consumers~\footnote{The few not meant
-for consumers are annotated \texttt{MASM\_NO\_EXPORT}, carry explicit
-documentation warnings, and typically yield incomplete types not defined in top
-level headers.}.
+In the \texttt{CMake} file of a new project, add the following:
 
-The central class of the API is the \texttt{Molecule}, defined in the header
-\texttt{Molecule.h}. To avoid proliferation of ever more specialized member
-functions, its interface is limited to accessors and small-scale modifications.
+\begin{Verbatim}
+# Suppose your target is named transmogrifier
+find_package(molassembler REQUIRED)
+target_link_libraries(transmogrifier PUBLIC molassembler::molassembler)
+\end{Verbatim}
+
+Note that if \texttt{transmogrifier} were a library you were making,
+\texttt{PUBLIC} here denotes that you use \textsc{Molassembler} types in your
+public interface, and any consumers of \texttt{transmogrifier} must also link
+against \textsc{Molassembler}, so alter this as needed.
+
+Provided you have installed \textsc{Molassembler} somewhere, this should take
+care of include directories, compile definitions and linking for you. Perhaps
+you need to specify the path you have installed it to when invoking
+\texttt{CMake} using either of the arguments \texttt{CMAKE\_PREFIX\_PATH} or
+\texttt{molassembler\_DIR}.
 
 \newpage
 \chapter{Using the Python module}
@@ -400,8 +417,10 @@ where \texttt{<version>} is the Python version you are using (\textit{e.g.},
 3.6) and \texttt{<install directory>} is where you installed
 \textsc{Molassembler}. Now you can simply import the module and use it just
 like any other Python module. All functionality available in the Python module
-is documented with examples. You can explore the available functionality using
-the \texttt{help} and \texttt{dir} Python functions:
+is \href{https://scine.ethz.ch/download/molassembler/doc-py}{documented with
+examples}\footnote{\texttt{scine.ethz.ch/download/molassembler/doc-py}}. You can
+interactively explore the available functionality in an interactive Python shell
+using the \texttt{help} and \texttt{dir} Python functions:
 
 \begin{Verbatim}
 import scine_molassembler as masm
@@ -409,12 +428,11 @@ dir(masm)
 help(masm)
 \end{Verbatim}
 
-A Sphinx documentation is available 
-\href{https://scine.ethz.ch/download/molassembler}{online}\footnote{\texttt{scine.ethz.ch/download/molassembler}}.
-
 \chapter{Extensions planned in future releases}
 \begin{itemize}
-\item Interfaces to other quantum chemical packages such as \textsc{Serenity}\cite{serenity}
+  \item Better handling of aromatics
+  \item Better ranking algorithm
+  \item Stabilized SMILES parser
 \end{itemize}
 
 
@@ -423,10 +441,13 @@ A Sphinx documentation is available
 Please consult the following references for more details on
 \textsc{Molassembler}. We kindly ask you to cite the following reference in any
 publication of results obtained with \textsc{Molassembler}.
-\vspace{1.0cm}
 
-J.-G.~Sobez, M.~Reiher
-\href{https://pubs.acs.org/doi/10.1021/acs.jctc.8b00169}{Molassembler}, \textit{J.~Chem.~Theory Comput.}, \textbf{2018}, \textit{16}, 3091.
+\vspace{1cm}
+
+% J.-G.~Sobez, M.~Reiher. qcscine/molassembler: Release 1.0.0 (Version 1.0.0), Zenodo, 2020. DOI
+
+J.-G.~Sobez, M.~Reiher. Molassembler: Molecular graph construction, modification
+and conformer generation for inorganic and organic molecules, \textit{submitted}
 
 
 

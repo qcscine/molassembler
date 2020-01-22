@@ -13,12 +13,12 @@ edges in a mathematical graph. The
 relative spatial arrangements of atoms.
 :class:`scine_molassembler.AtomStereopermutator` instances are responsible for
 classifying the local shape of its substituents and allowing permutation through
-distinct non-rotationally superimposable arrangements of its substituents. The
-simplest stereogenic case it manages is an asymmetric tetrahedron, where its two
-stereopermutations represent the R and S arrangements. The
-:class:`scine_molassembler.AtomStereopermutator` manages these arrangements in
-distinct shapes that range from two substituents (linear and bent) up to twelve
-(icosahedron and cuboctahedron).
+distinct non-rotationally superimposable arrangements of its substituents. One
+of the simpler stereogenic cases it manages is that of an asymmetric
+tetrahedron, where its two stereopermutations represent the R and S
+arrangements. The :class:`scine_molassembler.AtomStereopermutator` manages these
+arrangements in distinct shapes that range from two substituents (linear and
+bent) up to twelve (icosahedron and cuboctahedron).
 :class:`scine_molassembler.BondStereopermutator` instances are responsible for
 the relative arrangement of two :class:`scine_molassembler.AtomStereopermutator`
 instances fused at arbitrary vertices of their shapes. They manage, for

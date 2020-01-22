@@ -8,7 +8,7 @@ body, table, div, p, dl {
 }
 
 .textblock p, .textblock dd, .textblock td, .textblock li, 
-.memdoc p, .memdoc dd, .memdoc td, .memdoc li {
+.memdoc p, .memdoc dd, .memdoc td, .memdoc li, .image * {
   max-width: 75ch;
 }
 
@@ -1241,9 +1241,8 @@ dl.section dd {
         text-align: center;
 }
 
-.caption
-{
-	font-weight: bold;
+.caption {
+  font-style: italic;
 }
 
 div.zoom
