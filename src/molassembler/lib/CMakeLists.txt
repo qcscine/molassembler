@@ -265,8 +265,8 @@ function(molassembler_library_links target_name)
   target_link_eigen(${target_name} PUBLIC)
 endfunction()
 
-# Shared library
-add_library(molassembler SHARED
+# Main library, of type as determined by BUILD_SHARED_LIBS
+add_library(molassembler
   $<TARGET_OBJECTS:molassembler_obj>
   ${CMAKE_CURRENT_BINARY_DIR}/molassembler/Version.h
   ${CMAKE_CURRENT_BINARY_DIR}/molassembler/Export.h
@@ -275,18 +275,28 @@ molassembler_includes_and_properties(molassembler)
 molassembler_library_links(molassembler)
 add_library(molassembler::molassembler ALIAS molassembler)
 
-# Static library
-add_library(molassembler_static STATIC
-  $<TARGET_OBJECTS:molassembler_obj>
-  ${CMAKE_CURRENT_BINARY_DIR}/molassembler/Version.h
-  ${CMAKE_CURRENT_BINARY_DIR}/molassembler/Export.h
-)
-molassembler_includes_and_properties(molassembler_static)
-molassembler_library_links(molassembler_static)
-add_library(molassembler::molassembler_static ALIAS molassembler_static)
+if(BUILD_SHARED_LIBS)
+  # If molassembler is shared, we still need a static variant for linking into
+  # the tests and other binaries that hook deeper into molassembler than the
+  # public API
+  add_library(molassembler_static STATIC
+    $<TARGET_OBJECTS:molassembler_obj>
+    ${CMAKE_CURRENT_BINARY_DIR}/molassembler/Version.h
+    ${CMAKE_CURRENT_BINARY_DIR}/molassembler/Export.h
+  )
+  molassembler_includes_and_properties(molassembler_static)
+  molassembler_library_links(molassembler_static)
+  add_library(molassembler::molassembler_static ALIAS molassembler_static)
+
+  # Target name for others to hook into where needed
+  set(MOLASSEMBLER_STATIC_TARGET molassembler_static PARENT_SCOPE)
+else()
+  # If molassembler is static, then that's all we need
+  set(MOLASSEMBLER_STATIC_TARGET molassembler PARENT_SCOPE)
+endif()
 
 install(
-  TARGETS molassembler molassembler_static
+  TARGETS molassembler
   EXPORT molassemblerTargets
   DESTINATION lib
 )

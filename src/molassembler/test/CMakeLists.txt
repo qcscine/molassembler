@@ -49,7 +49,7 @@ target_link_libraries(MolassemblerTests
     Boost::boost
     Boost::regex
     gor1
-    molassembler_static
+    ${MOLASSEMBLER_STATIC_TARGET}
     stereopermutation
     Boost::unit_test_framework
     Boost::filesystem
@@ -69,7 +69,7 @@ target_link_libraries(DistanceGeometryTests
     Boost::boost
     Boost::regex
     gor1
-    molassembler_static
+    ${MOLASSEMBLER_STATIC_TARGET}
     stereopermutation
     Boost::unit_test_framework
     Boost::filesystem
