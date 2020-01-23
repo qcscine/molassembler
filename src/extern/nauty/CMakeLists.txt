@@ -40,6 +40,11 @@ target_include_directories(nauty PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
   $<INSTALL_INTERFACE:$<INSTALL_PREFIX>/include>
 )
+install(
+  FILES LICENSE
+  DESTINATION share/doc/molassembler/licenses
+  RENAME nauty.txt
+)
 set_target_properties(nauty PROPERTIES POSITION_INDEPENDENT_CODE ON)
 install(TARGETS nauty EXPORT nautyTargets ARCHIVE DESTINATION lib)
 

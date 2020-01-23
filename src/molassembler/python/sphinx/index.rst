@@ -4,9 +4,11 @@ molassembler
 Molassembler is a C++ library that aims to facilitate conversions between
 Cartesian and graph representations of molecules. It provides the necessary
 functionality to represent a molecule as a graph, modify it in graph space, and
-generate coordinates from graphs. It can capture the absolute configuration
-of molecules with multidentate and haptic ligands from positional data and
-generate non-superposable stereopermutations as output.
+generate new coordinates from graphs. It can capture the absolute configuration
+of inorganic molecules with multidentate and haptic ligands from Cartesian
+coordinates and enumerate non-superposable stereopermutations at non-terminal
+atoms and non-isotropic bonds at arbitrary local shapes ranging up to the
+icosahedron and cuboctahedron.
 
 This is the documentation for molassembler's Python bindings which bind the core
 functionality of the library for quick prototyping.
@@ -68,6 +70,7 @@ Core features
    :maxdepth: 1
    :caption: Other
 
+   issues
    changelog
+   C++ API <https://scine.ethz.ch/download/molassembler/doc-cpp/index.html>
    genindex
-   C++ Documentation <https://scine.ethz.ch/download/molassembler/doc-cpp/index.html>

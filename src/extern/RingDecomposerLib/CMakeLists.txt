@@ -47,7 +47,13 @@ SET(CMAKE_INSTALL_RPATH "\$ORIGIN/lib")
 include_directories(${LIB_SOURCE_DIR})
 add_subdirectory("${LIB_SOURCE_DIR}")
 #add_subdirectory("${SOURCE_DIR}/Test")
-add_subdirectory("${SOURCE_DIR}/MinimalExample")
-add_subdirectory("${SOURCE_DIR}/RDKitBenchmark")
-add_subdirectory("${PYTHON_SOURCE_DIR}")
+#add_subdirectory("${SOURCE_DIR}/MinimalExample")
+#add_subdirectory("${SOURCE_DIR}/RDKitBenchmark")
+#add_subdirectory("${PYTHON_SOURCE_DIR}")
 #add_subdirectory("${TEST_DIR}")
+
+install(
+  FILES LICENSE
+  DESTINATION share/doc/molassembler/licenses
+  RENAME RingDecomposerLib.txt
+)

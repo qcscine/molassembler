@@ -16,3 +16,9 @@ target_include_directories(
 )
 
 source_group("Headers" FILES ${HEADERS_All})
+
+install(
+  FILES LICENSE.txt
+  DESTINATION share/doc/molassembler/licenses
+  RENAME json.txt
+)

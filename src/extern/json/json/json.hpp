@@ -11679,7 +11679,8 @@ class serializer
 
     @note The function has been edited: a std::array is used.
 
-    @copyright Copyright (c) 2008-2009 Bjoern Hoehrmann <bjoern@hoehrmann.de>
+    @copyright This code is licensed under the 3-clause BSD license.
+ *   Copyright Copyright (c) 2008-2009 Bjoern Hoehrmann <bjoern@hoehrmann.de>
     @sa http://bjoern.hoehrmann.de/utf-8/decoder/dfa/
     */
     static uint8_t decode(uint8_t& state, uint32_t& codep, const uint8_t byte) noexcept

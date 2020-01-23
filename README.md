@@ -1,20 +1,22 @@
 # Molassembler library
 ## Overview
 
-Molassembler is a C++ library that aims to facilitate crossings between
+Molassembler is a C++ library that aims to facilitate conversions between
 Cartesian and graph representations of molecules. It provides the necessary
 functionality to represent a molecule as a graph, modify it in graph space, and
-generate coordinates from graphs. It can capture the absolute configuration
-of multidentate and haptic inorganic molecules from positional data and
-generate non-superposable stereopermutations as output.
+generate new coordinates from graphs. It can capture the absolute configuration
+of inorganic molecules with multidentate and haptic ligands from Cartesian
+coordinates and enumerate non-superposable stereopermutations at non-terminal
+atoms and non-isotropic bonds at arbitrary local shapes ranging up to the
+icosahedron and cuboctahedron.
 
 
 ## Features
 
-- Molecule construction from many types of information. 
-- Stereocenters are treated from trigonal pyramidal all the way up to
-  icosahedral and cuboctahedral local geometries.
-- High-temperature approximation is invoked by default to avoid considering
+- Molecules can be constructed from many types of information.
+- Stereocenters are treated in shapes ranging from monovacant tetrahedron all
+  the way up to the icosahedron and cuboctahedron.
+- A high-temperature approximation is invoked by default to avoid considering
   inverting nitrogen centers as stereocenters, but this is optional. Even in
   the high-temperature approximation, nitrogen centers whose substituents
   form a strained cycle and hence do not invert rapidly are considered a
@@ -30,12 +32,13 @@ generate non-superposable stereopermutations as output.
 - Ranking algorithms are nearly fully IUPAC Blue Book 2013 compliant, extended
   to larger symmetries.
 - Stochastic conformer generation with Distance Geometry
-  - Unassigned stereocenters are randomly assigned from relative statistical
-    occurrence weights.
-  - Full metrization during distance matrix generation scales with approximately
-    N^3.5. Achieved via shortest paths calculation in graph using GOR1 algorithm.
-  - Can optionally choose four-atom or 10% partial metrization.
-  - Embedding and refinement is performed in four spatial dimensions.
+- Directed conformer generation through enumeration of rotamers
+
+
+## License
+
+Molassembler is licensed under the BSD 3-clause "New" or "Revised" license. See
+also the `LICENSE.txt` file.
 
 
 ## Integrating
@@ -44,9 +47,9 @@ This library requires the C++14 standard.
 
 Dependencies:
 
-- Boost (Boost license) >= 1.64
+- SCINE Utils (BSD-3 license) > 1.0.0
+- Boost (Boost license) >= 1.64 (lowest tested, prefer recent)
 - Eigen (MPL 2.0 license) >= 3
-- SCINE Utils (BSD-3 license)> 0.1.0
 - (BLAS library, added if detected during compilation)
 
 
@@ -54,13 +57,10 @@ Can currently be compiled with:
 
 - [x] GCC >= 7
 - [x] Clang >= 4
-- [ ] MSVC (compiler compliance issues with C++14 `constexpr` code)
+- [x] MinGW-w64 (latest)
+- [ ] MSVC (compiler compliance issues with `constexpr`)
 
-Windows compatibility is in progress. In the meantime, consider options like
-MinGW (compiles with GCC) or Visual Studio Codegen with Clang to create Windows
-libraries.
-
-Unowned libraries included this distribution:
+Unowned libraries included in distribution (see `src/extern`):
 
 - RingDecomposerLib[^1] (BSD-3 license): Unique Ring Family[^2] cycle detection
 - Outcome (until released in boost): Improved error propagation
@@ -84,15 +84,16 @@ $ make
 
 ## Tests
 
-We recommend running the tests in a release build of the library. After
-building the library and tests, run `make test`. For the python bindings, the
-python module `pytest` must be available.
+We recommend running the tests in a release build of the library. The debug
+builds can run for a good 20-30 minutes. After building the library and tests,
+run `make test`. The python bindings are tested with `pytest` and `doctest`, if
+available.
 
 
 ## Documentation
 
-If `doxygen` is installed, the C++ library documentation is built too. If the
-python bindings are built and the sphinx module is available, the python
+If `doxygen` is found, the C++ library documentation is built. If the python
+bindings are built and the `sphinx` python module is available, the python
 binding documentation is generated too.
 
 

@@ -1,5 +1,6 @@
 /*!@file
- * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ * @copyright This code is licensed under the 3-clause BSD license.
+ *   Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
  *   See LICENSE.txt
  */
 
@@ -27,25 +28,16 @@ void writeAngleAnalysisFiles(
   using namespace cyclic_polygons;
 
   const double longestEdge = temple::max(edgeLengths);
-
   const double minR = longestEdge / 2 + 1e-10;
-
   const double lowerBound = minR;
-
   const double upperBound = std::max(
-    detail::regularCircumradius(
-      edgeLengths.size(),
-      longestEdge
-    ),
+    detail::regularCircumradius(edgeLengths.size(), longestEdge),
     minR
   );
 
   double rootGuess = detail::regularCircumradius(
     edgeLengths.size(),
-    std::max(
-      temple::average(edgeLengths),
-      minR
-    )
+    std::max(temple::average(edgeLengths), minR)
   );
 
   if(rootGuess < lowerBound) {

@@ -8,10 +8,12 @@ Molassembler is a C++ library that aims to facilitate conversions between
 Cartesian and graph representations of molecules. It provides the necessary
 functionality to represent a molecule as a graph, modify it in graph space, and
 generate new coordinates from graphs. It can capture the absolute configuration
-of multidentate and haptic inorganic molecules from positional data and
-generate non-superposable stereopermutations as output.
+of inorganic molecules with multidentate and haptic ligands from Cartesian
+coordinates and enumerate non-superposable stereopermutations at non-terminal
+atoms and non-isotropic bonds at arbitrary local shapes ranging up to the
+icosahedron and cuboctahedron.
 
-This is the documentation for molassembler's C++ code. 
+This is the documentation for molassembler's C++ library. 
 
 
 @section manual-introduction Introduction
@@ -30,15 +32,15 @@ are responsible for classifying the local shape of its substituents and
 allowing permutation through distinct non-rotationally superimposable
 arrangements of its substituents. One of the simpler stereogenic cases it
 manages is that of an asymmetric tetrahedron, where its two stereopermutations
-represent the R and S arrangements. Atom stereopermutators 
+represent the \e R and \e S arrangements. Atom stereopermutators 
  manage such arrangements in
 distinct shapes that range from two substituents (linear and bent) up to twelve
 (icosahedron and cuboctahedron).
 \masm{BondStereopermutator, Bond stereopermutators} are responsible for
 the relative arrangement of two
 \masm{AtomStereopermutator, atom stereopermutator} instances fused at arbitrary
-vertices of their shapes. They manage, for instance, the E and Z arrangements
-at asymmetric double bonds.
+vertices of their shapes. They manage, for instance, the \e E and \e Z
+arrangements at asymmetric double bonds.
 
 @note Stereopermutators are not called stereocenters - which might seem the more
 natural choice - because these objects also manage shape and ranking
@@ -46,84 +48,106 @@ combinations in which there is only one possible arrangement and its central
 atom is consequentially not a stereocenter.
 
 
-@subsection manual-introduction-ctor Construction from Cartesian coordinates
+@subsection manual-introduction-shapes Shapes
 
-When Molecules are constructed from a \masm{Graph} and Cartesian coordinates,
-the following individual steps occur: At each non-terminal atom in the graph,
-substituents are grouped into binding sites, where sites constituted by
-multiple substituents are haptic. These sites are then ranked according to
-extended IUPAC sequence rules. Then, the positions of these binding sites in
-the coordinates are classified into a distinct shape.
+Molassembler classifies the substituents around every non-terminal atom into a
+polyhedral \link Scine::shapes::Shape shape \endlink if a
+\masm{Molecule} is constructed with Cartesian coordinates.
 
 @image html molecule_shapes.png "Octahedron, tetrahedron and equilateral triangle shapes shown in a sample molecule."
 
-When it comes to haptic ligands, the set of haptically bonded atoms' centroid
-is taken as a putative vertex position.
+In order to deal with haptic ligands, a further abstraction is introduced:
+Substituents are always grouped into binding sites made of contiguous sets of
+atoms. Then that set of atom's centroid is taken as a putative shape vertex
+position in shape classification.
 
 @image html haptic_shape.png "The centroid of the benzene in is shown as a gray sphere in the center of the carbocycle. The shape of the iron center is then closest to an equilateral triangle."
 
-Alternatively, when molecules are constructed by a graph only, this part of the
-construction is replaced by a shape inference algorithm that tries to guess
-reasonable shapes based only on graph information (which never contains charge
-information, and is hence limited in its usefulness).
+Alternatively, when molecules are constructed by a \masm{Graph} only, this part
+of the construction is replaced by a shape inference algorithm that tries to
+guess reasonable shapes based only on graph information (which is limited in
+accuracy, generously speaking, as soon as inorganic centers are involved).
 
 
-@subsection manual-introduction-shapes Shapes
+@subsection manual-introduction-stereopermutations Stereopermutations and feasibility
 
-Non-terminal atoms in molecules often adopt nearly ideal local shapes when
-no strain is placed upon its substituents due to small cycles. The local
-shapes currently provided by this library are:
+Now we need to figure out how many different non-superposable relative
+arrangements of the binding sites are possible within the classified shape. The
+operative word being *different*, the binding sites of each non-terminal atom
+are ranked according to extended IUPAC sequence rules. The ranking and links
+between sites are reduced to an abstract binding case such as
+@math{(A-A)_3}. From there, we enumerate the following non-superimposable
+cases within a particular shape, say, an octahedron:
 
-Size | Name
----- | ----
-2    | Line, bent
-3    | Equatorial triangle, monovacant tetrahedron, T-shape
-4    | Tetrahedron, square, seesaw, trigonal pyramid
-5    | Square pyramid, trigonal bipyramid, pentagon
-6    | Octahedron, trigonal prism, pentagonal pyramid, hexagon
-7    | Pentagonal bipyramid, capped octahedron, capped trigonal prism
-8    | Square antiprism, cube, trigonal dodecahedron, hexagonal bipyramid
-9    | Tricapped trigonal prism, capped square antiprism, heptagonal bipyramid
-10   | Bicapped square antiprism
-11   | Edge contracted icosahedron
-12   | Icosahedron, cuboctahedron
+@image html oct.svg "In an octahedron, the abstract binding case (A-A)3 has four distinct non-superimposable arrangements, termed stereopermutations. In the first two, all bidentate ligands are arranged cis. The third is cis-cis-trans, and the last trans-trans-trans."
 
-Data provided per shape:
-- Number of vertices
-- String name
-- Angle function returning angles between vertices
-- Spherical coordinates
-- Point group
-- A minimal set of rotations to allow the generation of all superimposable
-  sequences of binding site mapping indices
-- A set of tetrahedra whose signed volumes permit the distinction of chiral
-  elements within the shape
-- A mirror permutation
+Whether any of these stereopermutations are actually possible in a particular
+molecule depends on the length of the bridge between the binding atoms of the
+bidentate ligand. If it's very long, then perhaps all stereopermutations are
+possible. At intermediate lengths, the stereopermutations with
+trans-arrangements might be infeasible, and at very short bridge lengths (say,
+just one intermediate atom), none of them might be possible.
 
-In addition, this library can compute site addition and site loss
-transitions between shapes at compile-time.
+Molassembler takes the abstract enumerated stereopermutations and checks the
+feasibility of all bridges between any multidentate ligands, if present.
+Additionally, if there are haptic ligands, the cone it occupies is estimated and
+collisions between haptic ligands are avoided.
 
 
-@subsection manual-introduction-stereopermutation Stereopermutation
+@subsection manual-introduction-atom-stereopermutators Atom stereopermutators
 
-Figuring out all non-superimposable arrangements of substituents around the
-idealized shapes is a permutational problem and is the core task of a
-sub-library of molassembler. It builds upon the definitions provided by the
-shapes library to achieve its task.
+In a @masm{Molecule},
+@masm{AtomStereopermutator, atom stereopermutators} are
+instantiated on each non-terminal atom. Atom stereopermutators store the local
+shape at this atom, all abstract stereopermutations (with relative statistical
+occurrence weights), the results of the feasibility checks, and which
+stereopermutation is currently realized. Note that terminal atoms aren't
+particularly interesting because their local shape has merely a single vertex
+and there isn't much to manage. The stereopermutation an
+@masm{AtomStereopermutator, atom stereopermutator} is set as can only be
+determined if Cartesian coordinates are present. Otherwise, if there are
+multiple feasible stereopermutations but no way to determine which is realized,
+the @masm{AtomStereopermutator, atom stereopermutator} is *unspecified*. This
+means that it represents all of its feasible stereopermutations. The
+conformational ensemble of a molecule with a single
+@masm{AtomStereopermutator, atom stereopermutator} representing an unspecified
+asymmetric tetrahedron (where there are two possible stereopermutations, known
+by their stereodescriptors @e R and @e S), is essentially a racemic mixture.
 
-Most of organic chemistry can be composed of linear, bent, equilateral triangle
-and tetrahedron shapes. The most common source of chiral information in
-organic chemistry is an asymmetric tetrahedral carbon, where its four
-subtituents are all different (i.e. have different ranking according to the
-IUPAC rules). From a local shape and the information that all substituents
-are distinct ranking-wise, we know that there are two non-superimposable
-permutations of ligands known by their stereodescriptors R and S. 
+Molassembler introduces a particular terminology here. Stereopermutators expose
+two different stereodescriptors. The first, the @e index @e of @e permutation,
+independent of any feasibility checks, is just a number ranging from zero to
+the number of stereopermutations minus one. From our example in an octahedron
+shape from before, there are four stereopermutations. The valid indices of
+permutation are then zero, one, two and three. Say within the particular
+@masm{Molecule}, only the all-cis arranged stereopermutations are feasible. The
+set of feasible stereopermutations is indexed just like the set of all
+stereopermutations, and that index is called an @e assignment, because these are
+the only stereopermutations that you can assign a stereopermutator to.
+Assignments, like indices of permutations, are merely a number ranging from
+zero to the number of feasible stereopermutations minus one. In our octahedron
+example, there are two feasible stereopermutations, and valid assignments are
+zero and one.
 
-Stereopermutations of any shape can be computed symbolically @cite
-bennett1969computation , including cases in which substituents are mutually
-linked, such as in multidentate ligands.
+@subsection manual-introduction-bond-stereopermutators Bond stereopermutators
 
-@subsection manual-introduction-examples Examples
+Stereogenic arrangements of atoms due to rotational barriers around bonds are
+managed by @masm{BondStereopermutator, bond stereopermutators}. They can be
+formed with arbitrary assigned, adjacent @masm{AtomStereopermutator, atom
+stereopermutators}. Like their atom-centric counterparts, a feasibility
+algorithm determines whether particular rotational arrangements are possible
+given any bridges connecting its ends. As a result, in carbocycles of sizes
+three to seven, bond stereopermutators composed of equatorial triangles, bent
+shapes or mixtures thereof are not stereogenic, i.e. only a single
+stereopermutation is feasible.
+
+Keep in mind that bond stereopermutators are by no means connected with any
+sort of molecular orbital reasoning, and are purely phenomenological. Given a
+@masm{Molecule} with any sort of flat cycle in its Cartesian coordinates,
+molassembler will instantiate @masm{BondStereopermutator, bond
+stereopermutators} on @e all edges of the cycle. Similarly, molassembler will
+not complain if a bond stereopermutator is instantiated on a bond of single
+bond order.
 
 
 
@@ -148,11 +172,11 @@ i.e. bond orders are interpreted as a single bond if the fractional bond order
 is is more than or equal to 0.5. Double bond stereocenters (i.e. in organic
 molecules E/Z stereocenters) are still interpreted from coordinate information
 despite the main bond type discretized to a single bond. This part of a
-`Molecule`'s interpretation is discussed elsewhere.
+@masm{Molecule}'s interpretation is discussed elsewhere.
 
 @subsection manual-algorithms-shape-det Shape determination
 
-If no coordinates are present when constructing a Molecule, the idealized
+If no coordinates are present when constructing a @masm{Molecule}, the idealized
 shape on any non-terminal atom must be determined from its local
 substituents within the set of appropriately sized shapes. For main-group
 atoms, this is accomplished by application of a very basic valence shell
@@ -261,7 +285,7 @@ Conformer generation itself is based on four-dimensional Distance Geometry
 
 @subsection manual-algorithms-canonicalization Canonicalization
 
-Molecule instances can be canonicalized. Graph canonicalization is an algorithm
+@masm{Molecule} instances can be canonicalized. Graph canonicalization is an algorithm
 that reduces all isomorphic forms of an input graph into a canonical form. After
 canonicalization, isomorphism tests are reduced to mere identity tests.
 
@@ -288,17 +312,17 @@ correct, after which operator == defaults to an identity permutation check:
 @code{.cpp}
 Molecule a = ..., b = ...;
 // Assuming a and be are non-canonical, i.e.:
-// a.canonicalComponents() == AtomEnvironmentComponents::None
+assert(a.canonicalComponents() == AtomEnvironmentComponents::None);
 
 bool isomorphic = (a == b); // Backtracking boost algorithm for isomorphism, slow
 
 a.canonicalize(); // Canonicalization, slow
-// Now: a.canonicalComponents() == AtomEnvironmentComponents::All
+assert(a.canonicalComponents() == AtomEnvironmentComponents::All);
 
 isomorphic = (a == b); // Full isomorphism check (like before) since b is not canonical, slow
 
 b.canonicalize(); // Canonicalization, slow
-// Now: b.canonicalComponents() == AtomEnvironmentComponents::All
+assert(b.canonicalComponents() == AtomEnvironmentComponents::All);
 
 isomorphic = (a == b); // Identitity permutation isomorphism check, fast
 @endcode
@@ -309,7 +333,7 @@ specify fewer components of molecules for use in canonicalization or comparison:
 @code{.cpp}
 Molecule a = ..., b = ...;
 // Assuming a and be are non-canonical, i.e.:
-// a.canonicalComponents() == AtomEnvironmentComponents::None
+assert(a.canonicalComponents() == AtomEnvironmentComponents::None);
 
 // Isomorphism with just element types and bond orders
 AtomEnvironmentComponents componentsMask = AtomEnvironmentComponents::ElementTypes
@@ -319,7 +343,10 @@ bool myIsomorphism = a.modularCompare(b, componentsMask); // Full isomorphism, s
 
 a.canonicalize(componentsMask); // Canonicalization, slow
 b.canonicalize(componentsMask); // Canonicalization, slow
-// Now: a.canonicalComponents() == b.canonicalComponents() == componentsMask
+assert(
+  a.canonicalComponents() == b.canonicalComponents() 
+  && b.canonicalComponents() == componentsMask
+);
 
 myIsomorphism = a.canonicalCompare(b, componentsMask); // Identity permutation check, fast!
 
@@ -427,7 +454,7 @@ reproducible behavior.
 
 The maxim of the library is to permit the specification of any desired graph,
 however unreasonable, within the logical constraints of the molecular model.
-These constraints are that a Molecule class can only contain a single connected
+These constraints are that a @masm{Molecule} class can only contain a single connected
 component and must consist of at least one atom. Apart from that, you can
 create completely unreasonable graphs. Keep in mind, however, that these can be
 at odds with either the reduction of stereopermutations to assignments, where
@@ -435,10 +462,10 @@ algorithms throw out obviously impossible permutations (yielding stereocenters
 with no possible assignments) or with the library's spatial modeling in
 conformer generation.
 
-Information about a Molecule can be obtained from its constituting graph and
-stereocenter list classes, but editing is centralized at the Molecule interface
-since graph and stereocenter changes force a full re-ranking of all atoms and
-possibly changes in the list of stereocenters.
+Information about a @masm{Molecule} can be obtained from its constituting graph
+and stereocenter list classes, but editing is centralized at the
+@masm{Molecule} interface since graph and stereocenter changes force a full
+re-ranking of all atoms and possibly changes in the list of stereocenters.
 
 Among the possible changes in the list of stereocenters on re-ranking are:
 
@@ -448,8 +475,8 @@ Among the possible changes in the list of stereocenters on re-ranking are:
 - If a stereocenter is assigned, its assignment may change.
 
 It is therefore important that **upon each molecular edit**, any state about or
-within the StereocenterList of the molecule being edit that is stored externally
-to the instance itself is considered invalidated.
+within the @masm{StereopermutatorList} of the molecule being edit that is stored
+externally to the instance itself is considered invalidated.
 
 @subsection manual-molecules-eta The Eta bond type
 
@@ -459,7 +486,7 @@ metal. These bonds are of the Eta bond type, regardless of their individual
 order. It is, however, the task of the library to differentiate which bonds
 between atoms are to be considered an Eta bond type and which are not, based
 wholly upon the graph structure. The public API of molassembler does not accept
-user-defined Eta bond types. Specify Single as bond type in the creation of
+user-defined Eta bond types. Specify \c Single as bond type in the creation of
 haptic bonding.
 
 @subsection manual-molecules-conformers Conformer generation
@@ -467,25 +494,17 @@ haptic bonding.
 The generation of conformational ensembles of molecular graphs has a few
 peculiarities you need to know about.
 
-For one, it is very explicit in the library that conformer generation can fail.
-The possibility of failure is expressed by the explicit Result type of conformer
-generation interfaces, which is essentially a two-state variant type holding
-either your requested conformational ensemble or some information about the
-reason for failure. The possibility of failure is explicit precisely to force
-you to consider it when integrating this library. A molecule you have generated
-may have stereocenters with no possible assignments due to too short bridge
-lengths for multidentate ligands or too many large haptic ligands whose cones
-overlap in any arrangements. It may also conflict with the spatial model, which
-has upper limits on granted slack for particularly strained graphs.
-
-Furthermore, the conformer generation sequence will increase modeling tolerances
-for each progressive embedding failure across the entire molecule. Even if only
-one part of your molecule is strained and requires this additional effort, the
-spatial model for the entire molecule will slacken, reducing local shape
-idealization strictness even in clear-cut cases. Heavily loosened tolerances can
-lead to odd-looking spatial structures. In those cases, you may want to further
-refine these with force field or semiempirical quantum chemical methods before
-running any more precise calculations.
+It is very explicit in the library that conformer generation can fail.
+The possibility of failure is expressed by the explicit \c result type of
+conformer generation interfaces, which is essentially a two-state variant type
+holding either your requested conformational ensemble or some information about
+the reason for failure. The possibility of failure is explicit precisely to
+force you to consider it when integrating this library. A @masm{Molecule,
+molecule} you have generated may have stereopermutators with no possible
+assignments due to too short bridge lengths for multidentate ligands or too
+many large haptic ligands whose cones overlap in all arrangements. It may also
+conflict with the spatial model, which has upper limits on granted slack for
+particularly strained graphs.
 
 @section known-issues Known issues
 
@@ -511,7 +530,7 @@ systems would require special care in the following places:
 - In bond order discretization, if nearest integer discretization is chosen,
   aromatic bond orders (around 1.5) may be randomly rounded up or down, with no
   care taken to generate a Kekule structure of a contained conjugated system
-- In molecule comparison, mesomer kekule structures may not be recognized as
+- In molecule comparison, mesomer Kekule structures may not be recognized as
   equivalent molecules
 
 @section manual-glossary Glossary
@@ -545,7 +564,7 @@ include them, and there are no forward declarations.
 
 @note Additionally, some (very few) functions in the top-level headers are not
 meant for consumers. These are annotated \c MASM_NO_EXPORT, carry an explicit
-warning that they exist solely for library-internal purporses, and typcially
+warning that they exist solely for library-internal purposes, and typically
 yield incomplete types. It is advisable not to use these functions or create
 functionality dependent on possibly forward-declared types involved. They do
 not form part of the public interface and are thus subject to free

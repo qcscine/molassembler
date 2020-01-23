@@ -1,5 +1,3 @@
-set(OUTCOME_VERSION 0.1.0)
-
 include(${CMAKE_CURRENT_LIST_DIR}/boost_outcomeTargets.cmake)
 
 @PACKAGE_INIT@

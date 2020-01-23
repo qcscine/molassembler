@@ -1,5 +1,3 @@
-set(GOR1_VERSION 0.1.0)
-
 include(CMakeFindDependencyMacro)
 find_dependency(Boost REQUIRED)
 

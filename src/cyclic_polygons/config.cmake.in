@@ -1,8 +1,6 @@
 include(CMakeFindDependencyMacro)
 find_dependency(molassembler COMPONENTS temple REQUIRED)
 
-set(CYCLIC_POLYGONS_VERSION 0.1.0)
-
 include(${CMAKE_CURRENT_LIST_DIR}/cyclic_polygonsTargets.cmake)
 
 @PACKAGE_INIT@

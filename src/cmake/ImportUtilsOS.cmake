@@ -18,7 +18,7 @@ macro(import_utils_os)
       )
       # Note: Options defined in the project calling this function override default
       # option values specified in the imported project.
-      add_subdirectory(${scine-utils-os_SOURCE_DIR} ${scine-utils-os_BINARY_DIR})
+      add_subdirectory(${scine-utils-os_SOURCE_DIR} ${scine-utils-os_BINARY_DIR} EXCLUDE_FROM_ALL)
 
       if(SCINE_BUILD_PYTHON_BINDINGS)
         set(SCINE_UTILS_PYTHON_BINARY_PATH ${scine-utils-os_BINARY_DIR}/src/Utils)

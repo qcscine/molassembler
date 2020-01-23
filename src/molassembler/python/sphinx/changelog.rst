@@ -6,7 +6,7 @@ This project adheres to semantic versioning.
 This changelog only captures changes to the python bindings. For detailed
 changes to the underlying C++ library, see the repository's ``CHANGELOG.md``.
 
-1.0.0 - 2019-12-01
+1.0.0 - 2020-01-23
 ------------------
 Added
 ~~~~~
