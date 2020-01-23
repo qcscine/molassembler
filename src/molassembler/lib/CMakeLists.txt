@@ -10,7 +10,7 @@ endif()
 set(_LIBPREFIX ${CMAKE_CURRENT_SOURCE_DIR}/molassembler)
 
 set(HEADERS_all
-  ${_LIBPREFIX}/AngstromWrapper.h
+  ${_LIBPREFIX}/AngstromPositions.h
   ${_LIBPREFIX}/AtomStereopermutator.h
   ${_LIBPREFIX}/BondOrders.h
   ${_LIBPREFIX}/BondStereopermutator.h
@@ -78,7 +78,7 @@ set(HEADERS_all
 
 # collect sources
 set(SOURCES_all
-  ${_LIBPREFIX}/AngstromWrapper.cpp
+  ${_LIBPREFIX}/AngstromPositions.cpp
   ${_LIBPREFIX}/AtomStereopermutator.cpp
   ${_LIBPREFIX}/BondOrders.cpp
   ${_LIBPREFIX}/BondStereopermutator.cpp
@@ -346,7 +346,7 @@ set_target_properties(molassembler_static PROPERTIES
 install(
   TARGETS molassembler molassembler_static
   EXPORT molassemblerTargets
-  DESTINATION $<$<NOT:$<CONFIG:Release>>:$<CONFIG>/>lib
+  DESTINATION lib
 )
 
 molassembler_install_component_cmake_files(

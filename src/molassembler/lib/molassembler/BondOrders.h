@@ -21,7 +21,7 @@ using ElementTypeCollection = std::vector<ElementType>;
 namespace molassembler {
 
 // Forward-declarations
-class AngstromWrapper;
+class AngstromPositions;
 
 /*! @brief Calculates a bond order collection via UFF-like bond distance modelling
  *
@@ -33,7 +33,7 @@ class AngstromWrapper;
  */
 MASM_EXPORT Utils::BondOrderCollection uffBondOrders(
   const Utils::ElementTypeCollection& elements,
-  const AngstromWrapper& angstromWrapper
+  const AngstromPositions& angstromWrapper
 );
 
 } // namespace molassembler

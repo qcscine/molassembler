@@ -32,11 +32,11 @@ namespace detail {
 Eigen::MatrixXd gather(const Eigen::VectorXd& vectorizedPositions);
 
 /**
- * @brief Converts Nx3 matrix into AngstromWrapper type
+ * @brief Converts Nx3 matrix into AngstromPositions type
  *
  * @complexity{@math{\Theta(N)}}
  */
-AngstromWrapper convertToAngstromWrapper(const Eigen::MatrixXd& positions);
+AngstromPositions convertToAngstromPositions(const Eigen::MatrixXd& positions);
 
 /**
  * @brief Rotates and translates the generated coordinates against the fixed
@@ -86,7 +86,7 @@ MoleculeDGInformation gatherDGInformation(
 );
 
 //! @brief Distance Geometry refinement
-outcome::result<AngstromWrapper> refine(
+outcome::result<AngstromPositions> refine(
   Eigen::MatrixXd embeddedPositions,
   const DistanceBoundsMatrix& distanceBounds,
   const Configuration& configuration,
@@ -94,7 +94,7 @@ outcome::result<AngstromWrapper> refine(
 );
 
 // @brief Individual conformer generation routine
-outcome::result<AngstromWrapper> generateConformer(
+outcome::result<AngstromPositions> generateConformer(
   const Molecule& molecule,
   const Configuration& configuration,
   std::shared_ptr<MoleculeDGInformation>& DgDataPtr,
@@ -111,7 +111,7 @@ outcome::result<AngstromWrapper> generateConformer(
  * @see generateEnsemble
  */
 std::vector<
-  outcome::result<AngstromWrapper>
+  outcome::result<AngstromPositions>
 > run(
   const Molecule& molecule,
   unsigned numConformers,

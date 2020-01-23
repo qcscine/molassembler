@@ -33,7 +33,7 @@ namespace molassembler {
 
 // More forward declarations
 class Molecule;
-class AngstromWrapper;
+class AngstromPositions;
 
 //! Input and output
 namespace io {
@@ -76,7 +76,7 @@ private:
  */
 MASM_EXPORT std::pair<Utils::AtomCollection, Utils::BondOrderCollection> exchangeFormat(
   const Molecule& molecule,
-  AngstromWrapper angstromWrapper
+  AngstromPositions angstromWrapper
 );
 
 //! @overload
@@ -126,7 +126,7 @@ MASM_EXPORT std::vector<Molecule> split(const std::string& filename);
 MASM_EXPORT void write(
   const std::string& filename,
   const Molecule& molecule,
-  const AngstromWrapper& angstromWrapper
+  const AngstromPositions& angstromWrapper
 );
 
 //! @overload

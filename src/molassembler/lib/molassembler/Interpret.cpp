@@ -92,7 +92,7 @@ PrivateGraph discretize(
 
 Parts construeParts(
   const Utils::ElementTypeCollection& elements,
-  const AngstromWrapper& angstromWrapper,
+  const AngstromPositions& angstromWrapper,
   const Utils::BondOrderCollection& bondOrders,
   const BondDiscretizationOption discretization,
   const boost::optional<double>& stereopermutatorThreshold
@@ -196,7 +196,7 @@ Parts construeParts(
 
 MoleculesResult molecules(
   const Utils::ElementTypeCollection& elements,
-  const AngstromWrapper& angstromWrapper,
+  const AngstromPositions& angstromWrapper,
   const Utils::BondOrderCollection& bondOrders,
   const BondDiscretizationOption discretization,
   const boost::optional<double>& stereopermutatorThreshold
@@ -222,7 +222,7 @@ MoleculesResult molecules(
     for(auto& precursor : parts.precursors) {
       result.molecules.emplace_back(
         Graph {std::move(precursor.graph)},
-        AngstromWrapper(detail::paste(precursor.angstromPositions), LengthUnit::Angstrom),
+        AngstromPositions(detail::paste(precursor.angstromPositions), LengthUnit::Angstrom),
         precursor.bondStereopermutatorCandidatesOptional
       );
     }
@@ -242,7 +242,7 @@ MoleculesResult molecules(
 
 MoleculesResult molecules(
   const Utils::ElementTypeCollection& elements,
-  const AngstromWrapper& angstromWrapper,
+  const AngstromPositions& angstromWrapper,
   const BondDiscretizationOption discretization,
   const boost::optional<double>& stereopermutatorThreshold
 ) {
@@ -263,7 +263,7 @@ MoleculesResult molecules(
 ) {
   return molecules(
     atomCollection.getElements(),
-    AngstromWrapper {atomCollection.getPositions(), LengthUnit::Bohr},
+    AngstromPositions {atomCollection.getPositions(), LengthUnit::Bohr},
     bondOrders,
     discretization,
     stereopermutatorThreshold
@@ -275,7 +275,7 @@ MoleculesResult molecules(
   const BondDiscretizationOption discretization,
   const boost::optional<double>& stereopermutatorThreshold
 ) {
-  AngstromWrapper angstromWrapper {atomCollection.getPositions(), LengthUnit::Bohr};
+  AngstromPositions angstromWrapper {atomCollection.getPositions(), LengthUnit::Bohr};
 
   return molecules(
     atomCollection.getElements(),
@@ -346,7 +346,7 @@ std::vector<
 
 GraphsResult graphs(
   const Utils::ElementTypeCollection& elements,
-  const AngstromWrapper& angstromWrapper,
+  const AngstromPositions& angstromWrapper,
   const Utils::BondOrderCollection& bondOrders,
   BondDiscretizationOption discretization
 ) {
@@ -374,7 +374,7 @@ GraphsResult graphs(
 ) {
   return graphs(
     atomCollection.getElements(),
-    AngstromWrapper {atomCollection.getPositions(), LengthUnit::Bohr},
+    AngstromPositions {atomCollection.getPositions(), LengthUnit::Bohr},
     bondOrders,
     discretization
   );

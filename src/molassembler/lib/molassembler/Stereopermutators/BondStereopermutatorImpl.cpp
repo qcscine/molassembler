@@ -18,7 +18,7 @@
 #include "temple/Random.h"
 #include "temple/Stl17.h"
 
-#include "molassembler/AngstromWrapper.h"
+#include "molassembler/AngstromPositions.h"
 #include "molassembler/AtomStereopermutator.h"
 #include "molassembler/Detail/Cartesian.h"
 #include "molassembler/DistanceGeometry/SpatialModel.h"
@@ -854,7 +854,7 @@ void BondStereopermutator::Impl::applyPermutation(const std::vector<AtomIndex>& 
 }
 
 void BondStereopermutator::Impl::fit(
-  const AngstromWrapper& angstromWrapper,
+  const AngstromPositions& angstromWrapper,
   const AtomStereopermutator& stereopermutatorA,
   const AtomStereopermutator& stereopermutatorB,
   const FittingMode mode

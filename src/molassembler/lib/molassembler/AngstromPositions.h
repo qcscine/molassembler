@@ -22,17 +22,17 @@ namespace molassembler {
  * @brief A wrapper class around Utils' PositionCollection to emphasize
  *   that the positions stored therein are in Angstrom
  */
-class MASM_EXPORT AngstromWrapper {
+class MASM_EXPORT AngstromPositions {
 public:
   //! Positions in angstrom units
   Utils::PositionCollection positions;
 
   //! Default ctor
-  AngstromWrapper() = default;
+  AngstromPositions() = default;
   //! Preallocate space for N positions
-  explicit AngstromWrapper(unsigned N);
+  explicit AngstromPositions(unsigned N);
   //! Convert from a Utils::PositionCollection
-  explicit AngstromWrapper(
+  explicit AngstromPositions(
     const Utils::PositionCollection& pos,
     LengthUnit lengthUnit = LengthUnit::Bohr
   );

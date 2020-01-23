@@ -70,7 +70,7 @@ void BondStereopermutator::applyPermutation(const std::vector<AtomIndex>& permut
 }
 
 void BondStereopermutator::fit(
-  const AngstromWrapper& angstromWrapper,
+  const AngstromPositions& angstromWrapper,
   const AtomStereopermutator& stereopermutatorA,
   const AtomStereopermutator& stereopermutatorB,
   const FittingMode mode

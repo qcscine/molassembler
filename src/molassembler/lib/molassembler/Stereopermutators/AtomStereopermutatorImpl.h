@@ -100,7 +100,7 @@ public:
    */
   void fit(
     const Graph& graph,
-    const AngstromWrapper& angstromWrapper
+    const AngstromPositions& angstromWrapper
   );
 
   /*!

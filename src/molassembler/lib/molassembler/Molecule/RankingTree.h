@@ -1027,7 +1027,7 @@ private:
    * also included in this library.
    */
   void _applySequenceRules(
-    const boost::optional<AngstromWrapper>& positionsOption
+    const boost::optional<AngstromPositions>& positionsOption
   );
 
   /*!
@@ -1081,7 +1081,7 @@ public:
     AtomIndex atomToRank,
     const std::vector<AtomIndex>& excludeIndices = {},
     ExpansionOption expansionMethod = ExpansionOption::OnlyRequiredBranches,
-    const boost::optional<AngstromWrapper>& positionsOption = boost::none
+    const boost::optional<AngstromPositions>& positionsOption = boost::none
   );
 //!@}
 

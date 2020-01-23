@@ -39,10 +39,10 @@ Eigen::MatrixXd gather(const Eigen::VectorXd& vectorizedPositions) {
   return positionMatrix;
 }
 
-AngstromWrapper convertToAngstromWrapper(const Eigen::MatrixXd& positions) {
+AngstromPositions convertToAngstromPositions(const Eigen::MatrixXd& positions) {
   assert(positions.cols() == 3);
   const unsigned N = positions.rows();
-  AngstromWrapper angstromWrapper {N};
+  AngstromPositions angstromWrapper {N};
   for(unsigned i = 0; i < N; ++i) {
     angstromWrapper.positions.row(i) = Utils::Position {
       positions.row(i).transpose()
@@ -205,7 +205,7 @@ MoleculeDGInformation gatherDGInformation(
   return data;
 }
 
-outcome::result<AngstromWrapper> refine(
+outcome::result<AngstromPositions> refine(
   Eigen::MatrixXd embeddedPositions,
   const DistanceBoundsMatrix& distanceBounds,
   const Configuration& configuration,
@@ -371,15 +371,15 @@ outcome::result<AngstromWrapper> refine(
   auto gatheredPositions = detail::gather(transformedPositions);
 
   if(!configuration.fixedPositions.empty()) {
-    return detail::convertToAngstromWrapper(
+    return detail::convertToAngstromPositions(
       detail::fitAndSetFixedPositions(gatheredPositions, configuration)
     );
   }
 
-  return detail::convertToAngstromWrapper(gatheredPositions);
+  return detail::convertToAngstromPositions(gatheredPositions);
 }
 
-outcome::result<AngstromWrapper> generateConformer(
+outcome::result<AngstromPositions> generateConformer(
   const Molecule& molecule,
   const Configuration& configuration,
   std::shared_ptr<MoleculeDGInformation>& DgDataPtr,
@@ -443,7 +443,7 @@ outcome::result<AngstromWrapper> generateConformer(
 }
 
 std::vector<
-  outcome::result<AngstromWrapper>
+  outcome::result<AngstromPositions>
 > run(
   const Molecule& molecule,
   const unsigned numConformers,
@@ -451,7 +451,7 @@ std::vector<
   const boost::optional<unsigned> seedOption
 ) {
   using ReturnType = std::vector<
-    outcome::result<AngstromWrapper>
+    outcome::result<AngstromPositions>
   >;
 
   // In case there are zero assignment stereopermutators, we give up immediately

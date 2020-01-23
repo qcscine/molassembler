@@ -31,7 +31,7 @@ namespace molassembler {
 // Forward-declarations
 class Molecule;
 class Graph;
-class AngstromWrapper;
+class AngstromPositions;
 
 //! @brief Given Cartesian coordinates, construct graphs or molecules
 namespace interpret {
@@ -75,7 +75,7 @@ struct MASM_EXPORT MoleculesResult {
  */
 MASM_EXPORT MoleculesResult molecules(
   const Utils::ElementTypeCollection& elements,
-  const AngstromWrapper& angstromWrapper,
+  const AngstromPositions& angstromWrapper,
   const Utils::BondOrderCollection& bondOrders,
   BondDiscretizationOption discretization = BondDiscretizationOption::Binary,
   const boost::optional<double>& stereopermutatorThreshold = 1.4
@@ -102,7 +102,7 @@ MASM_EXPORT MoleculesResult molecules(
  */
 MASM_EXPORT MoleculesResult molecules(
   const Utils::ElementTypeCollection& elements,
-  const AngstromWrapper& angstromWrapper,
+  const AngstromPositions& angstromWrapper,
   BondDiscretizationOption discretization = BondDiscretizationOption::Binary,
   const boost::optional<double>& stereopermutatorThreshold = 1.4
 );
@@ -218,7 +218,7 @@ struct MASM_EXPORT GraphsResult {
  */
 MASM_EXPORT GraphsResult graphs(
   const Utils::ElementTypeCollection& elements,
-  const AngstromWrapper& angstromWrapper,
+  const AngstromPositions& angstromWrapper,
   const Utils::BondOrderCollection& bondOrders,
   BondDiscretizationOption discretization = BondDiscretizationOption::Binary
 );

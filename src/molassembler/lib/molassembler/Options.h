@@ -12,7 +12,7 @@
 #include "molassembler/Prng.h"
 
 #include "Utils/Geometry/ElementTypes.h"
-#include "molassembler/AngstromWrapper.h"
+#include "molassembler/AngstromPositions.h"
 
 namespace Scine {
 namespace molassembler {

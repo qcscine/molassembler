@@ -60,7 +60,7 @@ void AtomStereopermutator::applyPermutation(const std::vector<AtomIndex>& permut
 
 void AtomStereopermutator::fit(
   const Graph& graph,
-  const AngstromWrapper& angstromWrapper
+  const AngstromPositions& angstromWrapper
 ) {
   _pImpl->fit(graph, angstromWrapper);
 }

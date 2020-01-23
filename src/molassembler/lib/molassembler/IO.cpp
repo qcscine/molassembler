@@ -77,7 +77,7 @@ Molecule LineNotation::fromInChI(const std::string& inchi) {
 
 std::pair<Utils::AtomCollection, Utils::BondOrderCollection> exchangeFormat(
   const Molecule& molecule,
-  AngstromWrapper angstromWrapper
+  AngstromPositions angstromWrapper
 ) {
   return std::make_pair(
     Utils::AtomCollection(
@@ -216,7 +216,7 @@ std::vector<Molecule> split(const std::string& filename) {
 void write(
   const std::string& filename,
   const Molecule& molecule,
-  const AngstromWrapper& angstromWrapper
+  const AngstromPositions& angstromWrapper
 ) {
   assert(molecule.graph().N() == static_cast<AtomIndex>(angstromWrapper.positions.rows()));
   auto data = exchangeFormat(molecule, angstromWrapper);

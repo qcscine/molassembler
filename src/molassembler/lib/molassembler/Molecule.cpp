@@ -56,7 +56,7 @@ Molecule::Molecule(Graph graph) : _pImpl(
 
 Molecule::Molecule(
   Graph graph,
-  const AngstromWrapper& positions,
+  const AngstromPositions& positions,
   const boost::optional<
     std::vector<BondIndex>
   >& bondStereopermutatorCandidatesOptional
@@ -204,7 +204,7 @@ const StereopermutatorList& Molecule::stereopermutators() const {
 }
 
 StereopermutatorList Molecule::inferStereopermutatorsFromPositions(
-  const AngstromWrapper& angstromWrapper,
+  const AngstromPositions& angstromWrapper,
   const boost::optional<
     std::vector<BondIndex>
   >& explicitBondStereopermutatorCandidatesOption
@@ -232,7 +232,7 @@ bool Molecule::modularCompare(
 RankingInformation Molecule::rankPriority(
   const AtomIndex a,
   const std::vector<AtomIndex>& excludeAdjacent,
-  const boost::optional<AngstromWrapper>& positionsOption
+  const boost::optional<AngstromPositions>& positionsOption
 ) const {
   return _pImpl->rankPriority(a, excludeAdjacent, positionsOption);
 }

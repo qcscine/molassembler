@@ -377,7 +377,7 @@ DirectedConformerGenerator::Impl::getDecisionList(
   const Utils::PositionCollection& positions,
   const BondStereopermutator::FittingMode mode
 ) {
-  AngstromWrapper angstromPositions {positions};
+  AngstromPositions angstromPositions {positions};
 
   if(
     !temple::all_of(

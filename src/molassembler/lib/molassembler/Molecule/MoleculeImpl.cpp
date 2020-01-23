@@ -333,7 +333,7 @@ Molecule::Impl::Impl(Graph graph)
 
 Molecule::Impl::Impl(
   Graph graph,
-  const AngstromWrapper& positions,
+  const AngstromPositions& positions,
   const boost::optional<
     std::vector<BondIndex>
   >& bondStereopermutatorCandidatesOptional
@@ -918,7 +918,7 @@ const StereopermutatorList& Molecule::Impl::stereopermutators() const {
 }
 
 StereopermutatorList Molecule::Impl::inferStereopermutatorsFromPositions(
-  const AngstromWrapper& angstromWrapper,
+  const AngstromPositions& angstromWrapper,
   const boost::optional<
     std::vector<BondIndex>
   >& explicitBondStereopermutatorCandidatesOption
@@ -1113,7 +1113,7 @@ bool Molecule::Impl::modularCompare(
 RankingInformation Molecule::Impl::rankPriority(
   const AtomIndex a,
   const std::vector<AtomIndex>& excludeAdjacent,
-  const boost::optional<AngstromWrapper>& positionsOption
+  const boost::optional<AngstromPositions>& positionsOption
 ) const {
   if(!_isValidIndex(a)) {
     throw std::out_of_range("Supplied atom index is invalid!");

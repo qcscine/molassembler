@@ -51,12 +51,10 @@ if(${SHAPES_TRY_CONSTEXPR})
   target_compile_definitions(shapes PUBLIC SHAPES_TRY_CONSTEXPR)
 endif()
 
-# NOTE: The entirety of the generator expression below is provided purely for
-# the convenience of installing multiple build types into a single prefix folder
 install(
   TARGETS shapes
   EXPORT shapesTargets
-  DESTINATION $<$<NOT:$<CONFIG:Release>>:$<CONFIG>/>lib
+  DESTINATION lib
 )
 
 molassembler_install_component_cmake_files(

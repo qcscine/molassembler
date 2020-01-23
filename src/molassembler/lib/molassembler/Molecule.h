@@ -164,7 +164,7 @@ public:
    */
   Molecule(
     Graph graph,
-    const AngstromWrapper& positions,
+    const AngstromPositions& positions,
     const boost::optional<
       std::vector<BondIndex>
     >& bondStereopermutatorCandidatesOptional = boost::none
@@ -663,7 +663,7 @@ public:
    *   bond (irrelevant if left default).
    */
   StereopermutatorList inferStereopermutatorsFromPositions(
-    const AngstromWrapper& angstromWrapper,
+    const AngstromPositions& angstromWrapper,
     const boost::optional<
       std::vector<BondIndex>
     >& explicitBondStereopermutatorCandidatesOption = boost::none
@@ -697,7 +697,7 @@ public:
   RankingInformation rankPriority(
     AtomIndex a,
     const std::vector<AtomIndex>& excludeAdjacent = {},
-    const boost::optional<AngstromWrapper>& positionsOption = boost::none
+    const boost::optional<AngstromPositions>& positionsOption = boost::none
   ) const;
 //!@}
 

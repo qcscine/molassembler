@@ -194,7 +194,7 @@ public:
    */
   void fit(
     const Graph& graph,
-    const AngstromWrapper& angstromWrapper
+    const AngstromPositions& angstromWrapper
   );
 
   /*! @brief Propagate the stereocenter state through a possible ranking change

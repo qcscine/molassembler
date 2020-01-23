@@ -655,7 +655,7 @@ public:
  * meaning from lowest priority to highest priority.
  */
 void RankingTree::_applySequenceRules(
-  const boost::optional<AngstromWrapper>& positionsOption
+  const boost::optional<AngstromPositions>& positionsOption
 ) {
   /* Sequence rule 2
    * - A node with higher atomic mass precedes ones with lower atomic mass
@@ -2964,7 +2964,7 @@ RankingTree::RankingTree(
   const AtomIndex atomToRank,
   const std::vector<AtomIndex>& excludeIndices,
   const ExpansionOption expansionMethod,
-  const boost::optional<AngstromWrapper>& positionsOption
+  const boost::optional<AngstromPositions>& positionsOption
 ) : _graph(graph),
     _stereopermutatorsRef(stereopermutators),
     _adaptedMolGraphviz(_adaptMolGraph(std::move(molGraphviz)))

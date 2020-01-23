@@ -37,7 +37,7 @@ class Engine;
 } // namespace random
 
 // Forward-declarations
-class AngstromWrapper;
+class AngstromPositions;
 class PrivateGraph;
 struct RankingInformation;
 class AtomStereopermutator;
@@ -210,7 +210,7 @@ public:
    *   on geometric closeness to the idealized minimum
    */
   void fit(
-    const AngstromWrapper& angstromWrapper,
+    const AngstromPositions& angstromWrapper,
     const AtomStereopermutator& stereopermutatorA,
     const AtomStereopermutator& stereopermutatorB,
     FittingMode mode = FittingMode::Thresholded

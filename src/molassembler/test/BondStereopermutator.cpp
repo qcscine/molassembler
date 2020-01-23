@@ -149,7 +149,7 @@ void checkExpectations(const boost::filesystem::path& filePath) {
     // Reinterpret the molecule from the existing graph and the generated positions
     Molecule reinterpreted {
       mol.graph(),
-      AngstromWrapper {positionsResult.value()}
+      AngstromPositions {positionsResult.value()}
     };
 
     bool pass = reinterpreted == mol;

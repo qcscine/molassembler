@@ -130,7 +130,7 @@ BOOST_FIXTURE_TEST_CASE(AtomStereopermutationCGFitCoherence, LowTemperatureFixtu
        */
       unsigned matches = 0;
       unsigned mismatches = 0;
-      boost::optional<AngstromWrapper> matchingPositions;
+      boost::optional<AngstromPositions> matchingPositions;
       for(const auto& positionResult : ensemble) {
         if(!positionResult) {
           std::cout << "Failed to generate a conformer: " << positionResult.error().message() << "\n";
@@ -222,7 +222,7 @@ BOOST_AUTO_TEST_CASE(BidentateAssignmentRecognized) {
   if(auto conf = generateRandomConformation(pincer)) {
     Molecule reinterpreted {
       pincer.graph(),
-      AngstromWrapper {conf.value()}
+      AngstromPositions {conf.value()}
     };
     auto assignmentOptional = temple::optionals::flatMap(
       reinterpreted.stereopermutators().option(0),

@@ -9,7 +9,7 @@
 #include "Utils/Typenames.h"
 #include "Utils/Bonds/BondOrderCollection.h"
 
-#include "molassembler/AngstromWrapper.h"
+#include "molassembler/AngstromPositions.h"
 #include "molassembler/Modeling/BondDistance.h"
 
 namespace Scine {
@@ -18,7 +18,7 @@ namespace molassembler {
 
 Utils::BondOrderCollection uffBondOrders(
   const Utils::ElementTypeCollection& elements,
-  const AngstromWrapper& angstromWrapper
+  const AngstromPositions& angstromWrapper
 ) {
   const unsigned N = elements.size();
 

@@ -93,7 +93,7 @@ struct BondStereopermutator::Impl : public temple::crtp::LexicographicComparable
   void applyPermutation(const std::vector<AtomIndex>& permutation);
 
   void fit(
-    const AngstromWrapper& angstromWrapper,
+    const AngstromPositions& angstromWrapper,
     const AtomStereopermutator& stereopermutatorA,
     const AtomStereopermutator& stereopermutatorB,
     FittingMode mode

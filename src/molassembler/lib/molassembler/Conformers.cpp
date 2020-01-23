@@ -20,7 +20,7 @@ std::vector<
 ) {
   auto result = distance_geometry::run(molecule, numStructures, configuration, boost::none);
 
-  /* Convert the AngstromWrappers into PositionCollections */
+  /* Convert the AngstromPositionss into PositionCollections */
   std::vector<
     outcome::result<Utils::PositionCollection>
   > converted;
@@ -49,7 +49,7 @@ std::vector<
 ) {
   auto result = distance_geometry::run(molecule, numStructures, configuration, seed);
 
-  /* Convert the AngstromWrappers into PositionCollections */
+  /* Convert the AngstromPositionss into PositionCollections */
   std::vector<
     outcome::result<Utils::PositionCollection>
   > converted;

@@ -4,17 +4,17 @@
  *   See LICENSE.txt
  */
 
-#include "molassembler/AngstromWrapper.h"
+#include "molassembler/AngstromPositions.h"
 
 #include "Utils/Constants.h"
 
 namespace Scine {
 namespace molassembler {
 
-AngstromWrapper::AngstromWrapper(const unsigned N)
+AngstromPositions::AngstromPositions(const unsigned N)
   : positions(Utils::PositionCollection::Zero(N, 3)) {}
 
-AngstromWrapper::AngstromWrapper(
+AngstromPositions::AngstromPositions(
   const Utils::PositionCollection& pos,
   const LengthUnit lengthUnit
 ) {
@@ -25,7 +25,7 @@ AngstromWrapper::AngstromWrapper(
   }
 }
 
-Utils::PositionCollection AngstromWrapper::getBohr() const {
+Utils::PositionCollection AngstromPositions::getBohr() const {
   return positions * Utils::Constants::bohr_per_angstrom;
 }
 

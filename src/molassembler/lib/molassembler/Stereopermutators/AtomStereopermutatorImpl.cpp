@@ -883,7 +883,7 @@ const std::vector<unsigned>& AtomStereopermutator::Impl::getShapePositionMap() c
 
 void AtomStereopermutator::Impl::fit(
   const Graph& graph,
-  const AngstromWrapper& angstromWrapper
+  const AngstromPositions& angstromWrapper
 ) {
   const unsigned S = shapes::size(_shape);
   assert(S == _ranking.sites.size());
