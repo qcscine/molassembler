@@ -16,9 +16,14 @@ macro(import_utils_os)
         GIT_TAG        develop
         QUIET
       )
+
       # Note: Options defined in the project calling this function override default
       # option values specified in the imported project.
-      add_subdirectory(${scine-utils-os_SOURCE_DIR} ${scine-utils-os_BINARY_DIR} EXCLUDE_FROM_ALL)
+      set(_SCINE_BUILD_TESTS ${SCINE_BUILD_TESTS})
+      set(SCINE_BUILD_TESTS OFF)
+      add_subdirectory(${scine-utils-os_SOURCE_DIR} ${scine-utils-os_BINARY_DIR})
+      set(SCINE_BUILD_TESTS ${_SCINE_BUILD_TESTS})
+      unset(_SCINE_BUILD_TESTS)
 
       if(SCINE_BUILD_PYTHON_BINDINGS)
         set(SCINE_UTILS_PYTHON_BINARY_PATH ${scine-utils-os_BINARY_DIR}/src/Utils)

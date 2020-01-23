@@ -95,8 +95,6 @@ if(SCINE_BUILD_DOCS)
           set_tests_properties(PythonBindingsDoctest PROPERTIES
             ENVIRONMENT PYTHONPATH=${SCINE_UTILS_PYTHON_BINARY_PATH}:$ENV{PYTHONPATH}
           )
-          # Make sure the scine_utilities are built (it's dir is EXCLUDE_FROM_ALL)
-          add_dependencies(molassembler_python scine_utilities)
         endif()
       else()
         message(STATUS "Python documentation testing is disabled as the scine_utilities module cannot be found and is not being built in-tree")
