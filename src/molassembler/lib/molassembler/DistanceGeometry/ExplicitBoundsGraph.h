@@ -15,15 +15,13 @@
 // #define MOLASSEMBLER_EXPLICIT_GRAPH_USE_SPECIALIZED_GOR1_ALGORITHM
 
 #include "boost/graph/adjacency_list.hpp"
-#include "boost_outcome/outcome.hpp"
 #include "Eigen/Core"
 #include "Utils/Geometry/ElementInfo.h"
 
-#include "molassembler/Export.h"
 #include "molassembler/DistanceGeometry/ValueBounds.h"
+#include "molassembler/Conformers.h"
 
 namespace Scine {
-
 namespace molassembler {
 
 namespace random {
@@ -38,7 +36,6 @@ class PrivateGraph;
 namespace distance_geometry {
 
 // Forward-declarations
-enum class Partiality;
 class DistanceBoundsMatrix;
 
 
@@ -226,9 +223,7 @@ private:
 };
 
 } // namespace distance_geometry
-
 } // namespace molassembler
-
 } // namespace Scine
 
 #endif

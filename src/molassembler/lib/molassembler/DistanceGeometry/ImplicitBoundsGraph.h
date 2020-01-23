@@ -14,19 +14,18 @@
 
 // #define MOLASSEMBLER_IMPLICIT_GRAPH_USE_SPECIALIZED_GOR1_ALGORITHM
 
-#include "boost_outcome/outcome.hpp"
 #include "boost/property_map/property_map.hpp"
 #include "Eigen/Core"
 #include "Utils/Geometry/ElementTypes.h"
 
 #include "molassembler/DistanceGeometry/ValueBounds.h"
+#include "molassembler/Conformers.h"
 
 #include <array>
 #include <map>
 #include <tuple>
 
 namespace Scine {
-
 namespace molassembler {
 
 namespace random {
@@ -41,7 +40,6 @@ class PrivateGraph;
 namespace distance_geometry {
 
 // Forward-declarations
-enum class Partiality;
 class DistanceBoundsMatrix;
 
 /*!
@@ -523,9 +521,7 @@ public:
 };
 
 } // namespace distance_geometry
-
 } // namespace molassembler
-
 } // namespace Scine
 
 #endif

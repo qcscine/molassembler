@@ -1,14 +1,11 @@
 set(HEADERS_ALL ${CMAKE_CURRENT_SOURCE_DIR}/CyclicPolygons.h)
 
 add_library(cyclic_polygons INTERFACE)
-target_sources(
-  cyclic_polygons INTERFACE $<BUILD_INTERFACE:${HEADERS_ALL}>
-)
+target_sources(cyclic_polygons INTERFACE $<BUILD_INTERFACE:${HEADERS_ALL}>)
 
-target_include_directories(
-  cyclic_polygons INTERFACE
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
-    $<INSTALL_INTERFACE:$<INSTALL_PREFIX>/include>
+target_include_directories(cyclic_polygons INTERFACE
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+  $<INSTALL_INTERFACE:$<INSTALL_PREFIX>/include>
 )
 
 target_link_libraries(cyclic_polygons INTERFACE temple)

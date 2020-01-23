@@ -7,6 +7,9 @@ project(molassembler
 )
 enable_testing()
 
+# Build molassembler shared by default
+option(BUILD_SHARED_LIBS ON)
+
 # Project-specific options
 option(MOLASSEMBLER_ANALYSIS_BINARIES "Compile analysis binaries" OFF)
 option(MOLASSEMBLER_VALIDATION_TESTS "Compile validation tests" OFF)

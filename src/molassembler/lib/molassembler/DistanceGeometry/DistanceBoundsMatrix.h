@@ -15,7 +15,6 @@
 #include "molassembler/Conformers.h"
 
 namespace Scine {
-
 namespace molassembler {
 
 namespace random {
@@ -197,9 +196,7 @@ private:
 };
 
 } // namespace distance_geometry
-
 } // namespace molassembler
-
 } // namespace Scine
 
 #endif

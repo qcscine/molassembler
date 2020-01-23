@@ -14,13 +14,10 @@
 #include "molassembler/DistanceGeometry/ValueBounds.h"
 #include "molassembler/Types.h"
 
-#include <tuple>
 #include <vector>
-#include <cassert>
 #include <array>
 
 namespace Scine {
-
 namespace molassembler {
 
 //! Distance geometry-related classes and functions
@@ -48,17 +45,7 @@ struct ChiralConstraint {
    */
   double weight = 1.0;
 
-  ChiralConstraint(
-    SiteSequence passSites,
-    const double passLower,
-    const double passUpper
-  ) : sites(std::move(passSites)),
-      lower(passLower),
-      upper(passUpper)
-  {
-    // Must be <= because flat targets have lower = upper = 0
-    assert(lower <= upper);
-  }
+  ChiralConstraint(SiteSequence passSites, double passLower, double passUpper);
 };
 
 /**
@@ -78,22 +65,11 @@ struct DihedralConstraint {
   //! Upper bound on signed volume
   double upper;
 
-  DihedralConstraint(
-    SiteSequence passSites,
-    const double passLower,
-    const double passUpper
-  ) : sites(std::move(passSites)),
-      lower(passLower),
-      upper(passUpper)
-  {
-    assert(lower <= upper);
-  }
+  DihedralConstraint(SiteSequence passSites, double passLower, double passUpper);
 };
 
 } // namespace distance_geometry
-
 } // namespace molassembler
-
 } // namespace Scine
 
 #endif

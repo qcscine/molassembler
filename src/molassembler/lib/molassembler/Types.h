@@ -10,7 +10,7 @@
 
 #include "molassembler/Export.h"
 #include <cstddef>
-#include <iterator>
+#include <type_traits>
 
 namespace Scine {
 
@@ -80,14 +80,10 @@ struct MASM_EXPORT BondIndex {
   bool operator == (const BondIndex& other) const;
 
   //! Returns the address of first
-  const_iterator begin() const {
-    return &first;
-  }
+  const_iterator begin() const;
 
   //! Returns the address past second
-  const_iterator end() const {
-    return std::next(&second);
-  }
+  const_iterator end() const;
 };
 
 /*! @brief Hash for BondIndex so it can be used as a key type in unordered containers

@@ -27,9 +27,7 @@
 
 
 namespace Scine {
-
 namespace molassembler {
-
 namespace distance_geometry {
 
 /* Class Implementation */
@@ -828,7 +826,5 @@ ImplicitBoundsGraph::in_group_edge_iterator::in_group_edge_iterator(
 }
 
 } // namespace distance_geometry
-
 } // namespace molassembler
-
 } // namespace Scine

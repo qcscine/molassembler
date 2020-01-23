@@ -90,6 +90,7 @@ set(SOURCES_all
   ${_LIBPREFIX}/DistanceGeometry/ConformerGeneration.cpp
   ${_LIBPREFIX}/DistanceGeometry/DirectedConformerGeneratorImpl.cpp
   ${_LIBPREFIX}/DistanceGeometry/DistanceBoundsMatrix.cpp
+  ${_LIBPREFIX}/DistanceGeometry/DistanceGeometry.cpp
   ${_LIBPREFIX}/DistanceGeometry/ExplicitBoundsGraph.cpp
   ${_LIBPREFIX}/DistanceGeometry/ImplicitBoundsGraph.cpp
   ${_LIBPREFIX}/DistanceGeometry/MetricMatrix.cpp
@@ -171,7 +172,7 @@ if(${CMAKE_VERSION} VERSION_GREATER_EQUAL "3.12.0")
   target_link_libraries(molassembler_obj PRIVATE
     temple
     Boost::boost
-    ${MOLASSEMBLER_UTILS_TARGET}
+    Scine::UtilsOS
     boost_outcome
     RingDecomposerLibStatic
     stereopermutation
@@ -186,7 +187,7 @@ if(${CMAKE_VERSION} VERSION_GREATER_EQUAL "3.12.0")
 else()
   target_include_directories(molassembler_obj
     PUBLIC
-    $<TARGET_PROPERTY:${MOLASSEMBLER_UTILS_TARGET},INTERFACE_INCLUDE_DIRECTORIES>
+      $<TARGET_PROPERTY:Scine::UtilsOS,INTERFACE_INCLUDE_DIRECTORIES>
       $<TARGET_PROPERTY:boost_outcome,INTERFACE_INCLUDE_DIRECTORIES>
       $<TARGET_PROPERTY:RingDecomposerLibStatic,INTERFACE_INCLUDE_DIRECTORIES>
       $<TARGET_PROPERTY:Boost::boost,INTERFACE_INCLUDE_DIRECTORIES>
@@ -204,18 +205,65 @@ target_compile_options(molassembler_obj PRIVATE
   $<$<BOOL:${OpenMP_CXX_FOUND}>:${OpenMP_CXX_FLAGS}>
 )
 # Suppress warnings coming from various external libraries
-target_include_directories(molassembler_obj
-  SYSTEM PRIVATE
-    ${Boost_INCLUDE_DIR}
-    ${RDL_INCLUDE_DIR}
-    $<TARGET_PROPERTY:Eigen3::Eigen,INTERFACE_INCLUDE_DIRECTORIES>
-    $<TARGET_PROPERTY:json,INTERFACE_INCLUDE_DIRECTORIES>
-    $<TARGET_PROPERTY:nauty,INTERFACE_INCLUDE_DIRECTORIES>
+target_include_directories(molassembler_obj SYSTEM PRIVATE
+  ${Boost_INCLUDE_DIR}
+  ${RDL_INCLUDE_DIR}
+  $<TARGET_PROPERTY:Eigen3::Eigen,INTERFACE_INCLUDE_DIRECTORIES>
+  $<TARGET_PROPERTY:json,INTERFACE_INCLUDE_DIRECTORIES>
+  $<TARGET_PROPERTY:nauty,INTERFACE_INCLUDE_DIRECTORIES>
 )
 set_target_properties(molassembler_obj PROPERTIES
   CXX_VISIBILITY_PRESET hidden
   VISIBILITY_INLINES_HIDDEN ON
 )
+
+function(molassembler_includes_and_properties target_name)
+  target_include_directories(${target_name} PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
+    $<INSTALL_INTERFACE:$<INSTALL_PREFIX>/include>
+  )
+  set_target_properties(${target_name} PROPERTIES
+    CXX_VISIBILITY_PRESET hidden
+    VISIBILITY_INLINES_HIDDEN ON
+    OUTPUT_NAME "molassembler"
+  )
+endfunction()
+
+function(molassembler_library_links target_name)
+  # Some of the dependencies of this possibly static version of molassembler
+  # are INTERFACE libraries. We need them only for implementation details and
+  # they do not provide any symbols, so they are linked PRIVATE. CMake still
+  # references their targets as LINK_ONLY dependencies in
+  # INTERFACE_LINK_LIBRARIES for the static library!
+  #
+  # Yet we want only the include information from these libraries so that
+  # the library can be built properly, yet not the link dependency.
+  # See in particular: https://gitlab.kitware.com/cmake/cmake/issues/15415
+  target_include_directories(${target_name} PRIVATE
+    $<TARGET_PROPERTY:cyclic_polygons,INTERFACE_INCLUDE_DIRECTORIES>
+    $<TARGET_PROPERTY:gor1,INTERFACE_INCLUDE_DIRECTORIES>
+    $<TARGET_PROPERTY:json,INTERFACE_INCLUDE_DIRECTORIES>
+    $<TARGET_PROPERTY:temple,INTERFACE_INCLUDE_DIRECTORIES>
+  )
+
+  # And then we link in the rest of the libraries just like in the shared case
+  target_link_libraries(${target_name}
+    PUBLIC
+      Scine::UtilsOS
+      boost_outcome
+      shapes
+    PRIVATE
+      stereopermutation
+      Boost::filesystem
+      Boost::system
+      RingDecomposerLibStatic
+      nauty
+      $<$<BOOL:${OpenMP_CXX_FOUND}>:OpenMP::OpenMP_CXX>
+  )
+
+  target_link_eigen(${target_name} PUBLIC)
+endfunction()
 
 # Shared library
 add_library(molassembler SHARED
@@ -223,47 +271,9 @@ add_library(molassembler SHARED
   ${CMAKE_CURRENT_BINARY_DIR}/molassembler/Version.h
   ${CMAKE_CURRENT_BINARY_DIR}/molassembler/Export.h
 )
-target_include_directories(molassembler
-  PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
-    $<INSTALL_INTERFACE:$<INSTALL_PREFIX>/include>
-)
-
+molassembler_includes_and_properties(molassembler)
+molassembler_library_links(molassembler)
 add_library(molassembler::molassembler ALIAS molassembler)
-
-# Linking for the shared version of molassembler is fairly straightforward.
-# Some notes:
-# - Boost::boost Types like boost::optional form part of the public interface
-# - Boost::filesystem, ::system are required for implementation details and
-#   hence PRIVATE, subsumed since we are using the boost static libraries
-# - boost_outcome Result types form part of the public interface, distributed
-#   as a COMPONENT in this build tree (see extern)
-# - All other PRIVATE libraries are STATIC or INTERFACE libraries that we can
-#   subsume
-target_link_libraries(molassembler
-  PUBLIC
-    Boost::boost
-    ${MOLASSEMBLER_UTILS_TARGET}
-    boost_outcome
-    shapes
-  PRIVATE
-    temple
-    stereopermutation
-    cyclic_polygons
-    gor1
-    json
-    Boost::filesystem
-    Boost::system
-    RingDecomposerLibStatic
-    nauty
-    $<$<BOOL:${OpenMP_CXX_FOUND}>:OpenMP::OpenMP_CXX>
-)
-target_link_eigen(molassembler PUBLIC)
-set_target_properties(molassembler PROPERTIES
-  CXX_VISIBILITY_PRESET hidden
-  VISIBILITY_INLINES_HIDDEN ON
-)
 
 # Static library
 add_library(molassembler_static STATIC
@@ -271,77 +281,9 @@ add_library(molassembler_static STATIC
   ${CMAKE_CURRENT_BINARY_DIR}/molassembler/Version.h
   ${CMAKE_CURRENT_BINARY_DIR}/molassembler/Export.h
 )
-set_target_properties(molassembler_static PROPERTIES
-  OUTPUT_NAME "molassembler"
-)
-target_include_directories(molassembler_static PUBLIC
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
-  $<INSTALL_INTERFACE:$<INSTALL_PREFIX>/include>
-)
+molassembler_includes_and_properties(molassembler_static)
+molassembler_library_links(molassembler_static)
 add_library(molassembler::molassembler_static ALIAS molassembler_static)
-
-# The linking for the static version of molassembler is more complicated.
-#
-# Regarding the differentiation between public and private dependencies, it is
-# important to note two things:
-# - When B is linked into A, and both A and B are static libraries, no
-#   transfer of symbols from B into A is performed at all. If you wish to
-#   perform something of that likeness, you need to literally concatenate the
-#   two static libraries together with the platform archiver. This does NOT
-#   perform anything of the normal duties of a linker in the sense that no
-#   distinction is made whether the symbols in B are actually needed or not,
-#   the archiver merely pastes these libraries together.
-# - For the above reason, and since static libraries carry no information by
-#   themselves about where encountered undefined symbols may be found, CMake
-#   handles PRIVATE linking of a static library as if it were PUBLIC and
-#   propagates the linking requirements of B onto A.
-#
-# In effect, no distinction is made between PUBLIC and PRIVATE for static A
-# and B. The behavioral claims here are based on
-# https://cmake.org/pipermail/cmake/2016-May/063400.html
-#
-# However, some of the dependencies of this static version of molassembler are
-# targets declared via add_library(x INTERFACE), i.e. they are header-only. We
-# need them only for implementation details and they do not provide any
-# symbols, so they are PRIVATE. CMake still references their targets as
-# LINK_ONLY dependencies in INTERFACE_LINK_LIBRARIES for the static library!
-#
-# Yet we want only the include information from these libraries so that
-# molassembler_static can be built properly, yet not the link dependency.
-#
-# So we link the special cases, populating all dependency information:
-target_link_libraries(molassembler_static PRIVATE
-  cyclic_polygons
-  gor1
-  json
-)
-
-# And then reset the libraries listed in INTERFACE_LINK_LIBRARIES (which are
-# only the aforementioned libraries specified in a LINK_ONLY generator
-# expression). This removes the link dependency but does retain the
-# information required to build molassembler_static from those targets.
-set_target_properties(molassembler_static PROPERTIES
-  INTERFACE_LINK_LIBRARIES ""
-)
-
-# And finally we link in the rest of the public interface libraries
-target_link_libraries(molassembler_static PUBLIC
-  Boost::boost
-  ${MOLASSEMBLER_UTILS_TARGET}
-  boost_outcome
-  RingDecomposerLibStatic
-  stereopermutation
-  Boost::filesystem
-  Boost::system
-  nauty
-  $<$<BOOL:${OpenMP_CXX_FOUND}>:OpenMP::OpenMP_CXX>
-)
-target_link_eigen(molassembler_static PUBLIC)
-set_target_properties(molassembler_static PROPERTIES
-  CXX_VISIBILITY_PRESET hidden
-  VISIBILITY_INLINES_HIDDEN ON
-)
 
 install(
   TARGETS molassembler molassembler_static

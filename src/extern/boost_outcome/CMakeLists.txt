@@ -39,10 +39,9 @@ set(HEADERS_All
 
 add_library(boost_outcome INTERFACE)
 target_sources(boost_outcome INTERFACE $<BUILD_INTERFACE:${HEADERS_All}>)
-target_include_directories(
-  boost_outcome INTERFACE
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
-    $<INSTALL_INTERFACE:$<INSTALL_PREFIX>/include>
+target_include_directories(boost_outcome INTERFACE
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+  $<INSTALL_INTERFACE:$<INSTALL_PREFIX>/include>
 )
 
 install(

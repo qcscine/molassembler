@@ -9,9 +9,9 @@
 #include "boost/functional/hash.hpp"
 
 #include <tuple>
+#include <iterator>
 
 namespace Scine {
-
 namespace molassembler {
 
 static_assert(
@@ -39,6 +39,15 @@ bool BondIndex::operator == (const BondIndex& other) const {
   return std::tie(first, second) == std::tie(other.first, other.second);
 }
 
+BondIndex::const_iterator BondIndex::begin() const {
+  return &first;
+}
+
+//! Returns the address past second
+BondIndex::const_iterator BondIndex::end() const {
+  return std::next(&second);
+}
+
 std::size_t hash_value(const BondIndex& bond) {
   std::size_t seed = 0;
   boost::hash_combine(seed, bond.first);
@@ -47,5 +56,4 @@ std::size_t hash_value(const BondIndex& bond) {
 }
 
 } // namespace molassembler
-
 } // namespace Scine
