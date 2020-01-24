@@ -5,7 +5,6 @@
  */
 
 #include <boost/test/unit_test.hpp>
-#include "boost/range/iterator_range_core.hpp"
 
 #include "molassembler/Cycles.h"
 #include "molassembler/Editing.h"
@@ -61,7 +60,7 @@ auto combineUnaryPredicates(P1&& p1, P2&& p2) {
 }
 
 boost::optional<AtomIndex> findSingle(const Molecule& mol, const Utils::ElementType element) {
-  for(const AtomIndex i : boost::make_iterator_range(mol.graph().atoms())) {
+  for(const AtomIndex i : mol.graph().atoms()) {
     if(mol.graph().elementType(i) == element) {
       return {i};
     }
@@ -73,7 +72,7 @@ boost::optional<AtomIndex> findSingle(const Molecule& mol, const Utils::ElementT
 std::vector<AtomIndex> findMultiple(const Molecule& mol, const Utils::ElementType element) {
   std::vector<AtomIndex> matches;
 
-  for(const AtomIndex i : boost::make_iterator_range(mol.graph().atoms())) {
+  for(const AtomIndex i : mol.graph().atoms()) {
     if(mol.graph().elementType(i) == element) {
       matches.push_back(i);
     }
@@ -84,7 +83,7 @@ std::vector<AtomIndex> findMultiple(const Molecule& mol, const Utils::ElementTyp
 
 template<typename UnaryPredicate>
 boost::optional<BondIndex> findEdge(const Molecule& mol, UnaryPredicate&& predicate) {
-  for(const BondIndex bond : boost::make_iterator_range(mol.graph().bonds())) {
+  for(const BondIndex bond : mol.graph().bonds()) {
     if(predicate(bond)) {
       return bond;
     }

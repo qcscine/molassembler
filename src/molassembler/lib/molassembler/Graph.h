@@ -12,14 +12,10 @@
 #include "Utils/Geometry/ElementTypes.h"
 
 #include "molassembler/Types.h"
+#include "molassembler/IteratorRange.h"
 
 #include <memory>
 #include <vector>
-
-#if __cpp_lib_experimental_propagate_const >= 201505
-#define MOLASSEMBLER_ENABLE_PROPAGATE_CONST
-#include <experimental/propagate_const>
-#endif
 
 namespace Scine {
 // Forward-declarations
@@ -134,7 +130,7 @@ public:
      * @param begin Whether this iterator denotes a begin or end iterator
      *
      * @note This constructor is enabled if the template parameter
-     *   isVertexInitialized is false
+     *   isVertexInitialized is true
      */
     template<bool Dependent = isVertexInitialized, std::enable_if_t<Dependent, int>...>
     InnerBasedIterator(AtomIndex a, const PrivateGraph& inner, bool begin);
@@ -153,14 +149,7 @@ public:
 
   private:
     struct Impl;
-
-#ifdef MOLASSEMBLER_ENABLE_PROPAGATE_CONST
-    std::experimental::propagate_const<
-      std::unique_ptr<Impl>
-    > _pImpl;
-#else
     std::unique_ptr<Impl> _pImpl;
-#endif
   };
 
   //! Iterator type yielding all valid atom indices
@@ -171,9 +160,6 @@ public:
   using AdjacencyIterator = InnerBasedIterator<AtomIndex, true>;
   //! Iterator type yielding incident bonds to an atom
   using IncidentEdgesIterator = InnerBasedIterator<BondIndex, true>;
-
-  template<typename Iter>
-  using Range = std::pair<Iter, Iter>;
 //!@}
 
 //!@name Special member functions
@@ -288,39 +274,31 @@ public:
    *   indices.
    *
    * @complexity{@math{\Theta(N)}}
-   * @note Use e.g. `boost::make_iterator_range` to yield an object with begin
-   *   and end members for range-for usage
    */
-  Range<AtomIterator> atoms() const;
+  IteratorRange<AtomIterator> atoms() const;
   /*! @brief A begin-end pair of iterators that yield the range of valid bond
    *   indices
    *
    * @complexity{@math{\Theta(N)}}
-   * @note Use e.g. `boost::make_iterator_range` to yield an object with begin
-   *   and end members for range-for usage
    */
-  Range<BondIterator> bonds() const;
+  IteratorRange<BondIterator> bonds() const;
   /*! @brief Fetch iterator pair yielding adjacents of an atom
    *
    * @param a The atom whose adjacents are desired
    *
    * @complexity{@math{\Theta(N)}}
-   * @note Use e.g. `boost::make_iterator_range` to yield an object with begin
-   *   and end members for range-for usage
    * @returns A begin-end pair of iterators that yield adjacent atoms of an atom
    */
-  Range<AdjacencyIterator> adjacents(AtomIndex a) const;
+  IteratorRange<AdjacencyIterator> adjacents(AtomIndex a) const;
   /*! @brief Fetch iterator pair yielding bonds indices indicent to an atom
    *
    * @param a The atom whose incident atoms are desired
    *
    * @complexity{@math{\Theta(N)}}
-   * @note Use e.g. `boost::make_iterator_range` to yield an object with begin
-   *   and end members for range-for usage
    * @returns A begin-end pair of iterators that yield incident bond indices of
    *   an atom
    */
-  Range<IncidentEdgesIterator> bonds(AtomIndex a) const;
+  IteratorRange<IncidentEdgesIterator> bonds(AtomIndex a) const;
 //!@}
 
   /*! @brief Access to library-internal graph representation class
@@ -342,13 +320,7 @@ public:
   MASM_NO_EXPORT const PrivateGraph& inner() const;
 
 private:
-#ifdef MOLASSEMBLER_ENABLE_PROPAGATE_CONST
-  std::experimental::propagate_const<
-    std::unique_ptr<PrivateGraph>
-  > _innerPtr;
-#else
   std::unique_ptr<PrivateGraph> _innerPtr;
-#endif
 };
 
 } // namespace molassembler

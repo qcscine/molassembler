@@ -6,10 +6,11 @@
 
 #include "molassembler/Molecule/AtomEnvironmentHash.h"
 
-#include "boost/range/iterator_range_core.hpp"
 #include "boost/range/join.hpp"
 #include "shapes/PropertyCaching.h"
 
+#include "molassembler/AtomStereopermutator.h"
+#include "molassembler/BondStereopermutator.h"
 #include "molassembler/StereopermutatorList.h"
 #include "molassembler/Graph/PrivateGraph.h"
 
@@ -201,10 +202,7 @@ std::vector<BondInformation> gatherBonds(
   bonds.reserve(shapes::constexpr_properties::maxShapeSize);
 
   if(componentsBitmask & AtomEnvironmentComponents::Stereopermutations) {
-    for(
-      const PrivateGraph::Edge& edge :
-      boost::make_iterator_range(inner.edges(i))
-    ) {
+    for(const PrivateGraph::Edge& edge : inner.edges(i)) {
       const BondIndex bond {
         inner.source(edge),
         inner.target(edge)
@@ -234,10 +232,7 @@ std::vector<BondInformation> gatherBonds(
       }
     }
   } else {
-    for(
-      const PrivateGraph::Edge& edge :
-      boost::make_iterator_range(inner.edges(i))
-    ) {
+    for(const PrivateGraph::Edge& edge : inner.edges(i)) {
       bonds.emplace_back(
         inner.bondType(edge),
         false,

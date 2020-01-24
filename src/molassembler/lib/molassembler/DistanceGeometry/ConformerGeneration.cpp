@@ -10,6 +10,7 @@
 #include "Utils/Constants.h"
 #include "Utils/Typenames.h"
 
+#include "molassembler/BondStereopermutator.h"
 #include "molassembler/DistanceGeometry/EigenRefinement.h"
 #include "molassembler/DistanceGeometry/Error.h"
 #include "molassembler/DistanceGeometry/ExplicitBoundsGraph.h"

@@ -15,11 +15,6 @@
 
 #include "molassembler/Options.h"
 
-#if __cpp_lib_experimental_propagate_const >= 201505
-#define MOLASSEMBLER_ENABLE_PROPAGATE_CONST
-#include <experimental/propagate_const>
-#endif
-
 namespace Scine {
 // External forward declarations
 namespace Utils {
@@ -669,6 +664,9 @@ public:
     >& explicitBondStereopermutatorCandidatesOption = boost::none
   ) const;
 
+  //! Returns a command-line interface information string
+  std::string str() const;
+
   /*! @brief Rank substituents of an atom
    *
    * Performs a ranking algorithm that attempts to differentiate branches
@@ -794,6 +792,7 @@ public:
 private:
   //! Private implementation member
   struct Impl;
+  std::unique_ptr<Impl> _pImpl;
 
   /* Allow access to implementation to editor class that enables more
    * macro-oriented editing as opposed to the low-level editing provided here
@@ -805,14 +804,6 @@ private:
    * part of the public interface.
    */
   friend class DirectedConformerGenerator;
-
-#ifdef MOLASSEMBLER_ENABLE_PROPAGATE_CONST
-  std::experimental::propagate_const<
-    std::unique_ptr<Impl>
-  > _pImpl;
-#else
-  std::unique_ptr<Impl> _pImpl;
-#endif
 };
 
 } // namespace molassembler

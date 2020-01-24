@@ -51,6 +51,7 @@ set(HEADERS_all
   ${_LIBPREFIX}/IO/SmilesParser.h
   ${_LIBPREFIX}/Interpret.h
   ${_LIBPREFIX}/Isomers.h
+  ${_LIBPREFIX}/IteratorRange.h
   ${_LIBPREFIX}/Log.h
   ${_LIBPREFIX}/Modeling/AtomInfo.h
   ${_LIBPREFIX}/Modeling/BondDistance.h
@@ -71,6 +72,7 @@ set(HEADERS_all
   ${_LIBPREFIX}/Stereopermutators/BondStereopermutatorImpl.h
   ${_LIBPREFIX}/Stereopermutators/CycleFeasibility.h
   ${_LIBPREFIX}/Stereopermutators/FeasiblePermutations.h
+  ${_LIBPREFIX}/Stereopermutators/StereopermutatorListImpl.h
   ${_LIBPREFIX}/Stereopermutators/ShapeVertexMaps.h
   ${_LIBPREFIX}/Subgraphs.h
   ${_LIBPREFIX}/Types.h
@@ -126,12 +128,14 @@ set(SOURCES_all
   ${_LIBPREFIX}/RankingInformation.cpp
   ${_LIBPREFIX}/Serialization.cpp
   ${_LIBPREFIX}/StereopermutatorList.cpp
+  ${_LIBPREFIX}/StereopermutatorListIterators.cpp
   ${_LIBPREFIX}/Stereopermutators/AbstractPermutations.cpp
   ${_LIBPREFIX}/Stereopermutators/AtomStereopermutatorImpl.cpp
   ${_LIBPREFIX}/Stereopermutators/BondStereopermutatorImpl.cpp
   ${_LIBPREFIX}/Stereopermutators/CycleFeasibility.cpp
   ${_LIBPREFIX}/Stereopermutators/FeasiblePermutations.cpp
   ${_LIBPREFIX}/Stereopermutators/ShapeVertexMaps.cpp
+  ${_LIBPREFIX}/Stereopermutators/StereopermutatorListImpl.cpp
   ${_LIBPREFIX}/Subgraphs.cpp
   ${_LIBPREFIX}/Types.cpp
 )

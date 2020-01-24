@@ -5,6 +5,8 @@
  */
 #include "molassembler/IO/SmilesMoleculeBuilder.h"
 
+#include "molassembler/AtomStereopermutator.h"
+#include "molassembler/BondStereopermutator.h"
 #include "molassembler/StereopermutatorList.h"
 #include "molassembler/Stereopermutators/AbstractPermutations.h"
 #include "molassembler/Stereopermutators/FeasiblePermutations.h"
@@ -747,7 +749,7 @@ std::vector<Molecule> MoleculeBuilder::interpret() {
   }
 
   /* Copy edges into the separate components */
-  for(const PrivateGraph::Edge& edge : boost::make_iterator_range(graph.edges())) {
+  for(const PrivateGraph::Edge& edge : graph.edges()) {
     const PrivateGraph::Vertex source = graph.source(edge);
     const PrivateGraph::Vertex target = graph.target(edge);
 
@@ -782,10 +784,7 @@ std::vector<Molecule> MoleculeBuilder::interpret() {
     } else if(!data.atomBracket && isValenceFillElement(precursor.elementType(vertexInPrecursor))) {
       // Figure out current valence.
       int currentValence = 0;
-      for(
-        const PrivateGraph::Edge edge :
-        boost::make_iterator_range(precursor.edges(vertexInPrecursor))
-      ) {
+      for(const PrivateGraph::Edge edge : precursor.edges(vertexInPrecursor)) {
         currentValence += Bond::bondOrderMap.at(
           static_cast<unsigned>(
             precursor.bondType(edge)

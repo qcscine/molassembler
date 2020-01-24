@@ -6,8 +6,6 @@
 
 #include "molassembler/Interpret.h"
 
-#include "boost/range/iterator_range_core.hpp"
-
 #include "Utils/Geometry/AtomCollection.h"
 #include "Utils/Bonds/BondOrderCollection.h"
 
@@ -158,12 +156,7 @@ Parts construeParts(
   }
 
   // Copy over edges and bond orders
-  for(
-    const PrivateGraph::Edge& edge :
-    boost::make_iterator_range(
-      atomCollectionGraph.edges()
-    )
-  ) {
+  for(const PrivateGraph::Edge& edge : atomCollectionGraph.edges()) {
     const PrivateGraph::Vertex source = atomCollectionGraph.source(edge);
     const PrivateGraph::Vertex target = atomCollectionGraph.target(edge);
 

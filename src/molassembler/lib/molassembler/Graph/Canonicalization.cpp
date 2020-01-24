@@ -143,12 +143,12 @@ struct NautySparseGraph {
     e.reserve(nde);
 
     // Construct the adjacency list representation within a 'sparsegraph'
-    for(AtomIndex i : boost::make_iterator_range(inner.vertices())) {
+    for(AtomIndex i : inner.vertices()) {
       d.push_back(inner.degree(i));
 
       // Create an adjacency list for i in v
       v.push_back(e.size());
-      for(AtomIndex j : boost::make_iterator_range(inner.adjacents(i))) {
+      for(AtomIndex j : inner.adjacents(i)) {
         e.push_back(j);
       }
     }

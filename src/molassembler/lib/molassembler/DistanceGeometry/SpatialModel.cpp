@@ -7,7 +7,6 @@
 #include "molassembler/DistanceGeometry/SpatialModel.h"
 
 #include "boost/numeric/interval.hpp"
-#include "boost/range/iterator_range_core.hpp"
 #include "boost/graph/graphviz.hpp"
 #include "Utils/Typenames.h"
 #include "Utils/Geometry/ElementInfo.h"
@@ -27,6 +26,8 @@
 #include "temple/Stringify.h"
 #include "temple/Stl17.h"
 
+#include "molassembler/AtomStereopermutator.h"
+#include "molassembler/BondStereopermutator.h"
 #include "molassembler/Cycles.h"
 #include "molassembler/Detail/Cartesian.h"
 #include "molassembler/DistanceGeometry/DistanceGeometry.h"
@@ -119,7 +120,7 @@ SpatialModel::SpatialModel(
     throw std::logic_error("Failed precondition: molecule has zero-assignment or unassigned stereopermutators");
   }
 
-  for(AtomIndex i : boost::make_iterator_range(_molecule.graph().atoms())) {
+  for(AtomIndex i : _molecule.graph().atoms()) {
     if(_molecule.graph().degree(i) == 1) {
       continue;
     }
@@ -888,16 +889,16 @@ double SpatialModel::siteCentralAngle(
     }
   };
 
-  auto cycleIteratorPair = inner.cycles().containing(prospectiveCycleEdges);
+  auto cycleRange = inner.cycles().containing(prospectiveCycleEdges);
 
   // If the range is zero-length, there are no cycles with both edges!
-  if(cycleIteratorPair.first == cycleIteratorPair.second) {
+  if(cycleRange.begin() == cycleRange.end()) {
     return idealAngle;
   }
 
   unsigned smallestCycleSize = 100;
   std::vector<BondIndex> minimalCycle;
-  for(auto cycleEdges : boost::make_iterator_range(cycleIteratorPair)) {
+  for(auto cycleEdges : cycleRange) {
     if(cycleEdges.size() < smallestCycleSize) {
       minimalCycle = std::move(cycleEdges);
       smallestCycleSize = minimalCycle.size();
@@ -1362,9 +1363,7 @@ std::vector<BondIndex> SpatialModel::cycleConsistingOfExactly(
 
   for(
     const auto cycleEdges :
-    boost::make_iterator_range(
-      graph.cycles().containing(possibleCycleEdges)
-    )
+    graph.cycles().containing(possibleCycleEdges)
   ) {
     if(cycleEdges.size() == atoms.size()) {
       return cycleEdges;
@@ -1658,7 +1657,7 @@ void SpatialModel::_addDefaultAngles() {
   for(AtomIndex center = 0; center < N; ++center) {
     temple::forEach(
       temple::adaptors::allPairs(
-        boost::make_iterator_range(inner.adjacents(center))
+        inner.adjacents(center)
       ),
       [&](const AtomIndex i, const AtomIndex j) -> void {
         assert(i != j);
@@ -1675,14 +1674,14 @@ void SpatialModel::_addDefaultAngles() {
 void SpatialModel::_addDefaultDihedrals() {
   const PrivateGraph& inner = _molecule.graph().inner();
 
-  for(const auto& edgeDescriptor : boost::make_iterator_range(inner.edges())) {
+  for(const auto& edgeDescriptor : inner.edges()) {
     const AtomIndex sourceIndex = inner.source(edgeDescriptor);
     const AtomIndex targetIndex = inner.target(edgeDescriptor);
 
     temple::forEach(
       temple::adaptors::allPairs(
-        boost::make_iterator_range(inner.adjacents(sourceIndex)),
-        boost::make_iterator_range(inner.adjacents(targetIndex))
+        inner.adjacents(sourceIndex),
+        inner.adjacents(targetIndex)
       ),
       [&](
         const AtomIndex sourceAdjacentIndex,
@@ -1714,7 +1713,7 @@ void SpatialModel::_modelBondDistances(
 ) {
   const PrivateGraph& inner = _molecule.graph().inner();
 
-  for(const auto& edge: boost::make_iterator_range(inner.edges())) {
+  for(const auto& edge: inner.edges()) {
     BondType bondType = inner.bondType(edge);
 
     // Do not model eta bonds, stereopermutators are responsible for those
@@ -1894,7 +1893,7 @@ void SpatialModel::_modelSpirocenters(
    * particularly small, i.e. are sizes 3-5
    */
   for(const auto& stereopermutator : _molecule.stereopermutators().atomStereopermutators()) {
-    AtomIndex i = stereopermutator.centralIndex();
+    const AtomIndex i = stereopermutator.centralIndex();
 
     // Skip any fixed central atoms
     if(fixedAngstromPositions.count(i) > 0) {
@@ -1958,10 +1957,7 @@ void SpatialModel::_modelSpirocenters(
         if(intersection.size() == 1 && *intersection.begin() == i) {
           std::vector<AtomIndex> firstAdjacents;
           std::vector<AtomIndex> secondAdjacents;
-          for(
-            const AtomIndex iAdjacent :
-            boost::make_iterator_range(inner.adjacents(i))
-          ) {
+          for(const AtomIndex iAdjacent : inner.adjacents(i)) {
             if(cycleOneVertices.count(iAdjacent) > 0) {
               firstAdjacents.push_back(iAdjacent);
             }

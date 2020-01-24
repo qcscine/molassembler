@@ -5,6 +5,8 @@
  */
 
 #include "molassembler/Molecule/MolGraphWriter.h"
+#include "molassembler/AtomStereopermutator.h"
+#include "molassembler/BondStereopermutator.h"
 #include "molassembler/StereopermutatorList.h"
 
 #include "Utils/Geometry/ElementInfo.h"
@@ -13,7 +15,6 @@
 #include "shapes/Data.h"
 
 namespace Scine {
-
 namespace molassembler {
 
 /* Constructor */
@@ -45,7 +46,10 @@ std::vector<std::string> MolGraphWriter::bondStereopermutatorTooltips(const Bond
 }
 
 void MolGraphWriter::writeBondStereopermutatorNodes(std::ostream& os) const {
-  for(const auto& bondStereopermutator : stereopermutatorListPtr->bondStereopermutators()) {
+  for(
+    const auto& bondStereopermutator :
+    stereopermutatorListPtr->bondStereopermutators()
+  ) {
     std::string state;
     if(bondStereopermutator.assigned()) {
       state = std::to_string(bondStereopermutator.assigned().value());
@@ -203,5 +207,4 @@ const std::map<BondType, std::string> MolGraphWriter::bondTypeDisplayString {
 };
 
 } // namespace molassembler
-
 } // namespace Scine

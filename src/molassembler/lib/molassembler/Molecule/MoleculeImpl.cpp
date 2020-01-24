@@ -144,7 +144,7 @@ StereopermutatorList Molecule::Impl::_detectStereopermutators() const {
   }
 
   // Find BondStereopermutators
-  for(BondIndex bond : boost::make_iterator_range(graph().bonds())) {
+  for(BondIndex bond : graph().bonds()) {
     if(_isGraphBasedBondStereopermutatorCandidate(graph().bondType(bond))) {
       _tryAddBondStereopermutator(bond, stereopermutatorList);
     }
@@ -204,10 +204,7 @@ void Molecule::Impl::_propagateGraphChange() {
    * Need state propagation for BondStereopermutators, anything else is madness
    */
 
-  for(
-    const PrivateGraph::Vertex vertex :
-    boost::make_iterator_range(inner.vertices())
-  ) {
+  for(const PrivateGraph::Vertex vertex : inner.vertices()) {
     auto stereopermutatorOption = _stereopermutators.option(vertex);
     RankingInformation localRanking = rankPriority(vertex);
 
@@ -225,7 +222,7 @@ void Molecule::Impl::_propagateGraphChange() {
 
       // Are there adjacent bond stereopermutators?
       std::vector<BondIndex> adjacentBondStereopermutators;
-      for(BondIndex bond : boost::make_iterator_range(_adjacencies.bonds(vertex))) {
+      for(BondIndex bond : _adjacencies.bonds(vertex)) {
         if(_stereopermutators.option(bond)) {
           adjacentBondStereopermutators.push_back(std::move(bond));
         }
@@ -293,7 +290,7 @@ void Molecule::Impl::_propagateGraphChange() {
   }
 
   // Look for new bond stereopermutators
-  for(BondIndex bond : boost::make_iterator_range(graph().bonds())) {
+  for(BondIndex bond : graph().bonds()) {
     if(_isGraphBasedBondStereopermutatorCandidate(graph().bondType(bond))) {
       _tryAddBondStereopermutator(bond, _stereopermutators);
     }
@@ -399,10 +396,7 @@ BondIndex Molecule::Impl::addBond(
     /*! @todo Remove any BondStereopermutators on adjacent edges of toIndex (no
      * substituent addition/removal propagation possible yet)
      */
-    for(
-      const BondIndex& adjacentEdge :
-      boost::make_iterator_range(_adjacencies.bonds(toIndex))
-    ) {
+    for(const BondIndex& adjacentEdge : _adjacencies.bonds(toIndex)) {
       _stereopermutators.try_remove(adjacentEdge);
     }
   };
@@ -582,10 +576,7 @@ void Molecule::Impl::removeAtom(const AtomIndex a) {
   _stereopermutators.try_remove(a);
 
   // Any adjacent bond stereopermutators have to be dropped
-  for(
-    const BondIndex& adjacentEdge :
-    boost::make_iterator_range(_adjacencies.bonds(a))
-  ) {
+  for(const BondIndex& adjacentEdge : _adjacencies.bonds(a)) {
     _stereopermutators.try_remove(adjacentEdge);
   }
 
@@ -827,7 +818,7 @@ void Molecule::Impl::setShapeAtAtom(
   }
 
   // Remove any adjacent bond stereopermutators since there is no propagation
-  for(BondIndex bond : boost::make_iterator_range(_adjacencies.bonds(a))) {
+  for(BondIndex bond : _adjacencies.bonds(a)) {
     _stereopermutators.try_remove(bond);
   }
 
@@ -838,6 +829,29 @@ void Molecule::Impl::setShapeAtAtom(
 /* Information */
 boost::optional<AtomEnvironmentComponents> Molecule::Impl::canonicalComponents() const {
   return _canonicalComponentsOption;
+}
+
+std::string Molecule::Impl::str() const {
+  std::stringstream info;
+
+  if(!_stereopermutators.empty()) {
+    info << "Stereopermutator information:\n";
+
+    for(const auto& stereopermutator :
+      _stereopermutators.atomStereopermutators()
+    ) {
+      info << stereopermutator.info() << "\n";
+    }
+
+    for(
+      const auto& stereopermutator :
+      _stereopermutators.bondStereopermutators()
+    ) {
+      info << stereopermutator.info() << "\n";
+    }
+  }
+
+  return info.str();
 }
 
 boost::optional<shapes::Shape> Molecule::Impl::inferShape(
@@ -989,7 +1003,7 @@ StereopermutatorList Molecule::Impl::inferStereopermutatorsFromPositions(
     }
   } else {
     // Every multiple-order bond is a candidate
-    for(const BondIndex& bondIndex : boost::make_iterator_range(graph().bonds())) {
+    for(const BondIndex& bondIndex : graph().bonds()) {
       if(_isGraphBasedBondStereopermutatorCandidate(graph().bondType(bondIndex))) {
         tryInstantiateBondStereopermutator(bondIndex);
       }

@@ -21,6 +21,7 @@
 #include "temple/Stringify.h"
 #include "temple/Optionals.h"
 
+#include "molassembler/Graph.h"
 #include "molassembler/Graph/PrivateGraph.h"
 #include "molassembler/IO.h"
 #include "molassembler/Interpret.h"
@@ -28,6 +29,8 @@
 #include "molassembler/Molecule.h"
 #include "molassembler/Molecule/AtomEnvironmentHash.h"
 #include "molassembler/Options.h"
+#include "molassembler/AtomStereopermutator.h"
+#include "molassembler/BondStereopermutator.h"
 #include "molassembler/StereopermutatorList.h"
 
 #include "Utils/Geometry/ElementInfo.h"
@@ -765,7 +768,7 @@ BOOST_AUTO_TEST_CASE(ShapeClassification) {
 
   // This is a huge system with octahedral iron centers (#90)
   auto interconnected = io::read("shape_classification/interconnected.mol");
-  for(const AtomIndex i : boost::make_iterator_range(interconnected.graph().atoms())) {
+  for(const AtomIndex i : interconnected.graph().atoms()) {
     if(interconnected.graph().elementType(i) == Utils::ElementType::Fe) {
       checkAtomStereopermutator(interconnected, i, shapes::Shape::Octahedron);
     }

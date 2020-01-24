@@ -8,10 +8,10 @@
 #define BOOST_FILESYSTEM_NO_DEPRECATED
 
 #include "boost/filesystem.hpp"
-#include "boost/range/iterator_range_core.hpp"
 #include "boost/test/unit_test.hpp"
 
 #include "molassembler/Cycles.h"
+#include "molassembler/Graph.h"
 #include "molassembler/Graph/GraphAlgorithms.h"
 #include "molassembler/Molecule.h"
 #include "molassembler/RankingInformation.h"
@@ -592,12 +592,7 @@ bool testHapticBonds(const boost::filesystem::path& filePath) {
     expectedEtaBonds.insert(edgeOption.value());
   }
 
-  for(
-    const PrivateGraph::Edge edge :
-    boost::make_iterator_range(
-      graph.edges()
-    )
-  ) {
+  for(const PrivateGraph::Edge edge : graph.edges()) {
     AtomIndex i = graph.source(edge);
     AtomIndex j = graph.target(edge);
     BondType bty = graph.bondType(edge);

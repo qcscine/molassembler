@@ -9,13 +9,14 @@
 #include "molassembler/Molecule.h"
 #include "molassembler/Molecule/AtomEnvironmentHash.h"
 #include "molassembler/Graph.h"
+#include "molassembler/AtomStereopermutator.h"
+#include "molassembler/BondStereopermutator.h"
 #include "molassembler/StereopermutatorList.h"
 #include "molassembler/Stereopermutators/AbstractPermutations.h"
 #include "molassembler/Stereopermutators/FeasiblePermutations.h"
 #include "shapes/Data.h"
 
 namespace Scine {
-
 namespace molassembler {
 
 bool enantiomeric(const Molecule& a, const Molecule& b) {
@@ -80,7 +81,10 @@ bool enantiomeric(const Molecule& a, const Molecule& b) {
   bool atLeastOneEnantiomericPair = false;
 
   // Match B's stereopermutators to A's (lists are same-size as established above)
-  for(const AtomStereopermutator& aPermutator : a.stereopermutators().atomStereopermutators()) {
+  for(
+    const AtomStereopermutator& aPermutator :
+    a.stereopermutators().atomStereopermutators()
+  ) {
     // Skip all stereopermutators with just one stereopermutation
     if(aPermutator.numStereopermutations() <= 1) {
       continue;
@@ -216,5 +220,4 @@ Molecule enantiomer(const Molecule& a) {
 }
 
 } // namespace molassembler
-
 } // namespace Scine

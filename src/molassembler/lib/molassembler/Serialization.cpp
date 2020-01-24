@@ -15,6 +15,8 @@
 #include "molassembler/IO/Base64.h"
 #include "molassembler/Molecule.h"
 #include "molassembler/RankingInformation.h"
+#include "molassembler/AtomStereopermutator.h"
+#include "molassembler/BondStereopermutator.h"
 #include "molassembler/StereopermutatorList.h"
 #include "molassembler/Version.h"
 
@@ -190,7 +192,7 @@ struct adl_serializer<Scine::molassembler::Graph> {
     j["Z"] = json::array();
     auto& elements = j["Z"];
 
-    for(const auto vertexIndex : boost::make_iterator_range(inner.vertices())) {
+    for(const auto vertexIndex : inner.vertices()) {
       elements.push_back(
         inner.elementType(vertexIndex)
       );
@@ -202,7 +204,7 @@ struct adl_serializer<Scine::molassembler::Graph> {
 
     for(
       const Scine::molassembler::PrivateGraph::Edge& edgeDescriptor :
-      boost::make_iterator_range(inner.edges())
+      inner.edges()
     ) {
       json e = json::array();
       e.push_back(

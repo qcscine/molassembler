@@ -11,7 +11,6 @@
 #include "boost/graph/breadth_first_search.hpp"
 #include "boost/graph/connected_components.hpp"
 #include "boost/graph/biconnected_components.hpp"
-#include "boost/range/iterator_range_core.hpp"
 #include "boost/range/combine.hpp"
 #include "temple/Adaptors/AllPairs.h"
 #include "temple/Functional.h"
@@ -89,13 +88,12 @@ std::vector<LinkInformation> siteLinks(
   > siteIndicesToLinksPositionMap;
 
   for(
-    auto cycleOuterEdges : boost::make_iterator_range(
-      graph.cycles().containing(
-        BondIndex {
-          stereopermutatorA.centralIndex(),
-          stereopermutatorB.centralIndex()
-        }
-      )
+    auto cycleOuterEdges :
+    graph.cycles().containing(
+      BondIndex {
+        stereopermutatorA.centralIndex(),
+        stereopermutatorB.centralIndex()
+      }
     )
   ) {
     // Figure out which substituent of A and B is part of the cycle
@@ -192,13 +190,11 @@ std::vector<LinkInformation> siteLinks(
     [&](const AtomIndex a, const AtomIndex b) {
       for(
         auto cycleOuterEdges :
-        boost::make_iterator_range(
-          graph.etaPreservedCycles().containing(
-            std::vector<BondIndex> {
-              BondIndex {source, a},
-              BondIndex {source, b}
-            }
-          )
+        graph.etaPreservedCycles().containing(
+          std::vector<BondIndex> {
+            BondIndex {source, a},
+            BondIndex {source, b}
+          }
         )
       ) {
         assert(
@@ -295,10 +291,7 @@ void findSites(
   temple::TinySet<PrivateGraph::Vertex> centralAdjacents;
   centralAdjacents.reserve(A);
 
-  for(
-    const PrivateGraph::Vertex adjacent :
-    boost::make_iterator_range(graph.adjacents(centralIndex))
-  ) {
+  for(const PrivateGraph::Vertex adjacent : graph.adjacents(centralIndex)) {
     centralAdjacents.insert(adjacent);
   }
 
@@ -308,10 +301,7 @@ void findSites(
 
   std::function<void(const PrivateGraph::Vertex)> recursiveDiscover
   = [&](const PrivateGraph::Vertex seed) {
-    for(
-      const PrivateGraph::Vertex adjacent :
-      boost::make_iterator_range(graph.adjacents(seed))
-    ) {
+    for(const PrivateGraph::Vertex adjacent : graph.adjacents(seed)) {
       if(centralAdjacents.count(adjacent) > 0 && site.count(adjacent) == 0) {
         // *iter is shared adjacent of center and seed and not yet discovered
         site.insert(adjacent);
@@ -355,10 +345,7 @@ std::vector<
 
     adjacents.reserve(graph.degree(centralIndex));
 
-    for(
-      const AtomIndex centralAdjacent :
-      boost::make_iterator_range(graph.adjacents(centralIndex))
-    ) {
+    for(const AtomIndex centralAdjacent : graph.adjacents(centralIndex)) {
       auto edge = graph.edge(centralAdjacent, centralIndex);
 
       if(graph.bondType(edge) == BondType::Eta) {

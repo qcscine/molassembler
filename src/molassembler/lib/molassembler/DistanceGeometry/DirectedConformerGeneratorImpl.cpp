@@ -246,7 +246,7 @@ DirectedConformerGenerator::Impl::Impl(
 
   if(bondsToConsider.empty()) {
     // Consider all bonds
-    for(BondIndex bondIndex : boost::make_iterator_range(_molecule.graph().bonds())) {
+    for(BondIndex bondIndex : _molecule.graph().bonds()) {
       auto importanceVariant = considerBond(bondIndex, _molecule, smallestCycleMap);
 
       if(boost::apply_visitor(visitor, importanceVariant)) {
@@ -360,7 +360,7 @@ DirectedConformerGenerator::Impl::getDecisionList(
 ) {
   if(
     !temple::all_of(
-      boost::make_iterator_range(_molecule.graph().atoms()),
+      _molecule.graph().atoms(),
       [&](const AtomIndex i) -> bool {
         return atomCollection.getElement(i) == _molecule.graph().elementType(i);
       }

@@ -8,11 +8,12 @@
 
 #include "boost/filesystem.hpp"
 #include "boost/test/unit_test.hpp"
-#include "boost/range/iterator_range_core.hpp"
 
 #include "molassembler/Conformers.h"
 #include "molassembler/IO.h"
 #include "molassembler/Molecule.h"
+#include "molassembler/AtomStereopermutator.h"
+#include "molassembler/BondStereopermutator.h"
 #include "molassembler/StereopermutatorList.h"
 
 #include <iostream>
@@ -101,8 +102,8 @@ void checkExpectations(const boost::filesystem::path& filePath) {
     auto bondStereopermutatorRange = mol.stereopermutators().bondStereopermutators();
     BOOST_CHECK(
       std::distance(
-        std::begin(bondStereopermutatorRange),
-        std::end(bondStereopermutatorRange)
+        bondStereopermutatorRange.first,
+        bondStereopermutatorRange.second
       ) == 0
     );
 
@@ -185,9 +186,9 @@ BOOST_AUTO_TEST_CASE(BondStatePropagationTests) {
   const StereopermutatorList& stereopermutators = mol.stereopermutators();
 
   auto bondStereopermutatorRange = stereopermutators.bondStereopermutators();
-  BOOST_REQUIRE(std::distance(bondStereopermutatorRange.begin(), bondStereopermutatorRange.end()) > 0);
+  BOOST_REQUIRE(std::distance(bondStereopermutatorRange.first, bondStereopermutatorRange.second) > 0);
 
-  const BondStereopermutator& mainStereopermutator = *bondStereopermutatorRange.begin();
+  const BondStereopermutator& mainStereopermutator = *bondStereopermutatorRange.first;
 
   BOOST_REQUIRE(mainStereopermutator.assigned());
 
@@ -198,7 +199,7 @@ BOOST_AUTO_TEST_CASE(BondStatePropagationTests) {
 
   // Find a hydrogen substituent
   boost::optional<AtomIndex> hydrogenSubstituent;
-  for(const AtomIndex substituent : boost::make_iterator_range(mol.graph().adjacents(side))) {
+  for(const AtomIndex substituent : mol.graph().adjacents(side)) {
     if(mol.graph().elementType(substituent) == Utils::ElementType::H) {
       hydrogenSubstituent = substituent;
       break;
@@ -213,8 +214,8 @@ BOOST_AUTO_TEST_CASE(BondStatePropagationTests) {
   // All references are, in principle, invalidated. Just being extra careful.
   auto postPermutatorRange = stereopermutators.bondStereopermutators();
   // The new stereopermutator must still be assigned, and have a different assignment
-  BOOST_REQUIRE(std::distance(postPermutatorRange.begin(), postPermutatorRange.end()) > 0);
-  const BondStereopermutator& postPermutator = *postPermutatorRange.begin();
+  BOOST_REQUIRE(std::distance(postPermutatorRange.first, postPermutatorRange.second) > 0);
+  const BondStereopermutator& postPermutator = *postPermutatorRange.first;
   BOOST_REQUIRE(postPermutator.assigned());
 
   // In this particular case, we know that the final assignment has to be different

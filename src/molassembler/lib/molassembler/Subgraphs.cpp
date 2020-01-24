@@ -16,11 +16,9 @@
 
 #include "molassembler/Graph/Bridge.h"
 #include "molassembler/Molecule.h"
+#include "molassembler/AtomStereopermutator.h"
+#include "molassembler/BondStereopermutator.h"
 #include "molassembler/StereopermutatorList.h"
-
-// TEMP
-// #include "Utils/Geometry/ElementInfo.h"
-// #include <iostream>
 
 /* TODO
  * - Missing algorithm for stereopermutator extension
@@ -29,11 +27,8 @@
  */
 
 namespace Scine {
-
 namespace molassembler {
-
 namespace subgraphs {
-
 namespace detail {
 
 struct SubgraphCallback {
@@ -369,7 +364,5 @@ std::vector<IndexMap> maximum(
 }
 
 } // namespace subgraphs
-
 } // namespace molassembler
-
 } // namespace Scine

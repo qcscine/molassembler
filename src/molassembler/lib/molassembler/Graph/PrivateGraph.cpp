@@ -135,11 +135,11 @@ void PrivateGraph::applyPermutation(const std::vector<Vertex>& permutation) {
   /* I failed to get copy_graph to perform the permutation for me, so we copy
    * manually:
    */
-  for(Vertex i : boost::make_iterator_range(vertices())) {
+  for(Vertex i : vertices()) {
     transformedGraph[permutation.at(i)].elementType = _graph[i].elementType;
   }
 
-  for(Edge e : boost::make_iterator_range(edges())) {
+  for(Edge e : edges()) {
     auto newBondPair = boost::add_edge(
       permutation.at(boost::source(e, _graph)),
       permutation.at(boost::target(e, _graph)),
@@ -294,7 +294,7 @@ bool PrivateGraph::identicalGraph(const PrivateGraph& other) const {
 
   // Make sure topology matches
   return temple::all_of(
-    boost::make_iterator_range(edges()),
+    edges(),
     [&](const Edge& edge) -> bool {
       Edge correspondingEdge;
       bool edgeExists;
@@ -351,19 +351,35 @@ std::pair<
 }
 
 PrivateGraph::VertexRange PrivateGraph::vertices() const {
-  return boost::vertices(_graph);
+  auto iters = boost::vertices(_graph);
+  return {
+    std::move(iters.first),
+    std::move(iters.second)
+  };
 }
 
 PrivateGraph::EdgeRange PrivateGraph::edges() const {
-  return boost::edges(_graph);
+  auto iters = boost::edges(_graph);
+  return {
+    std::move(iters.first),
+    std::move(iters.second)
+  };
 }
 
 PrivateGraph::AdjacentVertexRange PrivateGraph::adjacents(const Vertex a) const {
-  return boost::adjacent_vertices(a, _graph);
+  auto iters = boost::adjacent_vertices(a, _graph);
+  return {
+    std::move(iters.first),
+    std::move(iters.second)
+  };
 }
 
 PrivateGraph::IncidentEdgeRange PrivateGraph::edges(const Vertex a) const {
-  return boost::out_edges(a, _graph);
+  auto iters = boost::out_edges(a, _graph);
+  return {
+    std::move(iters.first),
+    std::move(iters.second)
+  };
 }
 
 const PrivateGraph::BglType& PrivateGraph::bgl() const {

@@ -6,14 +6,13 @@
 
 #include "molassembler/Descriptors.h"
 
-#include "boost/range/iterator_range_core.hpp"
-
+#include "molassembler/Graph.h"
 #include "molassembler/Cycles.h"
 #include "molassembler/Molecule.h"
 #include "molassembler/StereopermutatorList.h"
+#include "molassembler/BondStereopermutator.h"
 
 namespace Scine {
-
 namespace molassembler {
 
 unsigned numRotatableBonds(const Molecule& mol) {
@@ -38,7 +37,7 @@ unsigned numRotatableBonds(const Molecule& mol) {
   }
 
   double count = 0;
-  for(const auto& edge : boost::make_iterator_range(mol.graph().bonds())) {
+  for(const auto& edge : mol.graph().bonds()) {
     // If the bond is not Single, it cannot be a rotatable bond
     if(mol.graph().bondType(edge) != BondType::Single) {
       continue;
@@ -85,5 +84,4 @@ unsigned numRotatableBonds(const Molecule& mol) {
 }
 
 } // namespace molassmembler
-
 } // namespace Scine

@@ -139,7 +139,7 @@ std::string getPathString(const std::string& fileName) {
 
 bool noCarbonsAreTrigonalPyramidal(const Molecule& molecule) {
   bool pass = true;
-  for(AtomIndex i : boost::make_iterator_range(molecule.graph().atoms())) {
+  for(AtomIndex i : molecule.graph().atoms()) {
     if(
       molecule.graph().elementType(i) == Utils::ElementType::C
       && temple::optionals::map(

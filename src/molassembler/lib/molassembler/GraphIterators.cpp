@@ -69,7 +69,7 @@ template<typename T, bool isVertexInitialized>
 Graph::InnerBasedIterator<T, isVertexInitialized>::~InnerBasedIterator() = default;
 
 template<typename T, bool isVertexInitialized>
-Graph::InnerBasedIterator<T, isVertexInitialized>::InnerBasedIterator() = default;
+Graph::InnerBasedIterator<T, isVertexInitialized>::InnerBasedIterator() : _pImpl(std::make_unique<Impl>()) {}
 
 template<typename T, bool isVertexInitialized>
 template<bool Dependent, std::enable_if_t<!Dependent, int>...>
@@ -160,6 +160,7 @@ template<>
 struct Graph::AtomIterator::Impl
   : public BaseIteratorWrapper<PrivateGraph::BglType::vertex_iterator>
 {
+  Impl() = default;
   Impl(const PrivateGraph& inner, bool begin) {
     auto vertexIterators = inner.vertices();
     if(begin) {
@@ -181,6 +182,7 @@ struct Graph::BondIterator::Impl
 {
   const PrivateGraph* innerPtr;
 
+  Impl() = default;
   Impl(const PrivateGraph& inner, bool begin) : innerPtr(&inner) {
     auto edgeIterators = inner.edges();
     if(begin) {
@@ -199,6 +201,7 @@ template<>
 struct Graph::AdjacencyIterator::Impl
   : public BaseIteratorWrapper<PrivateGraph::BglType::adjacency_iterator>
 {
+  Impl() = default;
   Impl(
     const AtomIndex a,
     const PrivateGraph& inner,
@@ -223,6 +226,7 @@ struct Graph::IncidentEdgesIterator::Impl
 {
   const PrivateGraph* innerPtr;
 
+  Impl() = default;
   Impl(const AtomIndex a, const PrivateGraph& inner, bool begin) : innerPtr(&inner) {
     auto edgeIterators = inner.edges(a);
     if(begin) {

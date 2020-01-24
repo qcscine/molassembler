@@ -15,11 +15,6 @@
 
 #include "molassembler/Types.h"
 
-#if __cpp_lib_experimental_propagate_const >= 201505
-#define MOLASSEMBLER_ENABLE_PROPAGATE_CONST
-#include <experimental/propagate_const>
-#endif
-
 #include <vector>
 #include <string>
 #include <memory>
@@ -339,14 +334,7 @@ public:
 
 private:
   struct Impl;
-
-#ifdef MOLASSEMBLER_ENABLE_PROPAGATE_CONST
-  std::experimental::propagate_const<
-    std::unique_ptr<Impl>
-  > _pImpl;
-#else
   std::unique_ptr<Impl> _pImpl;
-#endif
 };
 
 } // namespace molassembler

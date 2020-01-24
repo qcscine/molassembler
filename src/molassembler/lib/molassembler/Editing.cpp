@@ -9,6 +9,8 @@
 #include "molassembler/Graph/Bridge.h"
 #include "molassembler/Graph/PrivateGraph.h"
 #include "molassembler/Molecule/MoleculeImpl.h"
+#include "molassembler/AtomStereopermutator.h"
+#include "molassembler/BondStereopermutator.h"
 #include "molassembler/Stereopermutators/AbstractPermutations.h"
 #include "molassembler/Stereopermutators/FeasiblePermutations.h"
 
@@ -18,7 +20,6 @@
 
 namespace Scine {
 namespace molassembler {
-
 namespace detail {
 
 /**
@@ -40,7 +41,7 @@ std::unordered_map<AtomIndex, AtomIndex> transferGraph(
    */
   std::unordered_map<AtomIndex, AtomIndex> copyVertexTargetIndices;
   if(copyVertices.empty()) {
-    for(const AtomIndex& vertex : boost::make_iterator_range(source.vertices())) {
+    for(const AtomIndex& vertex : source.vertices()) {
       copyVertexTargetIndices.insert({
         vertex,
         target.addVertex(
@@ -59,10 +60,7 @@ std::unordered_map<AtomIndex, AtomIndex> transferGraph(
     }
   }
 
-  for(
-    const PrivateGraph::Edge& e :
-    boost::make_iterator_range(source.edges())
-  ) {
+  for(const PrivateGraph::Edge& e : source.edges()) {
     auto findSourceIter = copyVertexTargetIndices.find(
       source.source(e)
     );
@@ -457,10 +455,7 @@ Molecule Editing::superpose(
 
   auto topPermutatorOption = topStereopermutators.option(topAtom);
 
-  for(
-    const AtomIndex bottomAtomAdjacent :
-    boost::make_iterator_range(bottomInner.adjacents(bottomAtom))
-  ) {
+  for(const AtomIndex bottomAtomAdjacent : bottomInner.adjacents(bottomAtom)) {
     const AtomIndex newSubstituent = vertexMapping.at(bottomAtomAdjacent);
     const BondType bondType = bottomInner.bondType(
       bottomInner.edge(bottomAtom, bottomAtomAdjacent)

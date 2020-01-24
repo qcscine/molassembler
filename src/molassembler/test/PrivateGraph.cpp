@@ -64,7 +64,7 @@ BOOST_AUTO_TEST_CASE(BridgeEdges) {
   // All edges must be bridge edges
   BOOST_CHECK(
     temple::all_of(
-      boost::make_iterator_range(ethane.edges()),
+      ethane.edges(),
       [&](const auto& e) -> bool {
         return !ethane.canRemove(e);
       }

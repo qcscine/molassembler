@@ -43,13 +43,7 @@
 
 #include "temple/Adaptors/AllPairs.h"
 
-#if __cpp_lib_experimental_propagate_const >= 201505
-#define MOLASSEMBLER_ENABLE_PROPAGATE_CONST
-#include <experimental/propagate_const>
-#endif
-
 namespace Scine {
-
 namespace molassembler {
 
 /*!
@@ -1112,7 +1106,6 @@ public:
 };
 
 } // namespace molassembler
-
 } // namespace Scine
 
 #endif

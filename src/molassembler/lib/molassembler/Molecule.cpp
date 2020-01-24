@@ -229,6 +229,10 @@ bool Molecule::modularCompare(
   return _pImpl->modularCompare(*other._pImpl, componentBitmask);
 }
 
+std::string Molecule::str() const {
+  return _pImpl->str();
+}
+
 RankingInformation Molecule::rankPriority(
   const AtomIndex a,
   const std::vector<AtomIndex>& excludeAdjacent,
@@ -254,19 +258,6 @@ std::ostream& operator << (
   std::ostream& os,
   const Scine::molassembler::Molecule& molecule
 ) {
-  const auto& stereopermutators = molecule.stereopermutators();
-
-  if(!stereopermutators.empty()) {
-    os << "Stereopermutator information:\n";
-
-    for(const auto& stereopermutator : stereopermutators.atomStereopermutators()) {
-      os << stereopermutator.info() << "\n";
-    }
-
-    for(const auto& stereopermutator : stereopermutators.bondStereopermutators()) {
-      os << stereopermutator.info() << "\n";
-    }
-  }
-
+  os << molecule.str();
   return os;
 }

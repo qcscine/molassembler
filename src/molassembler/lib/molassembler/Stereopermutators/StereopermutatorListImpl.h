@@ -2,96 +2,26 @@
  * @copyright This code is licensed under the 3-clause BSD license.
  *   Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
  *   See LICENSE.txt
- * @brief Owning class storing all stereopermutators in a molecule
- *
- * Contains the declaration for a class that stores a list of all stereopermutators
- * in a molecule.
+ * @brief Private implementation of StereopermutatorList
  */
 
-#ifndef INCLUDE_MOLASSEMBLER_STEREOPERMUTATOR_LIST_H
-#define INCLUDE_MOLASSEMBLER_STEREOPERMUTATOR_LIST_H
+#ifndef INCLUDE_MOLASSEMBLER_STEREOPERMUTATOR_LIST_IMPL_H
+#define INCLUDE_MOLASSEMBLER_STEREOPERMUTATOR_LIST_IMPL_H
 
-#include "molassembler/Types.h"
-#include "molassembler/Export.h"
-#include "molassembler/IteratorRange.h"
+#include "molassembler/StereopermutatorList.h"
+#include "molassembler/AtomStereopermutator.h"
+#include "molassembler/BondStereopermutator.h"
 
-#include "boost/optional/optional_fwd.hpp"
-#include <memory>
-#include <vector>
+#include "boost/functional/hash.hpp"
+
+#include <unordered_map>
 
 namespace Scine {
 namespace molassembler {
 
-class AtomStereopermutator;
-class BondStereopermutator;
-
-/**
- * @brief Manages all stereopermutators that are part of a Molecule
- */
-class MASM_EXPORT StereopermutatorList {
-private:
-  struct Impl;
-
-public:
-//!@name Public types
-//!@{
-  template<typename Permutator>
-  class iterator {
-  public:
-    static_assert(
-      std::is_same<std::decay_t<Permutator>, AtomStereopermutator>::value
-      || std::is_same<std::decay_t<Permutator>, BondStereopermutator>::value,
-      "This type may not be instantiated for any type other than atom and bond stereopermutators"
-    );
-
-    using iterator_category = std::forward_iterator_tag;
-    using difference_type = std::ptrdiff_t;
-    using value_type = Permutator;
-    using pointer = Permutator*;
-    using reference = Permutator&;
-
-    iterator(iterator&& other) noexcept;
-    iterator& operator = (iterator&& other) noexcept;
-    iterator(const iterator& other);
-    iterator& operator = (const iterator& other);
-    ~iterator();
-
-    iterator();
-
-    using ImplType = std::conditional_t<
-      std::is_const<Permutator>::value,
-      const StereopermutatorList::Impl&,
-      StereopermutatorList::Impl&
-    >;
-    iterator(ImplType impl, bool begin);
-
-    iterator& operator ++ ();
-    iterator operator ++ (int);
-    reference operator * () const;
-
-    bool operator == (const iterator& other) const;
-    bool operator != (const iterator& other) const;
-
-  private:
-    struct Impl;
-    std::unique_ptr<Impl> impl_;
-  };
-
-  using AtomStereopermutatorIterator = iterator<AtomStereopermutator>;
-  using AtomStereopermutatorConstIterator = iterator<const AtomStereopermutator>;
-  using BondStereopermutatorIterator = iterator<BondStereopermutator>;
-  using BondStereopermutatorConstIterator = iterator<const BondStereopermutator>;
-//!@}
-
-//!@name Special member functions
-//!@{
-  StereopermutatorList();
-  StereopermutatorList(StereopermutatorList&& other) noexcept;
-  StereopermutatorList& operator = (StereopermutatorList&& other) noexcept;
-  StereopermutatorList(const StereopermutatorList& other);
-  StereopermutatorList& operator = (const StereopermutatorList& other);
-  ~StereopermutatorList();
-//!@}
+struct StereopermutatorList::Impl {
+  using AtomMapType = std::unordered_map<AtomIndex, AtomStereopermutator>;
+  using BondMapType = std::unordered_map<BondIndex, BondStereopermutator, boost::hash<BondIndex>>;
 
 //!@name Modification
 //!@{
@@ -186,7 +116,7 @@ public:
    * @complexity{@math{O(A + B)}}
    */
   bool compare(
-    const StereopermutatorList& other,
+    const Impl& other,
     AtomEnvironmentComponents componentBitmask
   ) const;
 
@@ -239,46 +169,20 @@ public:
   unsigned size() const;
 //!@}
 
-//!@name Ranges (not thread-safe)
-//!@{
-  /*! @brief Returns an iterable object with modifiable atom stereopermutator references
-   *
-   * @complexity{@math{\Theta(1)}}
-   */
-  IteratorRange<AtomStereopermutatorIterator> atomStereopermutators();
-
-  /*! @brief Returns an iterable object with unmodifiable atom stereopermutator references
-   *
-   * @complexity{@math{\Theta(1)}}
-   */
-  IteratorRange<AtomStereopermutatorConstIterator> atomStereopermutators() const;
-
-  /*! @brief Returns an iterable object with modifiable bond stereopermutator references
-   *
-   * @complexity{@math{\Theta(1)}}
-   */
-  IteratorRange<BondStereopermutatorIterator> bondStereopermutators();
-
-  /*! @brief Returns an iterable object with unmodifiable bond stereopermutator references
-   *
-   * @complexity{@math{\Theta(1)}}
-   */
-  IteratorRange<BondStereopermutatorConstIterator> bondStereopermutators() const;
-//!@}
-
 //!@name Operators
 //!@{
   /*! @brief Strict equality comparison
    *
    * @complexity{@math{O(A + B)}}
    */
-  bool operator == (const StereopermutatorList& other) const;
-  //! Inverts @p operator ==
-  bool operator != (const StereopermutatorList& other) const;
+  bool operator == (const Impl& other) const;
 //!@}
 
-private:
-  std::unique_ptr<Impl> impl_;
+  //! The underlying storage for atom stereopermutators
+  AtomMapType atomStereopermutators;
+
+  //! The underlying storage for bond stereopermutators
+  BondMapType bondStereopermutators;
 };
 
 } // namespace molassembler

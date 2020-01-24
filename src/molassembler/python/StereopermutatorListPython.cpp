@@ -5,6 +5,8 @@
  */
 #include "OptionalPython.h"
 
+#include "molassembler/AtomStereopermutator.h"
+#include "molassembler/BondStereopermutator.h"
 #include "molassembler/StereopermutatorList.h"
 
 void init_stereopermutator_list(pybind11::module& m) {

@@ -13,7 +13,6 @@
 #include "temple/Functional.h"
 
 #include "RingDecomposerLib.h"
-#include "boost/range/iterator_range_core.hpp"
 #include "boost/variant.hpp"
 
 namespace Scine {
@@ -240,7 +239,7 @@ struct Cycles::RdlCyclePtrs {
 namespace detail {
 
 template<typename Arg>
-std::pair<Cycles::UrfIdsCycleIterator, Cycles::UrfIdsCycleIterator>
+IteratorRange<Cycles::UrfIdsCycleIterator>
 makeURFIDsCycleIterator(const std::shared_ptr<Cycles::RdlDataPtrs>& dataPtr, Arg&& arg) {
   Cycles::UrfIdsCycleIterator begin {arg, dataPtr};
   Cycles::UrfIdsCycleIterator end = begin;
@@ -254,17 +253,17 @@ makeURFIDsCycleIterator(const std::shared_ptr<Cycles::RdlDataPtrs>& dataPtr, Arg
 
 } // namespace detail
 
-std::pair<Cycles::UrfIdsCycleIterator, Cycles::UrfIdsCycleIterator>
+IteratorRange<Cycles::UrfIdsCycleIterator>
 Cycles::containing(const AtomIndex atom) const {
   return detail::makeURFIDsCycleIterator(_rdlPtr, atom);
 }
 
-std::pair<Cycles::UrfIdsCycleIterator, Cycles::UrfIdsCycleIterator>
+IteratorRange<Cycles::UrfIdsCycleIterator>
 Cycles::containing(const BondIndex& bond) const {
   return containing(std::vector<BondIndex> {bond});
 }
 
-std::pair<Cycles::UrfIdsCycleIterator, Cycles::UrfIdsCycleIterator>
+IteratorRange<Cycles::UrfIdsCycleIterator>
 Cycles::containing(const std::vector<BondIndex>& bonds) const {
   auto fetchBondURFs = [&](const BondIndex& bond) -> std::vector<unsigned> {
     auto findIter = _urfMap.find(bond);
@@ -311,7 +310,7 @@ Cycles::RdlDataPtrs::RdlDataPtrs(
   graphPtr = RDL_initNewGraph(sourceGraph.N());
 
   if(ignoreEtaBonds) {
-    for(const auto edge : boost::make_iterator_range(sourceGraph.edges())) {
+    for(const auto edge : sourceGraph.edges()) {
       // Copy vertices (without bond type information)
       if(sourceGraph.bondType(edge) != BondType::Eta) {
         auto edgeAddResult = RDL_addUEdge(
@@ -326,7 +325,7 @@ Cycles::RdlDataPtrs::RdlDataPtrs(
       }
     }
   } else {
-    for(const auto edge : boost::make_iterator_range(sourceGraph.edges())) {
+    for(const auto edge : sourceGraph.edges()) {
       auto edgeAddResult = RDL_addUEdge(
         graphPtr,
         sourceGraph.source(edge),

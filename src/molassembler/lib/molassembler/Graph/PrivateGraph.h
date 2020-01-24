@@ -12,6 +12,7 @@
 #include "Utils/Geometry/ElementTypes.h"
 
 #include "molassembler/Cycles.h"
+#include "molassembler/IteratorRange.h"
 
 #include <limits>
 
@@ -69,13 +70,10 @@ public:
   using Vertex = BglType::vertex_descriptor;
   using Edge = BglType::edge_descriptor;
 
-  template<typename Iter>
-  using Range = std::pair<Iter, Iter>;
-
-  using VertexRange = Range<BglType::vertex_iterator>;
-  using EdgeRange = Range<BglType::edge_iterator>;
-  using AdjacentVertexRange = Range<BglType::adjacency_iterator>;
-  using IncidentEdgeRange = Range<BglType::out_edge_iterator>;
+  using VertexRange = IteratorRange<BglType::vertex_iterator>;
+  using EdgeRange = IteratorRange<BglType::edge_iterator>;
+  using AdjacentVertexRange = IteratorRange<BglType::adjacency_iterator>;
+  using IncidentEdgeRange = IteratorRange<BglType::out_edge_iterator>;
 
   /*!
    * @brief Data class to return removal safety information on the graph

@@ -7,7 +7,6 @@
 #define BOOST_FILESYSTEM_NO_DEPRECATED
 
 #include "boost/filesystem.hpp"
-#include "boost/range/iterator_range_core.hpp"
 #include "boost/test/unit_test.hpp"
 
 #include "temple/Stringify.h"

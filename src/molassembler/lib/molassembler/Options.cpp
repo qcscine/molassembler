@@ -6,11 +6,9 @@
 
 #include "molassembler/Options.h"
 
-#include "boost/range/iterator_range_core.hpp"
 #include "shapes/Data.h"
 
 namespace Scine {
-
 namespace molassembler {
 
 random::Engine& randomnessEngine() {
@@ -24,5 +22,4 @@ ChiralStatePreservation Options::chiralStatePreservation = ChiralStatePreservati
 ShapeTransition Options::shapeTransition = ShapeTransition::MaximizeChiralStatePreservation;
 
 } // namespace molassembler
-
 } // namespace Scine

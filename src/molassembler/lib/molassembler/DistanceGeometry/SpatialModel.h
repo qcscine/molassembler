@@ -20,7 +20,12 @@
 
 #include "molassembler/DistanceGeometry/DistanceBoundsMatrix.h"
 #include "molassembler/Molecule.h"
+#include "molassembler/Graph.h"
 #include "molassembler/StereopermutatorList.h"
+#include "molassembler/AtomStereopermutator.h"
+
+#include "boost/functional/hash.hpp"
+#include <unordered_map>
 
 namespace Scine {
 namespace molassembler {

@@ -7,7 +7,6 @@
 #include "temple/Optionals.h"
 #include "molassembler/Modeling/ShapeInference.h"
 
-#include "boost/range/iterator_range_core.hpp"
 #include "boost/optional.hpp"
 #include "Utils/Geometry/ElementInfo.h"
 
@@ -248,7 +247,7 @@ int formalCharge(
       Utils::ElementInfo::Z(graph.elementType(index))
     ).valenceElectrons();
 
-    for(const AtomIndex adjacent : boost::make_iterator_range(graph.adjacents(index))) {
+    for(const AtomIndex adjacent : graph.adjacents(index)) {
       valenceElectrons -= bondWeights.at(
         graph.bondType(
           *graph.bond(index, adjacent)

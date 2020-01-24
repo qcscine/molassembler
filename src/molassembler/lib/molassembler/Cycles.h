@@ -14,6 +14,7 @@
 #include "boost/functional/hash.hpp"
 #include "boost/optional/optional_fwd.hpp"
 
+#include "molassembler/IteratorRange.h"
 #include "molassembler/Types.h"
 
 #include <functional>
@@ -214,18 +215,18 @@ public:
    * @complexity{@math{O(U)} where @math{U} is the number of unique ring
    * families of the molecule}
    */
-  std::pair<UrfIdsCycleIterator, UrfIdsCycleIterator> containing(AtomIndex atom) const;
+  IteratorRange<UrfIdsCycleIterator> containing(AtomIndex atom) const;
   /*! @brief Range of relevant cycles containing a bond
    *
    * @complexity{@math{\Theta(1)}}
    */
-  std::pair<UrfIdsCycleIterator, UrfIdsCycleIterator> containing(const BondIndex& bond) const;
+  IteratorRange<UrfIdsCycleIterator> containing(const BondIndex& bond) const;
   /*! @brief Range of relevant cycles containing several bonds
    *
    * @complexity{@math{\Theta(B)} where @math{B} is the number of bonds in the
    * parameters}
    */
-  std::pair<UrfIdsCycleIterator, UrfIdsCycleIterator> containing(const std::vector<BondIndex>& bonds) const;
+  IteratorRange<UrfIdsCycleIterator> containing(const std::vector<BondIndex>& bonds) const;
 //!@}
 
 //!@name Operators

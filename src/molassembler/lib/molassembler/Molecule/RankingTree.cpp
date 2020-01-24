@@ -2429,9 +2429,7 @@ std::vector<RankingTree::TreeVertexIndex> RankingTree::_expand(
 
   for(
     const PrivateGraph::Vertex& molAdjacentIndex :
-    boost::make_iterator_range(
-      _graph.inner().adjacents(_tree[index].molIndex)
-    )
+    _graph.inner().adjacents(_tree[index].molIndex)
   ) {
     if(treeOutAdjacencies.count(molAdjacentIndex) != 0) {
       continue;
@@ -2981,9 +2979,7 @@ RankingTree::RankingTree(
   std::set<TreeVertexIndex> branchIndices;
   for(
     const AtomIndex rootAdjacentIndex :
-    boost::make_iterator_range(
-      _graph.inner().adjacents(atomToRank)
-    )
+    _graph.inner().adjacents(atomToRank)
   ) {
     if(
       std::find(

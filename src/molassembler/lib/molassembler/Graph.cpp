@@ -103,7 +103,7 @@ bool Graph::adjacent(const AtomIndex a, const AtomIndex b) const {
 
 std::vector<AtomIndex> Graph::atomsOfElement(const Utils::ElementType e) const {
   std::vector<AtomIndex> matches;
-  for(AtomIndex i : boost::make_iterator_range(inner().vertices())) {
+  for(AtomIndex i : inner().vertices()) {
     if(inner().elementType(i) == e) {
       matches.push_back(i);
     }
@@ -122,7 +122,7 @@ boost::optional<BondIndex> Graph::bond(const AtomIndex a, const AtomIndex b) con
 Utils::BondOrderCollection Graph::bondOrders() const {
   Utils::BondOrderCollection BOs(inner().N());
 
-  for(const auto edge : boost::make_iterator_range(inner().edges())) {
+  for(const auto edge : inner().edges()) {
     BOs.setOrder(
       inner().source(edge),
       inner().target(edge),
@@ -167,28 +167,28 @@ unsigned Graph::degree(const AtomIndex a) const {
   return inner().degree(a);
 }
 
-Graph::Range<Graph::AtomIterator> Graph::atoms() const {
+IteratorRange<Graph::AtomIterator> Graph::atoms() const {
   return {
     AtomIterator(inner(), true),
     AtomIterator(inner(), false)
   };
 }
 
-Graph::Range<Graph::BondIterator> Graph::bonds() const {
+IteratorRange<Graph::BondIterator> Graph::bonds() const {
   return {
     BondIterator(inner(), true),
     BondIterator(inner(), false)
   };
 }
 
-Graph::Range<Graph::AdjacencyIterator> Graph::adjacents(const AtomIndex a) const {
+IteratorRange<Graph::AdjacencyIterator> Graph::adjacents(const AtomIndex a) const {
   return {
     AdjacencyIterator(a, inner(), true),
     AdjacencyIterator(a, inner(), false)
   };
 }
 
-Graph::Range<Graph::IncidentEdgesIterator> Graph::bonds(const AtomIndex a) const {
+IteratorRange<Graph::IncidentEdgesIterator> Graph::bonds(const AtomIndex a) const {
   return {
     IncidentEdgesIterator(a, inner(), true),
     IncidentEdgesIterator(a, inner(), false)

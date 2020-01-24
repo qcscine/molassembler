@@ -10,6 +10,7 @@
 
 #include "molassembler/Molecule.h"
 
+#include "molassembler/Graph.h"
 #include "molassembler/Graph/PrivateGraph.h"
 #include "molassembler/StereopermutatorList.h"
 #include "Utils/Geometry/AtomCollection.h"
@@ -265,6 +266,7 @@ struct Molecule::Impl {
 //!@{
   //! Yield which components were used in canonicalization
   boost::optional<AtomEnvironmentComponents> canonicalComponents() const;
+
   /*! Determines what the local geometry at a non-terminal atom ought to be
    *
    * Returns the expected shape name at a non-terminal atom.
@@ -305,6 +307,9 @@ struct Molecule::Impl {
     const Impl& other,
     AtomEnvironmentComponents componentBitmask
   ) const;
+
+  //! Returns a command-line interface information string
+  std::string str() const;
 
   RankingInformation rankPriority(
     AtomIndex a,
