@@ -18,6 +18,7 @@
 #include "temple/Optionals.h"
 
 #include "molassembler/Cycles.h"
+#include "molassembler/Graph.h"
 #include "molassembler/Graph/GraphAlgorithms.h"
 #include "molassembler/IO.h"
 #include "molassembler/Molecule/RankingTree.h"

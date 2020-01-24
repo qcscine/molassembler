@@ -12,6 +12,7 @@
 #include "molassembler/Stereopermutators/FeasiblePermutations.h"
 #include "molassembler/Stereopermutators/ShapeVertexMaps.h"
 #include "molassembler/RankingInformation.h"
+#include "molassembler/Graph.h"
 #include "molassembler/Graph/PrivateGraph.h"
 #include "molassembler/Graph/GraphAlgorithms.h"
 #include "molassembler/Modeling/BondDistance.h"

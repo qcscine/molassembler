@@ -17,21 +17,31 @@
 #ifndef INCLUDE_MOLASSEMBLER_ATOM_STEREOPERMUTATOR_H
 #define INCLUDE_MOLASSEMBLER_ATOM_STEREOPERMUTATOR_H
 
-#include "molassembler/Options.h"
-#include "molassembler/Graph.h"
+#include "molassembler/Types.h"
+#include "shapes/Shapes.h"
 
-using namespace std::string_literals;
+#include "boost/optional/optional_fwd.hpp"
+
+#include <array>
+#include <vector>
+#include <memory>
 
 namespace Scine {
 namespace molassembler {
 
 /* Forward declarations */
 struct RankingInformation;
+class AngstromPositions;
+class Graph;
 
 namespace stereopermutators {
 struct Abstract;
 struct Feasible;
 } // namespace stereopermutators
+
+namespace random {
+class Engine;
+} // namespace random
 
 namespace distance_geometry {
 

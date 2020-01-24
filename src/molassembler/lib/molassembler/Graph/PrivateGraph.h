@@ -12,12 +12,10 @@
 #include "Utils/Geometry/ElementTypes.h"
 
 #include "molassembler/Cycles.h"
-#include "molassembler/IteratorRange.h"
 
 #include <limits>
 
 namespace Scine {
-
 namespace molassembler {
 
 /**
@@ -326,6 +324,5 @@ private:
 };
 
 } // namespace molassembler
-
 } // namespace Scine
 #endif

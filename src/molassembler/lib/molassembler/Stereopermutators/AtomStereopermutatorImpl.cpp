@@ -37,8 +37,9 @@
 
 #include "Utils/Geometry/ElementInfo.h"
 
-namespace Scine {
+using namespace std::string_literals;
 
+namespace Scine {
 namespace molassembler {
 
 /* Static functions */
@@ -1180,5 +1181,4 @@ void AtomStereopermutator::Impl::setShape(
 }
 
 } // namespace molassembler
-
 } // namespace Scine

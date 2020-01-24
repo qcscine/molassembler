@@ -6,8 +6,9 @@
 
 #include "molassembler/Stereopermutators/AtomStereopermutatorImpl.h"
 
-namespace Scine {
+#include "molassembler/Graph.h"
 
+namespace Scine {
 namespace molassembler {
 
 /* AtomStereopermutator implementations */
@@ -162,5 +163,4 @@ bool AtomStereopermutator::operator < (const AtomStereopermutator& other) const 
 }
 
 } // namespace molassembler
-
 } // namespace Scine

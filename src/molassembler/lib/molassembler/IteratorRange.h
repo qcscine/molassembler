@@ -8,6 +8,7 @@
 #ifndef INCLUDE_MOLASSEMBLER_RANGE_H
 #define INCLUDE_MOLASSEMBLER_RANGE_H
 
+#include "molassembler/Export.h"
 #include <utility>
 
 namespace Scine {
@@ -22,7 +23,7 @@ namespace molassembler {
  * different from a std::pair with homogeneous template arguments.
  */
 template<typename Iter>
-struct IteratorRange {
+struct MASM_EXPORT IteratorRange {
   Iter first;
   Iter second;
 

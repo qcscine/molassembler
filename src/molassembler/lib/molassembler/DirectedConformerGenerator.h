@@ -11,12 +11,10 @@
 #include "molassembler/Conformers.h"
 #include "molassembler/BondStereopermutator.h"
 
-#include "boost/optional/optional_fwd.hpp"
 #include "boost/variant/variant_fwd.hpp"
 #include "boost/functional/hash.hpp"
 
 #include <unordered_map>
-#include <memory>
 
 namespace Scine {
 namespace Utils {
@@ -28,7 +26,6 @@ namespace molassembler {
 namespace outcome = BOOST_OUTCOME_V2_NAMESPACE;
 
 class Molecule;
-class BondStereopermutator;
 
 /** @brief Helper type for directed conformer generation.
  *

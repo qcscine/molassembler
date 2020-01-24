@@ -12,7 +12,6 @@
 #define INCLUDE_MOLASSEMBLER_STEREOPERMUTATOR_LIST_H
 
 #include "molassembler/Types.h"
-#include "molassembler/Export.h"
 #include "molassembler/IteratorRange.h"
 
 #include "boost/optional/optional_fwd.hpp"

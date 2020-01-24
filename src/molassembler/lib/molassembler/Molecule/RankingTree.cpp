@@ -17,6 +17,7 @@
 #include "temple/GroupBy.h"
 #include "temple/Stringify.h"
 
+#include "molassembler/Graph.h"
 #include "molassembler/Graph/GraphAlgorithms.h"
 #include "molassembler/Graph/PrivateGraph.h"
 #include "molassembler/Modeling/ShapeInference.h"
@@ -30,7 +31,6 @@
 #include <iostream>
 
 namespace Scine {
-
 namespace molassembler {
 
 // Must declare constexpr static member without definition!
@@ -3495,5 +3495,4 @@ std::string RankingTree::_adaptMolGraph(std::string molGraph) {
 }
 
 } // namespace molassembler
-
 } // namespace Scine

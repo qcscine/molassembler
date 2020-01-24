@@ -12,6 +12,7 @@
 #include "molassembler/Conformers.h"
 #include "molassembler/IO.h"
 #include "molassembler/Molecule.h"
+#include "molassembler/Graph.h"
 #include "molassembler/AtomStereopermutator.h"
 #include "molassembler/BondStereopermutator.h"
 #include "molassembler/StereopermutatorList.h"

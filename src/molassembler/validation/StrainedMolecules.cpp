@@ -12,7 +12,7 @@
 
 #include "molassembler/Conformers.h"
 #include "molassembler/DistanceGeometry/SpatialModel.h"
-#include "molassembler/Io.h"
+#include "molassembler/IO.h"
 #include "molassembler/Molecule.h"
 #include "molassembler/StereopermutatorList.h"
 
@@ -32,7 +32,7 @@ BOOST_AUTO_TEST_CASE(transSpanningImpossibilitiesRemoved) {
   for(unsigned i = 0; i < N; ++i) {
     mol.assignStereopermutator(0, i);
 
-    auto ensemble = generateEnsemble(mol, 10);
+    auto ensemble = generateRandomEnsemble(mol, 10);
     for(auto& positionResult : ensemble) {
       if(!positionResult) {
         BOOST_FAIL(positionResult.error().message());
@@ -49,13 +49,13 @@ void readFileGenConformationAndWriteFile(const boost::filesystem::path& filePath
   // Read the file
   auto mol = io::read(filePath.string());
 
-  distance_geometry::SpatialModel spatialModel {mol, distance_geometry::Configuration {}, randomnessEngine()};
+  distance_geometry::SpatialModel spatialModel {mol, distance_geometry::Configuration {}};
 
   spatialModel.writeGraphviz(filePath.stem().string() + ".dot"s);
 
   try {
     // Generate a conformation
-    if(auto positionsResult = generateConformation(mol)) {
+    if(auto positionsResult = generateRandomConformation(mol)) {
       // Write the generated conformation to file
       io::write(
         filePath.stem().string() + "-generated.mol"s,

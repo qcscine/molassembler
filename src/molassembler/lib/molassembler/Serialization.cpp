@@ -11,6 +11,7 @@
 #include "Utils/Typenames.h"
 #include "json/json.hpp"
 
+#include "molassembler/Graph.h"
 #include "molassembler/Graph/GraphAlgorithms.h"
 #include "molassembler/IO/Base64.h"
 #include "molassembler/Molecule.h"

@@ -42,6 +42,8 @@
 #include <fstream>
 #include <Eigen/Dense>
 
+using namespace std::string_literals;
+
 namespace Scine {
 namespace molassembler {
 

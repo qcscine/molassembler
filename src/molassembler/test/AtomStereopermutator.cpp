@@ -7,6 +7,7 @@
 #include "boost/test/unit_test.hpp"
 
 #include "molassembler/Molecule.h"
+#include "molassembler/Graph.h"
 #include "molassembler/AtomStereopermutator.h"
 #include "molassembler/StereopermutatorList.h"
 #include "molassembler/Conformers.h"

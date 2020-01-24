@@ -43,6 +43,8 @@
 
 #include "temple/Adaptors/AllPairs.h"
 
+using namespace std::string_literals;
+
 namespace Scine {
 namespace molassembler {
 

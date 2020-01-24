@@ -11,9 +11,9 @@
 #ifndef INCLUDE_MOLASSEMBLER_BOND_STEREOPERMUTATOR_H
 #define INCLUDE_MOLASSEMBLER_BOND_STEREOPERMUTATOR_H
 
-#include "boost/optional/optional_fwd.hpp"
-
 #include "molassembler/Types.h"
+
+#include "boost/optional/optional_fwd.hpp"
 
 #include <vector>
 #include <string>

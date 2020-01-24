@@ -14,6 +14,8 @@
 #include "temple/Stringify.h"
 #include "shapes/Data.h"
 
+using namespace std::string_literals;
+
 namespace Scine {
 namespace molassembler {
 
