@@ -8,15 +8,15 @@
 #ifndef INCLUDE_MOLASSEMBLER_CONFORMER_GENERATION_H
 #define INCLUDE_MOLASSEMBLER_CONFORMER_GENERATION_H
 
-#include "Utils/Typenames.h"
 #include "molassembler/Types.h"
+#include "Utils/Typenames.h"
 #include "boost_outcome/outcome.hpp"
 #include <vector>
 
 namespace Scine {
 namespace molassembler {
 
-namespace outcome = BOOST_OUTCOME_V2_NAMESPACE;
+namespace outcome = OUTCOME_V2_NAMESPACE;
 
 // Forward-declarations
 class Molecule;

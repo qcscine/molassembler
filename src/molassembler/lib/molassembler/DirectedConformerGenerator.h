@@ -23,7 +23,7 @@ class AtomCollection;
 
 namespace molassembler {
 
-namespace outcome = BOOST_OUTCOME_V2_NAMESPACE;
+namespace outcome = OUTCOME_V2_NAMESPACE;
 
 class Molecule;
 

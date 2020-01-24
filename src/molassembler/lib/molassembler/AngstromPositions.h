@@ -11,9 +11,9 @@
 #ifndef INCLUDE_MOLASSEMBLER_ANGSTROM_POSITIONS_H
 #define INCLUDE_MOLASSEMBLER_ANGSTROM_POSITIONS_H
 
-#include "Utils/Typenames.h"
-
 #include "molassembler/Types.h"
+
+#include "Utils/Typenames.h"
 
 namespace Scine {
 namespace molassembler {

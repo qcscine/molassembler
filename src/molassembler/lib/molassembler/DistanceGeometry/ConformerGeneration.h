@@ -17,7 +17,7 @@
 namespace Scine {
 namespace molassembler {
 
-namespace outcome = BOOST_OUTCOME_V2_NAMESPACE;
+namespace outcome = OUTCOME_V2_NAMESPACE;
 
 namespace distance_geometry {
 namespace detail {

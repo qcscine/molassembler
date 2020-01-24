@@ -15,7 +15,6 @@
 #include "shapes/Shapes.h"
 #include "temple/OrderedPair.h"
 #include "temple/constexpr/FloatingPointComparison.h"
-#include "temple/OperatorSuppliers.h"
 
 #include <vector>
 

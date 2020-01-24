@@ -28,7 +28,7 @@ namespace random {
 class Engine;
 } // namespace random
 
-namespace outcome = BOOST_OUTCOME_V2_NAMESPACE;
+namespace outcome = OUTCOME_V2_NAMESPACE;
 
 // Forward-declare PrivateGraph
 class PrivateGraph;
