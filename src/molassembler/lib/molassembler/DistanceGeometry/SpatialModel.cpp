@@ -366,10 +366,11 @@ void SpatialModel::addAtomStereopermutatorInformation(
         }
       );
     } else {
-      /* Distance of every site site atom index to the central atom assumptions
-       * - Every haptic index is on the cone base circle
-       * - Cone height is defined by feasiblePermutations.siteDistance
-       * - Cone angle is defined by feasiblePermutations.coneAngle
+      /* Distance of every site site atom index to the central atom assumption:
+       * Every haptic atom index is on the cone base circle.
+       *
+       * Cone height is feasiblePermutations.siteDistance, cone angle is
+       * feasiblePermutations.coneAngle
        */
       const ValueBounds& coneAngleBounds = feasiblePermutations.coneAngles.at(siteI).value();
 
@@ -1052,8 +1053,7 @@ ChiralConstraint SpatialModel::makeChiralConstraint(
    *
    */
 
-  constexpr unsigned cayleyMengerDim = 5;
-  using DeterminantMatrix = Eigen::Matrix<double, cayleyMengerDim, cayleyMengerDim>;
+  using DeterminantMatrix = Eigen::Matrix<double, 5, 5>;
 
   DeterminantMatrix lowerMatrix;
   DeterminantMatrix upperMatrix;
@@ -1065,52 +1065,50 @@ ChiralConstraint SpatialModel::makeChiralConstraint(
   upperMatrix.diagonal().setZero();
 
   /* Cycle through all combinations of site indices in the tetrahedron
-   * definition sequence. boost::none means the central atom.
+   * definition sequence. None entries signify replacement with the central
+   * atom. The central atom / None can only occur once (else volume of
+   * tetrahedron is zero and the definition is nonsense).
    */
   for(unsigned i = 0; i < 4; ++i) {
-    boost::optional<distance_geometry::ValueBounds> iBounds;
-    if(minimalConstraint.at(i)) {
-      iBounds = feasiblePermutations.siteDistances.at(
-        minimalConstraint.at(i).value()
-      );
-    }
+    const auto iBoundsOption = temple::optionals::map(
+      minimalConstraint.at(i),
+      temple::functor::at(feasiblePermutations.siteDistances)
+    );
 
     for(unsigned j = i + 1; j < 4; ++j) {
-      boost::optional<distance_geometry::ValueBounds> jBounds;
-      if(minimalConstraint.at(j)) {
-        jBounds = feasiblePermutations.siteDistances.at(
-          minimalConstraint.at(j).value()
-        );
-      }
+      const auto jBoundsOption = temple::optionals::map(
+        minimalConstraint.at(j),
+        temple::functor::at(feasiblePermutations.siteDistances)
+      );
 
-      assert(iBounds || jBounds);
-
-      distance_geometry::ValueBounds oneThreeDistanceBounds;
-      if(iBounds && jBounds) {
-        /* If neither index is the central atom, we can calculate an
-         * expected one-three distance
+      ValueBounds oneThreeDistanceBounds;
+      if(iBoundsOption && jBoundsOption) {
+        /* If both options are populated, then neither the index optional in
+         * minimalConstraint at i or at j are none. If neither index is the
+         * central atom, we can calculate an expected one-three distance:
          */
-        double siteAngle = permutator.angle(
+        const double siteAngle = permutator.angle(
           minimalConstraint.at(i).value(),
           minimalConstraint.at(j).value()
         );
 
         oneThreeDistanceBounds = {
           CommonTrig::lawOfCosines(
-            iBounds.value().lower,
-            jBounds.value().lower,
+            iBoundsOption->lower,
+            jBoundsOption->lower,
             std::max(0.0, siteAngle * (1 - angleRelativeVariance * looseningMultiplier))
           ),
           CommonTrig::lawOfCosines(
-            iBounds.value().upper,
-            jBounds.value().upper,
+            iBoundsOption->upper,
+            jBoundsOption->upper,
             std::min(M_PI, siteAngle * (1 + angleRelativeVariance * looseningMultiplier))
           )
         };
-      } else if(iBounds) {
-        oneThreeDistanceBounds = iBounds.value();
+      } else if(iBoundsOption) {
+        oneThreeDistanceBounds = iBoundsOption.value();
       } else {
-        oneThreeDistanceBounds = jBounds.value();
+        assert(jBoundsOption);
+        oneThreeDistanceBounds = jBoundsOption.value();
       }
 
       lowerMatrix(i + 1, j + 1) = std::pow(oneThreeDistanceBounds.lower, 2);
@@ -1135,11 +1133,12 @@ ChiralConstraint SpatialModel::makeChiralConstraint(
   auto tetrahedronSites = temple::map(
     minimalConstraint,
     [&](const boost::optional<unsigned>& siteIndexOptional) -> std::vector<AtomIndex> {
-      if(siteIndexOptional) {
-        return ranking.sites.at(siteIndexOptional.value());
-      }
-
-      return {centerAtom};
+      return temple::optionals::map(
+        siteIndexOptional,
+        temple::functor::at(ranking.sites)
+      ).value_or_eval(
+        [centerAtom]() {return std::vector<AtomIndex>(1, centerAtom);}
+      );
     }
   );
 

@@ -1011,10 +1011,6 @@ boost::optional<unsigned> AtomStereopermutator::Impl::indexOfPermutation() const
 
 std::vector<AtomStereopermutator::MinimalChiralConstraint>
 AtomStereopermutator::Impl::minimalChiralConstraints(bool enforce) const {
-  std::vector<
-    std::array<boost::optional<unsigned>, 4>
-  > precursors;
-
   /* It only makes sense to emit these minimal representations of chiral
    * constraints if the stereopermutator is assigned.
    *
@@ -1035,12 +1031,12 @@ AtomStereopermutator::Impl::minimalChiralConstraints(bool enforce) const {
    */
   if(
     _assignmentOption
-    && (numStereopermutations() > 1 || enforce)
+    && (numAssignments() > 1 || enforce)
   ) {
     /* Invert _neighborSymmetryPositionMap, we need a mapping of
      *  (position in symmetry) -> atom index
      */
-    auto symmetryPositionToSiteIndexMap = shapeVertexToSiteIndexMap(
+    const auto shapeMap = shapeVertexToSiteIndexMap(
       _abstract.permutations.list.at(
         _feasible.indices.at(
           _assignmentOption.value()
@@ -1049,34 +1045,23 @@ AtomStereopermutator::Impl::minimalChiralConstraints(bool enforce) const {
       _abstract.canonicalSites
     );
 
-    // Get list of tetrahedra from symmetry
-    const auto& tetrahedraList = shapes::tetrahedra(_shape);
-
-    precursors.reserve(tetrahedraList.size());
-    for(const auto& tetrahedron : tetrahedraList) {
-      /* Replace indices (represent positions within the symmetry) with the
-       * site index at that position from the inverted map
-       */
-
-      // Make a minimal sequence from it
-      precursors.push_back(
-        temple::map(
+    return temple::map(
+      shapes::tetrahedra(_shape),
+      [&](const auto& tetrahedron) -> MinimalChiralConstraint {
+        return temple::map_stl(
           tetrahedron,
-          [&](const boost::optional<unsigned>& indexOptional) -> boost::optional<unsigned> {
-            if(indexOptional) {
-              return symmetryPositionToSiteIndexMap.at(
-                indexOptional.value()
-              );
-            }
-
-            return boost::none;
+          [&](const auto& shapeVertexOptional) -> boost::optional<unsigned> {
+            return temple::optionals::map(
+              shapeVertexOptional,
+              temple::functor::at(shapeMap)
+            );
           }
-        )
-      );
-    }
+        );
+      }
+    );
   }
 
-  return precursors;
+  return {};
 }
 
 std::string AtomStereopermutator::Impl::info() const {
