@@ -43,6 +43,7 @@ Core features
    :caption: Introduction
 
    model
+   recipes
 
 .. toctree::
    :hidden:

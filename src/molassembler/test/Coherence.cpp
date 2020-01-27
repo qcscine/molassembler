@@ -5,6 +5,7 @@
  */
 
 #include <boost/test/unit_test.hpp>
+
 #include "molassembler/Conformers.h"
 #include "molassembler/DistanceGeometry/ConformerGeneration.h"
 
@@ -21,6 +22,7 @@
 
 #include "Fixtures.h"
 
+#include "boost/optional/optional_io.hpp"
 #include <iostream>
 
 using namespace std::string_literals;
@@ -184,6 +186,27 @@ BOOST_FIXTURE_TEST_CASE(AtomStereopermutationCGFitCoherence, LowTemperatureFixtu
   }
 }
 
+void testIdenticalReinterpret(const Molecule& mol, const AtomIndex checkPosition) {
+  auto fetchAssignment = [&](const Molecule& molecule) {
+    return temple::optionals::flatMap(
+      molecule.stereopermutators().option(checkPosition),
+      [](const auto& f) { return f.assigned(); }
+    );
+  };
+
+  const auto expectedAssignment = fetchAssignment(mol);
+  if(auto conf = generateRandomConformation(mol)) {
+    Molecule reinterpreted {
+      mol.graph(),
+      AngstromPositions {conf.value()}
+    };
+    auto reinterpretedAssignment = fetchAssignment(reinterpreted);
+    BOOST_CHECK_EQUAL(reinterpretedAssignment, expectedAssignment);
+  } else {
+    BOOST_FAIL(conf.error());
+  }
+}
+
 BOOST_AUTO_TEST_CASE(BidentateAssignmentRecognized) {
   const std::string pincer_smiles = "[Ir]12([H])(Cl)P(C(C)(C)(C))(C(C)(C)(C))CC(=CC=C3)C1=C3CP2(C(C)(C)(C))C(C)(C)C";
   // NOTE: set shape at 0 to trigonal bipyramid
@@ -219,19 +242,22 @@ BOOST_AUTO_TEST_CASE(BidentateAssignmentRecognized) {
   }
   BOOST_REQUIRE(expectedAssignmentOption);
 
-  if(auto conf = generateRandomConformation(pincer)) {
-    Molecule reinterpreted {
-      pincer.graph(),
-      AngstromPositions {conf.value()}
-    };
-    auto assignmentOptional = temple::optionals::flatMap(
-      reinterpreted.stereopermutators().option(0),
-      [](const AtomStereopermutator& f) -> boost::optional<unsigned> {
-        return f.assigned();
-      }
-    );
-    BOOST_CHECK(assignmentOptional == expectedAssignmentOption);
-  } else {
-    BOOST_FAIL(conf.error());
+  testIdenticalReinterpret(pincer, 0);
+}
+
+BOOST_AUTO_TEST_CASE(Shipscrews) {
+  const std::string shipscrew_smiles = "[Fe@OH1+3]123(OC(=O)C(=O)O1)(OC(=O)C(=O)O2)OC(=O)C(=O)O3";
+  auto shipscrew = io::experimental::parseSmilesSingleMolecule(shipscrew_smiles);
+
+  const auto numAssignments = temple::optionals::flatMap(
+    shipscrew.stereopermutators().option(0),
+    [](const auto& p) { return p.numAssignments(); }
+  );
+  const auto expectedNumAssignments = boost::optional<unsigned>(2);
+  BOOST_REQUIRE(numAssignments == expectedNumAssignments);
+
+  for(unsigned i = 0; i < 2; ++i) {
+    shipscrew.assignStereopermutator(0, i);
+    testIdenticalReinterpret(shipscrew, 0);
   }
 }
