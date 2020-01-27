@@ -147,7 +147,7 @@ BOOST_AUTO_TEST_CASE(AnglesMatchCoordinates) {
 
   for(const auto& shape: allShapes) {
     auto getCoordinates =  [&](const unsigned index) -> Eigen::Vector3d {
-      return shapeData().at(shape).coordinates.col(index);
+      return coordinates(shape).col(index);
     };
 
     bool all_pass = true;
@@ -191,7 +191,7 @@ BOOST_AUTO_TEST_CASE(AllTetrahedraPositive) {
   for(const auto& shape: allShapes) {
     auto getCoordinates = [&](const boost::optional<unsigned>& indexOption) -> Eigen::Vector3d {
       if(indexOption) {
-        return shapeData().at(shape).coordinates.col(indexOption.value());
+        return coordinates(shape).col(indexOption.value());
       }
 
       return {0, 0, 0};

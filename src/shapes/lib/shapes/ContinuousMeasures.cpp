@@ -989,7 +989,7 @@ ShapeResult shapeFaithfulPaperImplementation(
 
   // Add the origin
   Matrix shapeCoordinates(3, N);
-  shapeCoordinates.block(0, 0, 3, N - 1) = shapeData().at(shape).coordinates;
+  shapeCoordinates.block(0, 0, 3, N - 1) = coordinates(shape);
   shapeCoordinates.col(N - 1) = Eigen::Vector3d::Zero();
   // Normalize the coordinates
   shapeCoordinates = normalize(shapeCoordinates);
@@ -1076,7 +1076,7 @@ ShapeResult shapeAlternateImplementationBase(
 
   // Add the origin
   Matrix shapeCoordinates(3, N);
-  shapeCoordinates.block(0, 0, 3, N - 1) = shapeData().at(shape).coordinates;
+  shapeCoordinates.block(0, 0, 3, N - 1) = coordinates(shape);
   shapeCoordinates.col(N - 1) = Eigen::Vector3d::Zero();
   // Normalize the coordinates
   shapeCoordinates = normalize(shapeCoordinates);
@@ -1278,7 +1278,7 @@ ShapeResult shapeHeuristics(
 
   // Add origin to shape coordinates and renormalize
   PositionCollection shapeCoords (3, N);
-  shapeCoords.leftCols(N - 1) = shapeData().at(shape).coordinates;
+  shapeCoords.leftCols(N - 1) = coordinates(shape);
   shapeCoords.col(N - 1) = Eigen::Vector3d::Zero();
   shapeCoords = normalize(shapeCoords);
 
@@ -1420,7 +1420,7 @@ ShapeResult shapeHeuristicsCentroidLast(
 
   // Add origin to shape coordinates and renormalize
   PositionCollection shapeCoords (3, N);
-  shapeCoords.leftCols(N - 1) = shapeData().at(shape).coordinates;
+  shapeCoords.leftCols(N - 1) = coordinates(shape);
   shapeCoords.col(N - 1) = Eigen::Vector3d::Zero();
   shapeCoords = normalize(shapeCoords);
 
@@ -1588,7 +1588,7 @@ double minimumDistortionAngle(const Shape a, const Shape b) {
   // Add origin to shape b's coordinates
   const unsigned S = size(b);
   PositionCollection p (3, S + 1);
-  p.block(0, 0, 3, S) = shapeData().at(b).coordinates;
+  p.block(0, 0, 3, S) = coordinates(b);
   p.col(S) = Eigen::Vector3d::Zero();
 
   return std::asin(

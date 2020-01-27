@@ -55,7 +55,7 @@ BOOST_AUTO_TEST_CASE(InertialStandardization) {
   };
 
   for(const auto nameTopPair : tops) {
-    auto positions = addOrigin(shapeData().at(nameTopPair.first).coordinates);
+    auto positions = addOrigin(coordinates(nameTopPair.first));
 
     // Apply a random coordinate transformation
 

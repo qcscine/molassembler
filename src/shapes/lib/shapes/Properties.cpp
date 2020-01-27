@@ -298,7 +298,7 @@ Eigen::Vector3d getCoordinates(
   if(indexInShapeOption) {
     assert(indexInShapeOption.value() < shapes::size(shape));
 
-    return shapeData().at(shape).coordinates.col(
+    return coordinates(shape).col(
       indexInShapeOption.value()
     );
   }
@@ -336,8 +336,8 @@ double calculateAngleDistortion(
 
   double angularDistortion = 0;
 
-  for(unsigned i = 0; i < mappingIndexLimit; ++i) {
-    for(unsigned j = i + 1; j < mappingIndexLimit; ++j) {
+  for(Vertex i(0); i < mappingIndexLimit; ++i) {
+    for(Vertex j(i + 1); j < mappingIndexLimit; ++j) {
       angularDistortion += std::fabs(
         shapes::angleFunction(from)(i, j)
         - shapes::angleFunction(to)(

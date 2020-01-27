@@ -87,7 +87,7 @@ BOOST_AUTO_TEST_CASE(PointGroupMeasures) {
       continue;
     }
 
-    auto positions = addOrigin(shapeData().at(shape).coordinates);
+    auto positions = addOrigin(coordinates(shape));
     // distort(positions);
     auto normalized = continuous::normalize(positions);
 
@@ -244,7 +244,7 @@ BOOST_AUTO_TEST_CASE(PointGroupElementGroupings) {
 
 BOOST_AUTO_TEST_CASE(SquareC4D4PointGroups) {
   const double pointGroupCSM = continuous::pointGroup(
-    continuous::normalize(shapeData().at(Shape::Square).coordinates),
+    continuous::normalize(coordinates(Shape::Square)),
     PointGroup::C4
   );
   BOOST_CHECK_MESSAGE(
@@ -253,7 +253,7 @@ BOOST_AUTO_TEST_CASE(SquareC4D4PointGroups) {
   );
 
   const double D4CSM = continuous::pointGroup(
-    continuous::normalize(shapeData().at(Shape::Square).coordinates),
+    continuous::normalize(coordinates(Shape::Square)),
     PointGroup::D4
   );
 
@@ -288,7 +288,7 @@ BOOST_AUTO_TEST_CASE(FixedCnAxis) {
   constexpr double acceptanceThreshold = 0.3;
 
   for(const auto& nameOrderPair : highestOrderAxis) {
-    auto positions = addOrigin(shapeData().at(nameOrderPair.first).coordinates);
+    auto positions = addOrigin(coordinates(nameOrderPair.first));
     distort(positions);
 
     auto normalizedPositions = continuous::normalize(positions);
@@ -402,8 +402,8 @@ BOOST_AUTO_TEST_CASE(AsymmetricTopStandardization) {
   };
 
   for(const Shape shape : asymmetricTopsWithC2) {
-    auto coordinates = addOrigin(shapeData().at(shape).coordinates);
-    auto normalizedPositions = continuous::normalize(coordinates);
+    auto shapeCoordinates = addOrigin(coordinates(shape));
+    auto normalizedPositions = continuous::normalize(shapeCoordinates);
     const Top top = standardizeTop(normalizedPositions);
     BOOST_CHECK_MESSAGE(
       top == Top::Asymmetric,
@@ -430,7 +430,7 @@ BOOST_AUTO_TEST_CASE(ShapeMeasuresYieldForwardPermutation) {
   const Shape testShape = Shape::Tetrahedron;
 
   auto shapeCoordinates = continuous::normalize(
-    addOrigin(shapeData().at(testShape).coordinates)
+    addOrigin(coordinates(testShape))
   );
 
   continuous::PositionCollection shuffled (3, shapeCoordinates.cols());
@@ -515,7 +515,7 @@ BOOST_AUTO_TEST_CASE(ShapeMeasuresAlternateAlgorithm) {
     }
 
     auto shapeCoordinates = continuous::normalize(
-      addOrigin(shapeData().at(shape).coordinates)
+      addOrigin(coordinates(shape))
     );
     const double unrotated = continuous::shapeAlternateImplementation(shapeCoordinates, shape).measure;
     BOOST_CHECK_MESSAGE(
@@ -565,7 +565,7 @@ BOOST_AUTO_TEST_CASE(ShapeMeasuresHeuristics) {
     }
 
     auto shapeCoordinates = continuous::normalize(
-      addOrigin(shapeData().at(shape).coordinates)
+      addOrigin(coordinates(shape))
     );
 
     for(unsigned i = 1; i < 6; ++i) {
@@ -665,7 +665,7 @@ BOOST_AUTO_TEST_CASE(MinimumDistortionConstants) {
   auto testF = [](const Shape a, const Shape b, const double expectedMinimumDistortion) {
     auto makeShapeCoordinates = [](const Shape shape) {
       return continuous::normalize(
-        addOrigin(shapeData().at(shape).coordinates)
+        addOrigin(coordinates(shape))
       );
     };
 

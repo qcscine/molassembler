@@ -307,6 +307,9 @@ constexpr double getTetrahedronVolume(
   );
 }
 
+// Typedef to avoid reusing C-Style function ptr type
+using AngleFunctionPtr = double(*)(const unsigned, const unsigned);
+
 /*! @brief Calculates angular distortion caused by a shape transition mapping
  *
  * @complexity{@math{\Theta(S^2)}}
@@ -321,8 +324,8 @@ template<size_t size>
 constexpr double calculateAngularDistortion(
   const ArrayType<unsigned, size>& indexMapping,
   const size_t sourceSymmetrySize,
-  const data::AngleFunctionPtr& sourceAngleFunction,
-  const data::AngleFunctionPtr& targetAngleFunction
+  const AngleFunctionPtr sourceAngleFunction,
+  const AngleFunctionPtr targetAngleFunction
 ) {
   double distortionSum = 0;
 

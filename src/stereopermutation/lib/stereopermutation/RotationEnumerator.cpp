@@ -6,6 +6,7 @@
 
 #include "stereopermutation/RotationEnumerator.h"
 
+#include "boost/optional.hpp"
 #include "shapes/Data.h"
 
 namespace Scine {

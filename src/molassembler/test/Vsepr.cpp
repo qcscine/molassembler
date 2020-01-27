@@ -6,10 +6,12 @@
 
 #include <boost/test/unit_test.hpp>
 
-#include <iostream>
-
 #include "molassembler/Modeling/ShapeInference.h"
 #include "shapes/Data.h"
+
+#include "boost/optional.hpp"
+
+#include <iostream>
 
 using namespace Scine;
 using namespace molassembler;

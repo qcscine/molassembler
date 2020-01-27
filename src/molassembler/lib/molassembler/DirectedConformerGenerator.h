@@ -12,7 +12,6 @@
 #include "molassembler/BondStereopermutator.h"
 
 #include "boost/variant/variant_fwd.hpp"
-#include "boost/functional/hash.hpp"
 
 #include <unordered_map>
 

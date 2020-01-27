@@ -14,6 +14,8 @@
 #include "boost/optional.hpp"
 #include "boost/integer/common_factor_rt.hpp"
 
+#include <unordered_map>
+
 namespace Scine {
 namespace stereopermutation {
 

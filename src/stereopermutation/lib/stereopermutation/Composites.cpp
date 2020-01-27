@@ -38,7 +38,7 @@ std::pair<T, T> makeOrderedPair(T a, T b) {
 }
 
 void rotateCoordinates(
-  Eigen::Ref<shapes::CoordinateList> positions,
+  Eigen::Ref<shapes::Coordinates> positions,
   const Eigen::Vector3d& unitSource,
   const Eigen::Vector3d& unitTarget
 ) {
@@ -78,7 +78,7 @@ void rotateCoordinates(
 }
 
 void translateCoordinates(
-  Eigen::Ref<shapes::CoordinateList> positions,
+  Eigen::Ref<shapes::Coordinates> positions,
   const Eigen::Vector3d& translation
 ) {
   for(unsigned i = 0; i < positions.cols(); ++i) {
@@ -644,9 +644,7 @@ Composite::Composite(
    * NOTE: The central atom of both symmetries is always placed at the origin
    * in the coordinate definitions.
    */
-  shapes::CoordinateList firstCoordinates = shapes::shapeData().at(
-    _orientations.first.shape
-  ).coordinates;
+  auto firstCoordinates = shapes::coordinates(_orientations.first.shape);
   // Rotate left fused position onto <1, 0, 0>
   detail::rotateCoordinates(
     firstCoordinates,
@@ -654,9 +652,7 @@ Composite::Composite(
     Eigen::Vector3d::UnitX()
   );
 
-  auto secondCoordinates = shapes::shapeData().at(
-    _orientations.second.shape
-  ).coordinates;
+  auto secondCoordinates = shapes::coordinates(_orientations.second.shape);
   // Rotate right fused position onto <-1, 0, 0>
   detail::rotateCoordinates(
     secondCoordinates,
