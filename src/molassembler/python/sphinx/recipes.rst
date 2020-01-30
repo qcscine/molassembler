@@ -39,7 +39,7 @@ separate files.
 >>> # Make a conformation of alanine and its enantiomer and write each to a file
 >>> from copy import copy
 >>> alanine_enantiomer = copy(alanine)
->>> alanine_enantiomer.assign_stereopermutator(stereopermutator.central_index, other)
+>>> alanine_enantiomer.assign_stereopermutator(stereopermutator.placement, other)
 >>> def write_conformer(mol, filename):
         result = dg.generate_random_conformation(mol)
         assert not isinstance(result, str)
