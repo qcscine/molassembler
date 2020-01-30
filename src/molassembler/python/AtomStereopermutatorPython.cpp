@@ -93,8 +93,8 @@ void init_atom_stereopermutator(pybind11::module& m) {
   );
 
   atomStereopermutator.def_property_readonly(
-    "central_index",
-    &AtomStereopermutator::centralIndex,
+    "placement",
+    &AtomStereopermutator::placement,
     "The central atom this permutator is placed on"
   );
 

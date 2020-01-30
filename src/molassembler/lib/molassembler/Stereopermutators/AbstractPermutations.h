@@ -68,7 +68,7 @@ struct Abstract {
    *
    * Example:
    * @verbatim
-   * links = {indexPair = {5, 8}}
+   * links = {sites = {5, 8}}
    *
    * self-refential idx: 0  1  2    3  4    5
    * canonicalSites =   {1, 2, 4}, {5, 8}, {3} (this is output from canonicalize)
@@ -77,7 +77,7 @@ struct Abstract {
    * @endverbatim
    */
   static stereopermutation::Stereopermutation::OrderedLinks selfReferentialTransform(
-    const std::vector<LinkInformation>& rankingLinks,
+    const std::vector<RankingInformation::Link>& rankingLinks,
     const RankingInformation::RankedSitesType& canonicalSites
   );
 

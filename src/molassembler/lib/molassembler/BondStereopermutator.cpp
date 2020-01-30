@@ -7,7 +7,6 @@
 #include "molassembler/Stereopermutators/BondStereopermutatorImpl.h"
 
 namespace Scine {
-
 namespace molassembler {
 
 constexpr double BondStereopermutator::assignmentAcceptanceParameter;
@@ -58,15 +57,15 @@ BondStereopermutator::BondStereopermutator(
 }
 
 void BondStereopermutator::assign(boost::optional<unsigned> assignment) {
-  _pImpl -> assign(std::move(assignment));
+  _pImpl->assign(std::move(assignment));
 }
 
 void BondStereopermutator::assignRandom(random::Engine& engine) {
-  _pImpl -> assignRandom(engine);
+  _pImpl->assignRandom(engine);
 }
 
 void BondStereopermutator::applyPermutation(const std::vector<AtomIndex>& permutation) {
-  _pImpl -> applyPermutation(permutation);
+  _pImpl->applyPermutation(permutation);
 }
 
 void BondStereopermutator::fit(
@@ -75,7 +74,7 @@ void BondStereopermutator::fit(
   const AtomStereopermutator& stereopermutatorB,
   const FittingMode mode
 ) {
-  _pImpl -> fit(
+  _pImpl->fit(
     angstromWrapper,
     stereopermutatorA,
     stereopermutatorB,
@@ -89,7 +88,7 @@ void BondStereopermutator::propagateGraphChange(
   const PrivateGraph& inner,
   const StereopermutatorList& permutators
 ) {
-  _pImpl -> propagateGraphChange(
+  _pImpl->propagateGraphChange(
     oldPermutator,
     newPermutator,
     inner,
@@ -102,11 +101,11 @@ BondStereopermutator::Alignment BondStereopermutator::alignment() const {
 }
 
 boost::optional<unsigned> BondStereopermutator::assigned() const {
-  return _pImpl -> assigned();
+  return _pImpl->assigned();
 }
 
 const stereopermutation::Composite& BondStereopermutator::composite() const {
-  return _pImpl -> composite();
+  return _pImpl->composite();
 }
 
 double BondStereopermutator::dihedral(
@@ -115,7 +114,7 @@ double BondStereopermutator::dihedral(
   const AtomStereopermutator& stereopermutatorB,
   const SiteIndex siteIndexB
 ) const {
-  return _pImpl -> dihedral(
+  return _pImpl->dihedral(
     stereopermutatorA,
     siteIndexA,
     stereopermutatorB,
@@ -124,31 +123,31 @@ double BondStereopermutator::dihedral(
 }
 
 bool BondStereopermutator::hasSameCompositeOrientation(const BondStereopermutator& other) const {
-  return _pImpl -> hasSameCompositeOrientation(*other._pImpl);
+  return _pImpl->hasSameCompositeOrientation(*other._pImpl);
 }
 
 boost::optional<unsigned> BondStereopermutator::indexOfPermutation() const {
-  return _pImpl -> indexOfPermutation();
+  return _pImpl->indexOfPermutation();
 }
 
 unsigned BondStereopermutator::numAssignments() const {
-  return _pImpl -> numAssignments();
+  return _pImpl->numAssignments();
 }
 
 unsigned BondStereopermutator::numStereopermutations() const {
-  return _pImpl -> numStereopermutations();
+  return _pImpl->numStereopermutations();
 }
 
 std::string BondStereopermutator::info() const {
-  return _pImpl -> info();
+  return _pImpl->info();
 }
 
 std::string BondStereopermutator::rankInfo() const {
-  return _pImpl -> rankInfo();
+  return _pImpl->rankInfo();
 }
 
-BondIndex BondStereopermutator::edge() const {
-  return _pImpl -> edge();
+BondIndex BondStereopermutator::placement() const {
+  return _pImpl->placement();
 }
 
 bool BondStereopermutator::operator < (const BondStereopermutator& other) const {
@@ -166,5 +165,4 @@ bool BondStereopermutator::operator != (const BondStereopermutator& other) const
 }
 
 } // namespace molassembler
-
 } // namespace Scine

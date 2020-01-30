@@ -101,8 +101,8 @@ boost::optional<unsigned> AtomStereopermutator::assigned() const {
   return _pImpl->assigned();
 }
 
-AtomIndex AtomStereopermutator::centralIndex() const {
-  return _pImpl->centralIndex();
+AtomIndex AtomStereopermutator::placement() const {
+  return _pImpl->placement();
 }
 
 boost::optional<unsigned> AtomStereopermutator::indexOfPermutation() const {

@@ -143,7 +143,7 @@ public:
   boost::optional<unsigned> assigned() const;
 
   //! Returns a single-element vector containing the central atom
-  AtomIndex centralIndex() const;
+  AtomIndex placement() const;
 
   /*!
    * @brief Returns IOP within the set of symbolic ligand permutations

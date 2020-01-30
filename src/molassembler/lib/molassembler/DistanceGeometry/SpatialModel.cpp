@@ -169,7 +169,7 @@ SpatialModel::SpatialModel(
    */
   std::unordered_set<AtomIndex> forceConstraintEmissionSet;
   for(const auto& bondStereopermutator : _molecule.stereopermutators().bondStereopermutators()) {
-    for(AtomIndex placedAtomIndex : bondStereopermutator.edge()) {
+    for(AtomIndex placedAtomIndex : bondStereopermutator.placement()) {
       forceConstraintEmissionSet.insert(placedAtomIndex);
     }
   }
@@ -181,7 +181,7 @@ SpatialModel::SpatialModel(
       _molecule.graph().inner(),
       configuration.spatialModelLoosening,
       fixedAngstromPositions,
-      forceConstraintEmissionSet.count(stereopermutator.centralIndex()) > 0
+      forceConstraintEmissionSet.count(stereopermutator.placement()) > 0
     );
   }
 
@@ -190,10 +190,10 @@ SpatialModel::SpatialModel(
     addBondStereopermutatorInformation(
       bondStereopermutator,
       _molecule.stereopermutators().option(
-        bondStereopermutator.edge().first
+        bondStereopermutator.placement().first
       ).value(),
       _molecule.stereopermutators().option(
-        bondStereopermutator.edge().second
+        bondStereopermutator.placement().second
       ).value(),
       configuration.spatialModelLoosening,
       fixedAngstromPositions
@@ -259,7 +259,7 @@ void SpatialModel::addAtomStereopermutatorInformation(
 ) {
   const auto& feasiblePermutations = permutator.getFeasible();
   const auto& ranking = permutator.getRanking();
-  const AtomIndex centerAtom = permutator.centralIndex();
+  const AtomIndex centerAtom = permutator.placement();
 
   /* Angle information addition: Rough outline
    * - For each site
@@ -279,7 +279,7 @@ void SpatialModel::addAtomStereopermutatorInformation(
    * have to do anything differently at all.
    */
   std::vector<bool> siteFixed;
-  bool centerFixed = fixedAngstromPositions.count(centerAtom) > 0;
+  const bool centerFixed = fixedAngstromPositions.count(centerAtom) > 0;
   if(centerFixed) {
     // Map from site indices to whether the entire site is fixed or not
     siteFixed = temple::map(
@@ -320,7 +320,7 @@ void SpatialModel::addAtomStereopermutatorInformation(
     if(centerFixed && siteFixed.at(siteI)) {
       // All center to site constituting atom distances are fixed *exactly*
       for(const AtomIndex i : ranking.sites.at(siteI)) {
-        double bondDistance = cartesian::distance(
+        const double bondDistance = cartesian::distance(
           fixedAngstromPositions.at(i),
           fixedAngstromPositions.at(centerAtom)
         );
@@ -480,7 +480,7 @@ void SpatialModel::addAtomStereopermutatorInformation(
     assert(sites.size() == S);
     for(unsigned offset = 0; offset < S - 2; ++offset) {
       ChiralConstraint::SiteSequence constraintSites;
-      constraintSites[0] = {permutator.centralIndex()};
+      constraintSites[0] = {permutator.placement()};
       constraintSites[1] = sites.at(offset);
       constraintSites[2] = sites.at(offset + 1);
       constraintSites[3] = sites.at(offset + 2);
@@ -509,13 +509,13 @@ void SpatialModel::addBondStereopermutatorInformation(
   const stereopermutation::Composite& composite = permutator.composite();
 
   const AtomStereopermutator& firstStereopermutator = (
-    stereopermutatorA.centralIndex() == composite.orientations().first.identifier
+    stereopermutatorA.placement() == composite.orientations().first.identifier
     ? stereopermutatorA
     : stereopermutatorB
   );
 
   const AtomStereopermutator& secondStereopermutator = (
-    stereopermutatorB.centralIndex() == composite.orientations().second.identifier
+    stereopermutatorB.placement() == composite.orientations().second.identifier
     ? stereopermutatorB
     : stereopermutatorA
   );
@@ -583,8 +583,8 @@ void SpatialModel::addBondStereopermutatorInformation(
         setDihedralBoundsIfEmpty(
           orderedSequence(
             firstIndex,
-            firstStereopermutator.centralIndex(),
-            secondStereopermutator.centralIndex(),
+            firstStereopermutator.placement(),
+            secondStereopermutator.placement(),
             secondIndex
           ),
           dihedralBounds
@@ -606,8 +606,8 @@ void SpatialModel::addBondStereopermutatorInformation(
     _dihedralConstraints.emplace_back(
       DihedralConstraint::SiteSequence {
         firstStereopermutator.getRanking().sites.at(iAtFirst),
-        {firstStereopermutator.centralIndex()},
-        {secondStereopermutator.centralIndex()},
+        {firstStereopermutator.placement()},
+        {secondStereopermutator.placement()},
         secondStereopermutator.getRanking().sites.at(lAtSecond)
       },
       dihedralBounds.lower,
@@ -820,7 +820,7 @@ SpatialModel::BoundsMatrix SpatialModel::makePairwiseBounds(
 }
 
 double SpatialModel::siteCentralAngle(
-  const AtomIndex centralIndex,
+  const AtomIndex placement,
   const shapes::Shape& shape,
   const RankingInformation& ranking,
   const AtomStereopermutator::ShapeMap& shapeVertexMap,
@@ -860,11 +860,11 @@ double SpatialModel::siteCentralAngle(
   // Find cycles that contain the central index and its two monoatomic sites
   std::vector<BondIndex> prospectiveCycleEdges {
     BondIndex {
-      centralIndex,
+      placement,
       ranking.sites.at(sites.first).front()
     },
     BondIndex {
-      centralIndex,
+      placement,
       ranking.sites.at(sites.second).front()
     }
   };
@@ -920,7 +920,7 @@ double SpatialModel::siteCentralAngle(
   // Make sure the bonds adjacent to the permutator are at the front of minimalCycle
   auto iterForSwap = std::begin(minimalCycle);
   for(auto it = std::begin(minimalCycle); it != std::end(minimalCycle); ++it) {
-    if(it->first == centralIndex || it->second == centralIndex) {
+    if(it->first == placement || it->second == placement) {
       std::iter_swap(iterForSwap, it);
       ++iterForSwap;
     }
@@ -948,7 +948,7 @@ double SpatialModel::siteCentralAngle(
   const PrivateGraph& inner
 ) {
   return siteCentralAngle(
-    permutator.centralIndex(),
+    permutator.placement(),
     permutator.getShape(),
     permutator.getRanking(),
     permutator.getShapePositionMap(),
@@ -975,7 +975,7 @@ ValueBounds SpatialModel::modelSiteAngleBounds(
     // Turn the angle relative variance into an absolute variance
     double variance = SpatialModel::angleRelativeVariance * centralAngle;
     variance *= smallestCycleDistortionMultiplier(
-      permutator.centralIndex(),
+      permutator.placement(),
       inner.cycles()
     );
     variance *= looseningMultiplier;
@@ -1000,7 +1000,7 @@ ChiralConstraint SpatialModel::makeChiralConstraint(
 ) {
   const auto& feasiblePermutations = permutator.getFeasible();
   const auto& ranking = permutator.getRanking();
-  const AtomIndex centerAtom = permutator.centralIndex();
+  const AtomIndex centerAtom = permutator.placement();
 
   /* We need to calculate target upper and lower volumes for the chirality
    * constraints. _cache.siteDistances contains bounds for the distance to
@@ -1132,9 +1132,9 @@ ChiralConstraint SpatialModel::makeChiralConstraint(
    * logical operator (<, >, <=, >=, ==) between both is true. It
    * completely depends on the individual values.
    *
-   * Helpfully, chemical_symmetry only emits positive chiral target volume
-   * index sequences (see test case name allTetrahedraPositive), so no
-   * negative volumes have to be considered.
+   * Helpfully, shapes only emits positive chiral target volume index sequences
+   * (see test case name allTetrahedraPositive), so no negative volumes have to
+   * be considered.
    */
 
   return {
@@ -1197,7 +1197,7 @@ struct SpatialModel::ModelGraphWriter final : public MolGraphWriter {
       const auto& indexSequence = angleIterPair.first;
       const auto& angleBounds = angleIterPair.second;
 
-      if(indexSequence.at(1) == permutator.centralIndex()) {
+      if(indexSequence.at(1) == permutator.placement()) {
         tooltips.emplace_back(
           "["s + std::to_string(indexSequence.at(0)) + ","s
           + std::to_string(indexSequence.at(2)) +"] -> ["s
@@ -1229,11 +1229,11 @@ struct SpatialModel::ModelGraphWriter final : public MolGraphWriter {
 
       if(
         (
-          indexSequence.at(1) == permutator.edge().first
-          && indexSequence.at(2) == permutator.edge().second
+          indexSequence.at(1) == permutator.placement().first
+          && indexSequence.at(2) == permutator.placement().second
         ) || (
-          indexSequence.at(1) == permutator.edge().second
-          && indexSequence.at(2) == permutator.edge().first
+          indexSequence.at(1) == permutator.placement().second
+          && indexSequence.at(2) == permutator.placement().first
         )
       ) {
         tooltips.emplace_back(
@@ -1470,7 +1470,7 @@ double SpatialModel::spiroCrossAngle(const double alpha, const double beta) {
 
 ValueBounds SpatialModel::siteDistanceFromCenter(
   const std::vector<AtomIndex>& siteAtomList,
-  const AtomIndex centralIndex,
+  const AtomIndex placement,
   const Graph& graph
 ) {
   assert(!siteAtomList.empty());
@@ -1483,7 +1483,7 @@ ValueBounds SpatialModel::siteDistanceFromCenter(
 
     distance = modelDistance(
       atomIndex,
-      centralIndex,
+      placement,
       graph.inner()
     );
   } else {
@@ -1494,7 +1494,7 @@ ValueBounds SpatialModel::siteDistanceFromCenter(
         [&](AtomIndex atomIndex) -> double {
           return modelDistance(
             atomIndex,
-            centralIndex,
+            placement,
             graph.inner()
           );
         }
@@ -1871,7 +1871,7 @@ void SpatialModel::_modelSpirocenters(
    * particularly small, i.e. are sizes 3-5
    */
   for(const auto& stereopermutator : _molecule.stereopermutators().atomStereopermutators()) {
-    const AtomIndex i = stereopermutator.centralIndex();
+    const AtomIndex i = stereopermutator.placement();
 
     // Skip any fixed central atoms
     if(fixedAngstromPositions.count(i) > 0) {

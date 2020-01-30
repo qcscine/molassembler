@@ -163,7 +163,7 @@ temple::StrongIndexFlatMap<shapes::Vertex, SiteIndex> shapeVertexToSiteIndexMap(
 
 stereopermutation::Stereopermutation stereopermutationFromSiteToShapeVertexMap(
   const SiteToShapeVertexMap& siteToShapeVertexMap,
-  const std::vector<LinkInformation>& links,
+  const std::vector<RankingInformation::Link>& links,
   const RankingInformation::RankedSitesType& canonicalSites
 ) {
   /* We need to transform the sites to their canonical ranking characters
@@ -200,8 +200,8 @@ stereopermutation::Stereopermutation stereopermutationFromSiteToShapeVertexMap(
   stereopermutation::Stereopermutation::OrderedLinks selfReferentialLinks;
   for(auto linkInformation: links) {
     selfReferentialLinks.emplace_back(
-      siteToShapeVertexMap.at(linkInformation.indexPair.first),
-      siteToShapeVertexMap.at(linkInformation.indexPair.second)
+      siteToShapeVertexMap.at(linkInformation.sites.first),
+      siteToShapeVertexMap.at(linkInformation.sites.second)
     );
   }
 

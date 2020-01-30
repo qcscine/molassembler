@@ -149,14 +149,14 @@ public:
    * the site}
    *
    * @param siteAtomList Atom indices constituting the ligand site
-   * @param centralIndex The central index to which the ligand is bound
+   * @param placement The central index to which the ligand is bound
    * @param graph The molecular graph to model
    *
    * @return Bounds on the distance of the ligand site to the central index
    */
   static ValueBounds siteDistanceFromCenter(
     const std::vector<AtomIndex>& siteAtomList,
-    AtomIndex centralIndex,
+    AtomIndex placement,
     const Graph& graph
   );
 
@@ -217,9 +217,9 @@ public:
    *
    * @complexity{Varies. For most cases, @math{\Omega(1)}}
    *
-   * @param centralIndex The atom index of the central index of the angle
-   * @param shape The local shape at @p centralIndex
-   * @param ranking The ranking of substituents at @p centralIndex
+   * @param placement The atom index of the central index of the angle
+   * @param shape The local shape at @p placement
+   * @param ranking The ranking of substituents at @p placement
    * @param shapeVertexMap The mapping from site indices to shape vertices
    * @param sites The two sites between which the angle is to be determined
    * @param inner Graph instance being modeled
@@ -227,7 +227,7 @@ public:
    * @return The central value of the angle between the sites
    */
   static double siteCentralAngle(
-    AtomIndex centralIndex,
+    AtomIndex placement,
     const shapes::Shape& shape,
     const RankingInformation& ranking,
     const AtomStereopermutator::ShapeMap& shapeVertexMap,

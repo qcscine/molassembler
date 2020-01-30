@@ -17,23 +17,23 @@ namespace Scine {
 
 namespace molassembler {
 
-LinkInformation::LinkInformation() = default;
+RankingInformation::Link::Link() = default;
 
-LinkInformation::LinkInformation(
+RankingInformation::Link::Link(
   std::pair<SiteIndex, SiteIndex> siteIndices,
   std::vector<AtomIndex> sequence,
   const AtomIndex source
 ) {
   /* Fix degrees of freedom of the underlying information so we can
-   * efficiently implement operator <. indexPair can be an ordered pair:
+   * efficiently implement operator <. sites can be an ordered pair:
    */
-  indexPair = std::move(siteIndices);
-  if(indexPair.first == indexPair.second) {
-    throw std::runtime_error("LinkInformation site indices are identical!");
+  sites = std::move(siteIndices);
+  if(sites.first == sites.second) {
+    throw std::runtime_error("Link site indices are identical!");
   }
 
-  if(indexPair.first > indexPair.second) {
-    std::swap(indexPair.first, indexPair.second);
+  if(sites.first > sites.second) {
+    std::swap(sites.first, sites.second);
   }
 
   // The cycle sequence should be centralized on the source vertex
@@ -58,7 +58,7 @@ LinkInformation::LinkInformation(
   }
 }
 
-void LinkInformation::applyPermutation(const std::vector<AtomIndex>& permutation) {
+void RankingInformation::Link::applyPermutation(const std::vector<AtomIndex>& permutation) {
   // A link's site indices do not change, but the sequence does
   for(AtomIndex& atomIndex : cycleSequence) {
     atomIndex = permutation.at(atomIndex);
@@ -77,16 +77,16 @@ void LinkInformation::applyPermutation(const std::vector<AtomIndex>& permutation
   }
 }
 
-bool LinkInformation::operator == (const LinkInformation& other) const {
-  return std::tie(indexPair, cycleSequence) == std::tie(other.indexPair, other.cycleSequence);
+bool RankingInformation::Link::operator == (const Link& other) const {
+  return std::tie(sites, cycleSequence) == std::tie(other.sites, other.cycleSequence);
 }
 
-bool LinkInformation::operator != (const LinkInformation& other) const {
+bool RankingInformation::Link::operator != (const Link& other) const {
   return !(*this == other);
 }
 
-bool LinkInformation::operator < (const LinkInformation& other) const {
-  return std::tie(indexPair, cycleSequence) < std::tie(other.indexPair, other.cycleSequence);
+bool RankingInformation::Link::operator < (const Link& other) const {
+  return std::tie(sites, cycleSequence) < std::tie(other.sites, other.cycleSequence);
 }
 
 
@@ -158,7 +158,7 @@ void RankingInformation::applyPermutation(const std::vector<AtomIndex>& permutat
   }
   // .siteRanking is unchanged as it is index based into .sites
   // .links do have to be mapped, though
-  for(LinkInformation& link : links) {
+  for(Link& link : links) {
     link.applyPermutation(permutation);
   }
 

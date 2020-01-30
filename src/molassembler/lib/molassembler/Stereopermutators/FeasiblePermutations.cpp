@@ -22,8 +22,8 @@ namespace molassembler {
 namespace stereopermutators {
 
 bool Feasible::linkPossiblyFeasible(
-  const LinkInformation& link,
-  const AtomIndex centralIndex,
+  const RankingInformation::Link& link,
+  const AtomIndex placement,
   const ConeAngleType& cones,
   const RankingInformation& ranking,
   const shapes::Shape shape,
@@ -34,19 +34,19 @@ bool Feasible::linkPossiblyFeasible(
   assert(link.cycleSequence.front() != link.cycleSequence.back());
 
   // Perform no checks if, for either of the sites, no cone angle could be calculated
-  if(!cones.at(link.indexPair.first) || !cones.at(link.indexPair.second)) {
+  if(!cones.at(link.sites.first) || !cones.at(link.sites.second)) {
     return true;
   }
 
-  const distance_geometry::ValueBounds siteIConeAngle = cones.at(link.indexPair.first).value();
-  const distance_geometry::ValueBounds siteJConeAngle = cones.at(link.indexPair.second).value();
+  const distance_geometry::ValueBounds siteIConeAngle = cones.at(link.sites.first).value();
+  const distance_geometry::ValueBounds siteJConeAngle = cones.at(link.sites.second).value();
 
   const double symmetryAngle = distance_geometry::SpatialModel::siteCentralAngle(
-    centralIndex,
+    placement,
     shape,
     ranking,
     shapeVertexMap,
-    link.indexPair,
+    link.sites,
     graph.inner()
   );
 
@@ -58,7 +58,7 @@ bool Feasible::linkPossiblyFeasible(
      * distort the angle to enable the graph in some situations, and leave
      * the ideal angle preserved in others)
      */
-    assert(link.cycleSequence.front() == centralIndex);
+    assert(link.cycleSequence.front() == placement);
 
     /* TODO maybe it might be better to ask in a very boolean way whether
      * the shape is willing to distort for this particular link or not
@@ -67,17 +67,17 @@ bool Feasible::linkPossiblyFeasible(
 
     return !stereopermutators::triangleBondTooClose(
       distance_geometry::SpatialModel::modelDistance(
-        centralIndex,
+        placement,
         link.cycleSequence[1],
         graph.inner()
       ),
       distance_geometry::SpatialModel::modelDistance(
-        centralIndex,
+        placement,
         link.cycleSequence[2],
         graph.inner()
       ),
       symmetryAngle,
-      atom_info::bondRadius(graph.elementType(centralIndex))
+      atom_info::bondRadius(graph.elementType(placement))
     );
   }
 
@@ -107,7 +107,7 @@ bool Feasible::linkPossiblyFeasible(
   /* First we need to construct the cyclic polygon of the cycle sequence
    * without the central atom.
    */
-  assert(link.cycleSequence.front() == centralIndex);
+  assert(link.cycleSequence.front() == placement);
   auto cycleEdgeLengths = temple::map(
     temple::adaptors::cyclicFrame<2>(link.cycleSequence),
     [&](const auto& i, const auto& j) -> double {
@@ -128,7 +128,7 @@ bool Feasible::linkPossiblyFeasible(
 
   std::vector<stereopermutators::BaseAtom> bases (1);
   auto& base = bases.front();
-  base.elementType = graph.elementType(centralIndex);
+  base.elementType = graph.elementType(placement);
   base.distanceToLeft = a;
   base.distanceToRight = b;
 
@@ -150,7 +150,7 @@ bool Feasible::linkPossiblyFeasible(
 
 bool Feasible::possiblyFeasible(
   const stereopermutation::Stereopermutation& stereopermutation,
-  const AtomIndex centralIndex,
+  const AtomIndex placement,
   const RankingInformation::RankedSitesType& canonicalSites,
   const ConeAngleType& coneAngles,
   const RankingInformation& ranking,
@@ -181,7 +181,7 @@ bool Feasible::possiblyFeasible(
 
       // siteCentralAngle yields undistorted symmetry angles for haptic sites
       const double symmetryAngle = distance_geometry::SpatialModel::siteCentralAngle(
-        centralIndex,
+        placement,
         shape,
         ranking,
         shapeVertexMap,
@@ -215,7 +215,7 @@ bool Feasible::possiblyFeasible(
     [&](const auto& link) -> bool {
       return linkPossiblyFeasible(
         link,
-        centralIndex,
+        placement,
         coneAngles,
         ranking,
         shape,
@@ -229,7 +229,7 @@ bool Feasible::possiblyFeasible(
 Feasible::Feasible(
   const Abstract& abstractPermutations,
   const shapes::Shape shape,
-  const AtomIndex centralIndex,
+  const AtomIndex placement,
   const RankingInformation& ranking,
   const Graph& graph
 ) {
@@ -240,7 +240,7 @@ Feasible::Feasible(
     [&](const auto& siteAtomsList) -> distance_geometry::ValueBounds {
       return ModelType::siteDistanceFromCenter(
         siteAtomsList,
-        centralIndex,
+        placement,
         graph
       );
     }
@@ -282,7 +282,7 @@ Feasible::Feasible(
       if(
         possiblyFeasible(
           abstractPermutations.permutations.list.at(i),
-          centralIndex,
+          placement,
           abstractPermutations.canonicalSites,
           coneAngles,
           ranking,

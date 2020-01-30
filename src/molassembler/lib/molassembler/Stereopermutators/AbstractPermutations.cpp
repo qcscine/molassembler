@@ -53,13 +53,13 @@ std::vector<char> Abstract::transferToSymbolicCharacters(
 
 stereopermutation::Stereopermutation::OrderedLinks
 Abstract::selfReferentialTransform(
-  const std::vector<LinkInformation>& rankingLinks,
+  const std::vector<RankingInformation::Link>& rankingLinks,
   const RankingInformation::RankedSitesType& canonicalSites
 ) {
   if(
     temple::any_of(
       rankingLinks,
-      [](auto&& l) { return l.indexPair.first == l.indexPair.second; }
+      [](auto&& l) { return l.sites.first == l.sites.second; }
     )
   ) {
     throw std::out_of_range("Links are invalid");
@@ -84,8 +84,8 @@ Abstract::selfReferentialTransform(
     temple::map(
       rankingLinks,
       [&](const auto& link) -> stereopermutation::Stereopermutation::Link {
-        auto firstVertex = getRankedVertex(link.indexPair.first);
-        auto secondVertex = getRankedVertex(link.indexPair.second);
+        auto firstVertex = getRankedVertex(link.sites.first);
+        auto secondVertex = getRankedVertex(link.sites.second);
 
         if(firstVertex > secondVertex) {
           std::swap(firstVertex, secondVertex);

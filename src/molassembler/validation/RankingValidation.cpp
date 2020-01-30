@@ -351,7 +351,7 @@ std::set<Stereodescriptor> makeDescriptorSet(const Molecule& molecule) {
   for(const auto& atomStereopermutator : molecule.stereopermutators().atomStereopermutators()) {
     if(atomStereopermutator.numStereopermutations() > 1 && atomStereopermutator.assigned()) {
       Stereodescriptor descriptor;
-      descriptor.atomIndex = atomStereopermutator.centralIndex();
+      descriptor.atomIndex = atomStereopermutator.placement();
       descriptor.type = StereopermutatorType::A;
       descriptor.permutation = atomStereopermutator.indexOfPermutation().value();
 
@@ -365,9 +365,9 @@ std::set<Stereodescriptor> makeDescriptorSet(const Molecule& molecule) {
       descriptor.type = StereopermutatorType::B;
       descriptor.permutation = bondStereopermutator.indexOfPermutation().value();
 
-      descriptor.atomIndex = bondStereopermutator.edge().first;
+      descriptor.atomIndex = bondStereopermutator.placement().first;
       descriptors.insert(descriptor);
-      descriptor.atomIndex = bondStereopermutator.edge().second;
+      descriptor.atomIndex = bondStereopermutator.placement().second;
       descriptors.insert(descriptor);
     }
   }

@@ -59,7 +59,7 @@ temple::StrongIndexFlatMap<shapes::Vertex, SiteIndex> shapeVertexToSiteIndexMap(
 
 stereopermutation::Stereopermutation stereopermutationFromSiteToShapeVertexMap(
   const SiteToShapeVertexMap& siteToShapeVertexMap,
-  const std::vector<LinkInformation>& links,
+  const std::vector<RankingInformation::Link>& links,
   const RankingInformation::RankedSitesType& canonicalSites
 );
 

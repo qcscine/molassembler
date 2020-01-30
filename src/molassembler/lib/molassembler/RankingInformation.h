@@ -19,70 +19,12 @@ namespace molassembler {
 struct site_index_tag;
 using SiteIndex = temple::StrongIndex<site_index_tag, unsigned>;
 
-/**
- * @brief Information on links between substituents of a central atom
- */
-struct MASM_EXPORT LinkInformation {
-//!@name Special member functions
-//!@{
-  /*! @brief Default constructor
-   * @warning Does not establish member invariants
-   */
-  LinkInformation();
-
-  /*! @brief Constructor from data without established invariants
-   *
-   * @complexity{@math{\Theta(N)}}
-   */
-  LinkInformation(
-    std::pair<SiteIndex, SiteIndex> siteIndices,
-    std::vector<AtomIndex> sequence,
-    AtomIndex source
-  );
-//!@}
-
-//!@name Data members
-//!@{
-  //! An (asc) ordered pair of the site indices that are linked
-  std::pair<SiteIndex, SiteIndex> indexPair;
-
-  /*!
-   * @brief The in-order atom sequence of the cycle atom indices
-   *
-   * @note The cycle sequence is centralized on the source vertex, meaning the
-   * front index is always the source vertex
-   *
-   * @note The cycle sequence is standardized by ordering the second and last
-   * vertices of the sequence ascending (i.e. reversing the sequence past the
-   * source vertex if the second index is larger than the last one)
-   */
-  std::vector<AtomIndex> cycleSequence;
-//!@}
-
-//!@name Modification
-//!@{
-  /*! @brief Apply an index permutation to this object. Re-establishes invariants.
-   *
-   * @complexity{@math{\Theta(N)}}
-   */
-  void applyPermutation(const std::vector<AtomIndex>& permutation);
-//!@}
-
-//!@name Operators
-//!@{
-  //! Performs a lexicographical comparison on both data members
-  bool operator == (const LinkInformation& other) const;
-  bool operator != (const LinkInformation& other) const;
-
-  //! Performs a lexicographical comparison on both data members
-  bool operator < (const LinkInformation& other) const;
-//!@}
-};
-
 //! Ranking data of substituents around a central vertex
 struct MASM_EXPORT RankingInformation {
 //!@name Member types
 //!@{
+  struct Link;
+
   template<typename T>
   using NestedList = std::vector<
     std::vector<T>
@@ -170,7 +112,7 @@ struct MASM_EXPORT RankingInformation {
    * @note This list is sorted, enabling use of the RankingInformation
    *   comparatison operators
    */
-  std::vector<LinkInformation> links;
+  std::vector<Link> links;
 //!@}
 
 //!@name Modification
@@ -222,6 +164,67 @@ struct MASM_EXPORT RankingInformation {
   bool operator != (const RankingInformation& other) const;
 //!@}
 };
+
+/**
+ * @brief Information on links between substituents of a central atom
+ */
+struct RankingInformation::Link {
+//!@name Special member functions
+//!@{
+  /*! @brief Default constructor
+   * @warning Does not establish member invariants
+   */
+  Link();
+
+  /*! @brief Constructor from data without established invariants
+   *
+   * @complexity{@math{\Theta(N)}}
+   */
+  Link(
+    std::pair<SiteIndex, SiteIndex> siteIndices,
+    std::vector<AtomIndex> sequence,
+    AtomIndex source
+  );
+//!@}
+
+//!@name Data members
+//!@{
+  //! An (asc) ordered pair of the site indices that are linked
+  std::pair<SiteIndex, SiteIndex> sites;
+
+  /*!
+   * @brief The in-order atom sequence of the cycle atom indices
+   *
+   * @note The cycle sequence is centralized on the source vertex, meaning the
+   * front index is always the source vertex
+   *
+   * @note The cycle sequence is standardized by ordering the second and last
+   * vertices of the sequence ascending (i.e. reversing the sequence past the
+   * source vertex if the second index is larger than the last one)
+   */
+  std::vector<AtomIndex> cycleSequence;
+//!@}
+
+//!@name Modification
+//!@{
+  /*! @brief Apply an index permutation to this object. Re-establishes invariants.
+   *
+   * @complexity{@math{\Theta(N)}}
+   */
+  void applyPermutation(const std::vector<AtomIndex>& permutation);
+//!@}
+
+//!@name Operators
+//!@{
+  //! Performs a lexicographical comparison on both data members
+  bool operator == (const Link& other) const;
+  bool operator != (const Link& other) const;
+
+  //! Performs a lexicographical comparison on both data members
+  bool operator < (const Link& other) const;
+//!@}
+};
+
 
 } // namespace molassembler
 } // namespace Scine

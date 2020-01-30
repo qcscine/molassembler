@@ -15,7 +15,7 @@ namespace molassembler {
 AtomStereopermutator& StereopermutatorList::Impl::add(
   AtomStereopermutator stereopermutator
 ) {
-  const AtomIndex i = stereopermutator.centralIndex();
+  const AtomIndex i = stereopermutator.placement();
 
   auto emplaceResult = atomStereopermutators.emplace(
     i,
@@ -32,7 +32,7 @@ AtomStereopermutator& StereopermutatorList::Impl::add(
 BondStereopermutator& StereopermutatorList::Impl::add(
   BondStereopermutator stereopermutator
 ) {
-  const BondIndex edge = stereopermutator.edge();
+  const BondIndex edge = stereopermutator.placement();
 
   auto emplaceResult = bondStereopermutators.emplace(
     edge,
@@ -65,7 +65,7 @@ void StereopermutatorList::Impl::applyPermutation(const std::vector<AtomIndex>& 
     permutator.applyPermutation(permutation);
 #pragma omp critical(applyPermutationAtomMapMutation)
     {
-      newAtomMap.emplace(permutator.centralIndex(), std::move(permutator));
+      newAtomMap.emplace(permutator.placement(), std::move(permutator));
     }
   };
 
@@ -92,7 +92,7 @@ void StereopermutatorList::Impl::applyPermutation(const std::vector<AtomIndex>& 
   for(auto& mapPair : bondStereopermutators) {
     BondStereopermutator& permutator = mapPair.second;
     permutator.applyPermutation(permutation);
-    newBondMap.emplace(permutator.edge(), std::move(permutator));
+    newBondMap.emplace(permutator.placement(), std::move(permutator));
   }
   std::swap(newBondMap, bondStereopermutators);
 }
@@ -261,7 +261,7 @@ bool StereopermutatorList::Impl::compare(
 
     // Check all atom stereopermutators
     for(const auto& stereopermutator : atomStereopermutators | boost::adaptors::map_values) {
-      auto otherStereopermutatorOption = other.option(stereopermutator.centralIndex());
+      auto otherStereopermutatorOption = other.option(stereopermutator.placement());
 
       // Ensure there is a matching stereopermutator
       if(!otherStereopermutatorOption) {
@@ -283,7 +283,7 @@ bool StereopermutatorList::Impl::compare(
 
     // Check all bond stereopermutators
     for(const auto& stereopermutator : bondStereopermutators | boost::adaptors::map_values) {
-      auto otherStereopermutatorOption = other.option(stereopermutator.edge());
+      auto otherStereopermutatorOption = other.option(stereopermutator.placement());
 
       // Ensure there is a matching stereopermutator
       if(!otherStereopermutatorOption) {

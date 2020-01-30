@@ -26,7 +26,7 @@ namespace Scine {
 namespace molassembler {
 namespace graph_algorithms {
 
-std::vector<LinkInformation> siteLinks(
+std::vector<RankingInformation::Link> siteLinks(
   const PrivateGraph& graph,
   const AtomStereopermutator& stereopermutatorA,
   const AtomStereopermutator& stereopermutatorB
@@ -34,8 +34,8 @@ std::vector<LinkInformation> siteLinks(
   // Make sure the stereopermutators called with are bonded in the first place
   assert(
     graph.edgeOption(
-      stereopermutatorA.centralIndex(),
-      stereopermutatorB.centralIndex()
+      stereopermutatorA.placement(),
+      stereopermutatorB.placement()
     )
   );
 
@@ -79,7 +79,7 @@ std::vector<LinkInformation> siteLinks(
     };
   };
 
-  std::vector<LinkInformation> links;
+  std::vector<RankingInformation::Link> links;
   std::map<
     std::pair<SiteIndex, SiteIndex>,
     unsigned
@@ -89,16 +89,16 @@ std::vector<LinkInformation> siteLinks(
     auto cycleOuterEdges :
     graph.cycles().containing(
       BondIndex {
-        stereopermutatorA.centralIndex(),
-        stereopermutatorB.centralIndex()
+        stereopermutatorA.placement(),
+        stereopermutatorB.placement()
       }
     )
   ) {
     // Figure out which substituent of A and B is part of the cycle
     AtomIndex aAdjacent, bAdjacent;
     std::tie(aAdjacent, bAdjacent) = findNeighboringAtoms(
-      stereopermutatorA.centralIndex(),
-      stereopermutatorB.centralIndex(),
+      stereopermutatorA.placement(),
+      stereopermutatorB.placement(),
       cycleOuterEdges
     );
 
@@ -115,8 +115,8 @@ std::vector<LinkInformation> siteLinks(
       || cycleOuterEdges.size() < links.at(mapFindIter->second).cycleSequence.size()
     ) {
       // No invariant establishing for these LinkInformations
-      LinkInformation newLink;
-      newLink.indexPair = siteIndices;
+      RankingInformation::Link newLink;
+      newLink.sites = siteIndices;
       newLink.cycleSequence = makeRingIndexSequence(std::move(cycleOuterEdges));
 
       // Add or update existing
@@ -136,7 +136,7 @@ std::vector<LinkInformation> siteLinks(
   return links;
 }
 
-std::vector<LinkInformation> siteLinks(
+std::vector<RankingInformation::Link> siteLinks(
   const PrivateGraph& graph,
   const AtomIndex source,
   const std::vector<
@@ -177,7 +177,7 @@ std::vector<LinkInformation> siteLinks(
     }
   }
 
-  std::vector<LinkInformation> links;
+  std::vector<RankingInformation::Link> links;
   std::map<
     std::pair<SiteIndex, SiteIndex>,
     unsigned // Index of LinkInformation in links
@@ -217,7 +217,7 @@ std::vector<LinkInformation> siteLinks(
           mapFindIter == std::end(siteIndicesToLinksPositionMap)
           || cycleOuterEdges.size() < links.at(mapFindIter->second).cycleSequence.size()
         ) {
-          auto newLink = LinkInformation {
+          auto newLink = RankingInformation::Link {
             siteIndices,
             makeRingIndexSequence(std::move(cycleOuterEdges)),
             source
@@ -281,14 +281,14 @@ bool isHapticSite(
 
 void findSites(
   const PrivateGraph& graph,
-  const AtomIndex centralIndex,
+  const AtomIndex placement,
   const std::function<void(const std::vector<AtomIndex>&)>& callback
 ) {
-  const unsigned A = graph.degree(centralIndex);
+  const unsigned A = graph.degree(placement);
   temple::TinySet<PrivateGraph::Vertex> centralAdjacents;
   centralAdjacents.reserve(A);
 
-  for(const PrivateGraph::Vertex adjacent : graph.adjacents(centralIndex)) {
+  for(const PrivateGraph::Vertex adjacent : graph.adjacents(placement)) {
     centralAdjacents.insert(adjacent);
   }
 
@@ -332,18 +332,18 @@ std::vector<
   std::vector<AtomIndex>
 > ligandSiteGroups(
   const PrivateGraph& graph,
-  AtomIndex centralIndex,
+  AtomIndex placement,
   const std::vector<AtomIndex>& excludeAdjacents
 ) {
-  if(atom_info::isMainGroupElement(graph.elementType(centralIndex))) {
+  if(atom_info::isMainGroupElement(graph.elementType(placement))) {
     std::vector<
       std::vector<AtomIndex>
     > adjacents;
 
-    adjacents.reserve(graph.degree(centralIndex));
+    adjacents.reserve(graph.degree(placement));
 
-    for(const AtomIndex centralAdjacent : graph.adjacents(centralIndex)) {
-      auto edge = graph.edge(centralAdjacent, centralIndex);
+    for(const AtomIndex centralAdjacent : graph.adjacents(placement)) {
+      auto edge = graph.edge(centralAdjacent, placement);
 
       if(graph.bondType(edge) == BondType::Eta) {
         /* A non-metal central index can have eta bonds, but they are not
@@ -357,7 +357,7 @@ std::vector<
           std::string error = "Two main group elements are connected by an eta bond! ";
           error += std::to_string(centralAdjacent);
           error += " and ";
-          error += std::to_string(centralIndex);
+          error += std::to_string(placement);
 
           throw std::logic_error(error);
         }
@@ -373,7 +373,7 @@ std::vector<
           std::find(
             std::begin(excludeAdjacents),
             std::end(excludeAdjacents),
-            centralIndex
+            placement
           ) == std::end(excludeAdjacents)
         ) {
           adjacents.push_back(
@@ -392,12 +392,12 @@ std::vector<
 
   detail::findSites(
     graph,
-    centralIndex,
+    placement,
     [&](const std::vector<AtomIndex>& ligand) -> void {
       // Make sure all bonds are marked properly
       if(detail::isHapticSite(ligand, graph)) {
         for(const auto& hapticIndex : ligand) {
-          auto edge = graph.edge(centralIndex, hapticIndex);
+          auto edge = graph.edge(placement, hapticIndex);
           if(graph.bondType(edge) != BondType::Eta) {
             throw std::logic_error(
               "Haptic ligand constituting atom bound to non-main-group element via non-eta bond"
@@ -406,7 +406,7 @@ std::vector<
         }
       } else {
         for(const auto& nonHapticIndex : ligand) {
-          auto edge = graph.edge(centralIndex, nonHapticIndex);
+          auto edge = graph.edge(placement, nonHapticIndex);
           if(graph.bondType(edge) == BondType::Eta) {
             throw std::logic_error(
               "Non-haptic ligand bound to non-main-group element via eta bond"
@@ -443,26 +443,26 @@ std::vector<
 
 void updateEtaBonds(PrivateGraph& graph) {
   const AtomIndex N = graph.N();
-  for(AtomIndex centralIndex = 0; centralIndex < N; ++centralIndex) {
+  for(AtomIndex placement = 0; placement < N; ++placement) {
     // Skip any main group element types, none of these should be eta bonded
-    if(atom_info::isMainGroupElement(graph.elementType(centralIndex))) {
+    if(atom_info::isMainGroupElement(graph.elementType(placement))) {
       continue;
     }
 
     detail::findSites(
       graph,
-      centralIndex,
+      placement,
       [&](const std::vector<AtomIndex>& ligand) -> void {
         if(detail::isHapticSite(ligand, graph)) {
           // Mark all bonds to the central atom as haptic bonds
           for(const auto& hapticIndex : ligand) {
-            auto edge = graph.edge(centralIndex, hapticIndex);
+            auto edge = graph.edge(placement, hapticIndex);
             graph.bondType(edge) = BondType::Eta;
           }
         } else {
           // Mark all eta bonds to the central atom as single bonds
           for(const auto& hapticIndex : ligand) {
-            auto edge = graph.edge(centralIndex, hapticIndex);
+            auto edge = graph.edge(placement, hapticIndex);
             BondType& bondType = graph.bondType(edge);
             if(bondType == BondType::Eta) {
               bondType = BondType::Single;

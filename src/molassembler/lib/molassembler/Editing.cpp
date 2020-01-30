@@ -134,8 +134,8 @@ void transferStereopermutators(
   // Copy over permutators, adjusting their internal state
   for(const auto& permutator : source.atomStereopermutators()) {
     if(
-      vertexMapping.count(permutator.centralIndex()) > 0
-      && doNotCopyVertices.count(permutator.centralIndex()) == 0
+      vertexMapping.count(permutator.placement()) > 0
+      && doNotCopyVertices.count(permutator.placement()) == 0
     ) {
       AtomStereopermutator copy = permutator;
       copy.applyPermutation(permutation);
@@ -144,7 +144,7 @@ void transferStereopermutators(
   }
 
   for(const auto& permutator : source.bondStereopermutators()) {
-    BondIndex edge = permutator.edge();
+    BondIndex edge = permutator.placement();
     if(
       vertexMapping.count(edge.first) > 0
       && doNotCopyVertices.count(edge.first) == 0

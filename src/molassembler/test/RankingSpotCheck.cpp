@@ -48,8 +48,8 @@ bool isBondStereopermutator(
   }
 
   if(stereopermutatorOption->numStereopermutations() != numPermutations) {
-    std::cout << "Bond stereopermutator on " << stereopermutatorOption->edge().first
-      << " - " << stereopermutatorOption->edge().second
+    std::cout << "Bond stereopermutator on " << stereopermutatorOption->placement().first
+      << " - " << stereopermutatorOption->placement().second
       << " has " << stereopermutatorOption->numStereopermutations()
       << " stereopermutations, not " << numPermutations << "\n";
     return false;
@@ -57,8 +57,8 @@ bool isBondStereopermutator(
 
   if(assignment) {
     if(stereopermutatorOption->assigned() != assignment.value()) {
-      std::cout << "Bond stereopermutator on " << stereopermutatorOption->edge().first
-        << " - " << stereopermutatorOption->edge().second
+      std::cout << "Bond stereopermutator on " << stereopermutatorOption->placement().first
+        << " - " << stereopermutatorOption->placement().second
         << " is assigned "
         << (
           stereopermutatorOption->assigned()

@@ -170,7 +170,7 @@ double BondStereopermutator::Impl::dihedral(
 
   ReferencePair references {stereopermutatorA, stereopermutatorB};
   std::pair<unsigned, unsigned> siteIndices {siteIndexA, siteIndexB};
-  if(stereopermutatorA.centralIndex() == _composite.orientations().second.identifier) {
+  if(stereopermutatorA.placement() == _composite.orientations().second.identifier) {
     std::swap(references.first, references.second);
     std::swap(siteIndices.first, siteIndices.second);
     swapped = true;
@@ -227,14 +227,14 @@ BondStereopermutator::Impl::_makeOrientationState(
     focalStereopermutator.getShape(),
     focalStereopermutator.getShapePositionMap().at(
       focalStereopermutator.getRanking().getSiteIndexOf(
-        attachedStereopermutator.centralIndex()
+        attachedStereopermutator.placement()
       )
     ),
     _charifyRankedSites(
       focalStereopermutator.getRanking().siteRanking,
       focalStereopermutator.getShapePositionMap()
     ),
-    focalStereopermutator.centralIndex()
+    focalStereopermutator.placement()
   };
 }
 
@@ -244,7 +244,7 @@ bool BondStereopermutator::Impl::cycleObviouslyInfeasible(
   const AtomStereopermutator& firstStereopermutator,
   const AtomStereopermutator& secondStereopermutator,
   std::tuple<AtomIndex, AtomIndex, double> dihedral,
-  const LinkInformation& link
+  const RankingInformation::Link& link
 ) {
   /* To decide if a stereopermutation is possible or not:
    * - Determine the plane into which the cycle would expand for the given
@@ -255,8 +255,8 @@ bool BondStereopermutator::Impl::cycleObviouslyInfeasible(
    *   single bond
    */
   const AtomIndex i = std::get<0>(dihedral);
-  const AtomIndex j = firstStereopermutator.centralIndex();
-  const AtomIndex k = secondStereopermutator.centralIndex();
+  const AtomIndex j = firstStereopermutator.placement();
+  const AtomIndex k = secondStereopermutator.placement();
   const AtomIndex l = std::get<1>(dihedral);
   const double phi = std::get<2>(dihedral);
 
@@ -468,7 +468,7 @@ bool BondStereopermutator::Impl::cycleObviouslyInfeasible(
 //   const AtomStereopermutator& firstStereopermutator,
 //   const AtomStereopermutator& secondStereopermutator,
 //   std::tuple<AtomIndex, AtomIndex, double> dihedral,
-//   const LinkInformation& link
+//   const RankingInformation::Link& link
 // ) {
 //   /* Now to decide if a stereopermutation is possible or not:
 //    * - Build a spatial model of each cycle including bond distances and angles
@@ -591,8 +591,8 @@ bool BondStereopermutator::Impl::cycleObviouslyInfeasible(
 //   );
 //
 //   const AtomIndex i = std::get<0>(dihedral);
-//   const AtomIndex j = firstStereopermutator.centralIndex();
-//   const AtomIndex k = secondStereopermutator.centralIndex();
+//   const AtomIndex j = firstStereopermutator.placement();
+//   const AtomIndex k = secondStereopermutator.placement();
 //   const AtomIndex l = std::get<1>(dihedral);
 //
 //   assert(temple::makeContainsPredicate(link.cycleSequence)(i));
@@ -680,10 +680,10 @@ std::vector<unsigned> BondStereopermutator::Impl::notObviouslyInfeasibleStereope
    */
   auto getDihedralInformation = [&](
     const std::vector<stereopermutation::Composite::DihedralTuple>& dihedrals,
-    const LinkInformation& link
+    const RankingInformation::Link& link
   ) -> boost::optional<std::tuple<AtomIndex, AtomIndex, double>> {
-    const auto& firstSiteIndices = permutatorReferences.first.getRanking().sites.at(link.indexPair.first);
-    const auto& secondSiteIndices = permutatorReferences.second.getRanking().sites.at(link.indexPair.second);
+    const auto& firstSiteIndices = permutatorReferences.first.getRanking().sites.at(link.sites.first);
+    const auto& secondSiteIndices = permutatorReferences.second.getRanking().sites.at(link.sites.second);
 
     // We can't decide a dihedral for haptic sites here
     if(firstSiteIndices.size() > 1 || secondSiteIndices.size() > 1) {
@@ -691,8 +691,8 @@ std::vector<unsigned> BondStereopermutator::Impl::notObviouslyInfeasibleStereope
     }
 
     const std::pair<unsigned, unsigned> linkShapePositions {
-      permutatorReferences.first.getShapePositionMap().at(link.indexPair.first),
-      permutatorReferences.second.getShapePositionMap().at(link.indexPair.second)
+      permutatorReferences.first.getShapePositionMap().at(link.sites.first),
+      permutatorReferences.second.getShapePositionMap().at(link.sites.second)
     };
 
     // Look for a composite dihedral matching the shape positions
@@ -729,7 +729,7 @@ std::vector<unsigned> BondStereopermutator::Impl::notObviouslyInfeasibleStereope
     if(
       !temple::any_of(
         links,
-        [&](const LinkInformation& link) -> bool {
+        [&](const RankingInformation::Link& link) -> bool {
           auto dihedralInformationOption = getDihedralInformation(
             composite.dihedrals(stereopermutationIndex),
             link
@@ -852,7 +852,7 @@ void BondStereopermutator::Impl::fit(
   const AtomStereopermutator& stereopermutatorB,
   const FittingMode mode
 ) {
-  assert(stereopermutatorA.centralIndex() != stereopermutatorB.centralIndex());
+  assert(stereopermutatorA.placement() != stereopermutatorB.placement());
 
   // Early exit
   if(_composite.permutations() == 0) {
@@ -862,13 +862,13 @@ void BondStereopermutator::Impl::fit(
 
   // Can the following selections be done with a single branch?
   const AtomStereopermutator& firstStereopermutator = (
-    stereopermutatorA.centralIndex() == _composite.orientations().first.identifier
+    stereopermutatorA.placement() == _composite.orientations().first.identifier
     ? stereopermutatorA
     : stereopermutatorB
   );
 
   const AtomStereopermutator& secondStereopermutator = (
-    stereopermutatorB.centralIndex() == _composite.orientations().second.identifier
+    stereopermutatorB.placement() == _composite.orientations().second.identifier
     ? stereopermutatorB
     : stereopermutatorA
   );
@@ -921,8 +921,8 @@ void BondStereopermutator::Impl::fit(
 
       const double measuredDihedral = cartesian::dihedral(
         firstSitePositions.col(firstSite),
-        angstromWrapper.positions.row(firstStereopermutator.centralIndex()),
-        angstromWrapper.positions.row(secondStereopermutator.centralIndex()),
+        angstromWrapper.positions.row(firstStereopermutator.placement()),
+        angstromWrapper.positions.row(secondStereopermutator.placement()),
         secondSitePositions.col(secondSite)
       );
 
@@ -1010,7 +1010,7 @@ void BondStereopermutator::Impl::propagateGraphChange(
 
   /* Construct a new Composite with the new information */
   bool changedIsFirstInOldOrientations = (
-    _composite.orientations().first.identifier == newPermutator.centralIndex()
+    _composite.orientations().first.identifier == newPermutator.placement()
   );
 
   const OrientationState& oldOrientation = detail::select(
@@ -1036,7 +1036,7 @@ void BondStereopermutator::Impl::propagateGraphChange(
       newPermutator.getRanking().siteRanking,
       newPermutator.getShapePositionMap()
     ),
-    newPermutator.centralIndex()
+    newPermutator.placement()
   };
 
   // In case nothing has changed, we are done and can stop
@@ -1325,7 +1325,7 @@ std::string BondStereopermutator::Impl::rankInfo() const {
   );
 }
 
-BondIndex BondStereopermutator::Impl::edge() const {
+BondIndex BondStereopermutator::Impl::placement() const {
   // Return a standard form of smaller first
   return _edge;
 }

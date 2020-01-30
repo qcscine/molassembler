@@ -98,7 +98,7 @@ Molecule narrow(Molecule molecule, random::Engine& engine) {
     for(const auto& atomStereopermutator : stereopermutatorList.atomStereopermutators()) {
       if(!atomStereopermutator.assigned()) {
         unassignedAtomStereopermutators.push_back(
-          atomStereopermutator.centralIndex()
+          atomStereopermutator.placement()
         );
       }
     }
@@ -124,7 +124,7 @@ Molecule narrow(Molecule molecule, random::Engine& engine) {
     for(const auto& bondStereopermutator : stereopermutatorList.bondStereopermutators()) {
       if(!bondStereopermutator.assigned()) {
         unassignedBondStereopermutators.push_back(
-          bondStereopermutator.edge()
+          bondStereopermutator.placement()
         );
       }
     }

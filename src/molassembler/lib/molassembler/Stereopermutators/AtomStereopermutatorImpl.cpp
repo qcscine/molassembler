@@ -239,7 +239,7 @@ bool AtomStereopermutator::Impl::thermalized(
     if(
       temple::any_of(
         ranking.links,
-        [](const LinkInformation& link) {
+        [](const RankingInformation::Link& link) {
           return link.cycleSequence.size() <= 4;
         }
       )
@@ -980,7 +980,7 @@ boost::optional<unsigned> AtomStereopermutator::Impl::assigned() const {
   return _assignmentOption;
 }
 
-AtomIndex AtomStereopermutator::Impl::centralIndex() const {
+AtomIndex AtomStereopermutator::Impl::placement() const {
   return _centerAtom;
 }
 

@@ -695,6 +695,7 @@ int main(int argc, char* argv[]) {
   unsigned nStructures = 1;
 
   bool showFinalContributions = false;
+  bool showChiralConstraints = false;
   bool applyTetrangleSmoothing = false;
   bool printBounds = false;
 
@@ -708,14 +709,9 @@ int main(int argc, char* argv[]) {
       "Set number of structures to generate"
     )
     (
-      "from_file,f",
+      "input,i",
       boost::program_options::value<std::string>(),
-      "Read molecule to generate from file"
-    )
-    (
-      "line_notation,l",
-      boost::program_options::value<std::string>(),
-      "Generate molecule from passed SMILES string"
+      "Filename to read molecule from or SMILES string"
     )
     (
       "partiality,p",
@@ -728,9 +724,14 @@ int main(int argc, char* argv[]) {
       "Alter the maximum number of refinement steps (Default: 10'000)"
     )
     (
-      "contributions,c",
+      "final_contributions,f",
       boost::program_options::bool_switch(&showFinalContributions),
       "Show the final contributions to the refinement error functions"
+    )
+    (
+      "chirals,c",
+      boost::program_options::bool_switch(&showChiralConstraints),
+      "Show chiral constraint representations"
     )
     (
       "tetrangle,t",
@@ -746,9 +747,12 @@ int main(int argc, char* argv[]) {
 
   // Parse
   boost::program_options::variables_map options_variables_map;
+  boost::program_options::positional_options_description positional_description;
+  positional_description.add("input", 1);
   boost::program_options::store(
     boost::program_options::command_line_parser(argc, argv).
     options(options_description).
+    positional(positional_description).
     style(
       boost::program_options::command_line_style::unix_style
       | boost::program_options::command_line_style::allow_long_disguise
@@ -758,7 +762,7 @@ int main(int argc, char* argv[]) {
   boost::program_options::notify(options_variables_map);
 
   // Manage the results
-  if(options_variables_map.count("help") > 0) {
+  if(options_variables_map.count("help") > 0 || options_variables_map.count("input") != 1) {
     std::cout << options_description << std::endl;
     return 0;
   }
@@ -802,29 +806,29 @@ int main(int argc, char* argv[]) {
   std::string baseName;
   Molecule mol;
 
-  // Generate from file
-  if(options_variables_map.count("from_file") == 1) {
-    auto filename = options_variables_map["from_file"].as<std::string>();
-
-    if(!boost::filesystem::exists(filename)) {
-      std::cout << "The specified file could not be found!\n";
+  const std::string input = options_variables_map["input"].as<std::string>();
+  if(boost::filesystem::exists(input)) {
+    try {
+      mol = io::read(input);
+    } catch(...) {
+      std::cout << "Input exists as filename, but could not be read!\n";
       return 1;
     }
 
-    mol = io::read(filename);
-
-    boost::filesystem::path filepath {filename};
+    boost::filesystem::path filepath {input};
     baseName = filepath.stem().string();
-  } else if(options_variables_map.count("line_notation") == 1) {
-    mol = io::experimental::parseSmilesSingleMolecule(
-      options_variables_map["line_notation"].as<std::string>()
-    );
-    baseName = "smiles";
-
-    std::cout << mol << "\n";
   } else {
-    std::cout << "No molecule input specified!\n";
-    return 1;
+    std::cout << "Input is not found as file. Interpreting as SMILES string\n";
+
+    // Input is possibly a SMILES string
+    try {
+      mol = io::experimental::parseSmilesSingleMolecule(input);
+    } catch(...) {
+      std::cout << "Input could not be interpreted as a SMILES string.\n";
+      return 1;
+    }
+
+    baseName = "smiles";
   }
 
   std::ofstream graphFile(baseName +  "-graph.dot");
@@ -849,11 +853,7 @@ int main(int argc, char* argv[]) {
 
     std::string structBaseName = baseName + "-"s + std::to_string(structNum);
 
-    writeProgressFiles(
-      mol,
-      structBaseName,
-      refinementData
-    );
+    writeProgressFiles(mol, structBaseName, refinementData);
 
     io::write(
       structBaseName + "-last.mol"s,
@@ -862,6 +862,13 @@ int main(int argc, char* argv[]) {
         distance_geometry::detail::gather(refinementData.steps.back().positions)
       )
     );
+
+    if(showChiralConstraints) {
+      std::cout << "Chiral constraints of refinement " << structNum << ":\n";
+      for(const auto& constraint : refinementData.constraints) {
+        std::cout << temple::stringify(constraint.sites) << " -> [" << constraint.lower << ", " << constraint.upper << "]\n";
+      }
+    }
   }
 
   auto failures = temple::sum(

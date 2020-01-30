@@ -9,61 +9,6 @@
 void init_ranking_information(pybind11::module& m) {
   using namespace Scine::molassembler;
 
-  pybind11::class_<LinkInformation> linkInformation(
-    m,
-    "LinkInformation",
-    R"delim(
-      Information on links (graph paths) between substituents of a central atom
-
-      This captures all cycles that the central atom whose substituents are
-      being ranked and its sites are in.
-
-      >>> # Simple example of links between substituents
-      >>> import scine_utilities as utils
-      >>> cyclopropane = io.experimental.from_smiles("C1CC1")
-      >>> p = cyclopropane.stereopermutators.option(0)
-      >>> # Sites are single-index, non-haptic
-      >>> site_is_single_index = lambda s: len(s) == 1
-      >>> all(map(site_is_single_index, p.ranking.sites))
-      True
-      >>> # There is a single link between carbon atom sites
-      >>> is_carbon = lambda a: cyclopropane.graph.element_type(a) == utils.ElementType.C
-      >>> site_is_carbon = lambda s: len(s) == 1 and is_carbon(s[0])
-      >>> len(p.ranking.links) == 1
-      True
-      >>> single_link = p.ranking.links[0]
-      >>> site_index_is_carbon = lambda s: site_is_carbon(p.ranking.sites[s])
-      >>> all(map(site_index_is_carbon, single_link.index_pair))
-      True
-      >>> single_link.cycle_sequence # Atom indices of cycle members
-      [0, 1, 2]
-      >>> all(map(is_carbon, single_link.cycle_sequence)) # All carbons
-      True
-    )delim"
-  );
-
-  linkInformation.def_readonly(
-    "index_pair",
-    &LinkInformation::indexPair,
-    "An ordered pair of the site indices that are linked. See the "
-    "corresponding :class:`RankingInformation` sites member"
-  );
-
-  linkInformation.def_readonly(
-    "cycle_sequence",
-    &LinkInformation::cycleSequence,
-    R"delim(
-      The in-order atom sequence of the cycle involving the linked sites. The
-      source vertex is always placed at the front of this sequence. The
-      sequence is normalized such that second atom index is less than the last.
-    )delim"
-  );
-
-  linkInformation.def(pybind11::self == pybind11::self);
-  linkInformation.def(pybind11::self != pybind11::self);
-  linkInformation.def(pybind11::self < pybind11::self);
-
-
   pybind11::class_<RankingInformation> rankingInformation(
     m,
     "RankingInformation",
@@ -114,7 +59,7 @@ void init_ranking_information(pybind11::module& m) {
   rankingInformation.def_readonly(
     "links",
     &RankingInformation::links,
-    "An ordered list of :class:`LinkInformation` on all links between binding sites"
+    "An ordered list of :class:`RankingInformation.Link` on all links between binding sites"
   );
 
   rankingInformation.def(
@@ -133,4 +78,58 @@ void init_ranking_information(pybind11::module& m) {
 
   rankingInformation.def(pybind11::self == pybind11::self);
   rankingInformation.def(pybind11::self != pybind11::self);
+
+  pybind11::class_<RankingInformation::Link> link(
+    rankingInformation,
+    "Link",
+    R"delim(
+      Information on links (graph paths) between sites of a central atom
+
+      This captures all cycles that the central atom whose substituents are
+      being ranked and its sites are in.
+
+      >>> # Simple example of links between substituents
+      >>> import scine_utilities as utils
+      >>> cyclopropane = io.experimental.from_smiles("C1CC1")
+      >>> p = cyclopropane.stereopermutators.option(0)
+      >>> # Sites are single-index, non-haptic
+      >>> site_is_single_index = lambda s: len(s) == 1
+      >>> all(map(site_is_single_index, p.ranking.sites))
+      True
+      >>> # There is a single link between carbon atom sites
+      >>> is_carbon = lambda a: cyclopropane.graph.element_type(a) == utils.ElementType.C
+      >>> site_is_carbon = lambda s: len(s) == 1 and is_carbon(s[0])
+      >>> len(p.ranking.links) == 1
+      True
+      >>> single_link = p.ranking.links[0]
+      >>> site_index_is_carbon = lambda s: site_is_carbon(p.ranking.sites[s])
+      >>> all(map(site_index_is_carbon, single_link.sites))
+      True
+      >>> single_link.cycle_sequence # Atom indices of cycle members
+      [0, 1, 2]
+      >>> all(map(is_carbon, single_link.cycle_sequence)) # All carbons
+      True
+    )delim"
+  );
+
+  link.def_readonly(
+    "sites",
+    &RankingInformation::Link::sites,
+    "An ordered pair of the site indices that are linked. See the "
+    "corresponding :class:`RankingInformation` sites member"
+  );
+
+  link.def_readonly(
+    "cycle_sequence",
+    &RankingInformation::Link::cycleSequence,
+    R"delim(
+      The in-order atom sequence of the cycle involving the linked sites. The
+      source vertex is always placed at the front of this sequence. The
+      sequence is normalized such that second atom index is less than the last.
+    )delim"
+  );
+
+  link.def(pybind11::self == pybind11::self);
+  link.def(pybind11::self != pybind11::self);
+  link.def(pybind11::self < pybind11::self);
 }

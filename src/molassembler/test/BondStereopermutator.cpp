@@ -196,7 +196,7 @@ BOOST_AUTO_TEST_CASE(BondStatePropagationTests) {
   unsigned priorAssignment = mainStereopermutator.assigned().value();
 
   // Pick a side
-  const AtomIndex side = mainStereopermutator.edge().first;
+  const AtomIndex side = mainStereopermutator.placement().first;
 
   // Find a hydrogen substituent
   boost::optional<AtomIndex> hydrogenSubstituent;

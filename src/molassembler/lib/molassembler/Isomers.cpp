@@ -91,7 +91,7 @@ bool enantiomeric(const Molecule& a, const Molecule& b) {
     }
 
     const auto& bPermutatorOption = b.stereopermutators().option(
-      aPermutator.centralIndex()
+      aPermutator.placement()
     );
 
     // If there is no matching permutator, then these cannot be enantiomers

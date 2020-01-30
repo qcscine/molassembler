@@ -29,10 +29,10 @@ BOOST_AUTO_TEST_CASE(SiteRanking) {
     {5, 6}
   };
 
-  std::vector<LinkInformation> symmetricHapticPincerLinks;
-  LinkInformation a, b;
-  a.indexPair = {0_s, 1_s};
-  b.indexPair = {1_s, 2_s};
+  std::vector<RankingInformation::Link> symmetricHapticPincerLinks;
+  RankingInformation::Link a, b;
+  a.sites = {0_s, 1_s};
+  b.sites = {1_s, 2_s};
 
   symmetricHapticPincerLinks.push_back(a);
   symmetricHapticPincerLinks.push_back(b);
@@ -64,9 +64,9 @@ BOOST_AUTO_TEST_CASE(SiteRanking) {
     {5, 6}
   };
 
-  std::vector<LinkInformation> asymmetricHapticPincerLinks;
-  a.indexPair = {0_s, 1_s};
-  b.indexPair = {1_s, 2_s};
+  std::vector<RankingInformation::Link> asymmetricHapticPincerLinks;
+  a.sites = {0_s, 1_s};
+  b.sites = {1_s, 2_s};
 
   asymmetricHapticPincerLinks.push_back(a);
   asymmetricHapticPincerLinks.push_back(b);

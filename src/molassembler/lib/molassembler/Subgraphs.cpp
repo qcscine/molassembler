@@ -338,19 +338,19 @@ std::vector<IndexMap> maximum(
               std::end(fixedMap.left),
               std::begin(indexMap.left),
               std::end(indexMap.left),
-              [&](const auto& fixedPair, const auto& indexPair) -> bool {
-                if(fixedPair.first != indexPair.first) {
+              [&](const auto& fixedPair, const auto& sites) -> bool {
+                if(fixedPair.first != sites.first) {
                   return false;
                 }
 
                 if(
                   b.graph().elementType(fixedPair.second) == Utils::ElementType::H
-                  && b.graph().elementType(indexPair.second) == Utils::ElementType::H
+                  && b.graph().elementType(sites.second) == Utils::ElementType::H
                 ) {
                   return true;
                 }
 
-                return (fixedPair.second == indexPair.second);
+                return (fixedPair.second == sites.second);
               }
             );
           }

@@ -107,8 +107,8 @@ void init_bond_stereopermutator(pybind11::module& m) {
   );
 
   bondStereopermutator.def_property_readonly(
-    "edge",
-    &BondStereopermutator::edge,
+    "placement",
+    &BondStereopermutator::placement,
     "The edge this stereopermutator is placed on."
   );
 

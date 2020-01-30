@@ -62,8 +62,8 @@ void MolGraphWriter::writeBondStereopermutatorNodes(std::ostream& os) const {
     state += "/"s + std::to_string(bondStereopermutator.numAssignments());
 
     std::string graphNodeName = "BS"
-      + std::to_string(bondStereopermutator.edge().first)
-      + std::to_string(bondStereopermutator.edge().second);
+      + std::to_string(bondStereopermutator.placement().first)
+      + std::to_string(bondStereopermutator.placement().second);
 
     std::vector<std::string> tooltipStrings {bondStereopermutator.info()};
 
@@ -81,10 +81,10 @@ void MolGraphWriter::writeBondStereopermutatorNodes(std::ostream& os) const {
       << R"("];)" << "\n";
 
     // Add connections to the vertices (although those don't exist yet)
-    os << "  " << graphNodeName << " -- " << bondStereopermutator.edge().first
+    os << "  " << graphNodeName << " -- " << bondStereopermutator.placement().first
       << R"( [color="gray", dir="forward", len="2"];)"
       << "\n";
-    os << "  " << graphNodeName << " -- " << bondStereopermutator.edge().second
+    os << "  " << graphNodeName << " -- " << bondStereopermutator.placement().second
       << R"( [color="gray", dir="forward", len="2"];)"
       << "\n";
   }

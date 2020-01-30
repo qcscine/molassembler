@@ -265,11 +265,11 @@ public:
    */
   boost::optional<unsigned> assigned() const;
 
-  /*! @brief Returns the central atom this permutator is placed on
+  /*! @brief Returns the atom this permutator is placed on
    *
    * @complexity{@math{\Theta(1)}}
    */
-  AtomIndex centralIndex() const;
+  AtomIndex placement() const;
 
   /*! @brief Returns IOP within the set of symbolic ligand permutations
    *

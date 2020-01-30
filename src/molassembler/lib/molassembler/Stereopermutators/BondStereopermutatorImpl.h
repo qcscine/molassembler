@@ -19,7 +19,6 @@ namespace Scine {
 namespace molassembler {
 
 class StereopermutatorList;
-struct LinkInformation;
 
 struct BondStereopermutator::Impl : public temple::crtp::LexicographicComparable<Impl> {
   /* Make sure static_cast-ing our Alignment enum to Composite's Alignment is
@@ -53,7 +52,7 @@ struct BondStereopermutator::Impl : public temple::crtp::LexicographicComparable
     const AtomStereopermutator& firstStereopermutator,
     const AtomStereopermutator& secondStereopermutator,
     std::tuple<AtomIndex, AtomIndex, double> dihedral,
-    const LinkInformation& link
+    const RankingInformation::Link& link
   );
 
   static std::vector<unsigned> notObviouslyInfeasibleStereopermutations(
@@ -131,7 +130,7 @@ struct BondStereopermutator::Impl : public temple::crtp::LexicographicComparable
 
   std::string rankInfo() const;
 
-  BondIndex edge() const;
+  BondIndex placement() const;
 
 /* Operators */
   inline auto tie() const {

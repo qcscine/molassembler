@@ -111,19 +111,19 @@ struct adl_serializer<Scine::Utils::ElementTypeCollection> {
 };
 
 template<>
-struct adl_serializer<Scine::molassembler::LinkInformation> {
-  using Type = Scine::molassembler::LinkInformation;
+struct adl_serializer<Scine::molassembler::RankingInformation::Link> {
+  using Type = Scine::molassembler::RankingInformation::Link;
 
   static void to_json(json& j, const Type& link) {
     j["p"] = json::array();
-    j["p"].push_back(link.indexPair.first);
-    j["p"].push_back(link.indexPair.second);
+    j["p"].push_back(link.sites.first);
+    j["p"].push_back(link.sites.second);
 
     j["seq"] = link.cycleSequence;
   }
 
   static void from_json(const json& j, Type& link) {
-    link.indexPair = {
+    link.sites = {
       j["p"].at(0),
       j["p"].at(1)
     };
@@ -446,7 +446,7 @@ nlohmann::json serialize(const Molecule& molecule) {
     for(const auto& stereopermutator : stereopermutators.atomStereopermutators()) {
       json s;
 
-      s["c"] = stereopermutator.centralIndex();
+      s["c"] = stereopermutator.placement();
       s["s"] = shapes::nameIndex(stereopermutator.getShape());
       s["r"] = stereopermutator.getRanking();
 
@@ -463,7 +463,7 @@ nlohmann::json serialize(const Molecule& molecule) {
     for(const auto& stereopermutator : stereopermutators.bondStereopermutators()) {
       json s;
 
-      s["e"] = {stereopermutator.edge().first, stereopermutator.edge().second};
+      s["e"] = {stereopermutator.placement().first, stereopermutator.placement().second};
 
       if(stereopermutator.assigned()) {
         s["a"] = stereopermutator.assigned().value();
@@ -509,12 +509,12 @@ Molecule deserialize(const nlohmann::json& m) {
   if(m.count(atomStereopermutatorKey) > 0) {
     for(const auto& j : m[atomStereopermutatorKey]) {
       shapes::Shape shape = shapes::allShapes.at(j["s"]);
-      AtomIndex centralIndex = j["c"];
+      AtomIndex placement = j["c"];
 
       auto stereopermutator = AtomStereopermutator {
         graph,
         shape,
-        centralIndex,
+        placement,
         j["r"].get<RankingInformation>()
       };
 

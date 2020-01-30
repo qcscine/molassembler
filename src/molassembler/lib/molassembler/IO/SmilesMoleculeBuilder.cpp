@@ -469,7 +469,7 @@ void MoleculeBuilder::setAtomStereo(
       throw std::logic_error("Could not find matching feasible stereopermutation for stereocenter");
     }
 
-    mol.assignStereopermutator(permutator.centralIndex(), assignmentIter - std::begin(assignables));
+    mol.assignStereopermutator(permutator.placement(), assignmentIter - std::begin(assignables));
   }
 }
 
@@ -529,10 +529,10 @@ void MoleculeBuilder::setBondStereo(
       const Molecule& mol,
       const std::vector<PrivateGraph::Vertex>& indexInComponentMap
     ) const {
-      auto first = mol.stereopermutators().option(stereopermutator.edge().first).value();
-      auto second = mol.stereopermutators().option(stereopermutator.edge().second).value();
+      auto first = mol.stereopermutators().option(stereopermutator.placement().first).value();
+      auto second = mol.stereopermutators().option(stereopermutator.placement().second).value();
 
-      if(first.centralIndex() == indexInComponentMap.at(right)) {
+      if(first.placement() == indexInComponentMap.at(right)) {
         std::swap(first, second);
       }
 

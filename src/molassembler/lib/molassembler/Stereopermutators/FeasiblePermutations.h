@@ -40,8 +40,8 @@ struct Feasible {
    * @todo Move this to SpatialModel
    */
   static bool linkPossiblyFeasible(
-    const LinkInformation& link,
-    AtomIndex centralIndex,
+    const RankingInformation::Link& link,
+    AtomIndex placement,
     const ConeAngleType& cones,
     const RankingInformation& ranking,
     shapes::Shape shape,
@@ -59,7 +59,7 @@ struct Feasible {
    */
   static bool possiblyFeasible(
     const stereopermutation::Stereopermutation& assignment,
-    AtomIndex centralIndex,
+    AtomIndex placement,
     const RankingInformation::RankedSitesType& canonicalSites,
     const ConeAngleType& coneAngles,
     const RankingInformation& ranking,
@@ -79,7 +79,7 @@ struct Feasible {
    *
    * @param abstractPermutations The set of abstract stereopermutations
    * @param shape The underlying shape of the stereopermutator
-   * @param centralIndex the atom index of the stereopermutator
+   * @param placement the atom index of the stereopermutator
    * @param ranking Ranking object indicating chemical differences between
    *   sites and substituents
    * @param graph The graph being modeled
@@ -90,7 +90,7 @@ struct Feasible {
   Feasible(
     const Abstract& abstractPermutations,
     shapes::Shape shape,
-    AtomIndex centralIndex,
+    AtomIndex placement,
     const RankingInformation& ranking,
     const Graph& graph
   );

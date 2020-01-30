@@ -306,7 +306,7 @@ public:
    *
    * @complexity{@math{\Theta(1)}}
    */
-  BondIndex edge() const;
+  BondIndex placement() const;
 //!@}
 
 //!@name Operators

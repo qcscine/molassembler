@@ -397,7 +397,7 @@ bool testSubstituentLinks(const boost::filesystem::path& filePath) {
 
   LigandLevelSet condensedCalculated;
   for(const auto& linkData : links) {
-    condensedCalculated.insert(linkData.indexPair);
+    condensedCalculated.insert(linkData.sites);
   }
 
   std::map<AtomIndex, unsigned> indexToLigandMap;
@@ -429,7 +429,7 @@ bool testSubstituentLinks(const boost::filesystem::path& filePath) {
       << ". From:\n";
 
     for(const auto& link : links) {
-      std::cout << temple::stringify(link.indexPair) << ": "
+      std::cout << temple::stringify(link.sites) << ": "
         << temple::stringify(link.cycleSequence) << "\n";
     }
 

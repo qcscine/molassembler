@@ -12,6 +12,7 @@
 #define INCLUDE_MOLASSEMBLER_GRAPH_ALGORITHMS_H
 
 #include "molassembler/Graph/PrivateGraph.h"
+#include "molassembler/RankingInformation.h"
 
 #include <tuple>
 #include <vector>
@@ -21,7 +22,6 @@ namespace molassembler {
 
 // Forward-declarations
 class Cycles;
-struct LinkInformation;
 class AtomStereopermutator;
 
 //! Core graph-level algorithms (not requiring stereopermutator information)
@@ -32,7 +32,7 @@ namespace graph_algorithms {
  * @complexity{@math{\Theta(R)} where @math{R} is the number of relevant cycles
  * containing both stereopermutators' central indices}
  */
-std::vector<LinkInformation> siteLinks(
+std::vector<RankingInformation::Link> siteLinks(
   const PrivateGraph& graph,
   const AtomStereopermutator& stereopermutatorA,
   const AtomStereopermutator& stereopermutatorB
@@ -43,7 +43,7 @@ std::vector<LinkInformation> siteLinks(
  * @complexity{@math{O(S^2)} where @math{S} is the number of substituents of the
  * central vertex}
  */
-std::vector<LinkInformation> siteLinks(
+std::vector<RankingInformation::Link> siteLinks(
   const PrivateGraph& graph,
   AtomIndex source,
   const std::vector<
@@ -71,7 +71,7 @@ bool isHapticSite(
  */
 void findSites(
   const PrivateGraph& graph,
-  AtomIndex centralIndex,
+  AtomIndex placement,
   const std::function<void(const std::vector<AtomIndex>&)>& callback
 );
 
@@ -99,7 +99,7 @@ std::vector<
   std::vector<AtomIndex>
 > ligandSiteGroups(
   const PrivateGraph& graph,
-  AtomIndex centralIndex,
+  AtomIndex placement,
   const std::vector<AtomIndex>& excludeAdjacents = {}
 );
 
