@@ -16,6 +16,7 @@ add_executable(templeTests
   ${CMAKE_CURRENT_SOURCE_DIR}/Optimization/NelderMead.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/Optimization/SO3NelderMead.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/Optimization/TrustRegionNewton.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/StrongIndex.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/Variadic.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/constexprBTree.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/constexprTests.cpp
@@ -31,7 +32,9 @@ target_link_libraries(templeTests
 )
 target_link_eigen(templeTests PRIVATE)
 
-target_compile_definitions(templeTests PRIVATE BOOST_ALL_DYN_LINK)
+if(NOT Boost_USE_STATIC_LIBS)
+  target_compile_definitions(templeTests PRIVATE BOOST_ALL_DYN_LINK)
+endif()
 target_compile_options(templeTests PRIVATE ${MOLASSEMBLER_CXX_FLAGS})
 
 add_test(NAME MASMTempleTests COMMAND templeTests)

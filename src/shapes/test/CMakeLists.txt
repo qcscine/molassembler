@@ -26,7 +26,9 @@ target_link_libraries(shapeTests
 target_include_directories(shapeTests PRIVATE SYSTEM ${EIGEN3_INCLUDE_DIRS})
 
 target_compile_options(shapeTests PRIVATE ${MOLASSEMBLER_CXX_FLAGS})
-target_compile_definitions(shapeTests PRIVATE BOOST_ALL_DYN_LINK)
+if(NOT Boost_USE_STATIC_LIBS)
+  target_compile_definitions(shapeTests PRIVATE BOOST_ALL_DYN_LINK)
+endif()
 
 # add test
 add_test(NAME MASMShapeTests COMMAND shapeTests)

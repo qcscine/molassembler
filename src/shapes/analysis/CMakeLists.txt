@@ -38,7 +38,9 @@ foreach(filename ${analysisFiles})
   )
 
   target_compile_options(${targetName} PRIVATE ${MOLASSEMBLER_CXX_FLAGS})
-  target_compile_definitions(${targetName} PRIVATE BOOST_ALL_DYN_LINK)
+  if(NOT Boost_USE_STATIC_LIBS)
+    target_compile_definitions(${targetName} PRIVATE BOOST_ALL_DYN_LINK)
+  endif()
 
   set_target_properties(${targetName} PROPERTIES FOLDER "Analysis")
 endforeach()

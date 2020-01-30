@@ -21,15 +21,6 @@ if(MOLASSEMBLER_IPO)
   endif()
 endif()
 
-if(MOLASSEMBLER_ADDRESS_SANITIZE)
-  message(STATUS "Adding address sanitizer")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address" PARENT_SCOPE)
-  set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} -fsanitize=address" PARENT_SCOPE)
-  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fsanitize=address" PARENT_SCOPE)
-
-  message(WARNING "Address sanitiziation can cause ABI incompatibility issues if dependencies have not been compiled the same way. Set MOLASSEMBLER_ADDRESS_SANITIZE to OFF to avoid this.")
-endif()
-
 # Handle opportunity for architecture-specific instruction sets
 if(NOT "${SCINE_MARCH}" STREQUAL "" AND NOT MSVC)
   list(APPEND MOLASSEMBLER_CXX_FLAGS -march=${SCINE_MARCH})

@@ -41,7 +41,9 @@ molassembler_install_component_headers(
 if(SCINE_BUILD_TESTS)
   add_executable(gor1Tests test.cpp)
   target_compile_options(gor1Tests PRIVATE ${MOLASSEMBLER_CXX_FLAGS})
-  target_compile_definitions(gor1Tests PRIVATE BOOST_ALL_DYN_LINK)
+  if(NOT Boost_USE_STATIC_LIBS)
+    target_compile_definitions(gor1Tests PRIVATE BOOST_ALL_DYN_LINK)
+  endif()
   target_link_libraries(gor1Tests PRIVATE
     Boost::boost
     Boost::unit_test_framework

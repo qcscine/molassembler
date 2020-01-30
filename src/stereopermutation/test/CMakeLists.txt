@@ -8,7 +8,9 @@ endif()
 
 add_executable(permutationTests tests.cpp)
 target_compile_options(permutationTests PRIVATE ${MOLASSEMBLER_CXX_FLAGS})
-target_compile_definitions(permutationTests PRIVATE BOOST_ALL_DYN_LINK)
+if(NOT Boost_USE_STATIC_LIBS)
+  target_compile_definitions(permutationTests PRIVATE BOOST_ALL_DYN_LINK)
+endif()
 target_link_libraries(permutationTests
   PRIVATE
     Boost::boost

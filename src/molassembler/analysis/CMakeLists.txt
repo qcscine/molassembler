@@ -44,6 +44,5 @@ foreach(filename ${analysisFiles})
       gor1
   )
 
-  target_compile_definitions(${targetName} PRIVATE BOOST_ALL_DYN_LINK)
   target_compile_options(${targetName} PRIVATE ${MOLASSEMBLER_CXX_FLAGS})
 endforeach()

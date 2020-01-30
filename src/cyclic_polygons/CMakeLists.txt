@@ -17,7 +17,9 @@ endif()
 
 if(SCINE_BUILD_TESTS)
   add_executable(cyclicPolygonTests tests.cpp)
-  target_compile_definitions(cyclicPolygonTests PRIVATE BOOST_ALL_DYN_LINK)
+  if(NOT Boost_USE_STATIC_LIBS)
+    target_compile_definitions(cyclicPolygonTests PRIVATE BOOST_ALL_DYN_LINK)
+  endif()
   target_compile_options(cyclicPolygonTests PRIVATE ${MOLASSEMBLER_CXX_FLAGS})
   target_link_libraries(cyclicPolygonTests
     PRIVATE
