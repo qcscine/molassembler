@@ -151,7 +151,7 @@ auto map(
   reserveIfPossible(returnContainer, container);
 
   for(const auto& value : container) {
-    returnContainer.emplace_back(
+    returnContainer.push_back(
       invoke(function, value)
     );
   }
@@ -421,14 +421,14 @@ Container remove_if(
 }
 
 //! @brief vector iota shorthand
-template<typename UnsignedType>
-std::vector<UnsignedType> iota(UnsignedType upperBound) {
-  std::vector<UnsignedType> values (upperBound);
+template<typename T>
+std::vector<T> iota(unsigned upperBound) {
+  std::vector<T> values(upperBound);
 
   std::iota(
     std::begin(values),
     std::end(values),
-    0
+    T(0)
   );
 
   return values;

@@ -23,9 +23,7 @@
 #include "molassembler/RankingInformation.h"
 
 namespace Scine {
-
 namespace molassembler {
-
 namespace graph_algorithms {
 
 std::vector<LinkInformation> siteLinks(
@@ -83,7 +81,7 @@ std::vector<LinkInformation> siteLinks(
 
   std::vector<LinkInformation> links;
   std::map<
-    std::pair<unsigned, unsigned>,
+    std::pair<SiteIndex, SiteIndex>,
     unsigned
   > siteIndicesToLinksPositionMap;
 
@@ -104,7 +102,7 @@ std::vector<LinkInformation> siteLinks(
       cycleOuterEdges
     );
 
-    std::pair<unsigned, unsigned> siteIndices {
+    std::pair<SiteIndex, SiteIndex> siteIndices {
       stereopermutatorA.getRanking().getSiteIndexOf(aAdjacent),
       stereopermutatorB.getRanking().getSiteIndexOf(bAdjacent)
     };
@@ -162,7 +160,7 @@ std::vector<LinkInformation> siteLinks(
    * The two atoms adjacent to the central atom represented by those edges must
    * be from different sites.
    */
-  std::unordered_map<AtomIndex, unsigned> indexToSiteMap;
+  std::unordered_map<AtomIndex, SiteIndex> indexToSiteMap;
   for(unsigned i = 0; i < sites.size(); ++i) {
     for(const AtomIndex siteAtomIndex : sites.at(i)) {
       indexToSiteMap.emplace(siteAtomIndex, i);
@@ -181,7 +179,7 @@ std::vector<LinkInformation> siteLinks(
 
   std::vector<LinkInformation> links;
   std::map<
-    std::pair<unsigned, unsigned>,
+    std::pair<SiteIndex, SiteIndex>,
     unsigned // Index of LinkInformation in links
   > siteIndicesToLinksPositionMap;
 
@@ -204,15 +202,15 @@ std::vector<LinkInformation> siteLinks(
           }()
         );
 
-        const unsigned siteOfA = indexToSiteMap.at(a);
-        const unsigned siteOfB = indexToSiteMap.at(b);
+        const SiteIndex siteOfA = indexToSiteMap.at(a);
+        const SiteIndex siteOfB = indexToSiteMap.at(b);
 
         if(siteOfA == siteOfB) {
           // If the cycle adjacents are from the same ligand, ignore this cycle
           continue;
         }
 
-        const std::pair<unsigned, unsigned> siteIndices = std::minmax(siteOfA, siteOfB);
+        const std::pair<SiteIndex, SiteIndex> siteIndices = std::minmax(siteOfA, siteOfB);
 
         const auto mapFindIter = siteIndicesToLinksPositionMap.find(siteIndices);
         if(
@@ -244,7 +242,6 @@ std::vector<LinkInformation> siteLinks(
 
   // Sort the links before passing them out in order to ease comparisons
   temple::inplace::sort(links);
-
   return links;
 }
 
@@ -496,7 +493,5 @@ std::vector<unsigned> distance(AtomIndex a, const PrivateGraph& graph) {
 }
 
 } // namespace graph_algorithms
-
 } // namespace molassembler
-
 } // namespace Scine

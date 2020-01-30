@@ -20,7 +20,7 @@ namespace Scine {
 namespace stereopermutation {
 
 Stereopermutation::Stereopermutation(
-  std::vector<char> passCharacters,
+  CharacterOccupation passCharacters,
   OrderedLinks passLinks
 ) : characters(std::move(passCharacters)),
     links(std::move(passLinks))
@@ -53,14 +53,15 @@ Stereopermutation::Stereopermutation(
 
 typename Stereopermutation::OrderedLinks Stereopermutation::permuteLinks(
   const OrderedLinks& links,
-  const std::vector<unsigned>& permutation
+  const shapes::Permutation& permutation
 ) {
-  auto rotateIndex = [&permutation](const unsigned from) -> unsigned {
-    return std::find(
+  auto rotateIndex = [&permutation](const shapes::Vertex from) -> shapes::Vertex {
+    const unsigned indexOf = std::find(
       std::begin(permutation),
       std::end(permutation),
       from
     ) - std::begin(permutation);
+    return shapes::Vertex {indexOf};
   };
 
   return temple::sort(
@@ -108,14 +109,14 @@ std::string Stereopermutation::toString() const {
   return out.str();
 }
 
-std::vector<char> Stereopermutation::permuteCharacters(
-  const std::vector<char>& characters,
-  const std::vector<unsigned>& permutation
+Stereopermutation::CharacterOccupation Stereopermutation::permuteCharacters(
+  const CharacterOccupation& characters,
+  const shapes::Permutation& permutation
 ) {
   return temple::map(permutation, temple::functor::at(characters));
 }
 
-Stereopermutation Stereopermutation::applyPermutation(const std::vector<unsigned>& permutation) const {
+Stereopermutation Stereopermutation::applyPermutation(const shapes::Permutation& permutation) const {
   return {
     permuteCharacters(characters, permutation),
     permuteLinks(links, permutation)

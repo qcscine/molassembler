@@ -8,6 +8,7 @@
 #ifndef INCLUDE_MOLASSEMBLER_IO_SMILES_MOLECULE_BUILDER_H
 #define INCLUDE_MOLASSEMBLER_IO_SMILES_MOLECULE_BUILDER_H
 
+#include "shapes/Data.h"
 #include "molassembler/IO/SmilesParseData.h"
 #include "molassembler/Graph/PrivateGraph.h"
 #include "boost/variant.hpp"
@@ -91,7 +92,7 @@ private:
   );
 
   //! Fetches a map to help with the atom chiral markers
-  static std::vector<unsigned> shapeMap(const ChiralData& chiralData);
+  static std::vector<shapes::Vertex> shapeMap(const ChiralData& chiralData);
 //!@}
 
 //!@name Private member functions

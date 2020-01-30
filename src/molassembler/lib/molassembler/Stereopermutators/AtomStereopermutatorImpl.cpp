@@ -38,6 +38,7 @@
 #include "Utils/Geometry/ElementInfo.h"
 
 using namespace std::string_literals;
+using namespace std::placeholders;
 
 namespace Scine {
 namespace molassembler {
@@ -49,14 +50,14 @@ namespace detail {
 shapes::Shape pickTransition(
   const shapes::Shape shape,
   const unsigned T,
-  boost::optional<unsigned> removedSymmetryPositionOptional
+  boost::optional<shapes::Vertex> removedVertexOptional
 ) {
-  boost::optional<shapes::properties::SymmetryTransitionGroup> bestTransition;
+  boost::optional<shapes::properties::ShapeTransitionGroup> bestTransition;
   std::vector<shapes::Shape> propositions;
 
   auto replaceOrAdd = [&](
     shapes::Shape newName,
-    const shapes::properties::SymmetryTransitionGroup& transitionGroup
+    const shapes::properties::ShapeTransitionGroup& transitionGroup
   ) {
     if(bestTransition){
       if(transitionGroup.angularDistortion < bestTransition->angularDistortion) {
@@ -79,7 +80,7 @@ shapes::Shape pickTransition(
       continue;
     }
 
-    if(auto transitionOptional = shapes::getMapping(shape, propositionalShape, removedSymmetryPositionOptional)) {
+    if(auto transitionOptional = shapes::getMapping(shape, propositionalShape, removedVertexOptional)) {
       if(transitionOptional->indexMappings.empty()) {
         continue;
       }
@@ -116,7 +117,7 @@ shapes::Shape pickTransition(
   return shapes::properties::mostSymmetric(std::move(propositions));
 }
 
-std::pair<shapes::Shape, std::vector<unsigned>> classifyShape(const Eigen::Matrix<double, 3, Eigen::Dynamic>& sitePositions) {
+std::pair<shapes::Shape, std::vector<shapes::Vertex>> classifyShape(const Eigen::Matrix<double, 3, Eigen::Dynamic>& sitePositions) {
   const unsigned S = sitePositions.cols() - 1;
   auto normalized = shapes::continuous::normalize(sitePositions);
 
@@ -175,12 +176,12 @@ shapes::Shape AtomStereopermutator::Impl::up(const shapes::Shape shape) {
   return detail::pickTransition(shape, shapes::size(shape) + 1, boost::none);
 }
 
-shapes::Shape AtomStereopermutator::Impl::down(const shapes::Shape shape, const unsigned removedShapePosition) {
-  return detail::pickTransition(shape, shapes::size(shape) - 1, removedShapePosition);
+shapes::Shape AtomStereopermutator::Impl::down(const shapes::Shape shape, const shapes::Vertex removedVertex) {
+  return detail::pickTransition(shape, shapes::size(shape) - 1, removedVertex);
 }
 
-boost::optional<std::vector<unsigned>> AtomStereopermutator::Impl::getIndexMapping(
-  const shapes::properties::SymmetryTransitionGroup& mappingsGroup,
+boost::optional<std::vector<shapes::Vertex>> AtomStereopermutator::Impl::selectTransitionMapping(
+  const shapes::properties::ShapeTransitionGroup& mappingsGroup,
   const ChiralStatePreservation& preservationOption
 ) {
   if(mappingsGroup.indexMappings.empty()) {
@@ -227,7 +228,7 @@ bool AtomStereopermutator::Impl::thermalized(
   }
 
   /* Nitrogen atom inversion */
-  constexpr unsigned nitrogenZ = 7;
+  constexpr unsigned nitrogenZ = Utils::ElementInfo::Z(Utils::ElementType::N);
   bool isNitrogenIsotope = Utils::ElementInfo::Z(graph.elementType(centerAtom)) == nitrogenZ;
 
   if(
@@ -236,7 +237,8 @@ bool AtomStereopermutator::Impl::thermalized(
   ) {
     // Generally thermalized, except if in a small cycle
     if(
-      temple::any_of(ranking.links,
+      temple::any_of(
+        ranking.links,
         [](const LinkInformation& link) {
           return link.cycleSequence.size() <= 4;
         }
@@ -281,8 +283,8 @@ AtomStereopermutator::Impl::Impl(
     _thermalized {thermalized(
       graph,
       centerAtom,
-      shape,
-      ranking,
+      _shape,
+      _ranking,
       Options::temperatureRegime
     )}
 {}
@@ -355,16 +357,8 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
   RankingInformation newRanking,
   boost::optional<shapes::Shape> shapeOption
 ) {
-  // If nothing changes, nothing changes, and you don't get any internal state
-  if(newRanking == _ranking) {
-    // TODO no, this isn't right! If the symmetry has changed, then the internal state must change
-    return boost::none;
-  }
-
 #ifndef NDEBUG
-  /* The following is a precondition. It is also rankPriority's postcondition,
-   * but propagation may mess with it, so we need to be sure.
-   */
+  /* Check preconditions! */
   for(const auto& siteAtomList : boost::range::join(_ranking.sites, newRanking.sites)) {
     assert(
       std::is_sorted(
@@ -374,6 +368,42 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
     );
   }
 #endif
+
+  /* There are a lot of changes that can occur prior to a call to propagate that
+   * we need to correct. Multiple of these can apply at any given time!
+   *
+   * - Substituent count change
+   *   - A new substituent may be added to a site or removed
+   *   - Can happen at the same time as a site removal (three sites to two, one
+   *     newly haptic)
+   * - Ranking order change
+   *   - Order of ranked sites may change
+   *   - Implies a stereopermutation change!
+   * - Site count change
+   *   - Determined by comparing rankings
+   *   - Implies a shape change
+   *   - Need to make a map between old and new site indices (this can be
+   *     complicated by substituent-level changes)
+   * - Shape change
+   *   - Triggered by a site count change only
+   *   - Need to determine a map between old and new shape vertices
+   *
+   * Sketch of the following procedure
+   * - Determine mapping between sites, taking care to account for site and
+   *   substituent count changes
+   * - Determine mapping of shape vertices between shapes if a shape change
+   *   happens
+   * - Use shape map of current assignment to place old site indices at old shape vertices
+   * - Use mapping between shape vertices to enter the new shape
+   * - Use mapping between site indices to place new sites at the new shape
+   * - Make a stereopermutation from the new shape map and look for it in the
+   *   new feasibles
+   */
+
+  // If nothing changes, nothing changes, and nothing is propagated
+  if(newRanking == _ranking) {
+    return boost::none;
+  }
 
   /* There are five possible situations that can occur here:
    * - A substituent is removed, and that substituent was sole constituent of a
@@ -401,13 +431,13 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
    */
   auto situation = PropagationSituation::Unknown;
   int siteCountChange = static_cast<int>(newRanking.sites.size() - _ranking.sites.size());
-  boost::optional<unsigned> alteredSiteIndex;
-  boost::optional<AtomIndex> alteredSubstituentIndex;
-
   // Complain if more than one site is changed either way
   if(std::abs(siteCountChange) > 1) {
     throw std::logic_error("propagateGraphChange should only ever handle a single site addition or removal at once");
   }
+
+  boost::optional<SiteIndex> alteredSiteIndex;
+  boost::optional<AtomIndex> alteredSubstituentIndex;
 
   auto countSubstituents = [](const RankingInformation::SiteListType& sites) -> unsigned {
     return temple::accumulate(
@@ -472,6 +502,7 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
     alteredSiteIndex = rankingWithMoreSubstituents.getSiteIndexOf(changedSubstituents.front());
   };
 
+  /* Determine the situation */
   if(substituentCountChange == +1) {
     determineChangedSubstituentAndSite(newRanking, _ranking);
 
@@ -552,107 +583,56 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
    * ABCDEF.  There will be multiple ways to split A to F!
    */
   if(_assignmentOption && numStereopermutations() > 1) {
-    // A flat map of symmetry position to new site index in the new symmetry
-    std::vector<unsigned> sitesAtNewShapeVertices;
+    // A flat map of shape vertex to new site index in the new shape
+    using InvertedMap = temple::StrongIndexFlatMap<shapes::Vertex, SiteIndex>;
+    InvertedMap sitesAtNewShapeVertices;
 
     /* Site-level changes */
     if(situation == PropagationSituation::SiteAddition) {
-      /* Try to get a mapping to the new symmetry. If that returns a Some, try
-       * to get a mapping by preservationOption policy. If any of these steps
-       * returns boost::none, the whole expression is boost::none.
-       */
-      auto suitableMappingOption = temple::optionals::flatMap(
-        shapes::getMapping(_shape, newShape, boost::none),
-        [](const auto& mappingOption) {
-          return getIndexMapping(
-            mappingOption,
-            Options::chiralStatePreservation
-          );
-        }
-      );
-
-      if(suitableMappingOption) {
-        /* So now we must transfer the current assignment into the new symmetry
-         * and search for it in the set of uniques.
-         */
-        const auto& symmetryMapping = suitableMappingOption.value();
-
-        // Apply the mapping to get old symmetry positions at their places in the new symmetry
-        auto oldSymmetryPositionsInNewSymmetry = shapes::properties::applyIndexMapping(
+      if(
+        const auto shapeMapping = temple::optionals::flatMap(
+          shapes::getMapping(_shape, newShape, boost::none),
+          std::bind(selectTransitionMapping, _1, Options::chiralStatePreservation)
+        )
+      ) {
+        // Apply the mapping to get old shape positions at their places in the new shape
+        auto oldShapePositionsInNewShape = shapes::properties::applyIndexMapping(
           newShape,
-          symmetryMapping
+          shapeMapping.value()
         );
 
-        // Invert symmetryPositionMap to get: site = map.at(symmetryPosition)
-        std::vector<unsigned> oldSymmetryPositionToSiteMap(_shapePositionMap.size());
-        for(unsigned i = 0 ; i < _shapePositionMap.size(); ++i) {
-          oldSymmetryPositionToSiteMap.at(
-            _shapePositionMap.at(i)
-          ) = i;
-        }
-        /* We assume the new site is also merely added to the end! This may
-         * not always be true
+        auto oldShapePositionToSiteMap = _shapePositionMap.invert();
+        /* We assume the new site is also merely added to the end!
+         * This may not always be true
          */
-        oldSymmetryPositionToSiteMap.push_back(_shapePositionMap.size());
+        oldShapePositionToSiteMap.pushIsometric();
 
-        // Replace old symmetry positions by their site indices
-        sitesAtNewShapeVertices = temple::map(
-          oldSymmetryPositionsInNewSymmetry,
-          temple::functor::at(oldSymmetryPositionToSiteMap)
+        // Replace old shape positions by their site indices
+        sitesAtNewShapeVertices = InvertedMap(
+          temple::map(
+            oldShapePositionsInNewShape, // vec<Vertex>
+            temple::functor::at(oldShapePositionToSiteMap) // Vertex -> Site
+          )
         );
       }
-      /* If no mapping can be found that fits to the preservationOption,
-       * newStereopermutationOption remains boost::none, and this stereopermutator loses
-       * any chiral information it may have had.
-       */
     }
 
     if(situation == PropagationSituation::SiteRemoval) {
-      /* Try to get a mapping to the new symmetry. If that returns a Some, try
-       * to get a mapping by preservationOption policy. If any of these steps
-       * returns boost::none, the whole expression is boost::none.
-       */
-      auto suitableMappingOptional = temple::optionals::flatMap(
-        shapes::getMapping(
-          _shape,
-          newShape,
-          /* Last parameter is the deleted symmetry position, which is the
-           * symmetry position at which the site being removed is currently at
-           */
-          _shapePositionMap.at(*alteredSiteIndex)
-        ),
-        [](const auto& mappingOptional) {
-          return getIndexMapping(mappingOptional, Options::chiralStatePreservation);
-        }
-      );
-
-      /* It is weird that this block of code works although it is structurally
-       * so different from site addition propagation. Is it coincidence?
-       */
-      if(suitableMappingOptional) {
-        /* symmetryMapping {0, 4, 3, 2} means
-         * - at symmetry position 0 in the new symmetry, we have what was
-         *   at symmetry position 0 in the old symmetry
-         * - at symmetry position 1 in the new symmetry, we have what was
-         *   at symmetry position 4 in the old symmetry
-         *
-         */
-        const auto& symmetryMapping = suitableMappingOptional.value();
-
+      if(
+        const auto shapeMapping = temple::optionals::flatMap(
+          shapes::getMapping(_shape, newShape, _shapePositionMap.at(*alteredSiteIndex)),
+          std::bind(selectTransitionMapping, _1, Options::chiralStatePreservation)
+        )
+      ) {
         // Invert shapePositionMap to get: site = map.at(shapeVertex)
-        std::vector<unsigned> oldShapeVertexToSiteMap(_shapePositionMap.size());
-        for(unsigned i = 0 ; i < _shapePositionMap.size(); ++i) {
-          oldShapeVertexToSiteMap.at(
-            _shapePositionMap.at(i)
-          ) = i;
-        }
+        const auto oldShapeVertexToSiteMap = _shapePositionMap.invert();
 
         // Transfer site indices from current shape to new shape
         sitesAtNewShapeVertices.resize(shapes::size(newShape));
-        for(unsigned i = 0; i < shapes::size(newShape); ++i) {
+        for(shapes::Vertex i {0}; i < shapes::size(newShape); ++i) {
           // i is a symmetry position
           sitesAtNewShapeVertices.at(i) = oldShapeVertexToSiteMap.at(
-            symmetryMapping.at(i)
+            shapeMapping->at(i)
           );
         }
       }
@@ -670,15 +650,23 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
       );
 
       // Generate a flat map of old site indices to new site indices
-      auto siteMapping = temple::map(oldSites, temple::functor::indexIn(newRanking.sites));
+      const auto indexInFunctor = temple::functor::indexIn(newRanking.sites);
+      // SiteIndex -> SiteIndex map
+      const auto siteMapping = temple::map(
+        oldSites,
+        [&](const auto& atomIndexSet) -> SiteIndex {
+          return SiteIndex(indexInFunctor(atomIndexSet));
+        }
+      );
 
-      // Write the found mapping into sitesAtNewShapeVertices
-      sitesAtNewShapeVertices.resize(shapes::size(newShape));
+      // TODO weak indices and faulty categories!
+      std::vector<unsigned> faulty(shapes::size(newShape));
       for(unsigned i = 0; i < siteMapping.size(); ++i) {
-        sitesAtNewShapeVertices.at(i) = siteMapping.at(
-          _shapePositionMap.at(i)
+        faulty.at(i) = siteMapping.at(
+          _shapePositionMap.at(SiteIndex(i))
         );
       }
+      sitesAtNewShapeVertices = InvertedMap(faulty);
     }
 
     if(situation == PropagationSituation::SubstituentRemoval) {
@@ -692,15 +680,23 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
       );
 
       // Calculate the mapping from old sites to new ones
-      auto siteMapping = temple::map(oldSites, temple::functor::indexIn(newRanking.sites));
+      const auto indexInFunctor = temple::functor::indexIn(newRanking.sites);
+      const auto siteMapping = temple::map(
+        oldSites,
+        [&](const auto& atomIndexSet) -> SiteIndex {
+          return SiteIndex(indexInFunctor(atomIndexSet));
+        }
+      );
 
-      sitesAtNewShapeVertices.resize(shapes::size(newShape));
+      // TODO weak indices and faulty categories!
+      std::vector<unsigned> faulty(shapes::size(newShape));
       // Transfer sites to new mapping
       for(unsigned i = 0; i < siteMapping.size(); ++i) {
-        sitesAtNewShapeVertices.at(i) = siteMapping.at(
-          _shapePositionMap.at(i)
+        faulty.at(i) = siteMapping.at(
+          _shapePositionMap.at(SiteIndex(i))
         );
       }
+      sitesAtNewShapeVertices = InvertedMap(faulty);
     }
 
     /* Ranking-level change */
@@ -711,17 +707,7 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
         <= _abstract.permutations.list.size()
       )
     ) {
-      const auto& currentStereopermutation = _abstract.permutations.list.at(
-        _feasible.indices.at(
-          _assignmentOption.value()
-        )
-      );
-
-      // Replace the characters by their corresponding indices from the old ranking
-      sitesAtNewShapeVertices = shapeVertexToSiteIndexMap(
-        currentStereopermutation,
-        _abstract.canonicalSites
-      );
+      sitesAtNewShapeVertices = _shapePositionMap.invert();
     }
 
     if(!sitesAtNewShapeVertices.empty()) {
@@ -871,7 +857,7 @@ shapes::Shape AtomStereopermutator::Impl::getShape() const {
   return _shape;
 }
 
-const std::vector<unsigned>& AtomStereopermutator::Impl::getShapePositionMap() const {
+const AtomStereopermutator::ShapeMap& AtomStereopermutator::Impl::getShapePositionMap() const {
   if(_assignmentOption == boost::none) {
     throw std::logic_error(
       "The AtomStereopermutator is unassigned, sites are not assigned to "
@@ -903,7 +889,7 @@ void AtomStereopermutator::Impl::fit(
 
   // Classify the shape and set it
   shapes::Shape fittedShape;
-  std::vector<unsigned> matchingMapping;
+  std::vector<shapes::Vertex> matchingMapping;
   std::tie(fittedShape, matchingMapping) = detail::classifyShape(sitePositions);
   /* Drop the centroid, making the remaining sequence viable as an index mapping
    * within the set of shape rotations, i.e. for use in stereopermutation
@@ -924,7 +910,7 @@ void AtomStereopermutator::Impl::fit(
    * check each feasible permutation?
    */
   auto soughtStereopermutation = stereopermutationFromSiteToShapeVertexMap(
-    matchingMapping,
+    SiteToShapeVertexMap {std::move(matchingMapping)},
     _ranking.links,
     _abstract.canonicalSites
   );
@@ -974,8 +960,8 @@ void AtomStereopermutator::Impl::fit(
 
 /* Information */
 double AtomStereopermutator::Impl::angle(
-  const unsigned i,
-  const unsigned j
+  const SiteIndex i,
+  const SiteIndex j
 ) const {
   assert(i != j);
   assert(!_shapePositionMap.empty());
@@ -1010,7 +996,7 @@ boost::optional<unsigned> AtomStereopermutator::Impl::indexOfPermutation() const
 }
 
 std::vector<AtomStereopermutator::MinimalChiralConstraint>
-AtomStereopermutator::Impl::minimalChiralConstraints(bool enforce) const {
+AtomStereopermutator::Impl::minimalChiralConstraints(const bool enforce) const {
   /* It only makes sense to emit these minimal representations of chiral
    * constraints if the stereopermutator is assigned.
    *
@@ -1034,26 +1020,19 @@ AtomStereopermutator::Impl::minimalChiralConstraints(bool enforce) const {
     && (numAssignments() > 1 || enforce)
   ) {
     /* Invert _neighborSymmetryPositionMap, we need a mapping of
-     *  (position in symmetry) -> atom index
+     *  (vertex in shape) -> site index
      */
-    const auto shapeMap = shapeVertexToSiteIndexMap(
-      _abstract.permutations.list.at(
-        _feasible.indices.at(
-          _assignmentOption.value()
-        )
-      ),
-      _abstract.canonicalSites
-    );
+    const auto invertedShapeMap = _shapePositionMap.invert();
 
     return temple::map(
       shapes::tetrahedra(_shape),
       [&](const auto& tetrahedron) -> MinimalChiralConstraint {
         return temple::map_stl(
           tetrahedron,
-          [&](const auto& shapeVertexOptional) -> boost::optional<unsigned> {
+          [&](const auto& shapeVertexOptional) -> boost::optional<SiteIndex> {
             return temple::optionals::map(
               shapeVertexOptional,
-              temple::functor::at(shapeMap)
+              temple::functor::at(invertedShapeMap)
             );
           }
         );

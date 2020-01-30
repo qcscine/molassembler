@@ -3,7 +3,7 @@
  *   Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
  *   See LICENSE.txt
  */
-#include "pybind11/pybind11.h"
+#include "TypeCasters.h"
 #include "shapes/Data.h"
 
 void init_shape_submodule(pybind11::module& m) {

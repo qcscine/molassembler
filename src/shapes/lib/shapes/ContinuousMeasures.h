@@ -9,7 +9,7 @@
 #define INCLUDE_MOLASSEMBLER_SHAPES_CONTINUOUS_MEASURES_H
 
 #include "shapes/PointGroupElements.h"
-#include "shapes/Shapes.h"
+#include "shapes/Data.h"
 
 namespace Scine {
 namespace shapes {
@@ -121,7 +121,7 @@ double pointGroup(
 //! Result of a continuous shape measure calculation
 struct ShapeResult {
   //! Lowest value mapping from position indices to shape indices
-  std::vector<unsigned> mapping;
+  std::vector<Vertex> mapping;
   //! Continuous shape measure value
   double measure;
 };

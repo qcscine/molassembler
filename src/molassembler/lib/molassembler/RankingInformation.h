@@ -9,11 +9,15 @@
 #define INCLUDE_MOLASSEMBLER_RANKING_INFORMATION_H
 
 #include "molassembler/Types.h"
+#include "temple/StrongIndex.h"
 
 #include <vector>
 
 namespace Scine {
 namespace molassembler {
+
+struct site_index_tag;
+using SiteIndex = temple::StrongIndex<site_index_tag, unsigned>;
 
 /**
  * @brief Information on links between substituents of a central atom
@@ -31,7 +35,7 @@ struct MASM_EXPORT LinkInformation {
    * @complexity{@math{\Theta(N)}}
    */
   LinkInformation(
-    std::pair<unsigned, unsigned> siteIndices,
+    std::pair<SiteIndex, SiteIndex> siteIndices,
     std::vector<AtomIndex> sequence,
     AtomIndex source
   );
@@ -40,7 +44,7 @@ struct MASM_EXPORT LinkInformation {
 //!@name Data members
 //!@{
   //! An (asc) ordered pair of the site indices that are linked
-  std::pair<unsigned, unsigned> indexPair;
+  std::pair<SiteIndex, SiteIndex> indexPair;
 
   /*!
    * @brief The in-order atom sequence of the cycle atom indices
@@ -91,7 +95,7 @@ struct MASM_EXPORT RankingInformation {
   using SiteListType = NestedList<AtomIndex>;
 
   //! Ascending ordered list of binding site indices (sub-list site indices equal)
-  using RankedSitesType = NestedList<unsigned>;
+  using RankedSitesType = NestedList<SiteIndex>;
 //!@}
 
 //!@name Static member functions
@@ -190,7 +194,7 @@ struct MASM_EXPORT RankingInformation {
    * @throws std::out_of_range If the specified atom index is not part of any
    *   binding site
    */
-  unsigned getSiteIndexOf(AtomIndex i) const;
+  SiteIndex getSiteIndexOf(AtomIndex i) const;
 
   /** @brief Fetches the position of a binding site index within the site ranking
    *
@@ -200,7 +204,7 @@ struct MASM_EXPORT RankingInformation {
    *
    * @return The position within @p siteRanking of the supplied ligand index
    */
-  unsigned getRankedIndexOfSite(unsigned i) const;
+  unsigned getRankedIndexOfSite(SiteIndex i) const;
 
   /*! @brief Checks whether there are haptic binding sites
    *

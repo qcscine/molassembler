@@ -17,13 +17,11 @@
 #ifndef INCLUDE_MOLASSEMBLER_ATOM_STEREOPERMUTATOR_H
 #define INCLUDE_MOLASSEMBLER_ATOM_STEREOPERMUTATOR_H
 
-#include "molassembler/Types.h"
-#include "shapes/Shapes.h"
-
-#include "boost/optional/optional_fwd.hpp"
+#include "molassembler/RankingInformation.h"
+#include "shapes/Data.h"
+#include "temple/StrongIndexMap.h"
 
 #include <array>
-#include <vector>
 #include <memory>
 
 namespace Scine {
@@ -88,11 +86,13 @@ public:
     boost::optional<unsigned>
   >;
 
+  using ShapeMap = temple::StrongIndexFlatMap<SiteIndex, shapes::Vertex>;
+
   /*!
    * @brief Site index sequence defining a chiral constraint. If a site index
    *   is None, then it denotes the position of the central index
    */
-  using MinimalChiralConstraint = std::array<boost::optional<unsigned>, 4>;
+  using MinimalChiralConstraint = std::array<boost::optional<SiteIndex>, 4>;
 
 //!@name Special member functions
 //!@{
@@ -141,7 +141,7 @@ public:
    * @complexity{@math{O(S!)} if uncached, @math{\Theta(1)} otherwise}
    * @throws std::logic_error If there are no smaller shapes
    */
-  static shapes::Shape down(shapes::Shape shape, unsigned removedShapePosition);
+  static shapes::Shape down(shapes::Shape shape, shapes::Vertex removedVertex);
 //!@}
 
 //!@name Modifiers
@@ -254,7 +254,7 @@ public:
    *
    * @sa getRanking()
    */
-  double angle(unsigned i, unsigned j) const;
+  double angle(SiteIndex i, SiteIndex j) const;
 
   /*! @brief Returns the permutation index within the set of feasible permutations, if set
    *
@@ -342,7 +342,7 @@ public:
    * @complexity{@math{\Theta(1)}}
    * @throws std::logic_error if the stereopermutator is unassigned.
    */
-  const std::vector<unsigned>& getShapePositionMap() const;
+  const ShapeMap& getShapePositionMap() const;
 
   /*! @brief Returns the number of possible assignments
    *

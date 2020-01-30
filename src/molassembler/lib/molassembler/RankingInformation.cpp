@@ -20,7 +20,7 @@ namespace molassembler {
 LinkInformation::LinkInformation() = default;
 
 LinkInformation::LinkInformation(
-  std::pair<unsigned, unsigned> siteIndices,
+  std::pair<SiteIndex, SiteIndex> siteIndices,
   std::vector<AtomIndex> sequence,
   const AtomIndex source
 ) {
@@ -28,6 +28,10 @@ LinkInformation::LinkInformation(
    * efficiently implement operator <. indexPair can be an ordered pair:
    */
   indexPair = std::move(siteIndices);
+  if(indexPair.first == indexPair.second) {
+    throw std::runtime_error("LinkInformation site indices are identical!");
+  }
+
   if(indexPair.first > indexPair.second) {
     std::swap(indexPair.first, indexPair.second);
   }
@@ -117,18 +121,18 @@ RankingInformation::RankedSitesType RankingInformation::rankSites(
 ) {
   const unsigned sitesSize = sites.size();
 
-  temple::Poset<unsigned> siteIndexPoset {temple::iota<unsigned>(sitesSize)};
+  temple::Poset<SiteIndex> siteIndexPoset {temple::iota<SiteIndex>(sitesSize)};
 
   // Order by site size
   siteIndexPoset.orderUnordered(
-    [&](const unsigned i, const unsigned j) -> bool {
+    [&](const SiteIndex i, const SiteIndex j) -> bool {
       return sites.at(i).size() < sites.at(j).size();
     }
   );
 
   // Then sub-order by ranked positions of their site constituting atoms
   siteIndexPoset.orderUnordered(
-    [&](const unsigned i, const unsigned j) -> bool {
+    [&](const SiteIndex i, const SiteIndex j) -> bool {
       return (
         siteConstitutingAtomsRankedPositions(sites.at(i), substituentRanking)
         < siteConstitutingAtomsRankedPositions(sites.at(j), substituentRanking)
@@ -165,7 +169,7 @@ void RankingInformation::applyPermutation(const std::vector<AtomIndex>& permutat
   );
 }
 
-unsigned RankingInformation::getSiteIndexOf(const AtomIndex i) const {
+SiteIndex RankingInformation::getSiteIndexOf(const AtomIndex i) const {
   // Find the atom index i within the set of ligand definitions
   auto findIter = temple::find_if(
     sites,
@@ -183,10 +187,11 @@ unsigned RankingInformation::getSiteIndexOf(const AtomIndex i) const {
     throw std::out_of_range("Specified atom index is not part of any ligand");
   }
 
-  return findIter - std::begin(sites);
+  const unsigned idx = findIter - std::begin(sites);
+  return SiteIndex(idx);
 }
 
-unsigned RankingInformation::getRankedIndexOfSite(const unsigned i) const {
+unsigned RankingInformation::getRankedIndexOfSite(const SiteIndex i) const {
   auto findIter = temple::find_if(
     siteRanking,
     [&](const auto& equallyRankedSiteIndices) -> bool {

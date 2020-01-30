@@ -49,10 +49,10 @@ BOOST_AUTO_TEST_CASE(AtomStereopermutatorUpDown) {
   }
 
   std::vector<
-    std::tuple<Shape, unsigned, Shape>
+    std::tuple<Shape, shapes::Vertex, Shape>
   > downTuples {
-    {Shape::SquarePyramid, 4u, Shape::Square},
-    {Shape::SquarePyramid, 0u, Shape::Tetrahedron},
+    {Shape::SquarePyramid, shapes::Vertex(4), Shape::Square},
+    {Shape::SquarePyramid, shapes::Vertex(0), Shape::Tetrahedron},
   };
 
   for(const auto& tuple: downTuples) {
@@ -66,8 +66,8 @@ BOOST_AUTO_TEST_CASE(AtomStereopermutatorUpDown) {
   Options::chiralStatePreservation = ChiralStatePreservation::Unique;
 
   BOOST_CHECK_MESSAGE(
-    AtomStereopermutator::down(Shape::TrigonalPrism, 0) == Shape::Pentagon,
-    "Expected down(trig prism, 0) == pentagonal planar, got " << name(AtomStereopermutator::down(Shape::TrigonalPrism, 0)) << " instead."
+    AtomStereopermutator::down(Shape::TrigonalPrism, shapes::Vertex(0)) == Shape::Pentagon,
+    "Expected down(trig prism, 0) == pentagonal planar, got " << name(AtomStereopermutator::down(Shape::TrigonalPrism, shapes::Vertex(0))) << " instead."
   );
 
   // Restore prior state

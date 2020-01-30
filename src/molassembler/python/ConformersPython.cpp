@@ -3,7 +3,7 @@
  *   Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
  *   See LICENSE.txt
  */
-#include "VariantPython.h"
+#include "TypeCasters.h"
 #include "pybind11/eigen.h"
 
 #include "molassembler/Conformers.h"

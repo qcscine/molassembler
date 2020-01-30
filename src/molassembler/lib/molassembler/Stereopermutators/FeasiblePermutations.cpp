@@ -27,7 +27,7 @@ bool Feasible::linkPossiblyFeasible(
   const ConeAngleType& cones,
   const RankingInformation& ranking,
   const shapes::Shape shape,
-  const std::vector<unsigned>& shapeVertexMap,
+  const SiteToShapeVertexMap& shapeVertexMap,
   const Graph& graph
 ) {
   // The algorithm below is explained in detail in documents/denticity_feasibility
@@ -164,13 +164,13 @@ bool Feasible::possiblyFeasible(
 
   // Check if any haptic site cones intersect
   const unsigned L = ranking.sites.size();
-  for(unsigned siteI = 0; siteI < L - 1; ++siteI) {
-    if(ranking.sites[siteI].size() == 1) {
+  for(SiteIndex siteI {0}; siteI < L - 1; ++siteI) {
+    if(ranking.sites.at(siteI).size() == 1) {
       continue;
     }
 
-    for(unsigned siteJ = siteI + 1; siteJ < L; ++siteJ) {
-      if(ranking.sites[siteJ].size() == 1) {
+    for(SiteIndex siteJ {siteI + 1}; siteJ < L; ++siteJ) {
+      if(ranking.sites.at(siteJ).size() == 1) {
         continue;
       }
 

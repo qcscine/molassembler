@@ -23,6 +23,7 @@ std::ostream& nl(std::ostream& os) {
 
 using namespace Scine;
 using namespace stereopermutation;
+using namespace std::string_literals;
 
 int main(int argc, char* argv[]) {
   // Set up option parsing
@@ -156,7 +157,12 @@ int main(int argc, char* argv[]) {
 
     std::cout << "Symmetry: " << shapes::name(shape) << nl
       << "Characters: " << chars << nl
-      << "Links: " << temple::stringify(links) << nl << nl;
+      << "Links: " << temple::stringifyContainer(
+        links,
+        [](const Stereopermutation::Link link) -> std::string {
+          return "{"s + std::to_string(link.first) + ", "s + std::to_string(link.second) + "}"s;
+        }
+      ) << nl << nl;
 
     for(unsigned i = 0; i < unique.list.size(); ++i) {
       std::cout << "Weight " << unique.weights[i] << ": "

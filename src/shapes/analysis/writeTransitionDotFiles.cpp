@@ -152,13 +152,13 @@ void writeSymmetryTransitionDotFile(
   for(const auto& sourceSymmetry : shapes::allShapes) {
     std::map<
       shapes::Shape,
-      shapes::properties::SymmetryTransitionGroup
+      shapes::properties::ShapeTransitionGroup
     > distortionsMap;
 
     for(const auto& targetSymmetry : shapes::allShapes) {
       if(predicate(sourceSymmetry, targetSymmetry)) { // Ligand gain
         distortionsMap[targetSymmetry] = selectBestTransitionMappings(
-          symmetryTransitionMappings(
+          shapeTransitionMappings(
             sourceSymmetry,
             targetSymmetry
           )
@@ -321,11 +321,11 @@ void writeLigandLossDotFile(
         std::vector<
           std::pair<
             unsigned,
-            shapes::properties::SymmetryTransitionGroup
+            shapes::properties::ShapeTransitionGroup
           >
         > allMappings;
 
-        for(unsigned i = 0; i < shapes::size(sourceSymmetry); ++i) {
+        for(shapes::Vertex i {0}; i < shapes::size(sourceSymmetry); ++i) {
           allMappings.emplace_back(
             i,
             selectBestTransitionMappings(

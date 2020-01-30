@@ -230,15 +230,15 @@ public:
     AtomIndex centralIndex,
     const shapes::Shape& shape,
     const RankingInformation& ranking,
-    const std::vector<unsigned>& shapeVertexMap,
-    const std::pair<unsigned, unsigned>& sites,
+    const AtomStereopermutator::ShapeMap& shapeVertexMap,
+    const std::pair<SiteIndex, SiteIndex>& sites,
     const PrivateGraph& inner
   );
 
   //! @overload
   static double siteCentralAngle(
     const AtomStereopermutator& permutator,
-    const std::pair<unsigned, unsigned>& sites,
+    const std::pair<SiteIndex, SiteIndex>& sites,
     const PrivateGraph& inner
   );
 
@@ -255,7 +255,7 @@ public:
    */
   static ValueBounds modelSiteAngleBounds(
     const AtomStereopermutator& permutator,
-    const std::pair<unsigned, unsigned>& sites,
+    const std::pair<SiteIndex, SiteIndex>& sites,
     const double looseningMultiplier,
     const PrivateGraph& inner
   );

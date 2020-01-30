@@ -51,56 +51,42 @@ std::vector<NumericType> range(
 
 namespace properties {
 
-std::vector<unsigned> applyRotation(
-  const std::vector<unsigned>& indices,
-  const std::vector<unsigned>& rotation
+std::vector<Vertex> applyPermutation(
+  const Permutation& occupation,
+  const Permutation& permutation
 ) {
-  assert(indices.size() == rotation.size());
+  assert(occupation.size() == permutation.size());
 
-  std::vector<unsigned> retv;
-  retv.reserve(indices.size());
-
-  for(const auto& index : rotation) {
-    retv.push_back(
-      indices.at(index)
-    );
-  }
-
-  return retv;
+  return temple::map(
+    permutation,
+    temple::functor::at(occupation)
+  );
 }
 
-std::vector<unsigned> applyRotation(
-  const std::vector<unsigned>& indices,
+std::vector<Vertex> applyRotation(
+  const std::vector<Vertex>& occupation,
   const Shape shape,
   unsigned rotationFunctionIndex
 ) {
-  std::vector<unsigned> retv;
-
-  for(
-    const auto& index :
+  return applyPermutation(
+    occupation,
     shapes::rotations(shape).at(rotationFunctionIndex)
-  ) {
-    retv.push_back(
-      indices.at(index)
-    );
-  }
-
-  return retv;
+  );
 }
 
 unsigned rotationPeriodicity(
   const shapes::Shape shape,
-  const std::vector<unsigned>& rotation
+  const std::vector<Vertex>& rotation
 ) {
   assert(rotation.size() == shapes::size(shape));
 
-  const auto initialIndices = temple::iota<unsigned>(shapes::size(shape));
+  const auto initialIndices = temple::iota<Vertex>(Vertex(shapes::size(shape)));
 
-  std::vector<unsigned> modified = applyRotation(initialIndices, rotation);
+  std::vector<Vertex> modified = applyPermutation(initialIndices, rotation);
 
   unsigned i = 1;
   for(/* */; modified != initialIndices && i < 20; ++i) {
-    modified = applyRotation(modified, rotation);
+    modified = applyPermutation(modified, rotation);
   }
 
   // No rotation should have a periodicity of 20.
@@ -109,8 +95,8 @@ unsigned rotationPeriodicity(
   return i;
 }
 
-bool isRotation(const std::vector<unsigned>& rotation) {
-  return temple::sort(rotation) == temple::iota<unsigned>(rotation.size());
+bool isRotation(const Permutation& rotation) {
+  return temple::sort(rotation) == temple::iota<Vertex>(rotation.size());
 }
 
 std::vector<char> positionGroups(const shapes::Shape shape) {
@@ -124,12 +110,10 @@ std::vector<char> positionGroups(const shapes::Shape shape) {
    */
   const unsigned S = shapes::size(shape);
 
-  using IndexGroups = std::vector<
-    std::vector<unsigned>
-  >;
+  using IndexGroups = std::vector<Permutation>;
 
   // Helper function to find an index in an IndexGroup
-  auto nestedFind = [](const IndexGroups& a, unsigned i) {
+  auto nestedFind = [](const IndexGroups& a, Vertex i) {
     return temple::find_if(
       a,
       [&](const auto& group) -> bool {
@@ -140,14 +124,14 @@ std::vector<char> positionGroups(const shapes::Shape shape) {
 
   // Fetches all indices that are part of a permutation's index loop starting at i
   auto loopVertices = [](
-    const std::vector<unsigned>& rotation,
-    const unsigned i
-  ) -> std::vector<unsigned> {
+    const Permutation& rotation,
+    const Vertex i
+  ) -> std::vector<Vertex> {
     assert(isRotation(rotation));
-    std::vector<unsigned> vertices {i};
+    std::vector<Vertex> vertices(1, i);
     unsigned j = rotation.at(i);
     while(j != i) {
-      vertices.push_back(j);
+      vertices.emplace_back(j);
       j = rotation.at(j);
     }
     return vertices;
@@ -155,13 +139,13 @@ std::vector<char> positionGroups(const shapes::Shape shape) {
 
   // Combine two rotations into one where overlapping connected components are merged
   auto merge = [&loopVertices](
-    std::vector<unsigned> a,
-    const std::vector<unsigned>& b
-  ) -> std::vector<unsigned> {
+    Permutation a,
+    const Permutation& b
+  ) -> Permutation {
     assert(isRotation(a) && isRotation(b));
     const unsigned R = a.size();
     assert(b.size() == R);
-    for(unsigned i = 0; i < R; ++i) {
+    for(Vertex i {0}; i < R; ++i) {
       // Self-reference is uninteresting
       if(b.at(i) == i) {
         continue;
@@ -189,7 +173,7 @@ std::vector<char> positionGroups(const shapes::Shape shape) {
       // Now we have to figure out which vertices from b's loop aren't yet in a
       auto bLoopVertices = temple::sort(loopVertices(b, i));
       temple::inplace::sort(aLoopVertices);
-      std::vector<unsigned> bVerticesNotInA;
+      std::vector<Vertex> bVerticesNotInA;
       std::set_difference(
         std::begin(bLoopVertices),
         std::end(bLoopVertices),
@@ -200,8 +184,8 @@ std::vector<char> positionGroups(const shapes::Shape shape) {
 
       // And now we have to add in any vertices from loops in a that bVerticesNotInA have
       const unsigned t = bVerticesNotInA.size();
-      for(unsigned j = 0; j < t; ++j) {
-        for(unsigned k : loopVertices(a, bVerticesNotInA.at(j))) {
+      for(Vertex j {0}; j < t; ++j) {
+        for(Vertex k : loopVertices(a, bVerticesNotInA.at(j))) {
           if(temple::find(bVerticesNotInA, k) == std::end(bVerticesNotInA)) {
             bVerticesNotInA.push_back(k);
           }
@@ -210,8 +194,8 @@ std::vector<char> positionGroups(const shapes::Shape shape) {
 
       // Found full set
       if(bVerticesNotInA.size() == R - 1) {
-        a = {R - 1};
-        for(unsigned k = 0; k < R - 1; ++k) {
+        a = {Vertex(R - 1)};
+        for(Vertex k {0}; k < R - 1; ++k) {
           a.push_back(k);
         }
         return a;
@@ -233,18 +217,18 @@ std::vector<char> positionGroups(const shapes::Shape shape) {
   };
 
   // Extract all loop groups from a rotation
-  auto connectedComponents = [&nestedFind](const std::vector<unsigned>& rotation) -> IndexGroups {
+  auto connectedComponents = [&nestedFind](const Permutation& rotation) -> IndexGroups {
     const unsigned R = rotation.size();
 
     IndexGroups groups;
-    for(unsigned i = 0; i < R; ++i) {
+    for(Vertex i {0}; i < R; ++i) {
       if(nestedFind(groups, i) != std::end(groups)) {
         // Already found i
         continue;
       }
 
-      std::vector<unsigned> group {i};
-      unsigned j = rotation.at(i);
+      std::vector<Vertex> group {i};
+      Vertex j = rotation.at(i);
       while(j != i) {
         group.push_back(j);
         j = rotation.at(j);
@@ -260,7 +244,7 @@ std::vector<char> positionGroups(const shapes::Shape shape) {
   auto groups = connectedComponents(
     temple::accumulate(
       rotations(shape),
-      temple::iota<unsigned>(S), // Identity permutation
+      temple::iota<Vertex>(S), // Identity occupation
       merge
     )
   );
@@ -279,12 +263,12 @@ std::vector<char> positionGroups(const shapes::Shape shape) {
   return characterRepresentation;
 }
 
-std::vector<unsigned> inverseRotation(const std::vector<unsigned>& rotation) {
+std::vector<Vertex> inverseRotation(const std::vector<Vertex>& rotation) {
   const unsigned N = rotation.size();
 
-  std::vector<unsigned> permutation (N);
+  std::vector<Vertex> permutation (N);
 
-  for(unsigned i = 0; i < N; ++i) {
+  for(Vertex i {0}; i < N; ++i) {
     permutation.at(rotation.at(i)) = i;
   }
 
@@ -293,13 +277,13 @@ std::vector<unsigned> inverseRotation(const std::vector<unsigned>& rotation) {
 
 Eigen::Vector3d getCoordinates(
   const shapes::Shape shape,
-  const boost::optional<unsigned>& indexInShapeOption
+  const boost::optional<Vertex>& vertexOption
 ) {
-  if(indexInShapeOption) {
-    assert(indexInShapeOption.value() < shapes::size(shape));
+  if(vertexOption) {
+    assert(vertexOption.value() < shapes::size(shape));
 
     return coordinates(shape).col(
-      indexInShapeOption.value()
+      vertexOption.value()
     );
   }
 
@@ -320,7 +304,7 @@ double getTetrahedronVolume(
 double calculateAngleDistortion(
   const shapes::Shape from,
   const shapes::Shape to,
-  const std::vector<unsigned>& indexMapping
+  const std::vector<Vertex>& indexMapping
 ) {
   const unsigned mappingIndexLimit = std::min(
     shapes::size(from),
@@ -351,13 +335,13 @@ double calculateAngleDistortion(
   return angularDistortion;
 }
 
-boost::optional<unsigned> propagateIndexOptionalThroughMapping(
-  const boost::optional<unsigned>& indexOptional,
-  const std::vector<unsigned>& indexMapping
+boost::optional<Vertex> propagateIndexOptionalThroughMapping(
+  const boost::optional<Vertex>& indexOptional,
+  const std::vector<Vertex>& indexMapping
 ) {
   return temple::optionals::map(
     indexOptional,
-    [&](const unsigned v) -> unsigned {
+    [&](const Vertex v) -> Vertex {
       return indexMapping.at(v);
     }
   );
@@ -367,7 +351,7 @@ boost::optional<unsigned> propagateIndexOptionalThroughMapping(
 double calculateChiralDistortion(
   const shapes::Shape from,
   const shapes::Shape to,
-  const std::vector<unsigned>& indexMapping
+  const std::vector<Vertex>& indexMapping
 ) {
 
   assert(
@@ -412,10 +396,10 @@ double calculateChiralDistortion(
 
 
 std::set<
-  std::vector<unsigned>
+  std::vector<Vertex>
 > generateAllRotations(
   const shapes::Shape shape,
-  const std::vector<unsigned>& indices
+  const std::vector<Vertex>& indices
 ) {
   /* Replacing set here with unordered_set does not yield any speed
    * improvements. The hash function is comparatively too expensive for the
@@ -424,7 +408,7 @@ std::set<
   assert(shapes::size(shape) == indices.size());
 
   // Idea: Tree-like expansion of all possible combinations of rotations.
-  using IndicesList = std::vector<unsigned>;
+  using IndicesList = std::vector<Vertex>;
 
   std::set<IndicesList> allRotations = {indices};
 
@@ -479,9 +463,9 @@ std::set<
   return allRotations;
 }
 
-std::vector<unsigned> applyIndexMapping(
+std::vector<Vertex> applyIndexMapping(
   const shapes::Shape to,
-  const std::vector<unsigned>& mapping
+  const std::vector<Vertex>& mapping
 ) {
   /* Creates the list of indices in the target shape. Why is this necessary?
    *
@@ -526,9 +510,9 @@ std::vector<unsigned> applyIndexMapping(
    *    {0, 2, 1}   =>   {0, 2, 1}
    *
    */
-  std::vector<unsigned> shapeVertices (shapes::size(to));
+  std::vector<Vertex> shapeVertices (shapes::size(to));
 
-  for(unsigned i = 0; i < shapes::size(to); ++i) {
+  for(Vertex i {0}; i < shapes::size(to); ++i) {
     shapeVertices.at(
       mapping.at(i)
     ) = i;
@@ -538,9 +522,9 @@ std::vector<unsigned> applyIndexMapping(
 }
 
 DistortionInfo::DistortionInfo(
-  std::vector<unsigned> passIndexMapping,
-  const double& passAngularDistortion,
-  const double& passChiralDistortion
+  std::vector<Vertex> passIndexMapping,
+  const double passAngularDistortion,
+  const double passChiralDistortion
 ) : indexMapping(std::move(passIndexMapping)),
     angularDistortion(passAngularDistortion),
     chiralDistortion(passChiralDistortion)
@@ -550,14 +534,14 @@ std::size_t hash_value(const std::vector<unsigned>& permutation) {
   return temple::permutationIndex(permutation);
 }
 
-std::vector<DistortionInfo> symmetryTransitionMappings(
+std::vector<DistortionInfo> shapeTransitionMappings(
   const Shape from,
   const Shape to
 ) {
 
   /* Symmetries must be adjacent in size (0 = rearrangement,
    * +1 = ligand gain. Ligand loss is a special case where a specific position
-   * in the symmetry group is removed, and is not covered here!
+   * in the shape group is removed, and is not covered here!
    */
   assert(
     (std::set<int> {0, 1}).count(
@@ -567,7 +551,7 @@ std::vector<DistortionInfo> symmetryTransitionMappings(
   );
 
   /* Base idea: We need to go through all possible mappings. In situations where
-   * the target symmetry has one more or one fewer ligand, the last index in
+   * the target shape has one more or one fewer ligand, the last index in
    * the current sequence is either the added or removed ligand, and merely the
    * others are used to calculate the angular and chiral distortions involved
    * in the transition.
@@ -589,17 +573,17 @@ std::vector<DistortionInfo> symmetryTransitionMappings(
     shapes::size(to)
   );
 
-  auto indexMapping = temple::iota<unsigned>(largerSize);
+  auto indexMapping = temple::iota<Vertex>(largerSize);
 
   // Store all distortions calculated
   std::vector<DistortionInfo> distortions;
 
   // Need to keep track of rotations of mappings to avoid repetition
-  using PermutationType = std::vector<unsigned>;
+  using PermutationType = std::vector<Vertex>;
   std::unordered_set<
     PermutationType,
     boost::hash<PermutationType>
-  > encounteredSymmetryMappings;
+  > encounteredShapeMappings;
 
   /* Using std::next_permutation generates all possible mappings!
    * do-while is required since the very first mapping must be considered before
@@ -607,11 +591,8 @@ std::vector<DistortionInfo> symmetryTransitionMappings(
    */
   do {
     if( // is the mapping new?
-      encounteredSymmetryMappings.count(
-        applyIndexMapping(
-          to,
-          indexMapping
-        )
+      encounteredShapeMappings.count(
+        applyIndexMapping(to, indexMapping)
       ) == 0
     ) {
       /* Add it to the set of possible distortions, calculate angular and
@@ -623,7 +604,7 @@ std::vector<DistortionInfo> symmetryTransitionMappings(
         calculateChiralDistortion(from, to, indexMapping)
       );
 
-      /* Any rotations of the mapping in the target symmetry are equivalent, we
+      /* Any rotations of the mapping in the target shape are equivalent, we
        * do not want to count these as an additional multiplicity, so we
        * generate them and add them to the encountered mappings
        */
@@ -635,7 +616,7 @@ std::vector<DistortionInfo> symmetryTransitionMappings(
         )
       );
 
-      encounteredSymmetryMappings.insert(
+      encounteredShapeMappings.insert(
         allRotations.begin(),
         allRotations.end()
       );
@@ -648,29 +629,29 @@ std::vector<DistortionInfo> symmetryTransitionMappings(
 std::vector<DistortionInfo> ligandLossTransitionMappings(
   const shapes::Shape from,
   const shapes::Shape to,
-  const unsigned positionInSourceShape
+  const Vertex positionInSourceShape
 ) {
   // Ensure we are dealing with ligand loss
   assert(shapes::size(to) + 1 == shapes::size(from));
   assert(positionInSourceShape < shapes::size(from));
 
   /* Generate the index mapping specific to this position loss in the target
-   * symmetry.
+   * shape.
    *
    * The possible distortions are determined from the equivalent case of adding
-   * the ligand (which was to be deleted) to the smaller symmetry.
+   * the ligand (which was to be deleted) to the smaller shape.
    *
    * The deleted index is added to the end. The lowest permutation of the mapping
-   * from the smaller to the larger symmetry is then:
+   * from the smaller to the larger shape is then:
    *
    * 1, 2, ..., (pos - 1), (pos + 1), ..., (from_size - 1), pos
    */
-  std::vector<unsigned> indexMapping = temple::variadic::concatenate(
-    temple::iota<unsigned>(positionInSourceShape),
-    detail::range(positionInSourceShape + 1, shapes::size(from))
+  std::vector<Vertex> indexMapping = temple::variadic::concatenate(
+    temple::iota<Vertex>(positionInSourceShape),
+    detail::range(Vertex(positionInSourceShape + 1), Vertex(shapes::size(from)))
   );
 
-  /* NOTE: From here the algorithm is identical to symmetryTransitionMappings
+  /* NOTE: From here the algorithm is identical to shapeTransitionMappings
    * save that to and from are swapped in all occasions
    * and that std::next_permutation is only called on the subset excluding the
    * last position (the one that is added / deleted).
@@ -679,11 +660,11 @@ std::vector<DistortionInfo> ligandLossTransitionMappings(
   std::vector<DistortionInfo> distortions;
 
   std::set<
-    std::vector<unsigned>
-  > encounteredSymmetryMappings;
+    std::vector<Vertex>
+  > encounteredShapeMappings;
 
   do {
-    if(encounteredSymmetryMappings.count(indexMapping) == 0) {
+    if(encounteredShapeMappings.count(indexMapping) == 0) {
       distortions.emplace_back(
         indexMapping,
         calculateAngleDistortion(to, from, indexMapping),
@@ -692,7 +673,7 @@ std::vector<DistortionInfo> ligandLossTransitionMappings(
 
       auto allRotations = generateAllRotations(to, indexMapping);
 
-      encounteredSymmetryMappings.insert(
+      encounteredShapeMappings.insert(
         allRotations.begin(),
         allRotations.end()
       );
@@ -702,18 +683,18 @@ std::vector<DistortionInfo> ligandLossTransitionMappings(
   return distortions;
 }
 
-SymmetryTransitionGroup::SymmetryTransitionGroup(
+ShapeTransitionGroup::ShapeTransitionGroup(
   std::vector<
-    std::vector<unsigned>
+    std::vector<Vertex>
   > passIndexMappings,
-  const double& passAngleDistortion,
-  const double& passChiralDistortion
+  const double passAngleDistortion,
+  const double passChiralDistortion
 ) : indexMappings(std::move(passIndexMappings)),
     angularDistortion(passAngleDistortion),
     chiralDistortion(passChiralDistortion)
 {}
 
-SymmetryTransitionGroup selectBestTransitionMappings(
+ShapeTransitionGroup selectBestTransitionMappings(
   const std::vector<DistortionInfo>& distortions
 ) {
   /* We are interested only in the those transitions that have the very lowest
@@ -754,7 +735,7 @@ SymmetryTransitionGroup selectBestTransitionMappings(
     }
   );
 
-  return SymmetryTransitionGroup(
+  return ShapeTransitionGroup(
     temple::map(viableDistortions, [&](auto i) { return distortions.at(i).indexMapping; }),
     lowestAngularDistortion,
     lowestChiralDistortion
@@ -762,18 +743,18 @@ SymmetryTransitionGroup selectBestTransitionMappings(
 }
 
 unsigned numUnlinkedStereopermutations(
-  const shapes::Shape symmetry,
+  const shapes::Shape shape,
   const unsigned nIdenticalLigands
 ) {
   unsigned count = 1;
 
-  auto indices = detail::range(0u, shapes::size(symmetry));
+  auto indices = temple::iota<Vertex>(shapes::size(shape));
 
   for(unsigned i = 0; i < nIdenticalLigands; ++i) {
     indices.at(i) = 0;
   }
 
-  auto initialRotations = generateAllRotations(symmetry, indices);
+  auto initialRotations = generateAllRotations(shape, indices);
 
   std::set<decltype(indices)> rotations {
     std::make_move_iterator(std::begin(initialRotations)),
@@ -782,7 +763,7 @@ unsigned numUnlinkedStereopermutations(
 
   while(std::next_permutation(indices.begin(), indices.end())) {
     if(rotations.count(indices) == 0) {
-      auto allRotations = generateAllRotations(symmetry, indices);
+      auto allRotations = generateAllRotations(shape, indices);
       for(const auto& rotation : allRotations) {
         rotations.insert(rotation);
       }
@@ -795,20 +776,20 @@ unsigned numUnlinkedStereopermutations(
 }
 
 bool hasMultipleUnlinkedStereopermutations(
-  const shapes::Shape symmetry,
+  const shapes::Shape shape,
   const unsigned nIdenticalLigands
 ) {
-  if(nIdenticalLigands == shapes::size(symmetry)) {
+  if(nIdenticalLigands == shapes::size(shape)) {
     return false;
   }
 
-  auto indices = detail::range(0u, shapes::size(symmetry));
+  auto indices = temple::iota<Vertex>(shapes::size(shape));
 
   for(unsigned i = 0; i < nIdenticalLigands; ++i) {
     indices.at(i) = 0;
   }
 
-  auto initialRotations = generateAllRotations(symmetry, indices);
+  auto initialRotations = generateAllRotations(shape, indices);
 
   std::set<decltype(indices)> rotations {
     std::make_move_iterator(std::begin(initialRotations)),

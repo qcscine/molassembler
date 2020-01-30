@@ -11,13 +11,8 @@
 #ifndef INCLUDE_MOLASSEMBLER_STEREOPERMUTATIONS_STEREOPERMUTATION_H
 #define INCLUDE_MOLASSEMBLER_STEREOPERMUTATIONS_STEREOPERMUTATION_H
 
-#include "temple/Preprocessor.h"
-#include "temple/OperatorSuppliers.h"
+#include "shapes/Data.h"
 
-#include "boost/optional/optional_fwd.hpp"
-#include "boost/functional/hash.hpp"
-
-#include <vector>
 #include <map>
 
 namespace Scine {
@@ -37,10 +32,14 @@ class Stereopermutation : public temple::crtp::LexicographicComparable<Stereoper
 public:
 //!@name Member types
 //!@{
-  //! Type used to represent links between shape vertices
-  using OrderedLinks = std::vector<
-    std::pair<unsigned, unsigned>
-  >;
+  //! Character occupations
+  using CharacterOccupation = std::vector<char>;
+
+  //! Type used to represent a link between shape vertices
+  using Link = std::pair<shapes::Vertex, shapes::Vertex>;
+
+  //! Unordered type, but kept ordered by member functions
+  using OrderedLinks = std::vector<Link>;
 //!@}
 
 //!@name Static functions
@@ -49,9 +48,9 @@ public:
    *
    * @complexity{@math{\Theta(N)}}
    */
-  static std::vector<char> permuteCharacters(
-    const std::vector<char>& characters,
-    const std::vector<unsigned>& permutation
+  static CharacterOccupation permuteCharacters(
+    const CharacterOccupation& characters,
+    const shapes::Permutation& permutation
   );
 
   /*! @brief Rotate links
@@ -60,14 +59,14 @@ public:
    */
   static OrderedLinks permuteLinks(
     const OrderedLinks& links,
-    const std::vector<unsigned>& permutation
+    const shapes::Permutation& permutation
   );
 //!@}
 
 //!@name Member data
 //!@{
   //! Abstract representation of ranked substituents
-  std::vector<char> characters;
+  CharacterOccupation characters;
   //! Links between characters
   OrderedLinks links;
 //!@}
@@ -85,7 +84,7 @@ public:
    *  are bonded to one another.
    */
   Stereopermutation(
-    std::vector<char> passCharacters,
+    CharacterOccupation passCharacters,
     OrderedLinks passLinks = {}
   );
 //!@}
@@ -96,7 +95,7 @@ public:
    *
    * @complexity{@math{O(N + L)}}
    */
-  Stereopermutation applyPermutation(const std::vector<unsigned>& permutation) const;
+  Stereopermutation applyPermutation(const shapes::Permutation& permutation) const;
 
   //!@brief Gets a map of ligand symbol character to shape vertex positions
   std::map<

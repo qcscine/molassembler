@@ -219,9 +219,9 @@ BOOST_AUTO_TEST_CASE(BidentateAssignmentRecognized) {
   const auto& permutator = pincer.stereopermutators().option(0).value();
 
   // Which sites at the permutator are the phosphorus atoms?
-  std::vector<unsigned> phosphorusSites;
+  std::vector<SiteIndex> phosphorusSites;
   const auto& ranking = permutator.getRanking();
-  for(unsigned i = 0; i < ranking.sites.size(); ++i) {
+  for(SiteIndex i {0}; i < ranking.sites.size(); ++i) {
     if(
       ranking.sites.at(i).size() == 1
       && pincer.graph().elementType(ranking.sites.at(i).front()) == Utils::ElementType::P

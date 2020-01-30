@@ -111,7 +111,7 @@ Eigen::Matrix3d fitQuaternion(const Eigen::MatrixBase<DerivedA>& stator, const E
   return Eigen::Quaterniond(q[0], q[1], q[2], q[3]).toRotationMatrix();
 }
 
-using Parameters = std::vector<unsigned>;
+using Parameters = std::vector<Vertex>;
 
 struct Energy {
   const PositionCollection& referencePositions;
@@ -161,7 +161,7 @@ struct OldShapeAlgorithm {
 struct ShapeAlgorithm {
   virtual ~ShapeAlgorithm() = default;
 
-  using Permutation = std::vector<unsigned>;
+  using Permutation = std::vector<Vertex>;
   using ResultPair = std::pair<double, Permutation>;
 
   static Permutation invert(const Permutation& p) {
@@ -180,11 +180,11 @@ struct ShapeAlgorithm {
    * hence their [O, S] = [0, N - 1] = [0, N) ranges can be rotated.
    */
   static std::set<ShapeAlgorithm::Permutation> generateRotations(
-    const std::vector<unsigned> forwardsPermutation,
+    const Permutation& forwardsPermutation,
     const Shape shape
   ) {
     auto backwards = ShapeAlgorithm::invert(forwardsPermutation);
-    unsigned centroid = backwards.back();
+    Vertex centroid = backwards.back();
     backwards.pop_back();
     auto rotations = properties::generateAllRotations(shape, backwards);
 
@@ -218,7 +218,7 @@ struct ShapeAlgorithm {
 struct AllPermutations {
   ShapeAlgorithm::ResultPair shape(const PositionCollection& positions, Shape shape) {
     Energy energy {positions, ShapeAlgorithm::shapeCoordinates(shape)};
-    ShapeAlgorithm::Permutation permutation = temple::iota<unsigned>(positions.cols());
+    ShapeAlgorithm::Permutation permutation = temple::iota<Vertex>(Vertex(positions.cols()));
     ShapeAlgorithm::ResultPair minimal {std::numeric_limits<double>::max(), {}};
     do {
       double permutationEnergy = energy(permutation);
@@ -263,7 +263,7 @@ struct Cooling {
  * to encounter the minimum.
  */
 struct Anneal final : OldShapeAlgorithm {
-  using Permutation = std::vector<unsigned>;
+  using Permutation = std::vector<Vertex>;
 
   temple::JSF64 prng;
   std::ofstream trace {"anneal_trace.csv"};
@@ -305,7 +305,7 @@ struct Anneal final : OldShapeAlgorithm {
     const unsigned steps = facs.at(positions.cols() - 2);
     Energy energy {positions, shapeCoordinates(shape)};
 
-    auto parameters = temple::iota<unsigned>(positions.cols());
+    auto parameters = temple::iota<Vertex>(positions.cols());
     decltype(parameters) prospectiveParameters;
 
     double temperatureMultiplier = temple::accumulate(
@@ -366,7 +366,7 @@ struct Anneal final : OldShapeAlgorithm {
  * to encounter the minimum.
  */
 struct Tunnel final : OldShapeAlgorithm {
-  using Permutation = std::vector<unsigned>;
+  using Permutation = std::vector<Vertex>;
 
   temple::JSF64 prng;
   std::ofstream trace {"tunnel_trace.csv"};
@@ -414,7 +414,7 @@ struct Tunnel final : OldShapeAlgorithm {
     const unsigned steps = facs.at(positions.cols() - 2);
     Energy energy {positions, shapeCoordinates(shape)};
 
-    auto parameters = temple::iota<unsigned>(positions.cols());
+    auto parameters = temple::iota<Vertex>(positions.cols());
     decltype(parameters) prospectiveParameters;
 
     double currentEnergy = energy(parameters);
@@ -521,7 +521,7 @@ struct CircularBuffer {
  */
 struct ThermodynamicAnneal final : OldShapeAlgorithm {
   temple::JSF64 prng;
-  using Permutation = std::vector<unsigned>;
+  using Permutation = std::vector<Vertex>;
 
   std::unordered_map<unsigned, unsigned> stateIndexReduction;
   std::vector<double> energies;
@@ -664,7 +664,7 @@ struct ThermodynamicAnneal final : OldShapeAlgorithm {
     const unsigned N = positions.cols();
     Energy energy {positions, shapeCoordinates(shape)};
 
-    auto permutation = temple::iota<unsigned>(N);
+    auto permutation = temple::iota<Vertex>(N);
     decltype(permutation) prospectiveMove;
     double currentEnergy = energy(permutation);
     double minimalEnergy = currentEnergy;
@@ -696,8 +696,11 @@ struct ThermodynamicAnneal final : OldShapeAlgorithm {
         Q.insert(prospectiveStateIndex, currentStateIndex) = 1;
       } else {
         prospectiveStateIndex = stateIndexFindIter->second;
-        unsigned col, row;
-        std::tie(col, row) = std::minmax(prospectiveStateIndex, currentStateIndex);
+        unsigned col = prospectiveStateIndex;
+        unsigned row = currentStateIndex;
+        if(col > row) {
+          std::swap(col, row);
+        }
         Q.coeffRef(row, col) = Q.coeff(row, col) + 1;
       }
 
@@ -732,8 +735,11 @@ struct ThermodynamicAnneal final : OldShapeAlgorithm {
         Q.insert(prospectiveStateIndex, currentStateIndex) = 1;
       } else {
         prospectiveStateIndex = stateIndexFindIter->second;
-        unsigned col, row;
-        std::tie(col, row) = std::minmax(prospectiveStateIndex, currentStateIndex);
+        unsigned col = prospectiveStateIndex;
+        unsigned row = currentStateIndex;
+        if(col > row) {
+          std::swap(col, row);
+        }
         Q.coeffRef(row, col) = Q.coeff(row, col) + 1;
       }
 
@@ -776,7 +782,7 @@ struct Greedy final : OldShapeAlgorithm {
     const unsigned steps = 4 * facs.at(N - 2);
 
     Energy energy {positions, shapeCoordinates(shape)};
-    auto permutation = temple::iota<unsigned>(positions.cols());
+    auto permutation = temple::iota<Vertex>(positions.cols());
     double lowestEnergy = std::numeric_limits<double>::max();
 
     bool foundBetterPermutation;
@@ -863,7 +869,7 @@ struct SteepestDescent final : OldShapeAlgorithm {
     const unsigned steps = 4 * facs.at(N - 2);
 
     Energy energy {positions, shapeCoordinates(shape)};
-    auto bestCandidate = temple::iota<unsigned>(positions.cols());
+    auto bestCandidate = temple::iota<Vertex>(positions.cols());
     auto permutation = bestCandidate;
     double lowestEnergy = std::numeric_limits<double>::max();
 
@@ -1210,7 +1216,7 @@ void writeEnergyStatistics() {
     Energy energy {shapeCoordinates, distorted};
 
     rFile << "shape" << shapeNumber << " <- c(";
-    auto permutation = temple::iota<unsigned>(N);
+    auto permutation = temple::iota<Vertex>(N);
     rFile << energy(permutation);
     while(temple::inplace::next_permutation(permutation)) {
       rFile << ", " << energy(permutation);
@@ -1226,7 +1232,7 @@ void writeEnergyStatistics() {
 template<typename PRNG>
 PositionCollection shuffle(const PositionCollection& positions, PRNG& prng) {
   const unsigned C = positions.cols();
-  auto permutation = temple::iota<unsigned>(C);
+  auto permutation = temple::iota<Vertex>(C);
   temple::random::shuffle(permutation, prng);
   PositionCollection shuffled(3, C);
   for(unsigned i = 0; i < C; ++i) {

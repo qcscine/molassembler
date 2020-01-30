@@ -11,13 +11,9 @@
 #ifndef INCLUDE_MOLASSEMBLER_BOND_STEREOPERMUTATOR_H
 #define INCLUDE_MOLASSEMBLER_BOND_STEREOPERMUTATOR_H
 
-#include "molassembler/Types.h"
+#include "molassembler/AtomStereopermutator.h"
 
-#include "boost/optional/optional_fwd.hpp"
-
-#include <vector>
 #include <string>
-#include <memory>
 
 namespace Scine {
 namespace stereopermutation {
@@ -34,14 +30,7 @@ class Engine;
 // Forward-declarations
 class AngstromPositions;
 class PrivateGraph;
-struct RankingInformation;
-class AtomStereopermutator;
 class StereopermutatorList;
-
-namespace stereopermutators {
-struct Abstract;
-struct Feasible;
-} // namespace stereopermutators
 
 namespace distance_geometry {
 class SpatialModel;
@@ -270,9 +259,9 @@ public:
    */
   double dihedral(
     const AtomStereopermutator& stereopermutatorA,
-    unsigned siteIndexA,
+    SiteIndex siteIndexA,
     const AtomStereopermutator& stereopermutatorB,
-    unsigned siteIndexB
+    SiteIndex siteIndexB
   ) const;
 
 

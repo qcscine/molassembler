@@ -35,22 +35,6 @@ constexpr inline auto underlying(const EnumType e) {
   return static_cast<std::underlying_type_t<EnumType>>(e);
 }
 
-std::vector<unsigned> rotate(
-  const std::vector<unsigned>& toRotate,
-  const std::vector<unsigned>& rotationVector
-) {
-  std::vector<unsigned> rotated (toRotate.size());
-
-  for(unsigned i = 0; i < toRotate.size(); i++) {
-    assert(rotationVector[i] < toRotate.size());
-    rotated[i] = toRotate[
-      rotationVector[i]
-    ];
-  }
-
-  return rotated;
-}
-
 template<typename ShapeClass>
 struct LockstepTest {
   static bool value() {
@@ -75,8 +59,8 @@ BOOST_AUTO_TEST_CASE(AngleFunctionInputSymmetry) {
   for(const Shape shape: allShapes) {
     bool passesAll = true;
 
-    for(unsigned i = 0; i < size(shape) && passesAll; i++) {
-      for(unsigned j = i + 1; j < size(shape); j++) {
+    for(Vertex i(0); i < size(shape) && passesAll; ++i) {
+      for(Vertex j(i + 1); j < size(shape); ++j) {
         if(angleFunction(shape)(i, j) != angleFunction(shape)(j, i)) {
           passesAll = false;
           std::cout << name(shape)
@@ -98,7 +82,7 @@ BOOST_AUTO_TEST_CASE(AngleFunctionZeroForIdenticalInput) {
   for(const Shape shape: allShapes) {
     bool passesAll = true;
 
-    for(unsigned i = 0; i < size(shape); i++) {
+    for(Vertex i(0); i < size(shape); i++) {
       if(angleFunction(shape)(i, i) != 0) {
         passesAll = false;
         std::cout << name(shape)
@@ -116,8 +100,8 @@ BOOST_AUTO_TEST_CASE(AnglesWithinRadiansBounds) {
   for(const Shape shape : allShapes) {
     bool passesAll = true;
 
-    for(unsigned i = 0; i < size(shape); i++) {
-      for(unsigned j = 0; j < size(shape); j++) {
+    for(Vertex i(0); i < size(shape); i++) {
+      for(Vertex j(0); j < size(shape); j++) {
         if(
           !(
             0 <= angleFunction(shape)(i, j)
@@ -146,14 +130,14 @@ BOOST_AUTO_TEST_CASE(AnglesMatchCoordinates) {
    */
 
   for(const auto& shape: allShapes) {
-    auto getCoordinates =  [&](const unsigned index) -> Eigen::Vector3d {
+    auto getCoordinates =  [shape](const Vertex index) -> Eigen::Vector3d {
       return coordinates(shape).col(index);
     };
 
     bool all_pass = true;
 
-    for(unsigned i = 0; i < size(shape); i++) {
-      for(unsigned j = i + 1; j < size(shape); j++) {
+    for(Vertex i {0}; i < size(shape); i++) {
+      for(Vertex j {i + 1}; j < size(shape); j++) {
         auto angleInCoordinates = std::acos(
           getCoordinates(i).dot(
             getCoordinates(j)
@@ -189,7 +173,7 @@ BOOST_AUTO_TEST_CASE(AllTetrahedraPositive) {
    *
    */
   for(const auto& shape: allShapes) {
-    auto getCoordinates = [&](const boost::optional<unsigned>& indexOption) -> Eigen::Vector3d {
+    auto getCoordinates = [shape](const boost::optional<Vertex>& indexOption) -> Eigen::Vector3d {
       if(indexOption) {
         return coordinates(shape).col(indexOption.value());
       }
@@ -262,24 +246,23 @@ BOOST_AUTO_TEST_CASE(TetrahedraDefinitionIndicesUnique) {
 }
 
 BOOST_AUTO_TEST_CASE(SmallestAngleValueCorrect) {
-  const double comparisonSmallestAngle = temple::min(
-    temple::map(
-      allShapes,
-      [](const Shape& shape) -> double {
-        double shapeSmallestAngle = angleFunction(shape)(0, 1);
-
-        for(unsigned i = 0; i < size(shape); i++) {
-          for(unsigned j = i + 1; j < size(shape); j++) {
-            double angle = angleFunction(shape)(i, j);
-            if(angle < shapeSmallestAngle) {
-              shapeSmallestAngle = angle;
-            }
-          }
-        }
-
-        return shapeSmallestAngle;
+  auto shapeSmallestAngle = [](const Shape shape) -> double {
+    return temple::accumulate(
+      temple::adaptors::allPairs(
+        temple::iota<Vertex>(Vertex(size(shape)))
+      ),
+      M_PI,
+      [shape](const double currentSmallest, const auto& vertexPair) {
+        return std::min(
+          currentSmallest,
+          temple::invoke(angleFunction(shape), vertexPair)
+        );
       }
-    )
+    );
+  };
+
+  const double comparisonSmallestAngle = temple::min(
+    temple::map(allShapes, shapeSmallestAngle)
   );
 
   BOOST_CHECK(0 < smallestAngle && smallestAngle < M_PI);
@@ -319,7 +302,7 @@ std::enable_if_t<
    * .totalDistortion, .chiralDistortion - doubles
    */
   auto dynamicMappings = properties::selectBestTransitionMappings(
-    properties::symmetryTransitionMappings(
+    properties::shapeTransitionMappings(
       ShapeClassFrom::shape,
       ShapeClassTo::shape
     )
@@ -344,17 +327,18 @@ std::enable_if_t<
   // Do a full set comparison
   auto convertedMappings = temple::map_stl(
     temple::toSTL(constexprMappings.mappings),
-    [&](const auto& indexList) -> std::vector<unsigned> {
-      return {
-        std::begin(indexList),
-        std::end(indexList)
-      };
+    [&](const auto& indexList) -> std::vector<Vertex> {
+      std::vector<Vertex> v;
+      for(unsigned i : indexList) {
+        v.emplace_back(i);
+      }
+      return v;
     }
   );
 
   decltype(convertedMappings) dynamicResultSet {
-    dynamicMappings.indexMappings.begin(),
-    dynamicMappings.indexMappings.end()
+    std::begin(dynamicMappings.indexMappings),
+    std::end(dynamicMappings.indexMappings)
   };
 
   return temple::set_symmetric_difference(
@@ -416,10 +400,7 @@ std::enable_if_t<
 
   /* Dynamic part */
   std::vector<
-    std::pair<
-      unsigned,
-      shapes::properties::SymmetryTransitionGroup
-    >
+    std::pair<unsigned, shapes::properties::ShapeTransitionGroup>
   > dynamicMappings;
 
   for(unsigned i = 0; i < ShapeClassFrom::size; ++i) {
@@ -506,16 +487,17 @@ struct RotationGenerationTest {
     // This is a std::set of ShapeClass-sized std::vectors
     auto dynamicRotations = properties::generateAllRotations(
       ShapeClass::shape,
-      temple::iota<unsigned>(ShapeClass::size)
+      temple::iota<Vertex>(Vertex(ShapeClass::size))
     );
 
     auto convertedRotations = temple::map_stl(
       temple::toSTL(constexprRotations),
-      [&](const auto& indexList) -> std::vector<unsigned> {
-        return {
-          indexList.begin(),
-          indexList.end()
-        };
+      [&](const auto& indexList) -> std::vector<Vertex> {
+        std::vector<Vertex> v;
+        for(unsigned i : indexList) {
+          v.emplace_back(i);
+        }
+        return v;
       }
     );
 

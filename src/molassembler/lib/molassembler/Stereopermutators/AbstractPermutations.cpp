@@ -5,8 +5,14 @@
  */
 #include "molassembler/Stereopermutators/AbstractPermutations.h"
 
+#include "temple/Functional.h"
+
 #include <algorithm>
 #include <cassert>
+
+// TODO TMP
+#include "temple/Stringify.h"
+#include <iostream>
 
 namespace Scine {
 namespace molassembler {
@@ -50,44 +56,58 @@ Abstract::selfReferentialTransform(
   const std::vector<LinkInformation>& rankingLinks,
   const RankingInformation::RankedSitesType& canonicalSites
 ) {
-  stereopermutation::Stereopermutation::OrderedLinks links;
-
-  for(const auto& link : rankingLinks) {
-    auto getRankedPosition = [&canonicalSites](const unsigned siteIndex) -> unsigned {
-      unsigned position = 0;
-      for(const auto& equalSitesSet : canonicalSites) {
-        for(const auto& rankedSiteIndex : equalSitesSet) {
-          if(rankedSiteIndex == siteIndex) {
-            return position;
-          }
-
-          ++position;
-        }
-      }
-
-      throw std::logic_error("Site index not found in ranked sites");
-    };
-
-    const unsigned a = getRankedPosition(link.indexPair.first);
-    const unsigned b = getRankedPosition(link.indexPair.second);
-
-    links.emplace_back(
-      std::min(a, b),
-      std::max(a, b)
-    );
+  if(
+    temple::any_of(
+      rankingLinks,
+      [](auto&& l) { return l.indexPair.first == l.indexPair.second; }
+    )
+  ) {
+    throw std::out_of_range("Links are invalid");
   }
 
-  std::sort(std::begin(links), std::end(links));
-  return links;
+  auto getRankedVertex = [&canonicalSites](const SiteIndex site) -> shapes::Vertex {
+    shapes::Vertex vertex(0);
+    for(const auto& equalSitesSet : canonicalSites) {
+      for(const SiteIndex& rankedSiteIndex : equalSitesSet) {
+        if(rankedSiteIndex == site) {
+          return vertex;
+        }
+
+        ++vertex;
+      }
+    }
+
+    throw std::logic_error("Site index not found in ranked sites");
+  };
+
+  return temple::sort(
+    temple::map(
+      rankingLinks,
+      [&](const auto& link) -> stereopermutation::Stereopermutation::Link {
+        auto firstVertex = getRankedVertex(link.indexPair.first);
+        auto secondVertex = getRankedVertex(link.indexPair.second);
+
+        if(firstVertex > secondVertex) {
+          std::swap(firstVertex, secondVertex);
+        }
+
+        if(firstVertex == secondVertex) {
+          throw std::runtime_error("Got same ranked vertex");
+        }
+
+        return {firstVertex, secondVertex};
+      }
+    )
+  );
 }
 
 std::vector<char> Abstract::makeStereopermutationCharacters(
   const RankingInformation::RankedSitesType& canonicalSites,
   const std::vector<char>& canonicalStereopermutationCharacters,
-  const std::vector<unsigned>& sitesAtShapeVertices
+  const temple::StrongIndexFlatMap<shapes::Vertex, SiteIndex>& sitesAtShapeVertices
 ) {
   // Replace the site indices by their new ranking characters
-  std::vector<unsigned> flattenedIndices;
+  std::vector<SiteIndex> flattenedIndices;
   for(const auto& equalPrioritySet : canonicalSites) {
     for(const auto& index : equalPrioritySet) {
       flattenedIndices.push_back(index);
@@ -96,7 +116,7 @@ std::vector<char> Abstract::makeStereopermutationCharacters(
 
   std::vector<char> newStereopermutationCharacters;
 
-  for(const auto& siteIndex : sitesAtShapeVertices) {
+  for(const SiteIndex siteIndex : sitesAtShapeVertices) {
     const auto findIter = std::find(
       std::begin(flattenedIndices),
       std::end(flattenedIndices),

@@ -43,8 +43,8 @@ shapes::Shape AtomStereopermutator::up(const shapes::Shape shape) {
   return Impl::up(shape);
 }
 
-shapes::Shape AtomStereopermutator::down(const shapes::Shape shape, const unsigned removedShapePosition) {
-  return Impl::down(shape, removedShapePosition);
+shapes::Shape AtomStereopermutator::down(const shapes::Shape shape, const shapes::Vertex removedVertex) {
+  return Impl::down(shape, removedVertex);
 }
 
 void AtomStereopermutator::assign(boost::optional<unsigned> assignment) {
@@ -91,8 +91,8 @@ void AtomStereopermutator::setShape(
 
 /* Information */
 double AtomStereopermutator::angle(
-  const unsigned i,
-  const unsigned j
+  const SiteIndex i,
+  const SiteIndex j
 ) const {
   return _pImpl->angle(i, j);
 }
@@ -138,7 +138,7 @@ shapes::Shape AtomStereopermutator::getShape() const {
   return _pImpl->getShape();
 }
 
-const std::vector<unsigned>& AtomStereopermutator::getShapePositionMap() const {
+const AtomStereopermutator::ShapeMap& AtomStereopermutator::getShapePositionMap() const {
   return _pImpl->getShapePositionMap();
 }
 

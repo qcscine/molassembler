@@ -156,7 +156,7 @@ BOOST_AUTO_TEST_CASE( reduceTests) {
     ) == 120u
   );
 }
-BOOST_AUTO_TEST_CASE( minMaxTests ) {
+BOOST_AUTO_TEST_CASE(MinMaxTests) {
   const std::vector<unsigned> values {1, 4, 6, 8};
   BOOST_CHECK(temple::max(values) == 8u);
   BOOST_CHECK(temple::min(values) == 1u);

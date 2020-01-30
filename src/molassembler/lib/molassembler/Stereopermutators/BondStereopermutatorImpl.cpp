@@ -130,15 +130,15 @@ struct SymmetryMapHelper {
 
 std::vector<char> BondStereopermutator::Impl::_charifyRankedSites(
   const RankingInformation::RankedSitesType& sitesRanking,
-  const std::vector<unsigned>& symmetryPositionMap
+  const AtomStereopermutator::ShapeMap& shapeVertexMap
 ) {
-  std::vector<char> characters (symmetryPositionMap.size());
+  std::vector<char> characters (shapeVertexMap.size());
 
   char currentChar = 'A';
   for(const auto& equalPrioritySet : sitesRanking) {
     for(const auto& siteIndex : equalPrioritySet) {
       characters.at(
-        symmetryPositionMap.at(siteIndex)
+        shapeVertexMap.at(siteIndex)
       ) = currentChar;
     }
 
@@ -154,9 +154,9 @@ const stereopermutation::Composite& BondStereopermutator::Impl::composite() cons
 
 double BondStereopermutator::Impl::dihedral(
   const AtomStereopermutator& stereopermutatorA,
-  const unsigned siteIndexA,
+  const SiteIndex siteIndexA,
   const AtomStereopermutator& stereopermutatorB,
-  const unsigned siteIndexB
+  const SiteIndex siteIndexB
 ) const {
   if(!_assignment) {
     throw std::logic_error("This stereopermutator is unassigned! Dihedrals between sites are unspecified.");
@@ -177,28 +177,22 @@ double BondStereopermutator::Impl::dihedral(
   }
 
   // Derived from possibly swapped references
-  auto symmetryPositionMaps = temple::map_stl(
+  auto shapeVertexMaps = temple::map_stl(
     references,
     [](const PermutatorReference& ref) {
       return ref.get().getShapePositionMap();
     }
   );
 
-  std::pair<unsigned, unsigned> shapePositions;
+  std::pair<shapes::Vertex, shapes::Vertex> vertices;
   double dihedralAngle;
 
   for(const auto& dihedralTuple : _composite.dihedrals(*_assignment)) {
-    std::tie(shapePositions.first, shapePositions.second, dihedralAngle) = dihedralTuple;
+    std::tie(vertices.first, vertices.second, dihedralAngle) = dihedralTuple;
 
     if(
-      SymmetryMapHelper::getSiteIndexAt(
-        shapePositions.first,
-        symmetryPositionMaps.first
-      ) == siteIndices.first
-      && SymmetryMapHelper::getSiteIndexAt(
-        shapePositions.second,
-        symmetryPositionMaps.second
-      ) == siteIndices.second
+      shapeVertexMaps.first.indexOf(vertices.first) == siteIndices.first
+      && shapeVertexMaps.second.indexOf(vertices.second) == siteIndices.second
     ) {
       return (swapped) ? -dihedralAngle : dihedralAngle;
     }
@@ -231,11 +225,10 @@ BondStereopermutator::Impl::_makeOrientationState(
 ) {
   return {
     focalStereopermutator.getShape(),
-    SymmetryMapHelper::getSymmetryPositionOf(
+    focalStereopermutator.getShapePositionMap().at(
       focalStereopermutator.getRanking().getSiteIndexOf(
         attachedStereopermutator.centralIndex()
-      ),
-      focalStereopermutator.getShapePositionMap()
+      )
     ),
     _charifyRankedSites(
       focalStereopermutator.getRanking().siteRanking,
@@ -897,8 +890,8 @@ void BondStereopermutator::Impl::fit(
   auto firstSitePositions = makeSitePositions(firstStereopermutator);
   auto secondSitePositions = makeSitePositions(secondStereopermutator);
 
-  unsigned firstSymmetryPosition;
-  unsigned secondSymmetryPosition;
+  shapes::Vertex firstShapeVertex;
+  shapes::Vertex secondShapeVertex;
   double dihedralAngle;
 
   double bestPenalty = std::numeric_limits<double>::max();
@@ -907,17 +900,11 @@ void BondStereopermutator::Impl::fit(
   for(unsigned feasiblePermutationIndex : _feasiblePermutations) {
     double penalty = 0.0;
     for(const auto& dihedralTuple : _composite.dihedrals(feasiblePermutationIndex)) {
-      std::tie(firstSymmetryPosition, secondSymmetryPosition, dihedralAngle) = dihedralTuple;
+      std::tie(firstShapeVertex, secondShapeVertex, dihedralAngle) = dihedralTuple;
 
       // Get site index of leftSymmetryPosition in left
-      const unsigned firstSiteIndex = SymmetryMapHelper::getSiteIndexAt(
-        firstSymmetryPosition,
-        firstStereopermutator.getShapePositionMap()
-      );
-      const unsigned secondSiteIndex = SymmetryMapHelper::getSiteIndexAt(
-        secondSymmetryPosition,
-        secondStereopermutator.getShapePositionMap()
-      );
+      const SiteIndex firstSite = firstStereopermutator.getShapePositionMap().indexOf(firstShapeVertex);
+      const SiteIndex secondSite = secondStereopermutator.getShapePositionMap().indexOf(secondShapeVertex);
 
       /* Dihedral angle differences aren't as easy as |b - a|, since
        * dihedrals are defined over (-pi, pi], so in the worst case
@@ -933,10 +920,10 @@ void BondStereopermutator::Impl::fit(
        */
 
       const double measuredDihedral = cartesian::dihedral(
-        firstSitePositions.col(firstSiteIndex),
+        firstSitePositions.col(firstSite),
         angstromWrapper.positions.row(firstStereopermutator.centralIndex()),
         angstromWrapper.positions.row(secondStereopermutator.centralIndex()),
-        secondSitePositions.col(secondSiteIndex)
+        secondSitePositions.col(secondSite)
       );
 
       double dihedralDifference = measuredDihedral - dihedralAngle;
@@ -1040,11 +1027,10 @@ void BondStereopermutator::Impl::propagateGraphChange(
   // Generate a new OrientationState for the modified stereopermutator
   stereopermutation::Composite::OrientationState possiblyModifiedOrientation {
     newPermutator.getShape(),
-    SymmetryMapHelper::getSymmetryPositionOf(
+    newPermutator.getShapePositionMap().at(
       newPermutator.getRanking().getSiteIndexOf(
         unchangedOrientation.identifier
-      ),
-      newPermutator.getShapePositionMap()
+      )
     ),
     _charifyRankedSites(
       newPermutator.getRanking().siteRanking,
@@ -1134,8 +1120,8 @@ void BondStereopermutator::Impl::propagateGraphChange(
     oldAbstract.canonicalSites
   );
 
-  auto getNewSymmetryPosition = [&](unsigned oldSymmetryPosition) -> unsigned {
-    const unsigned oldSiteIndex = oldSymmetryPositionToSiteMap.at(oldSymmetryPosition);
+  auto getNewShapeVertex = [&](shapes::Vertex oldVertex) -> shapes::Vertex {
+    const SiteIndex oldSiteIndex = oldSymmetryPositionToSiteMap.at(oldVertex);
 
     const std::vector<AtomIndex>& oldSite = oldRanking.sites.at(oldSiteIndex);
 
@@ -1156,40 +1142,36 @@ void BondStereopermutator::Impl::propagateGraphChange(
 
     assert(findSiteIter != std::end(newRankingSites));
 
-    const unsigned newSiteIndex = findSiteIter - std::begin(newRankingSites);
-
-    return SymmetryMapHelper::getSymmetryPositionOf(
-      newSiteIndex,
-      newPermutator.getShapePositionMap()
-    );
+    const SiteIndex newSiteIndex = SiteIndex(findSiteIter - std::begin(newRankingSites));
+    return newPermutator.getShapePositionMap().at(newSiteIndex);
   };
 
   // Map the set of old dihedral tuples into the new space
   std::vector<DihedralTuple> newCompositeDihedrals;
   newCompositeDihedrals.reserve(oldDihedralList.size());
   for(const DihedralTuple& oldDihedral : oldDihedralList) {
-    const unsigned changedSymmetryPosition = detail::select(
+    const shapes::Vertex changedVertex = detail::select(
       oldDihedral,
       changedIsFirstInOldOrientations
     );
 
-    const unsigned unchangedSymmetryPosition = detail::select(
+    const shapes::Vertex unchangedVertex = detail::select(
       oldDihedral,
       !changedIsFirstInOldOrientations
     );
 
-    const unsigned newSymmetryPosition = getNewSymmetryPosition(changedSymmetryPosition);
+    const shapes::Vertex newShapeVertex = getNewShapeVertex(changedVertex);
 
     if(modifiedOrientationIsFirstInNewComposite) {
       newCompositeDihedrals.emplace_back(
-        newSymmetryPosition,
-        unchangedSymmetryPosition,
+        newShapeVertex,
+        unchangedVertex,
         std::get<2>(oldDihedral)
       );
     } else {
       newCompositeDihedrals.emplace_back(
-        unchangedSymmetryPosition,
-        newSymmetryPosition,
+        unchangedVertex,
+        newShapeVertex,
         std::get<2>(oldDihedral)
       );
     }

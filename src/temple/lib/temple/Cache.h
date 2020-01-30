@@ -26,6 +26,9 @@ namespace temple {
 template<typename KeyType, typename ValueType>
 class MinimalCache {
 public:
+  using key_type = KeyType;
+  using value_type = ValueType;
+
 //!@name Modification
 //!@{
   //! Adds a data value for a key value into the cache.

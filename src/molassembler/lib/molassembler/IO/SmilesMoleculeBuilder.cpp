@@ -19,6 +19,7 @@
 #include "molassembler/Modeling/ShapeInference.h"
 #include "molassembler/Molecule.h"
 #include "shapes/Data.h"
+#include "shapes/Properties.h"
 
 #include "temple/Optionals.h"
 #include "temple/Functional.h"
@@ -120,84 +121,88 @@ BondType MoleculeBuilder::mutualBondType(
   return a.value();
 }
 
-std::vector<unsigned> MoleculeBuilder::shapeMap(const ChiralData& chiralData) {
+shapes::Vertex operator "" _v(unsigned long long v) {
+  return shapes::Vertex(v);
+}
+
+std::vector<shapes::Vertex> MoleculeBuilder::shapeMap(const ChiralData& chiralData) {
   if(chiralData.shape == shapes::Shape::Tetrahedron) {
     switch(chiralData.chiralIndex) {
-      case 1: return {{0, 1, 2, 3}}; // @, TH1
-      case 2: return {{0, 1, 3, 2}}; // @@, TH2
+      case 1: return {{0_v, 1_v, 2_v, 3_v}}; // @, TH1
+      case 2: return {{0_v, 1_v, 3_v, 2_v}}; // @@, TH2
     }
   } else if(chiralData.shape == shapes::Shape::Square) {
     switch(chiralData.chiralIndex) {
-      case 1: return {{0, 1, 2, 3}}; // SP1 = U
-      case 2: return {{0, 2, 3, 1}}; // SP2 = 4
-      case 3: return {{3, 2, 0, 1}}; // SP3 = Z
+      case 1: return {{0_v, 1_v, 2_v, 3_v}}; // SP1 = U
+      case 2: return {{0_v, 2_v, 3_v, 1_v}}; // SP2 = 4
+      case 3: return {{3_v, 2_v, 0_v, 1_v}}; // SP3 = Z
     }
   } else if(chiralData.shape == shapes::Shape::TrigonalBipyramid) {
     switch(chiralData.chiralIndex) {
-      case  1: return {{1, 2, 3, 0, 4}}; // TB1 = a, e, @
-      case  2: return {{1, 3, 2, 0, 4}}; // TB2 = a, e, @@
-      case  3: return {{1, 2, 4, 0, 3}}; // TB3 = a, d, @
-      case  4: return {{1, 4, 2, 0, 3}}; // TB4 = a, d, @@
-      case  5: return {{1, 3, 4, 0, 2}}; // TB5 = a, c, @
-      case  6: return {{1, 4, 3, 0, 2}}; // TB6 = a, c, @@
-      case  7: return {{2, 3, 4, 0, 1}}; // TB7 = a, b, @
-      case  8: return {{2, 4, 3, 0, 1}}; // TB8 = a, b, @@
-      case  9: return {{0, 2, 3, 1, 4}}; // TB9 = b, e, @
-      case 10: return {{0, 2, 4, 1, 3}}; // TB10 = b, d, @
-      case 11: return {{0, 3, 2, 1, 4}}; // TB11 = b, e, @@
-      case 12: return {{0, 4, 2, 1, 3}}; // TB12 = b, d, @@
-      case 13: return {{0, 3, 4, 1, 2}}; // TB13 = b, c, @
-      case 14: return {{0, 4, 3, 1, 2}}; // TB14 = b, c, @@
-      case 15: return {{0, 1, 3, 2, 4}}; // TB15 = c, e, @
-      case 16: return {{0, 1, 4, 2, 3}}; // TB16 = c, d, @
-      case 17: return {{0, 1, 2, 3, 4}}; // TB17 = d, e, @
-      case 18: return {{0, 2, 1, 3, 4}}; // TB18 = d, e, @@
-      case 19: return {{0, 4, 1, 2, 3}}; // TB19 = c, d, @@
-      case 20: return {{0, 3, 1, 2, 4}}; // TB20 = c, e, @@
+      case  1: return {{1_v, 2_v, 3_v, 0_v, 4_v}}; // TB1 = a, e, @
+      case  2: return {{1_v, 3_v, 2_v, 0_v, 4_v}}; // TB2 = a, e, @@
+      case  3: return {{1_v, 2_v, 4_v, 0_v, 3_v}}; // TB3 = a, d, @
+      case  4: return {{1_v, 4_v, 2_v, 0_v, 3_v}}; // TB4 = a, d, @@
+      case  5: return {{1_v, 3_v, 4_v, 0_v, 2_v}}; // TB5 = a, c, @
+      case  6: return {{1_v, 4_v, 3_v, 0_v, 2_v}}; // TB6 = a, c, @@
+      case  7: return {{2_v, 3_v, 4_v, 0_v, 1_v}}; // TB7 = a, b, @
+      case  8: return {{2_v, 4_v, 3_v, 0_v, 1_v}}; // TB8 = a, b, @@
+      case  9: return {{0_v, 2_v, 3_v, 1_v, 4_v}}; // TB9 = b, e, @
+      case 10: return {{0_v, 2_v, 4_v, 1_v, 3_v}}; // TB10 = b, d, @
+      case 11: return {{0_v, 3_v, 2_v, 1_v, 4_v}}; // TB11 = b, e, @@
+      case 12: return {{0_v, 4_v, 2_v, 1_v, 3_v}}; // TB12 = b, d, @@
+      case 13: return {{0_v, 3_v, 4_v, 1_v, 2_v}}; // TB13 = b, c, @
+      case 14: return {{0_v, 4_v, 3_v, 1_v, 2_v}}; // TB14 = b, c, @@
+      case 15: return {{0_v, 1_v, 3_v, 2_v, 4_v}}; // TB15 = c, e, @
+      case 16: return {{0_v, 1_v, 4_v, 2_v, 3_v}}; // TB16 = c, d, @
+      case 17: return {{0_v, 1_v, 2_v, 3_v, 4_v}}; // TB17 = d, e, @
+      case 18: return {{0_v, 2_v, 1_v, 3_v, 4_v}}; // TB18 = d, e, @@
+      case 19: return {{0_v, 4_v, 1_v, 2_v, 3_v}}; // TB19 = c, d, @@
+      case 20: return {{0_v, 3_v, 1_v, 2_v, 4_v}}; // TB20 = c, e, @@
     }
   } else if(chiralData.shape == shapes::Shape::Octahedron) {
     switch(chiralData.chiralIndex) {
       /* Look along an axis, what remains is a square with a winding. So
        * square shapes are reused with definitions of square shapes and windings
        */
-      case  1: return {{1, 2, 3, 4, 0, 5}}; // OH1 = a, f, U, @
-      case  2: return {{4, 3, 2, 1, 0, 5}}; // OH2 = a, f, U, @@
-      case  3: return {{1, 2, 3, 5, 0, 4}}; // OH3 = a, e, U, @
-      case 16: return {{5, 3, 2, 1, 0, 4}}; // OH16 = a, e, U, @@
-      case  6: return {{1, 2, 4, 5, 0, 3}}; // OH6 = a, d, U, @
-      case 18: return {{5, 4, 2, 1, 0, 3}}; // OH18 = a, d, U, @@
-      case 19: return {{1, 3, 4, 5, 0, 2}}; // OH19 = a, c, U, @
-      case 24: return {{5, 4, 3, 1, 0, 2}}; // OH24 = a, c, U, @@
-      case 25: return {{2, 3, 4, 5, 0, 1}}; // OH25 = a, b, U, @
-      case 30: return {{5, 4, 3, 2, 0, 1}}; // OH30 = a, b, U, @@
+      case  1: return {{1_v, 2_v, 3_v, 4_v, 0_v, 5_v}}; // OH1 = a, f, U, @
+      case  2: return {{4_v, 3_v, 2_v, 1_v, 0_v, 5_v}}; // OH2 = a, f, U, @@
+      case  3: return {{1_v, 2_v, 3_v, 5_v, 0_v, 4_v}}; // OH3 = a, e, U, @
+      case 16: return {{5_v, 3_v, 2_v, 1_v, 0_v, 4_v}}; // OH16 = a, e, U, @@
+      case  6: return {{1_v, 2_v, 4_v, 5_v, 0_v, 3_v}}; // OH6 = a, d, U, @
+      case 18: return {{5_v, 4_v, 2_v, 1_v, 0_v, 3_v}}; // OH18 = a, d, U, @@
+      case 19: return {{1_v, 3_v, 4_v, 5_v, 0_v, 2_v}}; // OH19 = a, c, U, @
+      case 24: return {{5_v, 4_v, 3_v, 1_v, 0_v, 2_v}}; // OH24 = a, c, U, @@
+      case 25: return {{2_v, 3_v, 4_v, 5_v, 0_v, 1_v}}; // OH25 = a, b, U, @
+      case 30: return {{5_v, 4_v, 3_v, 2_v, 0_v, 1_v}}; // OH30 = a, b, U, @@
 
       /* Note: For the Z shape, the connection between the first two atoms
        * determines the winding.
        */
-      case  4: return {{1, 2, 4, 3, 0, 5}}; // OH4 = a, f, Z, @
-      case 14: return {{3, 4, 2, 1, 0, 5}}; // OH14 = a, f, Z, @@
-      case  5: return {{1, 2, 5, 3, 0, 4}}; // OH5 = a, e, Z, @
-      case 15: return {{3, 5, 2, 1, 0, 4}}; // OH15 = a, e, Z, @@
-      case  7: return {{1, 2, 5, 4, 0, 3}}; // OH7 = a, d, Z, @
-      case 17: return {{4, 5, 2, 1, 0, 3}}; // OH17 = a, d, Z, @@
-      case 20: return {{1, 3, 5, 4, 0, 2}}; // OH20 = a, c, Z, @
-      case 23: return {{4, 5, 3, 1, 0, 2}}; // OH23 = a, c, Z, @@
-      case 26: return {{2, 3, 5, 4, 0, 1}}; // OH26 = a, b, Z, @
-      case 29: return {{4, 5, 3, 2, 0, 1}}; // OH29 = a, b, Z, @@
+      case  4: return {{1_v, 2_v, 4_v, 3_v, 0_v, 5_v}}; // OH4 = a, f, Z, @
+      case 14: return {{3_v, 4_v, 2_v, 1_v, 0_v, 5_v}}; // OH14 = a, f, Z, @@
+      case  5: return {{1_v, 2_v, 5_v, 3_v, 0_v, 4_v}}; // OH5 = a, e, Z, @
+      case 15: return {{3_v, 5_v, 2_v, 1_v, 0_v, 4_v}}; // OH15 = a, e, Z, @@
+      case  7: return {{1_v, 2_v, 5_v, 4_v, 0_v, 3_v}}; // OH7 = a, d, Z, @
+      case 17: return {{4_v, 5_v, 2_v, 1_v, 0_v, 3_v}}; // OH17 = a, d, Z, @@
+      case 20: return {{1_v, 3_v, 5_v, 4_v, 0_v, 2_v}}; // OH20 = a, c, Z, @
+      case 23: return {{4_v, 5_v, 3_v, 1_v, 0_v, 2_v}}; // OH23 = a, c, Z, @@
+      case 26: return {{2_v, 3_v, 5_v, 4_v, 0_v, 1_v}}; // OH26 = a, b, Z, @
+      case 29: return {{4_v, 5_v, 3_v, 2_v, 0_v, 1_v}}; // OH29 = a, b, Z, @@
 
       /* For the 4 shape, the connection between the second and third atom
        * determines the winding.
        */
-      case 10: return {{4, 2, 3, 1, 0, 5}}; // OH10 = a, f, 4, @
-      case  8: return {{1, 3, 2, 4, 0, 5}}; // OH8 = a, f, 4, @@
-      case 11: return {{5, 2, 3, 1, 0, 4}}; // OH11 = a, e, 4, @
-      case  9: return {{1, 3, 2, 5, 0, 4}}; // OH9 = a, e, 4, @@
-      case 13: return {{5, 2, 4, 1, 0, 3}}; // OH13 = a, d, 4, @
-      case 12: return {{1, 4, 2, 5, 0, 3}}; // OH12 = a, d, 4, @@
-      case 22: return {{5, 3, 4, 1, 0, 2}}; // OH22 = a, c, 4, @
-      case 21: return {{1, 4, 3, 5, 0, 2}}; // OH21 = a, c, 4, @@
-      case 28: return {{5, 3, 4, 2, 0, 1}}; // OH28 = a, b, 4, @
-      case 27: return {{2, 4, 3, 5, 0, 1}}; // OH27 = a, b, 4, @@
+      case 10: return {{4_v, 2_v, 3_v, 1_v, 0_v, 5_v}}; // OH10 = a, f, 4, @
+      case  8: return {{1_v, 3_v, 2_v, 4_v, 0_v, 5_v}}; // OH8 = a, f, 4, @@
+      case 11: return {{5_v, 2_v, 3_v, 1_v, 0_v, 4_v}}; // OH11 = a, e, 4, @
+      case  9: return {{1_v, 3_v, 2_v, 5_v, 0_v, 4_v}}; // OH9 = a, e, 4, @@
+      case 13: return {{5_v, 2_v, 4_v, 1_v, 0_v, 3_v}}; // OH13 = a, d, 4, @
+      case 12: return {{1_v, 4_v, 2_v, 5_v, 0_v, 3_v}}; // OH12 = a, d, 4, @@
+      case 22: return {{5_v, 3_v, 4_v, 1_v, 0_v, 2_v}}; // OH22 = a, c, 4, @
+      case 21: return {{1_v, 4_v, 3_v, 5_v, 0_v, 2_v}}; // OH21 = a, c, 4, @@
+      case 28: return {{5_v, 3_v, 4_v, 2_v, 0_v, 1_v}}; // OH28 = a, b, 4, @
+      case 27: return {{2_v, 4_v, 3_v, 5_v, 0_v, 1_v}}; // OH27 = a, b, 4, @@
     }
   }
 
@@ -393,9 +398,9 @@ void MoleculeBuilder::setAtomStereo(
      */
     const unsigned S = shapes::size(chiralData.shape);
     const RankingInformation& ranking = permutator.getRanking();
-    std::vector<unsigned> sortedSites = temple::sort(
-      temple::iota<unsigned>(S),
-      [&](const unsigned a, const unsigned b) -> bool {
+    std::vector<SiteIndex> sortedSites = temple::sort(
+      temple::iota<SiteIndex>(S),
+      [&](const SiteIndex a, const SiteIndex b) -> bool {
         return ranking.sites.at(a) < ranking.sites.at(b);
       }
     );
@@ -406,27 +411,37 @@ void MoleculeBuilder::setAtomStereo(
      * hcount instead of explicitly, then it is considered to be the first
      * atom in the clockwise or anticlockwise counting.
      */
-    for(unsigned j = 0; j < ranking.sites.size(); ++j) {
-      if(
-        ranking.sites.at(j).size() == 1
-        && mol.graph().elementType(ranking.sites.at(j).front()) == Utils::ElementType::H
-        && vertexData.at(i).hCount == 1u
-      ) {
-        auto vertexMapIter = std::find(std::begin(sortedSites), std::end(sortedSites), j);
-        assert(vertexMapIter != std::end(sortedSites));
-        std::iter_swap(std::begin(sortedSites), vertexMapIter);
-        break;
+    if(vertexData.at(i).hCount == 1u) {
+      for(SiteIndex j {0}; j < ranking.sites.size(); ++j) {
+        if(
+          ranking.sites.at(j).size() == 1
+          && mol.graph().elementType(ranking.sites.at(j).front()) == Utils::ElementType::H
+        ) {
+          auto explicitHydrogenIter = std::find(std::begin(sortedSites), std::end(sortedSites), j);
+          if(explicitHydrogenIter == std::end(sortedSites)) {
+            throw std::runtime_error("Failed to find explicit hydrogen site in sorted sites");
+          }
+          /* Rotate the hcount site index to the first position in the sorted
+           * sites
+           */
+          std::rotate(
+            std::begin(sortedSites),
+            explicitHydrogenIter,
+            explicitHydrogenIter + 1
+          );
+          break;
+        }
       }
     }
 
     // TODO missing weirdness re: ring closing bonds
 
     /* Transfer the sorted sites onto shape vertices */
-    auto vertexMap = shapeMap(chiralData);
-    std::vector<unsigned> siteToShapeVertexMap(S);
+    auto vertexMap = shapes::properties::inverseRotation(shapeMap(chiralData));
+    SiteToShapeVertexMap siteToShapeVertexMap; // SiteIndex -> shapes::Vertex
+    siteToShapeVertexMap.resize(S);
     for(unsigned j = 0; j < S; ++j) {
-      siteToShapeVertexMap.at(vertexMap.at(j)) = sortedSites.at(j);
-      // siteToShapeVertexMap.at(j) = sortedSites.at(vertexMap.at(j));
+      siteToShapeVertexMap.at(sortedSites.at(j)) = vertexMap.at(j);
     }
 
     /* Create a stereopermutation and look for it in the list of feasibles */
@@ -521,10 +536,10 @@ void MoleculeBuilder::setBondStereo(
         std::swap(first, second);
       }
 
-      auto getSiteIndexLeft = [&](const PrivateGraph::Vertex i) -> unsigned {
+      auto getSiteIndexLeft = [&](const PrivateGraph::Vertex i) -> SiteIndex {
         return first.getRanking().getSiteIndexOf(indexInComponentMap.at(i));
       };
-      auto getSiteIndexRight = [&](const PrivateGraph::Vertex i) -> unsigned {
+      auto getSiteIndexRight = [&](const PrivateGraph::Vertex i) -> SiteIndex {
         return second.getRanking().getSiteIndexOf(indexInComponentMap.at(i));
       };
 

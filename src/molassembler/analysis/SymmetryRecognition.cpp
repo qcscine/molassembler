@@ -70,7 +70,7 @@ struct AngularDeviation {
          * asymmetric symmetry case
          */
         const double penalty = temple::accumulate(
-          shapes::properties::generateAllRotations(name, temple::iota<unsigned>(S)),
+          shapes::properties::generateAllRotations(name, temple::iota<shapes::Vertex>(S)),
           std::numeric_limits<double>::max(),
           [&](const double minAngularDeviation, const auto& rotation) -> double {
             const double angleDeviation = temple::sum(
@@ -207,7 +207,7 @@ struct AngularDeviationGeometryIndexHybrid final : public Recognizer {
          * asymmetric symmetry case
          */
         const double penalty = temple::accumulate(
-          shapes::properties::generateAllRotations(name, temple::iota<unsigned>(S)),
+          shapes::properties::generateAllRotations(name, temple::iota<shapes::Vertex>(S)),
           std::numeric_limits<double>::max(),
           [&](const double minAngularDeviation, const auto& rotation) -> double {
             const double angleDeviation = temple::sum(
@@ -395,11 +395,12 @@ struct CShMPathDev final : public Recognizer {
       }
       return findIter - std::begin(validShapes);
     };
-    unsigned i, j;
-    std::tie(i, j) = std::minmax(
-      indexOfShape(a),
-      indexOfShape(b)
-    );
+    unsigned i = indexOfShape(a);
+    unsigned j = indexOfShape(b);
+
+    if(i > j) {
+      std::swap(i, j);
+    }
 
     return minimumDistortionAngles(i, j);
   }

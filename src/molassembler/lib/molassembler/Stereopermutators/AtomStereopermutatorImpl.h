@@ -19,7 +19,7 @@
 namespace Scine {
 namespace shapes {
 namespace properties {
-struct SymmetryTransitionGroup;
+struct ShapeTransitionGroup;
 } // namespace properties
 } // namespace shapes
 
@@ -46,14 +46,13 @@ public:
    * @throws std::logic_error If there are no smaller shapes
    * @note Behavior is dependent on ChiralStatePreservation option
    */
-  static shapes::Shape down(shapes::Shape shape, unsigned removedShapePosition);
+  static shapes::Shape down(shapes::Shape shape, shapes::Vertex removedVertex);
 
   /*!
-   * @brief Generates an shape position index mapping from a shape
-   *   transition group
+   * @brief Selects a shape vertex mapping from a shape transition group
    */
-  static boost::optional<std::vector<unsigned>> getIndexMapping(
-    const shapes::properties::SymmetryTransitionGroup& mappingsGroup,
+  static boost::optional<std::vector<shapes::Vertex>> selectTransitionMapping(
+    const shapes::properties::ShapeTransitionGroup& mappingsGroup,
     const ChiralStatePreservation& preservationOption
   );
 
@@ -68,14 +67,18 @@ public:
 //!@}
 
 /* Constructors */
+  /**
+   * @brief Constructor
+   *
+   * @param graph Base graph
+   * @param shape Shape the stereopermutator represents
+   * @param centerAtom Placement
+   * @param ranking Ranking of its substituents
+   */
   Impl(
-    // The base graph
     const Graph& graph,
-    // The shape of this Stereopermutator
     shapes::Shape shape,
-    // The atom this Stereopermutator is centered on
     AtomIndex centerAtom,
-    // Ranking information of substituents
     RankingInformation ranking
   );
 
@@ -128,7 +131,7 @@ public:
 
 /* Information */
   //! Returns the angle between two site indices in the idealized shape
-  double angle(unsigned i, unsigned j) const;
+  double angle(SiteIndex i, SiteIndex j) const;
 
   /*!
    * @brief Returns the permutation index within the set of possible
@@ -194,7 +197,7 @@ public:
    * @brief Yields the mapping from site indices to shape positions
    * @throws std::logic_error if the stereopermutator is unassigned.
    */
-  const std::vector<unsigned>& getShapePositionMap() const;
+  const ShapeMap& getShapePositionMap() const;
 
   /*!
    * @brief Returns the number of possible permutations
@@ -240,7 +243,7 @@ private:
   boost::optional<unsigned> _assignmentOption;
 
   //! Derived property of @p _assignmentOption
-  std::vector<unsigned> _shapePositionMap;
+  ShapeMap _shapePositionMap;
 
   //! Whether all feasible assignments interconvert thermally
   bool _thermalized;

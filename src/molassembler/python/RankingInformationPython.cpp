@@ -3,11 +3,8 @@
  *   Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
  *   See LICENSE.txt
  */
-#include "pybind11/pybind11.h"
-#include "pybind11/stl.h"
+#include "TypeCasters.h"
 #include "pybind11/operators.h"
-
-#include "molassembler/RankingInformation.h"
 
 void init_ranking_information(pybind11::module& m) {
   using namespace Scine::molassembler;

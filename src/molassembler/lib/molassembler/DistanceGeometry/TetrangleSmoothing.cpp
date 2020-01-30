@@ -27,8 +27,12 @@ struct LU {
   ) {
     for(unsigned i = 0; i < 4; ++i) {
       for(unsigned j = i + 1; j < 4; ++j) {
-        unsigned a, b;
-        std::tie(a, b) = std::minmax(indices[i], indices[j]);
+        unsigned a = indices[i];
+        unsigned b = indices[j];
+        if(a > b) {
+          std::swap(a, b);
+        }
+
         U(i, j) = bounds(a, b);
         U(j, i) = bounds(a, b);
         L(i, j) = bounds(b, a);

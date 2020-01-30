@@ -20,7 +20,7 @@
 #include <iostream>
 
 const std::array<unsigned, 4> distortionColumns {{8, 8, 8, 30}};
-const std::array<unsigned, 3> symmetryColumns {{5, 5, 25}};
+const std::array<unsigned, 3> shapeColumns {{5, 5, 25}};
 const std::array<unsigned, 4> ambiguityColumns {{10, 25, 25, 4}};
 
 using namespace Scine;
@@ -55,15 +55,15 @@ void printMappingsHeader() {
 }
 
 void printPermissibleSymmetries() {
-  std::cout << std::setw(symmetryColumns[0]) << "Idx"
-    << std::setw(symmetryColumns[1]) << "Size"
-    << std::setw(symmetryColumns[2]) << "Name"
+  std::cout << std::setw(shapeColumns[0]) << "Idx"
+    << std::setw(shapeColumns[1]) << "Size"
+    << std::setw(shapeColumns[2]) << "Name"
     << nl;
 
   for(unsigned i = 0; i < shapes::allShapes.size(); i++) {
-    std::cout << std::setw(symmetryColumns[0]) << i
-      << std::setw(symmetryColumns[1]) << shapes::size(shapes::allShapes.at(i))
-      << std::setw(symmetryColumns[2]) << shapes::name(shapes::allShapes.at(i))
+    std::cout << std::setw(shapeColumns[0]) << i
+      << std::setw(shapeColumns[1]) << shapes::size(shapes::allShapes.at(i))
+      << std::setw(shapeColumns[2]) << shapes::name(shapes::allShapes.at(i))
       << nl;
   }
 
@@ -120,17 +120,17 @@ double calculateAmbiguity(
 struct AmbiguityEntry {
   double ambiguity;
   shapes::Shape source, target;
-  boost::optional<unsigned> deletedIndex;
+  boost::optional<shapes::Vertex> deletedVertex;
 
   AmbiguityEntry(
     const double passAmbiguity,
     const shapes::Shape passSource,
     const shapes::Shape passTarget,
-    boost::optional<unsigned> passDeletedIndex = boost::none
+    boost::optional<shapes::Vertex> passDeletedIndex = boost::none
   ) : ambiguity(passAmbiguity),
       source(passSource),
       target(passTarget),
-      deletedIndex(std::move(passDeletedIndex))
+      deletedVertex(std::move(passDeletedIndex))
   {}
 };
 
@@ -140,8 +140,8 @@ int main(int argc, char* argv[]) {
   boost::program_options::options_description options_description("Recognized options");
   options_description.add_options()
     ("help", "Produce help message")
-    ("s", boost::program_options::value<unsigned>(), "Source symmetry index")
-    ("t", boost::program_options::value<unsigned>(), "Target symmetry index")
+    ("s", boost::program_options::value<unsigned>(), "Source shape index")
+    ("t", boost::program_options::value<unsigned>(), "Target shape index")
     ("a", boost::program_options::value<bool>(), "Calculate ambiguity of lowest mappings")
   ;
 
@@ -156,7 +156,7 @@ int main(int argc, char* argv[]) {
   // Manage the results
   if(options_variables_map.count("help") > 0) {
     std::cout << options_description << nl
-      << "The following symmetry indices are permissible:" << nl;
+      << "The following shape indices are permissible:" << nl;
     printPermissibleSymmetries();
     return 0;
   }
@@ -165,30 +165,30 @@ int main(int argc, char* argv[]) {
     options_variables_map.count("s") > 0
     && options_variables_map.count("t") > 0
   ) {
-    unsigned sourceSymmetryArg = options_variables_map["s"].as<unsigned>();
-    unsigned targetSymmetryArg = options_variables_map["t"].as<unsigned>();
+    unsigned sourceShapeArg = options_variables_map["s"].as<unsigned>();
+    unsigned targetShapeArg = options_variables_map["t"].as<unsigned>();
 
     if(
-      sourceSymmetryArg >= shapes::allShapes.size()
-      || targetSymmetryArg >= shapes::allShapes.size()
+      sourceShapeArg >= shapes::allShapes.size()
+      || targetShapeArg >= shapes::allShapes.size()
     ) {
-      std::cout << "Specified symmetry out of bounds. Valid symmetries:" << nl << nl;
+      std::cout << "Specified shape out of bounds. Valid symmetries:" << nl << nl;
       printPermissibleSymmetries();
       return 1;
     }
 
-    if(sourceSymmetryArg == targetSymmetryArg) {
-      std::cout << "The source and target symmetry may not be identical." << nl << nl;
+    if(sourceShapeArg == targetShapeArg) {
+      std::cout << "The source and target shape may not be identical." << nl << nl;
       printPermissibleSymmetries();
       return 1;
     }
 
-    shapes::Shape sourceSymmetry(shapes::allShapes.at(sourceSymmetryArg)),
-                   targetSymmetry(shapes::allShapes.at(targetSymmetryArg));
+    shapes::Shape sourceShape(shapes::allShapes.at(sourceShapeArg)),
+                   targetShape(shapes::allShapes.at(targetShapeArg));
 
     int diff = (
-      static_cast<int>(shapes::size(targetSymmetry))
-      - static_cast<int>(shapes::size(sourceSymmetry))
+      static_cast<int>(shapes::size(targetShape))
+      - static_cast<int>(shapes::size(sourceShape))
     );
 
     if(std::abs(diff) > 1) {
@@ -206,9 +206,9 @@ int main(int argc, char* argv[]) {
 
     if(diff == 1 || diff == 0) {
       const auto distortions = temple::sort(
-        shapes::properties::symmetryTransitionMappings(
-          sourceSymmetry,
-          targetSymmetry
+        shapes::properties::shapeTransitionMappings(
+          sourceShape,
+          targetShape
         ),
         distortionComparator
       );
@@ -216,11 +216,11 @@ int main(int argc, char* argv[]) {
       printMappingsHeader();
       writeDistortions(distortions);
     } else {
-      for(unsigned i = 0; i < shapes::size(sourceSymmetry); ++i) {
+      for(shapes::Vertex i {0}; i < shapes::size(sourceShape); ++i) {
         const auto distortions = temple::sort(
             shapes::properties::ligandLossTransitionMappings(
-            sourceSymmetry,
-            targetSymmetry,
+            sourceShape,
+            targetShape,
             i
           ),
           distortionComparator
@@ -236,22 +236,22 @@ int main(int argc, char* argv[]) {
   if(options_variables_map.count("a") > 0) {
     std::vector<AmbiguityEntry> ambiguities;
 
-    for(const auto& sourceSymmetry : shapes::allShapes) {
-      for(const auto& targetSymmetry : shapes::allShapes) {
-        if(sourceSymmetry == targetSymmetry) {
+    for(const auto& sourceShape : shapes::allShapes) {
+      for(const auto& targetShape : shapes::allShapes) {
+        if(sourceShape == targetShape) {
           // Skip identity mapping
           continue;
         }
 
         int diff = (
-          static_cast<int>(shapes::size(targetSymmetry))
-          - static_cast<int>(shapes::size(sourceSymmetry))
+          static_cast<int>(shapes::size(targetShape))
+          - static_cast<int>(shapes::size(sourceShape))
         );
 
         if(diff == 1 || diff == 0) {
-          auto distortions = shapes::properties::symmetryTransitionMappings(
-            sourceSymmetry,
-            targetSymmetry
+          auto distortions = shapes::properties::shapeTransitionMappings(
+            sourceShape,
+            targetShape
           );
 
           auto ambiguity = calculateAmbiguity(distortions);
@@ -259,15 +259,15 @@ int main(int argc, char* argv[]) {
           if(0.0 < ambiguity && ambiguity < 1.0) {
             ambiguities.emplace_back(
               ambiguity,
-              sourceSymmetry,
-              targetSymmetry
+              sourceShape,
+              targetShape
             );
           }
         } else if(diff == -1) {
-          for(unsigned i = 0; i < shapes::size(sourceSymmetry); ++i) {
+          for(shapes::Vertex i {0}; i < shapes::size(sourceShape); ++i) {
             auto distortions = shapes::properties::ligandLossTransitionMappings(
-              sourceSymmetry,
-              targetSymmetry,
+              sourceShape,
+              targetShape,
               i
             );
 
@@ -276,8 +276,8 @@ int main(int argc, char* argv[]) {
             if(0.0 < ambiguity && ambiguity < 1.0) {
               ambiguities.emplace_back(
                 ambiguity,
-                sourceSymmetry,
-                targetSymmetry,
+                sourceShape,
+                targetShape,
                 i
               );
             }
@@ -299,7 +299,7 @@ int main(int argc, char* argv[]) {
       << "Zero indicates that the choice is unambiguous, one that the choice is " << nl
       << "completely ambiguous. Ambiguity values excluding zero and one are shown" << nl
       << "(both are common). Idx is the index that is deleted when the target" << nl
-      << "symmetry is smaller than the source symmetry." << nl << nl;
+      << "shape is smaller than the source shape." << nl << nl;
 
 
     std::cout << std::fixed << std::setprecision(2);
@@ -314,8 +314,8 @@ int main(int argc, char* argv[]) {
         << std::setw(ambiguityColumns[2]) << shapes::name(entry.target)
         << std::setw(ambiguityColumns[3]);
 
-      if(entry.deletedIndex) {
-        std::cout << entry.deletedIndex.value();
+      if(entry.deletedVertex) {
+        std::cout << entry.deletedVertex.value();
       } else {
         std::cout << " ";
       }

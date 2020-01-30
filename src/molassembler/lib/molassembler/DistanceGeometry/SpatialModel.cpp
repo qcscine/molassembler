@@ -60,24 +60,6 @@ inline auto orderedSequence(Inds ... inds) {
   return indices;
 }
 
-struct SymmetryMapHelper {
-  static unsigned getSymmetryPositionOf(unsigned siteIndex, const std::vector<unsigned>& map) {
-    return map.at(siteIndex);
-  }
-
-  static unsigned getSiteIndexAt(unsigned symmetryPosition, const std::vector<unsigned>& map) {
-    auto findIter = std::find(
-      std::begin(map),
-      std::end(map),
-      symmetryPosition
-    );
-
-    assert(findIter != std::end(map));
-
-    return findIter - std::begin(map);
-  }
-};
-
 namespace distance_geometry {
 
 // General availability of static constexpr members
@@ -417,12 +399,13 @@ void SpatialModel::addAtomStereopermutatorInformation(
    *
    * NOTE: Cone angles are calculated for non-haptic sites too -> (0, 0).
    */
-  for(unsigned long i = 0; i < ranking.sites.size() - 1; ++i) {
+  const unsigned siteCount = ranking.sites.size();
+  for(SiteIndex i {0}; i < siteCount - 1; ++i) {
     if(!feasiblePermutations.coneAngles.at(i)) {
       continue;
     }
 
-    for(unsigned long j = i + 1; j < ranking.sites.size(); ++j) {
+    for(SiteIndex j {i + 1}; j < siteCount; ++j) {
       if(!feasiblePermutations.coneAngles.at(j)) {
         continue;
       }
@@ -538,24 +521,18 @@ void SpatialModel::addBondStereopermutatorInformation(
   );
 
   /* Only dihedrals */
-  unsigned firstShapePosition;
-  unsigned secondShapePosition;
+  shapes::Vertex firstShapePosition;
+  shapes::Vertex secondShapePosition;
   double dihedralAngle;
 
   for(const auto& dihedralTuple : composite.dihedrals(permutation)) {
     std::tie(firstShapePosition, secondShapePosition, dihedralAngle) = dihedralTuple;
 
-    const unsigned siteIndexIAtFirst = SymmetryMapHelper::getSiteIndexAt(
-      firstShapePosition,
-      firstStereopermutator.getShapePositionMap()
-    );
-    const unsigned siteIndexLAtSecond = SymmetryMapHelper::getSiteIndexAt(
-      secondShapePosition,
-      secondStereopermutator.getShapePositionMap()
-    );
+    const SiteIndex iAtFirst = firstStereopermutator.getShapePositionMap().indexOf(firstShapePosition);
+    const SiteIndex lAtSecond = secondStereopermutator.getShapePositionMap().indexOf(secondShapePosition);
 
-    const auto& coneAngleIOption = firstStereopermutator.getFeasible().coneAngles.at(siteIndexIAtFirst);
-    const auto& coneAngleLOption = secondStereopermutator.getFeasible().coneAngles.at(siteIndexLAtSecond);
+    const auto& coneAngleIOption = firstStereopermutator.getFeasible().coneAngles.at(iAtFirst);
+    const auto& coneAngleLOption = secondStereopermutator.getFeasible().coneAngles.at(lAtSecond);
 
     // Do not emit chiral constraints if cone angles are unknown
     if(!coneAngleIOption || !coneAngleLOption) {
@@ -599,8 +576,8 @@ void SpatialModel::addBondStereopermutatorInformation(
     // Set per-atom sequence dihedral distance bounds
     temple::forEach(
       temple::adaptors::allPairs(
-        firstStereopermutator.getRanking().sites.at(siteIndexIAtFirst),
-        secondStereopermutator.getRanking().sites.at(siteIndexLAtSecond)
+        firstStereopermutator.getRanking().sites.at(iAtFirst),
+        secondStereopermutator.getRanking().sites.at(lAtSecond)
       ),
       [&](const AtomIndex firstIndex, const AtomIndex secondIndex) -> void {
         setDihedralBoundsIfEmpty(
@@ -628,10 +605,10 @@ void SpatialModel::addBondStereopermutatorInformation(
 
     _dihedralConstraints.emplace_back(
       DihedralConstraint::SiteSequence {
-        firstStereopermutator.getRanking().sites.at(siteIndexIAtFirst),
+        firstStereopermutator.getRanking().sites.at(iAtFirst),
         {firstStereopermutator.centralIndex()},
         {secondStereopermutator.centralIndex()},
-        secondStereopermutator.getRanking().sites.at(siteIndexLAtSecond)
+        secondStereopermutator.getRanking().sites.at(lAtSecond)
       },
       dihedralBounds.lower,
       dihedralBounds.upper
@@ -846,8 +823,8 @@ double SpatialModel::siteCentralAngle(
   const AtomIndex centralIndex,
   const shapes::Shape& shape,
   const RankingInformation& ranking,
-  const std::vector<unsigned>& shapeVertexMap,
-  const std::pair<unsigned, unsigned>& sites,
+  const AtomStereopermutator::ShapeMap& shapeVertexMap,
+  const std::pair<SiteIndex, SiteIndex>& sites,
   const PrivateGraph& inner
 ) {
   /* We need to respect the graph as ground truth and distort an ideal
@@ -967,7 +944,7 @@ double SpatialModel::siteCentralAngle(
 
 double SpatialModel::siteCentralAngle(
   const AtomStereopermutator& permutator,
-  const std::pair<unsigned, unsigned>& sites,
+  const std::pair<SiteIndex, SiteIndex>& sites,
   const PrivateGraph& inner
 ) {
   return siteCentralAngle(
@@ -982,7 +959,7 @@ double SpatialModel::siteCentralAngle(
 
 ValueBounds SpatialModel::modelSiteAngleBounds(
   const AtomStereopermutator& permutator,
-  const std::pair<unsigned, unsigned>& sites,
+  const std::pair<SiteIndex, SiteIndex>& sites,
   const double looseningMultiplier,
   const PrivateGraph& inner
 ) {
@@ -1132,7 +1109,7 @@ ChiralConstraint SpatialModel::makeChiralConstraint(
   // Map the site indices to their constituent indices for use in the prototype
   auto tetrahedronSites = temple::map(
     minimalConstraint,
-    [&](const boost::optional<unsigned>& siteIndexOptional) -> std::vector<AtomIndex> {
+    [&](const boost::optional<SiteIndex>& siteIndexOptional) -> std::vector<AtomIndex> {
       return temple::optionals::map(
         siteIndexOptional,
         temple::functor::at(ranking.sites)

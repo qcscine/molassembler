@@ -16,7 +16,6 @@
 #include "molassembler/DistanceGeometry/DistanceGeometry.h"
 
 namespace Scine {
-
 namespace molassembler {
 
 class StereopermutatorList;
@@ -115,9 +114,9 @@ struct BondStereopermutator::Impl : public temple::crtp::LexicographicComparable
 
   double dihedral(
     const AtomStereopermutator& stereopermutatorA,
-    unsigned siteIndexA,
+    SiteIndex siteIndexA,
     const AtomStereopermutator& stereopermutatorB,
-    unsigned siteIndexB
+    SiteIndex siteIndexB
   ) const;
 
   bool hasSameCompositeOrientation(const BondStereopermutator::Impl& other) const;
@@ -154,8 +153,8 @@ private:
 
   //! Yields abstract site characters at their shape positions
   static std::vector<char> _charifyRankedSites(
-    const std::vector<std::vector<unsigned>>& sitesRanking,
-    const std::vector<unsigned>& symmetryPositionMap
+    const RankingInformation::RankedSitesType& sitesRanking,
+    const AtomStereopermutator::ShapeMap& shapeVertexMap
   );
 
   static stereopermutation::Composite _constructComposite(
@@ -171,7 +170,6 @@ private:
 };
 
 } // namespace molassembler
-
 } // namespace Scine
 
 #endif

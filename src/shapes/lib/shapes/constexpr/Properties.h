@@ -17,6 +17,7 @@
 #define INCLUDE_SHAPE_CONSTEXPR_PROPERTIES_H
 
 #include "shapes/Data.h"
+#include "shapes/constexpr/Data.h"
 
 #include "temple/constexpr/Bitset.h"
 #include "temple/constexpr/DynamicSet.h"

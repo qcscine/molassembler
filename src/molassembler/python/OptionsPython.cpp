@@ -3,7 +3,7 @@
  *   Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
  *   See LICENSE.txt
  */
-#include "pybind11/pybind11.h"
+#include "TypeCasters.h"
 #include "molassembler/Options.h"
 
 void init_options(pybind11::module& m) {

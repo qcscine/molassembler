@@ -17,7 +17,6 @@
 #include <vector>
 
 namespace Scine {
-
 namespace molassembler {
 
 // Forward-declarations
@@ -128,9 +127,7 @@ void updateEtaBonds(PrivateGraph& graph);
 std::vector<unsigned> distance(AtomIndex a, const PrivateGraph& graph);
 
 } // namespace graph_algorithms
-
 } // namespace molassembler
-
 } // namespace Scine
 
 #endif

@@ -25,6 +25,8 @@ using namespace shapes;
 extern const std::string& topName(Top top);
 extern void randomlyRotate(Eigen::Ref<continuous::PositionCollection> vs);
 
+inline Vertex operator "" _v (unsigned long long v) { return Vertex(v); }
+
 template<typename EnumType>
 constexpr inline auto underlying(const EnumType e) {
   return static_cast<std::underlying_type_t<EnumType>>(e);
@@ -435,7 +437,7 @@ BOOST_AUTO_TEST_CASE(ShapeMeasuresYieldForwardPermutation) {
 
   continuous::PositionCollection shuffled (3, shapeCoordinates.cols());
   BOOST_REQUIRE_MESSAGE(size(testShape) == 4, "Test setup is no longer valid");
-  const std::vector<unsigned> shufflePermutation {{3, 4, 0, 2, 1}};
+  const std::vector<Vertex> shufflePermutation {{3_v, 4_v, 0_v, 2_v, 1_v}};
   for(unsigned i = 0; i < 5; ++i) {
     shuffled.col(shufflePermutation.at(i)) = shapeCoordinates.col(i);
   }
@@ -447,7 +449,7 @@ BOOST_AUTO_TEST_CASE(ShapeMeasuresYieldForwardPermutation) {
   BOOST_CHECK_CLOSE(faithful.measure, alternate.measure, 1);
   BOOST_CHECK_CLOSE(faithful.measure, heuristics.measure, 1);
 
-  auto isBackwardsMapping = [](const std::vector<unsigned>& permutation) -> bool {
+  auto isBackwardsMapping = [](const std::vector<Vertex>& permutation) -> bool {
     /* A forward permutation maps from positions to shape indices.
      * A backwards permutation maps from shape indices to positions.
      *
@@ -459,10 +461,10 @@ BOOST_AUTO_TEST_CASE(ShapeMeasuresYieldForwardPermutation) {
     return permutation.back() == permutation.size() - 1;
   };
 
-  auto invert = [](const std::vector<unsigned>& p) -> std::vector<unsigned> {
+  auto invert = [](const std::vector<Vertex>& p) -> std::vector<Vertex> {
     const unsigned P = p.size();
-    std::vector<unsigned> inverse(P);
-    for(unsigned i = 0; i < P; ++i) {
+    std::vector<Vertex> inverse(P);
+    for(Vertex i {0}; i < P; ++i) {
       inverse.at(p.at(i)) = i;
     }
     return inverse;

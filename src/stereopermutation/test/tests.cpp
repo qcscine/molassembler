@@ -9,7 +9,6 @@
 
 #include <algorithm>
 #include <vector>
-#include <iostream>
 #include <cassert>
 #include <functional>
 #include <numeric>
@@ -41,6 +40,10 @@ std::ostream& operator << (std::ostream& os, const std::vector<T>& vector) {
   return os;
 }
 
+shapes::Vertex operator "" _v(unsigned long long v) {
+  return shapes::Vertex(v);
+}
+
 // create instances of all symmetries with monodentate ligands
 BOOST_AUTO_TEST_CASE(StereopermutationInstantiation) {
   for(const auto& shape: shapes::allShapes) {
@@ -57,14 +60,14 @@ BOOST_AUTO_TEST_CASE(StereopermutationRotation) {
   // Octahedron ship-screw like cis-cis-cis
   const Stereopermutation asymm {
     {'A', 'B', 'C', 'D', 'E', 'F'},
-    {{0, 1}, {2, 4}, {3, 5}}
+    {{0_v, 1_v}, {2_v, 4_v}, {3_v, 5_v}}
   };
 
-  std::vector<unsigned> C4z {{3, 0, 1, 2, 4, 5}};
+  std::vector<shapes::Vertex> C4z {{3_v, 0_v, 1_v, 2_v, 4_v, 5_v}};
 
   const Stereopermutation expected {
     {'D', 'A', 'B', 'C', 'E', 'F'},
-    {{0, 5}, {1, 2}, {3, 4}}
+    {{0_v, 5_v}, {1_v, 2_v}, {3_v, 4_v}}
   };
 
   const Stereopermutation rotated = asymm.applyPermutation(C4z);
@@ -79,7 +82,7 @@ BOOST_AUTO_TEST_CASE(StereopermutationRotation) {
 BOOST_AUTO_TEST_CASE(RotationCorrectness) {
   Stereopermutation testCase {
     {'A', 'A', 'C', 'D', 'B', 'B'},
-    {{0, 5}, {1, 4}}
+    {{0_v, 5_v}, {1_v, 4_v}}
   };
 
   auto isAorB = [](const char& test) -> bool {
@@ -117,19 +120,11 @@ BOOST_AUTO_TEST_CASE(OctahedralSymmetryCorrectness) {
 BOOST_AUTO_TEST_CASE(BugfixTests) {
   Stereopermutation a {
     {'A', 'A', 'A', 'B', 'B', 'B'},
-    {
-      std::make_pair(2, 3),
-      std::make_pair(1, 4),
-      std::make_pair(0, 5)
-    }
+    {{2_v, 3_v}, {1_v, 4_v}, {0_v, 5_v}}
   };
   Stereopermutation b {
     {'A', 'A', 'B', 'A', 'B', 'B'},
-    {
-      std::make_pair(3, 5),
-      std::make_pair(1, 2),
-      std::make_pair(0, 4)
-    }
+    {{3_v, 5_v}, {1_v, 2_v}, {0_v, 4_v}}
   };
 
   // one and only one of the following can be true for any Stereopermutations a and b
@@ -143,19 +138,11 @@ BOOST_AUTO_TEST_CASE(BugfixTests) {
    */
   Stereopermutation c {
     {'A', 'A', 'A', 'B', 'B', 'B'},
-    {
-      std::make_pair(2, 3),
-      std::make_pair(1, 4),
-      std::make_pair(0, 5)
-    }
+    {{2_v, 3_v}, {1_v, 4_v}, {0_v, 5_v}}
   };
   Stereopermutation d {
     {'A', 'A', 'A', 'B', 'B', 'B'},
-    {
-      std::make_pair(1, 4),
-      std::make_pair(2, 3),
-      std::make_pair(0, 5)
-    }
+    {{1_v, 4_v}, {2_v, 3_v}, {0_v, 5_v}}
   };
 
   BOOST_CHECK(temple::testLogicalOperators(c, d));
@@ -163,17 +150,28 @@ BOOST_AUTO_TEST_CASE(BugfixTests) {
   BOOST_CHECK(rotationallySuperimposable(d, c, shapes::Shape::Octahedron));
 }
 
+using Characters = Stereopermutation::CharacterOccupation;
 using PairSet = std::vector<
   std::pair<unsigned, unsigned>
 >;
-
-using Characters = std::vector<char>;
 
 struct TestCase {
   Characters characters;
   PairSet pairs;
   unsigned expectedUnique;
 };
+
+Stereopermutation::OrderedLinks makeLinks(const PairSet& pairs) {
+  return temple::map(
+    pairs,
+    [](const std::pair<unsigned, unsigned>& v) -> Stereopermutation::Link {
+      return std::make_pair(
+        shapes::Vertex(v.first),
+        shapes::Vertex(v.second)
+      );
+    }
+  );
+}
 
 void runTestsWithCounts(
   const shapes::Shape& shape,
@@ -183,7 +181,7 @@ void runTestsWithCounts(
     // instantiate
     const Stereopermutation stereopermutation {
       testCase.characters,
-      testCase.pairs
+      makeLinks(testCase.pairs)
     };
 
     // The count of uniques in the tests are all without trans-arranged pairs!
@@ -193,7 +191,7 @@ void runTestsWithCounts(
       true // remove trans arranged pairs
     );
 
-    std::cout << stereopermutation.toString() << " unique weights: " << temple::stringify(unique.weights) << "\n";
+    // std::cout << stereopermutation.toString() << " unique weights: " << temple::stringify(unique.weights) << "\n";
 
     BOOST_CHECK_MESSAGE(
       unique.list.size() == testCase.expectedUnique,
@@ -404,16 +402,9 @@ BOOST_AUTO_TEST_CASE(OctahedralCaseWithoutTransRemoval) {
   const auto characters = Characters(6, 'A');
   const auto pairs = PairSet({{0, 1}, {2, 3}, {4, 5}});
 
-  const Stereopermutation stereopermutation {characters, pairs};
+  const Stereopermutation stereopermutation {characters, makeLinks(pairs)};
   const auto unique = uniques(stereopermutation, shape);
   BOOST_CHECK_EQUAL(unique.list.size(), 4u);
-}
-
-void writeState(const Composite::OrientationState& a) {
-  std::cout << "OrientationState {\n"
-    << "  symmetry: " << shapes::name(a.shape) << "\n"
-    << "  fusedPosition: " << a.fusedVertex << "\n"
-    << "  characters: " << temple::stringify(a.characters) << "\n}\n";
 }
 
 bool testOrientationState(Composite::OrientationState a) {
@@ -440,7 +431,7 @@ BOOST_AUTO_TEST_CASE(OrientationStateTests) {
       maximumAsymmetricCase.at(i) = 'A' + i;
     }
 
-    for(unsigned i = 0; i < S; ++i ) {
+    for(shapes::Vertex i {0}; i < S; ++i ) {
       BOOST_CHECK_MESSAGE(
         testOrientationState(
           Composite::OrientationState {
@@ -465,13 +456,13 @@ BOOST_AUTO_TEST_CASE(compositesTests) {
   Composite a {
     Composite::OrientationState {
       shapes::Shape::Seesaw,
-      0,
+      0_v,
       {'A', 'B', 'C', 'D'},
       leftIdentifier
     },
     Composite::OrientationState {
       shapes::Shape::Tetrahedron,
-      0,
+      0_v,
       {'A', 'B', 'C', 'D'},
       rightIdentifier
     }
@@ -485,13 +476,13 @@ BOOST_AUTO_TEST_CASE(compositesTests) {
   Composite b {
     Composite::OrientationState {
       shapes::Shape::Octahedron,
-      4,
+      4_v,
       {'A', 'B', 'C', 'D', 'E', 'F'},
       leftIdentifier
     },
     Composite::OrientationState {
       shapes::Shape::Octahedron,
-      2,
+      2_v,
       {'A', 'B', 'C', 'D', 'E', 'F'},
       rightIdentifier
     }
@@ -505,13 +496,13 @@ BOOST_AUTO_TEST_CASE(compositesTests) {
   Composite c {
     Composite::OrientationState {
       shapes::Shape::Bent,
-      0,
+      0_v,
       {'A', 'B'},
       leftIdentifier
     },
     Composite::OrientationState {
       shapes::Shape::EquilateralTriangle,
-      0,
+      0_v,
       {'A', 'B', 'C'},
       rightIdentifier
     }
@@ -525,13 +516,13 @@ BOOST_AUTO_TEST_CASE(compositesTests) {
   Composite d {
     Composite::OrientationState {
       shapes::Shape::EquilateralTriangle,
-      0,
+      0_v,
       {'A', 'B', 'C'},
       leftIdentifier
     },
     Composite::OrientationState {
       shapes::Shape::EquilateralTriangle,
-      0,
+      0_v,
       {'A', 'B', 'C'},
       rightIdentifier
     }
@@ -545,13 +536,13 @@ BOOST_AUTO_TEST_CASE(compositesTests) {
   Composite e {
     Composite::OrientationState {
       shapes::Shape::Bent,
-      0,
+      0_v,
       {'A', 'B'},
       leftIdentifier
     },
     Composite::OrientationState {
       shapes::Shape::Bent,
-      0,
+      0_v,
       {'A', 'B'},
       rightIdentifier
     }
@@ -570,13 +561,13 @@ BOOST_AUTO_TEST_CASE(compositesAlignment) {
   Composite a {
     Composite::OrientationState {
       shapes::Shape::Tetrahedron,
-      0,
+      0_v,
       {'A', 'B', 'C', 'D'},
       leftIdentifier
     },
     Composite::OrientationState {
       shapes::Shape::Tetrahedron,
-      0,
+      0_v,
       {'A', 'B', 'C', 'D'},
       rightIdentifier
     },
@@ -591,13 +582,13 @@ BOOST_AUTO_TEST_CASE(compositesAlignment) {
   Composite b {
     Composite::OrientationState {
       shapes::Shape::Bent,
-      0,
+      0_v,
       {'A', 'B'},
       leftIdentifier
     },
     Composite::OrientationState {
       shapes::Shape::SquarePyramid,
-      0,
+      0_v,
       {'A', 'B', 'C', 'D', 'E'},
       rightIdentifier
     },
@@ -612,13 +603,13 @@ BOOST_AUTO_TEST_CASE(compositesAlignment) {
   Composite c {
     Composite::OrientationState {
       shapes::Shape::Octahedron,
-      4,
+      4_v,
       {'A', 'B', 'C', 'D', 'E', 'F'},
       leftIdentifier
     },
     Composite::OrientationState {
       shapes::Shape::Octahedron,
-      2,
+      2_v,
       {'A', 'B', 'C', 'D', 'E', 'F'},
       rightIdentifier
     }

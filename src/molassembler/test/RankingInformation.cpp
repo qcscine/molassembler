@@ -9,25 +9,21 @@
 #include "molassembler/RankingInformation.h"
 #include "temple/Stringify.h"
 
-template<typename T>
-using RaggedVector = std::vector<
-  std::vector<T>
->;
+using namespace Scine;
+using namespace molassembler;
 
-BOOST_AUTO_TEST_CASE(rankingCombinationTests) {
-  using namespace Scine;
-  using namespace molassembler;
+using namespace std::string_literals;
 
-  using RaggedAtoms = RaggedVector<AtomIndex>;
-  using RaggedLigands = RaggedVector<unsigned>;
+inline SiteIndex operator "" _s (unsigned long long v) { return SiteIndex(v); }
 
-  auto symmetricHapticPincerRanking = RaggedAtoms {
+BOOST_AUTO_TEST_CASE(SiteRanking) {
+  const auto symmetricHapticPincerRanking = RankingInformation::RankedSubstituentsType {
     {1, 6},
     {2, 5},
     {3, 4}
   };
 
-  auto symmetricHapticPincerLigands = RaggedAtoms {
+  const auto symmetricHapticPincerLigands = RankingInformation::SiteListType {
     {1, 2},
     {3, 4},
     {5, 6}
@@ -35,43 +31,50 @@ BOOST_AUTO_TEST_CASE(rankingCombinationTests) {
 
   std::vector<LinkInformation> symmetricHapticPincerLinks;
   LinkInformation a, b;
-  a.indexPair = {0, 1};
-  b.indexPair = {1, 2};
+  a.indexPair = {0_s, 1_s};
+  b.indexPair = {1_s, 2_s};
 
   symmetricHapticPincerLinks.push_back(a);
   symmetricHapticPincerLinks.push_back(b);
 
-  auto symmetricHapticPincerRankedLigands = RankingInformation::rankSites(
+  auto symmetricHapticPincerRankedSites = RankingInformation::rankSites(
     symmetricHapticPincerLigands,
     symmetricHapticPincerRanking
   );
 
   BOOST_CHECK_MESSAGE(
-    (symmetricHapticPincerRankedLigands == RaggedLigands {{0, 2}, {1}}),
-    "Expected {{0, 2}, 1}, got " << temple::stringify(symmetricHapticPincerRankedLigands)
+    (symmetricHapticPincerRankedSites == RankingInformation::RankedSitesType {{0_s, 2_s}, {1_s}}),
+    "Expected {{0, 2}, 1}, got " << temple::stringifyContainer(
+      symmetricHapticPincerRankedSites,
+      [](const auto& siteList) -> std::string {
+        return "{"s + temple::stringifyContainer(siteList,
+          [&](SiteIndex v) -> std::string { return std::to_string(v); }
+        ) + "}"s;
+      }
+    )
   );
 
-  auto asymmetricHapticPincerRanking = RaggedAtoms {
+  auto asymmetricHapticPincerRanking = RankingInformation::RankedSubstituentsType {
     {1}, {6}, {2}, {5}, {3}, {4}
   };
 
-  auto asymmetricHapticPincerLigands = RaggedAtoms {
+  auto asymmetricHapticPincerLigands = RankingInformation::SiteListType {
     {1, 2},
     {3, 4},
     {5, 6}
   };
 
   std::vector<LinkInformation> asymmetricHapticPincerLinks;
-  a.indexPair = {0, 1};
-  b.indexPair = {1, 2};
+  a.indexPair = {0_s, 1_s};
+  b.indexPair = {1_s, 2_s};
 
   asymmetricHapticPincerLinks.push_back(a);
   asymmetricHapticPincerLinks.push_back(b);
 
-  auto asymmetricHapticPincerRankedLigands = RankingInformation::rankSites(
+  auto asymmetricHapticPincerRankedSites = RankingInformation::rankSites(
     asymmetricHapticPincerLigands,
     asymmetricHapticPincerRanking
   );
 
-  BOOST_CHECK((asymmetricHapticPincerRankedLigands == RaggedLigands {{0}, {2}, {1}}));
+  BOOST_CHECK((asymmetricHapticPincerRankedSites == RankingInformation::RankedSitesType {{0_s}, {2_s}, {1_s}}));
 }

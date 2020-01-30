@@ -3,9 +3,8 @@
  *   Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
  *   See LICENSE.txt
  */
-#include "OptionalPython.h"
+#include "TypeCasters.h"
 #include "pybind11/operators.h"
-#include "pybind11/stl.h"
 
 #include "molassembler/AtomStereopermutator.h"
 #include "molassembler/BondStereopermutator.h"

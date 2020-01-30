@@ -60,7 +60,7 @@ Eigen::Matrix3d fitQuaternion(const Eigen::MatrixBase<DerivedA>& stator, const E
 Eigen::Matrix3d fitQuaternion(
   const PositionCollection& stator,
   const PositionCollection& rotor,
-  const std::unordered_map<unsigned, unsigned>& p
+  const std::unordered_map<Vertex, Vertex, boost::hash<Vertex>>& p
 ) {
   assert(centroidIsZero(stator));
   assert(centroidIsZero(rotor));
@@ -985,7 +985,7 @@ ShapeResult shapeFaithfulPaperImplementation(
     throw std::logic_error("Mismatched number of positions between supplied coordinates and shape!");
   }
 
-  auto permutation = temple::iota<unsigned>(N);
+  auto permutation = temple::iota<Vertex>(N);
 
   // Add the origin
   Matrix shapeCoordinates(3, N);
@@ -1000,7 +1000,7 @@ ShapeResult shapeFaithfulPaperImplementation(
   double permutationalMinimum = std::numeric_limits<double>::max();
 
   Eigen::Matrix<double, 3, Eigen::Dynamic> permutedShape(3, N);
-  std::vector<unsigned> bestPermutation;
+  std::vector<Vertex> bestPermutation;
   Eigen::Matrix3d bestRotationMatrix;
   do {
     // Construct a permuted shape positions matrix
@@ -1072,7 +1072,7 @@ ShapeResult shapeAlternateImplementationBase(
     throw std::logic_error("Mismatched number of positions between supplied coordinates and shape!");
   }
 
-  auto permutation = temple::iota<unsigned>(N);
+  auto permutation = temple::iota<Vertex>(N);
 
   // Add the origin
   Matrix shapeCoordinates(3, N);
@@ -1084,7 +1084,7 @@ ShapeResult shapeAlternateImplementationBase(
   double permutationalMinimum = std::numeric_limits<double>::max();
 
   Eigen::Matrix<double, 3, Eigen::Dynamic> permutedShape(3, N);
-  std::vector<unsigned> bestPermutation;
+  std::vector<Vertex> bestPermutation;
   Eigen::Matrix3d bestRotationMatrix;
   do {
     // Construct a permuted shape positions matrix
@@ -1168,15 +1168,15 @@ ShapeResult shapeAlternateImplementationCentroidLast(
   );
 }
 
-using PartialMapping = std::unordered_map<unsigned, unsigned>;
+using PartialMapping = std::unordered_map<Vertex, Vertex, boost::hash<Vertex>>;
 using NarrowType = std::pair<double, PartialMapping>;
 
 NarrowType shapeHeuristicsNarrow(
   const PositionCollection& stator,
   const PositionCollection& rotor,
-  std::unordered_map<unsigned, unsigned> permutation,
-  std::vector<unsigned> freeLeftVertices,
-  std::vector<unsigned> freeRightVertices
+  std::unordered_map<Vertex, Vertex, boost::hash<Vertex>> permutation,
+  std::vector<Vertex> freeLeftVertices,
+  std::vector<Vertex> freeRightVertices
 ) {
   const unsigned N = stator.cols();
 
@@ -1185,8 +1185,8 @@ NarrowType shapeHeuristicsNarrow(
    */
   const unsigned V = freeLeftVertices.size();
   Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> costs (V, V);
-  for(unsigned i = 0; i < V; ++i) {
-    for(unsigned j = 0; j < V; ++j) {
+  for(Vertex i {0}; i < V; ++i) {
+    for(Vertex j {0}; j < V; ++j) {
       costs(i, j) = (
         stator.col(freeLeftVertices.at(i))
         - rotor.col(freeRightVertices.at(j))
@@ -1199,12 +1199,12 @@ NarrowType shapeHeuristicsNarrow(
    * particular mapping choice whose expected rotational fit penalty we can sum
    * up from the previous matrix.
    */
-  auto subPermutation = temple::iota<unsigned>(V);
+  auto subPermutation = temple::iota<Vertex>(V);
   decltype(subPermutation) bestPermutation;
   double minimalCost = std::numeric_limits<double>::max();
   do {
     double cost = 0.0;
-    for(unsigned i = 0; i < V; ++i) {
+    for(Vertex i {0}; i < V; ++i) {
       cost += costs(i, subPermutation.at(i));
     }
 
@@ -1215,7 +1215,7 @@ NarrowType shapeHeuristicsNarrow(
   } while(std::next_permutation(std::begin(subPermutation), std::end(subPermutation)));
 
   // Fuse permutation and best subpermutation
-  for(unsigned i = 0; i < V; ++i) {
+  for(Vertex i {0}; i < V; ++i) {
     permutation.emplace(freeLeftVertices.at(i), freeRightVertices.at(bestPermutation.at(i)));
   }
 
@@ -1228,9 +1228,9 @@ NarrowType shapeHeuristicsNarrow(
   auto rotated = R * rotor;
 
   const double energy = temple::accumulate(
-    temple::adaptors::range(N),
+    temple::adaptors::range(Vertex(N)),
     0.0,
-    [&](const double carry, const unsigned i) -> double {
+    [&](const double carry, const Vertex i) -> double {
       return carry + (
         stator.col(i) - rotated.col(permutation.at(i))
       ).squaredNorm();
@@ -1285,33 +1285,33 @@ ShapeResult shapeHeuristics(
   NarrowType minimalNarrow {std::numeric_limits<double>::max(), {}};
   PartialMapping permutation;
 
-  for(unsigned i = 0; i < N; ++i) {
-    permutation[0] = i;
-    for(unsigned j = 0; j < N; ++j) {
+  for(Vertex i {0}; i < N; ++i) {
+    permutation[Vertex(0)] = i;
+    for(Vertex j {0}; j < N; ++j) {
       if(j == i) {
         continue;
       }
 
-      permutation[1] = j;
-      for(unsigned k = 0; k < N; ++k) {
+      permutation[Vertex(1)] = j;
+      for(Vertex k {0}; k < N; ++k) {
         if(k == i || k == j) {
           continue;
         }
 
-        permutation[2] = k;
-        for(unsigned l = 0; l < N; ++l) {
+        permutation[Vertex(2)] = k;
+        for(Vertex l {0}; l < N; ++l) {
           if(l == i || l == k || l == j) {
             continue;
           }
 
-          permutation[3] = l;
+          permutation[Vertex(3)] = l;
 
-          for(unsigned m = 0; m < N; ++m) {
+          for(Vertex m {0}; m < N; ++m) {
             if(m == i || m == j || m == k || m == l) {
               continue;
             }
 
-            permutation[4] = m;
+            permutation[Vertex(4)] = m;
             Eigen::Matrix3d R = fitQuaternion(normalizedPositions, shapeCoords, permutation);
             auto rotatedShape = R * shapeCoords;
 
@@ -1334,14 +1334,14 @@ ShapeResult shapeHeuristics(
             /* Solve the permutational (N-5)! subproblem without realigning all
              * positions.
              */
-            std::vector<unsigned> freeLeftVertices;
+            std::vector<Vertex> freeLeftVertices;
             freeLeftVertices.reserve(N - 5);
-            for(unsigned a = 5; a < N; ++a) {
+            for(Vertex a {5}; a < N; ++a) {
               freeLeftVertices.push_back(a);
             }
-            std::vector<unsigned> freeRightVertices;
+            std::vector<Vertex> freeRightVertices;
             freeRightVertices.reserve(N - 5);
-            for(unsigned a = 0; a < N; ++a) {
+            for(Vertex a {0}; a < N; ++a) {
               if(a != i && a != j && a != k && a != l && a != m) {
                 freeRightVertices.push_back(a);
               }
@@ -1370,7 +1370,7 @@ ShapeResult shapeHeuristics(
    * during the repeated scaling minimization function call.
    */
 
-  std::vector<unsigned> bestPermutation(minimalNarrow.second.size());
+  std::vector<Vertex> bestPermutation(minimalNarrow.second.size());
   for(const auto& iterPair : minimalNarrow.second) {
     bestPermutation.at(iterPair.first) = iterPair.second;
   }
@@ -1428,32 +1428,32 @@ ShapeResult shapeHeuristicsCentroidLast(
   PartialMapping permutation;
   permutation.emplace(N - 1, N - 1);
 
-  for(unsigned i = 0; i < N - 1; ++i) {
-    permutation[0] = i;
-    for(unsigned j = 0; j < N - 1; ++j) {
+  for(Vertex i {0}; i < N - 1; ++i) {
+    permutation[Vertex(0)] = i;
+    for(Vertex j {0}; j < N - 1; ++j) {
       if(j == i) {
         continue;
       }
 
-      permutation[1] = j;
-      for(unsigned k = 0; k < N - 1; ++k) {
+      permutation[Vertex(1)] = j;
+      for(Vertex k {0}; k < N - 1; ++k) {
         if(k == i || k == j) {
           continue;
         }
 
-        permutation[2] = k;
-        for(unsigned l = 0; l < N - 1; ++l) {
+        permutation[Vertex(2)] = k;
+        for(Vertex l {0}; l < N - 1; ++l) {
           if(l == i || l == k || l == j) {
             continue;
           }
 
-          permutation[3] = l;
-          for(unsigned m = 0; m < N - 1; ++m) {
+          permutation[Vertex(3)] = l;
+          for(Vertex m {0}; m < N - 1; ++m) {
             if(m == i || m == j || m == k || m == l) {
               continue;
             }
 
-            permutation[4] = m;
+            permutation[Vertex(4)] = m;
             Eigen::Matrix3d R = fitQuaternion(normalizedPositions, shapeCoords, permutation);
             auto rotatedShape = R * shapeCoords;
 
@@ -1477,14 +1477,14 @@ ShapeResult shapeHeuristicsCentroidLast(
             /* Solve the permutational (N-5)! subproblem without realigning all
              * positions.
              */
-            std::vector<unsigned> freeLeftVertices;
+            std::vector<Vertex> freeLeftVertices;
             freeLeftVertices.reserve(N - 6);
-            for(unsigned a = 5; a < N - 1; ++a) {
+            for(Vertex a {5}; a < N - 1; ++a) {
               freeLeftVertices.push_back(a);
             }
-            std::vector<unsigned> freeRightVertices;
+            std::vector<Vertex> freeRightVertices;
             freeRightVertices.reserve(N - 6);
-            for(unsigned a = 0; a < N - 1; ++a) {
+            for(Vertex a {0}; a < N - 1; ++a) {
               if(a != i && a != j && a != k && a != l && a != m) {
                 freeRightVertices.push_back(a);
               }
@@ -1513,7 +1513,7 @@ ShapeResult shapeHeuristicsCentroidLast(
    * during the repeated scaling minimization function call.
    */
 
-  std::vector<unsigned> bestPermutation(minimalNarrow.second.size());
+  std::vector<Vertex> bestPermutation(minimalNarrow.second.size());
   for(const auto& iterPair : minimalNarrow.second) {
     bestPermutation.at(iterPair.first) = iterPair.second;
   }

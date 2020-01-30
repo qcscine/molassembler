@@ -112,7 +112,7 @@ Uniques uniques(
   checkArguments(base, shape);
 
   const unsigned S = shapes::size(shape);
-  auto permutation = temple::iota<unsigned>(S);
+  auto permutation = temple::iota<shapes::Vertex>(S);
   auto stereopermutation = base;
 
   /* In case we want to skip trans pairs, the initial stereopermutation must also not

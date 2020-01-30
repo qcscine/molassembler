@@ -16,7 +16,10 @@
 #include "boost/optional/optional_fwd.hpp"
 #include "Eigen/Core"
 
-#include "shapes/constexpr/Data.h"
+#include "shapes/Shapes.h"
+#include "shapes/PointGroups.h"
+#include "temple/StrongIndex.h"
+#include "temple/Preprocessor.h"
 
 #include <vector>
 
@@ -24,10 +27,11 @@ namespace Scine {
 namespace shapes {
 
 //! @brief Index of a shape vertex
-using Vertex = unsigned;
+struct vertex_index_tag;
+using Vertex = temple::StrongIndex<vertex_index_tag, unsigned>;
 
 //! @brief Representation of a shape vertex permutation
-using Permutation = std::vector<unsigned>;
+using Permutation = std::vector<Vertex>;
 
 /* Typedefs */
 //! The type to store shape rotations

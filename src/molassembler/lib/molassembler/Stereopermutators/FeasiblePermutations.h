@@ -11,6 +11,7 @@
 #include "molassembler/DistanceGeometry/ValueBounds.h"
 #include "molassembler/Options.h"
 #include "molassembler/RankingInformation.h"
+#include "molassembler/Stereopermutators/ShapeVertexMaps.h"
 
 #include "stereopermutation/Stereopermutation.h"
 
@@ -44,7 +45,7 @@ struct Feasible {
     const ConeAngleType& cones,
     const RankingInformation& ranking,
     shapes::Shape shape,
-    const std::vector<unsigned>& shapeVertexMap,
+    const SiteToShapeVertexMap& shapeVertexMap,
     const Graph& graph
   );
 

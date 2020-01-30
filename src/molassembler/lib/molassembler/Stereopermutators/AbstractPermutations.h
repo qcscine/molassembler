@@ -8,8 +8,7 @@
 #ifndef INCLUDE_MOLASSEMBLER_STEREOPERMUTATIONS_ABSTRACT_PERMUTATIONS_H
 #define INCLUDE_MOLASSEMBLER_STEREOPERMUTATIONS_ABSTRACT_PERMUTATIONS_H
 
-#include "molassembler/RankingInformation.h"
-
+#include "molassembler/Stereopermutators/ShapeVertexMaps.h"
 #include "stereopermutation/Manipulation.h"
 
 namespace Scine {
@@ -91,7 +90,7 @@ struct Abstract {
   static std::vector<char> makeStereopermutationCharacters(
     const RankingInformation::RankedSitesType& canonicalSites,
     const std::vector<char>& canonicalStereopermutationCharacters,
-    const std::vector<unsigned>& sitesAtShapeVertices
+    const temple::StrongIndexFlatMap<shapes::Vertex, SiteIndex>& sitesAtShapeVertices
   );
 //!@}
 

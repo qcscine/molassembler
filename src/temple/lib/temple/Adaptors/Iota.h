@@ -21,11 +21,6 @@ public:
 //!@name Constructors
 //!@{
   Iota(T lower, T upper) : _lower(lower), _upper(upper) {
-    static_assert(
-      std::is_integral<T>::value,
-      "Iota template argument must be an integral value"
-    );
-
     assert(_lower < _upper);
   }
 
@@ -135,24 +130,14 @@ private:
 
 } // namespace detail
 
-template<typename IntegerType>
-auto range(IntegerType lower, IntegerType upper) {
-  static_assert(
-    std::is_integral<IntegerType>::value,
-    "Range must be called with an integer value"
-  );
-
-  return detail::Iota<IntegerType>(lower, upper);
+template<typename T>
+auto range(T lower, T upper) {
+  return detail::Iota<T>(lower, upper);
 }
 
-template<typename IntegerType>
-auto range(IntegerType upper) {
-  static_assert(
-    std::is_integral<IntegerType>::value,
-    "Range must be called with an integer value"
-  );
-
-  return detail::Iota<IntegerType>(upper);
+template<typename T>
+auto range(T upper) {
+  return detail::Iota<T>(upper);
 }
 
 } // namespace adaptors

@@ -10,6 +10,9 @@
 
 #include "molassembler/RankingInformation.h"
 
+#include "temple/StrongIndexMap.h"
+#include "shapes/Data.h"
+
 namespace Scine {
 
 namespace stereopermutation {
@@ -17,6 +20,8 @@ class Stereopermutation;
 } // namespace stereopermutation
 
 namespace molassembler {
+
+using SiteToShapeVertexMap = temple::StrongIndexFlatMap<SiteIndex, shapes::Vertex>;
 
 /*! @brief Generates a flat mapping from site indices to shape vertices
  *
@@ -31,7 +36,7 @@ namespace molassembler {
  *
  * @complexity{@math{\Theta(N)}}
  */
-std::vector<unsigned> siteToShapeVertexMap(
+SiteToShapeVertexMap siteToShapeVertexMap(
   const stereopermutation::Stereopermutation& stereopermutation,
   const RankingInformation::RankedSitesType& canonicalSites
 );
@@ -47,13 +52,13 @@ std::vector<unsigned> siteToShapeVertexMap(
  *
  * @complexity{@math{\Theta(N)}}
  */
-std::vector<unsigned> shapeVertexToSiteIndexMap(
+temple::StrongIndexFlatMap<shapes::Vertex, SiteIndex> shapeVertexToSiteIndexMap(
   const stereopermutation::Stereopermutation& stereopermutation,
   const RankingInformation::RankedSitesType& canonicalSites
 );
 
 stereopermutation::Stereopermutation stereopermutationFromSiteToShapeVertexMap(
-  const std::vector<unsigned>& siteToShapeVertexMap,
+  const SiteToShapeVertexMap& siteToShapeVertexMap,
   const std::vector<LinkInformation>& links,
   const RankingInformation::RankedSitesType& canonicalSites
 );

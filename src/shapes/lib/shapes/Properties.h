@@ -2,7 +2,7 @@
  * @copyright This code is licensed under the 3-clause BSD license.
  *   Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
  *   See LICENSE.txt
- * @brief Run-time symmetry property calculations
+ * @brief Run-time shape property calculations
  *
  * Contains a suite of property calculations on the dynamic shape data.
  */
@@ -13,6 +13,7 @@
 #include "Eigen/Core"
 #include "boost/optional/optional_fwd.hpp"
 
+#include "shapes/Data.h"
 #include "shapes/Shapes.h"
 
 #include <set>
@@ -30,17 +31,17 @@ constexpr double floatingPointEqualityThreshold [[gnu::unused]] = 1e-4;
  *
  * @complexity{@math{\Theta(S)}}
  */
-std::vector<unsigned> applyRotation(
-  const std::vector<unsigned>& indices,
-  const std::vector<unsigned>& rotation
+Permutation applyPermutation(
+  const Permutation& occupation,
+  const Permutation& permutation
 );
 
 /*! @brief Rotates a passed list of indices of a specific shape
  *
  * @complexity{@math{\Theta(S)}}
  */
-std::vector<unsigned> applyRotation(
-  const std::vector<unsigned>& indices,
+std::vector<Vertex> applyRotation(
+  const Permutation& occupation,
   Shape shape,
   unsigned rotationFunctionIndex
 );
@@ -52,7 +53,7 @@ std::vector<unsigned> applyRotation(
  */
 unsigned rotationPeriodicity(
   Shape shape,
-  const std::vector<unsigned>& rotation
+  const Permutation& rotation
 );
 
 /*! @brief Generate a character representation of a shape's position groups
@@ -74,7 +75,7 @@ std::vector<char> positionGroups(Shape shape);
  *
  * @complexity{@math{\Theta(N)}}
  */
-std::vector<unsigned> inverseRotation(const std::vector<unsigned>& rotation);
+Permutation inverseRotation(const Permutation& rotation);
 
 /*! @brief Gets the coordinates of an indexOptional for a specific shape.
  *
@@ -85,7 +86,7 @@ std::vector<unsigned> inverseRotation(const std::vector<unsigned>& rotation);
  */
 Eigen::Vector3d getCoordinates(
   Shape shape,
-  const boost::optional<unsigned>& indexInShapeOption
+  const boost::optional<Vertex>& vertexOption
 );
 
 /*! @brief Tetrahedron volume spanned by four positions
@@ -113,7 +114,7 @@ double getTetrahedronVolume(
 double calculateAngleDistortion(
   Shape from,
   Shape to,
-  const std::vector<unsigned>& indexMapping
+  const std::vector<Vertex>& indexMapping
 );
 
 /*! @brief Propagates an index optional through an index mapping
@@ -125,9 +126,9 @@ double calculateAngleDistortion(
  *
  * @complexity{@math{\Theta(1)}}
  */
-boost::optional<unsigned> propagateIndexOptionalThroughMapping(
-  const boost::optional<unsigned>& indexOptional,
-  const std::vector<unsigned>& indexMapping
+boost::optional<Vertex> propagateIndexOptionalThroughMapping(
+  const boost::optional<Vertex>& indexOptional,
+  const std::vector<Vertex>& indexMapping
 );
 
 /*! @brief Calculates chiral distortion for a transition between shapes
@@ -142,7 +143,7 @@ boost::optional<unsigned> propagateIndexOptionalThroughMapping(
 double calculateChiralDistortion(
   Shape from,
   Shape to,
-  const std::vector<unsigned>& indexMapping
+  const std::vector<Vertex>& indexMapping
 );
 
 /*! @brief Generates all rotations of a sequence of indices within a shape
@@ -150,10 +151,10 @@ double calculateChiralDistortion(
  * @complexity{At most maxRotation iterations}
  */
 std::set<
-  std::vector<unsigned>
+  std::vector<Vertex>
 > generateAllRotations(
   Shape shape,
-  const std::vector<unsigned>& indices
+  const std::vector<Vertex>& indices
 );
 
 /*! @brief Transform shape positions through a mapping
@@ -167,23 +168,23 @@ std::set<
  * @param mapping An index mapping that specifies how indices are mapped
  *   from a source shape to a target shape
  */
-std::vector<unsigned> applyIndexMapping(
+std::vector<Vertex> applyIndexMapping(
   Shape to,
-  const std::vector<unsigned>& mapping
+  const std::vector<Vertex>& mapping
 );
 
 /**
  * @brief Data type grouping distortions between shapes
  */
 struct DistortionInfo {
-  std::vector<unsigned> indexMapping;
+  std::vector<Vertex> indexMapping;
   double angularDistortion;
   double chiralDistortion;
 
   DistortionInfo(
-    std::vector<unsigned> passIndexMapping,
-    const double& passAngularDistortion,
-    const double& passChiralDistortion
+    std::vector<Vertex> passIndexMapping,
+    double passAngularDistortion,
+    double passChiralDistortion
   );
 };
 
@@ -201,7 +202,7 @@ struct DistortionInfo {
  *
  * @pre shapes::size(from) + {0, 1} == shapes::size(to)
  */
-std::vector<DistortionInfo> symmetryTransitionMappings(
+std::vector<DistortionInfo> shapeTransitionMappings(
   Shape from,
   Shape to
 );
@@ -222,41 +223,41 @@ std::vector<DistortionInfo> symmetryTransitionMappings(
 std::vector<DistortionInfo> ligandLossTransitionMappings(
   Shape from,
   Shape to,
-  unsigned positionInSourceShape
+  Vertex positionInSourceShape
 );
 
 //! A grouping of index mappings of equal angular and chiral distortion
-struct SymmetryTransitionGroup {
+struct ShapeTransitionGroup {
   /*!
    * @brief A list of index mappings that share the same @p angularDistortion
    *   and @p chiralDistortion
    */
   std::vector<
-    std::vector<unsigned>
+    std::vector<Vertex>
   > indexMappings;
   double angularDistortion;
   double chiralDistortion;
 
-  SymmetryTransitionGroup(
+  ShapeTransitionGroup(
     std::vector<
-      std::vector<unsigned>
+      std::vector<Vertex>
     > passIndexMappings,
-    const double& passAngleDistortion,
-    const double& passChiralDistortion
+    double passAngleDistortion,
+    double passChiralDistortion
   );
 
-  SymmetryTransitionGroup() = default;
+  ShapeTransitionGroup() = default;
 };
 
 /*! @brief Selects the best transition mapping from many DistortionInfos
  *
  * Selects index mappings from a DistortionInfo list, choosing those with lowest
  * angular distortion first, and lowest chiral distortion afterwards. Groups
- * them into a SymmetryTransitionGroup.
+ * them into a ShapeTransitionGroup.
  *
  * @complexity{@math{\Theta(N)}}
  */
-SymmetryTransitionGroup selectBestTransitionMappings(
+ShapeTransitionGroup selectBestTransitionMappings(
   const std::vector<DistortionInfo>& distortions
 );
 

@@ -14,7 +14,7 @@
 namespace Scine {
 namespace molassembler {
 
-std::vector<unsigned> siteToShapeVertexMap(
+SiteToShapeVertexMap siteToShapeVertexMap(
   const stereopermutation::Stereopermutation& stereopermutation,
   const RankingInformation::RankedSitesType& canonicalSites
 ) {
@@ -62,7 +62,7 @@ std::vector<unsigned> siteToShapeVertexMap(
    */
   std::vector<
     std::vector<unsigned>
-  > availableSymmetryPositions;
+  > availableShapeVertices;
 
   const char maxChar = temple::max(stereopermutation.characters);
   // For each ranking character
@@ -76,30 +76,30 @@ std::vector<unsigned> siteToShapeVertexMap(
       }
     }
 
-    availableSymmetryPositions.emplace_back(
+    availableShapeVertices.emplace_back(
       std::move(positions)
     );
   }
 
   // For linked sites, we need to find a shape position to place them
-  auto placeAndMark = [&](const unsigned symmetryPosition) {
-    char priority = stereopermutation.characters.at(symmetryPosition);
+  auto placeAndMark = [&](const unsigned shapeVertex) {
+    char priority = stereopermutation.characters.at(shapeVertex);
 
-    unsigned countUpToPosition = std::count(
+    const unsigned countUpToPosition = std::count(
       std::begin(stereopermutation.characters),
-      std::begin(stereopermutation.characters) + symmetryPosition,
+      std::begin(stereopermutation.characters) + shapeVertex,
       priority
     );
 
-    unsigned correspondingSite = canonicalSites.at(priority - 'A').at(countUpToPosition);
+    const unsigned correspondingSite = canonicalSites.at(priority - 'A').at(countUpToPosition);
 
     if(positionMap.at(correspondingSite) == placeholder) {
-      unsigned newSymmetryPosition = availableSymmetryPositions.at(priority - 'A').front();
+      unsigned newShapeVertex = availableShapeVertices.at(priority - 'A').front();
 
-      positionMap.at(correspondingSite) = newSymmetryPosition;
+      positionMap.at(correspondingSite) = newShapeVertex;
 
-      availableSymmetryPositions.at(priority - 'A').erase(
-        availableSymmetryPositions.at(priority - 'A').begin()
+      availableShapeVertices.at(priority - 'A').erase(
+        availableShapeVertices.at(priority - 'A').begin()
       );
 
       usedLists.at(priority - 'A').at(countUpToPosition) = true;
@@ -128,13 +128,13 @@ std::vector<unsigned> siteToShapeVertexMap(
 
       assert(positionMap.at(correspondingSite) == placeholder);
 
-      const unsigned symmetryPosition = availableSymmetryPositions.at(priorityChar - 'A').front();
+      const unsigned shapeVertex = availableShapeVertices.at(priorityChar - 'A').front();
 
-      availableSymmetryPositions.at(priorityChar - 'A').erase(
-        std::begin(availableSymmetryPositions.at(priorityChar - 'A'))
+      availableShapeVertices.at(priorityChar - 'A').erase(
+        std::begin(availableShapeVertices.at(priorityChar - 'A'))
       );
 
-      positionMap.at(correspondingSite) = symmetryPosition;
+      positionMap.at(correspondingSite) = shapeVertex;
 
       *unusedIndexIter = true;
     }
@@ -144,32 +144,25 @@ std::vector<unsigned> siteToShapeVertexMap(
   assert(
     temple::all_of(
       positionMap,
-      [](const unsigned symmetryPosition) -> bool {
-        return symmetryPosition != placeholder;
+      [](const unsigned shapeVertex) -> bool {
+        return shapeVertex != placeholder;
       }
     ) && "A shape position is still marked with a placeholder!"
   );
 
-  return positionMap;
+  return SiteToShapeVertexMap(positionMap);
 }
 
-std::vector<unsigned> shapeVertexToSiteIndexMap(
+temple::StrongIndexFlatMap<shapes::Vertex, SiteIndex> shapeVertexToSiteIndexMap(
   const stereopermutation::Stereopermutation& stereopermutation,
   const RankingInformation::RankedSitesType& canonicalSites
 ) {
-  auto base = siteToShapeVertexMap(stereopermutation, canonicalSites);
-
-  std::vector<unsigned> inverseMap (base.size());
-
-  for(unsigned i = 0; i < base.size(); ++i) {
-    inverseMap.at(base.at(i)) = i;
-  }
-
-  return inverseMap;
+  const auto base = siteToShapeVertexMap(stereopermutation, canonicalSites);
+  return base.invert();
 }
 
 stereopermutation::Stereopermutation stereopermutationFromSiteToShapeVertexMap(
-  const std::vector<unsigned>& siteToShapeVertexMap,
+  const SiteToShapeVertexMap& siteToShapeVertexMap,
   const std::vector<LinkInformation>& links,
   const RankingInformation::RankedSitesType& canonicalSites
 ) {
@@ -183,7 +176,7 @@ stereopermutation::Stereopermutation stereopermutationFromSiteToShapeVertexMap(
    */
   const unsigned S = siteToShapeVertexMap.size();
   std::vector<char> characters(S);
-  for(unsigned siteIndex = 0; siteIndex < S; ++siteIndex) {
+  for(SiteIndex siteIndex {0}; siteIndex < S; ++siteIndex) {
     auto findIter = std::find_if(
       std::begin(canonicalSites),
       std::end(canonicalSites),

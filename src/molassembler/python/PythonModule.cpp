@@ -3,7 +3,7 @@
  *   Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
  *   See LICENSE.txt
  */
-#include "pybind11/pybind11.h"
+#include "TypeCasters.h"
 
 void init_atom_stereopermutator(pybind11::module& m);
 void init_bond_stereopermutator(pybind11::module& m);

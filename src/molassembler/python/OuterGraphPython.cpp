@@ -3,8 +3,7 @@
  *   Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
  *   See LICENSE.txt
  */
-#include "pybind11/pybind11.h"
-#include "pybind11/stl.h"
+#include "TypeCasters.h"
 
 #include "molassembler/Cycles.h"
 #include "molassembler/Graph.h"

@@ -6,6 +6,7 @@
 
 #include "shapes/Data.h"
 
+#include "shapes/constexpr/Data.h"
 #include "boost/optional.hpp"
 #include "temple/constexpr/TupleType.h"
 
@@ -138,7 +139,7 @@ template<size_t shapeSize>
 Permutation makeMirror(
   const std::array<unsigned, shapeSize>& constexprMirror
 ) {
-  std::vector<unsigned> mirror (shapeSize);
+  std::vector<Vertex> mirror (shapeSize);
   std::copy(
     std::begin(constexprMirror),
     std::end(constexprMirror),

@@ -13,6 +13,7 @@
 #define INCLUDE_MOLASSEMBLER_STEREOPERMUTATION_COMPOSITES_H
 
 #include "shapes/Shapes.h"
+#include "shapes/Data.h"
 #include "temple/OrderedPair.h"
 #include "temple/constexpr/FloatingPointComparison.h"
 
@@ -37,7 +38,7 @@ public:
     //! The angle this group is placed at from the fused position
     double angle;
     //! The shape vertices making up this group
-    std::vector<unsigned> shapeVertices;
+    std::vector<shapes::Vertex> vertices;
     /*!
      * @brief Whether the ranking characters indicate that this group of
      *   shape vertices is isotropic
@@ -54,7 +55,7 @@ public:
     //! The shape of either positional shape
     shapes::Shape shape;
     //! The shape vertex of the local shape that the other is fused at
-    unsigned fusedVertex;
+    shapes::Vertex fusedVertex;
     //! Abstract ranking-characters of the sites at their shape vertices
     std::vector<char> characters;
     /*!
@@ -69,7 +70,7 @@ public:
     //! Member initializing constructor
     OrientationState(
       shapes::Shape passShape,
-      unsigned passFusedVertex,
+      shapes::Vertex passFusedVertex,
       std::vector<char> passCharacters,
       std::size_t passIdentifier
     );
@@ -78,13 +79,13 @@ public:
      *
      * @complexity{@math{\Theta(N)}}
      */
-    void applyCharacterRotation(const std::vector<unsigned>& rotation);
+    void applyCharacterRotation(const std::vector<shapes::Vertex>& rotation);
 
     /*! @brief Smallest shape vertex from the same group as the fused position
      *
      * @complexity{@math{\Theta(S^2)}}
      */
-    unsigned lowestEqualVertexInShape() const;
+    shapes::Vertex lowestEqualVertexInShape() const;
 
     /*! @brief Calculates the required reduction mapping to the canonical form
      *
@@ -93,7 +94,7 @@ public:
      * unlinked stereopermutations if all substituents are different, but that
      * itself probably scales factorially in the size of the shape.}
      */
-    std::vector<unsigned> findReductionMapping(unsigned reducedFusedVertex) const;
+    std::vector<shapes::Vertex> findReductionMapping(shapes::Vertex reducedFusedVertex) const;
 
     /* c++17 nodiscard */
     /*!
@@ -110,7 +111,7 @@ public:
      * @complexity{@math{O(S!)} where @math{S} is the size of the shape (see
      * findReductionMapping)}
      */
-    std::vector<unsigned> transformToCanonical();
+    std::vector<shapes::Vertex> transformToCanonical();
 
     /*! @brief Reverts the OrientationState to a non-canonical form
      *
@@ -118,7 +119,7 @@ public:
      *
      * @complexity{@math{\Theta(S)}}
      */
-    void revert(const std::vector<unsigned>& reversionMapping);
+    void revert(const std::vector<shapes::Vertex>& reversionMapping);
 
     /*!
      * @brief Collects all coplanar indices that are closest to the fused
@@ -136,7 +137,7 @@ public:
   };
 
   //! First shape vertex, second shape vertex, dihedral angle tuple
-  using DihedralTuple = std::tuple<unsigned, unsigned, double>;
+  using DihedralTuple = std::tuple<shapes::Vertex, shapes::Vertex, double>;
 
   //! List of lists of dihedral angles for distinct rotational configurations
   using PermutationsList = std::vector<
@@ -192,16 +193,16 @@ public:
    * @param changedVertices The shape vertices which must change in the
    *   sought rotation
    */
-  static std::vector<unsigned> generateRotation(
+  static std::vector<shapes::Vertex> generateRotation(
     shapes::Shape shape,
-    unsigned fixedVertex,
-    const std::vector<unsigned>& changedVertices
+    shapes::Vertex fixedVertex,
+    const std::vector<shapes::Vertex>& changedVertices
   );
 
-  static std::vector<unsigned> rotation(
+  static std::vector<shapes::Vertex> rotation(
     shapes::Shape shape,
-    unsigned fixedVertex,
-    const std::vector<unsigned>& perpendicularPlaneVertices
+    shapes::Vertex fixedVertex,
+    const std::vector<shapes::Vertex>& perpendicularPlaneVertices
   );
 
   //! Creates sets of within-group cross angles in the perpendicular plane

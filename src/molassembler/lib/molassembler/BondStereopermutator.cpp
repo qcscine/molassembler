@@ -111,9 +111,9 @@ const stereopermutation::Composite& BondStereopermutator::composite() const {
 
 double BondStereopermutator::dihedral(
   const AtomStereopermutator& stereopermutatorA,
-  const unsigned siteIndexA,
+  const SiteIndex siteIndexA,
   const AtomStereopermutator& stereopermutatorB,
-  const unsigned siteIndexB
+  const SiteIndex siteIndexB
 ) const {
   return _pImpl -> dihedral(
     stereopermutatorA,

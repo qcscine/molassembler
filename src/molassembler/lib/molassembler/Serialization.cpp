@@ -26,6 +26,19 @@
 namespace nlohmann {
 
 template<>
+struct adl_serializer<Scine::molassembler::SiteIndex> {
+  using Type = Scine::molassembler::SiteIndex;
+
+  static void to_json(json& j, const Type& value) {
+    j = static_cast<unsigned>(value);
+  }
+
+  static void from_json(const json& j, Type& value) {
+    value = Type(j.get<unsigned>());
+  }
+};
+
+template<>
 struct adl_serializer<Scine::molassembler::BondStereopermutator::Alignment> {
   using Type = Scine::molassembler::BondStereopermutator::Alignment;
   using Underlying = std::underlying_type_t<Type>;
@@ -174,7 +187,7 @@ struct adl_serializer<Scine::molassembler::RankingInformation> {
 
     ranking.siteRanking.reserve(j["lr"].size());
     for(const auto& listJSON : j["lr"]) {
-      std::vector<unsigned> equalSiteIndices;
+      std::vector<Scine::molassembler::SiteIndex> equalSiteIndices;
       for(const auto& listElementJSON : listJSON) {
         equalSiteIndices.push_back(listElementJSON);
       }

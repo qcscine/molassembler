@@ -68,7 +68,7 @@ extern const temple::UpperTriangularMatrix<
  */
 extern temple::MinimalCache<
   std::tuple<Shape, Shape, boost::optional<unsigned>>,
-  properties::SymmetryTransitionGroup
+  properties::ShapeTransitionGroup
 > mappingsCache;
 
 /*! @brief Cached access to mappings. Populates the cache from constexpr if generated.
@@ -84,10 +84,10 @@ extern temple::MinimalCache<
  *
  * @returns The symmetry transition if possible, None otherwise
  */
-const boost::optional<const properties::SymmetryTransitionGroup&> getMapping(
+const boost::optional<const properties::ShapeTransitionGroup&> getMapping(
   Shape a,
   Shape b,
-  const boost::optional<unsigned>& removedIndexOption = boost::none
+  const boost::optional<Vertex>& removedIndexOption = boost::none
 );
 
 #ifdef USE_CONSTEXPR_HAS_MULTIPLE_UNLINKED_STEREOPERMUTATIONS

@@ -11,7 +11,6 @@
 #include "temple/Functional.h"
 
 namespace Scine {
-
 namespace shapes {
 
 constexpr temple::Array<std::pair<double, double>, nShapes> symmetryAngleBounds = temple::tuples::map<
@@ -36,10 +35,10 @@ double maximumAngle(const Shape shape) {
 }
 
 #ifdef USE_CONSTEXPR_TRANSITION_MAPPINGS
-template<typename SymmetrySource, typename SymmetryTarget>
+template<typename ShapeSource, typename ShapeTarget>
 struct mappingCalculationFunctor {
   static constexpr auto value() {
-    return constexpr_properties::calculateMapping<SymmetrySource, SymmetryTarget>();
+    return constexpr_properties::calculateMapping<ShapeSource, ShapeTarget>();
   }
 };
 
@@ -57,22 +56,24 @@ constexpr temple::UpperTriangularMatrix<
 
 temple::MinimalCache<
   std::tuple<Shape, Shape, boost::optional<unsigned>>,
-  properties::SymmetryTransitionGroup
+  properties::ShapeTransitionGroup
 > mappingsCache;
 
-const boost::optional<const properties::SymmetryTransitionGroup&> getMapping(
+const boost::optional<const properties::ShapeTransitionGroup&> getMapping(
   const Shape a,
   const Shape b,
-  const boost::optional<unsigned>& removedIndexOption
+  const boost::optional<Vertex>& removedIndexOption
 ) {
   if(a == b) {
     return boost::none;
   }
 
-  auto cacheKey = std::make_tuple(a, b, removedIndexOption);
+  using Key = typename decltype(mappingsCache)::key_type;
 
-  if(mappingsCache.has(cacheKey)) {
-    return mappingsCache.getOption(cacheKey);
+  const Key key {a, b, removedIndexOption};
+
+  if(mappingsCache.has(key)) {
+    return mappingsCache.getOption(key);
   }
 
   int sizeDiff = static_cast<int>(shapes::size(b)) - static_cast<int>(shapes::size(a));
@@ -100,14 +101,15 @@ const boost::optional<const properties::SymmetryTransitionGroup&> getMapping(
     if(constexprOption.hasValue()) {
       const auto& constexprMappings = constexprOption.value();
 
-      properties::SymmetryTransitionGroup stlResult;
+      properties::ShapeTransitionGroup stlResult;
       stlResult.indexMappings = temple::map(
         temple::toSTL(constexprMappings.mappings),
-        [&](const auto& indexList) -> std::vector<unsigned> {
-          return {
-            indexList.begin(),
-            indexList.end()
-          };
+        [&](const auto& indexList) -> std::vector<Vertex> {
+          std::vector<Vertex> v;
+          for(unsigned i : indexList) {
+            v.emplace_back(i);
+          }
+          return v;
         }
       );
 
@@ -115,37 +117,37 @@ const boost::optional<const properties::SymmetryTransitionGroup&> getMapping(
       stlResult.chiralDistortion = constexprMappings.chiralDistortion;
 
       mappingsCache.add(
-        cacheKey,
+        key,
         stlResult
       );
     } else {
       // Calculate dynamically (relevant for targets of size 9 and higher)
       mappingsCache.add(
-        cacheKey,
+        key,
         properties::selectBestTransitionMappings(
-          properties::symmetryTransitionMappings(a, b)
+          properties::shapeTransitionMappings(a, b)
         )
       );
     }
 #else
     mappingsCache.add(
-      cacheKey,
+      key,
       properties::selectBestTransitionMappings(
-        properties::symmetryTransitionMappings(a, b)
+        properties::shapeTransitionMappings(a, b)
       )
     );
 #endif
   } else if(sizeDiff == -1 && removedIndexOption) {
     // Deletion case (always dynamic)
     mappingsCache.add(
-      cacheKey,
+      key,
       properties::selectBestTransitionMappings(
         properties::ligandLossTransitionMappings(a, b, removedIndexOption.value())
       )
     );
   }
 
-  return mappingsCache.getOption(cacheKey);
+  return mappingsCache.getOption(key);
 }
 
 #ifdef USE_CONSTEXPR_HAS_MULTIPLE_UNLINKED_STEREOPERMUTATIONS
@@ -235,5 +237,4 @@ bool hasMultipleUnlinkedStereopermutations(
 }
 
 } // namespace shapes
-
 } // namespace Scine
