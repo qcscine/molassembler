@@ -170,6 +170,7 @@ struct MASM_EXPORT Configuration {
  * optional, except that in the error case it carries data about the error in
  * order to help diagnose possible mistakes made in the molecular graph
  * specification.
+ *
  * @code{.cpp}
  * auto ensemble = generateRandomEnsemble(mol, 10);
  * unsigned conformerIndex = 0;
@@ -186,7 +187,7 @@ struct MASM_EXPORT Configuration {
  *   }
  *   ++conformerIndex;
  * }
- * @endcode{}
+ * @endcode
  */
 MASM_EXPORT std::vector<
   outcome::result<Utils::PositionCollection>

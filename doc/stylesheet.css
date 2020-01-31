@@ -172,30 +172,31 @@ dl.el {
 }
 
 pre.fragment {
-        border: 1px solid #C4CFE5;
-        background-color: #FBFCFD;
-        padding: 4px 6px;
-        margin: 4px 8px 4px 2px;
-        overflow: auto;
-        word-wrap: break-word;
-        font-size:  9pt;
-        line-height: 125%;
-        font-family: monospace, fixed;
-        font-size: 105%;
+  border: 1px solid #C4CFE5;
+  background-color: #FBFCFD;
+  padding: 4px 6px;
+  margin: 4px 8px 4px 2px;
+  overflow: auto;
+  word-wrap: break-word;
+  font-size:  9pt;
+  line-height: 125%;
+  font-family: monospace, fixed;
+  font-size: 105%;
 }
 
 div.fragment {
-        padding: 0px;
-        margin: 4px 8px 4px 2px;
+  padding: 0px;
+  margin: 4px 8px 4px 2px;
 	background-color: #FBFCFD;
 	border: 1px solid #C2D7E7;
+  max-width:90ch;
 }
 
 div.line {
 	font-family: monospace, fixed;
   font-size: 14px;
 	min-height: 14px;
-	line-height: 1.0;
+	line-height: 1.3;
 	text-wrap: unrestricted;
 	white-space: -moz-pre-wrap; /* Moz */
 	white-space: -pre-wrap;     /* Opera 4-6 */

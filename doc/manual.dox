@@ -158,7 +158,7 @@ into some examples.
 @parblock @note 
 Molassembler ships with an experimental SMILES parser that, pending some
 bugfixes and some more implementation details, should achieve full openSMILES
-standard-compliacne and be stabilized in a future release.
+standard-compliance and be stabilized in a future release.
 
 It's not yet part of the public API, but it can already do a lot, which is
 why you'll see it in some of these examples.
