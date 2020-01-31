@@ -173,6 +173,7 @@ molecule, and writing those to separate files.
 
 @code{.cpp}
 Molecule alanine = io::experimental::parseSmilesSingleMolecule("C[C@@H](C(=O)O)N");
+
 std::vector<AtomIndex> interestingAtoms;
 for(const auto& permutator : alanine.stereopermutators().atom_stereopermutators()) {
   if(permutator.numStereopermutations() > 1) {
@@ -189,6 +190,7 @@ const unsigned otherPermutation = (permutator->assigned() == 1u) ? 0u : 1u;
 Molecule alanineEnantiomer = alanine;
 alanineEnantiomer.assignStereopermutator(interestingAtoms.front(), otherPermutation);
 
+// Create conformers and write them to file
 auto writeConformer = [](const Molecule& mol, const std::string& filename) {
   auto result = generateRandomConformation(mol);
   assert(result);
@@ -215,10 +217,12 @@ consider the octahedral iron oxalate complex:
 @code{.cpp}
 std::string smiles = "[Fe@OH1+3]123(OC(=O)C(=O)O1)(OC(=O)C(=O)O2)OC(=O)C(=O)O3";
 Molecule shipscrew = io::experimental::parseSmilesSingleMolecule(smiles);
+
 auto permutator = shipscrew.stereopermutators().option(0);
 assert(permutator);
 assert(permutator->numStereopermutations() == 4u);
 assert(permutator->numAssignments() == 2u);
+
 for(unsigned assignment = 0; assignment < permutator->numAssignments(); ++assignment) {
   shipscrew.assignStereopermutator(0, assignment);
   auto result = generateRandomConformation(shipscrew);
