@@ -189,12 +189,8 @@ SpatialModel::SpatialModel(
   for(const auto& bondStereopermutator : _molecule.stereopermutators().bondStereopermutators()) {
     addBondStereopermutatorInformation(
       bondStereopermutator,
-      _molecule.stereopermutators().option(
-        bondStereopermutator.placement().first
-      ).value(),
-      _molecule.stereopermutators().option(
-        bondStereopermutator.placement().second
-      ).value(),
+      _molecule.stereopermutators().at(bondStereopermutator.placement().first),
+      _molecule.stereopermutators().at(bondStereopermutator.placement().second),
       configuration.spatialModelLoosening,
       fixedAngstromPositions
     );
@@ -1579,10 +1575,9 @@ void SpatialModel::checkFixedPositionsPreconditions(
   }
 
   for(const auto& indexPositionPair : configuration.fixedPositions) {
-    const AtomIndex& atomIndex = indexPositionPair.first;
+    const AtomIndex atomIndex = indexPositionPair.first;
 
-    auto stereopermutatorOption = molecule.stereopermutators().option(atomIndex);
-    if(stereopermutatorOption) {
+    if(auto stereopermutatorOption = molecule.stereopermutators().option(atomIndex)) {
       // Check to ensure either 0, 1 or L sites are fixed
       unsigned numFixedSites = temple::accumulate(
         stereopermutatorOption->getRanking().sites,

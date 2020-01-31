@@ -94,6 +94,23 @@ public:
 
 //!@name Modification
 //!@{
+  /*! @brief Access atom stereopermutator at an atom
+   *
+   * @throws std::out_of_range If there is no atom stereopermutator on the
+   * passed atom
+   *
+   * @complexity{@math{\Theta(1)}}
+   */
+  AtomStereopermutator& at(AtomIndex index);
+
+  /*! @brief Access bond stereopermutator at a bond
+   *
+   * @throws std::out_of_range If there is no bond stereopermutator on the
+   * passed bond
+   *
+   * @complexity{@math{\Theta(1)}}
+   */
+  BondStereopermutator& at(const BondIndex& index);
   /*! @brief Add a new AtomStereopermutator to the list
    *
    * @complexity{@math{\Theta(1)} amortized}
@@ -180,6 +197,24 @@ public:
 
 //!@name Information
 //!@{
+  /*! @brief Access atom stereopermutator at an atom
+   *
+   * @throws std::out_of_range If there is no atom stereopermutator on the
+   * passed atom
+   *
+   * @complexity{@math{\Theta(1)}}
+   */
+  const AtomStereopermutator& at(AtomIndex index) const;
+
+  /*! @brief Access bond stereopermutator at a bond
+   *
+   * @throws std::out_of_range If there is no bond stereopermutator on the
+   * passed bond
+   *
+   * @complexity{@math{\Theta(1)}}
+   */
+  const BondStereopermutator& at(const BondIndex& index) const;
+
   /*! @brief Modular comparison with another StereopermutatorList using a bitmask
    *
    * @complexity{@math{O(A + B)}}

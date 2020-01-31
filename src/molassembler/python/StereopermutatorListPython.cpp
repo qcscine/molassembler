@@ -167,4 +167,26 @@ void init_stereopermutator_list(pybind11::module& m) {
       return repr;
     }
   );
+
+  stereopermutatorList.def(
+    "__getitem__",
+    [](const StereopermutatorList& list, unsigned index) {
+      try {
+        return list.at(index);
+      } catch(...) {
+        throw pybind11::index_error("No atom stereopermutator at this atom");
+      }
+    }
+  );
+
+  stereopermutatorList.def(
+    "__getitem__",
+    [](const StereopermutatorList& list, BondIndex index) {
+      try {
+        return list.at(index);
+      } catch(...) {
+        throw pybind11::index_error("No bond stereopermutator at this bond");
+      }
+    }
+  );
 }

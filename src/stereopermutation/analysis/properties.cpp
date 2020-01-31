@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <vector>
 #include <iostream>
+#include <iomanip>
 #include <cassert>
 #include <functional>
 
@@ -31,59 +32,75 @@ int main(int argc, char* argv[]) {
   options_description.add_options()
     ("help", "Produce help message")
     (
-      "s",
+      "shape,s",
       boost::program_options::value<unsigned>(),
-      "Set symmetry index"
+      "Set shape index"
     )
     (
-      "c",
+      "characters,c",
       boost::program_options::value<std::string>(),
       "Specify case characters"
     )
     (
-      "l",
+      "links,l",
       boost::program_options::value<std::string>(),
-      "Specify linking (remember to place quotation marks)"
+      "Specify links (remember to place quotation marks)"
     )
   ;
 
   // Parse
   boost::program_options::variables_map options_variables_map;
+  boost::program_options::positional_options_description positional_description;
+  positional_description.add("shape", 1);
+  positional_description.add("characters", 1);
+  positional_description.add("links", 1);
+
   boost::program_options::store(
-    boost::program_options::parse_command_line(argc, argv, options_description),
+    boost::program_options::command_line_parser(argc, argv).
+    options(options_description).
+    positional(positional_description).
+    style(
+      boost::program_options::command_line_style::unix_style
+      | boost::program_options::command_line_style::allow_long_disguise
+    ).run(),
     options_variables_map
   );
   boost::program_options::notify(options_variables_map);
 
   if(options_variables_map.count("help") != 0) {
     std::cout << options_description << nl;
+    std::cout << "Example flags for octahedral (A-A)3: -s 12 -c AAAAAA -l \"0, 1, 2, 3, 4, 5\"" << nl;
+    std::cout << "Note: The links list is stripped of anything not a comma or number,  split by commas and parsed pairwise." << nl;
+
+    std::cout << nl << "Valid shape indices:" << nl << nl;
+    for(unsigned i = 0; i < shapes::allShapes.size(); i++) {
+      std::cout << std::setw(4) << i << " - " << shapes::name(shapes::allShapes.at(i)) << nl;
+    }
+    std::cout << nl;
     return 0;
   }
 
-  if(
-    options_variables_map.count("s") != 0
-    && options_variables_map.count("c") != 0
-  ) {
-    // Validate symmetry argument
-    unsigned argSymmetry = options_variables_map["s"].as<unsigned>();
+  if(options_variables_map.count("shape") > 0 && options_variables_map.count("characters") > 0) {
+    // Validate shape argument
+    unsigned argSymmetry = options_variables_map["shape"].as<unsigned>();
     if(argSymmetry >= shapes::allShapes.size()) {
-      std::cout << "Specified symmetry out of bounds. Valid symmetries are 0-"
-        << (shapes::allShapes.size() - 1) << ":\n\n";
+      std::cout << "Specified shape out of bounds. Valid shapes are 0-"
+        << (shapes::allShapes.size() - 1) << ":" << nl << nl;
       for(unsigned i = 0; i < shapes::allShapes.size(); i++) {
-        std::cout << "  " << i << " - " << shapes::name(shapes::allShapes.at(i)) << "\n";
+        std::cout << "  " << i << " - " << shapes::name(shapes::allShapes.at(i)) << nl;
       }
-      std::cout << std::endl;
+      std::cout << nl;
       return 0;
     }
 
     shapes::Shape shape = shapes::allShapes[argSymmetry];
 
     // Validate characters
-    std::string chars = options_variables_map["c"].as<std::string>();
+    std::string chars = options_variables_map["characters"].as<std::string>();
 
     if(chars.size() != shapes::size(shape)) {
-      std::cout << "Number of characters does not fit specified symmetry size: "
-        << chars.size() << " characters specified, symmetry size is "
+      std::cout << "Number of characters does not fit specified shape size: "
+        << chars.size() << " characters specified, shape size is "
         << shapes::size(shape) << nl;
 
       return 0;
@@ -98,13 +115,13 @@ int main(int argc, char* argv[]) {
 
     // Validate links (if present)
     Stereopermutation::OrderedLinks links;
-    if(options_variables_map.count("l") != 0) {
+    if(options_variables_map.count("links") != 0) {
       /* Naive parse strategy:
-       * - remove all opening and closing brackets from the string
+       * - remove anything not a number or comma from the string
        * - split along commas, check size % 2 == 0
        * - parse non-overlapping pairwise as links
        */
-      std::string linksString = options_variables_map["l"].as<std::string>();
+      std::string linksString = options_variables_map["links"].as<std::string>();
 
       linksString.erase(
         std::remove_if(
@@ -155,19 +172,27 @@ int main(int argc, char* argv[]) {
 
     auto unique = uniques(base, shape, false);
 
-    std::cout << "Symmetry: " << shapes::name(shape) << nl
-      << "Characters: " << chars << nl
-      << "Links: " << temple::stringifyContainer(
+    std::cout << "Shape: " << shapes::name(shape) << nl
+      << "Characters: " << chars << nl;
+
+    if(!links.empty()) {
+      std::cout << "Links: " << temple::stringifyContainer(
         links,
         [](const Stereopermutation::Link link) -> std::string {
           return "{"s + std::to_string(link.first) + ", "s + std::to_string(link.second) + "}"s;
         }
-      ) << nl << nl;
+      ) << nl;
+    }
+
+    std::cout << nl;
 
     for(unsigned i = 0; i < unique.list.size(); ++i) {
       std::cout << "Weight " << unique.weights[i] << ": "
-        << unique.list[i].toString()
-        << ", link angles: ";
+        << unique.list[i].toString();
+
+      if(!unique.list[i].links.empty()) {
+        std::cout << ", link angles: ";
+      }
 
       for(const auto& linkPair : unique.list[i].links) {
         std::cout << (

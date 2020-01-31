@@ -67,6 +67,14 @@ void StereopermutatorList::try_remove(const BondIndex& edge) {
   impl_->try_remove(edge);
 }
 
+AtomStereopermutator& StereopermutatorList::at(const AtomIndex index) {
+  return impl_->at(index);
+}
+
+BondStereopermutator& StereopermutatorList::at(const BondIndex& index) {
+  return impl_->at(index);
+}
+
 boost::optional<AtomStereopermutator&> StereopermutatorList::option(const AtomIndex index) {
   return impl_->option(index);
 }
@@ -90,6 +98,14 @@ unsigned StereopermutatorList::B() const {
 
 unsigned StereopermutatorList::size() const {
   return impl_->size();
+}
+
+const AtomStereopermutator& StereopermutatorList::at(const AtomIndex index) const {
+  return static_cast<const Impl*>(impl_.get())->at(index);
+}
+
+const BondStereopermutator& StereopermutatorList::at(const BondIndex& index) const {
+  return static_cast<const Impl*>(impl_.get())->at(index);
 }
 
 boost::optional<const AtomStereopermutator&> StereopermutatorList::option(const AtomIndex index) const {

@@ -161,6 +161,14 @@ void StereopermutatorList::Impl::try_remove(const BondIndex& edge) {
   }
 }
 
+AtomStereopermutator& StereopermutatorList::Impl::at(const AtomIndex index) {
+  return atomStereopermutators.at(index);
+}
+
+BondStereopermutator& StereopermutatorList::Impl::at(const BondIndex& index) {
+  return bondStereopermutators.at(index);
+}
+
 boost::optional<AtomStereopermutator&> StereopermutatorList::Impl::option(const AtomIndex index) {
   auto findIter = atomStereopermutators.find(index);
 
@@ -196,6 +204,14 @@ unsigned StereopermutatorList::Impl::B() const {
 
 unsigned StereopermutatorList::Impl::size() const {
   return atomStereopermutators.size() + bondStereopermutators.size();
+}
+
+const AtomStereopermutator& StereopermutatorList::Impl::at(const AtomIndex index) const {
+  return atomStereopermutators.at(index);
+}
+
+const BondStereopermutator& StereopermutatorList::Impl::at(const BondIndex& index) const {
+  return bondStereopermutators.at(index);
 }
 
 boost::optional<const AtomStereopermutator&> StereopermutatorList::Impl::option(const AtomIndex index) const {
