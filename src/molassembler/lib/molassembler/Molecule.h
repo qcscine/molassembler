@@ -792,7 +792,7 @@ public:
 private:
   //! Private implementation member
   struct Impl;
-  std::unique_ptr<Impl> _pImpl;
+  std::unique_ptr<Impl> pImpl_;
 
   /* Allow access to implementation to editor class that enables more
    * macro-oriented editing as opposed to the low-level editing provided here

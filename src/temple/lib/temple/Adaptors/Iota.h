@@ -20,16 +20,16 @@ class Iota {
 public:
 //!@name Constructors
 //!@{
-  Iota(T lower, T upper) : _lower(lower), _upper(upper) {
-    assert(_lower < _upper);
+  Iota(T lower, T upper) : lower_(lower), upper_(upper) {
+    assert(lower_ < upper_);
   }
 
   explicit Iota(T upper) : Iota(T {0}, upper) {}
 //!@}
 
   std::size_t size() const {
-    // This is fine since we know that _upper > _lower (see ctor)
-    return _upper - _lower;
+    // This is fine since we know that upper_ > lower_ (see ctor)
+    return upper_ - lower_;
   }
 
 //!@name Iterators
@@ -113,18 +113,18 @@ public:
   };
 
   iterator begin() const {
-    return iterator {_lower};
+    return iterator {lower_};
   }
 
   iterator end() const {
-    return iterator {_upper};
+    return iterator {upper_};
   }
 //!@}
 
 private:
 //!@name State
 //!@{
-  T _lower, _upper;
+  T lower_, upper_;
 //!@}
 };
 

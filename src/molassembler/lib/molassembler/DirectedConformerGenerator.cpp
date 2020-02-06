@@ -42,7 +42,7 @@ DirectedConformerGenerator::considerBond(
 DirectedConformerGenerator::DirectedConformerGenerator(
   Molecule molecule,
   const BondList& bondsToConsider
-) : _pImpl(std::make_unique<Impl>(std::move(molecule), bondsToConsider)) {}
+) : pImpl_(std::make_unique<Impl>(std::move(molecule), bondsToConsider)) {}
 
 DirectedConformerGenerator::DirectedConformerGenerator(DirectedConformerGenerator&& other) noexcept = default;
 DirectedConformerGenerator& DirectedConformerGenerator::operator = (DirectedConformerGenerator&& other) noexcept = default;
@@ -50,27 +50,27 @@ DirectedConformerGenerator& DirectedConformerGenerator::operator = (DirectedConf
 DirectedConformerGenerator::~DirectedConformerGenerator() = default;
 
 DirectedConformerGenerator::DecisionList DirectedConformerGenerator::generateNewDecisionList() {
-  return _pImpl->generateNewDecisionList();
+  return pImpl_->generateNewDecisionList();
 }
 
 bool DirectedConformerGenerator::insert(const DecisionList& decisionList) {
-  return _pImpl->insert(decisionList);
+  return pImpl_->insert(decisionList);
 }
 
 bool DirectedConformerGenerator::contains(const DecisionList& decisionList) {
-  return _pImpl->contains(decisionList);
+  return pImpl_->contains(decisionList);
 }
 
 const DirectedConformerGenerator::BondList& DirectedConformerGenerator::bondList() const {
-  return _pImpl->bondList();
+  return pImpl_->bondList();
 }
 
 unsigned DirectedConformerGenerator::decisionListSetSize() const {
-  return _pImpl->decisionListSetSize();
+  return pImpl_->decisionListSetSize();
 }
 
 unsigned DirectedConformerGenerator::idealEnsembleSize() const {
-  return _pImpl->idealEnsembleSize();
+  return pImpl_->idealEnsembleSize();
 }
 
 outcome::result<Utils::PositionCollection>
@@ -78,7 +78,7 @@ DirectedConformerGenerator::generateRandomConformation(
   const DecisionList& decisionList,
   const distance_geometry::Configuration& configuration
 ) {
-  return _pImpl->generateRandomConformation(decisionList, configuration);
+  return pImpl_->generateRandomConformation(decisionList, configuration);
 }
 
 outcome::result<Utils::PositionCollection>
@@ -87,25 +87,25 @@ DirectedConformerGenerator::generateConformation(
   const unsigned seed,
   const distance_geometry::Configuration& configuration
 ) {
-  return _pImpl->generateConformation(decisionList, seed, configuration);
+  return pImpl_->generateConformation(decisionList, seed, configuration);
 }
 
 const Molecule& DirectedConformerGenerator::conformationMolecule(const DecisionList& decisionList) {
-  return _pImpl->conformationMolecule(decisionList);
+  return pImpl_->conformationMolecule(decisionList);
 }
 
 DirectedConformerGenerator::DecisionList DirectedConformerGenerator::getDecisionList(
   const Utils::AtomCollection& atomCollection,
   const BondStereopermutator::FittingMode mode
 ) {
-  return _pImpl->getDecisionList(atomCollection, mode);
+  return pImpl_->getDecisionList(atomCollection, mode);
 }
 
 DirectedConformerGenerator::DecisionList DirectedConformerGenerator::getDecisionList(
   const Utils::PositionCollection& positions,
   const BondStereopermutator::FittingMode mode
 ) {
-  return _pImpl->getDecisionList(positions, mode);
+  return pImpl_->getDecisionList(positions, mode);
 }
 
 } // namespace molassembler

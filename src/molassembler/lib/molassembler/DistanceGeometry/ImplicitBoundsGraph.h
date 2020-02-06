@@ -163,15 +163,15 @@ public:
 
 private:
   //! Pointer to molecule from which the bounds come from
-  const PrivateGraph* _innerGraphPtr;
+  const PrivateGraph* innerGraphPtr_;
 
   //! Stores the two heaviest element types
-  std::array<Utils::ElementType, 2> _heaviestAtoms;
+  std::array<Utils::ElementType, 2> heaviestAtoms_;
 
   //! Dense adjacency matrix for O(1) access to fixed distances
-  Eigen::MatrixXd _distances;
+  Eigen::MatrixXd distances_;
 
-  static void _explainContradictionPaths(
+  static void explainContradictionPaths_(
     VertexDescriptor a,
     VertexDescriptor b,
     const std::vector<VertexDescriptor>& predecessors,
@@ -284,7 +284,7 @@ public:
    * @complexity{@math{\Theta(1)}}
    */
   inline const Eigen::MatrixXd& getMatrix() const {
-    return _distances;
+    return distances_;
   }
 
   /*! @brief Returns the number of out-edges for a particular vertex
@@ -312,7 +312,7 @@ public:
     using reference = double;
     using key_type = EdgeDescriptor;
 
-    const ImplicitBoundsGraph* _basePtr;
+    const ImplicitBoundsGraph* basePtr_;
 
     EdgeWeightMap(const ImplicitBoundsGraph& base);
     double operator [] (const EdgeDescriptor& e) const;
@@ -379,12 +379,12 @@ public:
 
   //! An iterator to enumerate all edges in a graph.
   class edge_iterator {
-    const ImplicitBoundsGraph* _basePtr;
+    const ImplicitBoundsGraph* basePtr_;
 
-    VertexDescriptor _i, _b;
-    bool _crossGroup;
+    VertexDescriptor i_, b_;
+    bool crossGroup_;
 
-    void _increment();
+    void increment_();
 
   public:
     using iterator_category = std::forward_iterator_tag;
@@ -433,10 +433,10 @@ public:
 
   //! An iterator to enumerate only edges to the same part of the graph from specific vertices
   class in_group_edge_iterator {
-    const ImplicitBoundsGraph* _basePtr;
-    VertexDescriptor _i;
-    VertexDescriptor _b;
-    bool _isLeft;
+    const ImplicitBoundsGraph* basePtr_;
+    VertexDescriptor i_;
+    VertexDescriptor b_;
+    bool isLeft_;
 
   public:
     using iterator_category = std::forward_iterator_tag;
@@ -466,12 +466,12 @@ public:
        * either the lower or upper bound, and convert the double there to
        * boolean. That boolean is true only if the double is != 0.
        */
-      ++_b;
+      ++b_;
       while(
-        _b < static_cast<VertexDescriptor>(_basePtr->_distances.outerSize())
-        && (_basePtr->_distances(internal(_i), _b) == 0.0)
+        b_ < static_cast<VertexDescriptor>(basePtr_->distances_.outerSize())
+        && (basePtr_->distances_(internal(i_), b_) == 0.0)
       ) {
-        ++_b;
+        ++b_;
       }
       return *this;
     }
@@ -484,10 +484,10 @@ public:
 
     inline bool operator == (const in_group_edge_iterator& other) {
       return (
-        _isLeft == other._isLeft
-        && _i == other._i
-        && _b == other._b
-        && _basePtr == other._basePtr
+        isLeft_ == other.isLeft_
+        && i_ == other.i_
+        && b_ == other.b_
+        && basePtr_ == other.basePtr_
       );
     }
     inline bool operator != (const in_group_edge_iterator& other) {
@@ -495,19 +495,19 @@ public:
     }
 
     inline EdgeDescriptor operator *() const {
-      return {_i, target()};
+      return {i_, target()};
     }
 
     inline VertexDescriptor target() const {
-      if(_isLeft) {
-        return left(_b);
+      if(isLeft_) {
+        return left(b_);
       }
 
-      return right(_b);
+      return right(b_);
     }
 
     inline double weight() const {
-      return _basePtr->upperBound(internal(_i), _b);
+      return basePtr_->upperBound(internal(i_), b_);
     }
   };
 

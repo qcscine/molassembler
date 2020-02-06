@@ -69,7 +69,7 @@ constexpr PrivateGraph::Vertex PrivateGraph::removalPlaceholder;
 
 /* Constructors */
 PrivateGraph::PrivateGraph() = default;
-PrivateGraph::PrivateGraph(const PrivateGraph::Vertex N) : _graph {N} {}
+PrivateGraph::PrivateGraph(const PrivateGraph::Vertex N) : graph_ {N} {}
 
 /* Rule of five members */
 /* Implementation note
@@ -81,16 +81,16 @@ PrivateGraph::PrivateGraph(const PrivateGraph::Vertex N) : _graph {N} {}
  * Moving the graph does not invalidate descriptors since the graph does
  * not change location in memory.
  */
-PrivateGraph::PrivateGraph(const PrivateGraph& other) : _graph(other._graph) {}
+PrivateGraph::PrivateGraph(const PrivateGraph& other) : graph_(other.graph_) {}
 PrivateGraph::PrivateGraph(PrivateGraph&& other) = default;
 PrivateGraph& PrivateGraph::operator = (const PrivateGraph& other) {
-  _graph = other._graph;
-  _properties.invalidate();
+  graph_ = other.graph_;
+  properties_.invalidate();
   return *this;
 }
 PrivateGraph& PrivateGraph::operator = (PrivateGraph&& other) {
-  _graph = std::move(other._graph);
-  _properties = std::move(other._properties);
+  graph_ = std::move(other.graph_);
+  properties_ = std::move(other.properties_);
   return *this;
 }
 PrivateGraph::~PrivateGraph() = default;
@@ -100,98 +100,98 @@ PrivateGraph::Edge PrivateGraph::addEdge(const Vertex a, const Vertex b, const B
   /* We have to be careful here since the edge list for a vector is not a set
    * (see BglType).  Check if there is already such an edge before adding it.
    */
-  auto existingEdgePair = boost::edge(a, b, _graph);
+  auto existingEdgePair = boost::edge(a, b, graph_);
   if(existingEdgePair.second) {
     throw std::logic_error("Edge already exists!");
   }
 
   // Invalidate the cache only after all throwing conditions
-  _properties.invalidate();
+  properties_.invalidate();
 
-  auto newBondPair = boost::add_edge(a, b, _graph);
+  auto newBondPair = boost::add_edge(a, b, graph_);
 
   // The bond may not yet exist
   assert(newBondPair.second);
-  _graph[newBondPair.first].bondType = bondType;
+  graph_[newBondPair.first].bondType = bondType;
 
   return newBondPair.first;
 }
 
 PrivateGraph::Vertex PrivateGraph::addVertex(const Utils::ElementType elementType) {
   // Invalidate the cache values
-  _properties.invalidate();
+  properties_.invalidate();
 
-  PrivateGraph::Vertex newVertex = boost::add_vertex(_graph);
-  _graph[newVertex].elementType = elementType;
+  PrivateGraph::Vertex newVertex = boost::add_vertex(graph_);
+  graph_[newVertex].elementType = elementType;
   return newVertex;
 }
 
 void PrivateGraph::applyPermutation(const std::vector<Vertex>& permutation) {
   // Invalidate the cache
-  _properties.invalidate();
+  properties_.invalidate();
 
-  BglType transformedGraph(boost::num_vertices(_graph));
+  BglType transformedGraph(boost::num_vertices(graph_));
 
   /* I failed to get copy_graph to perform the permutation for me, so we copy
    * manually:
    */
   for(Vertex i : vertices()) {
-    transformedGraph[permutation.at(i)].elementType = _graph[i].elementType;
+    transformedGraph[permutation.at(i)].elementType = graph_[i].elementType;
   }
 
   for(Edge e : edges()) {
     auto newBondPair = boost::add_edge(
-      permutation.at(boost::source(e, _graph)),
-      permutation.at(boost::target(e, _graph)),
+      permutation.at(boost::source(e, graph_)),
+      permutation.at(boost::target(e, graph_)),
       transformedGraph
     );
 
-    transformedGraph[newBondPair.first].bondType = _graph[e].bondType;
+    transformedGraph[newBondPair.first].bondType = graph_[e].bondType;
   }
 
-  std::swap(_graph, transformedGraph);
+  std::swap(graph_, transformedGraph);
 }
 
 BondType& PrivateGraph::bondType(const PrivateGraph::Edge& edge) {
   // Invalidate the cache values
-  _properties.invalidate();
+  properties_.invalidate();
 
-  return _graph[edge].bondType;
+  return graph_[edge].bondType;
 }
 
 void PrivateGraph::clearVertex(Vertex a) {
   // Invalidate the cache values
-  _properties.invalidate();
+  properties_.invalidate();
 
-  boost::clear_vertex(a, _graph);
+  boost::clear_vertex(a, graph_);
 }
 
 void PrivateGraph::removeEdge(const Edge& e) {
   // Invalidate the cache values
-  _properties.invalidate();
+  properties_.invalidate();
 
-  boost::remove_edge(e, _graph);
+  boost::remove_edge(e, graph_);
 }
 
 void PrivateGraph::removeVertex(Vertex a) {
   // Invalidate the cache values
-  _properties.invalidate();
+  properties_.invalidate();
 
-  boost::remove_vertex(a, _graph);
+  boost::remove_vertex(a, graph_);
 }
 
 Utils::ElementType& PrivateGraph::elementType(const Vertex a) {
   // Invalidate the cache values
-  _properties.invalidate();
+  properties_.invalidate();
 
-  return _graph[a].elementType;
+  return graph_[a].elementType;
 }
 
 PrivateGraph::BglType& PrivateGraph::bgl() {
   // Invalidate the cache values
-  _properties.invalidate();
+  properties_.invalidate();
 
-  return _graph;
+  return graph_;
 }
 
 /* Information */
@@ -214,9 +214,9 @@ bool PrivateGraph::canRemove(const Edge& edge) const {
   // Make sure the edge exists in the first place
   assert(
     boost::edge(
-      boost::source(edge, _graph),
-      boost::target(edge, _graph),
-      _graph
+      boost::source(edge, graph_),
+      boost::target(edge, graph_),
+      graph_
     ).second
   );
 
@@ -229,7 +229,7 @@ bool PrivateGraph::canRemove(const Edge& edge) const {
 /* Information */
 unsigned PrivateGraph::connectedComponents() const {
   std::vector<unsigned> componentMap(N());
-  return boost::connected_components(_graph, &componentMap[0]);
+  return boost::connected_components(graph_, &componentMap[0]);
 }
 
 unsigned PrivateGraph::connectedComponents(std::vector<unsigned>& componentMap) const {
@@ -238,19 +238,19 @@ unsigned PrivateGraph::connectedComponents(std::vector<unsigned>& componentMap) 
   if(componentMap.size() != size) {
     componentMap.resize(size);
   }
-  return boost::connected_components(_graph, &componentMap[0]);
+  return boost::connected_components(graph_, &componentMap[0]);
 }
 
 BondType PrivateGraph::bondType(const PrivateGraph::Edge& edge) const {
-  return _graph[edge].bondType;
+  return graph_[edge].bondType;
 }
 
 Utils::ElementType PrivateGraph::elementType(const Vertex a) const {
-  return _graph[a].elementType;
+  return graph_[a].elementType;
 }
 
 PrivateGraph::Edge PrivateGraph::edge(const Vertex a, const Vertex b) const {
-  auto edge = boost::edge(a, b, _graph);
+  auto edge = boost::edge(a, b, graph_);
 
   if(!edge.second) {
     throw std::out_of_range("Specified edge does not exist in the graph");
@@ -260,7 +260,7 @@ PrivateGraph::Edge PrivateGraph::edge(const Vertex a, const Vertex b) const {
 }
 
 boost::optional<PrivateGraph::Edge> PrivateGraph::edgeOption(const Vertex a, const Vertex b) const {
-  auto edge = boost::edge(a, b, _graph);
+  auto edge = boost::edge(a, b, graph_);
 
   if(edge.second) {
     return edge.first;
@@ -270,23 +270,23 @@ boost::optional<PrivateGraph::Edge> PrivateGraph::edgeOption(const Vertex a, con
 }
 
 PrivateGraph::Vertex PrivateGraph::source(const PrivateGraph::Edge& edge) const {
-  return boost::source(edge, _graph);
+  return boost::source(edge, graph_);
 }
 
 PrivateGraph::Vertex PrivateGraph::target(const PrivateGraph::Edge& edge) const {
-  return boost::target(edge, _graph);
+  return boost::target(edge, graph_);
 }
 
 PrivateGraph::Vertex PrivateGraph::degree(const PrivateGraph::Vertex a) const {
-  return boost::out_degree(a, _graph);
+  return boost::out_degree(a, graph_);
 }
 
 PrivateGraph::Vertex PrivateGraph::N() const {
-  return boost::num_vertices(_graph);
+  return boost::num_vertices(graph_);
 }
 
 PrivateGraph::Vertex PrivateGraph::B() const {
-  return boost::num_edges(_graph);
+  return boost::num_edges(graph_);
 }
 
 bool PrivateGraph::identicalGraph(const PrivateGraph& other) const {
@@ -299,9 +299,9 @@ bool PrivateGraph::identicalGraph(const PrivateGraph& other) const {
       Edge correspondingEdge;
       bool edgeExists;
       std::tie(correspondingEdge, edgeExists) = boost::edge(
-        boost::source(edge, _graph),
-        boost::target(edge, _graph),
-        other._graph
+        boost::source(edge, graph_),
+        boost::target(edge, graph_),
+        other.graph_
       );
 
       return edgeExists;
@@ -320,10 +320,10 @@ std::pair<
   auto bitsetPtr = std::make_shared<
     std::vector<bool>
   >();
-  detail::BridgeSplittingBFSVisitor visitor(bridge, _graph, bitsetPtr);
+  detail::BridgeSplittingBFSVisitor visitor(bridge, graph_, bitsetPtr);
 
   boost::breadth_first_search(
-    _graph,
+    graph_,
     target(bridge),
     boost::visitor(visitor)
   );
@@ -351,7 +351,7 @@ std::pair<
 }
 
 PrivateGraph::VertexRange PrivateGraph::vertices() const {
-  auto iters = boost::vertices(_graph);
+  auto iters = boost::vertices(graph_);
   return {
     std::move(iters.first),
     std::move(iters.second)
@@ -359,7 +359,7 @@ PrivateGraph::VertexRange PrivateGraph::vertices() const {
 }
 
 PrivateGraph::EdgeRange PrivateGraph::edges() const {
-  auto iters = boost::edges(_graph);
+  auto iters = boost::edges(graph_);
   return {
     std::move(iters.first),
     std::move(iters.second)
@@ -367,7 +367,7 @@ PrivateGraph::EdgeRange PrivateGraph::edges() const {
 }
 
 PrivateGraph::AdjacentVertexRange PrivateGraph::adjacents(const Vertex a) const {
-  auto iters = boost::adjacent_vertices(a, _graph);
+  auto iters = boost::adjacent_vertices(a, graph_);
   return {
     std::move(iters.first),
     std::move(iters.second)
@@ -375,7 +375,7 @@ PrivateGraph::AdjacentVertexRange PrivateGraph::adjacents(const Vertex a) const 
 }
 
 PrivateGraph::IncidentEdgeRange PrivateGraph::edges(const Vertex a) const {
-  auto iters = boost::out_edges(a, _graph);
+  auto iters = boost::out_edges(a, graph_);
   return {
     std::move(iters.first),
     std::move(iters.second)
@@ -383,43 +383,43 @@ PrivateGraph::IncidentEdgeRange PrivateGraph::edges(const Vertex a) const {
 }
 
 const PrivateGraph::BglType& PrivateGraph::bgl() const {
-  return _graph;
+  return graph_;
 }
 
 void PrivateGraph::populateProperties() const {
-  if(!_properties.removalSafetyDataOption) {
-    _properties.removalSafetyDataOption = _generateRemovalSafetyData();
+  if(!properties_.removalSafetyDataOption) {
+    properties_.removalSafetyDataOption = generateRemovalSafetyData_();
   }
-  if(!_properties.cyclesOption) {
-    _properties.cyclesOption = _generateCycles();
+  if(!properties_.cyclesOption) {
+    properties_.cyclesOption = generateCycles_();
   }
 }
 
 const PrivateGraph::RemovalSafetyData& PrivateGraph::removalSafetyData() const {
-  if(!_properties.removalSafetyDataOption) {
-    _properties.removalSafetyDataOption = _generateRemovalSafetyData();
+  if(!properties_.removalSafetyDataOption) {
+    properties_.removalSafetyDataOption = generateRemovalSafetyData_();
   }
 
-  return *_properties.removalSafetyDataOption;
+  return *properties_.removalSafetyDataOption;
 }
 
 const Cycles& PrivateGraph::cycles() const {
-  if(!_properties.cyclesOption) {
-    _properties.cyclesOption = _generateCycles();
+  if(!properties_.cyclesOption) {
+    properties_.cyclesOption = generateCycles_();
   }
 
-  return *_properties.cyclesOption;
+  return *properties_.cyclesOption;
 }
 
 const Cycles& PrivateGraph::etaPreservedCycles() const {
-  if(!_properties.etaPreservedCyclesOption) {
-    _properties.etaPreservedCyclesOption = _generateEtaPreservedCycles();
+  if(!properties_.etaPreservedCyclesOption) {
+    properties_.etaPreservedCyclesOption = generateEtaPreservedCycles_();
   }
 
-  return *_properties.etaPreservedCyclesOption;
+  return *properties_.etaPreservedCyclesOption;
 }
 
-PrivateGraph::RemovalSafetyData PrivateGraph::_generateRemovalSafetyData() const {
+PrivateGraph::RemovalSafetyData PrivateGraph::generateRemovalSafetyData_() const {
   RemovalSafetyData safetyData;
 
   std::vector<PrivateGraph::Vertex> articulationVertices;
@@ -432,7 +432,7 @@ PrivateGraph::RemovalSafetyData PrivateGraph::_generateRemovalSafetyData() const
 
   // Calculate the biconnected components and articulation vertices
   std::tie(numComponents, std::ignore) = boost::biconnected_components(
-    _graph,
+    graph_,
     componentMap,
     std::back_inserter(articulationVertices)
   );
@@ -467,11 +467,11 @@ PrivateGraph::RemovalSafetyData PrivateGraph::_generateRemovalSafetyData() const
   return safetyData;
 }
 
-Cycles PrivateGraph::_generateCycles() const {
+Cycles PrivateGraph::generateCycles_() const {
   return Cycles(*this);
 }
 
-Cycles PrivateGraph::_generateEtaPreservedCycles() const {
+Cycles PrivateGraph::generateEtaPreservedCycles_() const {
   return Cycles(*this, false);
 }
 

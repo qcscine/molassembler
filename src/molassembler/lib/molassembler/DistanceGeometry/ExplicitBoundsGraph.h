@@ -204,18 +204,18 @@ public:
 //!@}
 
 private:
-  GraphType _graph;
-  const PrivateGraph& _inner;
+  GraphType graph_;
+  const PrivateGraph& inner_;
   //! Stores the two heaviest element types
-  std::array<Utils::ElementType, 2> _heaviestAtoms;
+  std::array<Utils::ElementType, 2> heaviestAtoms_;
 
-  void _updateOrAddEdge(
+  void updateOrAddEdge_(
     VertexDescriptor i,
     VertexDescriptor j,
     double edgeWeight
   );
 
-  void _updateGraphWithFixedDistance(
+  void updateGraphWithFixedDistance_(
     VertexDescriptor a,
     VertexDescriptor b,
     double fixedDistance

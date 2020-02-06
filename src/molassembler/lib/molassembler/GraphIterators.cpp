@@ -54,14 +54,14 @@ Graph::InnerBasedIterator<T, isVertexInitialized>::operator = (InnerBasedIterato
 template<typename T, bool isVertexInitialized>
 Graph::InnerBasedIterator<T, isVertexInitialized>::InnerBasedIterator(
   const InnerBasedIterator& other
-) : _pImpl (
-  std::make_unique<Impl>(*other._pImpl)
+) : pImpl_ (
+  std::make_unique<Impl>(*other.pImpl_)
 ) { }
 
 template<typename T, bool isVertexInitialized>
 Graph::InnerBasedIterator<T, isVertexInitialized>&
 Graph::InnerBasedIterator<T, isVertexInitialized>::operator = (const InnerBasedIterator& other) {
-  *_pImpl = *other._pImpl;
+  *pImpl_ = *other.pImpl_;
   return *this;
 }
 
@@ -69,14 +69,14 @@ template<typename T, bool isVertexInitialized>
 Graph::InnerBasedIterator<T, isVertexInitialized>::~InnerBasedIterator() = default;
 
 template<typename T, bool isVertexInitialized>
-Graph::InnerBasedIterator<T, isVertexInitialized>::InnerBasedIterator() : _pImpl(std::make_unique<Impl>()) {}
+Graph::InnerBasedIterator<T, isVertexInitialized>::InnerBasedIterator() : pImpl_(std::make_unique<Impl>()) {}
 
 template<typename T, bool isVertexInitialized>
 template<bool Dependent, std::enable_if_t<!Dependent, int>...>
 Graph::InnerBasedIterator<T, isVertexInitialized>::InnerBasedIterator(
   const PrivateGraph& inner,
   bool begin
-) : _pImpl (
+) : pImpl_ (
   std::make_unique<Impl>(inner, begin)
 ) {}
 
@@ -86,36 +86,36 @@ Graph::InnerBasedIterator<T, isVertexInitialized>::InnerBasedIterator(
   const AtomIndex a,
   const PrivateGraph& inner,
   bool begin
-) : _pImpl (
+) : pImpl_ (
   std::make_unique<Impl>(a, inner, begin)
 ) {}
 
 template<typename T, bool isVertexInitialized>
 Graph::InnerBasedIterator<T, isVertexInitialized>& Graph::InnerBasedIterator<T, isVertexInitialized>::operator ++ () {
-  ++(*_pImpl);
+  ++(*pImpl_);
   return *this;
 }
 
 template<typename T, bool isVertexInitialized>
 Graph::InnerBasedIterator<T, isVertexInitialized> Graph::InnerBasedIterator<T, isVertexInitialized>::operator ++ (int) {
   auto copy = *this;
-  ++(*_pImpl);
+  ++(*pImpl_);
   return copy;
 }
 
 template<typename T, bool isVertexInitialized>
 typename Graph::InnerBasedIterator<T, isVertexInitialized>::value_type Graph::InnerBasedIterator<T, isVertexInitialized>::operator * () const {
-  return *(*_pImpl);
+  return *(*pImpl_);
 }
 
 template<typename T, bool isVertexInitialized>
 bool Graph::InnerBasedIterator<T, isVertexInitialized>::operator == (const InnerBasedIterator<T, isVertexInitialized>& other) const {
-  return *_pImpl == *other._pImpl;
+  return *pImpl_ == *other.pImpl_;
 }
 
 template<typename T, bool isVertexInitialized>
 bool Graph::InnerBasedIterator<T, isVertexInitialized>::operator != (const InnerBasedIterator<T, isVertexInitialized>& other) const {
-  return !(*_pImpl == *other._pImpl);
+  return !(*pImpl_ == *other.pImpl_);
 }
 
 /* Concept tests */

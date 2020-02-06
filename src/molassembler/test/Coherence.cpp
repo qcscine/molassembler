@@ -157,7 +157,7 @@ BOOST_FIXTURE_TEST_CASE(AtomStereopermutationCGFitCoherence, LowTemperatureFixtu
           std::string filename = (
             "shape_" + std::to_string(shapes::nameIndex(shape))
             + "_" + std::to_string(assignment)
-            + "_mismatch_" + std::to_string(mismatches)
+            + "mismatch__" + std::to_string(mismatches)
             + ".mol"
           );
           io::write(filename, molecule, positionResult.value());
@@ -169,7 +169,7 @@ BOOST_FIXTURE_TEST_CASE(AtomStereopermutationCGFitCoherence, LowTemperatureFixtu
         std::string filename = (
           "shape_" + std::to_string(shapes::nameIndex(shape))
           + "_" + std::to_string(assignment)
-          + "_match.mol"
+          + "match_.mol"
         );
         io::write(
           filename,

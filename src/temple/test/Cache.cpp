@@ -26,28 +26,28 @@ unsigned int ackermann(unsigned int m, unsigned int n) {
 class Foo {
 private:
   /* 2 */
-  mutable temple::Cache<std::string> _cache {
+  mutable temple::Cache<std::string> cache_ {
     std::make_pair(
       "bigNumber",
       [this]() {
-        return (this -> _determineMe());
+        return (this -> determineMe_());
       }
     )
   };
 
-  unsigned _determineMe() {
+  unsigned determineMe_() {
     return ackermann(3, 2);
   }
 
 public:
   unsigned getAckermann() const {
     /* 4 */
-    return _cache.getGeneratable<unsigned>("bigNumber");
+    return cache_.getGeneratable<unsigned>("bigNumber");
   }
 
   void changeCacheValue() {
     /* 5 */
-    _cache.changeGeneratable<unsigned>(
+    cache_.changeGeneratable<unsigned>(
       "bigNumber",
       [](unsigned* value) {
         *value = 4;

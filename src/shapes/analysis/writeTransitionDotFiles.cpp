@@ -28,8 +28,8 @@ public:
   using RgbType = std::array<double, 3>;
 
 private:
-  const RgbType _from, _to;
-  const double _min, _max;
+  const RgbType from_, to_;
+  const double min_, max_;
 
 public:
   RgbGradient(
@@ -37,28 +37,28 @@ public:
     const RgbType& to,
     double min,
     double max
-  ) : _from(from),
-      _to(to),
-      _min(min),
-      _max(max) {};
+  ) : from_(from),
+      to_(to),
+      min_(min),
+      max_(max) {};
 
   RgbType operator () (const double value) const {
     if(!(
-      _min <= value
-      && value <= _max
+      min_ <= value
+      && value <= max_
     )) {
       throw std::logic_error("Value given to gradient is not in min-max interval");
     }
 
     double advancement = 0;
-    if(std::fabs(_max - _min) >= 1e-10) {
-      advancement = (value - _min) / (_max - _min);
+    if(std::fabs(max_ - min_) >= 1e-10) {
+      advancement = (value - min_) / (max_ - min_);
     }
 
     return RgbType {{
-      _from[0] + advancement * (static_cast<double>(_to[0]) - _from[0]),
-      _from[1] + advancement * (static_cast<double>(_to[1]) - _from[1]),
-      _from[2] + advancement * (static_cast<double>(_to[2]) - _from[2])
+      from_[0] + advancement * (static_cast<double>(to_[0]) - from_[0]),
+      from_[1] + advancement * (static_cast<double>(to_[1]) - from_[1]),
+      from_[2] + advancement * (static_cast<double>(to_[2]) - from_[2])
     }};
   }
 

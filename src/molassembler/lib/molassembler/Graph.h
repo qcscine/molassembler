@@ -149,7 +149,7 @@ public:
 
   private:
     struct Impl;
-    std::unique_ptr<Impl> _pImpl;
+    std::unique_ptr<Impl> pImpl_;
   };
 
   //! Iterator type yielding all valid atom indices
@@ -320,7 +320,7 @@ public:
   MASM_NO_EXPORT const PrivateGraph& inner() const;
 
 private:
-  std::unique_ptr<PrivateGraph> _innerPtr;
+  std::unique_ptr<PrivateGraph> innerPtr_;
 };
 
 } // namespace molassembler

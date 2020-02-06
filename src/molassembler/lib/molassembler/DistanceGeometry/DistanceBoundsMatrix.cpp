@@ -26,19 +26,19 @@ constexpr double DistanceBoundsMatrix::defaultUpper;
 DistanceBoundsMatrix::DistanceBoundsMatrix() = default;
 
 DistanceBoundsMatrix::DistanceBoundsMatrix(const long unsigned N) {
-  _matrix.resize(N, N);
-  _matrix.triangularView<Eigen::Lower>().setConstant(defaultLower);
-  _matrix.triangularView<Eigen::StrictlyUpper>().setConstant(defaultUpper);
+  matrix_.resize(N, N);
+  matrix_.triangularView<Eigen::Lower>().setConstant(defaultLower);
+  matrix_.triangularView<Eigen::StrictlyUpper>().setConstant(defaultUpper);
 }
 
-DistanceBoundsMatrix::DistanceBoundsMatrix(Eigen::MatrixXd matrix) : _matrix {std::move(matrix)} {}
+DistanceBoundsMatrix::DistanceBoundsMatrix(Eigen::MatrixXd matrix) : matrix_ {std::move(matrix)} {}
 
 bool DistanceBoundsMatrix::setUpperBound(const AtomIndex i, const AtomIndex j, const double newUpperBound) {
   if(
     upperBound(i, j) >= newUpperBound
     && newUpperBound > lowerBound(i, j)
   ) {
-    _upperBound(i, j) = newUpperBound;
+    upperBound_(i, j) = newUpperBound;
     return true;
   }
 
@@ -50,7 +50,7 @@ bool DistanceBoundsMatrix::setLowerBound(const AtomIndex i, const AtomIndex j, c
     lowerBound(i, j) <= newLowerBound
     && newLowerBound < upperBound(i, j)
   ) {
-    _lowerBound(i, j) = newLowerBound;
+    lowerBound_(i, j) = newLowerBound;
     return true;
   }
 
@@ -111,12 +111,12 @@ void DistanceBoundsMatrix::smooth(Eigen::Ref<Eigen::MatrixXd> matrix) {
 }
 
 void DistanceBoundsMatrix::smooth() {
-  smooth(_matrix);
+  smooth(matrix_);
 }
 
 unsigned DistanceBoundsMatrix::boundInconsistencies() const {
   unsigned count = 0;
-  const unsigned N = _matrix.cols();
+  const unsigned N = matrix_.cols();
 
   for(unsigned i = 0; i < N - 1; i++) {
     for(unsigned j = i + 1; j < N; j++) {
@@ -130,13 +130,13 @@ unsigned DistanceBoundsMatrix::boundInconsistencies() const {
 }
 
 const Eigen::MatrixXd& DistanceBoundsMatrix::access() const {
-  return _matrix;
+  return matrix_;
 }
 
 outcome::result<Eigen::MatrixXd> DistanceBoundsMatrix::makeDistanceMatrix(random::Engine& engine, Partiality partiality) const noexcept {
-  auto matrixCopy = _matrix;
+  auto matrixCopy = matrix_;
 
-  const unsigned N = _matrix.cols();
+  const unsigned N = matrix_.cols();
 
   std::vector<AtomIndex> indices(N);
   std::iota(
@@ -223,11 +223,11 @@ outcome::result<Eigen::MatrixXd> DistanceBoundsMatrix::makeDistanceMatrix(random
 }
 
 Eigen::MatrixXd DistanceBoundsMatrix::makeSquaredBoundsMatrix() const {
-  return _matrix.array().square();
+  return matrix_.array().square();
 }
 
 unsigned DistanceBoundsMatrix::N() const {
-  return _matrix.cols();
+  return matrix_.cols();
 }
 
 } // namespace distance_geometry

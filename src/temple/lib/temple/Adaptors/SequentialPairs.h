@@ -66,13 +66,13 @@ struct SequentialPairGenerator : public Binding<Container> {
 
     Iterator() = default;
     Iterator(ContainerIteratorType left, ContainerIteratorType right)
-      : _left(std::move(left)),
-        _right(std::move(right))
+      : left_(std::move(left)),
+        right_(std::move(right))
     {}
 
     Iterator& operator ++ () {
-      ++_left;
-      ++_right;
+      ++left_;
+      ++right_;
       return *this;
     }
 
@@ -83,7 +83,7 @@ struct SequentialPairGenerator : public Binding<Container> {
     }
 
     bool operator == (const Iterator& other) const {
-      return _left == other._left && _right == other._right;
+      return left_ == other.left_ && right_ == other.right_;
     }
 
     bool operator != (const Iterator& other) const {
@@ -91,11 +91,11 @@ struct SequentialPairGenerator : public Binding<Container> {
     }
 
     PairType operator * () const {
-      return {*_left, *_right};
+      return {*left_, *right_};
     }
 
   private:
-    ContainerIteratorType _left, _right;
+    ContainerIteratorType left_, right_;
   };
 
   Iterator begin() const {

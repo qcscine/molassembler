@@ -42,8 +42,8 @@ namespace distance_geometry {
 ExplicitBoundsGraph::ExplicitBoundsGraph(
   const PrivateGraph& inner,
   const BoundsMatrix& bounds
-) : _graph {2 * inner.N()},
-    _inner {inner}
+) : graph_ {2 * inner.N()},
+    inner_ {inner}
 {
   const AtomIndex N = inner.N();
 
@@ -63,40 +63,40 @@ ExplicitBoundsGraph::ExplicitBoundsGraph(
           + atom_info::vdwRadius(inner.elementType(b))
         );
 
-        boost::add_edge(left(a), right(b), -vdwLowerBound, _graph);
-        boost::add_edge(left(b), right(a), -vdwLowerBound, _graph);
+        boost::add_edge(left(a), right(b), -vdwLowerBound, graph_);
+        boost::add_edge(left(b), right(a), -vdwLowerBound, graph_);
       } else {
         /* Add explicit edges for this a-b pair */
         // Bidirectional edge in left graph with upper weight
-        boost::add_edge(left(a), left(b), upperBound, _graph);
-        boost::add_edge(left(b), left(a), upperBound, _graph);
+        boost::add_edge(left(a), left(b), upperBound, graph_);
+        boost::add_edge(left(b), left(a), upperBound, graph_);
 
         // Bidirectional edge in right graph with upper weight
-        boost::add_edge(right(a), right(b), upperBound, _graph);
-        boost::add_edge(right(b), right(a), upperBound, _graph);
+        boost::add_edge(right(a), right(b), upperBound, graph_);
+        boost::add_edge(right(b), right(a), upperBound, graph_);
 
         // Forward edge from left to right graph with negative lower bound weight
-        boost::add_edge(left(a), right(b), -lowerBound, _graph);
-        boost::add_edge(left(b), right(a), -lowerBound, _graph);
+        boost::add_edge(left(a), right(b), -lowerBound, graph_);
+        boost::add_edge(left(b), right(a), -lowerBound, graph_);
       }
     }
   }
 
   // Determine the two heaviest element types in the molecule, O(N)
-  _heaviestAtoms = {{Utils::ElementType::H, Utils::ElementType::H}};
+  heaviestAtoms_ = {{Utils::ElementType::H, Utils::ElementType::H}};
   for(AtomIndex i = 0; i < N; ++i) {
     auto elementType = inner.elementType(i);
     if(
       Utils::ElementInfo::Z(elementType)
-      > Utils::ElementInfo::Z(_heaviestAtoms.back())
+      > Utils::ElementInfo::Z(heaviestAtoms_.back())
     ) {
-      _heaviestAtoms.back() = elementType;
+      heaviestAtoms_.back() = elementType;
 
       if(
-        Utils::ElementInfo::Z(_heaviestAtoms.back())
-        > Utils::ElementInfo::Z(_heaviestAtoms.front())
+        Utils::ElementInfo::Z(heaviestAtoms_.back())
+        > Utils::ElementInfo::Z(heaviestAtoms_.front())
       ) {
-        std::swap(_heaviestAtoms.front(), _heaviestAtoms.back());
+        std::swap(heaviestAtoms_.front(), heaviestAtoms_.back());
       }
     }
   }
@@ -105,8 +105,8 @@ ExplicitBoundsGraph::ExplicitBoundsGraph(
 ExplicitBoundsGraph::ExplicitBoundsGraph(
   const PrivateGraph& inner,
   const DistanceBoundsMatrix& bounds
-) : _graph {2 * inner.N()},
-    _inner {inner}
+) : graph_ {2 * inner.N()},
+    inner_ {inner}
 {
   const VertexDescriptor N = inner.N();
   for(VertexDescriptor a = 0; a < N; ++a) {
@@ -116,46 +116,46 @@ ExplicitBoundsGraph::ExplicitBoundsGraph(
 
       if(lower != DistanceBoundsMatrix::defaultLower) {
         // Forward edge from left to right graph with negative lower bound weight
-        boost::add_edge(left(a), right(b), -lower, _graph);
-        boost::add_edge(left(b), right(a), -lower, _graph);
+        boost::add_edge(left(a), right(b), -lower, graph_);
+        boost::add_edge(left(b), right(a), -lower, graph_);
       } else {
         const double vdwLowerBound = (
-          atom_info::vdwRadius(_inner.elementType(a))
-          + atom_info::vdwRadius(_inner.elementType(b))
+          atom_info::vdwRadius(inner_.elementType(a))
+          + atom_info::vdwRadius(inner_.elementType(b))
         );
 
         // Implicit lower bound on distance between the vertices
-        boost::add_edge(left(a), right(b), -vdwLowerBound, _graph);
-        boost::add_edge(left(b), right(a), -vdwLowerBound, _graph);
+        boost::add_edge(left(a), right(b), -vdwLowerBound, graph_);
+        boost::add_edge(left(b), right(a), -vdwLowerBound, graph_);
       }
 
       if(upper != DistanceBoundsMatrix::defaultUpper) {
         // Bidirectional edge in left graph with upper weight
-        boost::add_edge(left(a), left(b), upper, _graph);
-        boost::add_edge(left(b), left(a), upper, _graph);
+        boost::add_edge(left(a), left(b), upper, graph_);
+        boost::add_edge(left(b), left(a), upper, graph_);
 
         // Bidirectional edge in right graph with upper weight
-        boost::add_edge(right(a), right(b), upper, _graph);
-        boost::add_edge(right(b), right(a), upper, _graph);
+        boost::add_edge(right(a), right(b), upper, graph_);
+        boost::add_edge(right(b), right(a), upper, graph_);
       }
     }
   }
 
   // Determine the two heaviest element types in the molecule, O(N)
-  _heaviestAtoms = {{Utils::ElementType::H, Utils::ElementType::H}};
+  heaviestAtoms_ = {{Utils::ElementType::H, Utils::ElementType::H}};
   for(AtomIndex i = 0; i < N; ++i) {
     auto elementType = inner.elementType(i);
     if(
       Utils::ElementInfo::Z(elementType)
-      > Utils::ElementInfo::Z(_heaviestAtoms.back())
+      > Utils::ElementInfo::Z(heaviestAtoms_.back())
     ) {
-      _heaviestAtoms.back() = elementType;
+      heaviestAtoms_.back() = elementType;
 
       if(
-        Utils::ElementInfo::Z(_heaviestAtoms.back())
-        > Utils::ElementInfo::Z(_heaviestAtoms.front())
+        Utils::ElementInfo::Z(heaviestAtoms_.back())
+        > Utils::ElementInfo::Z(heaviestAtoms_.front())
       ) {
-        std::swap(_heaviestAtoms.front(), _heaviestAtoms.back());
+        std::swap(heaviestAtoms_.front(), heaviestAtoms_.back());
       }
     }
   }
@@ -167,16 +167,16 @@ void ExplicitBoundsGraph::addBound(
   const ValueBounds& bound
 ) {
   // Bidirectional edge in left graph with upper weight
-  boost::add_edge(left(a), left(b), bound.upper, _graph);
-  boost::add_edge(left(b), left(a), bound.upper, _graph);
+  boost::add_edge(left(a), left(b), bound.upper, graph_);
+  boost::add_edge(left(b), left(a), bound.upper, graph_);
 
   // Bidirectional edge in right graph with upper weight
-  boost::add_edge(right(a), right(b), bound.upper, _graph);
-  boost::add_edge(right(b), right(a), bound.upper, _graph);
+  boost::add_edge(right(a), right(b), bound.upper, graph_);
+  boost::add_edge(right(b), right(a), bound.upper, graph_);
 
   // Forward edge from left to right graph with negative lower bound weight
-  boost::add_edge(left(a), right(b), -bound.lower, _graph);
-  boost::add_edge(left(b), right(a), -bound.lower, _graph);
+  boost::add_edge(left(a), right(b), -bound.lower, graph_);
+  boost::add_edge(left(b), right(a), -bound.lower, graph_);
 }
 
 void ExplicitBoundsGraph::explainContradictionPaths(
@@ -215,85 +215,85 @@ void ExplicitBoundsGraph::explainContradictionPaths(
   }
 }
 
-void ExplicitBoundsGraph::_updateOrAddEdge(
+void ExplicitBoundsGraph::updateOrAddEdge_(
   const VertexDescriptor i,
   const VertexDescriptor j,
   const double edgeWeight
 ) {
-  auto edgeSearchPair = boost::edge(i, j, _graph);
+  auto edgeSearchPair = boost::edge(i, j, graph_);
   if(edgeSearchPair.second) {
-    boost::get(boost::edge_weight, _graph, edgeSearchPair.first) = edgeWeight;
+    boost::get(boost::edge_weight, graph_, edgeSearchPair.first) = edgeWeight;
   } else {
-    boost::add_edge(i, j, edgeWeight, _graph);
+    boost::add_edge(i, j, edgeWeight, graph_);
   }
 }
 
-void ExplicitBoundsGraph::_updateGraphWithFixedDistance(
+void ExplicitBoundsGraph::updateGraphWithFixedDistance_(
   const VertexDescriptor a,
   const VertexDescriptor b,
   const double fixedDistance
 ) {
-  _updateOrAddEdge(left(a), left(b), fixedDistance);
-  _updateOrAddEdge(left(b), left(a), fixedDistance);
+  updateOrAddEdge_(left(a), left(b), fixedDistance);
+  updateOrAddEdge_(left(b), left(a), fixedDistance);
 
-  _updateOrAddEdge(right(a), right(b), fixedDistance);
-  _updateOrAddEdge(right(b), right(a), fixedDistance);
+  updateOrAddEdge_(right(a), right(b), fixedDistance);
+  updateOrAddEdge_(right(b), right(a), fixedDistance);
 
-  _updateOrAddEdge(left(a), right(b), -fixedDistance);
-  _updateOrAddEdge(left(b), right(a), -fixedDistance);
+  updateOrAddEdge_(left(a), right(b), -fixedDistance);
+  updateOrAddEdge_(left(b), right(a), -fixedDistance);
 }
 
 double ExplicitBoundsGraph::lowerBound(
   const VertexDescriptor a,
   const VertexDescriptor b
 ) const {
-  auto edgeSearchPair = boost::edge(left(a), right(b), _graph);
+  auto edgeSearchPair = boost::edge(left(a), right(b), graph_);
 
   assert(edgeSearchPair.second);
 
   // The graph contains the lower bound negated
-  return -boost::get(boost::edge_weight, _graph, edgeSearchPair.first);
+  return -boost::get(boost::edge_weight, graph_, edgeSearchPair.first);
 }
 
 double ExplicitBoundsGraph::upperBound(
   const VertexDescriptor a,
   const VertexDescriptor b
 ) const {
-  auto edgeSearchPair = boost::edge(left(a), left(b), _graph);
+  auto edgeSearchPair = boost::edge(left(a), left(b), graph_);
 
   assert(edgeSearchPair.second);
 
-  return boost::get(boost::edge_weight, _graph, edgeSearchPair.first);
+  return boost::get(boost::edge_weight, graph_, edgeSearchPair.first);
 }
 
 double ExplicitBoundsGraph::maximalImplicitLowerBound(const VertexDescriptor i) const {
   assert(isLeft(i));
   AtomIndex a = i / 2;
-  Utils::ElementType elementType = _inner.elementType(a);
+  Utils::ElementType elementType = inner_.elementType(a);
 
-  if(elementType == _heaviestAtoms.front()) {
+  if(elementType == heaviestAtoms_.front()) {
     return atom_info::vdwRadius(
-      _heaviestAtoms.back()
+      heaviestAtoms_.back()
     ) + atom_info::vdwRadius(elementType);
   }
 
   return atom_info::vdwRadius(
-    _heaviestAtoms.front()
+    heaviestAtoms_.front()
   ) + atom_info::vdwRadius(elementType);
 }
 
 const ExplicitBoundsGraph::GraphType& ExplicitBoundsGraph::graph() const {
-  return _graph;
+  return graph_;
 }
 
 outcome::result<Eigen::MatrixXd> ExplicitBoundsGraph::makeDistanceBounds() const noexcept {
-  unsigned N = _inner.N();
+  unsigned N = inner_.N();
 
   Eigen::MatrixXd bounds;
   bounds.resize(N, N);
   bounds.setZero();
 
-  unsigned M = boost::num_vertices(_graph);
+  unsigned M = boost::num_vertices(graph_);
   std::vector<double> distances (M);
   std::vector<VertexDescriptor> predecessors (M);
   using ColorMapType = boost::two_bit_color_map<>;
@@ -302,12 +302,12 @@ outcome::result<Eigen::MatrixXd> ExplicitBoundsGraph::makeDistanceBounds() const
   for(AtomIndex a = 0; a < N - 1; ++a) {
     auto predecessor_map = boost::make_iterator_property_map(
       predecessors.begin(),
-      boost::get(boost::vertex_index, _graph)
+      boost::get(boost::vertex_index, graph_)
     );
 
     auto distance_map = boost::make_iterator_property_map(
       distances.begin(),
-      boost::get(boost::vertex_index, _graph)
+      boost::get(boost::vertex_index, graph_)
     );
 
     // re-fill color map with white
@@ -328,7 +328,7 @@ outcome::result<Eigen::MatrixXd> ExplicitBoundsGraph::makeDistanceBounds() const
     );
 #else
     boost::gor1_simplified_shortest_paths(
-      _graph,
+      graph_,
       VertexDescriptor {left(a)},
       predecessor_map,
       color_map,
@@ -363,7 +363,7 @@ outcome::result<Eigen::MatrixXd> ExplicitBoundsGraph::makeDistanceMatrix(random:
 }
 
 outcome::result<Eigen::MatrixXd> ExplicitBoundsGraph::makeDistanceMatrix(random::Engine& engine, Partiality partiality) noexcept {
-  const unsigned N = _inner.N();
+  const unsigned N = inner_.N();
 
   Eigen::MatrixXd distancesMatrix;
   distancesMatrix.resize(N, N);
@@ -377,7 +377,7 @@ outcome::result<Eigen::MatrixXd> ExplicitBoundsGraph::makeDistanceMatrix(random:
 
   temple::random::shuffle(indices, engine);
 
-  const unsigned M = boost::num_vertices(_graph);
+  const unsigned M = boost::num_vertices(graph_);
   std::vector<double> distances (M);
   using ColorMapType = boost::two_bit_color_map<>;
   ColorMapType color_map {M};
@@ -425,12 +425,12 @@ outcome::result<Eigen::MatrixXd> ExplicitBoundsGraph::makeDistanceMatrix(random:
 
       auto predecessor_map = boost::make_iterator_property_map(
         predecessors.begin(),
-        boost::get(boost::vertex_index, _graph)
+        boost::get(boost::vertex_index, graph_)
       );
 
       auto distance_map = boost::make_iterator_property_map(
         distances.begin(),
-        boost::get(boost::vertex_index, _graph)
+        boost::get(boost::vertex_index, graph_)
       );
 
       // re-fill color map with white
@@ -451,7 +451,7 @@ outcome::result<Eigen::MatrixXd> ExplicitBoundsGraph::makeDistanceMatrix(random:
       );
 #else
       boost::gor1_simplified_shortest_paths(
-        _graph,
+        graph_,
         left(a),
         predecessor_map,
         color_map,
@@ -482,7 +482,7 @@ outcome::result<Eigen::MatrixXd> ExplicitBoundsGraph::makeDistanceMatrix(random:
       ) = tightenedBound;
 
       // Modify the graph accordingly
-      _updateGraphWithFixedDistance(a, b, tightenedBound);
+      updateGraphWithFixedDistance_(a, b, tightenedBound);
     }
   }
 
@@ -491,12 +491,12 @@ outcome::result<Eigen::MatrixXd> ExplicitBoundsGraph::makeDistanceMatrix(random:
 
     auto predecessor_map = boost::make_iterator_property_map(
       predecessors.begin(),
-      boost::get(boost::vertex_index, _graph)
+      boost::get(boost::vertex_index, graph_)
     );
 
     auto distance_map = boost::make_iterator_property_map(
       distances.begin(),
-      boost::get(boost::vertex_index, _graph)
+      boost::get(boost::vertex_index, graph_)
     );
 
     // re-fill color map with white
@@ -517,7 +517,7 @@ outcome::result<Eigen::MatrixXd> ExplicitBoundsGraph::makeDistanceMatrix(random:
     );
 #else
     boost::gor1_simplified_shortest_paths(
-      _graph,
+      graph_,
       left(a),
       predecessor_map,
       color_map,
@@ -548,7 +548,7 @@ outcome::result<Eigen::MatrixXd> ExplicitBoundsGraph::makeDistanceMatrix(random:
       ) = tightenedBound;
 
       // Modify the graph accordingly
-      _updateGraphWithFixedDistance(a, b, tightenedBound);
+      updateGraphWithFixedDistance_(a, b, tightenedBound);
     }
   }
 

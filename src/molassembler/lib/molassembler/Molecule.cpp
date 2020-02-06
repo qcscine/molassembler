@@ -21,24 +21,24 @@ Utils::AtomCollection Molecule::applyCanonicalizationMap(
 }
 
 /* Molecule interface to Impl call forwards */
-Molecule::Molecule() noexcept : _pImpl(
+Molecule::Molecule() noexcept : pImpl_(
   std::make_unique<Impl>()
 ) {}
 
 Molecule::Molecule(Molecule&& other) noexcept = default;
 Molecule& Molecule::operator = (Molecule&& rhs) noexcept = default;
 
-Molecule::Molecule(const Molecule& other) : _pImpl(
-  std::make_unique<Impl>(*other._pImpl)
+Molecule::Molecule(const Molecule& other) : pImpl_(
+  std::make_unique<Impl>(*other.pImpl_)
 ) {}
 Molecule& Molecule::operator = (const Molecule& rhs) {
-  *_pImpl = *rhs._pImpl;
+  *pImpl_ = *rhs.pImpl_;
   return *this;
 }
 
 Molecule::~Molecule() = default;
 
-Molecule::Molecule(const Utils::ElementType element) noexcept : _pImpl(
+Molecule::Molecule(const Utils::ElementType element) noexcept : pImpl_(
   std::make_unique<Impl>(element)
 ) {}
 
@@ -46,11 +46,11 @@ Molecule::Molecule(
   const Utils::ElementType a,
   const Utils::ElementType b,
   const BondType bondType
-) noexcept : _pImpl(
+) noexcept : pImpl_(
   std::make_unique<Impl>(a, b, bondType)
 ) {}
 
-Molecule::Molecule(Graph graph) : _pImpl(
+Molecule::Molecule(Graph graph) : pImpl_(
   std::make_unique<Impl>(std::move(graph))
 ) {}
 
@@ -60,7 +60,7 @@ Molecule::Molecule(
   const boost::optional<
     std::vector<BondIndex>
   >& bondStereopermutatorCandidatesOptional
-) : _pImpl(
+) : pImpl_(
   std::make_unique<Impl>(
     std::move(graph),
     positions,
@@ -72,7 +72,7 @@ Molecule::Molecule(
   Graph graph,
   StereopermutatorList stereopermutators,
   boost::optional<AtomEnvironmentComponents> canonicalComponentsOption
-) : _pImpl(
+) : pImpl_(
   std::make_unique<Impl>(
     std::move(graph),
     std::move(stereopermutators),
@@ -86,7 +86,7 @@ AtomIndex Molecule::addAtom(
   const AtomIndex adjacentTo,
   const BondType bondType
 ) {
-  return _pImpl->addAtom(elementType, adjacentTo, bondType);
+  return pImpl_->addAtom(elementType, adjacentTo, bondType);
 }
 
 BondIndex Molecule::addBond(
@@ -94,62 +94,62 @@ BondIndex Molecule::addBond(
   const AtomIndex b,
   const BondType bondType
 ) {
-  return _pImpl->addBond(a, b, bondType);
+  return pImpl_->addBond(a, b, bondType);
 }
 
 void Molecule::applyPermutation(const std::vector<AtomIndex>& permutation) {
-  _pImpl->applyPermutation(permutation);
+  pImpl_->applyPermutation(permutation);
 }
 
 void Molecule::assignStereopermutator(
   const AtomIndex a,
   const boost::optional<unsigned>& assignment
 ) {
-  _pImpl->assignStereopermutator(a, assignment);
+  pImpl_->assignStereopermutator(a, assignment);
 }
 
 void Molecule::assignStereopermutator(
   const BondIndex& edge,
   const boost::optional<unsigned>& assignment
 ) {
-  _pImpl->assignStereopermutator(edge, assignment);
+  pImpl_->assignStereopermutator(edge, assignment);
 }
 
 void Molecule::assignStereopermutatorRandomly(
   const AtomIndex a,
   random::Engine& engine
 ) {
-  _pImpl->assignStereopermutatorRandomly(a, engine);
+  pImpl_->assignStereopermutatorRandomly(a, engine);
 }
 
 void Molecule::assignStereopermutatorRandomly(
   const BondIndex& e,
   random::Engine& engine
 ) {
-  _pImpl->assignStereopermutatorRandomly(e, engine);
+  pImpl_->assignStereopermutatorRandomly(e, engine);
 }
 
 std::vector<AtomIndex> Molecule::canonicalize(
   const AtomEnvironmentComponents componentBitmask
 ) {
-  return _pImpl->canonicalize(componentBitmask);
+  return pImpl_->canonicalize(componentBitmask);
 }
 
 void Molecule::removeAtom(const AtomIndex a) {
-  _pImpl->removeAtom(a);
+  pImpl_->removeAtom(a);
 }
 
 void Molecule::removeBond(
   const AtomIndex a,
   const AtomIndex b
 ) {
-  _pImpl->removeBond(a, b);
+  pImpl_->removeBond(a, b);
 }
 
 void Molecule::removeBond(
   const BondIndex& bond
 ) {
-  _pImpl->removeBond(bond.first, bond.second);
+  pImpl_->removeBond(bond.first, bond.second);
 }
 
 bool Molecule::setBondType(
@@ -157,50 +157,50 @@ bool Molecule::setBondType(
   const AtomIndex b,
   const BondType bondType
 ) {
-  return _pImpl->setBondType(a, b, bondType);
+  return pImpl_->setBondType(a, b, bondType);
 }
 
 void Molecule::setElementType(
   const AtomIndex a,
   const Utils::ElementType elementType
 ) {
-  _pImpl->setElementType(a, elementType);
+  pImpl_->setElementType(a, elementType);
 }
 
 void Molecule::setShapeAtAtom(
   const AtomIndex a,
   const shapes::Shape shape
 ) {
-  _pImpl->setShapeAtAtom(a, shape);
+  pImpl_->setShapeAtAtom(a, shape);
 }
 
 
 /* Information */
 boost::optional<AtomEnvironmentComponents> Molecule::canonicalComponents() const {
-  return _pImpl->canonicalComponents();
+  return pImpl_->canonicalComponents();
 }
 
 boost::optional<shapes::Shape> Molecule::inferShape(
   const AtomIndex index,
   const RankingInformation& ranking
 ) const {
-  return _pImpl->inferShape(index, ranking);
+  return pImpl_->inferShape(index, ranking);
 }
 
 std::string Molecule::dumpGraphviz() const {
-  return _pImpl->dumpGraphviz();
+  return pImpl_->dumpGraphviz();
 }
 
 const Graph& Molecule::graph() const {
-  return _pImpl->graph();
+  return pImpl_->graph();
 }
 
 std::size_t Molecule::hash() const {
-  return _pImpl->hash();
+  return pImpl_->hash();
 }
 
 const StereopermutatorList& Molecule::stereopermutators() const {
-  return _pImpl->stereopermutators();
+  return pImpl_->stereopermutators();
 }
 
 StereopermutatorList Molecule::inferStereopermutatorsFromPositions(
@@ -209,7 +209,7 @@ StereopermutatorList Molecule::inferStereopermutatorsFromPositions(
     std::vector<BondIndex>
   >& explicitBondStereopermutatorCandidatesOption
 ) const {
-  return _pImpl->inferStereopermutatorsFromPositions(
+  return pImpl_->inferStereopermutatorsFromPositions(
     angstromWrapper,
     explicitBondStereopermutatorCandidatesOption
   );
@@ -219,18 +219,18 @@ bool Molecule::canonicalCompare(
   const Molecule& other,
   const AtomEnvironmentComponents componentBitmask
 ) const {
-  return _pImpl->canonicalCompare(*other._pImpl, componentBitmask);
+  return pImpl_->canonicalCompare(*other.pImpl_, componentBitmask);
 }
 
 bool Molecule::modularCompare(
   const Molecule& other,
   const AtomEnvironmentComponents componentBitmask
 ) const {
-  return _pImpl->modularCompare(*other._pImpl, componentBitmask);
+  return pImpl_->modularCompare(*other.pImpl_, componentBitmask);
 }
 
 std::string Molecule::str() const {
-  return _pImpl->str();
+  return pImpl_->str();
 }
 
 RankingInformation Molecule::rankPriority(
@@ -238,16 +238,16 @@ RankingInformation Molecule::rankPriority(
   const std::vector<AtomIndex>& excludeAdjacent,
   const boost::optional<AngstromPositions>& positionsOption
 ) const {
-  return _pImpl->rankPriority(a, excludeAdjacent, positionsOption);
+  return pImpl_->rankPriority(a, excludeAdjacent, positionsOption);
 }
 
 /* Operators */
 bool Molecule::operator == (const Molecule& other) const {
-  return *_pImpl == *other._pImpl;
+  return *pImpl_ == *other.pImpl_;
 }
 
 bool Molecule::operator != (const Molecule& other) const {
-  return *_pImpl != *other._pImpl;
+  return *pImpl_ != *other.pImpl_;
 }
 
 

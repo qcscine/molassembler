@@ -460,7 +460,7 @@ std::vector<
     return ReturnType(numConformers, DgError::ZeroAssignmentStereopermutators);
   }
 
-#ifdef _OPENMP
+#ifdef OPENMP_
   /* Ensure the molecule's mutable properties are already generated so none are
    * generated on threaded const-access.
    */
@@ -497,7 +497,7 @@ std::vector<
 
 #pragma omp parallel
   {
-#ifdef _OPENMP
+#ifdef OPENMP_
     /* We have to distribute pseudo-randomness into each thread reproducibly
      * and want to avoid having to guard the global PRNG against access from
      * multiple threads, so we provide each thread its own Engine.
@@ -516,7 +516,7 @@ std::vector<
 #pragma omp for firstprivate(DgDataPtr)
     for(unsigned i = 0; i < numConformers; ++i) {
       // Get thread-specific randomness engine reference
-#ifdef _OPENMP
+#ifdef OPENMP_
       random::Engine& engine = randomnessEngines.at(
         omp_get_thread_num()
       );

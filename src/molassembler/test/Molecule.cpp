@@ -449,7 +449,7 @@ BOOST_AUTO_TEST_CASE(MoleculeIsomorphism) {
     if(!pass) {
       boost::filesystem::path base = currentFilePath.stem();
       std::string aPathString = base.string() + ".dot";
-      std::string bPathString = base.string() + "_isomorphic.dot";
+      std::string bPathString = base.string() + "isomorphic_.dot";
       std::cout << "Writing dot files '" << aPathString << "'.\n";
       std::ofstream aGraph(aPathString);
       aGraph << a.dumpGraphviz();

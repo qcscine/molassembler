@@ -19,11 +19,11 @@ constexpr double BondStereopermutator::assignmentAcceptanceParameter;
 BondStereopermutator::BondStereopermutator(BondStereopermutator&& other) noexcept = default;
 BondStereopermutator& BondStereopermutator::operator = (BondStereopermutator&& other) noexcept = default;
 
-BondStereopermutator::BondStereopermutator(const BondStereopermutator& other) : _pImpl(
-  std::make_unique<Impl>(*other._pImpl)
+BondStereopermutator::BondStereopermutator(const BondStereopermutator& other) : pImpl_(
+  std::make_unique<Impl>(*other.pImpl_)
 ) {}
 BondStereopermutator& BondStereopermutator::operator = (const BondStereopermutator& other) {
-  *_pImpl = *other._pImpl;
+  *pImpl_ = *other.pImpl_;
   return *this;
 }
 BondStereopermutator::~BondStereopermutator() = default;
@@ -34,7 +34,7 @@ BondStereopermutator::BondStereopermutator(
   const BondIndex& edge,
   const Alignment alignment
 ) {
-  _pImpl = std::make_unique<Impl>(
+  pImpl_ = std::make_unique<Impl>(
     stereopermutatorA,
     stereopermutatorB,
     edge,
@@ -48,7 +48,7 @@ BondStereopermutator::BondStereopermutator(
   const BondIndex& edge,
   const Alignment alignment
 ) {
-  _pImpl = std::make_unique<Impl>(
+  pImpl_ = std::make_unique<Impl>(
     graph,
     stereopermutators,
     edge,
@@ -57,15 +57,15 @@ BondStereopermutator::BondStereopermutator(
 }
 
 void BondStereopermutator::assign(boost::optional<unsigned> assignment) {
-  _pImpl->assign(std::move(assignment));
+  pImpl_->assign(std::move(assignment));
 }
 
 void BondStereopermutator::assignRandom(random::Engine& engine) {
-  _pImpl->assignRandom(engine);
+  pImpl_->assignRandom(engine);
 }
 
 void BondStereopermutator::applyPermutation(const std::vector<AtomIndex>& permutation) {
-  _pImpl->applyPermutation(permutation);
+  pImpl_->applyPermutation(permutation);
 }
 
 void BondStereopermutator::fit(
@@ -74,7 +74,7 @@ void BondStereopermutator::fit(
   const AtomStereopermutator& stereopermutatorB,
   const FittingMode mode
 ) {
-  _pImpl->fit(
+  pImpl_->fit(
     angstromWrapper,
     stereopermutatorA,
     stereopermutatorB,
@@ -88,7 +88,7 @@ void BondStereopermutator::propagateGraphChange(
   const PrivateGraph& inner,
   const StereopermutatorList& permutators
 ) {
-  _pImpl->propagateGraphChange(
+  pImpl_->propagateGraphChange(
     oldPermutator,
     newPermutator,
     inner,
@@ -97,15 +97,15 @@ void BondStereopermutator::propagateGraphChange(
 }
 
 BondStereopermutator::Alignment BondStereopermutator::alignment() const {
-  return _pImpl->alignment();
+  return pImpl_->alignment();
 }
 
 boost::optional<unsigned> BondStereopermutator::assigned() const {
-  return _pImpl->assigned();
+  return pImpl_->assigned();
 }
 
 const stereopermutation::Composite& BondStereopermutator::composite() const {
-  return _pImpl->composite();
+  return pImpl_->composite();
 }
 
 double BondStereopermutator::dihedral(
@@ -114,7 +114,7 @@ double BondStereopermutator::dihedral(
   const AtomStereopermutator& stereopermutatorB,
   const SiteIndex siteIndexB
 ) const {
-  return _pImpl->dihedral(
+  return pImpl_->dihedral(
     stereopermutatorA,
     siteIndexA,
     stereopermutatorB,
@@ -123,44 +123,44 @@ double BondStereopermutator::dihedral(
 }
 
 bool BondStereopermutator::hasSameCompositeOrientation(const BondStereopermutator& other) const {
-  return _pImpl->hasSameCompositeOrientation(*other._pImpl);
+  return pImpl_->hasSameCompositeOrientation(*other.pImpl_);
 }
 
 boost::optional<unsigned> BondStereopermutator::indexOfPermutation() const {
-  return _pImpl->indexOfPermutation();
+  return pImpl_->indexOfPermutation();
 }
 
 unsigned BondStereopermutator::numAssignments() const {
-  return _pImpl->numAssignments();
+  return pImpl_->numAssignments();
 }
 
 unsigned BondStereopermutator::numStereopermutations() const {
-  return _pImpl->numStereopermutations();
+  return pImpl_->numStereopermutations();
 }
 
 std::string BondStereopermutator::info() const {
-  return _pImpl->info();
+  return pImpl_->info();
 }
 
 std::string BondStereopermutator::rankInfo() const {
-  return _pImpl->rankInfo();
+  return pImpl_->rankInfo();
 }
 
 BondIndex BondStereopermutator::placement() const {
-  return _pImpl->placement();
+  return pImpl_->placement();
 }
 
 bool BondStereopermutator::operator < (const BondStereopermutator& other) const {
-  return *_pImpl < *other._pImpl;
+  return *pImpl_ < *other.pImpl_;
 }
 
 bool BondStereopermutator::operator == (const BondStereopermutator& other) const {
-  return *_pImpl == *other._pImpl;
+  return *pImpl_ == *other.pImpl_;
 }
 
 bool BondStereopermutator::operator != (const BondStereopermutator& other) const {
   return !(
-    *_pImpl == *other._pImpl
+    *pImpl_ == *other.pImpl_
   );
 }
 

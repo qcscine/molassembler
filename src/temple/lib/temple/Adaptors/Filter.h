@@ -59,18 +59,18 @@ struct FilterAdaptor {
       ContainerIteratorType begin,
       ContainerIteratorType end,
       const FilterAdaptor& parent
-    ) : _iter(std::move(begin)), _end(std::move(end)), _adaptor(parent) {
-      if(_iter != _end && !_adaptor.get().predicate(*_iter)) {
+    ) : iter_(std::move(begin)), end_(std::move(end)), adaptor_(parent) {
+      if(iter_ != end_ && !adaptor_.get().predicate(*iter_)) {
         do {
-          ++_iter;
-        } while(_iter != _end && !_adaptor.get().predicate(*_iter));
+          ++iter_;
+        } while(iter_ != end_ && !adaptor_.get().predicate(*iter_));
       }
     }
 
     Iterator& operator ++ () {
       do {
-        ++_iter;
-      } while(_iter != _end && !_adaptor.get().predicate(*_iter));
+        ++iter_;
+      } while(iter_ != end_ && !adaptor_.get().predicate(*iter_));
       return *this;
     }
 
@@ -81,7 +81,7 @@ struct FilterAdaptor {
     }
 
     bool operator == (const Iterator& other) const {
-      return _iter == other._iter;
+      return iter_ == other.iter_;
     }
 
     bool operator != (const Iterator& other) const {
@@ -89,12 +89,12 @@ struct FilterAdaptor {
     }
 
     ContainerValueType operator * () const {
-      return *_iter;
+      return *iter_;
     }
 
   private:
-    ContainerIteratorType _iter, _end;
-    std::reference_wrapper<const FilterAdaptor> _adaptor;
+    ContainerIteratorType iter_, end_;
+    std::reference_wrapper<const FilterAdaptor> adaptor_;
   };
 
   Iterator begin() const {

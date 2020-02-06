@@ -32,7 +32,7 @@ namespace distance_geometry {
 
 /* Class Implementation */
 
-void ImplicitBoundsGraph::_explainContradictionPaths(
+void ImplicitBoundsGraph::explainContradictionPaths_(
   const VertexDescriptor a,
   const VertexDescriptor b,
   const std::vector<VertexDescriptor>& predecessors,
@@ -71,30 +71,30 @@ void ImplicitBoundsGraph::_explainContradictionPaths(
 ImplicitBoundsGraph::ImplicitBoundsGraph(
   const PrivateGraph& inner,
   BoundsMatrix bounds
-) : _innerGraphPtr(&inner), _distances(std::move(bounds)) {
+) : innerGraphPtr_(&inner), distances_(std::move(bounds)) {
   // Determine the two heaviest element types in the molecule, O(N)
-  _heaviestAtoms = {{Utils::ElementType::H, Utils::ElementType::H}};
+  heaviestAtoms_ = {{Utils::ElementType::H, Utils::ElementType::H}};
   const VertexDescriptor N = inner.N();
   for(AtomIndex i = 0; i < N; ++i) {
     auto elementType = inner.elementType(i);
     if(
       Utils::ElementInfo::Z(elementType)
-      > Utils::ElementInfo::Z(_heaviestAtoms.back())
+      > Utils::ElementInfo::Z(heaviestAtoms_.back())
     ) {
-      _heaviestAtoms.back() = elementType;
+      heaviestAtoms_.back() = elementType;
 
       if(
-        Utils::ElementInfo::Z(_heaviestAtoms.back())
-        > Utils::ElementInfo::Z(_heaviestAtoms.front())
+        Utils::ElementInfo::Z(heaviestAtoms_.back())
+        > Utils::ElementInfo::Z(heaviestAtoms_.front())
       ) {
-        std::swap(_heaviestAtoms.front(), _heaviestAtoms.back());
+        std::swap(heaviestAtoms_.front(), heaviestAtoms_.back());
       }
     }
   }
 }
 
 ImplicitBoundsGraph::VertexDescriptor ImplicitBoundsGraph::num_vertices() const {
-  return 2 * _distances.outerSize();
+  return 2 * distances_.outerSize();
 }
 
 ImplicitBoundsGraph::VertexDescriptor ImplicitBoundsGraph::num_edges() const {
@@ -104,12 +104,12 @@ ImplicitBoundsGraph::VertexDescriptor ImplicitBoundsGraph::num_edges() const {
    * If there is no entry in the upper triangle, there is still an implicit
    * lower bound.
    */
-  unsigned N = _distances.outerSize();
+  unsigned N = distances_.outerSize();
   unsigned count = 0;
 
   for(unsigned i = 0; i < N - 1; ++i) {
     for(unsigned j = i + 1; j < N; ++j) {
-      if(_distances(i, j) > 0) {
+      if(distances_(i, j) > 0) {
         ++count;
       }
     }
@@ -138,9 +138,9 @@ std::pair<ImplicitBoundsGraph::EdgeDescriptor, bool> ImplicitBoundsGraph::edge(c
     };
   }
 
-  unsigned N = _distances.outerSize();
+  unsigned N = distances_.outerSize();
 
-  if(a < N && b < N && _distances(a, b) != 0) {
+  if(a < N && b < N && distances_(a, b) != 0) {
     return {
       EdgeDescriptor {i, j},
       true
@@ -156,13 +156,13 @@ std::pair<ImplicitBoundsGraph::EdgeDescriptor, bool> ImplicitBoundsGraph::edge(c
 bool ImplicitBoundsGraph::hasExplicit(const EdgeDescriptor& edge) const {
   assert(isLeft(edge.first) && !isLeft(edge.second));
 
-  return _distances(internal(edge.first), internal(edge.second)) != 0;
+  return distances_(internal(edge.first), internal(edge.second)) != 0;
 }
 
 outcome::result<Eigen::MatrixXd> ImplicitBoundsGraph::makeDistanceBounds() const noexcept {
   Eigen::MatrixXd bounds;
 
-  unsigned N = _distances.outerSize();
+  unsigned N = distances_.outerSize();
   bounds.resize(N, N);
   bounds.setZero();
 
@@ -217,7 +217,7 @@ outcome::result<Eigen::MatrixXd> ImplicitBoundsGraph::makeDistanceBounds() const
       bounds(b, a) = -distances.at(right(b));
 
       if(bounds(a, b) < bounds(b, a)) {
-        _explainContradictionPaths(a, b, predecessors, distances);
+        explainContradictionPaths_(a, b, predecessors, distances);
         return DgError::GraphImpossible;
       }
     }
@@ -231,7 +231,7 @@ outcome::result<Eigen::MatrixXd> ImplicitBoundsGraph::makeDistanceMatrix(random:
 }
 
 outcome::result<Eigen::MatrixXd> ImplicitBoundsGraph::makeDistanceMatrix(random::Engine& engine, Partiality partiality) noexcept {
-  const unsigned N = _innerGraphPtr->N();
+  const unsigned N = innerGraphPtr_->N();
 
   std::vector<AtomIndex> indices(N);
   std::iota(
@@ -272,12 +272,12 @@ outcome::result<Eigen::MatrixXd> ImplicitBoundsGraph::makeDistanceMatrix(random:
     otherIndices.reserve(N - 1);
 
     for(AtomIndex b = 0; b < a; ++b) {
-      if(!(_distances(a, b) == _distances(b, a) && _distances(a, b) != 0)) {
+      if(!(distances_(a, b) == distances_(b, a) && distances_(a, b) != 0)) {
         otherIndices.push_back(b);
       }
     }
     for(AtomIndex b = a + 1; b < N; ++b) {
-      if(!(_distances(a, b) == _distances(b, a) && _distances(a, b) != 0)) {
+      if(!(distances_(a, b) == distances_(b, a) && distances_(a, b) != 0)) {
         otherIndices.push_back(b);
       }
     }
@@ -330,7 +330,7 @@ outcome::result<Eigen::MatrixXd> ImplicitBoundsGraph::makeDistanceMatrix(random:
       );
 
       if(distances.at(left(b)) < -distances.at(right(b))) {
-        _explainContradictionPaths(a, b, predecessors, distances);
+        explainContradictionPaths_(a, b, predecessors, distances);
         return DgError::GraphImpossible;
       }
 
@@ -344,8 +344,8 @@ outcome::result<Eigen::MatrixXd> ImplicitBoundsGraph::makeDistanceMatrix(random:
 #endif
 
       // Record in distances matrix
-      _distances(a, b) = fixedDistance;
-      _distances(b, a) = fixedDistance;
+      distances_(a, b) = fixedDistance;
+      distances_(b, a) = fixedDistance;
     }
   }
 
@@ -392,8 +392,8 @@ outcome::result<Eigen::MatrixXd> ImplicitBoundsGraph::makeDistanceMatrix(random:
       if(
         a == b
         || (
-          _distances(a, b) == _distances(b, a)
-          && _distances(a, b) != 0
+          distances_(a, b) == distances_(b, a)
+          && distances_(a, b) != 0
         )
       ) {
         // Skip on-diagonal and already-chosen entries
@@ -411,20 +411,20 @@ outcome::result<Eigen::MatrixXd> ImplicitBoundsGraph::makeDistanceMatrix(random:
       );
 
       // Record in distances matrix
-      _distances(a, b) = fixedDistance;
-      _distances(b, a) = fixedDistance;
+      distances_(a, b) = fixedDistance;
+      distances_(b, a) = fixedDistance;
     }
   }
 
-  return _distances;
+  return distances_;
 }
 
 ImplicitBoundsGraph::VertexDescriptor ImplicitBoundsGraph::out_degree(VertexDescriptor i) const {
   unsigned count = 0;
-  unsigned N = _distances.outerSize();
+  unsigned N = distances_.outerSize();
   VertexDescriptor a = internal(i);
   for(VertexDescriptor b = 0; b < N; ++b) {
-    if(_distances(a, b) != 0) {
+    if(distances_(a, b) != 0) {
       ++count;
     }
   }
@@ -437,28 +437,28 @@ ImplicitBoundsGraph::VertexDescriptor ImplicitBoundsGraph::out_degree(VertexDesc
 }
 
 double& ImplicitBoundsGraph::lowerBound(const VertexDescriptor a, const VertexDescriptor b) {
-  return _distances(
+  return distances_(
     std::max(a, b),
     std::min(a, b)
   );
 }
 
 double& ImplicitBoundsGraph::upperBound(const VertexDescriptor a, const VertexDescriptor b) {
-  return _distances(
+  return distances_(
     std::min(a, b),
     std::max(a, b)
   );
 }
 
 double ImplicitBoundsGraph::lowerBound(const VertexDescriptor a, const VertexDescriptor b) const {
-  return _distances(
+  return distances_(
     std::max(a, b),
     std::min(a, b)
   );
 }
 
 double ImplicitBoundsGraph::upperBound(const VertexDescriptor a, const VertexDescriptor b) const {
-  return _distances(
+  return distances_(
     std::min(a, b),
     std::max(a, b)
   );
@@ -467,23 +467,23 @@ double ImplicitBoundsGraph::upperBound(const VertexDescriptor a, const VertexDes
 double ImplicitBoundsGraph::maximalImplicitLowerBound(const VertexDescriptor i) const {
   assert(isLeft(i));
   auto a = internal(i);
-  auto elementType = _innerGraphPtr->elementType(a);
+  auto elementType = innerGraphPtr_->elementType(a);
 
-  if(elementType == _heaviestAtoms.front()) {
+  if(elementType == heaviestAtoms_.front()) {
     return atom_info::vdwRadius(
-      _heaviestAtoms.back()
+      heaviestAtoms_.back()
     ) + atom_info::vdwRadius(elementType);
   }
 
   return atom_info::vdwRadius(
-    _heaviestAtoms.front()
+    heaviestAtoms_.front()
   ) + atom_info::vdwRadius(elementType);
 }
 
 /* Nested classes */
 /* Edge weight property map */
 ImplicitBoundsGraph::EdgeWeightMap::EdgeWeightMap(const ImplicitBoundsGraph& base)
-  : _basePtr(&base)
+  : basePtr_(&base)
 {}
 
 double ImplicitBoundsGraph::EdgeWeightMap::operator [] (const EdgeDescriptor& e) const {
@@ -491,7 +491,7 @@ double ImplicitBoundsGraph::EdgeWeightMap::operator [] (const EdgeDescriptor& e)
   auto b = internal(e.second);
 
   if(isLeft(e.first) && !isLeft(e.second)) {
-    double explicitValue = _basePtr->lowerBound(a, b);
+    double explicitValue = basePtr_->lowerBound(a, b);
 
     if(explicitValue != 0.0) {
       return -explicitValue;
@@ -499,14 +499,14 @@ double ImplicitBoundsGraph::EdgeWeightMap::operator [] (const EdgeDescriptor& e)
 
     return -(
       atom_info::vdwRadius(
-        _basePtr->_innerGraphPtr->elementType(a)
+        basePtr_->innerGraphPtr_->elementType(a)
       ) + atom_info::vdwRadius(
-        _basePtr->_innerGraphPtr->elementType(b)
+        basePtr_->innerGraphPtr_->elementType(b)
       )
     );
   }
 
-  return _basePtr->upperBound(a, b);
+  return basePtr_->upperBound(a, b);
 }
 
 double ImplicitBoundsGraph::EdgeWeightMap::operator () (const EdgeDescriptor& e) const {
@@ -586,22 +586,22 @@ ImplicitBoundsGraph::edge_iterator::edge_iterator() = default;
 ImplicitBoundsGraph::edge_iterator::edge_iterator(
   const ImplicitBoundsGraph& base,
   VertexDescriptor i
-) : _basePtr {&base},
-    _i {i}
+) : basePtr_ {&base},
+    i_ {i}
 {
-  auto a = internal(_i);
+  auto a = internal(i_);
 
-  _b = 0;
+  b_ = 0;
   if(a == 0) {
-    ++_b;
+    ++b_;
   }
 
-  _crossGroup = false;
-  unsigned N = _basePtr->_distances.outerSize();
+  crossGroup_ = false;
+  unsigned N = basePtr_->distances_.outerSize();
 
   if(a < N) {
-    while(_b < N && _basePtr->_distances(a, _b) == 0.0) {
-      ++_b;
+    while(b_ < N && basePtr_->distances_(a, b_) == 0.0) {
+      ++b_;
     }
   }
 }
@@ -612,7 +612,7 @@ ImplicitBoundsGraph::edge_iterator& ImplicitBoundsGraph::edge_iterator::operator
 ImplicitBoundsGraph::edge_iterator& ImplicitBoundsGraph::edge_iterator::operator = (ImplicitBoundsGraph::edge_iterator&& other) noexcept = default;
 
 ImplicitBoundsGraph::edge_iterator& ImplicitBoundsGraph::edge_iterator::operator ++ () {
-  _increment();
+  increment_();
   return *this;
 }
 
@@ -624,10 +624,10 @@ ImplicitBoundsGraph::edge_iterator ImplicitBoundsGraph::edge_iterator::operator 
 
 bool ImplicitBoundsGraph::edge_iterator::operator == (const edge_iterator& other) const {
   return (
-    _crossGroup == other._crossGroup
-    && _b == other._b
-    && _i == other._i
-    && _basePtr == other._basePtr
+    crossGroup_ == other.crossGroup_
+    && b_ == other.b_
+    && i_ == other.i_
+    && basePtr_ == other.basePtr_
   );
 }
 
@@ -636,9 +636,9 @@ bool ImplicitBoundsGraph::edge_iterator::operator != (const edge_iterator& other
 }
 
 double ImplicitBoundsGraph::edge_iterator::weight() const {
-  auto a = internal(_i);
-  if(_crossGroup) {
-    double data = _basePtr->lowerBound(a, _b);
+  auto a = internal(i_);
+  if(crossGroup_) {
+    double data = basePtr_->lowerBound(a, b_);
 
     if(data != 0.0) {
       return -data;
@@ -646,94 +646,94 @@ double ImplicitBoundsGraph::edge_iterator::weight() const {
 
     return -(
       atom_info::vdwRadius(
-        _basePtr->_innerGraphPtr->elementType(a)
+        basePtr_->innerGraphPtr_->elementType(a)
       ) + atom_info::vdwRadius(
-        _basePtr->_innerGraphPtr->elementType(_b)
+        basePtr_->innerGraphPtr_->elementType(b_)
       )
     );
   }
 
-  return _basePtr->upperBound(a, _b);
+  return basePtr_->upperBound(a, b_);
 }
 
 ImplicitBoundsGraph::VertexDescriptor ImplicitBoundsGraph::edge_iterator::target() const {
-  if(_crossGroup) {
-    return right(_b);
+  if(crossGroup_) {
+    return right(b_);
   }
 
-  if(isLeft(_i)) {
-    return left(_b);
+  if(isLeft(i_)) {
+    return left(b_);
   }
 
-  return right(_b);
+  return right(b_);
 }
 
 ImplicitBoundsGraph::EdgeDescriptor ImplicitBoundsGraph::edge_iterator::operator * () const {
   return {
-    _i,
+    i_,
     target()
   };
 }
 
-void ImplicitBoundsGraph::edge_iterator::_increment() {
-  unsigned N = _basePtr->_distances.outerSize();
-  auto a = internal(_i);
+void ImplicitBoundsGraph::edge_iterator::increment_() {
+  unsigned N = basePtr_->distances_.outerSize();
+  auto a = internal(i_);
 
-  if(!_crossGroup) {
-    ++_b;
+  if(!crossGroup_) {
+    ++b_;
     // Find the next explicit information
-    while(_b < N && _basePtr->_distances(a, _b) == 0.0) {
-      ++_b;
+    while(b_ < N && basePtr_->distances_(a, b_) == 0.0) {
+      ++b_;
     }
 
-    if(_b == N) {
-      if(isLeft(_i)) {
-        // Roll over to implicits only if _is is left
-        _crossGroup = true;
-        _b = 0;
-        if(_b == a) {
-          ++_b;
+    if(b_ == N) {
+      if(isLeft(i_)) {
+        // Roll over to implicits only if is_ is left
+        crossGroup_ = true;
+        b_ = 0;
+        if(b_ == a) {
+          ++b_;
         }
       } else {
         // Right vertices have no implicits
-        ++_i;
-        _b = 0;
+        ++i_;
+        b_ = 0;
 
-        a = internal(_i);
+        a = internal(i_);
 
-        if(_b == a) {
-          ++_b;
+        if(b_ == a) {
+          ++b_;
         }
 
         if(a < N) {
           // Search for next explicit
-          while(_b < N && _basePtr->_distances(a, _b) == 0.0) {
-            ++_b;
+          while(b_ < N && basePtr_->distances_(a, b_) == 0.0) {
+            ++b_;
           }
         }
       }
     }
   } else {
-    ++_b;
+    ++b_;
 
-    if(_b == a) {
-      ++_b;
+    if(b_ == a) {
+      ++b_;
     }
 
-    if(_b == N) {
+    if(b_ == N) {
       // Rollover to next explicits
-      _crossGroup = false;
-      _b = 0;
-      ++_i;
+      crossGroup_ = false;
+      b_ = 0;
+      ++i_;
 
-      a = internal(_i);
+      a = internal(i_);
 
-      if(_b == a) {
-        ++_b;
+      if(b_ == a) {
+        ++b_;
       }
 
-      while(_b < N && _basePtr->_distances(a, _b) == 0.0) {
-        ++_b;
+      while(b_ < N && basePtr_->distances_(a, b_) == 0.0) {
+        ++b_;
       }
     }
   }
@@ -742,9 +742,9 @@ void ImplicitBoundsGraph::edge_iterator::_increment() {
 std::string ImplicitBoundsGraph::edge_iterator::state() const {
   using namespace std::string_literals;
 
-  return std::to_string(_i) + " "s
-    + std::to_string(_b) + " "s
-    + std::to_string(static_cast<int>(_crossGroup));
+  return std::to_string(i_) + " "s
+    + std::to_string(b_) + " "s
+    + std::to_string(static_cast<int>(crossGroup_));
 }
 
 ImplicitBoundsGraph::edge_iterator ImplicitBoundsGraph::ebegin() const {
@@ -794,20 +794,20 @@ ImplicitBoundsGraph::in_group_edge_iterator& ImplicitBoundsGraph::in_group_edge_
 ImplicitBoundsGraph::in_group_edge_iterator::in_group_edge_iterator(
   const ImplicitBoundsGraph& base,
   const VertexDescriptor i
-) : _basePtr{&base},
-    _i {i},
-    _b {0},
-    _isLeft {isLeft(i)}
+) : basePtr_{&base},
+    i_ {i},
+    b_ {0},
+    isLeft_ {isLeft(i)}
 {
-  auto a = internal(_i);
+  auto a = internal(i_);
 
   if(a == 0) {
-    ++_b;
+    ++b_;
   }
 
-  unsigned N = _basePtr->_distances.outerSize();
-  while(_b < N && _basePtr->_distances(a, _b) == 0.0) {
-    ++_b;
+  unsigned N = basePtr_->distances_.outerSize();
+  while(b_ < N && basePtr_->distances_(a, b_) == 0.0) {
+    ++b_;
   }
 }
 
@@ -815,13 +815,13 @@ ImplicitBoundsGraph::in_group_edge_iterator::in_group_edge_iterator(
   const ImplicitBoundsGraph& base,
   const VertexDescriptor i,
   bool /* tag */
-) : _basePtr{&base},
-    _i {i},
-    _b {static_cast<VertexDescriptor>(base._distances.outerSize())},
-    _isLeft {isLeft(i)}
+) : basePtr_{&base},
+    i_ {i},
+    b_ {static_cast<VertexDescriptor>(base.distances_.outerSize())},
+    isLeft_ {isLeft(i)}
 {
-  if(internal(_i) == _b) {
-    ++_b;
+  if(internal(i_) == b_) {
+    ++b_;
   }
 }
 

@@ -273,45 +273,45 @@ AtomStereopermutator::Impl::Impl(
   const AtomIndex centerAtom,
   // Ranking information of substituents
   RankingInformation ranking
-) : _centerAtom {centerAtom},
-    _shape {shape},
-    _ranking {std::move(ranking)},
-    _abstract {_ranking, _shape},
-    _feasible {_abstract, _shape, _centerAtom, _ranking, graph},
-    _assignmentOption {boost::none},
-    _shapePositionMap {},
-    _thermalized {thermalized(
+) : centerAtom_ {centerAtom},
+    shape_ {shape},
+    ranking_ {std::move(ranking)},
+    abstract_ {ranking_, shape_},
+    feasible_ {abstract_, shape_, centerAtom_, ranking_, graph},
+    assignmentOption_ {boost::none},
+    shapePositionMap_ {},
+    thermalized_ {thermalized(
       graph,
       centerAtom,
-      _shape,
-      _ranking,
+      shape_,
+      ranking_,
       Options::temperatureRegime
     )}
 {}
 
 /* Modification */
 void AtomStereopermutator::Impl::assign(boost::optional<unsigned> assignment) {
-  if(assignment && assignment.value() >= _feasible.indices.size()) {
+  if(assignment && assignment.value() >= feasible_.indices.size()) {
     throw std::out_of_range("Supplied assignment index is out of range");
   }
 
   // Store new assignment
-  _assignmentOption = std::move(assignment);
+  assignmentOption_ = std::move(assignment);
 
   /* save a mapping of next neighbor indices to symmetry positions after
    * assigning (AtomIndex -> unsigned).
    */
-  if(_assignmentOption) {
-    _shapePositionMap = siteToShapeVertexMap(
-      _abstract.permutations.list.at(
-        _feasible.indices.at(
-          _assignmentOption.value()
+  if(assignmentOption_) {
+    shapePositionMap_ = siteToShapeVertexMap(
+      abstract_.permutations.list.at(
+        feasible_.indices.at(
+          assignmentOption_.value()
         )
       ),
-      _abstract.canonicalSites
+      abstract_.canonicalSites
     );
   } else { // Wipe the map
-    _shapePositionMap.clear();
+    shapePositionMap_.clear();
   }
 }
 
@@ -328,9 +328,9 @@ void AtomStereopermutator::Impl::assignRandom(random::Engine& engine) {
       temple::random::pickDiscrete(
         // Map the feasible permutations onto their weights
         temple::map(
-          _feasible.indices,
+          feasible_.indices,
           [&](const unsigned permutationIndex) -> unsigned {
-            return _abstract.permutations.weights.at(permutationIndex);
+            return abstract_.permutations.weights.at(permutationIndex);
           }
         ),
         engine
@@ -341,10 +341,10 @@ void AtomStereopermutator::Impl::assignRandom(random::Engine& engine) {
 
 void AtomStereopermutator::Impl::applyPermutation(const std::vector<AtomIndex>& permutation) {
   // RankingInformation changes (lots of atom indices)
-  _ranking.applyPermutation(permutation);
+  ranking_.applyPermutation(permutation);
 
-  // _centerAtom must change
-  _centerAtom = permutation.at(_centerAtom);
+  // centerAtom_ must change
+  centerAtom_ = permutation.at(centerAtom_);
 
   /* Neither shape nor assignment change. Also, although ranking and central
    * atom are implicated in their creation, abstract and feasible's states are
@@ -359,7 +359,7 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
 ) {
 #ifndef NDEBUG
   /* Check preconditions! */
-  for(const auto& siteAtomList : boost::range::join(_ranking.sites, newRanking.sites)) {
+  for(const auto& siteAtomList : boost::range::join(ranking_.sites, newRanking.sites)) {
     assert(
       std::is_sorted(
         std::begin(siteAtomList),
@@ -401,7 +401,7 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
    */
 
   // If nothing changes, nothing changes, and nothing is propagated
-  if(newRanking == _ranking) {
+  if(newRanking == ranking_) {
     return boost::none;
   }
 
@@ -430,7 +430,7 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
    * needed to proceed with each.
    */
   auto situation = PropagationSituation::Unknown;
-  int siteCountChange = static_cast<int>(newRanking.sites.size() - _ranking.sites.size());
+  int siteCountChange = static_cast<int>(newRanking.sites.size() - ranking_.sites.size());
   // Complain if more than one site is changed either way
   if(std::abs(siteCountChange) > 1) {
     throw std::logic_error("propagateGraphChange should only ever handle a single site addition or removal at once");
@@ -449,7 +449,7 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
     );
   };
 
-  int substituentCountChange = static_cast<int>(countSubstituents(newRanking.sites)) - static_cast<int>(countSubstituents(_ranking.sites));
+  int substituentCountChange = static_cast<int>(countSubstituents(newRanking.sites)) - static_cast<int>(countSubstituents(ranking_.sites));
   // Complain if multiple substituents are changed either way
   if(std::abs(substituentCountChange) > 1) {
     throw std::logic_error("propagateGraphChange should only ever handle a single substituent addition or removal at once");
@@ -504,7 +504,7 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
 
   /* Determine the situation */
   if(substituentCountChange == +1) {
-    determineChangedSubstituentAndSite(newRanking, _ranking);
+    determineChangedSubstituentAndSite(newRanking, ranking_);
 
     assert(!newRanking.sites.at(*alteredSiteIndex).empty());
     if(newRanking.sites.at(*alteredSiteIndex).size() > 1) {
@@ -513,9 +513,9 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
       situation = PropagationSituation::SiteAddition;
     }
   } else if(substituentCountChange == -1) {
-    determineChangedSubstituentAndSite(_ranking, newRanking);
-    assert(!_ranking.sites.at(*alteredSiteIndex).empty());
-    if(_ranking.sites.at(*alteredSiteIndex).size() > 1) {
+    determineChangedSubstituentAndSite(ranking_, newRanking);
+    assert(!ranking_.sites.at(*alteredSiteIndex).empty());
+    if(ranking_.sites.at(*alteredSiteIndex).size() > 1) {
       situation = PropagationSituation::SubstituentRemoval;
     } else {
       situation = PropagationSituation::SiteRemoval;
@@ -528,24 +528,24 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
   shapes::Shape newShape = shapeOption.value_or_eval(
     [&]() {
       if(siteCountChange == +1) {
-        return up(_shape);
+        return up(shape_);
       }
 
       if(siteCountChange == 0) {
-        return _shape;
+        return shape_;
       }
 
       assert(siteCountChange == -1);
       assert(alteredSiteIndex);
 
       /* We can only figure out a mapping if the stereocenter is assigned
-       * since otherwise _cache.symmetryPositionMap is empty and the symmetry
+       * since otherwise cache_.symmetryPositionMap is empty and the symmetry
        * position being removed is a necessary argument to down.
        */
-      if(_assignmentOption) {
+      if(assignmentOption_) {
         return down(
-          _shape,
-          _shapePositionMap.at(alteredSiteIndex.value())
+          shape_,
+          shapePositionMap_.at(alteredSiteIndex.value())
         );
       }
 
@@ -565,7 +565,7 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
   stereopermutators::Feasible newFeasible {
     newAbstract,
     newShape,
-    _centerAtom,
+    centerAtom_,
     newRanking,
     graph
   };
@@ -582,7 +582,7 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
    * in octahedral, we carry chiral state, and a ranking change leads to
    * ABCDEF.  There will be multiple ways to split A to F!
    */
-  if(_assignmentOption && numStereopermutations() > 1) {
+  if(assignmentOption_ && numStereopermutations() > 1) {
     // A flat map of shape vertex to new site index in the new shape
     using InvertedMap = temple::StrongIndexFlatMap<shapes::Vertex, SiteIndex>;
     InvertedMap sitesAtNewShapeVertices;
@@ -591,7 +591,7 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
     if(situation == PropagationSituation::SiteAddition) {
       if(
         const auto shapeMapping = temple::optionals::flatMap(
-          shapes::getMapping(_shape, newShape, boost::none),
+          shapes::getMapping(shape_, newShape, boost::none),
           std::bind(selectTransitionMapping, _1, Options::chiralStatePreservation)
         )
       ) {
@@ -601,7 +601,7 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
           shapeMapping.value()
         );
 
-        auto oldShapePositionToSiteMap = _shapePositionMap.invert();
+        auto oldShapePositionToSiteMap = shapePositionMap_.invert();
         /* We assume the new site is also merely added to the end!
          * This may not always be true
          */
@@ -620,12 +620,12 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
     if(situation == PropagationSituation::SiteRemoval) {
       if(
         const auto shapeMapping = temple::optionals::flatMap(
-          shapes::getMapping(_shape, newShape, _shapePositionMap.at(*alteredSiteIndex)),
+          shapes::getMapping(shape_, newShape, shapePositionMap_.at(*alteredSiteIndex)),
           std::bind(selectTransitionMapping, _1, Options::chiralStatePreservation)
         )
       ) {
         // Invert shapePositionMap to get: site = map.at(shapeVertex)
-        const auto oldShapeVertexToSiteMap = _shapePositionMap.invert();
+        const auto oldShapeVertexToSiteMap = shapePositionMap_.invert();
 
         // Transfer site indices from current shape to new shape
         sitesAtNewShapeVertices.resize(shapes::size(newShape));
@@ -643,7 +643,7 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
       /* Add the newSubstituentIndex to the old ranking's appropriate site so
        * the mapping is 1:1.
        */
-      RankingInformation::SiteListType oldSites = _ranking.sites;
+      RankingInformation::SiteListType oldSites = ranking_.sites;
       temple::TinySet<AtomIndex>::checked_insert(
         oldSites.at(*alteredSiteIndex),
         *alteredSubstituentIndex
@@ -663,7 +663,7 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
       std::vector<unsigned> faulty(shapes::size(newShape));
       for(unsigned i = 0; i < siteMapping.size(); ++i) {
         faulty.at(i) = siteMapping.at(
-          _shapePositionMap.at(SiteIndex(i))
+          shapePositionMap_.at(SiteIndex(i))
         );
       }
       sitesAtNewShapeVertices = InvertedMap(faulty);
@@ -673,7 +673,7 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
       /* Sort sites in the old ranking and new so we can use lexicographical
        * comparison to figure out a mapping
        */
-      RankingInformation::SiteListType oldSites = _ranking.sites;
+      RankingInformation::SiteListType oldSites = ranking_.sites;
       temple::inplace::remove(
         oldSites.at(*alteredSiteIndex),
         *alteredSubstituentIndex
@@ -693,7 +693,7 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
       // Transfer sites to new mapping
       for(unsigned i = 0; i < siteMapping.size(); ++i) {
         faulty.at(i) = siteMapping.at(
-          _shapePositionMap.at(SiteIndex(i))
+          shapePositionMap_.at(SiteIndex(i))
         );
       }
       sitesAtNewShapeVertices = InvertedMap(faulty);
@@ -704,10 +704,10 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
       situation == PropagationSituation::RankingChange
       && (
         newAbstract.permutations.list.size()
-        <= _abstract.permutations.list.size()
+        <= abstract_.permutations.list.size()
       )
     ) {
-      sitesAtNewShapeVertices = _shapePositionMap.invert();
+      sitesAtNewShapeVertices = shapePositionMap_.invert();
     }
 
     if(!sitesAtNewShapeVertices.empty()) {
@@ -765,22 +765,22 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
 
   // Extract old state from the class
   auto oldStateTuple = std::make_tuple(
-    std::move(_ranking),
-    std::move(_abstract),
-    std::move(_feasible),
-    std::move(_assignmentOption)
+    std::move(ranking_),
+    std::move(abstract_),
+    std::move(feasible_),
+    std::move(assignmentOption_)
   );
 
   // Overwrite the class state
-  _shape = newShape;
-  _ranking = std::move(newRanking);
-  _abstract = std::move(newAbstract);
-  _feasible = std::move(newFeasible);
-  _thermalized = thermalized(
+  shape_ = newShape;
+  ranking_ = std::move(newRanking);
+  abstract_ = std::move(newAbstract);
+  feasible_ = std::move(newFeasible);
+  thermalized_ = thermalized(
     graph,
-    _centerAtom,
-    _shape,
-    _ranking,
+    centerAtom_,
+    shape_,
+    ranking_,
     Options::temperatureRegime
   );
   assign(newAssignmentOption);
@@ -797,7 +797,7 @@ void AtomStereopermutator::Impl::propagateVertexRemoval(const AtomIndex removedI
   /* If the central atom is being removed, just drop this stereopermutator
    * beforehand in caller. This would just be unnecessary work.
    */
-  assert(_centerAtom != removedIndex);
+  assert(centerAtom_ != removedIndex);
 
   // Define some helper functions
   auto updateIndexInplace = [&removedIndex](AtomIndex& index) -> void {
@@ -821,19 +821,19 @@ void AtomStereopermutator::Impl::propagateVertexRemoval(const AtomIndex removedI
   };
 
   /* Update indices in RankingInformation */
-  for(auto& equalPrioritySet : _ranking.substituentRanking) {
+  for(auto& equalPrioritySet : ranking_.substituentRanking) {
     for(auto& index : equalPrioritySet) {
       updateIndexInplace(index);
     }
   }
 
-  for(auto& siteAtomList : _ranking.sites) {
+  for(auto& siteAtomList : ranking_.sites) {
     for(auto& atomIndex : siteAtomList) {
       updateIndexInplace(atomIndex);
     }
   }
 
-  for(auto& link : _ranking.links) {
+  for(auto& link : ranking_.links) {
     link.cycleSequence = temple::map(
       link.cycleSequence,
       updateIndex
@@ -842,50 +842,50 @@ void AtomStereopermutator::Impl::propagateVertexRemoval(const AtomIndex removedI
 }
 
 const stereopermutators::Abstract& AtomStereopermutator::Impl::getAbstract() const {
-  return _abstract;
+  return abstract_;
 }
 
 const stereopermutators::Feasible& AtomStereopermutator::Impl::getFeasible() const {
-  return _feasible;
+  return feasible_;
 }
 
 const RankingInformation& AtomStereopermutator::Impl::getRanking() const {
-  return _ranking;
+  return ranking_;
 }
 
 shapes::Shape AtomStereopermutator::Impl::getShape() const {
-  return _shape;
+  return shape_;
 }
 
 const AtomStereopermutator::ShapeMap& AtomStereopermutator::Impl::getShapePositionMap() const {
-  if(_assignmentOption == boost::none) {
+  if(assignmentOption_ == boost::none) {
     throw std::logic_error(
       "The AtomStereopermutator is unassigned, sites are not assigned to "
       "symmetry positions"
     );
   }
 
-  return _shapePositionMap;
+  return shapePositionMap_;
 }
 
 void AtomStereopermutator::Impl::fit(
   const Graph& graph,
   const AngstromPositions& angstromWrapper
 ) {
-  const unsigned S = shapes::size(_shape);
-  assert(S == _ranking.sites.size());
+  const unsigned S = shapes::size(shape_);
+  assert(S == ranking_.sites.size());
 
   // Save stereopermutator state to return to if no fit is viable
-  const shapes::Shape priorShape = _shape;
-  const boost::optional<unsigned> priorStereopermutation  = _assignmentOption;
+  const shapes::Shape priorShape = shape_;
+  const boost::optional<unsigned> priorStereopermutation  = assignmentOption_;
 
   // For all atoms making up a site, decide on the spatial average position
   Eigen::Matrix<double, 3, Eigen::Dynamic> sitePositions(3, S + 1);
   for(unsigned i = 0; i < S; ++i) {
-    sitePositions.col(i) = cartesian::averagePosition(angstromWrapper.positions, _ranking.sites.at(i));
+    sitePositions.col(i) = cartesian::averagePosition(angstromWrapper.positions, ranking_.sites.at(i));
   }
   // Add the putative center
-  sitePositions.col(S) = angstromWrapper.positions.row(_centerAtom);
+  sitePositions.col(S) = angstromWrapper.positions.row(centerAtom_);
 
   // Classify the shape and set it
   shapes::Shape fittedShape;
@@ -911,22 +911,22 @@ void AtomStereopermutator::Impl::fit(
    */
   auto soughtStereopermutation = stereopermutationFromSiteToShapeVertexMap(
     SiteToShapeVertexMap {std::move(matchingMapping)},
-    _ranking.links,
-    _abstract.canonicalSites
+    ranking_.links,
+    abstract_.canonicalSites
   );
 
   auto soughtRotations = stereopermutation::generateAllRotations(soughtStereopermutation, fittedShape);
 
-  /* Although the stereopermutations in _abstract are sorted by their index of
+  /* Although the stereopermutations in abstract_ are sorted by their index of
    * permutation and we could potentially binary search all of our sought
    * rotations within that set, this linear search will never be time-critical
    * as long as we use continuous shape measure-based shape classification.
    */
   boost::optional<unsigned> foundStereopermutation;
-  const unsigned A = _feasible.indices.size();
+  const unsigned A = feasible_.indices.size();
   for(unsigned a = 0; a < A; ++a) {
-    const auto& feasiblePermutation = _abstract.permutations.list.at(
-      _feasible.indices.at(a)
+    const auto& feasiblePermutation = abstract_.permutations.list.at(
+      feasible_.indices.at(a)
     );
     auto findIter = std::find(
       std::begin(soughtRotations),
@@ -964,34 +964,34 @@ double AtomStereopermutator::Impl::angle(
   const SiteIndex j
 ) const {
   assert(i != j);
-  assert(!_shapePositionMap.empty());
+  assert(!shapePositionMap_.empty());
 
-  return shapes::angleFunction(_shape)(
-    _shapePositionMap.at(i),
-    _shapePositionMap.at(j)
+  return shapes::angleFunction(shape_)(
+    shapePositionMap_.at(i),
+    shapePositionMap_.at(j)
   );
 }
 
 boost::optional<unsigned> AtomStereopermutator::Impl::assigned() const {
-  if(_thermalized) {
-    return temple::optionals::map(_assignmentOption, [](unsigned /* a */) { return 0u; });
+  if(thermalized_) {
+    return temple::optionals::map(assignmentOption_, [](unsigned /* a */) { return 0u; });
   }
 
-  return _assignmentOption;
+  return assignmentOption_;
 }
 
 AtomIndex AtomStereopermutator::Impl::placement() const {
-  return _centerAtom;
+  return centerAtom_;
 }
 
 boost::optional<unsigned> AtomStereopermutator::Impl::indexOfPermutation() const {
-  if(_thermalized) {
-    return temple::optionals::map(_assignmentOption, [](unsigned /* a */) { return 0u; });
+  if(thermalized_) {
+    return temple::optionals::map(assignmentOption_, [](unsigned /* a */) { return 0u; });
   }
 
   return temple::optionals::map(
-    _assignmentOption,
-    [&](unsigned a) { return _feasible.indices.at(a); }
+    assignmentOption_,
+    [&](unsigned a) { return feasible_.indices.at(a); }
   );
 }
 
@@ -1016,16 +1016,16 @@ AtomStereopermutator::Impl::minimalChiralConstraints(const bool enforce) const {
    * this stereopermutator might be achiral.
    */
   if(
-    _assignmentOption
+    assignmentOption_
     && (numAssignments() > 1 || enforce)
   ) {
-    /* Invert _neighborSymmetryPositionMap, we need a mapping of
+    /* Invert neighborSymmetryPositionMap_, we need a mapping of
      *  (vertex in shape) -> site index
      */
-    const auto invertedShapeMap = _shapePositionMap.invert();
+    const auto invertedShapeMap = shapePositionMap_.invert();
 
     return temple::map(
-      shapes::tetrahedra(_shape),
+      shapes::tetrahedra(shape_),
       [&](const auto& tetrahedron) -> MinimalChiralConstraint {
         return temple::map_stl(
           tetrahedron,
@@ -1045,23 +1045,23 @@ AtomStereopermutator::Impl::minimalChiralConstraints(const bool enforce) const {
 
 std::string AtomStereopermutator::Impl::info() const {
   std::string returnString = "A on "s
-    + std::to_string(_centerAtom) + " ("s + shapes::name(_shape) +", "s;
+    + std::to_string(centerAtom_) + " ("s + shapes::name(shape_) +", "s;
 
-  const auto& characters = _abstract.symbolicCharacters;
+  const auto& characters = abstract_.symbolicCharacters;
   std::copy(
     characters.begin(),
     characters.end(),
     std::back_inserter(returnString)
   );
 
-  for(const auto& link : _abstract.selfReferentialLinks) {
+  for(const auto& link : abstract_.selfReferentialLinks) {
     returnString += ", "s + characters.at(link.first) + "-"s + characters.at(link.second);
   }
 
   returnString += "): "s;
 
-  if(_assignmentOption) {
-    returnString += std::to_string(_assignmentOption.value());
+  if(assignmentOption_) {
+    returnString += std::to_string(assignmentOption_.value());
   } else {
     returnString += "u";
   }
@@ -1082,7 +1082,7 @@ std::string AtomStereopermutator::Impl::rankInfo() const {
    * and MUST use indices of permutation
    */
   return (
-    "A-"s + std::to_string(static_cast<unsigned>(_shape))
+    "A-"s + std::to_string(static_cast<unsigned>(shape_))
     + "-"s + std::to_string(numStereopermutations())
     + "-"s + (
       indexOfPermutation()
@@ -1093,50 +1093,50 @@ std::string AtomStereopermutator::Impl::rankInfo() const {
 }
 
 unsigned AtomStereopermutator::Impl::numAssignments() const {
-  if(_thermalized) {
+  if(thermalized_) {
     return 1;
   }
 
-  return _feasible.indices.size();
+  return feasible_.indices.size();
 }
 
 unsigned AtomStereopermutator::Impl::numStereopermutations() const {
-  if(_thermalized) {
+  if(thermalized_) {
     return 1;
   }
 
-  return _abstract.permutations.list.size();
+  return abstract_.permutations.list.size();
 }
 
 void AtomStereopermutator::Impl::setShape(
   const shapes::Shape shape,
   const Graph& graph
 ) {
-  if(_shape == shape) {
+  if(shape_ == shape) {
     // If the symmetry doesn't actually change, then nothing does
     return;
   }
 
-  _shape = shape;
+  shape_ = shape;
 
-  _abstract = stereopermutators::Abstract {
-    _ranking,
-    _shape
+  abstract_ = stereopermutators::Abstract {
+    ranking_,
+    shape_
   };
 
-  _feasible = stereopermutators::Feasible {
-    _abstract,
-    _shape,
-    _centerAtom,
-    _ranking,
+  feasible_ = stereopermutators::Feasible {
+    abstract_,
+    shape_,
+    centerAtom_,
+    ranking_,
     graph
   };
 
-  _thermalized = thermalized(
+  thermalized_ = thermalized(
     graph,
-    _centerAtom,
-    _shape,
-    _ranking,
+    centerAtom_,
+    shape_,
+    ranking_,
     Options::temperatureRegime
   );
 

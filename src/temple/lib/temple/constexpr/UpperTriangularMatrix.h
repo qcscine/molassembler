@@ -105,14 +105,14 @@ public:
 //!@name Constructors
 //!@{
   //! Default constructor
-  constexpr UpperTriangularMatrix() : _data {} {}
+  constexpr UpperTriangularMatrix() : data_ {} {}
 
   //! Constructor from existing data
   template<
     template<typename, size_t> class ArrayType
   > constexpr explicit UpperTriangularMatrix(
     const ArrayType<ValueType, dataSize>& data
-  ) : _data(data)
+  ) : data_(data)
   {
     static_assert(
       UpperTriangularMatrixImpl::isValidMatrixSize(dataSize) && dataSize > 0,
@@ -133,7 +133,7 @@ public:
       throw "Index out of bounds!";
     }
 
-    return _data.at(
+    return data_.at(
       UpperTriangularMatrixImpl::index_conversion::toSingleIndex<N>(i, j)
     );
   }
@@ -151,7 +151,7 @@ public:
       throw "Index out of bounds!";
     }
 
-    return _data.at(
+    return data_.at(
       UpperTriangularMatrixImpl::index_conversion::toSingleIndex<N>(i, j)
     );
   }
@@ -159,12 +159,12 @@ public:
 
   //! Get full underlying data in raw form
   constexpr const DataType& getData() const {
-    return _data;
+    return data_;
   }
 
 private:
 /* State */
-  DataType _data;
+  DataType data_;
 };
 
 //! Helper constructing function that deduces the required type signature

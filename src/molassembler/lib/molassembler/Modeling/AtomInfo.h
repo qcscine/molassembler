@@ -56,8 +56,8 @@ public:
   double vdwRadius() const;
 
 private:
-  std::array<unsigned, 4> _valenceElectrons;
-  double _vdwRadius;
+  std::array<unsigned, 4> valenceElectrons_;
+  double vdwRadius_;
 };
 
 /*!

@@ -128,7 +128,7 @@ struct SymmetryMapHelper {
   }
 };
 
-std::vector<char> BondStereopermutator::Impl::_charifyRankedSites(
+std::vector<char> BondStereopermutator::Impl::charifyRankedSites_(
   const RankingInformation::RankedSitesType& sitesRanking,
   const AtomStereopermutator::ShapeMap& shapeVertexMap
 ) {
@@ -149,7 +149,7 @@ std::vector<char> BondStereopermutator::Impl::_charifyRankedSites(
 }
 
 const stereopermutation::Composite& BondStereopermutator::Impl::composite() const {
-  return _composite;
+  return composite_;
 }
 
 double BondStereopermutator::Impl::dihedral(
@@ -158,7 +158,7 @@ double BondStereopermutator::Impl::dihedral(
   const AtomStereopermutator& stereopermutatorB,
   const SiteIndex siteIndexB
 ) const {
-  if(!_assignment) {
+  if(!assignment_) {
     throw std::logic_error("This stereopermutator is unassigned! Dihedrals between sites are unspecified.");
   }
 
@@ -170,7 +170,7 @@ double BondStereopermutator::Impl::dihedral(
 
   ReferencePair references {stereopermutatorA, stereopermutatorB};
   std::pair<unsigned, unsigned> siteIndices {siteIndexA, siteIndexB};
-  if(stereopermutatorA.placement() == _composite.orientations().second.identifier) {
+  if(stereopermutatorA.placement() == composite_.orientations().second.identifier) {
     std::swap(references.first, references.second);
     std::swap(siteIndices.first, siteIndices.second);
     swapped = true;
@@ -187,7 +187,7 @@ double BondStereopermutator::Impl::dihedral(
   std::pair<shapes::Vertex, shapes::Vertex> vertices;
   double dihedralAngle;
 
-  for(const auto& dihedralTuple : _composite.dihedrals(*_assignment)) {
+  for(const auto& dihedralTuple : composite_.dihedrals(*assignment_)) {
     std::tie(vertices.first, vertices.second, dihedralAngle) = dihedralTuple;
 
     if(
@@ -201,7 +201,7 @@ double BondStereopermutator::Impl::dihedral(
   throw std::logic_error("Could not find a dihedral angle for the specified sites");
 }
 
-stereopermutation::Composite BondStereopermutator::Impl::_constructComposite(
+stereopermutation::Composite BondStereopermutator::Impl::constructComposite_(
   const StereopermutatorList& stereopermutators,
   const BondIndex edge,
   const Alignment alignment
@@ -212,14 +212,14 @@ stereopermutation::Composite BondStereopermutator::Impl::_constructComposite(
   const auto& stereopermutatorB = stereopermutators.option(edge.second).value();
 
   return {
-    _makeOrientationState(stereopermutatorA, stereopermutatorB),
-    _makeOrientationState(stereopermutatorB, stereopermutatorA),
+    makeOrientationState_(stereopermutatorA, stereopermutatorB),
+    makeOrientationState_(stereopermutatorB, stereopermutatorA),
     static_cast<stereopermutation::Composite::Alignment>(alignment)
   };
 }
 
 stereopermutation::Composite::OrientationState
-BondStereopermutator::Impl::_makeOrientationState(
+BondStereopermutator::Impl::makeOrientationState_(
   const AtomStereopermutator& focalStereopermutator,
   const AtomStereopermutator& attachedStereopermutator
 ) {
@@ -230,7 +230,7 @@ BondStereopermutator::Impl::_makeOrientationState(
         attachedStereopermutator.placement()
       )
     ),
-    _charifyRankedSites(
+    charifyRankedSites_(
       focalStereopermutator.getRanking().siteRanking,
       focalStereopermutator.getShapePositionMap()
     ),
@@ -767,16 +767,16 @@ BondStereopermutator::Impl::Impl(
   const AtomStereopermutator& stereopermutatorB,
   const BondIndex edge,
   Alignment alignment
-) : _composite {
-      _makeOrientationState(stereopermutatorA, stereopermutatorB),
-      _makeOrientationState(stereopermutatorB, stereopermutatorA),
+) : composite_ {
+      makeOrientationState_(stereopermutatorA, stereopermutatorB),
+      makeOrientationState_(stereopermutatorB, stereopermutatorA),
       static_cast<stereopermutation::Composite::Alignment>(alignment)
     },
-    _edge(edge),
-    _feasiblePermutations(
-      temple::iota<unsigned>(_composite.permutations())
+    edge_(edge),
+    feasiblePermutations_(
+      temple::iota<unsigned>(composite_.permutations())
     ),
-    _assignment(boost::none)
+    assignment_(boost::none)
 {}
 
 BondStereopermutator::Impl::Impl(
@@ -784,28 +784,28 @@ BondStereopermutator::Impl::Impl(
   const StereopermutatorList& stereopermutators,
   const BondIndex edge,
   Alignment alignment
-) : _composite(
-      _constructComposite(stereopermutators, edge, alignment)
+) : composite_(
+      constructComposite_(stereopermutators, edge, alignment)
     ),
-    _edge(edge),
-    _feasiblePermutations(
+    edge_(edge),
+    feasiblePermutations_(
       notObviouslyInfeasibleStereopermutations(
-        graph, stereopermutators, _composite
+        graph, stereopermutators, composite_
       )
     ),
-    _assignment(boost::none)
+    assignment_(boost::none)
 {}
 
 /* Public members */
 /* Modification */
 void BondStereopermutator::Impl::assign(boost::optional<unsigned> assignment) {
   if(assignment && assignment.value() >= numAssignments()) {
-    /* The distinction here between numAssignments and _composite.permutations()
+    /* The distinction here between numAssignments and composite_.permutations()
      * is important because if the composite is isotropic, we simulate that
      * there is only a singular assignment (see numAssignments), although
      * all permutations are generated and present for fitting anyway.
      *
-     * If this were _composite.permutations(), we would accept assignments other
+     * If this were composite_.permutations(), we would accept assignments other
      * than zero if the underlying composite is isotropic, but not yield the
      * same assignment index when asked which assignment is currently set
      * in assigned().
@@ -813,7 +813,7 @@ void BondStereopermutator::Impl::assign(boost::optional<unsigned> assignment) {
     throw std::out_of_range("Supplied assignment index is out of range");
   }
 
-  _assignment = assignment;
+  assignment_ = assignment;
 }
 
 void BondStereopermutator::Impl::assignRandom(random::Engine& engine) {
@@ -835,12 +835,12 @@ void BondStereopermutator::Impl::applyPermutation(const std::vector<AtomIndex>& 
   /* Composite's OrientationState identifiers change (these have no impact on
    * assignment ordering however, so that should be safe)
    */
-  _composite.applyIdentifierPermutation(permutation);
+  composite_.applyIdentifierPermutation(permutation);
 
   // Edge we sit on changes according to the permutation
-  _edge = BondIndex {
-    permutation.at(_edge.first),
-    permutation.at(_edge.second)
+  edge_ = BondIndex {
+    permutation.at(edge_.first),
+    permutation.at(edge_.second)
   };
 
   // Assignment does not change
@@ -855,20 +855,20 @@ void BondStereopermutator::Impl::fit(
   assert(stereopermutatorA.placement() != stereopermutatorB.placement());
 
   // Early exit
-  if(_composite.permutations() == 0) {
-    _assignment = boost::none;
+  if(composite_.permutations() == 0) {
+    assignment_ = boost::none;
     return;
   }
 
   // Can the following selections be done with a single branch?
   const AtomStereopermutator& firstStereopermutator = (
-    stereopermutatorA.placement() == _composite.orientations().first.identifier
+    stereopermutatorA.placement() == composite_.orientations().first.identifier
     ? stereopermutatorA
     : stereopermutatorB
   );
 
   const AtomStereopermutator& secondStereopermutator = (
-    stereopermutatorB.placement() == _composite.orientations().second.identifier
+    stereopermutatorB.placement() == composite_.orientations().second.identifier
     ? stereopermutatorB
     : stereopermutatorA
   );
@@ -897,9 +897,9 @@ void BondStereopermutator::Impl::fit(
   double bestPenalty = std::numeric_limits<double>::max();
   std::vector<unsigned> bestStereopermutation;
 
-  for(unsigned feasiblePermutationIndex : _feasiblePermutations) {
+  for(unsigned feasiblePermutationIndex : feasiblePermutations_) {
     double penalty = 0.0;
-    for(const auto& dihedralTuple : _composite.dihedrals(feasiblePermutationIndex)) {
+    for(const auto& dihedralTuple : composite_.dihedrals(feasiblePermutationIndex)) {
       std::tie(firstShapeVertex, secondShapeVertex, dihedralAngle) = dihedralTuple;
 
       // Get site index of leftSymmetryPosition in left
@@ -952,8 +952,8 @@ void BondStereopermutator::Impl::fit(
     if(
       mode == FittingMode::Thresholded
       && (
-        penalty / _composite.dihedrals(feasiblePermutationIndex).size()
-        > assignmentAcceptanceParameter * 2 * M_PI / _composite.order()
+        penalty / composite_.dihedrals(feasiblePermutationIndex).size()
+        > assignmentAcceptanceParameter * 2 * M_PI / composite_.order()
       )
     ) {
       continue;
@@ -975,13 +975,13 @@ void BondStereopermutator::Impl::fit(
      * permutations
      */
     const unsigned stereopermutation = bestStereopermutation.front();
-    _assignment = (
-      temple::find(_feasiblePermutations, stereopermutation)
-      - std::begin(_feasiblePermutations)
+    assignment_ = (
+      temple::find(feasiblePermutations_, stereopermutation)
+      - std::begin(feasiblePermutations_)
     );
   } else {
     // On ambiguous matching, dis-assign the stereopermutator
-    _assignment = boost::none;
+    assignment_ = boost::none;
   }
 }
 
@@ -1010,17 +1010,17 @@ void BondStereopermutator::Impl::propagateGraphChange(
 
   /* Construct a new Composite with the new information */
   bool changedIsFirstInOldOrientations = (
-    _composite.orientations().first.identifier == newPermutator.placement()
+    composite_.orientations().first.identifier == newPermutator.placement()
   );
 
   const OrientationState& oldOrientation = detail::select(
-    _composite.orientations(),
+    composite_.orientations(),
     changedIsFirstInOldOrientations
   );
 
   // Reuse the OrientationState of the "other" atom stereopermutator
   const OrientationState& unchangedOrientation = detail::select(
-    _composite.orientations(),
+    composite_.orientations(),
     !changedIsFirstInOldOrientations
   );
 
@@ -1032,7 +1032,7 @@ void BondStereopermutator::Impl::propagateGraphChange(
         unchangedOrientation.identifier
       )
     ),
-    _charifyRankedSites(
+    charifyRankedSites_(
       newPermutator.getRanking().siteRanking,
       newPermutator.getShapePositionMap()
     ),
@@ -1064,10 +1064,10 @@ void BondStereopermutator::Impl::propagateGraphChange(
    * an assignment, we can choose any.
    */
   if(newComposite.isIsotropic()) {
-    _composite = std::move(newComposite);
-    _feasiblePermutations = std::move(newFeasiblePermutations);
-    if(!_feasiblePermutations.empty()) {
-      _assignment = 0;
+    composite_ = std::move(newComposite);
+    feasiblePermutations_ = std::move(newFeasiblePermutations);
+    if(!feasiblePermutations_.empty()) {
+      assignment_ = 0;
     }
     return;
   }
@@ -1075,9 +1075,9 @@ void BondStereopermutator::Impl::propagateGraphChange(
   /* If this BondStereopermutator is unassigned, and the permutator is not
    * isotropic after the ranking change, then this permutator stays unassigned.
    */
-  if(_assignment == boost::none) {
-    _composite = std::move(newComposite);
-    _feasiblePermutations = std::move(newFeasiblePermutations);
+  if(assignment_ == boost::none) {
+    composite_ = std::move(newComposite);
+    feasiblePermutations_ = std::move(newFeasiblePermutations);
     return;
   }
 
@@ -1107,8 +1107,8 @@ void BondStereopermutator::Impl::propagateGraphChange(
 
   using DihedralTuple = stereopermutation::Composite::DihedralTuple;
   // This permutator is assigned since that is ensured a few lines earlier
-  const std::vector<DihedralTuple>& oldDihedralList = _composite.dihedrals(
-    _assignment.value()
+  const std::vector<DihedralTuple>& oldDihedralList = composite_.dihedrals(
+    assignment_.value()
   );
 
   auto oldSymmetryPositionToSiteMap = shapeVertexToSiteIndexMap(
@@ -1222,15 +1222,15 @@ void BondStereopermutator::Impl::propagateGraphChange(
   }
 
   // Overwrite class state
-  _assignment = matchIter - std::begin(newComposite);
-  _composite = std::move(newComposite);
-  _feasiblePermutations = std::move(newFeasiblePermutations);
+  assignment_ = matchIter - std::begin(newComposite);
+  composite_ = std::move(newComposite);
+  feasiblePermutations_ = std::move(newFeasiblePermutations);
 }
 
 /* Information */
 BondStereopermutator::Alignment BondStereopermutator::Impl::alignment() const {
   return static_cast<BondStereopermutator::Alignment>(
-    _composite.alignment()
+    composite_.alignment()
   );
 }
 
@@ -1241,43 +1241,43 @@ boost::optional<unsigned> BondStereopermutator::Impl::assigned() const {
    * one arrangement in this case (although we need all of them for spatial
    * fitting).
    */
-  if(_assignment && (_composite.isIsotropic() && !_feasiblePermutations.empty())) {
+  if(assignment_ && (composite_.isIsotropic() && !feasiblePermutations_.empty())) {
     return 0U;
   }
 
-  return _assignment;
+  return assignment_;
 }
 
 bool BondStereopermutator::Impl::hasSameCompositeOrientation(const BondStereopermutator::Impl& other) const {
-  return _composite == other._composite;
+  return composite_ == other.composite_;
 }
 
 boost::optional<unsigned> BondStereopermutator::Impl::indexOfPermutation() const {
-  if(_assignment && _composite.isIsotropic()) {
+  if(assignment_ && composite_.isIsotropic()) {
     return 0U;
   }
 
-  if(!_assignment) {
+  if(!assignment_) {
     return boost::none;
   }
 
-  return _feasiblePermutations.at(*_assignment);
+  return feasiblePermutations_.at(*assignment_);
 }
 
 unsigned BondStereopermutator::Impl::numAssignments() const {
-  if(_composite.isIsotropic() && !_feasiblePermutations.empty()) {
+  if(composite_.isIsotropic() && !feasiblePermutations_.empty()) {
     return 1;
   }
 
-  return _feasiblePermutations.size();
+  return feasiblePermutations_.size();
 }
 
 unsigned BondStereopermutator::Impl::numStereopermutations() const {
-  if(_composite.isIsotropic()) {
+  if(composite_.isIsotropic()) {
     return 1;
   }
 
-  return _composite.permutations();
+  return composite_.permutations();
 }
 
 std::string BondStereopermutator::Impl::info() const {
@@ -1285,9 +1285,9 @@ std::string BondStereopermutator::Impl::info() const {
 
   std::string returnString =  "B on ";
 
-  returnString += std::to_string(_composite.orientations().first.identifier);
+  returnString += std::to_string(composite_.orientations().first.identifier);
   returnString += "-";
-  returnString += std::to_string(_composite.orientations().second.identifier);
+  returnString += std::to_string(composite_.orientations().second.identifier);
 
   const unsigned A = numAssignments();
 
@@ -1295,8 +1295,8 @@ std::string BondStereopermutator::Impl::info() const {
     returnString += ". Is non-stereogenic.";
   } else {
     returnString += ". Is ";
-    if(_assignment) {
-      returnString += std::to_string(_assignment.value());
+    if(assignment_) {
+      returnString += std::to_string(assignment_.value());
     } else {
       returnString += "u";
     }
@@ -1327,7 +1327,7 @@ std::string BondStereopermutator::Impl::rankInfo() const {
 
 BondIndex BondStereopermutator::Impl::placement() const {
   // Return a standard form of smaller first
-  return _edge;
+  return edge_;
 }
 
 } // namespace molassembler

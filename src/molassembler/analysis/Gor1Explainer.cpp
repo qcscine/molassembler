@@ -56,10 +56,10 @@ public:
   using Color = boost::color_traits<typename boost::property_traits<ColorMapType>::value_type>;
 
 private:
-  const Graph& _graph;
-  const std::vector<double>& _distances;
-  const std::vector<Vertex>& _predecessors;
-  const ColorMapType& _colors;
+  const Graph& graph_;
+  const std::vector<double>& distances_;
+  const std::vector<Vertex>& predecessors_;
+  const ColorMapType& colors_;
 
 public:
   GraphvizWriter(
@@ -67,21 +67,21 @@ public:
     const std::vector<double>& distances,
     const std::vector<Vertex>& predecessors,
     const ColorMapType& colors
-  ) : _graph {graph},
-      _distances {distances},
-      _predecessors {predecessors},
-      _colors {colors}
+  ) : graph_ {graph},
+      distances_ {distances},
+      predecessors_ {predecessors},
+      colors_ {colors}
   {}
 
   std::shared_ptr<WriterState> statePtr {new WriterState};
 
   void write_clusters(std::ostream& os) {
     os << "\nsubgraph cluster_left {\n";
-    for(Vertex i = 0; i < boost::num_vertices(_graph); i += 2) {
+    for(Vertex i = 0; i < boost::num_vertices(graph_); i += 2) {
       os << "  " << i << "; ";
     }
     os << "\n}\nsubgraph cluster_right {\n";
-    for(Vertex i = 1; i < boost::num_vertices(_graph); i += 2) {
+    for(Vertex i = 1; i < boost::num_vertices(graph_); i += 2) {
       os << "  " << i << "; ";
     }
     os << "\n}\n";
@@ -97,14 +97,14 @@ public:
   }
 
   bool inShortestPathsTree(const Vertex& v) {
-    return _predecessors.at(v) != v;
+    return predecessors_.at(v) != v;
   }
 
   void operator() (std::ostream& os, const Vertex& v) {
     os << "[";
 
 
-    auto v_color = boost::get(_colors, v);
+    auto v_color = boost::get(colors_, v);
     if(statePtr->highlightVertex && statePtr->highlightVertex.value() == v) {
       os << R"(fillcolor="tomato", fontcolor="white")";
       statePtr->highlightVertex = boost::none;
@@ -123,8 +123,8 @@ public:
     // Index and distance label
     os << R"(, label=")" << v << nl;
 
-    if(_distances.at(v) < 10000) {
-      os << _distances.at(v);
+    if(distances_.at(v) < 10000) {
+      os << distances_.at(v);
     } else {
       os << "inf";
     }
@@ -132,17 +132,17 @@ public:
 
     os << "]";
 
-    if(boost::num_vertices(_graph) <= 20 && v == boost::num_vertices(_graph) - 1) {
+    if(boost::num_vertices(graph_) <= 20 && v == boost::num_vertices(graph_) - 1) {
       write_clusters(os);
     }
   }
 
   bool inShortestPathsTree(const Vertex& source, const Vertex& target) {
     return (
-      _predecessors.at(target) == source
+      predecessors_.at(target) == source
       || (
         target % 2 == source % 2
-        && _predecessors.at(source) == target
+        && predecessors_.at(source) == target
       )
     );
   }
@@ -150,15 +150,15 @@ public:
   void operator() (std::ostream& os, const Edge& e) {
     os << "[";
 
-    os << R"(label=")" << boost::get(boost::edge_weight, _graph)(e) << R"(")";
+    os << R"(label=")" << boost::get(boost::edge_weight, graph_)(e) << R"(")";
 
-    auto source = boost::source(e, _graph);
-    auto target = boost::target(e, _graph);
+    auto source = boost::source(e, graph_);
+    auto target = boost::target(e, graph_);
 
     bool isHighlightedEdge = false;
     if(statePtr->highlightEdge) {
-      auto hSource = boost::source(statePtr->highlightEdge.value(), _graph);
-      auto hTarget = boost::target(statePtr->highlightEdge.value(), _graph);
+      auto hSource = boost::source(statePtr->highlightEdge.value(), graph_);
+      auto hTarget = boost::target(statePtr->highlightEdge.value(), graph_);
 
       if(
         (source == hSource && target == hTarget)
@@ -173,7 +173,7 @@ public:
       os << R"(, color="steelblue", penwidth=3)";
     }
 
-    if(source % 2 != target % 2 && !_graph.hasExplicit(e)) {
+    if(source % 2 != target % 2 && !graph_.hasExplicit(e)) {
       os << R"(, style="dashed")";
     }
 
@@ -237,47 +237,47 @@ public:
   using Edge = typename boost::graph_traits<ImplicitBoundsGraph>::edge_descriptor;
 
 private:
-  const std::vector<Vertex>& _predecessors;
+  const std::vector<Vertex>& predecessors_;
 
-  GraphvizWriter& _writer;
-  unsigned _counter = 0;
+  GraphvizWriter& writer_;
+  unsigned counter_ = 0;
   std::deque<Vertex> A_, B_;
 
 public:
   VisualizationVisitor(
     const std::vector<Vertex>& predecessors,
     GraphvizWriter& writer
-  ) : _predecessors {predecessors},
-      _writer {writer}
+  ) : predecessors_ {predecessors},
+      writer_ {writer}
   {}
 
   void examine_edge(const Edge& e, const Graph& g) {
-    _writer.statePtr->highlightEdge = e;
+    writer_.statePtr->highlightEdge = e;
     makeGraphvizFiles(g);
   }
 
   void relax_edge(const Edge& e, const Graph& g) {
-    _writer.statePtr->highlightEdge = e;
+    writer_.statePtr->highlightEdge = e;
     makeGraphvizFiles(g);
   }
 
   void a_push(const Vertex& v, const Graph& g) {
-    _writer.statePtr->highlightVertex = v;
+    writer_.statePtr->highlightVertex = v;
     A_.push_front(v);
     makeGraphvizFiles(g);
   }
   void a_pop(const Vertex& v, const Graph& g) {
-    _writer.statePtr->highlightVertex = v;
+    writer_.statePtr->highlightVertex = v;
     A_.pop_front();
     makeGraphvizFiles(g);
   }
   void b_push(const Vertex& v, const Graph& g) {
-    _writer.statePtr->highlightVertex = v;
+    writer_.statePtr->highlightVertex = v;
     B_.push_front(v);
     makeGraphvizFiles(g);
   }
   void b_pop(const Vertex& v, const Graph& g) {
-    _writer.statePtr->highlightVertex = v;
+    writer_.statePtr->highlightVertex = v;
     B_.pop_front();
     makeGraphvizFiles(g);
   }
@@ -296,7 +296,7 @@ public:
     using namespace std::string_literals;
 
     const std::string prefix = "gor1-explainer-"s
-      + std::to_string(_counter)
+      + std::to_string(counter_)
       + "-"s;
 
     std::ofstream graphFile(prefix + "0.dot"s);
@@ -304,9 +304,9 @@ public:
     boost::write_graphviz(
       graphFile,
       g,
-      _writer,
-      _writer,
-      _writer
+      writer_,
+      writer_,
+      writer_
     );
 
     graphFile.close();
@@ -320,10 +320,10 @@ public:
     stackBFile.close();
 
     std::ofstream treeGraph(prefix + "3.dot"s);
-    write_predecessor_graphviz(treeGraph, _predecessors);
+    write_predecessor_graphviz(treeGraph, predecessors_);
     treeGraph.close();
 
-    ++_counter;
+    ++counter_;
   }
 };
 

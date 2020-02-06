@@ -78,10 +78,10 @@ struct CyclicFrameAdaptor : public Binding<Container> {
     Iterator(
       ContainerIteratorType begin,
       ContainerIteratorType end
-    ) : _begin(begin), _iter(std::move(begin)), _end(std::move(end)) {}
+    ) : begin_(begin), iter_(std::move(begin)), end_(std::move(end)) {}
 
     Iterator& operator ++ () {
-      ++_iter;
+      ++iter_;
       return *this;
     }
 
@@ -92,7 +92,7 @@ struct CyclicFrameAdaptor : public Binding<Container> {
     }
 
     bool operator == (const Iterator& other) const {
-      return _iter == other._iter;
+      return iter_ == other.iter_;
     }
 
     bool operator != (const Iterator& other) const {
@@ -104,12 +104,12 @@ struct CyclicFrameAdaptor : public Binding<Container> {
 
       unsigned firstPhaseCopyCount = std::min(
         frameSize,
-        static_cast<unsigned>(std::distance(_iter, _end))
+        static_cast<unsigned>(std::distance(iter_, end_))
       );
 
       auto copyIter = std::copy(
-        _iter,
-        _iter + firstPhaseCopyCount,
+        iter_,
+        iter_ + firstPhaseCopyCount,
         std::begin(frame)
       );
 
@@ -118,8 +118,8 @@ struct CyclicFrameAdaptor : public Binding<Container> {
         const unsigned toCopyCount = frameSize - firstPhaseCopyCount;
 
         std::copy(
-          _begin,
-          _begin + toCopyCount,
+          begin_,
+          begin_ + toCopyCount,
           copyIter
         );
       }
@@ -128,7 +128,7 @@ struct CyclicFrameAdaptor : public Binding<Container> {
     }
 
   private:
-    ContainerIteratorType _begin, _iter, _end;
+    ContainerIteratorType begin_, iter_, end_;
   };
 
   Iterator begin() const {

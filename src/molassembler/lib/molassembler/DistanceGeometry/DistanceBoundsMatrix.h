@@ -80,22 +80,22 @@ public:
   DistanceBoundsMatrix(
     const PrivateGraph& inner,
     BoundsMatrix bounds
-  ) : _matrix(std::move(bounds)) {
+  ) : matrix_(std::move(bounds)) {
     // Populate the lower bounds if no explicit information is present
     const AtomIndex N = inner.N();
     for(AtomIndex i = 0; i < N - 1; ++i) {
       for(AtomIndex j = i + 1; j < N; ++j) {
         // i < j in all cases -> lower bound is (j, i), upper bound is (i, j)
-        if(_matrix(j, i) == 0) {
-          _matrix(j, i) = (
+        if(matrix_(j, i) == 0) {
+          matrix_(j, i) = (
             atom_info::vdwRadius(inner.elementType(i))
             + atom_info::vdwRadius(inner.elementType(j))
           );
         }
 
         // Ensure upper bound has a default value for Floyd's algorithm
-        if(_matrix(i, j) == 0.0) {
-          _matrix(i, j) = defaultUpper;
+        if(matrix_(i, j) == 0.0) {
+          matrix_(i, j) = defaultUpper;
         }
       }
     }
@@ -121,10 +121,10 @@ public:
    */
   inline double upperBound(AtomIndex i, AtomIndex j) const {
     if(i < j) {
-      return _matrix(i, j);
+      return matrix_(i, j);
     }
 
-    return _matrix(j, i);
+    return matrix_(j, i);
   }
 
   /*! @brief Access to lower bound of unordered indices
@@ -133,10 +133,10 @@ public:
    */
   inline double lowerBound(AtomIndex i, AtomIndex j) const {
     if(i < j) {
-      return _matrix(j, i);
+      return matrix_(j, i);
     }
 
-    return _matrix(i, j);
+    return matrix_(i, j);
   }
 
   /*! @brief Checks for cases in which the lower bound is greater than the upper bound
@@ -177,17 +177,17 @@ public:
 //!@}
 
 private:
-  Eigen::MatrixXd _matrix;
+  Eigen::MatrixXd matrix_;
 
-  inline double& _lowerBound(const AtomIndex i, const AtomIndex j) {
-    return _matrix(
+  inline double& lowerBound_(const AtomIndex i, const AtomIndex j) {
+    return matrix_(
       std::max(i, j),
       std::min(i, j)
     );
   }
 
-  inline double& _upperBound(const AtomIndex i, const AtomIndex j) {
-    return _matrix(
+  inline double& upperBound_(const AtomIndex i, const AtomIndex j) {
+    return matrix_(
       std::min(i, j),
       std::max(i, j)
     );

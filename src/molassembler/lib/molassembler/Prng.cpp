@@ -39,13 +39,13 @@ struct Engine::Impl {
 };
 
 // Engine's special member functions
-Engine::Engine() : _pImpl(std::make_unique<Impl>()) {
+Engine::Engine() : pImpl_(std::make_unique<Impl>()) {
 #ifndef NDEBUG
-  _pImpl->seed(272181374);
+  pImpl_->seed(272181374);
 #else
   std::random_device randomDevice;
 
-  _pImpl->seed(
+  pImpl_->seed(
     std::vector<int> {
       static_cast<int>(randomDevice()),
       static_cast<int>(randomDevice()),
@@ -57,27 +57,27 @@ Engine::Engine() : _pImpl(std::make_unique<Impl>()) {
 }
 Engine::Engine(Engine&& other) noexcept = default;
 Engine& Engine::operator = (Engine&& other) noexcept = default;
-Engine::Engine(const Engine& other) : _pImpl(std::make_unique<Impl>(*other._pImpl)) {}
+Engine::Engine(const Engine& other) : pImpl_(std::make_unique<Impl>(*other.pImpl_)) {}
 Engine& Engine::operator = (const Engine& other) {
-  *_pImpl = *other._pImpl;
+  *pImpl_ = *other.pImpl_;
   return *this;
 }
 Engine::~Engine() = default;
 
 void Engine::seed(int x) {
-  _pImpl->seed(x);
+  pImpl_->seed(x);
 }
 
 void Engine::seed(const std::vector<int>& seeds) {
-  _pImpl->seed(seeds);
+  pImpl_->seed(seeds);
 }
 
 Engine::result_type Engine::operator() () const {
-  return _pImpl->operator()();
+  return pImpl_->operator()();
 }
 
 bool Engine::operator == (const Engine& other) const {
-  return *_pImpl == *other._pImpl;
+  return *pImpl_ == *other.pImpl_;
 }
 
 } // namespace random

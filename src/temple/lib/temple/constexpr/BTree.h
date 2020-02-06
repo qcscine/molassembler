@@ -146,8 +146,8 @@ public:
 
 
 public:
-  constexpr BTree() : _rootPtr {0} {
-    _rootPtr = _newNode();
+  constexpr BTree() : rootPtr_ {0} {
+    rootPtr_ = newNode_();
   }
 
 //!@name Modification
@@ -158,15 +158,15 @@ public:
    */
   constexpr void clear() {
     // Refresh all nodes
-    for(auto& node: _nodes) {
+    for(auto& node: nodes_) {
       node = Node {};
     }
 
     // Clear the garbage
-    _garbage.clear();
+    garbage_.clear();
 
     // Assign a new root
-    _rootPtr = _newNode();
+    rootPtr_ = newNode_();
   }
 
   /*! @brief Add a value to the tree.
@@ -178,21 +178,21 @@ public:
    * @pre The tree does not contain @p value
    */
   constexpr void insert(const T& value) {
-    unsigned r = _rootPtr;
+    unsigned r = rootPtr_;
 
-    if(_getNode(r).isFull()) { // Root is full, must be split
-      unsigned s = _newNode();
+    if(getNode_(r).isFull()) { // Root is full, must be split
+      unsigned s = newNode_();
 
-      _rootPtr = s;
+      rootPtr_ = s;
 
-      _getNode(s).children.push_back(r);
-      _splitChild(s, 0);
-      _insertNonFull(s, value);
+      getNode_(s).children.push_back(r);
+      splitChild_(s, 0);
+      insertNonFull_(s, value);
     } else {
-      _insertNonFull(r, value);
+      insertNonFull_(r, value);
     }
 
-    ++_count;
+    ++count_;
   }
 
   /*! @brief Remove a value from the tree.
@@ -203,18 +203,18 @@ public:
    * @pre The value must exist in the tree.
    */
   constexpr void remove(const T& value) {
-    _delete(_rootPtr, value);
+    delete_(rootPtr_, value);
 
     // In case the root node is valueless but has a child, shrink the tree
-    if(_getNode(_rootPtr).values.size() == 0 && !_getNode(_rootPtr).isLeaf()) {
-      unsigned emptyRoot = _rootPtr;
+    if(getNode_(rootPtr_).values.size() == 0 && !getNode_(rootPtr_).isLeaf()) {
+      unsigned emptyRoot = rootPtr_;
 
-      _rootPtr = _getNode(_rootPtr).children.front();
+      rootPtr_ = getNode_(rootPtr_).children.front();
 
-      _markNodeDeleted(emptyRoot);
+      markNodeDeleted_(emptyRoot);
     }
 
-    --_count;
+    --count_;
   }
 
 //!@}
@@ -228,7 +228,7 @@ public:
    * @complexity{@math{\Theta(t \log_t N)}}
    */
   PURITY_WEAK constexpr bool contains(const T& value) const {
-    auto nodeIndexOptional = _search(_rootPtr, value);
+    auto nodeIndexOptional = search_(rootPtr_, value);
 
     return nodeIndexOptional.hasValue();
   }
@@ -242,17 +242,17 @@ public:
    * @complexity{@math{\Theta(t \log_t N)}}
    */
   PURITY_WEAK constexpr Optional<const T&> getOption(const T& value) const {
-    auto nodeIndexOptional = _search(_rootPtr, value);
+    auto nodeIndexOptional = search_(rootPtr_, value);
 
     if(!nodeIndexOptional.hasValue()) {
       return {};
     }
 
     auto valueLowerBound = lowerBound<T, LessThanComparator>(
-      _getNode(nodeIndexOptional.value()).values.begin(),
-      _getNode(nodeIndexOptional.value()).values.end(),
+      getNode_(nodeIndexOptional.value()).values.begin(),
+      getNode_(nodeIndexOptional.value()).values.end(),
       value,
-      _lt
+      lt_
     );
 
     return Optional<const T&> {*valueLowerBound};
@@ -266,17 +266,17 @@ public:
     graph << "digraph g {\n"
       << "  node [shape=record, height=.1]\n\n";
 
-    DynamicArray<unsigned, maxNodes> stack {_rootPtr};
+    DynamicArray<unsigned, maxNodes> stack {rootPtr_};
 
     while(stack.size() > 0) {
       unsigned nodeIndex = stack.back();
       stack.pop_back();
 
-      for(auto& childIndex : _getNode(nodeIndex).children) {
+      for(auto& childIndex : getNode_(nodeIndex).children) {
         stack.push_back(childIndex);
       }
 
-      const auto& node = _getNode(nodeIndex);
+      const auto& node = getNode_(nodeIndex);
 
       graph << "  node" << nodeIndex << "[label=\"";
 
@@ -317,18 +317,18 @@ public:
    *   anything is off.
    */
   constexpr void validate() const {
-    DynamicArray<unsigned, maxNodes> stack {_rootPtr};
+    DynamicArray<unsigned, maxNodes> stack {rootPtr_};
 
     while(stack.size() > 0) {
       unsigned nodeIndex = stack.back();
-      auto& node = _getNode(nodeIndex);
+      auto& node = getNode_(nodeIndex);
       stack.pop_back();
 
       for(auto& childIndex : node.children) {
         stack.push_back(childIndex);
       }
 
-      _validate(nodeIndex);
+      validate_(nodeIndex);
     }
   }
 
@@ -337,7 +337,7 @@ public:
    * @complexity{@math{\Theta(1)}}
    */
   PURITY_WEAK constexpr unsigned size() const {
-    return _count;
+    return count_;
   }
 //!@}
 
@@ -365,39 +365,39 @@ public:
     constexpr const_iterator(
       const BTree& tree,
       const InitializeAs& initDecision
-    ) : _baseRef(tree),
-        _leftMostNode(tree._smallestLeafNode(tree._rootPtr)),
-        _rightMostNode(tree._largestLeafNode(tree._rootPtr)),
-        _nodeStack {tree._rootPtr}
+    ) : baseRef_(tree),
+        leftMostNode_(tree.smallestLeafNode_(tree.rootPtr_)),
+        rightMostNode_(tree.largestLeafNode_(tree.rootPtr_)),
+        nodeStack_ {tree.rootPtr_}
     {
       if(!static_cast<bool>(static_cast<unsigned>(initDecision))) {
         // 0 is Begin, so not-false is begin
 
-        while(!_getCurrentNode().isLeaf()) {
-          _indexStack.push_back(0);
+        while(!getCurrentNode_().isLeaf()) {
+          indexStack_.push_back(0);
 
-          _nodeStack.push_back(
-            _getCurrentNode().children.front()
+          nodeStack_.push_back(
+            getCurrentNode_().children.front()
           );
         }
 
         // At pos 0 of the leaf indices
-        _indexStack.push_back(0);
+        indexStack_.push_back(0);
       } else {
         // End const_iterator initialization
 
-        while(!_getCurrentNode().isLeaf()) {
-          _indexStack.push_back(
-            2 * _getCurrentNode().values.size()
+        while(!getCurrentNode_().isLeaf()) {
+          indexStack_.push_back(
+            2 * getCurrentNode_().values.size()
           );
 
-          _nodeStack.push_back(
-            _getCurrentNode().children.back()
+          nodeStack_.push_back(
+            getCurrentNode_().children.back()
           );
         }
 
         // past-the-end of indices
-        _indexStack.push_back(_getCurrentNode().values.size());
+        indexStack_.push_back(getCurrentNode_().values.size());
       }
     }
   //!@}
@@ -406,22 +406,22 @@ public:
   //!@{
     const_iterator() = delete;
     constexpr const_iterator(const const_iterator& other)
-      : _baseRef(other._baseRef),
-        _leftMostNode(other._leftMostNode),
-        _rightMostNode(other._rightMostNode),
-        _nodeStack(other._nodeStack),
-        _indexStack(other._indexStack)
+      : baseRef_(other.baseRef_),
+        leftMostNode_(other.leftMostNode_),
+        rightMostNode_(other.rightMostNode_),
+        nodeStack_(other.nodeStack_),
+        indexStack_(other.indexStack_)
     {}
     constexpr const_iterator(const_iterator&& other) noexcept = default;
     constexpr const_iterator& operator = (const const_iterator& other) {
-      if(this->_baseRef != other._baseRef) {
+      if(this->baseRef_ != other.baseRef_) {
         throw "Assigning BTree const_iterator to another base instance!";
       }
 
-      _leftMostNode = other._leftMostNode;
-      _rightMostNode = other._rightMostNode;
-      _nodeStack = other._nodeStack;
-      _indexStack = other._indexStack;
+      leftMostNode_ = other.leftMostNode_;
+      rightMostNode_ = other.rightMostNode_;
+      nodeStack_ = other.nodeStack_;
+      indexStack_ = other.indexStack_;
 
       return *this;
     }
@@ -431,54 +431,54 @@ public:
 
     //! Prefix increment
     constexpr const_iterator& operator ++ () {
-      auto indexLimit = _currentNodeIndexLimit();
+      auto indexLimit = currentNodeIndexLimit_();
 
-      if(_indexStack.back() == indexLimit) { // We are already the end const_iterator
+      if(indexStack_.back() == indexLimit) { // We are already the end const_iterator
         // Do nothing and return immediately
         return *this;
       }
 
       // In case we are a leaf, increment and re-check
-      if(_getCurrentNode().isLeaf()) {
-        ++_indexStack.back();
+      if(getCurrentNode_().isLeaf()) {
+        ++indexStack_.back();
 
         /* If we hit the index limit for the node and we're not the rightmost
          * node, we have to go up the tree and to the right
          */
         if(
-          _indexStack.back() == indexLimit
-          && _nodeStack.back() != _rightMostNode
+          indexStack_.back() == indexLimit
+          && nodeStack_.back() != rightMostNode_
         ) {
           // Unwind the stack until we are at an incrementable position
           do {
-            _indexStack.pop_back();
-            _nodeStack.pop_back();
-          } while(_indexStack.back() >= _currentNodeIndexLimit() - 1);
+            indexStack_.pop_back();
+            nodeStack_.pop_back();
+          } while(indexStack_.back() >= currentNodeIndexLimit_() - 1);
 
           // Increment here, now we are placed on a value at an internal node
-          ++_indexStack.back();
+          ++indexStack_.back();
         }
 
         return *this;
       }
 
       // We are on an internal node, incrementing puts us on a child
-      ++_indexStack.back();
-      _nodeStack.push_back(
-        _getCurrentNode().children.at(
-          _indexStack.back() / 2 // children are at even indices
+      ++indexStack_.back();
+      nodeStack_.push_back(
+        getCurrentNode_().children.at(
+          indexStack_.back() / 2 // children are at even indices
         )
       );
 
-      while(!_getCurrentNode().isLeaf()) {
-        _indexStack.push_back(0);
-        _nodeStack.push_back(
-          _getCurrentNode().children.front()
+      while(!getCurrentNode_().isLeaf()) {
+        indexStack_.push_back(0);
+        nodeStack_.push_back(
+          getCurrentNode_().children.front()
         );
       }
 
       // Now we are a leaf, and placed on the first value
-      _indexStack.push_back(0);
+      indexStack_.push_back(0);
 
       return *this;
     }
@@ -492,46 +492,46 @@ public:
 
     //! Prefix decrement
     constexpr const_iterator& operator -- () {
-      if(_nodeStack.back() == _leftMostNode && _indexStack.back() == 0) {
+      if(nodeStack_.back() == leftMostNode_ && indexStack_.back() == 0) {
         // We are the begin const_iterator
         return *this;
       }
 
       // In case we are a leaf, decrement and re-check
-      if(_getCurrentNode().isLeaf()) {
+      if(getCurrentNode_().isLeaf()) {
         // If we are at zero, we have to find a decrementable position
-        if(_indexStack.back() == 0) {
+        if(indexStack_.back() == 0) {
           // Unwind the stack until we can decrement
           do {
-            _indexStack.pop_back();
-            _nodeStack.pop_back();
-          } while(_indexStack.back() == 0);
+            indexStack_.pop_back();
+            nodeStack_.pop_back();
+          } while(indexStack_.back() == 0);
         }
 
         // Decrement and return
-        --_indexStack.back();
+        --indexStack_.back();
         return *this;
       }
 
       // We are an internal node, decrementing puts us on a child
-      --_indexStack.back();
-      _nodeStack.push_back(
-        _getCurrentNode().children.at(
-          _indexStack.back() / 2
+      --indexStack_.back();
+      nodeStack_.push_back(
+        getCurrentNode_().children.at(
+          indexStack_.back() / 2
         )
       );
 
-      while(!_getCurrentNode().isLeaf()) {
-        _indexStack.push_back(
-          2 * _getCurrentNode().values.size()
+      while(!getCurrentNode_().isLeaf()) {
+        indexStack_.push_back(
+          2 * getCurrentNode_().values.size()
         );
-        _nodeStack.push_back(
-          _getCurrentNode().children.back()
+        nodeStack_.push_back(
+          getCurrentNode_().children.back()
         );
       }
 
-      _indexStack.push_back(
-         _getCurrentNode().values.size() - 1
+      indexStack_.push_back(
+         getCurrentNode_().values.size() - 1
       );
 
       return *this;
@@ -547,10 +547,10 @@ public:
     //! Compares on basis of positional equality
     PURITY_WEAK constexpr bool operator == (const const_iterator& other) const {
       return (
-        _nodeStack == other._nodeStack
-        && _indexStack == other._indexStack
-        && _leftMostNode == other._leftMostNode
-        && _rightMostNode == other._rightMostNode
+        nodeStack_ == other.nodeStack_
+        && indexStack_ == other.indexStack_
+        && leftMostNode_ == other.leftMostNode_
+        && rightMostNode_ == other.rightMostNode_
       );
     }
 
@@ -562,43 +562,43 @@ public:
 
     //! Non-modifiable access
     PURITY_WEAK constexpr reference operator *() const {
-      if(_getCurrentNode().isLeaf()) {
-        return _getCurrentNode().values.at(
-          _indexStack.back()
+      if(getCurrentNode_().isLeaf()) {
+        return getCurrentNode_().values.at(
+          indexStack_.back()
         );
       }
 
-      return _getCurrentNode().values.at(
-        _indexStack.back() / 2
+      return getCurrentNode_().values.at(
+        indexStack_.back() / 2
       );
     }
 
   private:
   //!@name State
   //!@{
-    const BTree& _baseRef;
-    const unsigned _leftMostNode;
-    const unsigned _rightMostNode;
-    DynamicArray<unsigned, maxHeight + 1> _nodeStack;
-    DynamicArray<unsigned, maxHeight + 1> _indexStack;
+    const BTree& baseRef_;
+    const unsigned leftMostNode_;
+    const unsigned rightMostNode_;
+    DynamicArray<unsigned, maxHeight + 1> nodeStack_;
+    DynamicArray<unsigned, maxHeight + 1> indexStack_;
   //!@}
 
   //!@name Private member functions
   //!@{
-    PURITY_WEAK constexpr const Node& _getCurrentNode() const {
-      return _baseRef._getNode(_nodeStack.back());
+    PURITY_WEAK constexpr const Node& getCurrentNode_() const {
+      return baseRef_.getNode_(nodeStack_.back());
     }
 
-    PURITY_WEAK constexpr unsigned _currentNodeIndexLimit() const {
+    PURITY_WEAK constexpr unsigned currentNodeIndexLimit_() const {
       // For leaves, the past-the-end position is the size of values
-      if(_getCurrentNode().isLeaf()) {
-        return _getCurrentNode().values.size();
+      if(getCurrentNode_().isLeaf()) {
+        return getCurrentNode_().values.size();
       }
 
       /* For internal nodes, the past-the-end position is the size of values
        * plus the size of children + 1
        */
-      return 2 * _getCurrentNode().values.size() + 1;
+      return 2 * getCurrentNode_().values.size() + 1;
     }
   //@}
   };
@@ -724,77 +724,77 @@ private:
 //!@name Private state
 //!@{
   //! 'Pointer' to root node
-  unsigned _rootPtr;
+  unsigned rootPtr_;
 
   //! Array holding all tree nodes
-  DynamicArray<Node, maxNodes> _nodes;
+  DynamicArray<Node, maxNodes> nodes_;
 
   //! Array holding 'pointers' to any 'deleted' tree nodes
-  DynamicArray<unsigned, maxNodes> _garbage;
+  DynamicArray<unsigned, maxNodes> garbage_;
 
   //! Less-than comparator instance
-  LessThanComparator _lt;
+  LessThanComparator lt_;
 
   //! Equality comparator instance
-  EqualityComparator _eq;
+  EqualityComparator eq_;
 
   //! Number of contained elements
-  unsigned _count = 0;
+  unsigned count_ = 0;
 //!@}
 
 //!@name Private member functions
 //!@{
   //! 'Allocates' a new node and returns a 'pointer' to it
-  constexpr unsigned _newNode() {
+  constexpr unsigned newNode_() {
     // If there are nodes in the garbage, take those first
-    if(_garbage.size() > 0) {
-      unsigned newNodeIndex = _garbage.back();
-      _garbage.pop_back();
+    if(garbage_.size() > 0) {
+      unsigned newNodeIndex = garbage_.back();
+      garbage_.pop_back();
 
       // Refresh the node
-      _nodes.at(newNodeIndex) = Node {};
+      nodes_.at(newNodeIndex) = Node {};
 
       return newNodeIndex;
     }
 
-    if(_nodes.size() == maxNodes) {
+    if(nodes_.size() == maxNodes) {
       // We cannot get any new nodes! Nothing in the garbage
       throw "The maximum number of nodes has been reached for a BTree!";
     }
 
     // Default: Just expand the dynamic array with a fresh Node
-    _nodes.push_back(Node {});
-    return _nodes.size() - 1;
+    nodes_.push_back(Node {});
+    return nodes_.size() - 1;
   }
 
-  //! Marks a node as 'deleted' for recycling in _newNode
-  constexpr void _markNodeDeleted(unsigned nodeIndex) {
-    _garbage.push_back(nodeIndex);
+  //! Marks a node as 'deleted' for recycling in newNode_
+  constexpr void markNodeDeleted_(unsigned nodeIndex) {
+    garbage_.push_back(nodeIndex);
   }
 
   //! Fetch a modifiable node by its 'pointer'
-  constexpr Node& _getNode(unsigned nodeIndex) {
-    return _nodes.at(nodeIndex);
+  constexpr Node& getNode_(unsigned nodeIndex) {
+    return nodes_.at(nodeIndex);
   }
 
   //! Fetch an unmodifiable node by its 'pointer'
-  PURITY_WEAK constexpr const Node& _getNode(unsigned nodeIndex) const {
-    return _nodes.at(nodeIndex);
+  PURITY_WEAK constexpr const Node& getNode_(unsigned nodeIndex) const {
+    return nodes_.at(nodeIndex);
   }
 
   //! Recursive search for an element in a subtree rooted at node
-  PURITY_WEAK constexpr Optional<unsigned> _search(unsigned nodeIndex, const T& value) const {
-    auto node = _getNode(nodeIndex);
+  PURITY_WEAK constexpr Optional<unsigned> search_(unsigned nodeIndex, const T& value) const {
+    auto node = getNode_(nodeIndex);
 
     auto valueLowerBound = lowerBound<T, LessThanComparator>(
       node.values.begin(),
       node.values.end(),
       value,
-      _lt
+      lt_
     );
 
     // In case the lower bound is actually our sought value, return this node
-    if(valueLowerBound != node.values.end() && _eq(*valueLowerBound, value)) {
+    if(valueLowerBound != node.values.end() && eq_(*valueLowerBound, value)) {
       return Optional<unsigned> {nodeIndex};
     }
 
@@ -807,7 +807,7 @@ private:
      * values (this also works in case LB is at values.end() since children.size()
      * == values.size() + 1) and look there
      */
-    return _search(
+    return search_(
       node.children.at(
         valueLowerBound - node.values.begin()
       ),
@@ -820,22 +820,22 @@ private:
    *   have to split it in order to be certain we can insert into it if
    *   necessary.
    */
-  constexpr void _splitChild(unsigned nodeIndex, const unsigned i) {
+  constexpr void splitChild_(unsigned nodeIndex, const unsigned i) {
     // i is the child index in node's values being split since that node is full
-    auto& parent = _getNode(nodeIndex);
+    auto& parent = getNode_(nodeIndex);
 
     // The node being split is afterwards considered the "left" node
-    auto& left = _getNode(
-      _getNode(nodeIndex).children.at(i)
+    auto& left = getNode_(
+      getNode_(nodeIndex).children.at(i)
     );
 
     // Allocate a new "right" node
-    if(_nodes.size() == maxNodes) {
+    if(nodes_.size() == maxNodes) {
       throw "Inserting into full BTree";
     }
 
-    auto rightIndex = _newNode();
-    auto& right = _getNode(rightIndex);
+    auto rightIndex = newNode_();
+    auto& right = getNode_(rightIndex);
 
     // Move values
     right.values = left.values.splice(minDegree);
@@ -862,18 +862,18 @@ private:
   }
 
   //! Insert case if the node we can insert into isn't full yet
-  constexpr void _insertNonFull(unsigned nodeIndex, const T& value) {
-    auto& node = _getNode(nodeIndex);
+  constexpr void insertNonFull_(unsigned nodeIndex, const T& value) {
+    auto& node = getNode_(nodeIndex);
 
     if(node.isLeaf()) {
       auto valueLowerBound = lowerBound<T, LessThanComparator>(
         node.values.begin(),
         node.values.end(),
         value,
-        _lt
+        lt_
       );
 
-      if(valueLowerBound != node.values.end() && _eq(*valueLowerBound, value)) {
+      if(valueLowerBound != node.values.end() && eq_(*valueLowerBound, value)) {
         throw "That key already exists in the tree!";
       }
 
@@ -884,76 +884,76 @@ private:
         node.values.begin(),
         node.values.end(),
         value,
-        _lt
+        lt_
       );
 
       auto childPos = valueLowerBound - node.values.begin();
 
       // In case the purported child is full, split it!
-      if(_getNode(node.children.at(childPos)).isFull()) {
-        _splitChild(nodeIndex, childPos);
+      if(getNode_(node.children.at(childPos)).isFull()) {
+        splitChild_(nodeIndex, childPos);
 
         /* values has an additional value from the split, check if index has to
          * be incremented
          */
-        if(_lt(node.values.at(childPos), value)) {
+        if(lt_(node.values.at(childPos), value)) {
           ++childPos;
         }
       }
 
       // The target child cannot be full anymore, so we can call
-      _insertNonFull(node.children.at(childPos), value);
+      insertNonFull_(node.children.at(childPos), value);
     }
   }
 
   //! Returns whether a node is the root
-  PURITY_WEAK constexpr bool _isRootNode(unsigned nodeIndex) const {
-    return nodeIndex == _rootPtr;
+  PURITY_WEAK constexpr bool isRootNode_(unsigned nodeIndex) const {
+    return nodeIndex == rootPtr_;
   }
 
   //! Returns the smallest leaf node in the sub-tree rooted at nodePtr
-  PURITY_WEAK constexpr unsigned _smallestLeafNode(unsigned nodeIndex) const {
-    while(!_getNode(nodeIndex).isLeaf()) {
-      nodeIndex = _getNode(nodeIndex).children.front();
+  PURITY_WEAK constexpr unsigned smallestLeafNode_(unsigned nodeIndex) const {
+    while(!getNode_(nodeIndex).isLeaf()) {
+      nodeIndex = getNode_(nodeIndex).children.front();
     }
 
     return nodeIndex;
   }
 
   //! Returns the largest leaf node in the sub-tree rooted at nodePtr
-  PURITY_WEAK constexpr unsigned _largestLeafNode(unsigned nodeIndex) const {
-    while(!_getNode(nodeIndex).isLeaf()) {
-      nodeIndex = _getNode(nodeIndex).children.back();
+  PURITY_WEAK constexpr unsigned largestLeafNode_(unsigned nodeIndex) const {
+    while(!getNode_(nodeIndex).isLeaf()) {
+      nodeIndex = getNode_(nodeIndex).children.back();
     }
 
     return nodeIndex;
   }
 
   //! Recursively deletes a value from a sub-tree rooted at node
-  constexpr void _delete(unsigned nodeIndex, const T& value) {
-    auto& node = _getNode(nodeIndex);
+  constexpr void delete_(unsigned nodeIndex, const T& value) {
+    auto& node = getNode_(nodeIndex);
 
     auto valueLowerBound = lowerBound<T, LessThanComparator>(
       node.values.begin(),
       node.values.end(),
       value,
-      _lt
+      lt_
     );
 
     unsigned indexOfLB = valueLowerBound - node.values.begin();
 
-    if(valueLowerBound != node.values.end() && _eq(*valueLowerBound, value)) {
+    if(valueLowerBound != node.values.end() && eq_(*valueLowerBound, value)) {
       // value to remove is in this node's values
       if(node.isLeaf()) {
         // Case 1
         node.values.removeAt(valueLowerBound);
       } else {
         // Case 2
-        if(_getNode(node.children.at(indexOfLB)).values.size() >= minDegree) {
+        if(getNode_(node.children.at(indexOfLB)).values.size() >= minDegree) {
           // Case 2a: Predecessor of value is maximum in subtree to the left
 
           // Predecessor value is largest value of largest leaf node in left subtree
-          T predecessor = _getNode(_largestLeafNode(
+          T predecessor = getNode_(largestLeafNode_(
             node.children.at(indexOfLB)
           )).values.back();
 
@@ -961,12 +961,12 @@ private:
           *valueLowerBound = predecessor;
 
           // Recursively delete the predecessor
-          _delete(node.children.at(indexOfLB), predecessor);
-        } else if(_getNode(node.children.at(indexOfLB + 1)).values.size() >= minDegree) {
+          delete_(node.children.at(indexOfLB), predecessor);
+        } else if(getNode_(node.children.at(indexOfLB + 1)).values.size() >= minDegree) {
           // Case 2b: Successor of value is minimum in subtree to the right
 
           // The successor value is the leftmost / smallest one
-          T successor = _getNode(_smallestLeafNode(
+          T successor = getNode_(smallestLeafNode_(
             node.children.at(indexOfLB + 1)
           )).values.front();
 
@@ -974,7 +974,7 @@ private:
           *valueLowerBound = successor;
 
           // Recursively delete the successor
-          _delete(node.children.at(indexOfLB + 1), successor);
+          delete_(node.children.at(indexOfLB + 1), successor);
         } else {
           /* Case 2c: Merge the value to delete, all of the right child into the
            * left child. The current node loses both k and the pointer to the
@@ -982,10 +982,10 @@ private:
            */
 
           unsigned leftChildIndex = node.children.at(indexOfLB);
-          auto& leftChild = _getNode(leftChildIndex);
+          auto& leftChild = getNode_(leftChildIndex);
 
           unsigned rightChildIndex = node.children.at(indexOfLB + 1);
-          auto& rightChild = _getNode(rightChildIndex);
+          auto& rightChild = getNode_(rightChildIndex);
 
           // Add the value to the left child
           leftChild.values.push_back(value);
@@ -1003,10 +1003,10 @@ private:
           );
 
           // Delete the right child
-          _markNodeDeleted(rightChildIndex);
+          markNodeDeleted_(rightChildIndex);
 
           // Delete the value recursively from the left child
-          _delete(leftChildIndex, value);
+          delete_(leftChildIndex, value);
         }
       }
     } else {
@@ -1015,17 +1015,17 @@ private:
        * at least minDegree values!
        */
       unsigned targetChildIndex = node.children.at(indexOfLB);
-      auto& targetChild = _getNode(targetChildIndex);
+      auto& targetChild = getNode_(targetChildIndex);
 
       if(targetChild.values.size() == minDegree - 1) {
         // Case 3a Move some values around from left or right siblings
 
         if(
           indexOfLB != 0
-          && _getNode(node.children.at(indexOfLB - 1)).values.size() >= minDegree
+          && getNode_(node.children.at(indexOfLB - 1)).values.size() >= minDegree
         ) {
           unsigned leftSiblingIndex = node.children.at(indexOfLB - 1);
-          auto& leftSibling = _getNode(leftSiblingIndex);
+          auto& leftSibling = getNode_(leftSiblingIndex);
 
           // Move value at LB into targetChild
           targetChild.values.insertAt(
@@ -1048,10 +1048,10 @@ private:
           }
         } else if(
           indexOfLB < node.values.size()
-          && _getNode(node.children.at(indexOfLB + 1)).values.size() >= minDegree
+          && getNode_(node.children.at(indexOfLB + 1)).values.size() >= minDegree
         ) {
           unsigned rightSiblingIndex = node.children.at(indexOfLB + 1);
-          auto& rightSibling = _getNode(rightSiblingIndex);
+          auto& rightSibling = getNode_(rightSiblingIndex);
 
           // Move value at LB into targetChild
           targetChild.values.push_back(
@@ -1079,7 +1079,7 @@ private:
 
           if(indexOfLB != 0) { // Merge with left sibling
             unsigned leftSiblingIndex = node.children.at(indexOfLB - 1);
-            auto& leftSibling = _getNode(leftSiblingIndex);
+            auto& leftSibling = getNode_(leftSiblingIndex);
 
             // Move value down to left sibling
             leftSibling.values.push_back(
@@ -1099,12 +1099,12 @@ private:
               node.children.begin() + indexOfLB
             );
 
-            _markNodeDeleted(targetChildIndex);
+            markNodeDeleted_(targetChildIndex);
 
             --indexOfLB;
           } else { // Merge with right sibling
             unsigned rightSiblingIndex = node.children.at(indexOfLB + 1);
-            auto& rightSibling = _getNode(rightSiblingIndex);
+            auto& rightSibling = getNode_(rightSiblingIndex);
 
             targetChild.values.push_back(
               node.values.at(indexOfLB)
@@ -1122,21 +1122,21 @@ private:
               node.children.begin() + indexOfLB + 1
             );
 
-            _markNodeDeleted(rightSiblingIndex);
+            markNodeDeleted_(rightSiblingIndex);
           }
         }
       }
 
-      _delete(node.children.at(indexOfLB), value);
+      delete_(node.children.at(indexOfLB), value);
     }
   }
 
   //! Checks whether the node is a valid B-Tree node, and throws if anything is off
-  constexpr void _validate(unsigned nodeIndex) const {
+  constexpr void validate_(unsigned nodeIndex) const {
     // The node should not be in the garbage
-    auto foundIter = _garbage.begin();
+    auto foundIter = garbage_.begin();
 
-    while(foundIter != _garbage.end()) {
+    while(foundIter != garbage_.end()) {
       if(*foundIter == nodeIndex) {
         break;
       }
@@ -1145,15 +1145,15 @@ private:
     }
 
     // Skip if the current node is in the garbage
-    if(foundIter != _garbage.end()) {
+    if(foundIter != garbage_.end()) {
       throw "An active node is marked as garbage!";
     }
 
-    auto& node = _getNode(nodeIndex);
+    auto& node = getNode_(nodeIndex);
 
     // A non-root node has min. t-1 values
     if(
-      !_isRootNode(nodeIndex)
+      !isRootNode_(nodeIndex)
       && node.values.size() < minDegree - 1
     ) {
       throw "Not every internal node has min. t-1 values!";
@@ -1161,7 +1161,7 @@ private:
 
     // Every internal node with n values has n+1 children
     if(
-      !_isRootNode(nodeIndex)
+      !isRootNode_(nodeIndex)
       && !node.isLeaf()
       && node.values.size() != node.children.size() - 1
     ) {
@@ -1179,12 +1179,12 @@ private:
     if(!node.isLeaf()) {
       for(unsigned i = 1; i < node.children.size(); ++i) {
         if(
-          !_lt(
-            _getNode(node.children.at(i - 1)).values.back(),
+          !lt_(
+            getNode_(node.children.at(i - 1)).values.back(),
             node.values.at(i - 1)
-          ) || !_lt(
+          ) || !lt_(
             node.values.at(i - 1),
-            _getNode(node.children.at(i)).values.front()
+            getNode_(node.children.at(i)).values.front()
           )
         ) {
           throw "Not all children's values are bounded by the parent!";

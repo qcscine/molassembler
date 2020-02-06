@@ -15,7 +15,7 @@ namespace molassembler {
 
 namespace distance_geometry {
 
-void MetricMatrix::_constructFromTemporary(Eigen::MatrixXd&& distances) {
+void MetricMatrix::constructFromTemporary_(Eigen::MatrixXd&& distances) {
   /* We have to be a little careful since only strict upper triangle of
    * distances contains anything of use to us.
    *
@@ -28,11 +28,11 @@ void MetricMatrix::_constructFromTemporary(Eigen::MatrixXd&& distances) {
   /* Resize our underlying matrix. There is no need to zero-initialize since all
    * parts of the lower triangle (including the diagonal) are overwritten.
    */
-  _matrix.resize(N, N);
+  matrix_.resize(N, N);
 
   /* We need to accomplish the following:
    *
-   * Every entry in the lower triangle of _matrix (including the diagonal)
+   * Every entry in the lower triangle of matrix_ (including the diagonal)
    * needs to be set according to the result of the following equations:
    *
    * D0[i]² =   (1/N) * sum_{j}(distances[i, j]²)
@@ -40,16 +40,16 @@ void MetricMatrix::_constructFromTemporary(Eigen::MatrixXd&& distances) {
    *
    *  (The second term is independent of i and can be precalculated!)
    *
-   * _matrix[i, j] = ( D0[i]² + D0[j]² - distances[i, j]² ) / 2
+   * matrix_[i, j] = ( D0[i]² + D0[j]² - distances[i, j]² ) / 2
    *
    * On the diagonal, where i == j:
-   * _matrix[i, i] = ( D0[i]² + D0[i]² - distances[i, i]² ) / 2
+   * matrix_[i, i] = ( D0[i]² + D0[i]² - distances[i, i]² ) / 2
    *                     ^--------^      ^-------------^
    *                       equal               =0
    *
-   * -> _matrix[i, i] = D0[i]²
+   * -> matrix_[i, i] = D0[i]²
    *
-   * So, we can store all of D0 immediately on _matrix's diagonal and perform
+   * So, we can store all of D0 immediately on matrix_'s diagonal and perform
    * the remaining transformation afterwards.
    */
 
@@ -80,7 +80,7 @@ void MetricMatrix::_constructFromTemporary(Eigen::MatrixXd&& distances) {
     firstTerm /= N;
 
     // assign as difference, no need to sqrt, we need the squares in a moment
-    _matrix.diagonal()(i) = firstTerm - doubleSumTerm;
+    matrix_.diagonal()(i) = firstTerm - doubleSumTerm;
   }
 
   /* Write off-diagonal elements into lower triangle
@@ -90,20 +90,20 @@ void MetricMatrix::_constructFromTemporary(Eigen::MatrixXd&& distances) {
    */
   for(AtomIndex i = 0; i < N; i++) {
     for(AtomIndex j = i + 1; j < N; j++) {
-      _matrix(j, i) = (
+      matrix_(j, i) = (
         // D0[i]²             + D0[j]²                - d(i, j)²
-        _matrix.diagonal()(i) + _matrix.diagonal()(j) - distances(i, j)
+        matrix_.diagonal()(i) + matrix_.diagonal()(j) - distances(i, j)
       ) / 2.0;
     }
   }
 }
 
 MetricMatrix::MetricMatrix(Eigen::MatrixXd distanceMatrix) {
-  _constructFromTemporary(std::move(distanceMatrix));
+  constructFromTemporary_(std::move(distanceMatrix));
 }
 
 const Eigen::MatrixXd& MetricMatrix::access() const {
-  return _matrix;
+  return matrix_;
 }
 
 Eigen::MatrixXd MetricMatrix::embed() const {
@@ -114,7 +114,7 @@ Eigen::MatrixXd MetricMatrix::embedWithFullDiagonalization() const {
   constexpr unsigned dimensionality = 4;
 
   // SelfAdjointEigenSolver only references the lower triangle
-  Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> eigenSolver(_matrix);
+  Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> eigenSolver(matrix_);
 
   Eigen::VectorXd eigenvalues = eigenSolver.eigenvalues();
 
@@ -153,7 +153,7 @@ Eigen::MatrixXd MetricMatrix::embedWithFullDiagonalization() const {
 }
 
 bool MetricMatrix::operator == (const MetricMatrix& other) const {
-  return _matrix == other._matrix;
+  return matrix_ == other.matrix_;
 }
 
 } // namespace distance_geometry

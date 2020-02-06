@@ -45,7 +45,7 @@ public:
   }
 
   //! Value constructor
-  constexpr explicit Optional(T value) : _value(std::move(value)), _hasValue(true) {
+  constexpr explicit Optional(T value) : value_(std::move(value)), hasValue_(true) {
     static_assert(
       std::is_same<T, std::decay_t<T>>::value,
       "T must not be a reference or const-qualified type"
@@ -60,7 +60,7 @@ public:
    * @complexity{@math{\Theta(1)}}
    */
   PURITY_WEAK constexpr bool hasValue() const {
-    return _hasValue;
+    return hasValue_;
   }
 
   /*! @brief Returns the contained value unchecked
@@ -69,7 +69,7 @@ public:
    * @warning If @p hasValue is false, this is UB.
    */
   PURITY_WEAK constexpr T value() const {
-    return _value;
+    return value_;
   }
 
   /*! @brief Monadic bind with function of signature T -> U
@@ -81,11 +81,11 @@ public:
   template<class UnaryFunction>
   constexpr auto map(UnaryFunction&& function) const {
     // Function has signature T -> U
-    using U = decltype(function(_value));
+    using U = decltype(function(value_));
 
-    if(_hasValue) {
+    if(hasValue_) {
       return Optional<U> {
-        function(_value)
+        function(value_)
       };
     }
 
@@ -101,10 +101,10 @@ public:
   template<class UnaryFunction>
   constexpr auto flatMap(UnaryFunction&& function) const {
     // Function has signature T -> Optional<U>
-    using OptionalU = decltype(function(_value));
+    using OptionalU = decltype(function(value_));
 
-    if(_hasValue) {
-      return OptionalU {function(_value)};
+    if(hasValue_) {
+      return OptionalU {function(value_)};
     }
 
     return OptionalU {};
@@ -115,8 +115,8 @@ public:
    * @complexity{@math{\Theta(1)}}
    */
   PURITY_WEAK constexpr T valueOr(const T& alternative) const {
-    if(_hasValue) {
-      return _value;
+    if(hasValue_) {
+      return value_;
     }
 
     return alternative;
@@ -127,25 +127,25 @@ public:
 //!@{
   //! Assignment from T
   constexpr Optional& operator = (T assignment) {
-    _value = assignment;
-    _hasValue = true;
+    value_ = assignment;
+    hasValue_ = true;
 
     return *this;
   }
 
   //! Convert-to-bool operator
   PURITY_WEAK constexpr operator bool () const {
-    return _hasValue;
+    return hasValue_;
   }
 
   //! Compares on basis of contained value. Nones do compare equal
   PURITY_WEAK constexpr bool operator == (const Optional& other) const {
-    if(!_hasValue && !other._hasValue) {
+    if(!hasValue_ && !other.hasValue_) {
       return true;
     }
 
-    if(_hasValue && other._hasValue) {
-      return _value == other._value;
+    if(hasValue_ && other.hasValue_) {
+      return value_ == other.value_;
     }
 
     return false;
@@ -159,23 +159,23 @@ public:
   //! Lexicographical-like comparison
   PURITY_WEAK constexpr bool operator < (const Optional& other) const {
     // If neither has a value, they are equal
-    if(!_hasValue && !other._hasValue) {
+    if(!hasValue_ && !other.hasValue_) {
       return false;
     }
 
     // If we do not have a value, but the other does, we are smaller
-    if(!_hasValue && other._hasValue) {
+    if(!hasValue_ && other.hasValue_) {
       return true;
     }
 
     // If we have a value, but the other doesn't, we are bigger
-    if(_hasValue && !other._hasValue) {
+    if(hasValue_ && !other.hasValue_) {
       return false;
     }
 
     // Remaining case: both have values
     return (
-      _value < other._value
+      value_ < other.value_
     );
   }
 
@@ -188,8 +188,8 @@ public:
 private:
 //!@name State
 //!@{
-  T _value = T {};
-  bool _hasValue = false;
+  T value_ = T {};
+  bool hasValue_ = false;
 //!@}
 };
 
@@ -202,10 +202,10 @@ public:
    *
    * None value. Default constructs a contained type.
    */
-  constexpr Optional() : _ref(_dummy) {}
+  constexpr Optional() : ref_(dummy_) {}
 
   //! Value constructor
-  constexpr explicit Optional(T& value) : _ref(value), _hasValue(true) {}
+  constexpr explicit Optional(T& value) : ref_(value), hasValue_(true) {}
 //!@}
 
 //!@name Information
@@ -215,7 +215,7 @@ public:
    * @complexity{@math{\Theta(1)}}
    */
   PURITY_WEAK constexpr bool hasValue() const {
-    return _hasValue;
+    return hasValue_;
   }
 
   /*! @brief Returns the contained value unchecked
@@ -224,7 +224,7 @@ public:
    * @warning If @p hasValue is false, this is UB.
    */
   PURITY_WEAK constexpr T& value() const {
-    return _ref;
+    return ref_;
   }
 
   /*! @brief Monadic bind with function of signature T -> U
@@ -236,11 +236,11 @@ public:
   template<class UnaryFunction>
   constexpr auto map(UnaryFunction&& function) const {
     // Function has signature T -> U
-    using U = decltype(function(_ref));
+    using U = decltype(function(ref_));
 
-    if(_hasValue) {
+    if(hasValue_) {
       return Optional<U> {
-        function(_ref)
+        function(ref_)
       };
     }
 
@@ -256,10 +256,10 @@ public:
   template<class UnaryFunction>
   constexpr auto flatMap(UnaryFunction&& function) const {
     // Function has signature T -> Optional<U>
-    using OptionalU = decltype(function(_ref));
+    using OptionalU = decltype(function(ref_));
 
-    if(_hasValue) {
-      return OptionalU {function(_ref)};
+    if(hasValue_) {
+      return OptionalU {function(ref_)};
     }
 
     return OptionalU {};
@@ -270,8 +270,8 @@ public:
    * @complexity{@math{\Theta(1)}}
    */
   PURITY_WEAK constexpr T valueOr(const T& alternative) const {
-    if(_hasValue) {
-      return _ref;
+    if(hasValue_) {
+      return ref_;
     }
 
     return alternative;
@@ -282,17 +282,17 @@ public:
 //!@{
   //! Convert-to-bool operator
   PURITY_WEAK constexpr operator bool () const {
-    return _hasValue;
+    return hasValue_;
   }
 
   //! Compares on basis of contained value. Nones do compare equal
   PURITY_WEAK constexpr bool operator == (const Optional& other) const {
-    if(!_hasValue && !other._hasValue) {
+    if(!hasValue_ && !other.hasValue_) {
       return true;
     }
 
-    if(_hasValue && other._hasValue) {
-      return _ref == other._ref;
+    if(hasValue_ && other.hasValue_) {
+      return ref_ == other.ref_;
     }
 
     return false;
@@ -306,23 +306,23 @@ public:
   //! Lexicographical-like comparison
   PURITY_WEAK constexpr bool operator < (const Optional& other) const {
     // If neither has a value, they are equal
-    if(!_hasValue && !other._hasValue) {
+    if(!hasValue_ && !other.hasValue_) {
       return false;
     }
 
     // If we do not have a value, but the other does, we are smaller
-    if(!_hasValue && other._hasValue) {
+    if(!hasValue_ && other.hasValue_) {
       return true;
     }
 
     // If we have a value, but the other doesn't, we are bigger
-    if(_hasValue && !other._hasValue) {
+    if(hasValue_ && !other.hasValue_) {
       return false;
     }
 
     // Remaining case: both have values
     return (
-      _ref < other._ref
+      ref_ < other.ref_
     );
   }
 
@@ -335,9 +335,9 @@ public:
 private:
 //!@name State
 //!@{
-  T _dummy = T{};
-  T& _ref;
-  bool _hasValue = false;
+  T dummy_ = T{};
+  T& ref_;
+  bool hasValue_ = false;
 //!@}
 };
 

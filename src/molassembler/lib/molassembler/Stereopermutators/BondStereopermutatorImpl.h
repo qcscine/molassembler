@@ -134,7 +134,7 @@ struct BondStereopermutator::Impl : public temple::crtp::LexicographicComparable
 
 /* Operators */
   inline auto tie() const {
-    return std::make_tuple(std::ref(_composite), assigned());
+    return std::make_tuple(std::ref(composite_), assigned());
   }
 
 private:
@@ -142,27 +142,27 @@ private:
    * Object representing union of both atom stereopermutators, yields abstract
    * spatial arrangements
    */
-  stereopermutation::Composite _composite;
+  stereopermutation::Composite composite_;
   //! Edge this stereopermutator is placed on
-  BondIndex _edge;
-  //! List of stereopermutations of _composite that are not obviously infeasible
-  std::vector<unsigned> _feasiblePermutations;
-  //! Index optional into _feasiblePermutations of the current assignment
-  boost::optional<unsigned> _assignment;
+  BondIndex edge_;
+  //! List of stereopermutations of composite_ that are not obviously infeasible
+  std::vector<unsigned> feasiblePermutations_;
+  //! Index optional into feasiblePermutations_ of the current assignment
+  boost::optional<unsigned> assignment_;
 
   //! Yields abstract site characters at their shape positions
-  static std::vector<char> _charifyRankedSites(
+  static std::vector<char> charifyRankedSites_(
     const RankingInformation::RankedSitesType& sitesRanking,
     const AtomStereopermutator::ShapeMap& shapeVertexMap
   );
 
-  static stereopermutation::Composite _constructComposite(
+  static stereopermutation::Composite constructComposite_(
     const StereopermutatorList& stereopermutators,
     BondIndex edge,
     Alignment alignment
   );
 
-  static stereopermutation::Composite::OrientationState _makeOrientationState(
+  static stereopermutation::Composite::OrientationState makeOrientationState_(
     const AtomStereopermutator& focalStereopermutator,
     const AtomStereopermutator& attachedStereopermutator
   );

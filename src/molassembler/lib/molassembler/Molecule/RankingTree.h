@@ -23,7 +23,7 @@
  *     pseudo-asymmetry needs to be included.
  *   - Stereopermutator interface change to support pseudo-asymmetry tag (?)
  *   - Ranking function interface change to propagate pseudo-asymmetry result
- * - When in _auxiliaryApplySequenceRules, and BFS is omnidirectional, isn't
+ * - When in auxiliaryApplySequenceRules_, and BFS is omnidirectional, isn't
  *   the up-edge always top-ranked? It may not be necessary to include it in
  *   the comparisonSets and as a result, also not complicate BFS handling.
  */
@@ -64,15 +64,15 @@ private:
   /*! For properly naming all the log files emitted in case the appropriate log
    * particular is set.
    */
-  static unsigned _debugMessageCounter;
+  static unsigned debugMessageCounter_;
 
   /*! Modifies the graphviz molgraph into a digraph so that it can be combined
    * with all the other digraphs using gvpack
    */
-  static std::string _adaptMolGraph(std::string molGraph);
+  static std::string adaptMolGraph_(std::string molGraph);
 
   //! Writes graphviz log files from graph strings
-  static void _writeGraphvizFiles(
+  static void writeGraphvizFiles_(
     const std::vector<std::string>& graphvizStrings
   );
 
@@ -154,7 +154,7 @@ public:
   // Returns whether the vertex or edge has an instantiated Stereopermutator
   class VariantHasInstantiatedStereopermutator;
 
-  // Returns the mixed depth (see _mixedDepth functions) of the vertex or edge
+  // Returns the mixed depth (see mixedDepth_ functions) of the vertex or edge
   class VariantDepth;
 
   // Returns the source node of a vertex (identity) or an edge (source node)
@@ -193,45 +193,45 @@ private:
 
 /* State */
   //! The BGL Graph representing the acyclic tree
-  BglType _tree;
+  BglType tree_;
 
   //! The helper instance for discovering the ordering of the to-rank branches
-  OrderDiscoveryHelper<TreeVertexIndex> _branchOrderingHelper;
+  OrderDiscoveryHelper<TreeVertexIndex> branchOrderingHelper_;
 
   // Closures
-  const Graph& _graph;
-  const StereopermutatorList& _stereopermutatorsRef;
-  const std::string _adaptedMolGraphviz;
+  const Graph& graph_;
+  const StereopermutatorList& stereopermutatorsRef_;
+  const std::string adaptedMolGraphviz_;
 
 /* Minor helper classes and functions */
   //! Returns the parent of a node. Fails if called on the root!
-  TreeVertexIndex _parent(const TreeVertexIndex& index) const;
+  TreeVertexIndex parent_(const TreeVertexIndex& index) const;
 
   //! Returns an unordered list of all adjacent vertices (in- and out-adjacents)
-  std::vector<TreeVertexIndex> _adjacents(TreeVertexIndex index) const;
+  std::vector<TreeVertexIndex> adjacents_(TreeVertexIndex index) const;
 
   //! Counts the number of terminal hydrogens on out-edges of the specified index
-  unsigned _adjacentTerminalHydrogens(const TreeVertexIndex& index) const;
+  unsigned adjacentTerminalHydrogens_(const TreeVertexIndex& index) const;
 
   //! Checks whether a tree index is the result of a bond split
-  bool _isBondSplitDuplicateVertex(const TreeVertexIndex& index) const;
+  bool isBondSplitDuplicateVertex_(const TreeVertexIndex& index) const;
 
   //! Checks whether a tree index is the result of a cycle closure
-  bool _isCycleClosureDuplicateVertex(const TreeVertexIndex& index) const;
+  bool isCycleClosureDuplicateVertex_(const TreeVertexIndex& index) const;
 
   /*! Determines which tree indices are to be ranked
    *
    * Determines which tree indices are to be ranked based on the central index
    * and a list of index excludes
    */
-  std::vector<TreeVertexIndex> _auxiliaryAdjacentsToRank(
+  std::vector<TreeVertexIndex> auxiliaryAdjacentsToRank_(
     TreeVertexIndex sourceIndex,
     const std::vector<TreeVertexIndex>& excludeIndices
   ) const;
 
   //! Returns whether any of the comparison multisets has an entry
   template<typename ComparisonSets>
-  bool _notEmpty(const ComparisonSets& comparisonSets) const {
+  bool notEmpty_(const ComparisonSets& comparisonSets) const {
     return temple::all_of(
       comparisonSets,
       [](const auto& mapPair) -> bool {
@@ -244,7 +244,7 @@ private:
    * Returns the node degree, excluding edges to or from nodes marked as
    * duplicate
    */
-  unsigned _nonDuplicateDegree(const TreeVertexIndex& index) const;
+  unsigned nonDuplicateDegree_(const TreeVertexIndex& index) const;
 
   /*! Adds the required duplicate atoms for bonds of high bond orders
    *
@@ -253,37 +253,37 @@ private:
    * the new duplicate tree vertex indices of duplicate nodes added to the
    * source vertex only, not those added to the target vertex.
    */
-  std::vector<TreeVertexIndex> _addBondOrderDuplicates(
+  std::vector<TreeVertexIndex> addBondOrderDuplicates_(
     const TreeVertexIndex& treeSource,
     const TreeVertexIndex& treeTarget
   );
 
   //! Returns all tree indices in the branch from the specified index up to root
-  std::unordered_set<TreeVertexIndex> _treeIndicesInBranch(TreeVertexIndex index) const;
+  std::unordered_set<TreeVertexIndex> treeIndicesInBranch_(TreeVertexIndex index) const;
 
   //! Returns all mol indices in the branch from the specified index up to root
-  std::unordered_set<AtomIndex> _molIndicesInBranch(TreeVertexIndex index) const;
+  std::unordered_set<AtomIndex> molIndicesInBranch_(TreeVertexIndex index) const;
 
   //! Returns a depth measure of a duplicate vertex for sequence rule 1
-  unsigned _duplicateDepth(TreeVertexIndex index) const;
+  unsigned duplicateDepth_(TreeVertexIndex index) const;
 
   //! Returns the depth of a node in the tree
-  unsigned _depthOfNode(TreeVertexIndex index) const;
+  unsigned depthOfNode_(TreeVertexIndex index) const;
 
   //! Returns a mixed depth measure for ranking both vertices and edges
-  unsigned _mixedDepth(const TreeVertexIndex& vertexIndex) const;
+  unsigned mixedDepth_(const TreeVertexIndex& vertexIndex) const;
 
   //! Returns a mixed depth measure for ranking both vertices and edges
-  unsigned _mixedDepth(const TreeEdgeIndex& edgeIndex) const;
+  unsigned mixedDepth_(const TreeEdgeIndex& edgeIndex) const;
 
   /*!
    * Returns the deepest vertex in the tree in whose child branches both a and
    * b are located
    */
-  JunctionInfo _junction(const TreeVertexIndex& a, const TreeVertexIndex& b) const;
+  JunctionInfo junction_(const TreeVertexIndex& a, const TreeVertexIndex& b) const;
 
   //! Returns whether a molecular graph index exists in a specific branch
-  bool _molIndexExistsInBranch(
+  bool molIndexExistsInBranch_(
     AtomIndex molIndex,
     TreeVertexIndex treeIndex
   ) const;
@@ -297,7 +297,7 @@ private:
    * Pre-expansion existing children may come about due to the addition of
    * multiple bond order duplicate atoms.
    */
-  std::vector<TreeVertexIndex> _expand(
+  std::vector<TreeVertexIndex> expand_(
     const TreeVertexIndex& index,
     const std::unordered_set<AtomIndex>& molIndicesInBranch
   );
@@ -308,7 +308,7 @@ private:
    * lexicographical_compare with a supplied comparator!
    */
   template<typename SetValueType, typename ComparatorType>
-  bool _multisetCompare(
+  bool multisetCompare_(
     const std::multiset<SetValueType, ComparatorType>& a,
     const std::multiset<SetValueType, ComparatorType>& b
   ) const {
@@ -350,7 +350,7 @@ private:
    *   adds new relationships (if discovered) to this reference.
    */
   template<typename SetValueType, typename ComparatorType>
-  void _compareBFSSets(
+  void compareBFSSets_(
     const std::map<
       TreeVertexIndex,
       std::multiset<SetValueType, ComparatorType>
@@ -364,9 +364,9 @@ private:
       temple::forEach(
         temple::adaptors::allPairs(undecidedSet),
         [&](const TreeVertexIndex a, const TreeVertexIndex b) {
-          if(_multisetCompare(comparisonSets.at(a), comparisonSets.at(b))) {
+          if(multisetCompare_(comparisonSets.at(a), comparisonSets.at(b))) {
             orderingHelper.addLessThanRelationship(a, b);
-          } else if(_multisetCompare(comparisonSets.at(b), comparisonSets.at(a))) {
+          } else if(multisetCompare_(comparisonSets.at(b), comparisonSets.at(a))) {
             orderingHelper.addLessThanRelationship(b, a);
           }
         }
@@ -378,8 +378,8 @@ private:
   std::string toString(const TreeEdgeIndex& edge) const;
   std::string toString(const VariantType& vertexOrEdge) const;
 
-  /* Some helper structs to get _runBFS to compile smoothly. Although the
-   * boolean template parameters to _runBFS are logically constexpr, and any
+  /* Some helper structs to get runBFS_ to compile smoothly. Although the
+   * boolean template parameters to runBFS_ are logically constexpr, and any
    * false branches of if (boolean template parameter) are removed during
    * optimization, they must compile! This requirement is removed in C++17
    * if-constexpr structures.
@@ -393,7 +393,7 @@ private:
    * Classes are necessary since partial function specialization is impossible.
    *
    * When modernizing the code to C++17, remove those classes and employ much
-   * more legible if-constexpr in all ifs in _runBFS using only constexpr
+   * more legible if-constexpr in all ifs in runBFS_ using only constexpr
    * template parameters.
    */
 
@@ -497,7 +497,7 @@ private:
     bool insertVertices,
     typename MultisetValueType,
     typename MultisetComparatorType
-  > void _runBFS(
+  > void runBFS_(
     TreeVertexIndex sourceIndex,
     OrderDiscoveryHelper<TreeVertexIndex>& orderingHelper,
     const boost::optional<unsigned>& depthLimitOptional = boost::none
@@ -588,12 +588,12 @@ private:
             edgeInserter.execute(
               comparisonSets,
               undecidedBranch,
-              boost::edge(sourceIndex, undecidedBranch, _tree).first
+              boost::edge(sourceIndex, undecidedBranch, tree_).first
             );
           } else {
             // Need to be direction-agnostic
-            auto forwardEdge = boost::edge(sourceIndex, undecidedBranch, _tree);
-            auto backwardEdge = boost::edge(undecidedBranch, sourceIndex, _tree);
+            auto forwardEdge = boost::edge(sourceIndex, undecidedBranch, tree_);
+            auto backwardEdge = boost::edge(undecidedBranch, sourceIndex, tree_);
 
             edgeInserter.execute(
               comparisonSets,
@@ -612,7 +612,7 @@ private:
     }
 
     // Compare undecided multisets, and add any discoveries to the ordering helper
-    _compareBFSSets(comparisonSets, undecidedSets, orderingHelper);
+    compareBFSSets_(comparisonSets, undecidedSets, orderingHelper);
 
     // Update the undecided sets
     undecidedSets = orderingHelper.getUndecidedSets();
@@ -621,7 +621,7 @@ private:
       // Write debug graph files if the corresponding log particular is set
       if(
         Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0
-        && _notEmpty(comparisonSets)
+        && notEmpty_(comparisonSets)
       ) {
         std::string header = (
           (
@@ -631,14 +631,14 @@ private:
           ) + "R"s + std::to_string(ruleNumber)
         );
 
-        _writeGraphvizFiles({
-          _adaptedMolGraphviz,
+        writeGraphvizFiles_({
+          adaptedMolGraphviz_,
           dumpGraphviz(
             header,
             {sourceIndex},
-            _collectSeeds(seeds, undecidedSets)
+            collectSeeds_(seeds, undecidedSets)
           ),
-          _makeBFSStateGraph(
+          makeBFSStateGraph_(
             header,
             sourceIndex,
             comparisonSets,
@@ -660,7 +660,7 @@ private:
       // Undecided indices remain
       !undecidedSets.empty()
       // Seeds exist that are relevant to the undecided sets
-      && _relevantSeeds(seeds, undecidedSets)
+      && relevantSeeds_(seeds, undecidedSets)
       && depth < depthLimitOptional.value_or(std::numeric_limits<unsigned>::max())
     ) {
       // BFS Step
@@ -686,13 +686,13 @@ private:
 
               // In-edges are only relevant for omnidirectional BFS
               for(
-                auto inIterPair = boost::in_edges(seed, _tree);
+                auto inIterPair = boost::in_edges(seed, tree_);
                 inIterPair.first != inIterPair.second;
                 ++inIterPair.first
               ) {
                 const auto& inEdge = *inIterPair.first;
 
-                auto edgeSource = boost::source(inEdge, _tree);
+                auto edgeSource = boost::source(inEdge, tree_);
 
                 // Check if already placed
                 if(visitedVertices.count(edgeSource) == 0) {
@@ -715,13 +715,13 @@ private:
 
             // Out edges are considered in all cases
             for( // Out-edges
-              auto outIterPair = boost::out_edges(seed, _tree);
+              auto outIterPair = boost::out_edges(seed, tree_);
               outIterPair.first != outIterPair.second;
               ++outIterPair.first
             ) {
               const auto& outEdge = *outIterPair.first;
 
-              auto edgeTarget = boost::target(outEdge, _tree);
+              auto edgeTarget = boost::target(outEdge, tree_);
 
               // Skip this vertex if in omnidirectional BFS and already-seen node
               if(!bfsDownOnly && visitedVertices.count(edgeTarget) > 0) {
@@ -741,7 +741,7 @@ private:
               );
 
               // Add out edge target to seeds only if non-terminal
-              if(!_tree[edgeTarget].isDuplicate) {
+              if(!tree_[edgeTarget].isDuplicate) {
                 newSeeds.push_back(edgeTarget);
               }
             }
@@ -753,7 +753,7 @@ private:
       }
 
       // Make comparisons in all undecided sets
-      _compareBFSSets(comparisonSets, undecidedSets, orderingHelper);
+      compareBFSSets_(comparisonSets, undecidedSets, orderingHelper);
 
       // Recalculate the undecided sets
       undecidedSets = orderingHelper.getUndecidedSets();
@@ -764,7 +764,7 @@ private:
       if /* C++17 constexpr */ (buildTypeIsDebug) {
         if(
           Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0
-          && _notEmpty(comparisonSets)
+          && notEmpty_(comparisonSets)
         ) {
           std::string header;
           if(!bfsDownOnly) {
@@ -772,14 +772,14 @@ private:
           }
           header += "R"s + std::to_string(ruleNumber);
 
-          _writeGraphvizFiles({
-            _adaptedMolGraphviz,
+          writeGraphvizFiles_({
+            adaptedMolGraphviz_,
             dumpGraphviz(
               header,
               {sourceIndex},
-              _collectSeeds(seeds, undecidedSets)
+              collectSeeds_(seeds, undecidedSets)
             ),
-            _makeBFSStateGraph(
+            makeBFSStateGraph_(
               header,
               sourceIndex,
               comparisonSets,
@@ -793,7 +793,7 @@ private:
   }
 
   // Flatten the undecided branches' seeds into a single set
-  static std::unordered_set<TreeVertexIndex> _collectSeeds(
+  static std::unordered_set<TreeVertexIndex> collectSeeds_(
     const std::map<
       TreeVertexIndex,
       std::vector<TreeVertexIndex>
@@ -805,7 +805,7 @@ private:
 
   //! Creates a graphviz representation of the BFS state
   template<typename ValueType, typename ComparatorType>
-  std::string _makeBFSStateGraph(
+  std::string makeBFSStateGraph_(
     const std::string& title,
     const TreeVertexIndex& base,
     const std::map<
@@ -886,10 +886,10 @@ private:
 
     class SmallGraphWriter {
     private:
-      const DisplayGraph& _graphBase;
-      const std::string _title;
-      const std::set<TreeVertexIndex> _colorVertices;
-      const std::set<TreeVertexIndex> _squareVertices;
+      const DisplayGraph& graphBase_;
+      const std::string title_;
+      const std::set<TreeVertexIndex> colorVertices_;
+      const std::set<TreeVertexIndex> squareVertices_;
 
     public:
       SmallGraphWriter(
@@ -897,17 +897,17 @@ private:
         std::string title,
         std::set<TreeVertexIndex> colorVertices,
         std::set<TreeVertexIndex> squareVertices
-      ) : _graphBase(base),
-          _title(std::move(title)),
-          _colorVertices(std::move(colorVertices)),
-          _squareVertices(std::move(squareVertices))
+      ) : graphBase_(base),
+          title_(std::move(title)),
+          colorVertices_(std::move(colorVertices)),
+          squareVertices_(std::move(squareVertices))
       {}
 
       void operator() (std::ostream& os) const {
         os << "  graph [fontname = \"Arial\", layout=\"dot\"];\n"
           << "  node [fontname = \"Arial\", shape = circle, style = filled];\n"
           << "  edge [fontname = \"Arial\"];\n"
-          << R"(  labelloc="t"; label=")" << _title << "\"\n";
+          << R"(  labelloc="t"; label=")" << title_ << "\"\n";
       }
 
       void operator() (
@@ -915,16 +915,16 @@ private:
         const typename DisplayGraph::vertex_descriptor& vertexIndex
       ) const {
         if(vertexIndex == rootIndex) {
-          os << R"([label=")" << _title << "\\n-\\n" << _graphBase[rootIndex].representation << R"(")";
+          os << R"([label=")" << title_ << "\\n-\\n" << graphBase_[rootIndex].representation << R"(")";
         } else {
-          os << R"([label=")" << _graphBase[vertexIndex].representation << R"(")";
+          os << R"([label=")" << graphBase_[vertexIndex].representation << R"(")";
         }
 
-        if(_colorVertices.count(vertexIndex) > 0) {
+        if(colorVertices_.count(vertexIndex) > 0) {
           os << R"(, fillcolor="tomato", fontcolor="white")";
         }
 
-        if(_squareVertices.count(vertexIndex) > 0) {
+        if(squareVertices_.count(vertexIndex) > 0) {
           os << R"(, shape="square")";
         }
 
@@ -979,7 +979,7 @@ private:
   //! Maps sets returned by an OrderDiscoveryHelper from tree indices to atom indices
   std::vector<
     std::vector<AtomIndex>
-  > _mapToAtomIndices(
+  > mapToAtomIndices_(
     const std::vector<
       std::vector<TreeVertexIndex>
     >& treeRankingSets
@@ -1003,7 +1003,7 @@ private:
    *   thus together in one of the undecided sets) have any seeds for another
    *   BFS iteration
    */
-  static bool _relevantSeeds(
+  static bool relevantSeeds_(
     const std::map<
       TreeVertexIndex,
       std::vector<TreeVertexIndex>
@@ -1022,7 +1022,7 @@ private:
    * shape must also be considered because transition metal chemistry is
    * also included in this library.
    */
-  void _applySequenceRules(
+  void applySequenceRules_(
     const boost::optional<AngstromPositions>& positionsOption
   );
 
@@ -1053,7 +1053,7 @@ private:
    */
   std::vector<
     std::vector<TreeVertexIndex>
-  > _auxiliaryApplySequenceRules(
+  > auxiliaryApplySequenceRules_(
     TreeVertexIndex sourceIndex,
     const std::vector<TreeVertexIndex>& adjacentsToRank,
     const boost::optional<unsigned>& depthLimitOptional = boost::none

@@ -96,9 +96,9 @@ public:
 
   private:
     //! Hold an owning reference to the base data to avoid dangling pointers
-    std::shared_ptr<RdlDataPtrs> _rdlPtr;
+    std::shared_ptr<RdlDataPtrs> rdlPtr_;
     //! Manage cycle data as shared pointer to permit expected iterator functionality
-    std::unique_ptr<RdlCyclePtrs> _cyclePtr;
+    std::unique_ptr<RdlCyclePtrs> cyclePtr_;
   };
 
   //! Iterator for cycles of specific universal ring families
@@ -150,13 +150,13 @@ public:
   private:
     struct UrfHelper;
 
-    std::shared_ptr<RdlDataPtrs> _rdlPtr;
-    std::unique_ptr<UrfHelper> _urfsPtr;
-    std::unique_ptr<RdlCyclePtrs> _cyclePtr;
+    std::shared_ptr<RdlDataPtrs> rdlPtr_;
+    std::unique_ptr<UrfHelper> urfsPtr_;
+    std::unique_ptr<RdlCyclePtrs> cyclePtr_;
 
-    void _advanceToNextPermissibleCycle();
-    void _initializeCyclesFromURFID();
-    void _matchCycleState(const UrfIdsCycleIterator& other);
+    void advanceToNextPermissibleCycle_();
+    void initializeCyclesFromURFID_();
+    void matchCycleState_(const UrfIdsCycleIterator& other);
   };
 
 //!@name Special member functions
@@ -237,9 +237,9 @@ public:
 //!@}
 
 private:
-  std::shared_ptr<RdlDataPtrs> _rdlPtr;
+  std::shared_ptr<RdlDataPtrs> rdlPtr_;
   // Map from BondIndex to ordered list of its URF IDs
-  std::unordered_map<BondIndex, std::vector<unsigned>, boost::hash<BondIndex>> _urfMap;
+  std::unordered_map<BondIndex, std::vector<unsigned>, boost::hash<BondIndex>> urfMap_;
 };
 
 /*! @brief Yields the size of the smallest cycle containing an atom

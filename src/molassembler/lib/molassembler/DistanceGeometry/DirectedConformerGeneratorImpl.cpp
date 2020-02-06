@@ -218,15 +218,15 @@ DirectedConformerGenerator::Impl::considerBond(
 DirectedConformerGenerator::Impl::Impl(
   Molecule molecule,
   const BondList& bondsToConsider
-) : _molecule(std::move(molecule))
+) : molecule_(std::move(molecule))
 {
   // Precalculate the smallest cycle map
-  auto smallestCycleMap = makeSmallestCycleMap(_molecule.graph().cycles());
+  auto smallestCycleMap = makeSmallestCycleMap(molecule_.graph().cycles());
 
   // Allocate some space for the relevant bonds and new stereopermutators
-  _relevantBonds.reserve(_molecule.graph().B() / 2);
+  relevantBonds_.reserve(molecule_.graph().B() / 2);
   std::vector<BondStereopermutator> bondStereopermutators;
-  bondStereopermutators.reserve(_molecule.graph().B() / 2);
+  bondStereopermutators.reserve(molecule_.graph().B() / 2);
 
   // Make a visitor to move out bond stereopermutators from the variant
   struct ExtractStereopermutatorVisitor : public boost::static_visitor<bool> {
@@ -246,46 +246,46 @@ DirectedConformerGenerator::Impl::Impl(
 
   if(bondsToConsider.empty()) {
     // Consider all bonds
-    for(BondIndex bondIndex : _molecule.graph().bonds()) {
-      auto importanceVariant = considerBond(bondIndex, _molecule, smallestCycleMap);
+    for(BondIndex bondIndex : molecule_.graph().bonds()) {
+      auto importanceVariant = considerBond(bondIndex, molecule_, smallestCycleMap);
 
       if(boost::apply_visitor(visitor, importanceVariant)) {
-        _relevantBonds.push_back(bondIndex);
+        relevantBonds_.push_back(bondIndex);
       }
     }
   } else {
     for(const BondIndex& bondIndex : bondsToConsider) {
-      auto importanceVariant = considerBond(bondIndex, _molecule, smallestCycleMap);
+      auto importanceVariant = considerBond(bondIndex, molecule_, smallestCycleMap);
 
       if(boost::apply_visitor(visitor, importanceVariant)) {
-        _relevantBonds.push_back(bondIndex);
+        relevantBonds_.push_back(bondIndex);
       }
     }
   }
 
   // Sort the relevant bonds and shrink
-  temple::inplace::sort(_relevantBonds);
-  _relevantBonds.shrink_to_fit();
+  temple::inplace::sort(relevantBonds_);
+  relevantBonds_.shrink_to_fit();
 
   /* In case there are no bonds to consider, then we're done. No other work
    * to be done.
    */
-  if(_relevantBonds.empty()) {
+  if(relevantBonds_.empty()) {
     return;
   }
 
   // Add the BondStereopermutators to our underlying molecule's stereopermutator list
   for(auto& bondStereopermutator : bondStereopermutators) {
-    _molecule._pImpl->_stereopermutators.add(
+    molecule_.pImpl_->stereopermutators_.add(
       std::move(bondStereopermutator)
     );
   }
 
   // Collect the bounds on each stereopermutator's permutations for the trie
   auto bounds = temple::map(
-    _relevantBonds,
+    relevantBonds_,
     [&](const BondIndex& bond) -> std::uint8_t {
-      auto stereoOption = _molecule.stereopermutators().option(bond);
+      auto stereoOption = molecule_.stereopermutators().option(bond);
       if(!stereoOption) {
         throw std::logic_error(
           "No BondStereopermutator for relevant bond, but it was just inserted"
@@ -299,34 +299,34 @@ DirectedConformerGenerator::Impl::Impl(
   );
 
   // Initialize the trie with the list of bounds
-  _decisionLists.setBounds(std::move(bounds));
+  decisionLists_.setBounds(std::move(bounds));
 }
 
 DirectedConformerGenerator::DecisionList
 DirectedConformerGenerator::Impl::generateNewDecisionList() {
-  if(_relevantBonds.empty()) {
+  if(relevantBonds_.empty()) {
     throw std::logic_error("List of relevant bonds is empty!");
   }
 
   detail::BoundedNodeTrieChooseFunctor<std::uint8_t> chooseFunctor {};
-  return _decisionLists.generateNewEntry(chooseFunctor);
+  return decisionLists_.generateNewEntry(chooseFunctor);
 }
 
 const Molecule& DirectedConformerGenerator::Impl::conformationMolecule(const DecisionList& decisionList) {
   const unsigned U = decisionList.size();
 
-  if(U != _decisionLists.bounds().size() || U != _relevantBonds.size()) {
+  if(U != decisionLists_.bounds().size() || U != relevantBonds_.size()) {
     throw std::invalid_argument("Passed decision list has wrong length");
   }
 
   for(unsigned i = 0; i < U; ++i) {
-    const BondIndex& bondIndex = _relevantBonds.at(i);
-    auto stereoOption = _molecule._pImpl->_stereopermutators.option(bondIndex);
+    const BondIndex& bondIndex = relevantBonds_.at(i);
+    auto stereoOption = molecule_.pImpl_->stereopermutators_.option(bondIndex);
     assert(stereoOption);
     stereoOption->assign(decisionList[i]);
   }
 
-  return _molecule;
+  return molecule_;
 }
 
 outcome::result<Utils::PositionCollection>
@@ -360,9 +360,9 @@ DirectedConformerGenerator::Impl::getDecisionList(
 ) {
   if(
     !temple::all_of(
-      _molecule.graph().atoms(),
+      molecule_.graph().atoms(),
       [&](const AtomIndex i) -> bool {
-        return atomCollection.getElement(i) == _molecule.graph().elementType(i);
+        return atomCollection.getElement(i) == molecule_.graph().elementType(i);
       }
     )
   ) {
@@ -381,9 +381,9 @@ DirectedConformerGenerator::Impl::getDecisionList(
 
   if(
     !temple::all_of(
-      _relevantBonds,
+      relevantBonds_,
       [&](const BondIndex& bondIndex) -> bool {
-        const auto& permutators = _molecule._pImpl->_stereopermutators;
+        const auto& permutators = molecule_.pImpl_->stereopermutators_;
         return (
           permutators.option(bondIndex.first)
           && permutators.option(bondIndex.second)
@@ -396,11 +396,11 @@ DirectedConformerGenerator::Impl::getDecisionList(
   }
 
   return temple::map(
-    _relevantBonds,
+    relevantBonds_,
     [&](const BondIndex& bondIndex) -> std::uint8_t {
-      auto firstAtom = _molecule._pImpl->_stereopermutators.option(bondIndex.first);
-      auto secondAtom = _molecule._pImpl->_stereopermutators.option(bondIndex.second);
-      auto stereoOption = _molecule._pImpl->_stereopermutators.option(bondIndex);
+      auto firstAtom = molecule_.pImpl_->stereopermutators_.option(bondIndex.first);
+      auto secondAtom = molecule_.pImpl_->stereopermutators_.option(bondIndex.second);
+      auto stereoOption = molecule_.pImpl_->stereopermutators_.option(bondIndex);
 
       assert(firstAtom && secondAtom && stereoOption);
       stereoOption->fit(angstromPositions, *firstAtom, *secondAtom, mode);

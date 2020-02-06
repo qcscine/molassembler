@@ -176,9 +176,9 @@ std::string Reflection::name() const {
   std::string composite = "sigma";
 
   if(normal.cwiseAbs().isApprox(Eigen::Vector3d::UnitZ(), 1e-8)) {
-    composite += "_h";
+    composite += "h_";
   } else if(orthogonal(normal, Eigen::Vector3d::UnitZ())) {
-    composite += "_v";
+    composite += "v_";
   } else {
     composite += (
       " w/ normal {"

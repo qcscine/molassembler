@@ -395,7 +395,7 @@ public:
 
 private:
   class Impl;
-  std::unique_ptr<Impl> _pImpl;
+  std::unique_ptr<Impl> pImpl_;
 };
 
 } // namespace molassembler

@@ -24,35 +24,35 @@ struct Molecule::Impl {
     const Utils::AtomCollection& atomCollection
   );
 
-  Graph _adjacencies;
-  StereopermutatorList _stereopermutators;
-  boost::optional<AtomEnvironmentComponents> _canonicalComponentsOption;
+  Graph adjacencies_;
+  StereopermutatorList stereopermutators_;
+  boost::optional<AtomEnvironmentComponents> canonicalComponentsOption_;
 
 /* "Private" helpers */
-  void _tryAddAtomStereopermutator(
+  void tryAddAtomStereopermutator_(
     AtomIndex candidateIndex,
     StereopermutatorList& stereopermutators
   ) const;
 
-  void _tryAddBondStereopermutator(
+  void tryAddBondStereopermutator_(
     const BondIndex& bond,
     StereopermutatorList& stereopermutators
   ) const;
 
   //! Generates a list of stereopermutators based on graph properties alone
-  StereopermutatorList _detectStereopermutators() const;
+  StereopermutatorList detectStereopermutators_() const;
 
   //! Ensures basic expectations about what constitutes a Molecule are met
-  void _ensureModelInvariants() const;
+  void ensureModelInvariants_() const;
 
   //! Returns whether the specified index is valid or not
-  bool _isValidIndex(AtomIndex index) const;
+  bool isValidIndex_(AtomIndex index) const;
 
   //! Returns whether an edge is double, triple or higher bond order
-  bool _isGraphBasedBondStereopermutatorCandidate(BondType bondType) const;
+  bool isGraphBasedBondStereopermutatorCandidate_(BondType bondType) const;
 
   //! Updates the molecule's StereopermutatorList after a graph modification
-  void _propagateGraphChange();
+  void propagateGraphChange_();
 
 
 //!@name Constructors

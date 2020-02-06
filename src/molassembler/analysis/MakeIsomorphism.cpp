@@ -53,7 +53,7 @@ int main(int argc, char* argv[]) {
     auto shuffledData = io::shuffle(readData.first, readData.second);
 
     Utils::ChemicalFileHandler::write(
-      filepath.stem().string() + "_isomorphism.mol",
+      filepath.stem().string() + "isomorphism_.mol",
       std::get<0>(shuffledData),
       std::get<1>(shuffledData)
     );

@@ -42,12 +42,12 @@ public:
   constexpr Array(
     const Array& other,
     std::index_sequence<Inds...> /* inds */
-  ) :_items {other[Inds]...} {}
+  ) :items_ {other[Inds]...} {}
 
   /*!  @brief Copy constructor
    *
    * Constructing from another array is tricky since we're technically not
-   * allowed to edit _items in-class, so we delegate to a helper constructor
+   * allowed to edit items_ in-class, so we delegate to a helper constructor
    * and directly form the mem-initializer
    *
    * @complexity{@math{\Theta(N)}}
@@ -66,7 +66,7 @@ public:
   constexpr Array(
     Array&& other,
     std::index_sequence<Inds...> /* inds */
-  ) :_items {std::move(other[Inds])...} {}
+  ) :items_ {std::move(other[Inds])...} {}
 
   /*! @brief Move constructor
    *
@@ -85,7 +85,7 @@ public:
    */
   constexpr Array& operator = (const Array& other) {
     for(std::size_t i = 0; i < nItems; ++i) {
-      _items[i] = other._items[i];
+      items_[i] = other.items_[i];
     }
 
     return *this;
@@ -97,7 +97,7 @@ public:
    */
   constexpr Array& operator = (Array&& other) noexcept {
     for(std::size_t i = 0; i < nItems; ++i) {
-      _items[i] = std::move(other._items[i]);
+      items_[i] = std::move(other.items_[i]);
     }
 
     return *this;
@@ -114,7 +114,7 @@ public:
   constexpr Array(
     const std::array<T, nItems>& other,
     std::index_sequence<Inds...> /* inds */
-  ) :_items {other[Inds]...} {}
+  ) :items_ {other[Inds]...} {}
 
   /*! @brief Construct from std::array using same trick as copy ctor
    *
@@ -130,7 +130,7 @@ public:
    */
   template<typename ...Args>
   constexpr Array(Args... args)
-    : _items {static_cast<T>(args)...}
+    : items_ {static_cast<T>(args)...}
   {}
 //!@}
 
@@ -144,22 +144,22 @@ public:
    * @complexity{@math{\Theta(1)}}
    */
   constexpr T& operator[] (const std::size_t index) noexcept {
-    return _items[index];
+    return items_[index];
   }
 
   //! @see operator[](const std::size_t)
   constexpr T& at(const std::size_t index) noexcept {
-    return _items[index];
+    return items_[index];
   }
 
   //! @overload
   constexpr const T& operator[] (const std::size_t index) const noexcept {
-    return _items[index];
+    return items_[index];
   }
 
   //! @overload
   constexpr const T& at(const std::size_t index) const noexcept {
-    return _items[index];
+    return items_[index];
   }
 
   /*! @brief Const accessor for the front element
@@ -167,7 +167,7 @@ public:
    * @complexity{@math{\Theta(1)}}
    */
   constexpr const T& front() const noexcept {
-    return _items[0];
+    return items_[0];
   }
 
   /*! @brief Const Accessor for the back element
@@ -175,7 +175,7 @@ public:
    * @complexity{@math{\Theta(1)}}
    */
   constexpr const T& back() const noexcept {
-    return _items[nItems - 1];
+    return items_[nItems - 1];
   }
 //!@}
 
@@ -189,7 +189,7 @@ public:
    */
   constexpr bool operator == (const Array& other) const noexcept {
     for(std::size_t i = 0; i < nItems; ++i) {
-      if(_items[i] != other._items[i]) {
+      if(items_[i] != other.items_[i]) {
         return false;
       }
     }
@@ -200,7 +200,7 @@ public:
   //! Inverts equality comparison
   constexpr bool operator != (const Array& other) const noexcept {
     for(std::size_t i = 0; i < nItems; ++i) {
-      if(_items[i] != other._items[i]) {
+      if(items_[i] != other.items_[i]) {
         return true;
       }
     }
@@ -214,11 +214,11 @@ public:
    */
   constexpr bool operator < (const Array& other) const noexcept {
     for(std::size_t i = 0; i < nItems; ++i) {
-      if(_items[i] < other._items[i]) {
+      if(items_[i] < other.items_[i]) {
         return true;
       }
 
-      if(_items[i] > other._items[i]) {
+      if(items_[i] > other.items_[i]) {
         return false;
       }
     }
@@ -246,19 +246,19 @@ public:
       Array& instance,
       std::size_t initPosition
     ) noexcept
-      : _baseRef(instance),
-        _position(initPosition)
+      : baseRef_(instance),
+        position_(initPosition)
     {}
 
     constexpr iterator() = delete;
     constexpr iterator(const iterator& other) noexcept
-      : _baseRef(other._baseRef),
-        _position(other._position)
+      : baseRef_(other.baseRef_),
+        position_(other.position_)
     {}
     constexpr iterator(iterator&& other) noexcept = default;
     constexpr iterator& operator = (const iterator& other) noexcept {
-      _baseRef = other._baseRef;
-      _position = other._position;
+      baseRef_ = other.baseRef_;
+      position_ = other.position_;
 
       return *this;
     }
@@ -266,7 +266,7 @@ public:
     ~iterator() = default;
 
     constexpr iterator& operator ++ () noexcept {
-      _position += 1;
+      position_ += 1;
       return *this;
     }
 
@@ -277,7 +277,7 @@ public:
     }
 
     constexpr iterator& operator --() noexcept {
-      _position -= 1;
+      position_ -= 1;
       return *this;
     }
 
@@ -300,26 +300,26 @@ public:
     }
 
     constexpr iterator& operator += (const int increment) noexcept {
-      _position += increment;
+      position_ += increment;
       return *this;
     }
 
     constexpr iterator& operator -= (const int increment) noexcept {
-      _position -= increment;
+      position_ -= increment;
       return *this;
     }
 
     PURITY_WEAK constexpr int operator - (const iterator& other) const noexcept {
       return (
-        static_cast<int>(_position)
-        - static_cast<int>(other._position)
+        static_cast<int>(position_)
+        - static_cast<int>(other.position_)
       );
     }
 
     PURITY_WEAK constexpr bool operator == (const iterator& other) const noexcept {
       return (
-        &_baseRef == &other._baseRef
-        && _position == other._position
+        &baseRef_ == &other.baseRef_
+        && position_ == other.position_
       );
     }
 
@@ -330,12 +330,12 @@ public:
     }
 
     PURITY_WEAK constexpr reference operator * () const noexcept {
-      return _baseRef[_position];
+      return baseRef_[position_];
     }
 
   private:
-    Array& _baseRef;
-    std::size_t _position;
+    Array& baseRef_;
+    std::size_t position_;
   };
 
   PURITY_WEAK constexpr iterator begin() noexcept {
@@ -361,22 +361,22 @@ public:
       const Array& instance,
       std::size_t initPosition
     ) noexcept
-      : _baseRef(instance),
-        _position(initPosition)
+      : baseRef_(instance),
+        position_(initPosition)
     {}
 
     constexpr const_iterator() = delete;
     constexpr const_iterator(const const_iterator& other) noexcept
-      : _baseRef(other._baseRef),
-        _position(other._position)
+      : baseRef_(other.baseRef_),
+        position_(other.position_)
     {}
     constexpr const_iterator(const_iterator&& other) noexcept = default;
     constexpr const_iterator& operator = (const const_iterator& other) {
-      if(_baseRef != other._baseRef) {
+      if(baseRef_ != other.baseRef_) {
         throw "Trying to assign constIterator to other base Array!";
       }
 
-      _position = other._position;
+      position_ = other.position_;
 
       return *this;
     }
@@ -384,7 +384,7 @@ public:
     ~const_iterator() = default;
 
     constexpr const_iterator& operator ++ () noexcept {
-      _position += 1;
+      position_ += 1;
       return *this;
     }
 
@@ -395,7 +395,7 @@ public:
     }
 
     constexpr const_iterator& operator --() noexcept {
-      _position -= 1;
+      position_ -= 1;
       return *this;
     }
 
@@ -418,26 +418,26 @@ public:
     }
 
     constexpr const_iterator& operator += (const int increment) noexcept {
-      _position += increment;
+      position_ += increment;
       return *this;
     }
 
     constexpr const_iterator& operator -= (const int increment) noexcept {
-      _position -= increment;
+      position_ -= increment;
       return *this;
     }
 
     constexpr int operator - (const const_iterator& other) const noexcept {
       return (
-        static_cast<int>(_position)
-        - static_cast<int>(other._position)
+        static_cast<int>(position_)
+        - static_cast<int>(other.position_)
       );
     }
 
     constexpr bool operator == (const const_iterator& other) const noexcept {
       return (
-        &_baseRef == &other._baseRef
-        && _position == other._position
+        &baseRef_ == &other.baseRef_
+        && position_ == other.position_
       );
     }
 
@@ -448,12 +448,12 @@ public:
     }
 
     constexpr reference operator * () const noexcept {
-      return _baseRef[_position];
+      return baseRef_[position_];
     }
 
   private:
-    const Array& _baseRef;
-    std::size_t _position;
+    const Array& baseRef_;
+    std::size_t position_;
   };
 
   constexpr const_iterator begin() const noexcept {
@@ -466,21 +466,21 @@ public:
 
   //! Implicit conversion operator to a std::array
   constexpr operator std::array<T, nItems> () const {
-    return _makeArray(std::make_index_sequence<nItems>{});
+    return makeArray_(std::make_index_sequence<nItems>{});
   }
 
   //! Explicit conversion to a std::array
   constexpr std::array<T, nItems> getArray() const {
-    return _makeArray(std::make_index_sequence<nItems>{});
+    return makeArray_(std::make_index_sequence<nItems>{});
   }
 
 private:
-  T _items[nItems];
+  T items_[nItems];
 
   template<size_t ... Inds>
-  std::array<T, nItems> _makeArray(std::index_sequence<Inds...> /* inds */) {
+  std::array<T, nItems> makeArray_(std::index_sequence<Inds...> /* inds */) {
     return {{
-      _items[Inds]...
+      items_[Inds]...
     }};
   }
 };

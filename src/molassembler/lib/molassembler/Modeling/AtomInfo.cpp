@@ -23,13 +23,13 @@ ElementInfo::ElementInfo(
   const unsigned dValenceElectrons,
   const unsigned fValenceElectrons
 ) :
-  _valenceElectrons {
+  valenceElectrons_ {
     sValenceElectrons,
     pValenceElectrons,
     dValenceElectrons,
     fValenceElectrons
   },
-  _vdwRadius (passVdwRadius)
+  vdwRadius_ (passVdwRadius)
 {}
 
 unsigned ElementInfo::maxOccupancy(const char shell) {
@@ -50,13 +50,13 @@ unsigned ElementInfo::maxOccupancy(const char shell) {
 unsigned ElementInfo::valenceElectrons(const char shell) const {
   switch(shell) {
     case 's':
-      return _valenceElectrons[0];
+      return valenceElectrons_[0];
     case 'p':
-      return _valenceElectrons[1];
+      return valenceElectrons_[1];
     case 'd':
-      return _valenceElectrons[2];
+      return valenceElectrons_[2];
     case 'f':
-      return _valenceElectrons[3];
+      return valenceElectrons_[3];
     default:
       return 0;
   }
@@ -91,13 +91,13 @@ bool ElementInfo::shellsFullOrEmpty(const std::vector<char>& shells) const {
 unsigned ElementInfo::valenceElectrons() const {
   unsigned sum = 0;
   for(unsigned i = 0; i < 4; i++) {
-    sum += _valenceElectrons[i];
+    sum += valenceElectrons_[i];
   }
   return sum;
 }
 
 double ElementInfo::vdwRadius() const {
-  return _vdwRadius;
+  return vdwRadius_;
 }
 
 /* From the original UFF paper

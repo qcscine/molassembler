@@ -45,7 +45,7 @@ Utils::AtomCollection Molecule::Impl::applyCanonicalizationMap(
   return permuted;
 }
 
-void Molecule::Impl::_tryAddAtomStereopermutator(
+void Molecule::Impl::tryAddAtomStereopermutator_(
   AtomIndex candidateIndex,
   StereopermutatorList& stereopermutators
 ) const {
@@ -68,7 +68,7 @@ void Molecule::Impl::_tryAddAtomStereopermutator(
 
   // Construct a Stereopermutator here
   auto newStereopermutator = AtomStereopermutator {
-    _adjacencies,
+    adjacencies_,
     shape,
     candidateIndex,
     std::move(localRanking)
@@ -82,7 +82,7 @@ void Molecule::Impl::_tryAddAtomStereopermutator(
   stereopermutators.add(std::move(newStereopermutator));
 }
 
-void Molecule::Impl::_tryAddBondStereopermutator(
+void Molecule::Impl::tryAddBondStereopermutator_(
   const BondIndex& bond,
   StereopermutatorList& stereopermutators
 ) const {
@@ -109,7 +109,7 @@ void Molecule::Impl::_tryAddBondStereopermutator(
 
   // Construct a Stereopermutator here
   BondStereopermutator newStereopermutator {
-    _adjacencies.inner(),
+    adjacencies_.inner(),
     stereopermutators,
     bond
   };
@@ -124,14 +124,14 @@ void Molecule::Impl::_tryAddBondStereopermutator(
   }
 }
 
-StereopermutatorList Molecule::Impl::_detectStereopermutators() const {
+StereopermutatorList Molecule::Impl::detectStereopermutators_() const {
   StereopermutatorList stereopermutatorList;
 
-#ifdef _OPENMP
+#ifdef OPENMP_
   /* Ensure inner's properties are populated to avoid data races in its mutable
    * members
    */
-  _adjacencies.inner().populateProperties();
+  adjacencies_.inner().populateProperties();
 #endif
 
   // Find AtomStereopermutators
@@ -140,20 +140,20 @@ StereopermutatorList Molecule::Impl::_detectStereopermutators() const {
     candidateIndex < graph().N();
     ++candidateIndex
   ) {
-    _tryAddAtomStereopermutator(candidateIndex, stereopermutatorList);
+    tryAddAtomStereopermutator_(candidateIndex, stereopermutatorList);
   }
 
   // Find BondStereopermutators
   for(BondIndex bond : graph().bonds()) {
-    if(_isGraphBasedBondStereopermutatorCandidate(graph().bondType(bond))) {
-      _tryAddBondStereopermutator(bond, stereopermutatorList);
+    if(isGraphBasedBondStereopermutatorCandidate_(graph().bondType(bond))) {
+      tryAddBondStereopermutator_(bond, stereopermutatorList);
     }
   }
 
   return stereopermutatorList;
 }
 
-void Molecule::Impl::_ensureModelInvariants() const {
+void Molecule::Impl::ensureModelInvariants_() const {
   if(graph().inner().connectedComponents() > 1) {
     throw std::logic_error("Molecules must be a single connected component. The supplied graph has multiple");
   }
@@ -163,11 +163,11 @@ void Molecule::Impl::_ensureModelInvariants() const {
   }
 }
 
-bool Molecule::Impl::_isValidIndex(const AtomIndex index) const {
+bool Molecule::Impl::isValidIndex_(const AtomIndex index) const {
   return index < graph().N();
 }
 
-bool Molecule::Impl::_isGraphBasedBondStereopermutatorCandidate(
+bool Molecule::Impl::isGraphBasedBondStereopermutatorCandidate_(
   BondType bondType
 ) const {
   return (
@@ -179,12 +179,12 @@ bool Molecule::Impl::_isGraphBasedBondStereopermutatorCandidate(
   );
 }
 
-void Molecule::Impl::_propagateGraphChange() {
+void Molecule::Impl::propagateGraphChange_() {
   /* Two cases: If the StereopermutatorList is empty, we can just use detect to
    * find any new stereopermutators in the Molecule.
    */
-  if(_stereopermutators.empty()) {
-    _stereopermutators = _detectStereopermutators();
+  if(stereopermutators_.empty()) {
+    stereopermutators_ = detectStereopermutators_();
     return;
   }
 
@@ -195,23 +195,23 @@ void Molecule::Impl::_propagateGraphChange() {
    * assignments and assign the stereopermutator to that.
    */
 
-  graph_algorithms::updateEtaBonds(_adjacencies.inner());
+  graph_algorithms::updateEtaBonds(adjacencies_.inner());
 
   // All graph access after this point must be const for thread safety
-  const PrivateGraph& inner = _adjacencies.inner();
+  const PrivateGraph& inner = adjacencies_.inner();
 
   /*! @todo
    * Need state propagation for BondStereopermutators, anything else is madness
    */
 
   for(const PrivateGraph::Vertex vertex : inner.vertices()) {
-    auto stereopermutatorOption = _stereopermutators.option(vertex);
+    auto stereopermutatorOption = stereopermutators_.option(vertex);
     RankingInformation localRanking = rankPriority(vertex);
 
     if(stereopermutatorOption) {
       // The atom has become terminal
       if(localRanking.sites.size() <= 1) {
-        _stereopermutators.remove(vertex);
+        stereopermutators_.remove(vertex);
         continue;
       }
 
@@ -222,8 +222,8 @@ void Molecule::Impl::_propagateGraphChange() {
 
       // Are there adjacent bond stereopermutators?
       std::vector<BondIndex> adjacentBondStereopermutators;
-      for(BondIndex bond : _adjacencies.bonds(vertex)) {
-        if(_stereopermutators.option(bond)) {
+      for(BondIndex bond : adjacencies_.bonds(vertex)) {
+        if(stereopermutators_.option(bond)) {
           adjacentBondStereopermutators.push_back(std::move(bond));
         }
       }
@@ -236,7 +236,7 @@ void Molecule::Impl::_propagateGraphChange() {
 
       // Propagate the state
       auto oldAtomStereopermutatorStateOption = stereopermutatorOption -> propagate(
-        _adjacencies,
+        adjacencies_,
         std::move(localRanking),
         newShapeOption
       );
@@ -259,7 +259,7 @@ void Molecule::Impl::_propagateGraphChange() {
        */
       if(!stereopermutatorOption->assigned()) {
         for(const BondIndex& bond : adjacentBondStereopermutators) {
-          _stereopermutators.remove(bond);
+          stereopermutators_.remove(bond);
         }
 
         continue;
@@ -275,24 +275,24 @@ void Molecule::Impl::_propagateGraphChange() {
        */
       if(oldAtomStereopermutatorStateOption) {
         for(const BondIndex& bond : adjacentBondStereopermutators) {
-          _stereopermutators.option(bond)->propagateGraphChange(
+          stereopermutators_.option(bond)->propagateGraphChange(
             *oldAtomStereopermutatorStateOption,
             *stereopermutatorOption,
             inner,
-            _stereopermutators
+            stereopermutators_
           );
         }
       }
     } else {
       // There is no atom stereopermutator on this vertex, so try to add one
-      _tryAddAtomStereopermutator(vertex, _stereopermutators);
+      tryAddAtomStereopermutator_(vertex, stereopermutators_);
     }
   }
 
   // Look for new bond stereopermutators
   for(BondIndex bond : graph().bonds()) {
-    if(_isGraphBasedBondStereopermutatorCandidate(graph().bondType(bond))) {
-      _tryAddBondStereopermutator(bond, _stereopermutators);
+    if(isGraphBasedBondStereopermutatorCandidate_(graph().bondType(bond))) {
+      tryAddBondStereopermutator_(bond, stereopermutators_);
     }
   }
 }
@@ -303,7 +303,7 @@ Molecule::Impl::Impl() noexcept
   : Impl(Utils::ElementType::H, Utils::ElementType::H, BondType::Single) {}
 
 Molecule::Impl::Impl(const Utils::ElementType element) noexcept {
-  PrivateGraph& inner = _adjacencies.inner();
+  PrivateGraph& inner = adjacencies_.inner();
   inner.addVertex(element);
 }
 
@@ -312,20 +312,20 @@ Molecule::Impl::Impl(
   const Utils::ElementType b,
   const BondType bondType
 ) noexcept {
-  // update _adjacencies
-  PrivateGraph& inner = _adjacencies.inner();
+  // update adjacencies_
+  PrivateGraph& inner = adjacencies_.inner();
   PrivateGraph::Vertex i = inner.addVertex(a);
   PrivateGraph::Vertex j = inner.addVertex(b);
   inner.addEdge(i, j, bondType);
 }
 
 Molecule::Impl::Impl(Graph graph)
-  : _adjacencies(std::move(graph))
+  : adjacencies_(std::move(graph))
 {
   // Initialization
-  graph_algorithms::updateEtaBonds(_adjacencies.inner());
-  _stereopermutators = _detectStereopermutators();
-  _ensureModelInvariants();
+  graph_algorithms::updateEtaBonds(adjacencies_.inner());
+  stereopermutators_ = detectStereopermutators_();
+  ensureModelInvariants_();
 }
 
 Molecule::Impl::Impl(
@@ -334,26 +334,26 @@ Molecule::Impl::Impl(
   const boost::optional<
     std::vector<BondIndex>
   >& bondStereopermutatorCandidatesOptional
-) : _adjacencies(std::move(graph))
+) : adjacencies_(std::move(graph))
 {
-  graph_algorithms::updateEtaBonds(_adjacencies.inner());
-  _stereopermutators = inferStereopermutatorsFromPositions(
+  graph_algorithms::updateEtaBonds(adjacencies_.inner());
+  stereopermutators_ = inferStereopermutatorsFromPositions(
     positions,
     bondStereopermutatorCandidatesOptional
   );
-  _ensureModelInvariants();
+  ensureModelInvariants_();
 }
 
 Molecule::Impl::Impl(
   Graph graph,
   StereopermutatorList stereopermutators,
   boost::optional<AtomEnvironmentComponents> canonicalComponentsOption
-) : _adjacencies(std::move(graph)),
-    _stereopermutators(std::move(stereopermutators)),
-    _canonicalComponentsOption(std::move(canonicalComponentsOption))
+) : adjacencies_(std::move(graph)),
+    stereopermutators_(std::move(stereopermutators)),
+    canonicalComponentsOption_(std::move(canonicalComponentsOption))
 {
   // Initialization
-  _ensureModelInvariants();
+  ensureModelInvariants_();
 }
 
 /* Modifiers */
@@ -362,11 +362,11 @@ AtomIndex Molecule::Impl::addAtom(
   const AtomIndex adjacentTo,
   const BondType bondType
 ) {
-  if(!_isValidIndex(adjacentTo)) {
+  if(!isValidIndex_(adjacentTo)) {
     throw std::out_of_range("Molecule::addAtom: Supplied atom index is invalid!");
   }
 
-  const AtomIndex index = _adjacencies.inner().addVertex(elementType);
+  const AtomIndex index = adjacencies_.inner().addVertex(elementType);
   addBond(index, adjacentTo, bondType);
   /* addBond handles the stereopermutator update on adjacentTo and also
    * performs a full-molecule rerank propagation.
@@ -380,7 +380,7 @@ BondIndex Molecule::Impl::addBond(
   const AtomIndex b,
   const BondType bondType
 ) {
-  if(!_isValidIndex(a) || !_isValidIndex(b)) {
+  if(!isValidIndex_(a) || !isValidIndex_(b)) {
     throw std::out_of_range("Molecule::addBond: A supplied index is invalid!");
   }
 
@@ -388,7 +388,7 @@ BondIndex Molecule::Impl::addBond(
     throw std::logic_error("Molecule::addBond: Cannot add a bond between identical indices!");
   }
 
-  PrivateGraph& inner = _adjacencies.inner();
+  PrivateGraph& inner = adjacencies_.inner();
 
   inner.addEdge(a, b, bondType);
 
@@ -396,35 +396,35 @@ BondIndex Molecule::Impl::addBond(
     /*! @todo Remove any BondStereopermutators on adjacent edges of toIndex (no
      * substituent addition/removal propagation possible yet)
      */
-    for(const BondIndex& adjacentEdge : _adjacencies.bonds(toIndex)) {
-      _stereopermutators.try_remove(adjacentEdge);
+    for(const BondIndex& adjacentEdge : adjacencies_.bonds(toIndex)) {
+      stereopermutators_.try_remove(adjacentEdge);
     }
   };
 
   notifySubstituentAddition(a);
   notifySubstituentAddition(b);
 
-  _propagateGraphChange();
-  _canonicalComponentsOption = boost::none;
+  propagateGraphChange_();
+  canonicalComponentsOption_ = boost::none;
 
   return BondIndex {a, b};
 }
 
 void Molecule::Impl::applyPermutation(const std::vector<AtomIndex>& permutation) {
-  _adjacencies.inner().applyPermutation(permutation);
-  _stereopermutators.applyPermutation(permutation);
-  _canonicalComponentsOption = boost::none;
+  adjacencies_.inner().applyPermutation(permutation);
+  stereopermutators_.applyPermutation(permutation);
+  canonicalComponentsOption_ = boost::none;
 }
 
 void Molecule::Impl::assignStereopermutator(
   const AtomIndex a,
   const boost::optional<unsigned>& assignmentOption
 ) {
-  if(!_isValidIndex(a)) {
+  if(!isValidIndex_(a)) {
     throw std::out_of_range("Molecule::assignStereopermutator: Supplied index is invalid!");
   }
 
-  auto stereopermutatorOption = _stereopermutators.option(a);
+  auto stereopermutatorOption = stereopermutators_.option(a);
 
   if(!stereopermutatorOption) {
     throw std::out_of_range("assignStereopermutator: No stereopermutator at this index!");
@@ -442,8 +442,8 @@ void Molecule::Impl::assignStereopermutator(
     stereopermutatorOption -> assign(assignmentOption);
 
     // A reassignment can change ranking! See the RankingTree tests
-    _propagateGraphChange();
-    _canonicalComponentsOption = boost::none;
+    propagateGraphChange_();
+    canonicalComponentsOption_ = boost::none;
   }
 }
 
@@ -451,11 +451,11 @@ void Molecule::Impl::assignStereopermutator(
   const BondIndex& edge,
   const boost::optional<unsigned>& assignmentOption
 ) {
-  if(!_isValidIndex(edge.first) || !_isValidIndex(edge.second)) {
+  if(!isValidIndex_(edge.first) || !isValidIndex_(edge.second)) {
     throw std::out_of_range("Molecule::assignStereopermutator: Supplied bond atom indices is invalid!");
   }
 
-  auto stereopermutatorOption = _stereopermutators.option(edge);
+  auto stereopermutatorOption = stereopermutators_.option(edge);
 
   if(!stereopermutatorOption) {
     throw std::out_of_range("assignStereopermutator: No stereopermutator at this bond!");
@@ -473,17 +473,17 @@ void Molecule::Impl::assignStereopermutator(
     stereopermutatorOption -> assign(assignmentOption);
 
     // A reassignment can change ranking! See the RankingTree tests
-    _propagateGraphChange();
-    _canonicalComponentsOption = boost::none;
+    propagateGraphChange_();
+    canonicalComponentsOption_ = boost::none;
   }
 }
 
 void Molecule::Impl::assignStereopermutatorRandomly(const AtomIndex a, random::Engine& engine) {
-  if(!_isValidIndex(a)) {
+  if(!isValidIndex_(a)) {
     throw std::out_of_range("Molecule::assignStereopermutatorRandomly: Supplied index is invalid!");
   }
 
-  auto stereopermutatorOption = _stereopermutators.option(a);
+  auto stereopermutatorOption = stereopermutators_.option(a);
 
   if(!stereopermutatorOption) {
     throw std::out_of_range("assignStereopermutatorRandomly: No stereopermutator at this index!");
@@ -492,12 +492,12 @@ void Molecule::Impl::assignStereopermutatorRandomly(const AtomIndex a, random::E
   stereopermutatorOption->assignRandom(engine);
 
   // A reassignment can change ranking! See the RankingTree tests
-  _propagateGraphChange();
-  _canonicalComponentsOption = boost::none;
+  propagateGraphChange_();
+  canonicalComponentsOption_ = boost::none;
 }
 
 void Molecule::Impl::assignStereopermutatorRandomly(const BondIndex& e, random::Engine& engine) {
-  auto stereopermutatorOption = _stereopermutators.option(e);
+  auto stereopermutatorOption = stereopermutators_.option(e);
 
   if(!stereopermutatorOption) {
     throw std::out_of_range("assignStereopermutatorRandomly: No stereopermutator at this edge!");
@@ -506,8 +506,8 @@ void Molecule::Impl::assignStereopermutatorRandomly(const BondIndex& e, random::
   stereopermutatorOption->assignRandom(engine);
 
   // A reassignment can change ranking! See the RankingTree tests
-  _propagateGraphChange();
-  _canonicalComponentsOption = boost::none;
+  propagateGraphChange_();
+  canonicalComponentsOption_ = boost::none;
 }
 
 std::vector<AtomIndex> Molecule::Impl::canonicalize(
@@ -545,13 +545,13 @@ std::vector<AtomIndex> Molecule::Impl::canonicalize(
   applyPermutation(inverse.permutation);
 
   // Set the underlying canonical components
-  _canonicalComponentsOption = componentBitmask;
+  canonicalComponentsOption_ = componentBitmask;
 
   return inverse.permutation;
 }
 
 void Molecule::Impl::removeAtom(const AtomIndex a) {
-  if(!_isValidIndex(a)) {
+  if(!isValidIndex_(a)) {
     throw std::out_of_range("Molecule::removeAtom: Supplied index is invalid!");
   }
 
@@ -559,7 +559,7 @@ void Molecule::Impl::removeAtom(const AtomIndex a) {
     throw std::logic_error("Removing this atom disconnects the graph!");
   }
 
-  PrivateGraph& inner = _adjacencies.inner();
+  PrivateGraph& inner = adjacencies_.inner();
 
   std::vector<AtomIndex> previouslyAdjacentVertices;
   auto adjacencyIterators = inner.adjacents(a);
@@ -573,11 +573,11 @@ void Molecule::Impl::removeAtom(const AtomIndex a) {
   inner.clearVertex(a);
 
   // Any stereopermutator on this index must be dropped
-  _stereopermutators.try_remove(a);
+  stereopermutators_.try_remove(a);
 
   // Any adjacent bond stereopermutators have to be dropped
-  for(const BondIndex& adjacentEdge : _adjacencies.bonds(a)) {
-    _stereopermutators.try_remove(adjacentEdge);
+  for(const BondIndex& adjacentEdge : adjacencies_.bonds(a)) {
+    stereopermutators_.try_remove(adjacentEdge);
   }
 
   // Remove the vertex itself
@@ -588,7 +588,7 @@ void Molecule::Impl::removeAtom(const AtomIndex a) {
    * all vertex descriptors across all permutators to ensure that chiral state
    * is modeled correctly.
    */
-  _stereopermutators.propagateVertexRemoval(a);
+  stereopermutators_.propagateVertexRemoval(a);
 
   /* call removeSubstituent on all adjacent stereopermutators, with
    * removalPlaceholder as the 'which' parameter, which is what
@@ -596,12 +596,12 @@ void Molecule::Impl::removeAtom(const AtomIndex a) {
    * stereopermutators' internal state
    */
   for(const auto& indexToUpdate : previouslyAdjacentVertices) {
-    if(auto stereopermutatorOption = _stereopermutators.option(indexToUpdate)) {
+    if(auto stereopermutatorOption = stereopermutators_.option(indexToUpdate)) {
       auto localRanking = rankPriority(indexToUpdate);
 
       // If index becomes terminal, drop the stereopermutator
       if(localRanking.sites.size() <= 1) {
-        _stereopermutators.remove(indexToUpdate);
+        stereopermutators_.remove(indexToUpdate);
         continue;
       }
 
@@ -611,18 +611,18 @@ void Molecule::Impl::removeAtom(const AtomIndex a) {
       }
 
       stereopermutatorOption->propagate(
-        _adjacencies,
+        adjacencies_,
         std::move(localRanking),
         newShapeOption
       );
     }
 
     //! @todo BondStereopermutator update
-    /*if(_stereopermutators.involving(indexToUpdate)) {
-      if(_stereopermutators.at(indexToUpdate) -> type() == Stereopermutators::Type::AtomStereopermutator) {
+    /*if(stereopermutators_.involving(indexToUpdate)) {
+      if(stereopermutators_.at(indexToUpdate) -> type() == Stereopermutators::Type::AtomStereopermutator) {
       } else {
         std::dynamic_pointer_cast<Stereopermutators::BondStereopermutator>(
-          _stereopermutators.at(indexToUpdate)
+          stereopermutators_.at(indexToUpdate)
         ) -> removeSubstituent(
           indexToUpdate,
           Stereopermutators::Stereopermutator::removalPlaceholder
@@ -631,19 +631,19 @@ void Molecule::Impl::removeAtom(const AtomIndex a) {
     }*/
   }
 
-  _propagateGraphChange();
-  _canonicalComponentsOption = boost::none;
+  propagateGraphChange_();
+  canonicalComponentsOption_ = boost::none;
 }
 
 void Molecule::Impl::removeBond(
   const AtomIndex a,
   const AtomIndex b
 ) {
-  if(!_isValidIndex(a) || !_isValidIndex(b)) {
+  if(!isValidIndex_(a) || !isValidIndex_(b)) {
     throw std::out_of_range("Molecule::removeBond: Supplied index is invalid!");
   }
 
-  PrivateGraph& inner = _adjacencies.inner();
+  PrivateGraph& inner = adjacencies_.inner();
 
   auto edgeOption = inner.edgeOption(a, b);
 
@@ -659,21 +659,21 @@ void Molecule::Impl::removeBond(
 
 
   /* If there is an BondStereopermutator on this edge, we have to drop it explicitly,
-   * since _propagateGraphChange cannot iterate over a now-removed edge.
+   * since propagateGraphChange_ cannot iterate over a now-removed edge.
    */
-  _stereopermutators.try_remove(BondIndex {a, b});
+  stereopermutators_.try_remove(BondIndex {a, b});
 
   // Remove the edge
   inner.removeEdge(edgeToRemove);
 
   // Notify all immediately adjacent stereopermutators of the removal
   auto notifyRemoval = [&](const AtomIndex indexToUpdate) {
-    if(auto stereopermutatorOption = _stereopermutators.option(indexToUpdate)) {
+    if(auto stereopermutatorOption = stereopermutators_.option(indexToUpdate)) {
       auto localRanking = rankPriority(indexToUpdate);
 
       // In case the central atom becomes terminal, just drop the stereopermutator
       if(localRanking.sites.size() <= 1) {
-        _stereopermutators.remove(indexToUpdate);
+        stereopermutators_.remove(indexToUpdate);
         return;
       }
 
@@ -683,18 +683,18 @@ void Molecule::Impl::removeBond(
       }
 
       stereopermutatorOption->propagate(
-        _adjacencies,
+        adjacencies_,
         std::move(localRanking),
         newShapeOption
       );
     }
 
     //! @todo propagation
-    /*if(_stereopermutators.involving(indexToUpdate)) {
-      if(_stereopermutators.at(indexToUpdate) -> type() == Stereopermutators::Type::AtomStereopermutator) {
+    /*if(stereopermutators_.involving(indexToUpdate)) {
+      if(stereopermutators_.at(indexToUpdate) -> type() == Stereopermutators::Type::AtomStereopermutator) {
       } else {
         std::dynamic_pointer_cast<Stereopermutators::BondStereopermutator>(
-          _stereopermutators.at(indexToUpdate)
+          stereopermutators_.at(indexToUpdate)
         ) -> removeSubstituent(
           indexToUpdate,
           removedIndex
@@ -707,11 +707,11 @@ void Molecule::Impl::removeBond(
   notifyRemoval(b);
 
   /* All other cases, where there may be BondStereopermutators or AtomStereopermutators
-   * on a or b, should be handled correctly by _propagateGraphChange.
+   * on a or b, should be handled correctly by propagateGraphChange_.
    */
 
-  _propagateGraphChange();
-  _canonicalComponentsOption = boost::none;
+  propagateGraphChange_();
+  canonicalComponentsOption_ = boost::none;
 }
 
 bool Molecule::Impl::setBondType(
@@ -719,7 +719,7 @@ bool Molecule::Impl::setBondType(
   const AtomIndex b,
   const BondType bondType
 ) {
-  if(!_isValidIndex(a) || !_isValidIndex(b)) {
+  if(!isValidIndex_(a) || !isValidIndex_(b)) {
     throw std::out_of_range("Molecule::setBondType: A supplied index is invalid!");
   }
 
@@ -729,7 +729,7 @@ bool Molecule::Impl::setBondType(
     );
   }
 
-  PrivateGraph& inner = _adjacencies.inner();
+  PrivateGraph& inner = adjacencies_.inner();
 
   auto edgeOption = inner.edgeOption(a, b);
   if(!edgeOption) {
@@ -738,8 +738,8 @@ bool Molecule::Impl::setBondType(
   }
 
   inner.bondType(edgeOption.value()) = bondType;
-  _propagateGraphChange();
-  _canonicalComponentsOption = boost::none;
+  propagateGraphChange_();
+  canonicalComponentsOption_ = boost::none;
   return true;
 }
 
@@ -747,24 +747,24 @@ void Molecule::Impl::setElementType(
   const AtomIndex a,
   const Utils::ElementType elementType
 ) {
-  if(!_isValidIndex(a)) {
+  if(!isValidIndex_(a)) {
     throw std::out_of_range("Molecule::setElementType: This index is invalid!");
   }
 
-  _adjacencies.inner().elementType(a) = elementType;
-  _propagateGraphChange();
-  _canonicalComponentsOption = boost::none;
+  adjacencies_.inner().elementType(a) = elementType;
+  propagateGraphChange_();
+  canonicalComponentsOption_ = boost::none;
 }
 
 void Molecule::Impl::setShapeAtAtom(
   const AtomIndex a,
   const shapes::Shape shape
 ) {
-  if(!_isValidIndex(a)) {
+  if(!isValidIndex_(a)) {
     throw std::out_of_range("Molecule::setShapeAtAtom: Supplied atom index is invalid");
   }
 
-  auto stereopermutatorOption = _stereopermutators.option(a);
+  auto stereopermutatorOption = stereopermutators_.option(a);
 
   // If there is no stereopermutator at this position yet, we have to create it
   if(!stereopermutatorOption) {
@@ -779,7 +779,7 @@ void Molecule::Impl::setShapeAtAtom(
 
     // Add the stereopermutator irrespective of how many assignments it has
     auto newStereopermutator = AtomStereopermutator {
-      _adjacencies,
+      adjacencies_,
       shape,
       a,
       std::move(localRanking)
@@ -790,10 +790,10 @@ void Molecule::Impl::setShapeAtAtom(
       newStereopermutator.assign(0u);
     }
 
-    _stereopermutators.add(std::move(newStereopermutator));
+    stereopermutators_.add(std::move(newStereopermutator));
 
-    _propagateGraphChange();
-    _canonicalComponentsOption = boost::none;
+    propagateGraphChange_();
+    canonicalComponentsOption_ = boost::none;
     return;
   }
 
@@ -812,40 +812,40 @@ void Molecule::Impl::setShapeAtAtom(
     return;
   }
 
-  stereopermutatorOption->setShape(shape, _adjacencies);
+  stereopermutatorOption->setShape(shape, adjacencies_);
   if(stereopermutatorOption->numAssignments() == 1) {
     stereopermutatorOption->assign(0);
   }
 
   // Remove any adjacent bond stereopermutators since there is no propagation
-  for(BondIndex bond : _adjacencies.bonds(a)) {
-    _stereopermutators.try_remove(bond);
+  for(BondIndex bond : adjacencies_.bonds(a)) {
+    stereopermutators_.try_remove(bond);
   }
 
-  _propagateGraphChange();
-  _canonicalComponentsOption = boost::none;
+  propagateGraphChange_();
+  canonicalComponentsOption_ = boost::none;
 }
 
 /* Information */
 boost::optional<AtomEnvironmentComponents> Molecule::Impl::canonicalComponents() const {
-  return _canonicalComponentsOption;
+  return canonicalComponentsOption_;
 }
 
 std::string Molecule::Impl::str() const {
   std::stringstream info;
 
-  if(!_stereopermutators.empty()) {
+  if(!stereopermutators_.empty()) {
     info << "Stereopermutator information:\n";
 
     for(const auto& stereopermutator :
-      _stereopermutators.atomStereopermutators()
+      stereopermutators_.atomStereopermutators()
     ) {
       info << stereopermutator.info() << "\n";
     }
 
     for(
       const auto& stereopermutator :
-      _stereopermutators.bondStereopermutators()
+      stereopermutators_.bondStereopermutators()
     ) {
       info << stereopermutator.info() << "\n";
     }
@@ -858,7 +858,7 @@ boost::optional<shapes::Shape> Molecule::Impl::inferShape(
   const AtomIndex index,
   const RankingInformation& ranking
 ) const {
-  if(!_isValidIndex(index)) {
+  if(!isValidIndex_(index)) {
     throw std::out_of_range("Molecule::inferShape: Supplied index is invalid!");
   }
 
@@ -869,20 +869,20 @@ boost::optional<shapes::Shape> Molecule::Impl::inferShape(
   }
 
   return shape_inference::inferShape(
-    _adjacencies,
+    adjacencies_,
     index,
     ranking
   );
 }
 
 std::string Molecule::Impl::dumpGraphviz() const {
-  MolGraphWriter propertyWriter(&_adjacencies.inner(), &_stereopermutators);
+  MolGraphWriter propertyWriter(&adjacencies_.inner(), &stereopermutators_);
 
   std::stringstream graphvizStream;
 
   boost::write_graphviz(
     graphvizStream,
-    _adjacencies.inner().bgl(),
+    adjacencies_.inner().bgl(),
     propertyWriter,
     propertyWriter,
     propertyWriter
@@ -892,18 +892,18 @@ std::string Molecule::Impl::dumpGraphviz() const {
 }
 
 const Graph& Molecule::Impl::graph() const {
-  return _adjacencies;
+  return adjacencies_;
 }
 
 std::size_t Molecule::Impl::hash() const {
-  if(_canonicalComponentsOption == boost::none) {
+  if(canonicalComponentsOption_ == boost::none) {
     throw std::logic_error("Trying to hash an uncanonical molecule.");
   }
 
   auto hashes = hashes::generate(
     graph().inner(),
-    _stereopermutators,
-    _canonicalComponentsOption.value()
+    stereopermutators_,
+    canonicalComponentsOption_.value()
   );
 
   // Convolute all of the wide hashes into a size_t hash
@@ -928,7 +928,7 @@ std::size_t Molecule::Impl::hash() const {
 }
 
 const StereopermutatorList& Molecule::Impl::stereopermutators() const {
-  return _stereopermutators;
+  return stereopermutators_;
 }
 
 StereopermutatorList Molecule::Impl::inferStereopermutatorsFromPositions(
@@ -952,18 +952,18 @@ StereopermutatorList Molecule::Impl::inferStereopermutatorsFromPositions(
 
     // Construct it
     auto stereopermutator = AtomStereopermutator {
-      _adjacencies,
+      adjacencies_,
       dummyShape,
       vertex,
       std::move(localRanking)
     };
 
-    stereopermutator.fit(_adjacencies, angstromWrapper);
+    stereopermutator.fit(adjacencies_, angstromWrapper);
     stereopermutators.add(std::move(stereopermutator));
   }
 
   auto tryInstantiateBondStereopermutator = [&](const BondIndex& bondIndex) -> void {
-    // TODO this is suspiciously close to _tryAddBondStereopermutator
+    // TODO this is suspiciously close to tryAddBondStereopermutator_
 
     auto sourceAtomStereopermutatorOption = stereopermutators.option(bondIndex.first);
     auto targetAtomStereopermutatorOption = stereopermutators.option(bondIndex.second);
@@ -980,7 +980,7 @@ StereopermutatorList Molecule::Impl::inferStereopermutatorsFromPositions(
 
     // Construct a Stereopermutator here
     BondStereopermutator newStereopermutator {
-      _adjacencies.inner(),
+      adjacencies_.inner(),
       stereopermutators,
       bondIndex
     };
@@ -1004,7 +1004,7 @@ StereopermutatorList Molecule::Impl::inferStereopermutatorsFromPositions(
   } else {
     // Every multiple-order bond is a candidate
     for(const BondIndex& bondIndex : graph().bonds()) {
-      if(_isGraphBasedBondStereopermutatorCandidate(graph().bondType(bondIndex))) {
+      if(isGraphBasedBondStereopermutatorCandidate_(graph().bondType(bondIndex))) {
         tryInstantiateBondStereopermutator(bondIndex);
       }
     }
@@ -1042,11 +1042,11 @@ bool Molecule::Impl::canonicalCompare(
    * are enough to compare them canonically, too
    */
   if(
-    _canonicalComponentsOption
-    && other._canonicalComponentsOption
+    canonicalComponentsOption_
+    && other.canonicalComponentsOption_
     && (
-      _canonicalComponentsOption.value() < componentBitmask
-      || other._canonicalComponentsOption.value() < componentBitmask
+      canonicalComponentsOption_.value() < componentBitmask
+      || other.canonicalComponentsOption_.value() < componentBitmask
     )
   ) {
     throw std::logic_error("Fewer components were used in canonicalizing a Molecule than are being compared!");
@@ -1103,8 +1103,8 @@ bool Molecule::Impl::modularCompare(
   // Where the corresponding index from the other graph is stored
   std::vector<AtomIndex> indexMap(thisNumAtoms);
 
-  const auto& thisBGL = _adjacencies.inner().bgl();
-  const auto& otherBGL = other._adjacencies.inner().bgl();
+  const auto& thisBGL = adjacencies_.inner().bgl();
+  const auto& otherBGL = other.adjacencies_.inner().bgl();
 
   bool isomorphic = boost::isomorphism(
     thisBGL,
@@ -1129,7 +1129,7 @@ RankingInformation Molecule::Impl::rankPriority(
   const std::vector<AtomIndex>& excludeAdjacent,
   const boost::optional<AngstromPositions>& positionsOption
 ) const {
-  if(!_isValidIndex(a)) {
+  if(!isValidIndex_(a)) {
     throw std::out_of_range("Supplied atom index is invalid!");
   }
 
@@ -1137,7 +1137,7 @@ RankingInformation Molecule::Impl::rankPriority(
 
   // Expects that bond types are set properly, complains otherwise
   rankingResult.sites = graph_algorithms::ligandSiteGroups(
-    _adjacencies.inner(),
+    adjacencies_.inner(),
     a,
     excludeAdjacent
   );
@@ -1168,7 +1168,7 @@ RankingInformation Molecule::Impl::rankPriority(
 
   // Find links between sites
   rankingResult.links = graph_algorithms::siteLinks(
-    _adjacencies.inner(),
+    adjacencies_.inner(),
     a,
     rankingResult.sites,
     excludeAdjacent
@@ -1179,8 +1179,8 @@ RankingInformation Molecule::Impl::rankPriority(
 
 bool Molecule::Impl::operator == (const Impl& other) const {
   if(
-    _canonicalComponentsOption == AtomEnvironmentComponents::All
-    && other._canonicalComponentsOption == AtomEnvironmentComponents::All
+    canonicalComponentsOption_ == AtomEnvironmentComponents::All
+    && other.canonicalComponentsOption_ == AtomEnvironmentComponents::All
   ) {
     return canonicalCompare(other, AtomEnvironmentComponents::All);
   }

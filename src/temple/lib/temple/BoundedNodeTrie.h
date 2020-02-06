@@ -74,19 +74,19 @@ public:
    */
   bool insert(const ChoiceList& values) {
     // Ensure the bounds are set
-    if(_bounds.empty()) {
+    if(bounds_.empty()) {
       throw std::logic_error("No bounds are set!");
     }
 
     // Make sure we have a root to insert to
-    if(!_root) {
-      _establishRoot();
+    if(!root_) {
+      establishRoot_();
     }
 
-    InsertResult result = _root->insert(values, _bounds, 0);
+    InsertResult result = root_->insert(values, bounds_, 0);
 
     if(result.insertedSomething) {
-      ++_size;
+      ++size_;
     }
 
     return result.insertedSomething;
@@ -107,28 +107,28 @@ public:
    * @return The newly generated entry
    */
   ChoiceList generateNewEntry(const ChoosingFunction& chooseFunction) {
-    if(_bounds.empty()) {
+    if(bounds_.empty()) {
       throw std::logic_error("No bounds are set!");
     }
 
-    if(!_root) {
-      _establishRoot();
+    if(!root_) {
+      establishRoot_();
     }
 
-    if(_size == _capacity) {
+    if(size_ == capacity_) {
       throw std::logic_error("Trie is at capacity!");
     }
 
     ChoiceList values;
-    values.reserve(_bounds.size());
+    values.reserve(bounds_.size());
 
-    InsertResult result = _root->generate(chooseFunction, values, _bounds, 0);
+    InsertResult result = root_->generate(chooseFunction, values, bounds_, 0);
 
     if(!result.insertedSomething) {
       throw std::logic_error("Trie has failed to generate a new entry");
     }
 
-    ++_size;
+    ++size_;
 
     return values;
   }
@@ -138,21 +138,21 @@ public:
    * @complexity{@math{\Theta(N)}}
    */
   void setBounds(ChoiceList bounds) {
-    _bounds = std::move(bounds);
+    bounds_ = std::move(bounds);
 
     // Make sure there is at least a single bound
-    assert(!_bounds.empty());
+    assert(!bounds_.empty());
     // For there to be a decision, there need to be at least two options
     assert(
       temple::all_of(
-        _bounds,
+        bounds_,
         [](const ChoiceIndex value) -> bool {
           return value > 1;
         }
       )
     );
 
-    _establishCapacity();
+    establishCapacity_();
     clear();
   }
 
@@ -161,11 +161,11 @@ public:
    * @complexity{@math{\Theta(N)}}
    */
   void clear() {
-    if(_root) {
-      _root.reset();
+    if(root_) {
+      root_.reset();
     }
 
-    _size = 0;
+    size_ = 0;
   }
 //!@}
 
@@ -185,16 +185,16 @@ public:
    * @return Whether the value list is in the tree
    */
   bool contains(const ChoiceList& values) const {
-    if(!_root) {
+    if(!root_) {
       return false;
     }
 
-    return _root->contains(values, 0);
+    return root_->contains(values, 0);
   }
 
   //! Accessor for underlying bounds
   const ChoiceList& bounds() const {
-    return _bounds;
+    return bounds_;
   }
 
   /*! @brief Returns the number of value lists this trie contains
@@ -202,11 +202,11 @@ public:
    * @complexity{@math{\Theta(1)}}
    */
   unsigned size() const {
-    if(_root) {
-      assert(_root->size() == _size);
+    if(root_) {
+      assert(root_->size() == size_);
     }
 
-    return _size;
+    return size_;
   }
 
   /*! @brief Returns the total number of value lists this trie might contain
@@ -214,7 +214,7 @@ public:
    * @complexity{@math{\Theta(1)}}
    */
   unsigned capacity() const {
-    return _capacity;
+    return capacity_;
   }
 //!@}
 
@@ -435,17 +435,17 @@ private:
 //!@name Private member functions
 //!@{
   //! Generate a root node
-  void _establishRoot() {
-    if(_bounds.size() == 1) {
-      _root = std::make_unique<Leaf>(_bounds.front());
+  void establishRoot_() {
+    if(bounds_.size() == 1) {
+      root_ = std::make_unique<Leaf>(bounds_.front());
     } else {
-      _root = std::make_unique<Node>(_bounds.front());
+      root_ = std::make_unique<Node>(bounds_.front());
     }
   }
 
-  void _establishCapacity() {
-    _capacity = temple::accumulate(
-      _bounds,
+  void establishCapacity_() {
+    capacity_ = temple::accumulate(
+      bounds_,
       1u,
       std::multiplies<>()
     );
@@ -454,10 +454,10 @@ private:
 
 //!@name Private members
 //!@{
-  ChoiceList _bounds;
-  NodePtr _root;
-  unsigned _size = 0;
-  unsigned _capacity = 0;
+  ChoiceList bounds_;
+  NodePtr root_;
+  unsigned size_ = 0;
+  unsigned capacity_ = 0;
 //!@}
 };
 

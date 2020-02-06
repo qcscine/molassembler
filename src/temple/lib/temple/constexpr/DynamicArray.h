@@ -31,7 +31,7 @@ public:
 //!@name Constructors
 //!@{
   //! Default constructor
-  constexpr DynamicArray() : _items {} {}
+  constexpr DynamicArray() : items_ {} {}
 
   /*! @brief Helper to the copy constructor
    *
@@ -42,14 +42,14 @@ public:
   constexpr DynamicArray(
     const DynamicArray& other,
     std::index_sequence<Inds...> /* inds */
-  ) :_items {other[Inds]...},
-     _count(other._count)
+  ) :items_ {other[Inds]...},
+     count_(other.count_)
   {}
 
   /*! @brief Copy constructor
    *
    * Constructing from another dynamic array is tricky since we're technically
-   * not allowed to edit _items in-class, so we delegate to the previous
+   * not allowed to edit items_ in-class, so we delegate to the previous
    * constructor and directly form the mem-initializer
    *
    * @complexity{@math{\Theta(N)}}
@@ -66,8 +66,8 @@ public:
   constexpr DynamicArray(
     DynamicArray&& other,
     std::index_sequence<Inds...> /* inds */
-  ) :_items {std::move(other[Inds])...},
-     _count(other._count)
+  ) :items_ {std::move(other[Inds])...},
+     count_(other.count_)
   {}
 
   /*! @brief Move constructor
@@ -85,10 +85,10 @@ public:
    * @complexity{@math{\Theta(N)}}
    */
   constexpr DynamicArray& operator = (const DynamicArray& other) {
-    for(unsigned i = 0; i < other._count; ++i) {
-      _items[i] = other._items[i];
+    for(unsigned i = 0; i < other.count_; ++i) {
+      items_[i] = other.items_[i];
     }
-    _count = other._count;
+    count_ = other.count_;
     return *this;
   }
 
@@ -101,10 +101,10 @@ public:
    * @complexity{@math{\Theta(N)}}
    */
   constexpr DynamicArray& operator = (DynamicArray&& other) noexcept {
-    for(unsigned i = 0; i < other._count; ++i) {
-      _items[i] = std::move(other._items[i]);
+    for(unsigned i = 0; i < other.count_; ++i) {
+      items_[i] = std::move(other.items_[i]);
     }
-    _count = other._count;
+    count_ = other.count_;
     return *this;
   }
 
@@ -122,8 +122,8 @@ public:
   > constexpr DynamicArray(
     const ArrayType<T, N>& other,
     std::index_sequence<Inds...> /* inds */
-  ) : _items {other.at(Inds)...},
-      _count(N)
+  ) : items_ {other.at(Inds)...},
+      count_(N)
   {}
 
   //! Construct from any size of other array-like classes
@@ -139,8 +139,8 @@ public:
   //! Parameter pack constructor, will work as long as the arguments are castable
   template<typename ...Args>
   constexpr DynamicArray(Args... args)
-    : _items {static_cast<T>(args)...},
-      _count(sizeof...(args))
+    : items_ {static_cast<T>(args)...},
+      count_(sizeof...(args))
   {}
 //!@}
 
@@ -154,9 +154,9 @@ public:
    * number of elements cannot be exceeded and there is never any reallocation.
    */
   constexpr void push_back(const T& item) {
-    if(_count < nItems) {
-      _items[_count] = item;
-      _count += 1;
+    if(count_ < nItems) {
+      items_[count_] = item;
+      count_ += 1;
     } else {
       throw "Dynamic array is already full!";
     }
@@ -164,9 +164,9 @@ public:
 
   //! @overload
   constexpr void push_back(T&& item) {
-    if(_count < nItems) {
-      _items[_count] = std::move(item);
-      _count += 1;
+    if(count_ < nItems) {
+      items_[count_] = std::move(item);
+      count_ += 1;
     }
   }
 
@@ -175,8 +175,8 @@ public:
    * @complexity{@math{\Theta(1)}}
    */
   constexpr void pop_back() {
-    if(_count > 0) {
-      _count -= 1;
+    if(count_ > 0) {
+      count_ -= 1;
     }
   }
 
@@ -185,8 +185,8 @@ public:
    * @complexity{@math{\Theta(1)}}
    */
   constexpr void pop_back(const unsigned numberToPop) {
-    if(_count > numberToPop) {
-      _count -= numberToPop;
+    if(count_ > numberToPop) {
+      count_ -= numberToPop;
     }
   }
 
@@ -200,11 +200,11 @@ public:
   constexpr DynamicArray<T, nItems> splice(const unsigned fromIndex) {
     DynamicArray<T, nItems> spliced;
 
-    for(unsigned i = fromIndex; i < _count; ++i) {
-      spliced.push_back(std::move(_items[i]));
+    for(unsigned i = fromIndex; i < count_; ++i) {
+      spliced.push_back(std::move(items_[i]));
     }
 
-    pop_back(_count - fromIndex);
+    pop_back(count_ - fromIndex);
 
     return spliced;
   }
@@ -217,7 +217,7 @@ public:
    * @complexity{@math{\Theta(1)}}
    */
   PURITY_WEAK constexpr bool validIndex(const unsigned index) const noexcept {
-    return (index < _count);
+    return (index < count_);
   }
 
   /*! @brief Returns the number of contained elements
@@ -225,7 +225,7 @@ public:
    * @complexity{@math{\Theta(1)}}
    */
   PURITY_WEAK constexpr std::size_t size() const noexcept {
-    return _count;
+    return count_;
   }
 //!@}
 
@@ -244,7 +244,7 @@ public:
       return back();
     }
 
-    return _items[index];
+    return items_[index];
   }
 
   //! @overload
@@ -253,18 +253,18 @@ public:
       return back();
     }
 
-    return _items[index];
+    return items_[index];
   }
 
   //! @see operator[](const unsigned)
   PURITY_WEAK constexpr T& at(const unsigned index) noexcept {
-    // Not strong purity because _items is just a pointer!
+    // Not strong purity because items_ is just a pointer!
     return this->operator[](index);
   }
 
   //! @overload
   PURITY_WEAK constexpr const T& at(const unsigned index) const noexcept {
-    // Not strong purity because _items is just a pointer!
+    // Not strong purity because items_ is just a pointer!
     return this->operator[](index);
   }
 
@@ -273,7 +273,7 @@ public:
    * @complexity{@math{\Theta(1)}}
    */
   PURITY_WEAK constexpr T& front() noexcept {
-    return _items[0];
+    return items_[0];
   }
 
   /*! @brief Const accessor for the front element
@@ -281,7 +281,7 @@ public:
    * @complexity{@math{\Theta(1)}}
    */
   PURITY_WEAK constexpr const T& front() const noexcept {
-    return _items[0];
+    return items_[0];
   }
 
   /*! @brief Accessor for the back element
@@ -293,11 +293,11 @@ public:
     /* No UB in constexpr functions allowed, so we must return something within
      * the array, which is always an initialized value
      */
-    if(_count == 0) {
+    if(count_ == 0) {
       return front();
     }
 
-    return _items[_count - 1];
+    return items_[count_ - 1];
   }
 
   /*! @brief Const-accessor for the back element
@@ -309,11 +309,11 @@ public:
     /* NO UB in constexpr functions allowed, so we must return something within
      * the array, which is always an initialized value
      */
-    if(_count == 0) {
+    if(count_ == 0) {
       return front();
     }
 
-    return _items[_count - 1];
+    return items_[count_ - 1];
   }
 //!@}
 
@@ -324,7 +324,7 @@ public:
    * @complexity{@math{\Theta(1)}}
    */
   constexpr void clear() {
-    _count = 0;
+    count_ = 0;
   }
 
   /*! @brief Copy in elements from another dynamic array
@@ -354,7 +354,7 @@ public:
     if(insertPositionIter == end()) {
       push_back(item);
     } else {
-      _moveElementsRightUntil(insertPositionIter);
+      moveElementsRightUntil_(insertPositionIter);
 
       // Copy in the item
       *insertPositionIter = item;
@@ -374,7 +374,7 @@ public:
     if(insertPositionIter == end()) {
       push_back(item);
     } else {
-      _moveElementsRightUntil(insertPositionIter);
+      moveElementsRightUntil_(insertPositionIter);
 
       // Move in the item
       *insertPositionIter = std::move(item);
@@ -413,12 +413,12 @@ public:
    * @complexity{@math{O(N)}}
    */
   PURITY_WEAK constexpr bool operator == (const DynamicArray& other) const noexcept {
-    if(_count != other._count) {
+    if(count_ != other.count_) {
       return false;
     }
 
-    for(unsigned i = 0; i < _count; ++i) {
-      if(_items[i] != other._items[i]) {
+    for(unsigned i = 0; i < count_; ++i) {
+      if(items_[i] != other.items_[i]) {
         return false;
       }
     }
@@ -436,16 +436,16 @@ public:
    * @complexity{@math{O(N)}}
    */
   PURITY_WEAK constexpr bool operator < (const DynamicArray& other) const noexcept {
-    if(_count < other._count) {
+    if(count_ < other.count_) {
       return true;
     }
 
-    for(unsigned i = 0; i < _count; ++i) {
-      if(_items[i] < other._items[i]) {
+    for(unsigned i = 0; i < count_; ++i) {
+      if(items_[i] < other.items_[i]) {
         return true;
       }
 
-      if(_items[i] > other._items[i]) {
+      if(items_[i] > other.items_[i]) {
         return false;
       }
     }
@@ -475,24 +475,24 @@ public:
     constexpr explicit iterator(
       DynamicArray& instance,
       unsigned&& initPosition
-    ) : _baseRef(instance),
-        _position(initPosition)
+    ) : baseRef_(instance),
+        position_(initPosition)
     {}
 
     constexpr iterator(const iterator& other)
-      : _baseRef(other._baseRef),
-        _position(other._position)
+      : baseRef_(other.baseRef_),
+        position_(other.position_)
     {}
 
     constexpr iterator& operator = (const iterator& other) {
-      _baseRef = other._baseRef;
-      _position = other._position;
+      baseRef_ = other.baseRef_;
+      position_ = other.position_;
 
       return *this;
     }
 
     constexpr iterator& operator ++ () {
-      _position += 1;
+      position_ += 1;
       return *this;
     }
 
@@ -503,7 +503,7 @@ public:
     }
 
     constexpr iterator& operator --() {
-      _position -= 1;
+      position_ -= 1;
       return *this;
     }
 
@@ -526,26 +526,26 @@ public:
     }
 
     constexpr iterator& operator += (const int& increment) {
-      _position += increment;
+      position_ += increment;
       return *this;
     }
 
     constexpr iterator& operator -= (const int& increment) {
-      _position -= increment;
+      position_ -= increment;
       return *this;
     }
 
     PURITY_WEAK constexpr std::ptrdiff_t operator - (const iterator& other) const noexcept {
       return (
-        static_cast<std::ptrdiff_t>(_position)
-        - static_cast<std::ptrdiff_t>(other._position)
+        static_cast<std::ptrdiff_t>(position_)
+        - static_cast<std::ptrdiff_t>(other.position_)
       );
     }
 
     PURITY_WEAK constexpr bool operator == (const iterator& other) const noexcept {
       return (
-        &_baseRef == &other._baseRef
-        && _position == other._position
+        &baseRef_ == &other.baseRef_
+        && position_ == other.position_
       );
     }
 
@@ -556,12 +556,12 @@ public:
     }
 
     PURITY_WEAK constexpr reference operator * () const noexcept {
-      return _baseRef[_position];
+      return baseRef_[position_];
     }
 
   private:
-    DynamicArray& _baseRef;
-    unsigned _position;
+    DynamicArray& baseRef_;
+    unsigned position_;
   };
 
   PURITY_WEAK constexpr iterator begin() noexcept {
@@ -569,7 +569,7 @@ public:
   }
 
   PURITY_WEAK constexpr iterator end() noexcept {
-    return iterator(*this, _count);
+    return iterator(*this, count_);
   }
 
   /**
@@ -577,8 +577,8 @@ public:
    */
   class const_iterator {
   private:
-    const DynamicArray& _baseRef;
-    unsigned _position;
+    const DynamicArray& baseRef_;
+    unsigned position_;
 
   public:
     using iterator_category = std::random_access_iterator_tag;
@@ -590,27 +590,27 @@ public:
     constexpr explicit const_iterator(
       const DynamicArray& instance,
       unsigned&& initPosition
-    ) : _baseRef(instance),
-        _position(initPosition)
+    ) : baseRef_(instance),
+        position_(initPosition)
     {}
 
     constexpr const_iterator(const const_iterator& other)
-      : _baseRef(other._baseRef),
-        _position(other._position)
+      : baseRef_(other.baseRef_),
+        position_(other.position_)
     {}
 
     constexpr const_iterator& operator = (const const_iterator& other) {
-      if(_baseRef != other._baseRef) {
+      if(baseRef_ != other.baseRef_) {
         throw "Trying to assign const_iterator to other base DynamicArray!";
       }
 
-      _position = other._position;
+      position_ = other.position_;
 
       return *this;
     }
 
     constexpr const_iterator& operator ++ () {
-      _position += 1;
+      position_ += 1;
       return *this;
     }
 
@@ -621,7 +621,7 @@ public:
     }
 
     constexpr const_iterator& operator --() {
-      _position -= 1;
+      position_ -= 1;
       return *this;
     }
 
@@ -644,26 +644,26 @@ public:
     }
 
     constexpr const_iterator& operator += (const int& increment) {
-      _position += increment;
+      position_ += increment;
       return *this;
     }
 
     constexpr const_iterator& operator -= (const int& increment) {
-      _position -= increment;
+      position_ -= increment;
       return *this;
     }
 
     PURITY_WEAK constexpr std::ptrdiff_t operator - (const const_iterator& other) const noexcept {
       return (
-        static_cast<std::ptrdiff_t>(_position)
-        - static_cast<std::ptrdiff_t>(other._position)
+        static_cast<std::ptrdiff_t>(position_)
+        - static_cast<std::ptrdiff_t>(other.position_)
       );
     }
 
     PURITY_WEAK constexpr bool operator == (const const_iterator& other) const noexcept {
       return (
-        &_baseRef == &other._baseRef
-        && _position == other._position
+        &baseRef_ == &other.baseRef_
+        && position_ == other.position_
       );
     }
 
@@ -674,7 +674,7 @@ public:
     }
 
     PURITY_WEAK constexpr reference operator * () const noexcept {
-      return _baseRef[_position];
+      return baseRef_[position_];
     }
   };
 
@@ -683,7 +683,7 @@ public:
   }
 
   PURITY_WEAK constexpr const_iterator end() const noexcept {
-    return const_iterator(*this, _count);
+    return const_iterator(*this, count_);
   }
 //!@}
 
@@ -698,8 +698,8 @@ public:
 private:
 //!@name State
 //!@{
-  T _items[nItems];
-  std::size_t _count = 0;
+  T items_[nItems];
+  std::size_t count_ = 0;
 //!@}
 
 //!@name Private member functions
@@ -707,11 +707,11 @@ private:
   template<std::size_t ... Inds>
   std::array<T, nItems> makeArray(std::index_sequence<Inds...> /* inds */) {
     return {{
-      _items[Inds]...
+      items_[Inds]...
     }};
   }
 
-  constexpr void _moveElementsRightUntil(const iterator& position) {
+  constexpr void moveElementsRightUntil_(const iterator& position) {
     // Add the last element in the array onto the end
     push_back(
       back()

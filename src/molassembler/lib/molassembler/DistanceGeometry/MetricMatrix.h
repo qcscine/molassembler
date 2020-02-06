@@ -77,9 +77,9 @@ public:
 
 private:
 /* Underlying matrix representation */
-  Eigen::MatrixXd _matrix;
+  Eigen::MatrixXd matrix_;
 
-  void _constructFromTemporary(Eigen::MatrixXd&& distances);
+  void constructFromTemporary_(Eigen::MatrixXd&& distances);
 };
 
 } // namespace distance_geometry

@@ -38,23 +38,23 @@ public:
   DecisionList generateNewDecisionList();
 
   bool insert(const DecisionList& decisionList) {
-    return _decisionLists.insert(decisionList);
+    return decisionLists_.insert(decisionList);
   }
 
   bool contains(const DecisionList& decisionList) {
-    return _decisionLists.contains(decisionList);
+    return decisionLists_.contains(decisionList);
   }
 
   const BondList& bondList() const {
-    return _relevantBonds;
+    return relevantBonds_;
   }
 
   unsigned decisionListSetSize() const {
-    return _decisionLists.size();
+    return decisionLists_.size();
   }
 
   unsigned idealEnsembleSize() const {
-    return _decisionLists.capacity();
+    return decisionLists_.capacity();
   }
 
   outcome::result<Utils::PositionCollection> generateRandomConformation(
@@ -80,8 +80,8 @@ public:
   const Molecule& conformationMolecule(const DecisionList& decisionList);
 
 private:
-  Molecule _molecule;
-  BondList _relevantBonds;
+  Molecule molecule_;
+  BondList relevantBonds_;
 
   /* This data structure is primarily designed for use as a set-like type that
    * can contain all choices of discrete enumerated dihedral positions for a
@@ -102,7 +102,7 @@ private:
    * dihedral you have explored and which ones might lead to a conformer that
    * is most different from the ones you already have.
    */
-  temple::BoundedNodeTrie<std::uint8_t> _decisionLists;
+  temple::BoundedNodeTrie<std::uint8_t> decisionLists_;
 };
 
 } // namespace molassembler

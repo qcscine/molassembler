@@ -480,25 +480,25 @@ public:
 
 private:
   // Molecule closure
-  const Molecule& _molecule;
+  const Molecule& molecule_;
 
   //! Constraints by fixed positions
-  BoundsMapType<2> _constraints;
+  BoundsMapType<2> constraints_;
   //! Bond distance value bounds on index pairs
-  BoundsMapType<2> _bondBounds;
+  BoundsMapType<2> bondBounds_;
   //! Angle value bounds on index triples
-  BoundsMapType<3> _angleBounds;
+  BoundsMapType<3> angleBounds_;
   //! Dihedral value bounds on index quadruplets
-  BoundsMapType<4> _dihedralBounds;
+  BoundsMapType<4> dihedralBounds_;
 
   //! Chiral constraints
-  std::vector<ChiralConstraint> _chiralConstraints;
-  std::vector<DihedralConstraint> _dihedralConstraints;
+  std::vector<ChiralConstraint> chiralConstraints_;
+  std::vector<DihedralConstraint> dihedralConstraints_;
 
 //!@name Private methods
 //!@{
   //! Adds [0, π] default angle bounds for all bonded atom triples
-  void _addDefaultAngles();
+  void addDefaultAngles_();
 
   /*!
    * @brief Adds [0, π] default dihedrals to the model (of connected sequences)
@@ -506,29 +506,29 @@ private:
    * Adds [0, π] default dihedrals to the model. Avoids treating 1-4 pairs as
    * nonbonded.
    */
-  void _addDefaultDihedrals();
+  void addDefaultDihedrals_();
 
   /*!
    * It is permissible in some circumstances not to have AtomStereopermutators
    * even on non-terminal atoms. These have to be re-added in order for us
    * to be able to model everywhere.
    */
-  void _instantiateMissingAtomStereopermutators(random::Engine& engine);
+  void instantiateMissingAtomStereopermutators_(random::Engine& engine);
 
   //! Add bond distances to the underlying model
-  void _modelBondDistances(
+  void modelBondDistances_(
     const FixedPositionsMapType& fixedAngstromPositions,
     double looseningFactor
   );
 
   //! Add precise information to the model for cycles that are flat
-  void _modelFlatCycles(
+  void modelFlatCycles_(
     const FixedPositionsMapType& fixedAngstromPositions,
     double looseningFactor
   );
 
   //! Adds spirocenter modelling to the data set
-  void _modelSpirocenters(
+  void modelSpirocenters_(
     const FixedPositionsMapType& fixedAngstromPositions
   );
 //!@}

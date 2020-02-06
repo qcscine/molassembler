@@ -26,7 +26,7 @@
  * - Apple Clang (version unknown, fast and with low memory use)
  * - GCC 8.3.0 (fast but with roughly 26 GB RAM use)
  */
-#if defined(__clang__) || defined(SHAPES_TRY_CONSTEXPR)
+#if defined(_clang___) || defined(SHAPES_TRY_CONSTEXPR)
 
 /*!
  * @brief If defined, symmetry transition mappings are generated at compile time

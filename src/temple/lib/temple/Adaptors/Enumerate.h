@@ -56,8 +56,8 @@ public:
 
   class iterator {
   private:
-    ContainerIterator _it;
-    unsigned _index;
+    ContainerIterator it_;
+    unsigned index_;
 
   public:
     using iterator_category = std::forward_iterator_tag;
@@ -69,13 +69,13 @@ public:
     explicit iterator(
       ContainerIterator it,
       unsigned index
-    ) : _it(std::move(it)),
-        _index(index)
+    ) : it_(std::move(it)),
+        index_(index)
     {}
 
     iterator& operator ++ () {
-      ++_it;
-      ++_index;
+      ++it_;
+      ++index_;
       return *this;
     }
 
@@ -86,7 +86,7 @@ public:
     }
 
     bool operator == (iterator other) const {
-      return _it == other._it;
+      return it_ == other.it_;
     }
 
     bool operator != (iterator other) const {
@@ -95,8 +95,8 @@ public:
 
     reference operator * () const {
       return EnumerationStruct {
-        _index,
-        *_it
+        index_,
+        *it_
       };
     }
   };

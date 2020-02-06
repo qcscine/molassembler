@@ -69,8 +69,8 @@ struct Transformer {
 //!@{
   class iterator {
   private:
-    const Transformer* _basePtr;
-    ContainerIteratorType _iter;
+    const Transformer* basePtr_;
+    ContainerIteratorType iter_;
 
   public:
     using iterator_category = std::forward_iterator_tag;
@@ -83,12 +83,12 @@ struct Transformer {
     iterator(
       const Transformer& base,
       ContainerIteratorType&& iter
-    ) : _basePtr(&base),
-        _iter {iter}
+    ) : basePtr_(&base),
+        iter_ {iter}
     {}
 
     iterator& operator ++ () {
-      ++_iter;
+      ++iter_;
       return *this;
     }
 
@@ -99,7 +99,7 @@ struct Transformer {
     }
 
     bool operator == (const iterator& other) const {
-      return _iter == other._iter;
+      return iter_ == other.iter_;
     }
 
     bool operator != (const iterator& other) const {
@@ -107,7 +107,7 @@ struct Transformer {
     }
 
     ReturnType operator * () const {
-      return invoke(_basePtr->function, *_iter);
+      return invoke(basePtr_->function, *iter_);
     }
   };
 

@@ -43,20 +43,20 @@ static_assert(
 
 Graph::Graph(Graph&& other) noexcept = default;
 Graph& Graph::operator = (Graph&& other) noexcept = default;
-Graph::Graph(const Graph& other) : _innerPtr(
-  std::make_unique<PrivateGraph>(*other._innerPtr)
+Graph::Graph(const Graph& other) : innerPtr_(
+  std::make_unique<PrivateGraph>(*other.innerPtr_)
 ) {}
 Graph& Graph::operator = (const Graph& other) {
-  *_innerPtr = *other._innerPtr;
+  *innerPtr_ = *other.innerPtr_;
   return *this;
 }
 Graph::~Graph() = default;
 
-Graph::Graph() : _innerPtr(
+Graph::Graph() : innerPtr_(
   std::make_unique<PrivateGraph>()
 ) {}
 
-Graph::Graph(PrivateGraph&& inner) : _innerPtr(
+Graph::Graph(PrivateGraph&& inner) : innerPtr_(
   std::make_unique<PrivateGraph>(std::move(inner))
 ) {}
 
@@ -156,11 +156,11 @@ const Cycles& Graph::cycles() const {
 }
 
 PrivateGraph& Graph::inner() {
-  return *_innerPtr;
+  return *innerPtr_;
 }
 
 const PrivateGraph& Graph::inner() const {
-  return *_innerPtr;
+  return *innerPtr_;
 }
 
 unsigned Graph::degree(const AtomIndex a) const {

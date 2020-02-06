@@ -283,16 +283,16 @@ private:
 //!@name Private state
 //!@{
   //! Stores the relative orientation with which the permutations were generated
-  temple::OrderedPair<OrientationState> _orientations;
+  temple::OrderedPair<OrientationState> orientations_;
 
   //! List of dihedral sets that comprise all spatial arrangements
-  PermutationsList _stereopermutations;
+  PermutationsList stereopermutations_;
 
   //! Stores whether the Composite is isotropic
-  bool _isotropic;
+  bool isotropic_;
 
   //! Stores with which Alignment the stereopermutations were generated
-  Alignment _alignment;
+  Alignment alignment_;
 //!@}
 
   /*!

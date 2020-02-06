@@ -89,12 +89,12 @@ public:
       "The underlying type of the JSF generator must be unsigned!"
     );
 
-    _seed(input);
+    seed_(input);
   }
 
   //! Construct from a seed sequence
   explicit JSF(std::seed_seq& seedSeq) {
-    _seed(seedSeq);
+    seed_(seedSeq);
   }
 
   //! Construct from a single integer seed value
@@ -107,18 +107,18 @@ public:
 //!@{
   //! Seed the underlying state with four values
   constexpr void seed(const std::array<UnsignedType, 4>& input) {
-    _seed(input);
+    seed_(input);
   }
 
   //! Seed the underlying state with a seed sequence
   void seed(std::seed_seq& seedSeq) {
-    _seed(seedSeq);
+    seed_(seedSeq);
   }
 
   //! Seed the underlying state with a single integer value
   void seed(int seed) {
     std::seed_seq seedSeq {{seed}};
-    _seed(seedSeq);
+    seed_(seedSeq);
   }
 //!@}
 
@@ -129,9 +129,9 @@ public:
    * @complexity{@math{\Theta(1)}}
    */
   constexpr UnsignedType operator() () {
-    _advance();
+    advance_();
 
-    return _d;
+    return d_;
   }
 
   /*! @brief Compares the underlying state of two instances
@@ -140,10 +140,10 @@ public:
    */
   constexpr bool operator == (const JSF& other) const {
     return (
-      _a == other._a
-      && _b == other._b
-      && _c == other._c
-      && _d == other._d
+      a_ == other.a_
+      && b_ == other.b_
+      && c_ == other.c_
+      && d_ == other.d_
     );
   }
 
@@ -156,7 +156,7 @@ public:
 private:
 //!@name State
 //!@{
-  UnsignedType _a, _b, _c, _d;
+  UnsignedType a_, b_, c_, d_;
 //!@}
 
 //!@name Static properties
@@ -166,32 +166,32 @@ private:
 
 //!@name Private member functions
 //!@{
-  static constexpr UnsignedType _rotate(UnsignedType x, unsigned k) {
+  static constexpr UnsignedType rotate_(UnsignedType x, unsigned k) {
     return (x << k) | (x >> (bits - k));
   }
 
-  constexpr void _advance() {
-    UnsignedType e = _a - _rotate(_b, p);
-    _a = _b ^ _rotate(_c, q);
-    _b = _c + ((r > 0) ? _rotate(_d, r) : _d);
-    _c = _d + e;
-    _d = e + _a;
+  constexpr void advance_() {
+    UnsignedType e = a_ - rotate_(b_, p);
+    a_ = b_ ^ rotate_(c_, q);
+    b_ = c_ + ((r > 0) ? rotate_(d_, r) : d_);
+    c_ = d_ + e;
+    d_ = e + a_;
   }
 
-  constexpr void _advance(unsigned N) {
+  constexpr void advance_(unsigned N) {
     for(unsigned i = 0; i < N; ++i) {
-      _advance();
+      advance_();
     }
   }
 
-  constexpr void _seed(const std::array<UnsignedType, 4>& state) {
-    _a = state[0];
-    _b = state[1];
-    _c = state[2];
-    _d = state[3];
+  constexpr void seed_(const std::array<UnsignedType, 4>& state) {
+    a_ = state[0];
+    b_ = state[1];
+    c_ = state[2];
+    d_ = state[3];
   }
 
-  void _seed(std::seed_seq& seedSeq) {
+  void seed_(std::seed_seq& seedSeq) {
     std::array<UnsignedType, 4> stateArray;
 
     seedSeq.generate(
@@ -222,7 +222,7 @@ private:
       }
     }
 
-    _seed(stateArray);
+    seed_(stateArray);
   }
 //!@}
 };

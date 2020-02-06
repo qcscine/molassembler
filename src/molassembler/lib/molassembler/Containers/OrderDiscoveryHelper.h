@@ -64,8 +64,8 @@ public:
   using VertexIndexType = typename DependencyGraphType::vertex_descriptor;
 
 private:
-  std::map<T, VertexIndexType> _sourceMap;
-  DependencyGraphType _graph;
+  std::map<T, VertexIndexType> sourceMap_;
+  DependencyGraphType graph_;
 
   /*!
    * @brief Get a grouped list of the ordered data sorted by out_degree ascending
@@ -74,7 +74,7 @@ private:
    */
   std::vector<
     std::vector<T>
-  > _getSetsByDegree() const {
+  > getSetsByDegree_() const {
     /* Group all vertices's values by vertex out_degree
      *
      * The more out edges a vertex has, the "smaller" it is, since a less-than
@@ -89,10 +89,10 @@ private:
     > degreeToSetMap;
 
     typename DependencyGraphType::vertex_iterator iter, end;
-    std::tie(iter, end) = boost::vertices(_graph);
+    std::tie(iter, end) = boost::vertices(graph_);
 
     while(iter != end) {
-      auto outDegree = boost::out_degree(*iter, _graph);
+      auto outDegree = boost::out_degree(*iter, graph_);
 
       if(degreeToSetMap.count(outDegree) == 0) {
         degreeToSetMap[outDegree] = {*iter};
@@ -113,18 +113,18 @@ private:
         return temple::map_stl(
           mapIterPair.second,
           [&](const auto& index) -> T {
-            return _graph[index].data;
+            return graph_[index].data;
           }
         );
       }
     );
   }
 
-  VertexIndexType _addItem(const T& item) {
-    auto newIndex = boost::add_vertex(_graph);
+  VertexIndexType addItem_(const T& item) {
+    auto newIndex = boost::add_vertex(graph_);
 
-    _graph[newIndex].data = item;
-    _sourceMap.emplace(
+    graph_[newIndex].data = item;
+    sourceMap_.emplace(
       item,
       newIndex
     );
@@ -135,10 +135,10 @@ private:
 
   class GraphvizWriter {
   private:
-    const OrderDiscoveryHelper& _baseRef;
+    const OrderDiscoveryHelper& baseRef_;
 
   public:
-    GraphvizWriter(const OrderDiscoveryHelper& base) : _baseRef(base) {}
+    GraphvizWriter(const OrderDiscoveryHelper& base) : baseRef_(base) {}
 
     void operator() (std::ostream& os) const {
       os << "graph [fontname = \"Arial\", layout = \"dot\"];\n"
@@ -147,7 +147,7 @@ private:
     }
 
     void operator() (std::ostream& os, const VertexIndexType& vertexIndex) const {
-      os << R"([label=")" << _baseRef._graph[vertexIndex].data << R"("])";
+      os << R"([label=")" << baseRef_.graph_[vertexIndex].data << R"("])";
     }
 
     void operator() (std::ostream& /* os */, const typename DependencyGraphType::edge_descriptor& /* edge */) const {
@@ -186,25 +186,25 @@ public:
     // Build a mapping of vertices
     std::map<VertexIndexType, VertexIndexType> vertexMapping;
 
-    for(VertexIndexType i = 0; i < boost::num_vertices(other._graph); ++i) {
+    for(VertexIndexType i = 0; i < boost::num_vertices(other.graph_); ++i) {
       // Does this vertex exist in this graph already?
-      const auto& vertexData = other._graph[i].data;
-      if(_sourceMap.count(vertexData) > 0) {
+      const auto& vertexData = other.graph_[i].data;
+      if(sourceMap_.count(vertexData) > 0) {
         vertexMapping.emplace(
           i,
-          _sourceMap.at(vertexData)
+          sourceMap_.at(vertexData)
         );
       }
     }
 
     // Add non-contradicting edges from the other graph
     for(
-      auto edgeIterPair = boost::edges(other._graph);
+      auto edgeIterPair = boost::edges(other.graph_);
       edgeIterPair.first != edgeIterPair.second;
       ++edgeIterPair.first
     ) {
-      auto otherEdgeSource = boost::source(*edgeIterPair.first, other._graph);
-      auto otherEdgeTarget = boost::target(*edgeIterPair.first, other._graph);
+      auto otherEdgeSource = boost::source(*edgeIterPair.first, other.graph_);
+      auto otherEdgeTarget = boost::target(*edgeIterPair.first, other.graph_);
 
       if( // Both endpoints must have a counterpart in this graph
         vertexMapping.count(otherEdgeSource) > 0
@@ -217,7 +217,7 @@ public:
         auto thisGraphEdge = boost::edge(
           thisEdgeSource,
           thisEdgeTarget,
-          _graph
+          graph_
         );
 
         // In case the graph edge is found, go to the next edge
@@ -229,7 +229,7 @@ public:
         auto inverseGraphEdge = boost::edge(
           thisEdgeTarget,
           thisEdgeSource,
-          _graph
+          graph_
         );
 
         if(inverseGraphEdge.second) {
@@ -237,7 +237,7 @@ public:
         }
 
         // Add the edge to this graph
-        boost::add_edge(thisEdgeSource, thisEdgeTarget, _graph);
+        boost::add_edge(thisEdgeSource, thisEdgeTarget, graph_);
 
       }
     }
@@ -260,11 +260,11 @@ public:
     std::map<VertexIndexType, VertexIndexType> vertexMapping;
 
     // Add all new vertices from the other graph
-    for(VertexIndexType i = 0; i < boost::num_vertices(other._graph); ++i) {
+    for(VertexIndexType i = 0; i < boost::num_vertices(other.graph_); ++i) {
       // Does this vertex exist in this graph already?
-      const auto& vertexData = other._graph[i].data;
-      if(_sourceMap.count(vertexData) == 0) {
-        auto newIndex = _addItem(other._graph[i].data);
+      const auto& vertexData = other.graph_[i].data;
+      if(sourceMap_.count(vertexData) == 0) {
+        auto newIndex = addItem_(other.graph_[i].data);
         vertexMapping.emplace(
           i,
           newIndex
@@ -272,19 +272,19 @@ public:
       } else {
         vertexMapping.emplace(
           i,
-          _sourceMap.at(vertexData)
+          sourceMap_.at(vertexData)
         );
       }
     }
 
     // Add non-contradicting edges from the other graph
     for(
-      auto edgeIterPair = boost::edges(other._graph);
+      auto edgeIterPair = boost::edges(other.graph_);
       edgeIterPair.first != edgeIterPair.second;
       ++edgeIterPair.first
     ) {
-      auto otherEdgeSource = boost::source(*edgeIterPair.first, other._graph);
-      auto otherEdgeTarget = boost::target(*edgeIterPair.first, other._graph);
+      auto otherEdgeSource = boost::source(*edgeIterPair.first, other.graph_);
+      auto otherEdgeTarget = boost::target(*edgeIterPair.first, other.graph_);
 
       auto thisEdgeSource = vertexMapping.at(otherEdgeSource);
       auto thisEdgeTarget = vertexMapping.at(otherEdgeTarget);
@@ -293,7 +293,7 @@ public:
       auto thisGraphEdge = boost::edge(
         thisEdgeSource,
         thisEdgeTarget,
-        _graph
+        graph_
       );
 
       // In case the graph edge is found, go to the next edge
@@ -305,7 +305,7 @@ public:
       auto inverseGraphEdge = boost::edge(
         thisEdgeTarget,
         thisEdgeSource,
-        _graph
+        graph_
       );
 
       if(inverseGraphEdge.second) {
@@ -313,7 +313,7 @@ public:
       }
 
       // Add the edge to this graph
-      boost::add_edge(thisEdgeSource, thisEdgeTarget, _graph);
+      boost::add_edge(thisEdgeSource, thisEdgeTarget, graph_);
     }
 
     addTransferabilityEdges();
@@ -329,16 +329,16 @@ public:
    * There must be better ways of doing this.
    */
   void addTransferabilityEdges() {
-    for(VertexIndexType i = 0; i < boost::num_vertices(_graph); ++i) {
+    for(VertexIndexType i = 0; i < boost::num_vertices(graph_); ++i) {
       std::vector<VertexIndexType> seeds;
 
       for(
-        auto edgeIterPair = boost::out_edges(i, _graph);
+        auto edgeIterPair = boost::out_edges(i, graph_);
         edgeIterPair.first != edgeIterPair.second;
         ++edgeIterPair.first
       ) {
         seeds.emplace_back(
-          boost::target(*edgeIterPair.first, _graph)
+          boost::target(*edgeIterPair.first, graph_)
         );
       }
 
@@ -346,17 +346,17 @@ public:
         std::vector<VertexIndexType> newSeeds;
 
         for(const auto& seed: seeds) {
-          if(!boost::edge(i, seed, _graph).second) {
-            boost::add_edge(i, seed, _graph);
+          if(!boost::edge(i, seed, graph_).second) {
+            boost::add_edge(i, seed, graph_);
           }
 
           for(
-            auto edgeIterPair = boost::out_edges(seed, _graph);
+            auto edgeIterPair = boost::out_edges(seed, graph_);
             edgeIterPair.first != edgeIterPair.second;
             ++edgeIterPair.first
           ) {
             newSeeds.emplace_back(
-              boost::target(*edgeIterPair.first, _graph)
+              boost::target(*edgeIterPair.first, graph_)
             );
           }
         }
@@ -373,14 +373,14 @@ public:
    */
   template<typename It>
   void setUnorderedValues(It iter, const It end) {
-    if(boost::num_vertices(_graph) > 0) {
-      _graph.clear();
+    if(boost::num_vertices(graph_) > 0) {
+      graph_.clear();
     }
 
-    _sourceMap.clear();
+    sourceMap_.clear();
 
     for(/* */; iter != end; ++iter) {
-      _addItem(*iter);
+      addItem_(*iter);
     }
   }
 
@@ -412,7 +412,7 @@ public:
     std::vector<T>
   > getSets() const {
     // Keep only sets with at least one member
-    return _getSetsByDegree();
+    return getSetsByDegree_();
   }
 
   /*! @brief Returns grouped data (in descending order) whose internal order is undecided
@@ -424,7 +424,7 @@ public:
   > getUndecidedSets() const {
     // Keep only sets with more than one member
     return temple::copy_if(
-      _getSetsByDegree(),
+      getSetsByDegree_(),
       [](const auto& set) -> bool {
         return set.size() > 1;
       }
@@ -436,9 +436,9 @@ public:
    * @complexity{@math{\Theta(1)}}
    */
   bool isTotallyOrdered() const {
-    auto N = boost::num_vertices(_graph);
+    auto N = boost::num_vertices(graph_);
 
-    return(boost::num_edges(_graph) == N * (N - 1) / 2);
+    return(boost::num_edges(graph_) == N * (N - 1) / 2);
   }
 
   /*! @brief Add a less-than relationship to the graph
@@ -455,9 +455,9 @@ public:
      * storing a to vertex storing b
      */
     boost::add_edge(
-      _sourceMap.at(a),
-      _sourceMap.at(b),
-      _graph
+      sourceMap_.at(a),
+      sourceMap_.at(b),
+      graph_
     );
   }
 
@@ -472,7 +472,7 @@ public:
 
     boost::write_graphviz(
       ss,
-      _graph,
+      graph_,
       propertyWriter,
       propertyWriter,
       propertyWriter
@@ -493,12 +493,12 @@ public:
    * @complexity{@math{\Theta(1)}}
    */
   bool isSmaller(const T& a, const T& b) const {
-    if(_sourceMap.count(a) == 0 || _sourceMap.count(b) == 0) {
+    if(sourceMap_.count(a) == 0 || sourceMap_.count(b) == 0) {
       return false;
     }
 
     // is a < b?
-    auto smallerEdge = boost::edge(_sourceMap.at(a), _sourceMap.at(b), _graph);
+    auto smallerEdge = boost::edge(sourceMap_.at(a), sourceMap_.at(b), graph_);
     return smallerEdge.second;
   }
 };

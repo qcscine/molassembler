@@ -33,7 +33,7 @@ public:
 //!@{
   //! Adds a data value for a key value into the cache.
   void add(const KeyType key, const ValueType value) {
-    _cache.emplace(
+    cache_.emplace(
       std::move(key),
       std::move(value)
     );
@@ -41,13 +41,13 @@ public:
 
   //! Invalidates the entire cache, removing all stored data
   void invalidate() {
-    _cache.clear();
+    cache_.clear();
   }
 
   //! Selectively invalidates cache entries
   void invalidate(const KeyType& key) {
-    if(_cache.count(key) == 1) {
-      _cache.erase(key);
+    if(cache_.count(key) == 1) {
+      cache_.erase(key);
     }
   }
 //!@}
@@ -56,9 +56,9 @@ public:
 //!@{
   //! Fetches a cache entry via an optional
   boost::optional<const ValueType&> getOption(const KeyType& key) const {
-    if(_cache.count(key) == 1) {
+    if(cache_.count(key) == 1) {
       return boost::optional<const ValueType&>(
-        _cache.at(key)
+        cache_.at(key)
       );
     }
 
@@ -67,23 +67,23 @@ public:
 
   //! Tests whether the cache contains an entry for a key
   bool has(const KeyType& key) const {
-    return _cache.count(key) > 0;
+    return cache_.count(key) > 0;
   }
 
   //! Fetches a particular key, assuming that it is currently cached
   const ValueType& get(const KeyType& key) const {
-    if(_cache.count(key) == 0) {
+    if(cache_.count(key) == 0) {
       throw "Fetching member in Cache whose key does not exist!";
     }
 
-    return _cache.at(key);
+    return cache_.at(key);
   }
 //!@}
 
 private:
 /* Private members */
   //! Cache data
-  std::map<KeyType, ValueType> _cache;
+  std::map<KeyType, ValueType> cache_;
 };
 
 /*!
@@ -112,7 +112,7 @@ public:
   ) {
     // add all generators
     for(const auto& pair: initList) {
-      _generationMap[pair.first] = pair.second;
+      generationMap_[pair.first] = pair.second;
     }
   }
 //!@}
@@ -123,7 +123,7 @@ public:
   //! Adds a data value for a key value into the cache.
   template<typename T>
   void add(const KeyType& key, const T& value) {
-    _cache.emplace(
+    cache_.emplace(
       key,
       value
     );
@@ -136,21 +136,21 @@ public:
   template<typename T>
   T getGeneratable(const KeyType& key) {
     // if this is false, user has violated contract
-    assert(_generationMap.count(key) == 1);
+    assert(generationMap_.count(key) == 1);
 
-    if(_cache.count(key) == 1) {
+    if(cache_.count(key) == 1) {
       return boost::any_cast<T>(
-        _cache.at(key)
+        cache_.at(key)
       );
     }
 
-    _cache.emplace(
+    cache_.emplace(
       key,
-      _generationMap.at(key)() // calling it!
+      generationMap_.at(key)() // calling it!
     );
 
     return boost::any_cast<T>(
-      _cache.at(key)
+      cache_.at(key)
     );
   }
 
@@ -165,13 +165,13 @@ public:
       void(T*)
     > modifyingUnaryFunction
   ) {
-    assert(_generationMap.count(key) == 1);
+    assert(generationMap_.count(key) == 1);
 
     // if the generatable does not exist yet, generate it
-    if(_cache.count(key) == 0) {
-      _cache.emplace(
+    if(cache_.count(key) == 0) {
+      cache_.emplace(
         key,
-        _generationMap.at(key)()
+        generationMap_.at(key)()
       );
     }
 
@@ -179,7 +179,7 @@ public:
     modifyingUnaryFunction(
       boost::any_cast<T>(
         &(
-          _cache.find(key) -> second
+          cache_.find(key) -> second
         )
       )
     );
@@ -188,13 +188,13 @@ public:
 
   //! Invalidates the entire cache, removing all stored data
   void invalidate() {
-    _cache.clear();
+    cache_.clear();
   }
 
   //! Selectively invalidates cache entries
   void invalidate(const KeyType& key) {
-    if(_cache.count(key) == 1) {
-      _cache.erase(key);
+    if(cache_.count(key) == 1) {
+      cache_.erase(key);
     }
   }
 //!@}
@@ -204,10 +204,10 @@ public:
   //! Fetches a cache entry via an optional
   template<typename T>
   boost::optional<T> getOption(const KeyType& key) const {
-    if(_cache.count(key) == 1) {
+    if(cache_.count(key) == 1) {
       return boost::optional<T>(
         boost::any_cast<T>(
-          _cache.at(key)
+          cache_.at(key)
         )
       );
     }
@@ -217,7 +217,7 @@ public:
 
   //! Tests whether the cache contains an entry for a key
   bool has(const KeyType& key) const {
-    return (_cache.count(key) > 0);
+    return (cache_.count(key) > 0);
   }
 //!@}
 
@@ -227,7 +227,7 @@ private:
   std::map<
     KeyType,
     boost::any
-  > _cache;
+  > cache_;
 
   //! Map of key values to generating functions
   std::map<
@@ -235,7 +235,7 @@ private:
     std::function<
       boost::any()
     >
-  > _generationMap;
+  > generationMap_;
 };
 
 } //  namespace temple

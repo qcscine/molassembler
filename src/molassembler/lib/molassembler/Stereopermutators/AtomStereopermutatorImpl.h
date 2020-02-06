@@ -219,34 +219,34 @@ public:
 
 /* Operators */
   inline auto tie() const {
-    return std::make_tuple(_shape, _centerAtom, numStereopermutations(), assigned());
+    return std::make_tuple(shape_, centerAtom_, numStereopermutations(), assigned());
   }
 
 private:
 /* State */
   //! Central atom of the Stereopermutator
-  AtomIndex _centerAtom;
+  AtomIndex centerAtom_;
 
   //! The shape the stereopermutator represents
-  shapes::Shape _shape;
+  shapes::Shape shape_;
 
   //! Ranking information of substituents
-  RankingInformation _ranking;
+  RankingInformation ranking_;
 
   //! Abstract stereopermutations and intermediate state
-  stereopermutators::Abstract _abstract;
+  stereopermutators::Abstract abstract_;
 
   //! Models abstract stereopermutations and decides three-dimensional feasibility
-  stereopermutators::Feasible _feasible;
+  stereopermutators::Feasible feasible_;
 
   //! The current state of assignment (if or not, and if so, which)
-  boost::optional<unsigned> _assignmentOption;
+  boost::optional<unsigned> assignmentOption_;
 
-  //! Derived property of @p _assignmentOption
-  ShapeMap _shapePositionMap;
+  //! Derived property of @p assignmentOption_
+  ShapeMap shapePositionMap_;
 
   //! Whether all feasible assignments interconvert thermally
-  bool _thermalized;
+  bool thermalized_;
 };
 
 } // namespace molassembler

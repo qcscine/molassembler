@@ -239,7 +239,7 @@ ShapeResult shapeCentroidLast(
  *
  * Calculates @math{\theta_AB} in:
  *
- * @math{k_XY = \sqrt{\textrm{CShM}_A(B)} = \sqrt{\textrm{CShM}_B(A)} = 10 \sin(\theta_AB)}
+ * @math{k_XY = \sqrt{\textrm{CShM}A_(B)} = \sqrt{\textrm{CShM}B_(A)} = 10 \sin(\theta_AB)}
  *
  * @warning This function calls shape(), where heuristics are used for
  * particular shape sizes.
@@ -252,10 +252,10 @@ double minimumDistortionAngle(Shape a, Shape b);
  *
  * Calculates
  * @math{\Delta_AB = \frac{1}{\theta_AB}\left[
- *   \arcsin\frac{\sqrt{\textrm{CShM}_A(X)}}{10}
- *   + \arcsin\frac{\sqrt{\textrm{CShM}_B(X)}}{10}
+ *   \arcsin\frac{\sqrt{\textrm{CShM}A_(X)}}{10}
+ *   + \arcsin\frac{\sqrt{\textrm{CShM}B_(X)}}{10}
  * \right] - 1} where @math{\theta_AB} is the minimum distortion angle for the
- * shape pair and @math{\textrm{CShM}_i(x)} is the continuous shape measure of
+ * shape pair and @math{\textrm{CShM}i_(x)} is the continuous shape measure of
  * the positions @math{x} with regards to the shape @math{i}.
  *
  * This function form avoids two shape calculations if the minimum distortion

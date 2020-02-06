@@ -141,11 +141,11 @@ PURITY_STRONG constexpr std::enable_if_t<
 template<typename T>
 class ExpandedAbsoluteEqualityComparator {
 private:
-  const T _absoluteTolerance;
+  const T absoluteTolerance_;
 
 public:
   constexpr ExpandedAbsoluteEqualityComparator(const T absoluteTolerance)
-    : _absoluteTolerance(absoluteTolerance)
+    : absoluteTolerance_(absoluteTolerance)
   {
     assert(
       absoluteTolerance > 0
@@ -156,23 +156,23 @@ public:
   }
 
   PURITY_STRONG constexpr bool isLessThan(const T a, const T b) const noexcept {
-    return a < (b - _absoluteTolerance);
+    return a < (b - absoluteTolerance_);
   }
 
   PURITY_STRONG constexpr bool isMoreThan(const T a, const T b) const noexcept {
-    return a > (b + _absoluteTolerance);
+    return a > (b + absoluteTolerance_);
   }
 
   PURITY_STRONG constexpr bool isLessOrEqual(const T a, const T b) const noexcept {
-    return a < (b + _absoluteTolerance);
+    return a < (b + absoluteTolerance_);
   }
 
   PURITY_STRONG constexpr bool isMoreOrEqual(const T a, const T b) const noexcept {
-    return a > (b - _absoluteTolerance);
+    return a > (b - absoluteTolerance_);
   }
 
   PURITY_STRONG constexpr bool isEqual(const T a, const T b) const noexcept {
-    return Math::abs(a - b) <= _absoluteTolerance;
+    return Math::abs(a - b) <= absoluteTolerance_;
   }
 
   PURITY_STRONG constexpr bool isUnequal(const T a, const T b) const noexcept {
@@ -188,11 +188,11 @@ public:
 template<typename T>
 class ExpandedRelativeEqualityComparator {
 private:
-  const T _relativeTolerance;
+  const T relativeTolerance_;
 
 public:
   constexpr ExpandedRelativeEqualityComparator(const T relativeTolerance)
-    : _relativeTolerance(relativeTolerance)
+    : relativeTolerance_(relativeTolerance)
   {
     assert(relativeTolerance > 0);
   }
@@ -202,7 +202,7 @@ public:
       (a < b) && !detail::isCloseRelativeOrAbsolute(
         a,
         b,
-        _relativeTolerance,
+        relativeTolerance_,
         T {0}
       )
     );
@@ -213,7 +213,7 @@ public:
       (a > b) && !detail::isCloseRelativeOrAbsolute(
         a,
         b,
-        _relativeTolerance,
+        relativeTolerance_,
         T {0}
       )
     );
@@ -224,7 +224,7 @@ public:
       (a < b) || detail::isCloseRelativeOrAbsolute(
         a,
         b,
-        _relativeTolerance,
+        relativeTolerance_,
         T {0}
       )
     );
@@ -235,7 +235,7 @@ public:
       (a > b) || detail::isCloseRelativeOrAbsolute(
         a,
         b,
-        _relativeTolerance,
+        relativeTolerance_,
         T {0}
       )
     );
@@ -245,7 +245,7 @@ public:
     return detail::isCloseRelativeOrAbsolute(
       a,
       b,
-      _relativeTolerance,
+      relativeTolerance_,
       T {0}
     );
   }
@@ -254,7 +254,7 @@ public:
     return !detail::isCloseRelativeOrAbsolute(
       a,
       b,
-      _relativeTolerance,
+      relativeTolerance_,
       T {0}
     );
   }

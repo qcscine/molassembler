@@ -77,8 +77,8 @@ struct Zipper {
 //!@{
   class Iterator {
   private:
-    ContainerTIteratorType _left;
-    ContainerUIteratorType _right;
+    ContainerTIteratorType left_;
+    ContainerUIteratorType right_;
 
   public:
     using iterator_category = std::forward_iterator_tag;
@@ -89,13 +89,13 @@ struct Zipper {
 
     Iterator() = default;
     Iterator(ContainerTIteratorType&& left, ContainerUIteratorType&& right)
-      : _left {left},
-        _right {right}
+      : left_ {left},
+        right_ {right}
     {}
 
     Iterator& operator ++ () {
-      ++_left;
-      ++_right;
+      ++left_;
+      ++right_;
 
       return *this;
     }
@@ -107,7 +107,7 @@ struct Zipper {
     }
 
     bool operator == (const Iterator& other) const {
-      return _left == other._left && _right == other._right;
+      return left_ == other.left_ && right_ == other.right_;
     }
 
     bool operator != (const Iterator& other) const {
@@ -116,8 +116,8 @@ struct Zipper {
 
     PairType operator * () const {
       return {
-        *_left,
-        *_right
+        *left_,
+        *right_
       };
     }
   };

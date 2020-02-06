@@ -73,7 +73,7 @@ const ValueBounds SpatialModel::defaultDihedralBounds {std::nextafter(-M_PI, 0),
 SpatialModel::SpatialModel(
   const Molecule& molecule,
   const Configuration& configuration
-) : _molecule(molecule) {
+) : molecule_(molecule) {
   /* This is overall a pretty complicated constructor since it encompasses the
    * entire conversion from a molecular graph into some model of the internal
    * coordinates of all connected atoms, determining which conformations are
@@ -104,12 +104,12 @@ SpatialModel::SpatialModel(
     throw std::logic_error("Failed precondition: molecule has zero-assignment or unassigned stereopermutators");
   }
 
-  for(AtomIndex i : _molecule.graph().atoms()) {
-    if(_molecule.graph().degree(i) == 1) {
+  for(AtomIndex i : molecule_.graph().atoms()) {
+    if(molecule_.graph().degree(i) == 1) {
       continue;
     }
 
-    if(!_molecule.stereopermutators().option(i)) {
+    if(!molecule_.stereopermutators().option(i)) {
       throw std::logic_error("Non-terminal atom is missing an atom stereopermutator");
     }
   }
@@ -139,7 +139,7 @@ SpatialModel::SpatialModel(
         indexPositionPairB.second
       ) * Utils::Constants::angstrom_per_bohr ;
 
-      _constraints.emplace(
+      constraints_.emplace(
         orderedSequence(indexPositionPairA.first, indexPositionPairB.first),
         ValueBounds {spatialDistance, spatialDistance}
       );
@@ -156,29 +156,29 @@ SpatialModel::SpatialModel(
   }
 
   // Set bond distances
-  _modelBondDistances(fixedAngstromPositions, configuration.spatialModelLoosening);
+  modelBondDistances_(fixedAngstromPositions, configuration.spatialModelLoosening);
 
   /* For all flat cycles for which the internal angles can be determined
    * exactly, add that information
    */
-  _modelFlatCycles(fixedAngstromPositions, configuration.spatialModelLoosening);
+  modelFlatCycles_(fixedAngstromPositions, configuration.spatialModelLoosening);
 
   /* Create a list of AtomStereopermutators who must emit chiral constraints
    * even if they are achiral in order to satisfy refinement expectations of
    * BondStereopermutators.
    */
   std::unordered_set<AtomIndex> forceConstraintEmissionSet;
-  for(const auto& bondStereopermutator : _molecule.stereopermutators().bondStereopermutators()) {
+  for(const auto& bondStereopermutator : molecule_.stereopermutators().bondStereopermutators()) {
     for(AtomIndex placedAtomIndex : bondStereopermutator.placement()) {
       forceConstraintEmissionSet.insert(placedAtomIndex);
     }
   }
 
   // Get 1-3 information from AtomStereopermutators
-  for(const auto& stereopermutator : _molecule.stereopermutators().atomStereopermutators()) {
+  for(const auto& stereopermutator : molecule_.stereopermutators().atomStereopermutators()) {
     addAtomStereopermutatorInformation(
       stereopermutator,
-      _molecule.graph().inner(),
+      molecule_.graph().inner(),
       configuration.spatialModelLoosening,
       fixedAngstromPositions,
       forceConstraintEmissionSet.count(stereopermutator.placement()) > 0
@@ -186,25 +186,25 @@ SpatialModel::SpatialModel(
   }
 
   // Get 1-4 information from BondStereopermutators
-  for(const auto& bondStereopermutator : _molecule.stereopermutators().bondStereopermutators()) {
+  for(const auto& bondStereopermutator : molecule_.stereopermutators().bondStereopermutators()) {
     addBondStereopermutatorInformation(
       bondStereopermutator,
-      _molecule.stereopermutators().at(bondStereopermutator.placement().first),
-      _molecule.stereopermutators().at(bondStereopermutator.placement().second),
+      molecule_.stereopermutators().at(bondStereopermutator.placement().first),
+      molecule_.stereopermutators().at(bondStereopermutator.placement().second),
       configuration.spatialModelLoosening,
       fixedAngstromPositions
     );
   }
 
   /* Model spiro centers */
-  _modelSpirocenters(fixedAngstromPositions);
+  modelSpirocenters_(fixedAngstromPositions);
 
   /* Add default angles and dihedrals for all adjacent sequences (unpopulated
    * if e.g. the internal coordinates could not be modelled) to avoid using vdw
    * radius sums as minimum bounds for connected atom sequences.
    */
-  _addDefaultAngles();
-  _addDefaultDihedrals();
+  addDefaultAngles_();
+  addDefaultDihedrals_();
 }
 
 void SpatialModel::setBondBoundsIfEmpty(
@@ -214,7 +214,7 @@ void SpatialModel::setBondBoundsIfEmpty(
   // Check the precondition
   assert(bondIndices.front() < bondIndices.back());
 
-  _bondBounds.emplace(
+  bondBounds_.emplace(
     std::move(bondIndices),
     std::move(bounds)
   );
@@ -227,7 +227,7 @@ void SpatialModel::setAngleBoundsIfEmpty(
   // Check the precondition
   assert(angleIndices.front() < angleIndices.back());
 
-  _angleBounds.emplace(
+  angleBounds_.emplace(
     std::move(angleIndices),
     clamp(std::move(bounds), angleClampBounds)
   );
@@ -240,7 +240,7 @@ void SpatialModel::setDihedralBoundsIfEmpty(
   // Check the precondition
   assert(dihedralIndices.front() < dihedralIndices.back());
 
-  _dihedralBounds.emplace(
+  dihedralBounds_.emplace(
     std::move(dihedralIndices),
     std::move(bounds)
   );
@@ -456,7 +456,7 @@ void SpatialModel::addAtomStereopermutatorInformation(
     const AtomStereopermutator::MinimalChiralConstraint& minimalConstraint :
     permutator.minimalChiralConstraints(forceChiralConstraintEmission)
   ) {
-    _chiralConstraints.emplace_back(
+    chiralConstraints_.emplace_back(
       makeChiralConstraint(minimalConstraint, permutator, looseningMultiplier)
     );
   }
@@ -481,12 +481,12 @@ void SpatialModel::addAtomStereopermutatorInformation(
       constraintSites[2] = sites.at(offset + 1);
       constraintSites[3] = sites.at(offset + 2);
 
-      _chiralConstraints.emplace_back(
+      chiralConstraints_.emplace_back(
         std::move(constraintSites),
         -tolerance,
         tolerance
       );
-      _chiralConstraints.back().weight = weight;
+      chiralConstraints_.back().weight = weight;
     }
   }
 }
@@ -599,7 +599,7 @@ void SpatialModel::addBondStereopermutatorInformation(
       continue;
     }
 
-    _dihedralConstraints.emplace_back(
+    dihedralConstraints_.emplace_back(
       DihedralConstraint::SiteSequence {
         firstStereopermutator.getRanking().sites.at(iAtFirst),
         {firstStereopermutator.placement()},
@@ -999,7 +999,7 @@ ChiralConstraint SpatialModel::makeChiralConstraint(
   const AtomIndex centerAtom = permutator.placement();
 
   /* We need to calculate target upper and lower volumes for the chirality
-   * constraints. _cache.siteDistances contains bounds for the distance to
+   * constraints. cache_.siteDistances contains bounds for the distance to
    * each site site plane, and since the center of each cone should
    * constitute the average site position, we can calculate 1-3 distances
    * between the centerpoints of sites using the idealized angles.
@@ -1142,20 +1142,20 @@ ChiralConstraint SpatialModel::makeChiralConstraint(
 
 SpatialModel::BoundsMatrix SpatialModel::makePairwiseBounds() const {
   return makePairwiseBounds(
-    _molecule.graph().N(),
-    _constraints,
-    _bondBounds,
-    _angleBounds,
-    _dihedralBounds
+    molecule_.graph().N(),
+    constraints_,
+    bondBounds_,
+    angleBounds_,
+    dihedralBounds_
   );
 }
 
 std::vector<distance_geometry::ChiralConstraint> SpatialModel::getChiralConstraints() const {
-  return _chiralConstraints;
+  return chiralConstraints_;
 }
 
 std::vector<distance_geometry::DihedralConstraint> SpatialModel::getDihedralConstraints() const {
-  return _dihedralConstraints;
+  return dihedralConstraints_;
 }
 
 struct SpatialModel::ModelGraphWriter final : public MolGraphWriter {
@@ -1164,13 +1164,13 @@ struct SpatialModel::ModelGraphWriter final : public MolGraphWriter {
 
 /* Constructor */
   ModelGraphWriter(const PrivateGraph& inner, const SpatialModel& passSpatialModel)
-    : MolGraphWriter(&inner, &passSpatialModel._molecule.stereopermutators()),
+    : MolGraphWriter(&inner, &passSpatialModel.molecule_.stereopermutators()),
       spatialModel(passSpatialModel) {}
 
   std::vector<std::string> edgeTooltips(AtomIndex source, AtomIndex target) const final {
     const auto indexSequence = orderedSequence(source, target);
-    if(spatialModel._bondBounds.count(indexSequence) == 1) {
-      const auto& bondBounds = spatialModel._bondBounds.at(indexSequence);
+    if(spatialModel.bondBounds_.count(indexSequence) == 1) {
+      const auto& bondBounds = spatialModel.bondBounds_.at(indexSequence);
       std::string tooltip = "[" + std::to_string(bondBounds.lower);
       tooltip += ", ";
       tooltip += std::to_string(bondBounds.upper);
@@ -1189,7 +1189,7 @@ struct SpatialModel::ModelGraphWriter final : public MolGraphWriter {
     tooltips.emplace_back(shapes::name(permutator.getShape()));
     tooltips.emplace_back(permutator.info());
 
-    for(const auto& angleIterPair : spatialModel._angleBounds) {
+    for(const auto& angleIterPair : spatialModel.angleBounds_) {
       const auto& indexSequence = angleIterPair.first;
       const auto& angleBounds = angleIterPair.second;
 
@@ -1214,7 +1214,7 @@ struct SpatialModel::ModelGraphWriter final : public MolGraphWriter {
   ) const final {
     std::vector<std::string> tooltips;
 
-    for(const auto& dihedralMapPair : spatialModel._dihedralBounds) {
+    for(const auto& dihedralMapPair : spatialModel.dihedralBounds_) {
       const auto& indexSequence = dihedralMapPair.first;
       const auto& dihedralBounds = dihedralMapPair.second;
 
@@ -1250,7 +1250,7 @@ struct SpatialModel::ModelGraphWriter final : public MolGraphWriter {
 
 std::string SpatialModel::dumpGraphviz() const {
   ModelGraphWriter graphWriter(
-    _molecule.graph().inner(),
+    molecule_.graph().inner(),
     *this
   );
 
@@ -1258,7 +1258,7 @@ std::string SpatialModel::dumpGraphviz() const {
 
   boost::write_graphviz(
     graphvizStream,
-    _molecule.graph().inner().bgl(),
+    molecule_.graph().inner().bgl(),
     graphWriter,
     graphWriter,
     graphWriter
@@ -1269,7 +1269,7 @@ std::string SpatialModel::dumpGraphviz() const {
 
 void SpatialModel::writeGraphviz(const std::string& filename) const {
   ModelGraphWriter graphWriter(
-    _molecule.graph().inner(),
+    molecule_.graph().inner(),
     *this
   );
 
@@ -1277,7 +1277,7 @@ void SpatialModel::writeGraphviz(const std::string& filename) const {
 
   boost::write_graphviz(
     outStream,
-    _molecule.graph().inner().bgl(),
+    molecule_.graph().inner().bgl(),
     graphWriter,
     graphWriter,
     graphWriter
@@ -1617,8 +1617,8 @@ void SpatialModel::checkFixedPositionsPreconditions(
   }
 }
 
-void SpatialModel::_addDefaultAngles() {
-  const PrivateGraph& inner = _molecule.graph().inner();
+void SpatialModel::addDefaultAngles_() {
+  const PrivateGraph& inner = molecule_.graph().inner();
   /* If no explicit angle can be provided for a triple of bonded atoms, we need
    * to at least specify the range of possible angles so that no implicit
    * minimimum distance (sum of vdw radii) is used instead. This is important
@@ -1626,7 +1626,7 @@ void SpatialModel::_addDefaultAngles() {
    * can be modelled and hence angle calculation cannot be completed.
    */
 
-  const AtomIndex N = _molecule.graph().N();
+  const AtomIndex N = molecule_.graph().N();
   for(AtomIndex center = 0; center < N; ++center) {
     temple::forEach(
       temple::adaptors::allPairs(
@@ -1644,8 +1644,8 @@ void SpatialModel::_addDefaultAngles() {
   }
 }
 
-void SpatialModel::_addDefaultDihedrals() {
-  const PrivateGraph& inner = _molecule.graph().inner();
+void SpatialModel::addDefaultDihedrals_() {
+  const PrivateGraph& inner = molecule_.graph().inner();
 
   for(const auto& edgeDescriptor : inner.edges()) {
     const AtomIndex sourceIndex = inner.source(edgeDescriptor);
@@ -1680,11 +1680,11 @@ void SpatialModel::_addDefaultDihedrals() {
   }
 }
 
-void SpatialModel::_modelBondDistances(
+void SpatialModel::modelBondDistances_(
   const FixedPositionsMapType& fixedAngstromPositions,
   const double looseningFactor
 ) {
-  const PrivateGraph& inner = _molecule.graph().inner();
+  const PrivateGraph& inner = molecule_.graph().inner();
 
   for(const auto& edge: inner.edges()) {
     BondType bondType = inner.bondType(edge);
@@ -1725,11 +1725,11 @@ void SpatialModel::_modelBondDistances(
   }
 }
 
-void SpatialModel::_modelFlatCycles(
+void SpatialModel::modelFlatCycles_(
   const FixedPositionsMapType& fixedAngstromPositions,
   const double looseningFactor
 ) {
-  const PrivateGraph& inner = _molecule.graph().inner();
+  const PrivateGraph& inner = molecule_.graph().inner();
   const Cycles& cycleData = inner.cycles();
 
   for(auto cycleEdges : cycleData) {
@@ -1763,7 +1763,7 @@ void SpatialModel::_modelFlatCycles(
         cycleSize == 4
         && countPlanarityEnforcingBonds(
           cycleEdges,
-          _molecule.graph()
+          molecule_.graph()
         ) >= 1
       )
     ) {
@@ -1853,10 +1853,10 @@ void SpatialModel::_modelFlatCycles(
   }
 }
 
-void SpatialModel::_modelSpirocenters(
+void SpatialModel::modelSpirocenters_(
   const FixedPositionsMapType& fixedAngstromPositions
 ) {
-  const PrivateGraph& inner = _molecule.graph().inner();
+  const PrivateGraph& inner = molecule_.graph().inner();
   const Cycles& cycleData = inner.cycles();
 
   /* For an atom to be a spiro center, it needs to be contained in exactly two
@@ -1865,7 +1865,7 @@ void SpatialModel::_modelSpirocenters(
    * We also only have to worry about modeling them if the two URFs are
    * particularly small, i.e. are sizes 3-5
    */
-  for(const auto& stereopermutator : _molecule.stereopermutators().atomStereopermutators()) {
+  for(const auto& stereopermutator : molecule_.stereopermutators().atomStereopermutators()) {
     const AtomIndex i = stereopermutator.placement();
 
     // Skip any fixed central atoms
@@ -1958,11 +1958,11 @@ void SpatialModel::_modelSpirocenters(
            * sequences already exist.
            */
           if(
-            _angleBounds.count(firstSequence) == 1
-            && _angleBounds.count(secondSequence) == 1
+            angleBounds_.count(firstSequence) == 1
+            && angleBounds_.count(secondSequence) == 1
           ) {
-            ValueBounds firstAngleBounds = _angleBounds.at(firstSequence);
-            ValueBounds secondAngleBounds = _angleBounds.at(secondSequence);
+            ValueBounds firstAngleBounds = angleBounds_.at(firstSequence);
+            ValueBounds secondAngleBounds = angleBounds_.at(secondSequence);
 
             // Increases in cycle angles yield decrease in the cross angle
             double crossAngleLower = temple::stl17::clamp(
@@ -1996,9 +1996,9 @@ void SpatialModel::_modelSpirocenters(
               [&](const auto& firstAdjacent, const auto& secondAdjacent) {
                 auto sequence = orderedSequence(firstAdjacent, i, secondAdjacent);
 
-                auto findIter = _angleBounds.find(sequence);
-                if(findIter == _angleBounds.end()) {
-                  _angleBounds.emplace(
+                auto findIter = angleBounds_.find(sequence);
+                if(findIter == angleBounds_.end()) {
+                  angleBounds_.emplace(
                     std::make_pair(sequence, crossBounds)
                   );
                 } else {

@@ -34,7 +34,7 @@ template<
 private:
   using TreeType = BTree<T, 3, nItems, LessThanPredicate, EqualityPredicate>;
 
-  TreeType _tree;
+  TreeType tree_;
 
 public:
   //! Dynamic set
@@ -49,7 +49,7 @@ public:
     size_t size
   > constexpr DynamicSet(const ArrayType<T, size>& items) {
     for(const auto& item : items) {
-      _tree.insert(item);
+      tree_.insert(item);
     }
   }
 
@@ -58,7 +58,7 @@ public:
    * @complexity{@math{\Theta(N \log N)}}
    */
   PURITY_WEAK constexpr bool contains(const T& item) const {
-    return _tree.contains(item);
+    return tree_.contains(item);
   }
 
   /*! @brief Insertion an element into the set.
@@ -66,48 +66,48 @@ public:
    * @complexity{@math{\Theta(N \log N)}}
    */
   constexpr void insert(const T& item) {
-    _tree.insert(item);
+    tree_.insert(item);
   }
 
   PURITY_WEAK constexpr Optional<const T&> getOption(const T& item) const {
-    return _tree.getOption(item);
+    return tree_.getOption(item);
   }
 
   //! @brief Remove all elements of the set
   constexpr void clear() {
-    _tree.clear();
+    tree_.clear();
   }
 
   using const_iterator = typename TreeType::const_iterator;
 
   PURITY_WEAK constexpr const_iterator begin() const {
-    return _tree.begin();
+    return tree_.begin();
   }
 
   PURITY_WEAK constexpr const_iterator end() const {
-    return _tree.end();
+    return tree_.end();
   }
 
   PURITY_WEAK constexpr size_t size() const {
-    return _tree.size();
+    return tree_.size();
   }
 
   PURITY_WEAK constexpr bool operator == (const DynamicSet& other) const {
-    return _tree == other._tree;
+    return tree_ == other.tree_;
   }
 
   PURITY_WEAK constexpr bool operator != (const DynamicSet& other) const {
     return !(
-      _tree == other._tree
+      tree_ == other.tree_
     );
   }
 
   PURITY_WEAK constexpr bool operator < (const DynamicSet& other) const {
-    return _tree < other._tree;
+    return tree_ < other.tree_;
   }
 
   PURITY_WEAK constexpr bool operator > (const DynamicSet& other) const {
-    return other._tree < _tree;
+    return other.tree_ < tree_;
   }
 };
 

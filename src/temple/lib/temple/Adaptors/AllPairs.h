@@ -87,18 +87,18 @@ struct SingleContainerPairsGenerator
 
     iterator() = default;
     iterator(ContainerIterator left, ContainerIterator right, ContainerIterator end)
-      : _left(std::move(left)),
-        _right(std::move(right)),
-        _end(std::move(end))
+      : left_(std::move(left)),
+        right_(std::move(right)),
+        end_(std::move(end))
     {}
 
     // Prefix increment
     iterator& operator ++ () {
-      ++_right;
-      if(_right == _end) {
-        ++_left;
-        _right = _left;
-        ++_right;
+      ++right_;
+      if(right_ == end_) {
+        ++left_;
+        right_ = left_;
+        ++right_;
       }
 
       return *this;
@@ -112,7 +112,7 @@ struct SingleContainerPairsGenerator
     }
 
     bool operator == (const iterator& other) const {
-      return _left == other._left && _right == other._right;
+      return left_ == other.left_ && right_ == other.right_;
     }
 
     bool operator != (const iterator& other) const {
@@ -120,11 +120,11 @@ struct SingleContainerPairsGenerator
     }
 
     PairType operator * () const {
-      return {*_left, *_right};
+      return {*left_, *right_};
     }
 
   private:
-    ContainerIterator _left, _right, _end;
+    ContainerIterator left_, right_, end_;
   };
 
   iterator<ContainerIteratorType> begin() const {
@@ -223,18 +223,18 @@ struct TwoContainersAllPairsGenerator
       TIterator tEnd,
       UIterator uBegin,
       UIterator uEnd
-    ) : _tIter(std::move(tBegin)),
-        _tEnd(std::move(tEnd)),
-        _uBegin(std::move(uBegin)),
-        _uIter(_uBegin),
-        _uEnd(std::move(uEnd))
+    ) : tIter_(std::move(tBegin)),
+        tEnd_(std::move(tEnd)),
+        uBegin_(std::move(uBegin)),
+        uIter_(uBegin_),
+        uEnd_(std::move(uEnd))
     {}
 
     iterator& operator ++ () {
-      ++_uIter;
-      if(_uIter == _uEnd) {
-        ++_tIter;
-        _uIter = _uBegin;
+      ++uIter_;
+      if(uIter_ == uEnd_) {
+        ++tIter_;
+        uIter_ = uBegin_;
       }
 
       return *this;
@@ -248,8 +248,8 @@ struct TwoContainersAllPairsGenerator
 
     bool operator == (const iterator& other) const {
       return (
-        std::tie(_tIter, _tEnd, _uIter, _uEnd)
-        == std::tie(other._tIter, other._tEnd, other._uIter, other._uEnd)
+        std::tie(tIter_, tEnd_, uIter_, uEnd_)
+        == std::tie(other.tIter_, other.tEnd_, other.uIter_, other.uEnd_)
       );
     }
 
@@ -258,12 +258,12 @@ struct TwoContainersAllPairsGenerator
     }
 
     PairType operator * () const {
-      return {*_tIter, *_uIter};
+      return {*tIter_, *uIter_};
     }
 
   private:
-    TIterator _tIter, _tEnd;
-    UIterator _uBegin, _uIter, _uEnd;
+    TIterator tIter_, tEnd_;
+    UIterator uBegin_, uIter_, uEnd_;
   };
 
   iterator<ContainerTIterator, ContainerUIterator> begin() const {

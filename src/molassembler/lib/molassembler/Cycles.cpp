@@ -68,24 +68,24 @@ Cycles::Cycles(const Graph& sourceGraph, const bool ignoreEtaBonds)
 {}
 
 Cycles::Cycles(const PrivateGraph& sourceGraph, const bool ignoreEtaBonds)
-  : _rdlPtr(std::make_shared<RdlDataPtrs>(sourceGraph, ignoreEtaBonds))
+  : rdlPtr_(std::make_shared<RdlDataPtrs>(sourceGraph, ignoreEtaBonds))
 {
-  unsigned U = RDL_getNofURF(_rdlPtr->dataPtr);
+  unsigned U = RDL_getNofURF(rdlPtr_->dataPtr);
   for(unsigned i = 0; i < U; ++i) {
     RDL_edge* edgeArray;
-    unsigned nEdges = RDL_getEdgesForURF(_rdlPtr->dataPtr, i, &edgeArray);
+    unsigned nEdges = RDL_getEdgesForURF(rdlPtr_->dataPtr, i, &edgeArray);
     if(nEdges == RDL_INVALID_RESULT) {
       throw std::logic_error("RDL failure");
     }
 
     for(unsigned j = 0; j < nEdges; ++j) {
       const BondIndex bond { edgeArray[j][0], edgeArray[j][1] };
-      _urfMap[bond].push_back(i);
+      urfMap_[bond].push_back(i);
     }
   }
 
   // Sort the URFs for set intersections
-  for(auto& entry : _urfMap) {
+  for(auto& entry : urfMap_) {
     std::sort(
       std::begin(entry.second),
       std::end(entry.second)
@@ -94,29 +94,29 @@ Cycles::Cycles(const PrivateGraph& sourceGraph, const bool ignoreEtaBonds)
 }
 
 unsigned Cycles::numCycleFamilies() const {
-  return RDL_getNofURF(_rdlPtr->dataPtr);
+  return RDL_getNofURF(rdlPtr_->dataPtr);
 }
 
 unsigned Cycles::numCycleFamilies(const AtomIndex index) const {
-  return RDL_getNofURFContainingNode(_rdlPtr->dataPtr, index);
+  return RDL_getNofURFContainingNode(rdlPtr_->dataPtr, index);
 }
 
 //! Returns the number of relevant cycles (RCs)
 unsigned Cycles::numRelevantCycles() const {
-  return RDL_getNofRC(_rdlPtr->dataPtr);
+  return RDL_getNofRC(rdlPtr_->dataPtr);
 }
 
 unsigned Cycles::numRelevantCycles(const AtomIndex index) const {
-  return RDL_getNofRCFContainingNode(_rdlPtr->dataPtr, index);
+  return RDL_getNofRCFContainingNode(rdlPtr_->dataPtr, index);
 }
 
 Cycles::AllCyclesIterator Cycles::begin() const {
-  return {_rdlPtr};
+  return {rdlPtr_};
 }
 
 Cycles::AllCyclesIterator Cycles::end() const {
   return {
-    _rdlPtr,
+    rdlPtr_,
     numRelevantCycles()
   };
 }
@@ -255,7 +255,7 @@ makeURFIDsCycleIterator(const std::shared_ptr<Cycles::RdlDataPtrs>& dataPtr, Arg
 
 IteratorRange<Cycles::UrfIdsCycleIterator>
 Cycles::containing(const AtomIndex atom) const {
-  return detail::makeURFIDsCycleIterator(_rdlPtr, atom);
+  return detail::makeURFIDsCycleIterator(rdlPtr_, atom);
 }
 
 IteratorRange<Cycles::UrfIdsCycleIterator>
@@ -266,8 +266,8 @@ Cycles::containing(const BondIndex& bond) const {
 IteratorRange<Cycles::UrfIdsCycleIterator>
 Cycles::containing(const std::vector<BondIndex>& bonds) const {
   auto fetchBondURFs = [&](const BondIndex& bond) -> std::vector<unsigned> {
-    auto findIter = _urfMap.find(bond);
-    if(findIter == std::end(_urfMap)) {
+    auto findIter = urfMap_.find(bond);
+    if(findIter == std::end(urfMap_)) {
       return {};
     }
 
@@ -279,7 +279,7 @@ Cycles::containing(const std::vector<BondIndex>& bonds) const {
     urfs = detail::intersect(urfs, fetchBondURFs(bonds.at(i)));
   }
 
-  Cycles::UrfIdsCycleIterator begin {bonds, std::move(urfs), _rdlPtr};
+  Cycles::UrfIdsCycleIterator begin {bonds, std::move(urfs), rdlPtr_};
   Cycles::UrfIdsCycleIterator end = begin;
   end.advanceToEnd();
 
@@ -290,11 +290,11 @@ Cycles::containing(const std::vector<BondIndex>& bonds) const {
 }
 
 RDL_data* Cycles::dataPtr() const {
-  return _rdlPtr->dataPtr;
+  return rdlPtr_->dataPtr;
 }
 
 bool Cycles::operator == (const Cycles& other) const {
-  return _rdlPtr == other._rdlPtr;
+  return rdlPtr_ == other.rdlPtr_;
 }
 
 bool Cycles::operator != (const Cycles& other) const {
@@ -354,27 +354,27 @@ bool Cycles::RdlDataPtrs::bondExists(const BondIndex& bond) const {
 }
 
 Cycles::AllCyclesIterator::AllCyclesIterator(const AllCyclesIterator& other)
-  : _rdlPtr(other._rdlPtr),
-    _cyclePtr(std::make_unique<RdlCyclePtrs>(*_rdlPtr))
+  : rdlPtr_(other.rdlPtr_),
+    cyclePtr_(std::make_unique<RdlCyclePtrs>(*rdlPtr_))
 {
-  _cyclePtr->matchCycleState(*other._cyclePtr);
+  cyclePtr_->matchCycleState(*other.cyclePtr_);
 }
 
 Cycles::AllCyclesIterator::AllCyclesIterator(AllCyclesIterator&& other) noexcept
-  : _rdlPtr(std::move(other._rdlPtr)),
-    _cyclePtr(std::move(other._cyclePtr))
+  : rdlPtr_(std::move(other.rdlPtr_)),
+    cyclePtr_(std::move(other.cyclePtr_))
 {}
 
 Cycles::AllCyclesIterator& Cycles::AllCyclesIterator::operator = (const AllCyclesIterator& other) {
-  _rdlPtr = other._rdlPtr;
-  _cyclePtr = std::make_unique<RdlCyclePtrs>(*_rdlPtr);
-  _cyclePtr->matchCycleState(*other._cyclePtr);
+  rdlPtr_ = other.rdlPtr_;
+  cyclePtr_ = std::make_unique<RdlCyclePtrs>(*rdlPtr_);
+  cyclePtr_->matchCycleState(*other.cyclePtr_);
   return *this;
 }
 
 Cycles::AllCyclesIterator& Cycles::AllCyclesIterator::operator = (AllCyclesIterator&& other) noexcept {
-  _rdlPtr = std::move(other._rdlPtr);
-  _cyclePtr = std::move(other._cyclePtr);
+  rdlPtr_ = std::move(other.rdlPtr_);
+  cyclePtr_ = std::move(other.cyclePtr_);
   return *this;
 }
 
@@ -383,22 +383,22 @@ Cycles::AllCyclesIterator::~AllCyclesIterator() = default;
 Cycles::AllCyclesIterator::AllCyclesIterator(
   const std::shared_ptr<RdlDataPtrs>& dataPtr,
   unsigned rCycleIndex
-) : _rdlPtr {dataPtr} {
-  _cyclePtr = std::make_unique<RdlCyclePtrs>(*dataPtr);
+) : rdlPtr_ {dataPtr} {
+  cyclePtr_ = std::make_unique<RdlCyclePtrs>(*dataPtr);
 
   if(rCycleIndex != 0) {
     // Constructor to advance to specific index
-    while(_cyclePtr->rCycleIndex < rCycleIndex) {
+    while(cyclePtr_->rCycleIndex < rCycleIndex) {
       ++(*this);
     }
 
-    assert(_cyclePtr->rCycleIndex == rCycleIndex);
+    assert(cyclePtr_->rCycleIndex == rCycleIndex);
   }
 }
 
 Cycles::AllCyclesIterator& Cycles::AllCyclesIterator::operator ++ () {
-  if(!_cyclePtr->atEnd()) {
-    _cyclePtr->advance();
+  if(!cyclePtr_->atEnd()) {
+    cyclePtr_->advance();
   } else {
     throw std::logic_error("Advancing Cycles::AllCyclesIterator past end");
   }
@@ -413,12 +413,12 @@ Cycles::AllCyclesIterator Cycles::AllCyclesIterator::operator ++ (int) {
 }
 
 Cycles::AllCyclesIterator::value_type Cycles::AllCyclesIterator::operator * () const {
-  if(_cyclePtr->cyclePtr == nullptr) {
+  if(cyclePtr_->cyclePtr == nullptr) {
     throw std::range_error("Dereferencing Cycles::AllCyclesIterator end iterator");
   }
 
-  assert(!_cyclePtr->bonds.empty());
-  return _cyclePtr->bonds;
+  assert(!cyclePtr_->bonds.empty());
+  return cyclePtr_->bonds;
 }
 
 Cycles::AllCyclesIterator::pointer Cycles::AllCyclesIterator::operator -> () const {
@@ -428,8 +428,8 @@ Cycles::AllCyclesIterator::pointer Cycles::AllCyclesIterator::operator -> () con
 //! Must be constructed from same Cycles base and at same RC
 bool Cycles::AllCyclesIterator::operator == (const Cycles::AllCyclesIterator& other) const {
   return (
-    _rdlPtr == other._rdlPtr
-    && _cyclePtr->rCycleIndex == other._cyclePtr->rCycleIndex
+    rdlPtr_ == other.rdlPtr_
+    && cyclePtr_->rCycleIndex == other.cyclePtr_->rCycleIndex
   );
 }
 
@@ -548,24 +548,24 @@ struct Cycles::UrfIdsCycleIterator::UrfHelper {
 
   bool cycleSatisfiesSoughtConditions(const std::vector<BondIndex>& bonds) {
     CycleSatisfiesSoughtVisitor visitor {bonds};
-    return boost::apply_visitor(visitor, _soughtVariant);
+    return boost::apply_visitor(visitor, soughtVariant_);
   }
 
   template<typename Arg>
   UrfHelper(Arg&& arg, const RdlDataPtrs& dataPtrs)
-    : _soughtVariant(arg),
+    : soughtVariant_(arg),
       ids(getURFs(arg, dataPtrs)),
       idsIdx(0)
   {}
 
   template<typename Arg>
   UrfHelper(Arg&& arg, std::vector<unsigned> urfs)
-    : _soughtVariant(arg),
+    : soughtVariant_(arg),
       ids(std::move(urfs)),
       idsIdx(0)
   {}
 
-  VariantType _soughtVariant;
+  VariantType soughtVariant_;
   std::vector<unsigned> ids;
   unsigned idsIdx;
 };
@@ -573,107 +573,107 @@ struct Cycles::UrfIdsCycleIterator::UrfHelper {
 Cycles::UrfIdsCycleIterator::UrfIdsCycleIterator(
   AtomIndex soughtIndex,
   const std::shared_ptr<RdlDataPtrs>& dataPtr
-) : _rdlPtr(dataPtr),
-    _urfsPtr(std::make_unique<UrfHelper>(soughtIndex, *dataPtr)),
-    _cyclePtr()
+) : rdlPtr_(dataPtr),
+    urfsPtr_(std::make_unique<UrfHelper>(soughtIndex, *dataPtr)),
+    cyclePtr_()
 {
-  _initializeCyclesFromURFID();
+  initializeCyclesFromURFID_();
 }
 
 Cycles::UrfIdsCycleIterator::UrfIdsCycleIterator(
   const BondIndex& soughtBond,
   std::vector<unsigned> urfs,
   const std::shared_ptr<RdlDataPtrs>& dataPtr
-) : _rdlPtr(dataPtr),
-    _urfsPtr(
+) : rdlPtr_(dataPtr),
+    urfsPtr_(
       std::make_unique<UrfHelper>(
         std::vector<BondIndex> {soughtBond},
         std::move(urfs)
       )
     ),
-    _cyclePtr()
+    cyclePtr_()
 {
-  _initializeCyclesFromURFID();
+  initializeCyclesFromURFID_();
 }
 
 Cycles::UrfIdsCycleIterator::UrfIdsCycleIterator(
   const std::vector<BondIndex>& soughtBonds,
   std::vector<unsigned> urfs,
   const std::shared_ptr<RdlDataPtrs>& dataPtr
-) : _rdlPtr(dataPtr),
-    _urfsPtr(
+) : rdlPtr_(dataPtr),
+    urfsPtr_(
       std::make_unique<UrfHelper>(soughtBonds, std::move(urfs))
     ),
-    _cyclePtr()
+    cyclePtr_()
 {
-  _initializeCyclesFromURFID();
+  initializeCyclesFromURFID_();
 }
 
 Cycles::UrfIdsCycleIterator::UrfIdsCycleIterator(const UrfIdsCycleIterator& other)
-  : _rdlPtr(other._rdlPtr),
-    _urfsPtr(std::make_unique<UrfHelper>(*other._urfsPtr)),
-    _cyclePtr()
+  : rdlPtr_(other.rdlPtr_),
+    urfsPtr_(std::make_unique<UrfHelper>(*other.urfsPtr_)),
+    cyclePtr_()
 {
-  _matchCycleState(other);
+  matchCycleState_(other);
 }
 
 Cycles::UrfIdsCycleIterator::UrfIdsCycleIterator(UrfIdsCycleIterator&& other) noexcept
-  : _rdlPtr(std::move(other._rdlPtr)),
-    _urfsPtr(std::move(other._urfsPtr)),
-    _cyclePtr(std::move(other._cyclePtr))
+  : rdlPtr_(std::move(other.rdlPtr_)),
+    urfsPtr_(std::move(other.urfsPtr_)),
+    cyclePtr_(std::move(other.cyclePtr_))
 {}
 
 Cycles::UrfIdsCycleIterator& Cycles::UrfIdsCycleIterator::operator = (const UrfIdsCycleIterator& other) {
-  _rdlPtr = other._rdlPtr;
-  *_urfsPtr = *other._urfsPtr;
-  _matchCycleState(other);
+  rdlPtr_ = other.rdlPtr_;
+  *urfsPtr_ = *other.urfsPtr_;
+  matchCycleState_(other);
 
   return *this;
 }
 
-void Cycles::UrfIdsCycleIterator::_matchCycleState(const UrfIdsCycleIterator& other) {
-  if(_urfsPtr->idsIdx < _urfsPtr->ids.size()) {
-    _initializeCyclesFromURFID();
+void Cycles::UrfIdsCycleIterator::matchCycleState_(const UrfIdsCycleIterator& other) {
+  if(urfsPtr_->idsIdx < urfsPtr_->ids.size()) {
+    initializeCyclesFromURFID_();
   }
 
-  if(other._cyclePtr && other._cyclePtr->cyclePtr != nullptr) {
+  if(other.cyclePtr_ && other.cyclePtr_->cyclePtr != nullptr) {
     while(
-      _cyclePtr->cyclePtr != nullptr
-      && *_cyclePtr != *other._cyclePtr
+      cyclePtr_->cyclePtr != nullptr
+      && *cyclePtr_ != *other.cyclePtr_
     ) {
-      _cyclePtr->advance();
+      cyclePtr_->advance();
     }
 
-    if(_cyclePtr->cyclePtr == nullptr) {
+    if(cyclePtr_->cyclePtr == nullptr) {
       throw std::runtime_error("Could not match state in copy!");
     }
   }
 }
 
 Cycles::UrfIdsCycleIterator& Cycles::UrfIdsCycleIterator::operator = (UrfIdsCycleIterator&& other) noexcept {
-  _rdlPtr = std::move(other._rdlPtr);
-  _urfsPtr = std::move(other._urfsPtr);
-  _cyclePtr = std::move(other._cyclePtr);
+  rdlPtr_ = std::move(other.rdlPtr_);
+  urfsPtr_ = std::move(other.urfsPtr_);
+  cyclePtr_ = std::move(other.cyclePtr_);
 
   return *this;
 }
 
 Cycles::UrfIdsCycleIterator::~UrfIdsCycleIterator() = default;
 
-void Cycles::UrfIdsCycleIterator::_initializeCyclesFromURFID() {
-  assert(_urfsPtr);
-  if(!_urfsPtr->ids.empty()) {
-    assert(_urfsPtr->idsIdx < _urfsPtr->ids.size());
-    _cyclePtr = std::make_unique<RdlCyclePtrs>(
-      *_rdlPtr,
-      _urfsPtr->ids[_urfsPtr->idsIdx]
+void Cycles::UrfIdsCycleIterator::initializeCyclesFromURFID_() {
+  assert(urfsPtr_);
+  if(!urfsPtr_->ids.empty()) {
+    assert(urfsPtr_->idsIdx < urfsPtr_->ids.size());
+    cyclePtr_ = std::make_unique<RdlCyclePtrs>(
+      *rdlPtr_,
+      urfsPtr_->ids[urfsPtr_->idsIdx]
     );
 
     if(
-      !_cyclePtr->atEnd()
-      && !_urfsPtr->cycleSatisfiesSoughtConditions(_cyclePtr->bonds)
+      !cyclePtr_->atEnd()
+      && !urfsPtr_->cycleSatisfiesSoughtConditions(cyclePtr_->bonds)
     ) {
-      _advanceToNextPermissibleCycle();
+      advanceToNextPermissibleCycle_();
     }
 
     /* This is odd, but there does NOT have to be at least one RC in each URF
@@ -682,35 +682,35 @@ void Cycles::UrfIdsCycleIterator::_initializeCyclesFromURFID() {
   }
 }
 
-void Cycles::UrfIdsCycleIterator::_advanceToNextPermissibleCycle() {
-  assert(!_cyclePtr->atEnd());
+void Cycles::UrfIdsCycleIterator::advanceToNextPermissibleCycle_() {
+  assert(!cyclePtr_->atEnd());
 
   do {
-    _cyclePtr->advance();
+    cyclePtr_->advance();
   } while(
-    !_cyclePtr->atEnd()
-    && !_urfsPtr->cycleSatisfiesSoughtConditions(_cyclePtr->bonds)
+    !cyclePtr_->atEnd()
+    && !urfsPtr_->cycleSatisfiesSoughtConditions(cyclePtr_->bonds)
   );
 }
 
 Cycles::UrfIdsCycleIterator& Cycles::UrfIdsCycleIterator::operator ++ () {
-  assert(!_cyclePtr->atEnd());
+  assert(!cyclePtr_->atEnd());
 
   // Advance the cycle iterator if it's not at the end yet
-  if(!_cyclePtr->atEnd()) {
-    _advanceToNextPermissibleCycle();
+  if(!cyclePtr_->atEnd()) {
+    advanceToNextPermissibleCycle_();
   }
 
   /* If the cycle iterator is at the end now, advance to the next URF ID from
    * the list if possible. It may be strange, but it is not necessary
    * that a URF ID yields any RCs that fulfill the sought conditions.
    */
-  while(_cyclePtr->atEnd()) {
-    ++_urfsPtr->idsIdx;
-    if(_urfsPtr->idsIdx < _urfsPtr->ids.size()) {
-      _initializeCyclesFromURFID();
+  while(cyclePtr_->atEnd()) {
+    ++urfsPtr_->idsIdx;
+    if(urfsPtr_->idsIdx < urfsPtr_->ids.size()) {
+      initializeCyclesFromURFID_();
     } else {
-      _cyclePtr = {};
+      cyclePtr_ = {};
       break;
     }
   }
@@ -725,13 +725,13 @@ Cycles::UrfIdsCycleIterator Cycles::UrfIdsCycleIterator::operator ++ (int) {
 }
 
 Cycles::UrfIdsCycleIterator::value_type Cycles::UrfIdsCycleIterator::operator * () const {
-  if(_cyclePtr->cyclePtr == nullptr) {
+  if(cyclePtr_->cyclePtr == nullptr) {
     throw std::range_error("Dereferencing Cycles::UrfIdsCycleIterator end iterator");
   }
 
-  assert(_urfsPtr->cycleSatisfiesSoughtConditions(_cyclePtr->bonds));
-  assert(!_cyclePtr->bonds.empty());
-  return _cyclePtr->bonds;
+  assert(urfsPtr_->cycleSatisfiesSoughtConditions(cyclePtr_->bonds));
+  assert(!cyclePtr_->bonds.empty());
+  return cyclePtr_->bonds;
 }
 
 Cycles::UrfIdsCycleIterator::pointer Cycles::UrfIdsCycleIterator::operator -> () const {
@@ -741,25 +741,25 @@ Cycles::UrfIdsCycleIterator::pointer Cycles::UrfIdsCycleIterator::operator -> ()
 bool Cycles::UrfIdsCycleIterator::operator == (const UrfIdsCycleIterator& other) const {
   // Compare address of shared_ptr and the URF id index
   if(
-    std::tie(_rdlPtr, _urfsPtr->idsIdx)
-    != std::tie(other._rdlPtr, other._urfsPtr->idsIdx)
+    std::tie(rdlPtr_, urfsPtr_->idsIdx)
+    != std::tie(other.rdlPtr_, other.urfsPtr_->idsIdx)
   ) {
     return false;
   }
 
-  // _cyclePtr is nullable (end iterator)
-  if(_cyclePtr.operator bool() xor other._cyclePtr.operator bool()) {
+  // cyclePtr_ is nullable (end iterator)
+  if(cyclePtr_.operator bool() xor other.cyclePtr_.operator bool()) {
     // Heterogeneous case, one of both is an end iterator
     return false;
   }
 
   // Homogeneous case 1 (both are the end iterator)
-  if(!_cyclePtr && !other._cyclePtr) {
+  if(!cyclePtr_ && !other.cyclePtr_) {
     return true;
   }
 
   // Homogeneous case 2 (neither are the end iterator)
-  return _cyclePtr->rCycleIndex == other._cyclePtr->rCycleIndex;
+  return cyclePtr_->rCycleIndex == other.cyclePtr_->rCycleIndex;
 }
 
 bool Cycles::UrfIdsCycleIterator::operator != (const UrfIdsCycleIterator& other) const {
@@ -767,8 +767,8 @@ bool Cycles::UrfIdsCycleIterator::operator != (const UrfIdsCycleIterator& other)
 }
 
 void Cycles::UrfIdsCycleIterator::advanceToEnd() {
-  _cyclePtr.reset();
-  _urfsPtr->idsIdx = _urfsPtr->ids.size();
+  cyclePtr_.reset();
+  urfsPtr_->idsIdx = urfsPtr_->ids.size();
 }
 
 boost::optional<unsigned> smallestCycleContaining(AtomIndex atom, const Cycles& cycles) {

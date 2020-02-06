@@ -229,12 +229,12 @@ std::pair<Molecule, Molecule> Editing::cleave(const Molecule& a, const BondIndex
     Molecule& molecule,
     const AtomIndex notifyIndex
   ) {
-    if(auto stereopermutatorOption = molecule._pImpl->_stereopermutators.option(notifyIndex)) {
+    if(auto stereopermutatorOption = molecule.pImpl_->stereopermutators_.option(notifyIndex)) {
       auto localRanking = molecule.rankPriority(notifyIndex);
 
       // In case the central atom becomes terminal, just drop the stereopermutator
       if(localRanking.sites.size() <= 1) {
-        molecule._pImpl->_stereopermutators.remove(notifyIndex);
+        molecule.pImpl_->stereopermutators_.remove(notifyIndex);
         return;
       }
 
@@ -245,7 +245,7 @@ std::pair<Molecule, Molecule> Editing::cleave(const Molecule& a, const BondIndex
 
       // Notify the stereopermutator to remove the placeholder
       stereopermutatorOption->propagate(
-        molecule._pImpl->_adjacencies,
+        molecule.pImpl_->adjacencies_,
         std::move(localRanking),
         shapeOption
       );
@@ -263,7 +263,7 @@ std::pair<Molecule, Molecule> Editing::cleave(const Molecule& a, const BondIndex
     }
 
     // Rerank everywhere and update all stereopermutators
-    molecule._pImpl->_propagateGraphChange();
+    molecule.pImpl_->propagateGraphChange_();
   };
 
   fixEdgeAndPropagate(
@@ -294,7 +294,7 @@ Molecule Editing::insert(
    *   internal state
    * - Call notifyGraphChange and return log
    */
-  PrivateGraph& logInner = log._pImpl->_adjacencies.inner();
+  PrivateGraph& logInner = log.pImpl_->adjacencies_.inner();
 
   // Copy all vertices from wedge into log
   auto vertexMapping = detail::transferGraph(
@@ -322,7 +322,7 @@ Molecule Editing::insert(
   );
 
   // Copy in stereopermutators from wedge
-  StereopermutatorList& logStereopermutators = log._pImpl->_stereopermutators;
+  StereopermutatorList& logStereopermutators = log.pImpl_->stereopermutators_;
 
   detail::transferStereopermutators(
     wedge.stereopermutators(),
@@ -368,7 +368,7 @@ Molecule Editing::insert(
       }
 
       permutatorOption->propagate(
-        log._pImpl->_adjacencies,
+        log.pImpl_->adjacencies_,
         std::move(localRanking),
         shapeOption
       );
@@ -399,7 +399,7 @@ Molecule Editing::insert(
   );
 
   // Rerank everywhere and return
-  log._pImpl->_propagateGraphChange();
+  log.pImpl_->propagateGraphChange_();
   return log;
 }
 
@@ -422,7 +422,7 @@ Molecule Editing::superpose(
     bottomAtom + 1
   );
 
-  PrivateGraph& topInner = top._pImpl->_adjacencies.inner();
+  PrivateGraph& topInner = top.pImpl_->adjacencies_.inner();
 
   auto vertexMapping = detail::transferGraph(
     bottom.graph().inner(),
@@ -438,7 +438,7 @@ Molecule Editing::superpose(
    */
 
   // Copy in stereopermutators from bottom, including ones placed on bottomAtom
-  StereopermutatorList& topStereopermutators = top._pImpl->_stereopermutators;
+  StereopermutatorList& topStereopermutators = top.pImpl_->stereopermutators_;
   vertexMapping[bottomAtom] = topAtom;
   detail::transferStereopermutators(
     bottom.stereopermutators(),
@@ -475,7 +475,7 @@ Molecule Editing::superpose(
       }
 
       topPermutatorOption->propagate(
-        top._pImpl->_adjacencies,
+        top.pImpl_->adjacencies_,
         std::move(localRanking),
         shapeOption
       );
@@ -492,7 +492,7 @@ Molecule Editing::superpose(
   }
 
   // Rerank everywhere and return
-  top._pImpl->_propagateGraphChange();
+  top.pImpl_->propagateGraphChange_();
   return top;
 }
 
@@ -618,7 +618,7 @@ Molecule Editing::substitute(
   };
 
   // Rerank everywhere and return
-  compound._pImpl->_propagateGraphChange();
+  compound.pImpl_->propagateGraphChange_();
   return compound;
 }
 
@@ -629,8 +629,8 @@ Molecule Editing::connect(
   const AtomIndex bConnectAtom,
   const BondType bondType
 ) {
-  PrivateGraph& aInnerGraph = a._pImpl->_adjacencies.inner();
-  StereopermutatorList& aStereopermutators = a._pImpl->_stereopermutators;
+  PrivateGraph& aInnerGraph = a.pImpl_->adjacencies_.inner();
+  StereopermutatorList& aStereopermutators = a.pImpl_->stereopermutators_;
 
   // Copy b's graph into a
   auto vertexMapping = detail::transferGraph(
@@ -659,8 +659,8 @@ Molecule Editing::addLigand(
   AtomIndex complexatingAtom,
   const std::vector<AtomIndex>& ligandBindingAtoms
 ) {
-  PrivateGraph& aInnerGraph = a._pImpl->_adjacencies.inner();
-  StereopermutatorList& aStereopermutators = a._pImpl->_stereopermutators;
+  PrivateGraph& aInnerGraph = a.pImpl_->adjacencies_.inner();
+  StereopermutatorList& aStereopermutators = a.pImpl_->stereopermutators_;
 
   auto vertexMapping = detail::transferGraph(
     ligand.graph().inner(),

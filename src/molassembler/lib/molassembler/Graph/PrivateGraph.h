@@ -305,9 +305,9 @@ private:
     }
   };
 
-  RemovalSafetyData _generateRemovalSafetyData() const;
-  Cycles _generateCycles() const;
-  Cycles _generateEtaPreservedCycles() const;
+  RemovalSafetyData generateRemovalSafetyData_() const;
+  Cycles generateCycles_() const;
+  Cycles generateEtaPreservedCycles_() const;
 //!@}
 
 //!@name Information
@@ -317,9 +317,9 @@ private:
 //!@name Private state
 //!@{
   //! A directly owned Boost Library Graph.
-  BglType _graph;
+  BglType graph_;
   //! Property caching
-  mutable Properties _properties;
+  mutable Properties properties_;
 //!@}
 };
 

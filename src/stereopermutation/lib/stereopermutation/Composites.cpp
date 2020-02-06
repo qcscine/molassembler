@@ -186,7 +186,7 @@ std::vector<shapes::Vertex> Composite::OrientationState::findReductionMapping(
   shapes::Vertex reducedFusedVertex
 ) const {
   /* NOTE: The implementation below is VERY similar to
-   * Stereopermutation::_generateAllRotation's generation work.
+   * Stereopermutation::generateAllRotation_'s generation work.
    * BUT! This algorithm doesn't store the rotations, merely their index of
    * permutation to be able to terminate the backtracking algorithm, and tracks
    * the best structure.
@@ -562,11 +562,11 @@ Composite::Composite(
   OrientationState first,
   OrientationState second,
   const Alignment alignment
-) : _orientations { std::move(first), std::move(second) },
-    _alignment(alignment)
+) : orientations_ { std::move(first), std::move(second) },
+    alignment_(alignment)
 {
   // Do not construct the ordered pair of OrientationStates with same identifier
-  assert(_orientations.first.identifier != _orientations.second.identifier);
+  assert(orientations_.first.identifier != orientations_.second.identifier);
 
   /* In order to get meaningful indices of permutation, combinations of
    * symmetries across fused positions within the same group of symmetry
@@ -577,14 +577,14 @@ Composite::Composite(
    * symmetry position in its symmetry. After permutation are generated,
    * the orientation state is transformed back.
    */
-  auto firstReversionMapping = _orientations.first.transformToCanonical();
-  auto secondReversionMapping = _orientations.second.transformToCanonical();
+  auto firstReversionMapping = orientations_.first.transformToCanonical();
+  auto secondReversionMapping = orientations_.second.transformToCanonical();
 
   /* Find the group of symmetry positions with the smallest angle to the
    * fused position (these are the only important ones when considering
    * relative arrangements across the bond).
    */
-  auto angleGroups = _orientations.map(
+  auto angleGroups = orientations_.map(
     [](const OrientationState& orientation) -> AngleGroup {
       return orientation.smallestAngleGroup();
     }
@@ -597,8 +597,8 @@ Composite::Composite(
     angleGroups.first.vertices,
     [&](const unsigned a, const unsigned b) -> bool {
       return (
-        std::tie(_orientations.first.characters.at(a), a)
-        > std::tie(_orientations.first.characters.at(b), b)
+        std::tie(orientations_.first.characters.at(a), a)
+        > std::tie(orientations_.first.characters.at(b), b)
       );
     }
   );
@@ -607,8 +607,8 @@ Composite::Composite(
     angleGroups.second.vertices,
     [&](const unsigned a, const unsigned b) -> bool {
       return (
-        std::tie(_orientations.second.characters.at(a), a)
-        > std::tie(_orientations.second.characters.at(b), b)
+        std::tie(orientations_.second.characters.at(a), a)
+        > std::tie(orientations_.second.characters.at(b), b)
       );
     }
   );
@@ -619,7 +619,7 @@ Composite::Composite(
    * ranked substituents are placed. This is important information for deciding
    * whether a Composite yields a stereogenic object.
    */
-  _isotropic = angleGroups.first.isotropic || angleGroups.second.isotropic;
+  isotropic_ = angleGroups.first.isotropic || angleGroups.second.isotropic;
 
   /* Generate a set of stereopermutations for this particular combination,
    * which can then be indexed
@@ -641,19 +641,19 @@ Composite::Composite(
    * NOTE: The central atom of both symmetries is always placed at the origin
    * in the coordinate definitions.
    */
-  auto firstCoordinates = shapes::coordinates(_orientations.first.shape);
+  auto firstCoordinates = shapes::coordinates(orientations_.first.shape);
   // Rotate left fused position onto <1, 0, 0>
   detail::rotateCoordinates(
     firstCoordinates,
-    firstCoordinates.col(_orientations.first.fusedVertex).normalized(),
+    firstCoordinates.col(orientations_.first.fusedVertex).normalized(),
     Eigen::Vector3d::UnitX()
   );
 
-  auto secondCoordinates = shapes::coordinates(_orientations.second.shape);
+  auto secondCoordinates = shapes::coordinates(orientations_.second.shape);
   // Rotate right fused position onto <-1, 0, 0>
   detail::rotateCoordinates(
     secondCoordinates,
-    secondCoordinates.col(_orientations.second.fusedVertex).normalized(),
+    secondCoordinates.col(orientations_.second.fusedVertex).normalized(),
     -Eigen::Vector3d::UnitX()
   );
 
@@ -755,7 +755,7 @@ Composite::Composite(
 
       if(
         !temple::any_of(
-          _stereopermutations,
+          stereopermutations_,
           [&dihedralList](const auto& rhsDihedralList) -> bool {
             return fpComparator.isEqual(
               std::get<2>(dihedralList.front()),
@@ -772,7 +772,7 @@ Composite::Composite(
           }
         )
       ) {
-        _stereopermutations.push_back(std::move(dihedralList));
+        stereopermutations_.push_back(std::move(dihedralList));
       }
     }
   );
@@ -785,7 +785,7 @@ Composite::Composite(
     && angleGroups.second.vertices.size() == 1
   ) {
     // Add trans dihedral possibility
-    _stereopermutations.emplace_back(
+    stereopermutations_.emplace_back(
       std::vector<DihedralTuple> {
         DihedralTuple {
           angleGroups.first.vertices.front(),
@@ -797,10 +797,10 @@ Composite::Composite(
   }
 
   // Revert the OrientationStates and transform the stereopermutations too
-  _orientations.first.revert(firstReversionMapping);
-  _orientations.second.revert(secondReversionMapping);
+  orientations_.first.revert(firstReversionMapping);
+  orientations_.second.revert(secondReversionMapping);
 
-  for(auto& stereopermutation : _stereopermutations) {
+  for(auto& stereopermutation : stereopermutations_) {
     for(auto& dihedralTuple : stereopermutation) {
       auto findIter = std::find(
         std::begin(firstReversionMapping),
@@ -812,7 +812,7 @@ Composite::Composite(
 
       std::get<0>(dihedralTuple) = findIter - std::begin(firstReversionMapping);
 
-      assert(std::get<0>(dihedralTuple) != _orientations.first.fusedVertex);
+      assert(std::get<0>(dihedralTuple) != orientations_.first.fusedVertex);
 
       findIter = std::find(
         std::begin(secondReversionMapping),
@@ -824,7 +824,7 @@ Composite::Composite(
 
       std::get<1>(dihedralTuple) = findIter - std::begin(secondReversionMapping);
 
-      assert(std::get<1>(dihedralTuple) != _orientations.second.fusedVertex);
+      assert(std::get<1>(dihedralTuple) != orientations_.second.fusedVertex);
     }
   }
 
@@ -835,37 +835,37 @@ Composite::Composite(
    *   1 > 0 == Z > E
    */
   std::reverse(
-    std::begin(_stereopermutations),
-    std::end(_stereopermutations)
+    std::begin(stereopermutations_),
+    std::end(stereopermutations_)
   );
 }
 
 void Composite::applyIdentifierPermutation(const std::vector<std::size_t>& permutation) {
-  for(auto& orientationState : _orientations) {
+  for(auto& orientationState : orientations_) {
     orientationState.identifier = permutation.at(orientationState.identifier);
   }
 }
 
 unsigned Composite::permutations() const {
-  return _stereopermutations.size();
+  return stereopermutations_.size();
 }
 
 Composite::Alignment Composite::alignment() const {
-  return _alignment;
+  return alignment_;
 }
 
 const std::vector<Composite::DihedralTuple>& Composite::dihedrals(unsigned permutationIndex) const {
-  return _stereopermutations.at(permutationIndex);
+  return stereopermutations_.at(permutationIndex);
 }
 
 bool Composite::isIsotropic() const {
-  return _isotropic;
+  return isotropic_;
 }
 
 unsigned Composite::order() const {
   auto countDistinct = [&](auto&& f) {
     std::set<unsigned> positions;
-    for(const DihedralTuple& t : _stereopermutations.front()) {
+    for(const DihedralTuple& t : stereopermutations_.front()) {
       positions.insert(f(t));
     }
     return positions.size();
@@ -878,23 +878,23 @@ unsigned Composite::order() const {
 }
 
 const temple::OrderedPair<Composite::OrientationState>& Composite::orientations() const {
-  return _orientations;
+  return orientations_;
 }
 
 Composite::PermutationsList::const_iterator Composite::begin() const {
-  return std::begin(_stereopermutations);
+  return std::begin(stereopermutations_);
 }
 
 Composite::PermutationsList::const_iterator Composite::end() const {
-  return std::end(_stereopermutations);
+  return std::end(stereopermutations_);
 }
 
 bool Composite::operator < (const Composite& other) const {
-  return _orientations < other._orientations;
+  return orientations_ < other.orientations_;
 }
 
 bool Composite::operator == (const Composite& other) const {
-  return _orientations == other._orientations;
+  return orientations_ == other.orientations_;
 }
 
 bool Composite::operator != (const Composite& other) const {

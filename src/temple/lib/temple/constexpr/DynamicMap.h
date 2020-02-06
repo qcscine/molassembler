@@ -39,7 +39,7 @@ private:
    * type there.
    */
   struct OnlyFirstComparator {
-    constexpr static auto _keyComparator = std::less<KeyType>();
+    constexpr static auto keyComparator_ = std::less<KeyType>();
 
     constexpr OnlyFirstComparator() = default;
 
@@ -47,12 +47,12 @@ private:
       const PairType& a,
       const PairType& b
     ) const {
-      return _keyComparator(a.first, b.first);
+      return keyComparator_(a.first, b.first);
     }
   };
 
   struct OnlyFirstEquality {
-    constexpr static auto _keyComparator = std::equal_to<KeyType>();
+    constexpr static auto keyComparator_ = std::equal_to<KeyType>();
 
     constexpr OnlyFirstEquality() = default;
 
@@ -60,13 +60,13 @@ private:
       const PairType& a,
       const PairType& b
     ) const {
-      return _keyComparator(a.first, b.first);
+      return keyComparator_(a.first, b.first);
     }
   };
 
   using SetType = DynamicSet<PairType, N, OnlyFirstComparator, OnlyFirstEquality>;
 
-  SetType _items;
+  SetType items_;
 
 public:
 //!@name Special member functions
@@ -74,20 +74,20 @@ public:
   constexpr DynamicMap() = default;
 
   constexpr DynamicMap(DynamicMap&& other) noexcept
-    : _items(other._items)
+    : items_(other.items_)
   {}
 
   constexpr DynamicMap(const DynamicMap& other)
-    : _items(other._items)
+    : items_(other.items_)
   {}
 
   constexpr DynamicMap& operator = (const DynamicMap& other) {
-    _items = other._items;
+    items_ = other.items_;
     return *this;
   }
 
   constexpr DynamicMap& operator = (DynamicMap&& other) noexcept {
-    _items = other._items;
+    items_ = other.items_;
     return *this;
   }
 //!@}
@@ -104,11 +104,11 @@ public:
   ) {
     PairType pair { std::move(key), std::move(item) };
 
-    if(_items.contains(pair)) {
+    if(items_.contains(pair)) {
       throw "Map already contains an item for this key!";
     }
 
-    _items.insert(pair);
+    items_.insert(pair);
   }
 
   /*! @brief Inserts a key-value pair into the map or updates the mapped value
@@ -122,23 +122,23 @@ public:
   ) {
     PairType pair { std::move(key), std::move(item) };
 
-    auto searchIter = _items.find(pair);
+    auto searchIter = items_.find(pair);
 
-    if(searchIter == _items.end()) {
-      _items.insert(pair);
+    if(searchIter == items_.end()) {
+      items_.insert(pair);
     } else {
       // searchIter is a const_iterator unfortunately, so need to go via index
       auto indexOfElement = static_cast<unsigned>(
-        searchIter - _items.begin()
+        searchIter - items_.begin()
       );
 
       // Overwrite pair with same key
-      *(_items.begin() + indexOfElement) = pair;
+      *(items_.begin() + indexOfElement) = pair;
     }
   }
 
   constexpr void clear() {
-    _items.clear();
+    items_.clear();
   }
 //!@}
 
@@ -150,7 +150,7 @@ public:
    */
   constexpr const MappedType& at(const KeyType& key) const {
     PairType pair {key, MappedType {}};
-    auto keyOptional = _items.getOption(pair);
+    auto keyOptional = items_.getOption(pair);
 
     if(!keyOptional.hasValue()) {
       throw "No such key in this DynamicMap!";
@@ -165,7 +165,7 @@ public:
    * @complexity{@math{\Theta(1)}}
    */
   constexpr unsigned size() const {
-    return _items.size();
+    return items_.size();
   }
 //!@}
 
@@ -174,17 +174,17 @@ public:
   using const_iterator = typename SetType::const_iterator;
 
   constexpr const_iterator begin() const {
-    return _items.begin();
+    return items_.begin();
   }
 
   constexpr const_iterator end() const {
-    return _items.end();
+    return items_.end();
   }
 //!@}
 
 //!@name Operators
   constexpr bool operator == (const DynamicMap& other) const {
-    return _items == other._items;
+    return items_ == other.items_;
   }
 
   constexpr bool operator != (const DynamicMap& other) const {
@@ -192,11 +192,11 @@ public:
   }
 
   constexpr bool operator < (const DynamicMap& other) const {
-    return _items < other._items;
+    return items_ < other.items_;
   }
 
   constexpr bool operator > (const DynamicMap& other) const {
-    return other._items < _items;
+    return other.items_ < items_;
   }
 //!@}
 };
