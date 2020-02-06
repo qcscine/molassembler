@@ -9,7 +9,7 @@ def conan_paths_path_str(build_folder):
 
 class MolassemblerConan(ConanFile):
     name = "Molassembler"
-    version = "0.1.0"
+    version = "1.0.0"
     license = "BSD-3-Clause"
     author = "Jan-Grimo Sobez jan-grimo.sobez@phys.chem.ethz.ch"
     url = "https://gitlab.chab.ethz.ch/scine/molassembler"
@@ -22,13 +22,12 @@ of multidentate and haptic inorganic molecules from positional data and
 generate non-superposable stereopermutations as output."""
     topics = ("chemistry", "cheminformatics", "molecule")
     settings = "os", "compiler", "build_type", "arch"
-    options = {"subsume_dependencies": [True, False]}
-    default_options = {"subsume_dependencies": False}
+    options = {"shared": [True, False]}
+    default_options = {"shared": True}
     generators = "cmake_paths"
     exports_sources = "src/*", "CMakeLists.txt"
     build_requires = [("eigen/[~=3.3.7]@conan/stable")]
-    requires = [("boost/[~=1.71.0]@conan/stable"),
-                ("lapack/[~=3.7.1]@conan/stable")]
+    requires = [("boost/[~=1.71.0]@conan/stable")]
 
     def _configure_cmake(self):
         cmake = CMake(self)
@@ -47,10 +46,6 @@ generate non-superposable stereopermutations as output."""
         if self.settings.os == "Windows":
             self.build_requires("mingw_installer/[~=1.0]@conan/stable")
 
-    def config_options(self):
-        if self.settings.os == "Windows":
-            del self.options.fPIC
-
     def build(self):
         cmake = self._configure_cmake()
         cmake.build()
@@ -62,20 +57,3 @@ generate non-superposable stereopermutations as output."""
 
     def package_info(self):
         self.cpp_info.libs = ["molassembler"]
-
-
-if __name__ == "__main__":
-    print("Molassembler conan recipe options and default values:\n")
-
-    explanations = {
-        "subsume_dependencies": "Use static dependencies in order to get libraries and binaries with minimal runtime dependencies."
-    }
-
-    recipe = MolassemblerConan
-    for key in recipe.options.keys():
-        print("- " + str(key) + ": " + str(recipe.default_options[key]))
-        if key in explanations.keys():
-            for line in wrap(explanations[key], initial_indent="  ", subsequent_indent="  "):
-                print(line)
-
-            print()
