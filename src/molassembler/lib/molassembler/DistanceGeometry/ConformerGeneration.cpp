@@ -460,7 +460,7 @@ std::vector<
     return ReturnType(numConformers, DgError::ZeroAssignmentStereopermutators);
   }
 
-#ifdef OPENMP_
+#ifdef _OPENMP
   /* Ensure the molecule's mutable properties are already generated so none are
    * generated on threaded const-access.
    */
@@ -480,78 +480,85 @@ std::vector<
 
   ReturnType results(numConformers, static_cast<DgError>(0));
 
+  /* If a seed is supplied, the global prng state is not to be advanced.
+   * We create a random engine from the seed here if a seed is supplied.
+   */
   auto engineOption = temple::optionals::map(
     seedOption,
-    [](unsigned seed) -> random::Engine {
-      random::Engine engine;
-      engine.seed(seed);
-      return engine;
-    }
+    [](unsigned seed) { return random::Engine(seed); }
   );
 
+  /* Now we need something referencing either our new engine or the global prng
+   * engine.
+   */
   std::reference_wrapper<random::Engine> backgroundEngineWrapper = randomnessEngine();
   if(engineOption) {
     backgroundEngineWrapper = engineOption.value();
   }
   random::Engine& backgroundEngine = backgroundEngineWrapper.get();
 
-#pragma omp parallel
-  {
-#ifdef OPENMP_
-    /* We have to distribute pseudo-randomness into each thread reproducibly
-     * and want to avoid having to guard the global PRNG against access from
-     * multiple threads, so we provide each thread its own Engine.
-     */
-    const unsigned nThreads = omp_get_num_threads();
-    std::vector<random::Engine> randomnessEngines(nThreads);
+  /* We have to distribute pseudo-randomness into each thread reproducibly
+   * and want to avoid having to guard the global PRNG against access from
+   * multiple threads, so we provide each thread its own Engine and pre-generate
+   * each conformer's individual seed in the sequential section.
+   */
+#ifdef _OPENMP
+  const unsigned nThreads = omp_get_max_threads();
+#else
+  const unsigned nThreads = 1;
 #endif
 
-    /* Each thread has its own DgDataPtr, for the following reason: If we do
-     * not need to regenerate the SpatialModel data, then having all threads
-     * share access the underlying data to generate conformers is fine. If,
-     * otherwise, we do need to regenerate the SpatialModel data for each
-     * conformer, then each thread will reset its pointer to its self-generated
-     * SpatialModel data, creating thread-private state.
+  std::vector<random::Engine> randomnessEngines(nThreads);
+  const auto seeds = temple::random::getN<int>(
+    0,
+    std::numeric_limits<int>::max(),
+    numConformers,
+    backgroundEngine
+  );
+
+  /* Each thread has its own DgDataPtr, for the following reason: If we do
+   * not need to regenerate the SpatialModel data, then having all threads
+   * share access the underlying data to generate conformers is fine. If,
+   * otherwise, we do need to regenerate the SpatialModel data for each
+   * conformer, then each thread will reset its pointer to its self-generated
+   * SpatialModel data, creating thread-private state.
+   */
+#pragma omp parallel for firstprivate(DgDataPtr) schedule(dynamic)
+  for(unsigned i = 0; i < numConformers; ++i) {
+    // Get thread-specific randomness engine reference
+#ifdef _OPENMP
+    random::Engine& engine = randomnessEngines.at(
+      omp_get_thread_num()
+    );
+#else
+    random::Engine& engine = randomnessEngines.front();
+#endif
+
+    // Re-seed the thread-local PRNG engine for each conformer
+    engine.seed(seeds.at(i));
+
+    /* We have to handle any and all exceptions here bceause this is a parallel
+     * environment and exceptions are not propagated anywhere
      */
-#pragma omp for firstprivate(DgDataPtr)
-    for(unsigned i = 0; i < numConformers; ++i) {
-      // Get thread-specific randomness engine reference
-#ifdef OPENMP_
-      random::Engine& engine = randomnessEngines.at(
-        omp_get_thread_num()
+    try {
+      // Generate the conformer
+      auto conformerResult = generateConformer(
+        molecule,
+        configuration,
+        DgDataPtr,
+        regenerateEachStep,
+        engine
       );
 
-      // Re-seed the thread-local PRNG engine for each conformer
-#pragma omp critical
-      engine.seed(backgroundEngine());
-
-#else
-      random::Engine engine;
-      engine.seed(backgroundEngine());
-#endif
-
-      /* We have to handle any and all exceptions here bceause this is a
-       * parallel environment
-       */
-      try {
-        // Generate the conformer
-        auto conformerResult = generateConformer(
-          molecule,
-          configuration,
-          DgDataPtr,
-          regenerateEachStep,
-          engine
-        );
-
-        results.at(i) = std::move(conformerResult);
-      } catch(std::exception& e) {
-#pragma omp critical(collectConformer)
-        {
-          std::cerr << "WARNING: Uncaught exception in conformer generation: " << e.what() << "\n";
-        }
-      } // end catch
-    } // end pragma omp for private(DgDataPtr)
-  } // end pragma omp parallel
+      results.at(i) = std::move(conformerResult);
+    } catch(std::exception& e) {
+#pragma omp critical(outputWarning)
+      {
+        std::cerr << "WARNING: Uncaught exception in conformer generation: " << e.what() << "\n";
+      }
+      results.at(i) = DgError::UnknownException;
+    } // end catch
+  } // end pragma omp for private(DgDataPtr)
 
   return results;
 }

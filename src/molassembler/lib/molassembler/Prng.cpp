@@ -55,6 +55,9 @@ Engine::Engine() : pImpl_(std::make_unique<Impl>()) {
   );
 #endif
 }
+Engine::Engine(int seedArg) : Engine() {
+  seed(seedArg);
+}
 Engine::Engine(Engine&& other) noexcept = default;
 Engine& Engine::operator = (Engine&& other) noexcept = default;
 Engine::Engine(const Engine& other) : pImpl_(std::make_unique<Impl>(*other.pImpl_)) {}

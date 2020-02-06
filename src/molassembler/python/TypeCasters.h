@@ -37,15 +37,21 @@ struct type_caster<Scine::molassembler::SiteIndex> {
 
   bool load(handle src, bool) {
     PyObject* source = src.ptr();
-    PyObject* tmp = PyNumber_Long(source);
+    // Try to convert the handle to an integer
+    PyObject* tmp = PyNumber_Index(source);
     if(!tmp) {
       return false;
     }
 
-    const long signedValue = PyLong_AsLong(tmp);
-    value = Scine::molassembler::SiteIndex(signedValue);
+    PyObject* exc = nullptr;
+    const auto pyIndex = PyNumber_AsSsize_t(tmp, exc);
+    value = Scine::molassembler::SiteIndex(pyIndex);
     Py_DECREF(tmp);
-    return !(signedValue == -1 && !PyErr_Occurred());
+    if(exc) {
+      return false;
+    }
+
+    return true;
   }
 
   static handle cast(

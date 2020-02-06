@@ -963,8 +963,14 @@ double AtomStereopermutator::Impl::angle(
   const SiteIndex i,
   const SiteIndex j
 ) const {
-  assert(i != j);
-  assert(!shapePositionMap_.empty());
+  if(!assignmentOption_) {
+    throw std::runtime_error("Stereopermutator is unassigned, angles are unknown!");
+  }
+
+  const unsigned S = shapes::size(shape_);
+  if(i >= S || j >= S) {
+    throw std::out_of_range("Site index is out of range");
+  }
 
   return shapes::angleFunction(shape_)(
     shapePositionMap_.at(i),

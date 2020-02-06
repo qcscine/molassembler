@@ -249,8 +249,8 @@ public:
    *
    * @complexity{@math{\Theta(1)}}
    *
-   * @pre @p i and @p j are valid ligand indices into the underlying
-   * RankingInformation's RankingInformation#ligands member.
+   * @throws std::runtime_error If the stereopermutator is unassigned
+   * @throws std::out_of_range If any site index is out of range
    *
    * @sa getRanking()
    */

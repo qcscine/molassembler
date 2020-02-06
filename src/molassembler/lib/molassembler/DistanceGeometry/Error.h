@@ -112,7 +112,11 @@ enum class DgError {
   /**
    * @brief Deprecated error in loosening-increasing DG procedures
    */
-  TooManyFailures = 7
+  TooManyFailures = 7,
+  /**
+   * @brief Unknown exception
+   */
+  UnknownException = 8
 };
 
 // Boilerplate to allow interoperability of DgError with std::error_code
@@ -142,6 +146,8 @@ namespace detail {
           return "Refined structure has chiral constraints with wrong sign.";
         case DgError::TooManyFailures:
           return "Conformer generation yielded too many failures.";
+        case DgError::UnknownException:
+          return "Conformer generation encountered an unexpected exception.";
         default:
           return "Unknown error.";
       };

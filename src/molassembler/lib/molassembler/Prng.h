@@ -27,6 +27,7 @@ public:
   using result_type = uint32_t;
 
   explicit Engine();
+  explicit Engine(int seedArg);
   Engine(Engine&& other) noexcept;
   Engine& operator = (Engine&& other) noexcept;
   Engine(const Engine& other);

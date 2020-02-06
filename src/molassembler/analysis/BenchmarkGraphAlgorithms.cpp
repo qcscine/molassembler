@@ -172,7 +172,7 @@ void benchmark(
    *
    * The bottom four combinations should yield equal shortest paths distances,
    * although they are not consistent with the triangle inequalities. Only DBM
-   * + FW is correct__ so far.
+   * + FW is _correct_ so far.
    */
 
   /* Timings */

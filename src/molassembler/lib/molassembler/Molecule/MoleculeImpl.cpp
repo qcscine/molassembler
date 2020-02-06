@@ -127,7 +127,7 @@ void Molecule::Impl::tryAddBondStereopermutator_(
 StereopermutatorList Molecule::Impl::detectStereopermutators_() const {
   StereopermutatorList stereopermutatorList;
 
-#ifdef OPENMP_
+#ifdef _OPENMP
   /* Ensure inner's properties are populated to avoid data races in its mutable
    * members
    */
