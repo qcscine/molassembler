@@ -26,7 +26,8 @@ generate non-superposable stereopermutations as output."""
     default_options = {"shared": True}
     generators = "cmake_paths"
     exports_sources = "src/*", "CMakeLists.txt"
-    build_requires = [("eigen/[~=3.3.7]@conan/stable")]
+    build_requires = [("eigen/[~=3.3.7]@conan/stable"),
+                      ("scine_utilities/[~=2.1.0]")]
     requires = [("boost/[~=1.71.0]@conan/stable")]
 
     def _configure_cmake(self):
