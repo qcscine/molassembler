@@ -8,7 +8,7 @@ def conan_paths_path_str(build_folder):
 
 
 class MolassemblerConan(ConanFile):
-    name = "Molassembler"
+    name = "molassembler"
     version = "1.0.0"
     license = "BSD-3-Clause"
     author = "Jan-Grimo Sobez jan-grimo.sobez@phys.chem.ethz.ch"
@@ -26,9 +26,9 @@ generate non-superposable stereopermutations as output."""
     default_options = {"shared": True}
     generators = "cmake_paths"
     exports_sources = "src/*", "CMakeLists.txt"
-    build_requires = [("eigen/[~=3.3.7]@conan/stable"),
-                      ("scine_utilities/[~=2.1.0]")]
-    requires = [("boost/[~=1.71.0]@conan/stable")]
+    build_requires = [("eigen/[~=3.3.7]@conan/stable")]
+    requires = [("boost/[~=1.71.0]@conan/stable"),
+                ("scine_utilities/[~=2.1.0]")]
 
     def _configure_cmake(self):
         cmake = CMake(self)
