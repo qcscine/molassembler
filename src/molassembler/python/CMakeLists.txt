@@ -45,7 +45,16 @@ if(PY_PIP)
     "from .scine_molassembler import *\n"
   )
 
-  install(CODE "execute_process(WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR} COMMAND ${PYTHON_EXECUTABLE} -m pip install --prefix=${CMAKE_INSTALL_PREFIX} --upgrade .)")
+  install(CODE
+    "execute_process(
+      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+      COMMAND ${PYTHON_EXECUTABLE} -m pip install --prefix=${CMAKE_INSTALL_PREFIX} --upgrade .
+      RESULT_VARIABLE retcode
+    )
+    if(NOT \$\{retcode\} EQUAL 0)
+      message(FATAL_ERROR \"Non-zero exit code when installing Python module using pip\")
+    endif()"
+  )
 else()
   message(WARNING "The Python bindings will not be installed since the python module pip is unavailable.")
 endif()
