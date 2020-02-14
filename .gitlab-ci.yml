@@ -1,10 +1,22 @@
-#
+variables:
+  GIT_SUBMODULE_STRATEGY: recursive
+
+# SSH Setup
+before_script:
+  - which ssh-agent || (which yum && yum install openssh-clients -y) || (which apt-get && apt-get install openssh-client -y)
+  - eval $(ssh-agent -s)
+  - echo $SCINE_DEPLOY_KEY | base64 -d | ssh-add -
+  - mkdir -p ~/.ssh
+  - chmod 700 ~/.ssh
+  - echo $SCINE_DEPLOY_HOSTS | base64 -d > ~/.ssh/known_hosts
+
+
 # Define the CI stages
-#
 stages:
   - build
   - test
   - quality_checks
+  - deploy
 
 #
 # GCC Debug test and coverage
@@ -83,7 +95,7 @@ build:clang_release:
     - mkdir -p build_clang
     - cd build_clang
     - cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_EXPORT_COMPILE_COMMANDS=ON ..
-    - make -j8
+    - make -j
   artifacts:
     expire_in: 4 hours
     paths:
@@ -111,6 +123,48 @@ eth_license:
   image: gitlab.chab.ethz.ch:4567/reiher/docker/scine-gcc:latest
   script:
     - bash scripts/license_validity_check.sh
+
+# ============
+#    Deploy
+# ============
+# Make conan package
+deploy:conan:
+  stage: deploy
+  tags:
+    - default_docker
+  image: gitlab.chab.ethz.ch:4567/reiher/docker/scine-gcc:latest
+  script:
+    - python3 -m pip install conan
+    - git clone --recursive git@gitlab.chab.ethz.ch:scine/utils-open-source.git
+    - conan create --build=missing utils-open-source
+    - conan create --build=missing .
+  dependencies: []
+
+# Make conan python package for pypi
+deploy:pypi:
+  stage: deploy
+  tags:
+    - default_docker
+  image: quay.io/pypa/manylinux2014_x86_64
+  script:
+    - /opt/python/cp36-cp36m/bin/python -m venv cp36-cp36m
+    - source cp36-cp36m/bin/activate
+    - python -m pip install conan wheel
+    - mkdir -p build
+    - cd build
+    - git clone --recursive git@gitlab.chab.ethz.ch:scine/utils-open-source.git
+    - conan create -o scine_utilities:shared=False --build=missing utils-open-source
+    - conan install -o scine_molassembler:python=True -o scine_utilities:shared=False --build=missing ..
+    - conan build ..
+    - cd src/molassembler/python
+    - python setup.py bdist_wheel
+    - auditwheel show dist/*.whl
+    - auditwheel repair dist/*.whl
+  dependencies: []
+  artifacts:
+    expire_in: 1 day
+    paths:
+    - build/src/molassembler/python/wheelhouse
 
 # Wishful thinking:
 # pages:
