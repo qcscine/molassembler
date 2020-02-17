@@ -84,6 +84,14 @@ public:
   const_iterator begin() const { return std::begin(map_); }
   const_iterator end() const { return std::end(map_); }
 
+  bool operator == (const StrongIndexFlatMap& other) const {
+    return map_ == other.map_;
+  }
+
+  bool operator != (const StrongIndexFlatMap& other) const {
+    return map_ != other.map_;
+  }
+
 private:
   std::vector<U> map_;
 };

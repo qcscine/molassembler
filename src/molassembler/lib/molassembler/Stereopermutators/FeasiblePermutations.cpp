@@ -159,7 +159,8 @@ bool Feasible::possiblyFeasible(
 ) {
   const auto shapeVertexMap = siteToShapeVertexMap(
     stereopermutation,
-    canonicalSites
+    canonicalSites,
+    ranking.links
   );
 
   // Check if any haptic site cones intersect
@@ -189,9 +190,9 @@ bool Feasible::possiblyFeasible(
         graph.inner()
       );
 
-      /* A haptic steropermutation of sites is only obviously impossible if
-       * the haptic sites have no spatial freedom to arrange in a fashion
-       * that does not overlap.
+      /* A haptic steropermutation of sites is only feasible if the haptic
+       * sites have spatial freedom to arrange in a fashion that does not
+       * overlap.
        */
       if(
         (

@@ -1117,7 +1117,8 @@ void BondStereopermutator::Impl::propagateGraphChange(
         oldAssignment.value()
       )
     ),
-    oldAbstract.canonicalSites
+    oldAbstract.canonicalSites,
+    oldRanking.links
   );
 
   auto getNewShapeVertex = [&](shapes::Vertex oldVertex) -> shapes::Vertex {

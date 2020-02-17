@@ -55,13 +55,10 @@ typename Stereopermutation::OrderedLinks Stereopermutation::permuteLinks(
   const OrderedLinks& links,
   const shapes::Permutation& permutation
 ) {
-  auto rotateIndex = [&permutation](const shapes::Vertex from) -> shapes::Vertex {
-    const unsigned indexOf = std::find(
-      std::begin(permutation),
-      std::end(permutation),
-      from
-    ) - std::begin(permutation);
-    return shapes::Vertex {indexOf};
+  const auto rotateIndex = [&permutation](const shapes::Vertex from) -> shapes::Vertex {
+    return shapes::Vertex(
+      temple::find(permutation, from) - std::begin(permutation)
+    );
   };
 
   return temple::sort(

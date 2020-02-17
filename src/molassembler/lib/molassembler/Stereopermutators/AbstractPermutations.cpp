@@ -10,10 +10,6 @@
 #include <algorithm>
 #include <cassert>
 
-// TODO TMP
-#include "temple/Stringify.h"
-#include <iostream>
-
 namespace Scine {
 namespace molassembler {
 namespace stereopermutators {

@@ -38,7 +38,8 @@ using SiteToShapeVertexMap = temple::StrongIndexFlatMap<SiteIndex, shapes::Verte
  */
 SiteToShapeVertexMap siteToShapeVertexMap(
   const stereopermutation::Stereopermutation& stereopermutation,
-  const RankingInformation::RankedSitesType& canonicalSites
+  const RankingInformation::RankedSitesType& canonicalSites,
+  const std::vector<RankingInformation::Link>& siteLinks
 );
 
 /*! @brief Generates a flat mapping from shape vertices to site indices
@@ -54,7 +55,8 @@ SiteToShapeVertexMap siteToShapeVertexMap(
  */
 temple::StrongIndexFlatMap<shapes::Vertex, SiteIndex> shapeVertexToSiteIndexMap(
   const stereopermutation::Stereopermutation& stereopermutation,
-  const RankingInformation::RankedSitesType& canonicalSites
+  const RankingInformation::RankedSitesType& canonicalSites,
+  const std::vector<RankingInformation::Link>& siteLinks
 );
 
 stereopermutation::Stereopermutation stereopermutationFromSiteToShapeVertexMap(

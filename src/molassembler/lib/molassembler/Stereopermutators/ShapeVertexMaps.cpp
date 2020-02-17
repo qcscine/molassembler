@@ -11,154 +11,246 @@
 #include "temple/Functional.h"
 #include "temple/constexpr/Numeric.h"
 
+#include "boost/graph/adjacency_list.hpp"
+#include "boost/graph/isomorphism.hpp"
+
 namespace Scine {
 namespace molassembler {
+namespace detail {
+
+using PlainGraphType = boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS>;
+using Vertex = typename PlainGraphType::vertex_descriptor;
+
+struct SiteIndexColor {
+  std::vector<unsigned> rankingColor;
+
+  using argument_type = Vertex;
+  using result_type = unsigned;
+
+  inline SiteIndexColor(std::vector<unsigned> colors)
+    : rankingColor(colors) {}
+
+  inline unsigned operator() (const Vertex i) const {
+    return rankingColor.at(i);
+  }
+};
+
+struct VertexColor {
+  const stereopermutation::Stereopermutation* const stereopermutationPtr;
+
+  using argument_type = Vertex;
+  using result_type = unsigned;
+
+  inline VertexColor(const stereopermutation::Stereopermutation& s)
+    : stereopermutationPtr(&s) {}
+
+  inline unsigned operator() (const Vertex i) const {
+    return stereopermutationPtr->characters.at(i) - 'A';
+  }
+};
+
+BOOST_CONCEPT_ASSERT((
+  boost::AdaptableUnaryFunctionConcept<SiteIndexColor, unsigned, Vertex>
+));
+BOOST_CONCEPT_ASSERT((
+  boost::AdaptableUnaryFunctionConcept<VertexColor, unsigned, Vertex>
+));
+
+template<typename Invariant1, typename Invariant2>
+void mapUnmappedVertices(
+  Invariant1&& invariant1,
+  Invariant2&& invariant2,
+  std::vector<Vertex>& mapping
+) {
+  const unsigned V = mapping.size();
+  const Vertex nullVertex = PlainGraphType::null_vertex();
+  std::vector<Vertex> unmapped1;
+  for(Vertex i = 0; i < V; ++i) {
+    if(mapping.at(i) == nullVertex) {
+      unmapped1.push_back(i);
+    }
+  }
+
+  if(unmapped1.empty()) {
+    return;
+  }
+
+  // Which vertices in g2 are unmapped?
+  std::vector<Vertex> mapped2;
+  mapped2.reserve(V - unmapped1.size());
+  for(Vertex i = 0; i < V; ++i) {
+    Vertex mappedVertex = mapping.at(i);
+    if(mappedVertex != nullVertex) {
+      mapped2.push_back(mappedVertex);
+    }
+  }
+  temple::inplace::sort(mapped2);
+
+  auto allVertices = temple::iota<Vertex>(V);
+  std::vector<Vertex> unmapped2;
+  std::set_difference(
+    std::begin(allVertices),
+    std::end(allVertices),
+    std::begin(mapped2),
+    std::end(mapped2),
+    std::back_inserter(unmapped2)
+  );
+
+  using Invariant2Value = typename Invariant2::result_type;
+  std::unordered_multimap<Invariant2Value, Vertex> unmatchedMap;
+
+  for(Vertex v : unmapped2) {
+    unmatchedMap.emplace(invariant2(v), v);
+  }
+
+  // Map the remainder
+  for(Vertex v : unmapped1) {
+    const auto invariant = invariant1(v);
+    const auto findIter = unmatchedMap.find(invariant);
+    if(findIter == std::end(unmatchedMap)) {
+      throw std::logic_error("Mismatched invariants");
+    }
+    mapping.at(v) = findIter->second;
+    unmatchedMap.erase(findIter);
+  }
+}
+
+} // namespace detail
 
 SiteToShapeVertexMap siteToShapeVertexMap(
   const stereopermutation::Stereopermutation& stereopermutation,
-  const RankingInformation::RankedSitesType& canonicalSites
+  const RankingInformation::RankedSitesType& canonicalSites,
+  const std::vector<RankingInformation::Link>& siteLinks
 ) {
-  /* We are given an stereopermutation within some shape:
-   *   Characters: ABADCB
-   *   Links: (0, 1), (2, 5)
-   * and canonical sites (ranked sets of site indices re-sorted by
-   * decreasing set size): {{0, 4}, {2, 1}, {5}, {3}}
-   *
-   * We need to distribute the site indices (from the canonical sites) to
-   * the shape positions (defined by the stereopermutation) that they match (via
-   * their ranking character).
-   *
-   * Additionally, we need to ensure that:
-   * - AAAAAA {0, 1}, {2, 3}, {4, 5}
-   * - AAAAAA {0, 1}, {2, 4}, {3, 5}
-   * have different shape position maps.
-   *
-   * Link indices (from assignments) specify shape positions that are linked.
-   * Since shape positions are NOT exchangeable as two site indices are
-   * that rank equally, we need to distribute linked shape positions first,
-   * and then distribute the remaining characters afterwards.
-   */
+  const bool linksExist = (!stereopermutation.links.empty() || !siteLinks.empty());
+  const bool mappingIsBijective = (canonicalSites.size() == stereopermutation.characters.size());
 
-  constexpr unsigned placeholder = std::numeric_limits<unsigned>::max();
-  const unsigned S = stereopermutation.characters.size();
-
-  std::vector<unsigned> positionMap (S, placeholder);
-
-  /* Process the links */
-
-  /* For every site index within the group of sites of equal priority, we
-   * have to keep information on which have been used and which haven't.
-   */
-  auto usedLists = temple::map(
-    canonicalSites,
-    [](const auto& equalPrioritySet) -> std::vector<bool> {
-      return std::vector<bool>(equalPrioritySet.size(), false);
+  if(linksExist && !mappingIsBijective) {
+    if(stereopermutation.links.size() != siteLinks.size()) {
+      throw std::logic_error("Mismatched stereoperm and site link sizes");
     }
-  );
 
-  /* Additionally, for each canonical character, a limited set of shape
-   * positions are available: Those where the passed stereopermutation's characters
-   * match the character.
-   */
-  std::vector<
-    std::vector<unsigned>
-  > availableShapeVertices;
+    const unsigned S = stereopermutation.characters.size();
+    detail::PlainGraphType siteGraph(S);
+    for(const auto& siteLink : siteLinks) {
+      boost::add_edge(siteLink.sites.first, siteLink.sites.second, siteGraph);
+    }
 
-  const char maxChar = temple::max(stereopermutation.characters);
-  // For each ranking character
-  for(char i = 'A'; i <= maxChar; ++i) {
-    std::vector<unsigned> positions;
+    detail::PlainGraphType vertexGraph(S);
+    for(const auto& vertexLink : stereopermutation.links) {
+      boost::add_edge(vertexLink.first, vertexLink.second, vertexGraph);
+    }
 
-    // Go through the shape positions
-    for(unsigned s = 0; s < S; ++s) {
-      if(stereopermutation.characters.at(s) == i) {
-        positions.push_back(s);
+    auto siteRankingColors = temple::map(
+      temple::iota<SiteIndex>(S),
+      [&](SiteIndex site) -> unsigned {
+        const auto findIter = temple::find_if(
+          canonicalSites,
+          [&](const auto& equallyRankedSites) -> bool {
+            return temple::find(equallyRankedSites, site) != std::end(equallyRankedSites);
+          }
+        );
+
+        if(findIter == std::end(canonicalSites)) {
+          throw std::logic_error("Could not find site in canonicalSites");
+        }
+
+        return findIter - std::begin(canonicalSites);
       }
+    );
+
+    std::vector<detail::Vertex> indexMap(S);
+    const unsigned maxColor = temple::max(siteRankingColors) + 1;
+
+    const bool isomorphic = boost::isomorphism(
+      siteGraph,
+      vertexGraph,
+      boost::make_safe_iterator_property_map(
+        indexMap.begin(),
+        S,
+        boost::get(boost::vertex_index, siteGraph)
+      ),
+      detail::SiteIndexColor(siteRankingColors),
+      detail::VertexColor(stereopermutation),
+      maxColor,
+      boost::get(boost::vertex_index, siteGraph),
+      boost::get(boost::vertex_index, vertexGraph)
+    );
+
+    if(!isomorphic) {
+      throw std::logic_error("Graphs of site and shape vertex links are not isomorphic");
     }
 
-    availableShapeVertices.emplace_back(
-      std::move(positions)
+    detail::mapUnmappedVertices(
+      detail::SiteIndexColor(siteRankingColors),
+      detail::VertexColor(stereopermutation),
+      indexMap
+    );
+
+    if(temple::any_of(indexMap, [S](const detail::Vertex i) { return i >= S; })) {
+      throw std::logic_error("Isomorphism index map contains out of bounds vertex indices");
+    }
+
+    return SiteToShapeVertexMap(
+      temple::map(indexMap, [](auto&& i) { return shapes::Vertex(i); })
     );
   }
 
-  // For linked sites, we need to find a shape position to place them
-  auto placeAndMark = [&](const unsigned shapeVertex) {
-    char priority = stereopermutation.characters.at(shapeVertex);
-
-    const unsigned countUpToPosition = std::count(
-      std::begin(stereopermutation.characters),
-      std::begin(stereopermutation.characters) + shapeVertex,
-      priority
-    );
-
-    const unsigned correspondingSite = canonicalSites.at(priority - 'A').at(countUpToPosition);
-
-    if(positionMap.at(correspondingSite) == placeholder) {
-      unsigned newShapeVertex = availableShapeVertices.at(priority - 'A').front();
-
-      positionMap.at(correspondingSite) = newShapeVertex;
-
-      availableShapeVertices.at(priority - 'A').erase(
-        availableShapeVertices.at(priority - 'A').begin()
+  // If there are no links, this is a little easier
+  constexpr shapes::Vertex placeholder(std::numeric_limits<unsigned>::max());
+  const unsigned S = stereopermutation.characters.size();
+  std::vector<shapes::Vertex> map(S, placeholder);
+  /* Maps from site indices to the ranking character (that we can compare with
+   * in the stereopermutation characters) by searching for it in the
+   * canonicalSites.
+   */
+  std::vector<char> siteRankingCharacters = temple::map(
+    temple::iota<SiteIndex>(S),
+    [&](SiteIndex site) -> char {
+      const auto findIter = temple::find_if(
+        canonicalSites,
+        [&](const auto& equallyRankedSites) -> bool {
+          return temple::find(equallyRankedSites, site) != std::end(equallyRankedSites);
+        }
       );
 
-      usedLists.at(priority - 'A').at(countUpToPosition) = true;
+      if(findIter == std::end(canonicalSites)) {
+        throw std::logic_error("Could not find site in canonicalSites");
+      }
+
+      return 'A' + (findIter - std::begin(canonicalSites));
     }
+  );
+
+  auto firstAvailableVertex = [&](const SiteIndex site) -> shapes::Vertex {
+    const char siteRankedCharacter = siteRankingCharacters.at(site);
+    for(unsigned i = 0; i < S; ++i) {
+      if(
+        stereopermutation.characters.at(i) == siteRankedCharacter
+        && temple::find(map, shapes::Vertex(i)) == std::end(map)
+      ) {
+        return shapes::Vertex(i);
+      }
+    }
+
+    throw std::logic_error("No available vertex found for this site");
   };
 
-  // Place all linked indices
-  for(const auto& link: stereopermutation.links) {
-    placeAndMark(link.first);
-    placeAndMark(link.second);
-  }
-
-  // Next, process all characters
-  for(const auto& priorityChar : stereopermutation.characters) {
-    // Get an unused site index for that priority
-    const auto unusedIndexIter = std::find(
-      std::begin(usedLists.at(priorityChar - 'A')),
-      std::end(usedLists.at(priorityChar - 'A')),
-      false
-    );
-
-    if(unusedIndexIter != std::end(usedLists.at(priorityChar - 'A'))) {
-      const unsigned correspondingSite = canonicalSites.at(priorityChar - 'A').at(
-        unusedIndexIter - std::begin(usedLists.at(priorityChar - 'A'))
-      );
-
-      assert(positionMap.at(correspondingSite) == placeholder);
-
-      const unsigned shapeVertex = availableShapeVertices.at(priorityChar - 'A').front();
-
-      availableShapeVertices.at(priorityChar - 'A').erase(
-        std::begin(availableShapeVertices.at(priorityChar - 'A'))
-      );
-
-      positionMap.at(correspondingSite) = shapeVertex;
-
-      *unusedIndexIter = true;
+  for(unsigned i = 0; i < S; ++i) {
+    if(map.at(i) == placeholder) {
+      map.at(i) = firstAvailableVertex(SiteIndex(i));
     }
   }
 
-  // Ensure no shape positions are marked with placeholders
-  assert(
-    temple::all_of(
-      positionMap,
-      [](const unsigned shapeVertex) -> bool {
-        return shapeVertex != placeholder;
-      }
-    ) && "A shape position is still marked with a placeholder!"
-  );
-
-  return SiteToShapeVertexMap(positionMap);
+  return SiteToShapeVertexMap(map);
 }
 
 temple::StrongIndexFlatMap<shapes::Vertex, SiteIndex> shapeVertexToSiteIndexMap(
   const stereopermutation::Stereopermutation& stereopermutation,
-  const RankingInformation::RankedSitesType& canonicalSites
+  const RankingInformation::RankedSitesType& canonicalSites,
+  const std::vector<RankingInformation::Link>& siteLinks
 ) {
-  const auto base = siteToShapeVertexMap(stereopermutation, canonicalSites);
-  return base.invert();
+  return siteToShapeVertexMap(stereopermutation, canonicalSites, siteLinks).invert();
 }
 
 stereopermutation::Stereopermutation stereopermutationFromSiteToShapeVertexMap(

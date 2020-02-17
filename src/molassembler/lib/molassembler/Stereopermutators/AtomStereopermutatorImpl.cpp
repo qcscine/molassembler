@@ -308,7 +308,8 @@ void AtomStereopermutator::Impl::assign(boost::optional<unsigned> assignment) {
           assignmentOption_.value()
         )
       ),
-      abstract_.canonicalSites
+      abstract_.canonicalSites,
+      ranking_.links
     );
   } else { // Wipe the map
     shapePositionMap_.clear();

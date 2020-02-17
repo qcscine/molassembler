@@ -864,7 +864,7 @@ int main(int argc, char* argv[]) {
     );
 
     if(showChiralConstraints) {
-      std::cout << "Chiral constraints of refinement " << structNum << ":\n";
+      std::cout << "Chiral constraints (four atom index sets and bounds on signed volume in conformer) of refinement " << structNum << ":\n";
       for(const auto& constraint : refinementData.constraints) {
         std::cout << temple::stringify(constraint.sites) << " -> [" << constraint.lower << ", " << constraint.upper << "]\n";
       }

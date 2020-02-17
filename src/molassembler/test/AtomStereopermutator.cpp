@@ -6,21 +6,76 @@
 
 #include "boost/test/unit_test.hpp"
 
-#include "molassembler/Molecule.h"
-#include "molassembler/Graph.h"
 #include "molassembler/AtomStereopermutator.h"
-#include "molassembler/StereopermutatorList.h"
 #include "molassembler/Conformers.h"
+#include "molassembler/Graph.h"
 #include "molassembler/IO.h"
+#include "molassembler/Molecule.h"
+#include "molassembler/StereopermutatorList.h"
+#include "molassembler/Stereopermutators/ShapeVertexMaps.h"
+#include "stereopermutation/Manipulation.h"
 #include "shapes/Data.h"
 #include "shapes/PropertyCaching.h"
 #include "Utils/Math/QuaternionFit.h"
 #include "Utils/Geometry/ElementInfo.h"
 
+#include "temple/Functional.h"
+
 #include "Fixtures.h"
 
 using namespace Scine;
 using namespace molassembler;
+
+inline shapes::Vertex operator "" _v(unsigned long long v) {
+  return shapes::Vertex(v);
+}
+
+inline SiteIndex operator "" _s(unsigned long long s) {
+  return SiteIndex(s);
+}
+
+BOOST_AUTO_TEST_CASE(ShipscrewShapeVertexMap) {
+  // M[(A-A)_3] lambda/delta isomer "shipscrews"
+  const stereopermutation::Stereopermutation shipscrew {
+    std::vector<char>(6, 'A'),
+    {{0_v, 1_v}, {2_v, 4_v}, {3_v, 5_v}}
+  };
+
+  const auto shipscrewEnantiomer = shipscrew.applyPermutation(
+    shapes::mirror(shapes::Shape::Octahedron)
+  );
+
+  BOOST_REQUIRE_MESSAGE(
+    !stereopermutation::rotationallySuperimposable(
+      shipscrew,
+      shipscrewEnantiomer,
+      shapes::Shape::Octahedron
+    ),
+    "enantiomers are superimposable: " << shipscrew.toString() << " and " << shipscrewEnantiomer.toString()
+  );
+
+  const RankingInformation::RankedSitesType canonicalSites {
+    {0_s, 1_s, 2_s, 3_s, 4_s, 5_s}
+  };
+
+  const std::vector<RankingInformation::Link> siteLinks {
+    {{0_s, 1_s}, {0, 1, 2}, 0},
+    {{2_s, 3_s}, {0, 3, 4}, 0},
+    {{4_s, 5_s}, {0, 5, 6}, 0}
+  };
+
+  const auto maps = temple::map_stl(
+    std::make_pair(shipscrew, shipscrewEnantiomer),
+    [&](const auto& s) {
+      return siteToShapeVertexMap(s, canonicalSites, siteLinks);
+    }
+  );
+
+  BOOST_CHECK_MESSAGE(
+    maps.first != maps.second,
+    "Site to shape vertex maps are identical for shipscrew isomers"
+  );
+}
 
 BOOST_AUTO_TEST_CASE(AtomStereopermutatorUpDown) {
   using namespace shapes;
