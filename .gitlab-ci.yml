@@ -17,7 +17,7 @@ build:gcc_debug:
   script:
     - mkdir -p build_gcc_debug
     - cd build_gcc_debug
-    - pip install --user sphinx sphinx_rtd_theme
+    - pip3 install --user sphinx sphinx_rtd_theme pytest
     - cmake -DSCINE_BUILD_PYTHON_BINDINGS=ON -DPYTHON_EXECUTABLE=$(which python3) -DCMAKE_CXX_FLAGS="-g -O0 -coverage" -DCMAKE_EXE_LINKER_FLAGS="-coverage" ..
     - make -j8
   artifacts:
@@ -31,6 +31,7 @@ test:gcc_debug:
     - default_docker
   image: gitlab.chab.ethz.ch:4567/reiher/docker/scine-gcc:latest
   script:
+    - pip3 install --user pytest
     - (cd build_gcc_debug/src && ctest --output-on-failure)
     - python $(which gcovr) -r "$(pwd)/src/" -u --object-directory="$(pwd)/build_gcc_debug/src/" --exclude-dir ".*test.*" --exclude-dir ".*extern.*" --exclude-dir ".*analysis.*" -e ".*extern.*" -e ".*test.*"
   dependencies:
@@ -50,7 +51,7 @@ build:gcc_release:
   script:
     - mkdir -p build_gcc_release
     - cd build_gcc_release
-    - cmake -DCMAKE_BUILD_TYPE=Release -DSCINE_BUILD_PYTHON_BINDINGS=ON -DPYTHON_EXECUTABLE=$(which python) ..
+    - cmake -DCMAKE_BUILD_TYPE=Release -DSCINE_BUILD_PYTHON_BINDINGS=ON -DPYTHON_EXECUTABLE=$(which python3) ..
     - make -j8
   artifacts:
     expire_in: 2 hours
