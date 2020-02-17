@@ -31,7 +31,7 @@ test:gcc_debug:
     - default_docker
   image: gitlab.chab.ethz.ch:4567/reiher/docker/scine-gcc:latest
   script:
-    - pip3 install --user pytest
+    - pip3 install --user pytest numpy
     - (cd build_gcc_debug/src && ctest --output-on-failure)
     - python $(which gcovr) -r "$(pwd)/src/" -u --object-directory="$(pwd)/build_gcc_debug/src/" --exclude-dir ".*test.*" --exclude-dir ".*extern.*" --exclude-dir ".*analysis.*" -e ".*extern.*" -e ".*test.*"
   dependencies:
