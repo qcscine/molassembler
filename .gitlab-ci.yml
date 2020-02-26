@@ -25,7 +25,7 @@ coverage:
     - conan create -o scine_utilities:python=True --build=missing utils-open-source
     - mkdir -p build_coverage
     - cd build_coverage
-    - conan install -o scine_molassembler:python=True -o scine_molassembler:tests=True -o scine_molassembler:docs=True -o scine_molassembler:coverage=True ..
+    - conan install -o scine_molassembler:python=True -o scine_molassembler:tests=True -o scine_molassembler:docs=True -o scine_molassembler:coverage=True -o scine_molassembler:build_type=Debug ..
     - conan build ..
     - cd ..
     - python $(which gcovr) -r "$(pwd)/src/" -u --object-directory="$(pwd)/build_coverage/src/" --exclude-dir ".*test.*" --exclude-dir ".*extern.*" --exclude-dir ".*analysis.*" -e ".*extern.*" -e ".*test.*"
