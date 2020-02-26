@@ -7,6 +7,7 @@
 
 #include "molassembler/Cycles.h"
 #include "molassembler/Graph.h"
+#include "molassembler/GraphAlgorithms.h"
 
 #include "Utils/Bonds/BondOrderCollection.h"
 #include "Utils/Geometry/FormulaGenerator.h"
@@ -110,6 +111,8 @@ void init_outer_graph(pybind11::module& m) {
       BondType.Double
       >>> compound.graph[BondIndex(1, 2)] # C#N bond by bond subsetting
       BondType.Triple
+      >>> compound.graph[1, 2] # C#N bond by atom index subsetting
+      BondType.Triple
     )delim"
   );
 
@@ -200,7 +203,7 @@ void init_outer_graph(pybind11::module& m) {
       ElementType.H1
       >>> m.graph.element_type(2)
       ElementType.D
-      >>> m.graph[4] # Subsettable wih atom indices to get element types
+      >>> m.graph[4] # Subsettable with atom indices to get element types
       ElementType.H
     )delim"
   );
@@ -322,5 +325,25 @@ void init_outer_graph(pybind11::module& m) {
     [](const Graph& g, const BondIndex i) -> BondType {
       return g.bondType(i);
     }
+  );
+
+  outerGraph.def(
+    "__getitem__",
+    [](const Graph& g, const AtomIndex i, const AtomIndex j) -> BondType {
+      return g.bondType(BondIndex(i, j));
+    }
+  );
+
+  m.def(
+    "distance",
+    &distance,
+    pybind11::arg("source"),
+    pybind11::arg("graph"),
+    R"delim(
+      Calculates graph distances from a single atom index to all others
+
+      >>> m = io.experimental.from_smiles("CC(CC)C")
+      >>> distances = distance(1, m.graph)
+    )delim"
   );
 }
