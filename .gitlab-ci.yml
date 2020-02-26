@@ -69,8 +69,8 @@ pypi:
     - python -m pip install conan wheel
     - mkdir -p build && cd build
     - git clone --recursive git@gitlab.chab.ethz.ch:scine/utils-open-source.git
-    - conan create -o scine_utilities:python=True -o shared=False --build=missing utils-open-source
-    - conan install -o scine_molassembler:python=True -o shared=False --build=missing ..
+    - conan create -o scine_utilities:python=True -o scine_utilities:shared=False --build=missing utils-open-source
+    - conan install -o scine_molassembler:python=True -o scine_utilities:shared=False -o scine_molassembler:shared=False --build=missing ..
     - conan build ..
     - cd src/molassembler/python
     - python setup.py bdist_wheel
