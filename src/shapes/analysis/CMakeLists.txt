@@ -38,9 +38,13 @@ foreach(filename ${analysisFiles})
   )
 
   target_compile_options(${targetName} PRIVATE ${MOLASSEMBLER_CXX_FLAGS})
-  if(NOT Boost_USE_STATIC_LIBS)
+
+  include(LibType)
+  determine_lib_type(Boost::program_options)
+  if(${LIB_TYPE} STREQUAL "SHARED_LIBRARY")
     target_compile_definitions(${targetName} PRIVATE BOOST_ALL_DYN_LINK)
   endif()
+  unset(LIB_TYPE)
 
   set_target_properties(${targetName} PROPERTIES FOLDER "Analysis")
 endforeach()

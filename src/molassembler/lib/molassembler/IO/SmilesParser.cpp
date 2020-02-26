@@ -266,7 +266,6 @@ struct openSMILES : qi::grammar<Iterator> {
      * if no information is matched (empty string last, representing the
      * default bond order single), hence we need epsilon to place that semantic
      * action
-     *
      */
     branch = (
       lit('(')[branchOpen] > ( // Opening bracket must be followed by match of the rest

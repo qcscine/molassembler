@@ -32,9 +32,12 @@ target_link_libraries(templeTests
 )
 target_link_eigen(templeTests PRIVATE)
 
-if(NOT Boost_USE_STATIC_LIBS)
+include(LibType)
+determine_lib_type(Boost::unit_test_framework)
+if(${LIB_TYPE} STREQUAL "SHARED_LIBRARY")
   target_compile_definitions(templeTests PRIVATE BOOST_ALL_DYN_LINK)
 endif()
+unset(LIB_TYPE)
 target_compile_options(templeTests PRIVATE ${MOLASSEMBLER_CXX_FLAGS})
 
 add_test(NAME MASMTempleTests COMMAND templeTests)

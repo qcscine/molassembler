@@ -35,8 +35,5 @@ foreach(filename ${testFiles})
       stereopermutation
   )
 
-  if(NOT Boost_USE_STATIC_LIBS)
-    target_compile_definitions(${targetName} PRIVATE BOOST_ALL_DYN_LINK)
-  endif()
   target_compile_options(${targetName} PRIVATE ${MOLASSEMBLER_CXX_FLAGS})
 endforeach()

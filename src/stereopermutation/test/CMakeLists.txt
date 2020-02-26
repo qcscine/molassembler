@@ -8,9 +8,14 @@ endif()
 
 add_executable(permutationTests tests.cpp)
 target_compile_options(permutationTests PRIVATE ${MOLASSEMBLER_CXX_FLAGS})
-if(NOT Boost_USE_STATIC_LIBS)
+
+include(LibType)
+determine_lib_type(Boost::unit_test_framework)
+if(${LIB_TYPE} STREQUAL "SHARED_LIBRARY")
   target_compile_definitions(permutationTests PRIVATE BOOST_ALL_DYN_LINK)
 endif()
+unset(LIB_TYPE)
+
 target_link_libraries(permutationTests
   PRIVATE
     Boost::boost

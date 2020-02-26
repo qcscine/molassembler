@@ -18,6 +18,10 @@ if(MOLASSEMBLER_SANITIZE)
   message(WARNING "Address sanitiziation can cause ABI incompatibility issues if dependencies have not been compiled the same way. Set MOLASSEMBLER_SANITIZE to OFF to avoid this.")
 endif()
 
+if(COVERAGE AND CMAKE_BUILD_TYPE STREQUAL "Debug")
+  set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 -coverage ${CMAKE_CXX_FLAGS_DEBUG}")
+endif()
+
 include(ImportUtilsOS)
 import_utils_os()
 

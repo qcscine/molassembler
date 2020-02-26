@@ -10,139 +10,56 @@ before_script:
   - chmod 700 ~/.ssh
   - echo $SCINE_DEPLOY_HOSTS | base64 -d > ~/.ssh/known_hosts
 
-
-# Define the CI stages
 stages:
   - build
-  - test
-  - quality_checks
-  - deploy
+  - quality
 
-#
-# GCC Debug test and coverage
-#
-build:gcc_debug:
+coverage:
   stage: build
   tags:
     - default_docker
   image: gitlab.chab.ethz.ch:4567/reiher/docker/scine-gcc:latest
   script:
-    - mkdir -p build_gcc_debug
-    - cd build_gcc_debug
-    - pip3 install --user sphinx sphinx_rtd_theme pytest
-    - cmake -DSCINE_BUILD_PYTHON_BINDINGS=ON -DPYTHON_EXECUTABLE=$(which python3) -DCMAKE_CXX_FLAGS="-g -O0 -coverage" -DCMAKE_EXE_LINKER_FLAGS="-coverage" ..
-    - make -j8
-  artifacts:
-    expire_in: 2 hours
-    paths:
-      - build_gcc_debug
-
-test:gcc_debug:
-  stage: test
-  tags:
-    - default_docker
-  image: gitlab.chab.ethz.ch:4567/reiher/docker/scine-gcc:latest
-  script:
-    - pip3 install --user pytest numpy
-    - (cd build_gcc_debug/src && ctest --output-on-failure)
-    - python $(which gcovr) -r "$(pwd)/src/" -u --object-directory="$(pwd)/build_gcc_debug/src/" --exclude-dir ".*test.*" --exclude-dir ".*extern.*" --exclude-dir ".*analysis.*" -e ".*extern.*" -e ".*test.*"
-  dependencies:
-    - build:gcc_debug
-  coverage: '/^TOTAL.*\s+(\d+\%)$/'
-  artifacts:
-    expire_in: 2 hours
-
-#
-# GCC Release test
-#
-build:gcc_release:
-  stage: build
-  tags:
-    - default_docker
-  image: gitlab.chab.ethz.ch:4567/reiher/docker/scine-gcc:latest
-  script:
-    - mkdir -p build_gcc_release
-    - cd build_gcc_release
-    - cmake -DCMAKE_BUILD_TYPE=Release -DSCINE_BUILD_PYTHON_BINDINGS=ON -DPYTHON_EXECUTABLE=$(which python3) ..
-    - make -j8
-  artifacts:
-    expire_in: 2 hours
-    paths:
-      - build_gcc_release
-
-test:gcc_release:
-  stage: test
-  tags:
-    - default_docker
-  image: gitlab.chab.ethz.ch:4567/reiher/docker/scine-gcc:latest
-  script:
-    - (cd build_gcc_release/src && ctest --output-on-failure)
-  dependencies:
-    - build:gcc_release
-
-
-#
-# Clang Release test
-#
-build:clang_release:
-  stage: build
-  tags:
-    - default_docker
-  image: gitlab.chab.ethz.ch:4567/reiher/docker/scine-clang:latest
-  only:
-    - master
-  script:
-    - mkdir -p build_clang
-    - cd build_clang
-    - cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_EXPORT_COMPILE_COMMANDS=ON ..
-    - make -j
-  artifacts:
-    expire_in: 4 hours
-    paths:
-      - build_clang
-
-test:clang_release:
-  stage: test
-  tags:
-    - default_docker
-  image: gitlab.chab.ethz.ch:4567/reiher/docker/scine-clang:latest
-  only:
-    - master
-  script:
-    - (cd build_clang/src && ctest --output-on-failure)
-  dependencies:
-    - build:clang_release
-
-#
-# Verify that the ETH license is present in all source files
-#
-eth_license:
-  stage: quality_checks
-  tags:
-    - default_docker
-  image: gitlab.chab.ethz.ch:4567/reiher/docker/scine-gcc:latest
-  script:
-    - bash scripts/license_validity_check.sh
-
-# ============
-#    Deploy
-# ============
-# Make conan package
-deploy:conan:
-  stage: deploy
-  tags:
-    - default_docker
-  image: gitlab.chab.ethz.ch:4567/reiher/docker/scine-gcc:latest
-  script:
-    - python3 -m pip install conan
+    - python3 -m pip install --upgrade sphinx sphinx_rtd_theme pytest numpy
     - git clone --recursive git@gitlab.chab.ethz.ch:scine/utils-open-source.git
-    - conan create --build=missing utils-open-source
-    - conan create --build=missing .
-  dependencies: []
+    - conan create -o scine_utilities:python=True --build=missing utils-open-source
+    - mkdir -p build_coverage
+    - cd build_coverage
+    - conan install -o scine_molassembler:python=True -o scine_molassembler:tests=True -o scine_molassembler:docs=True -o scine_molassembler:coverage=True ..
+    - conan build ..
+    - cd ..
+    - python $(which gcovr) -r "$(pwd)/src/" -u --object-directory="$(pwd)/build_coverage/src/" --exclude-dir ".*test.*" --exclude-dir ".*extern.*" --exclude-dir ".*analysis.*" -e ".*extern.*" -e ".*test.*"
+  coverage: '/^TOTAL.*\s+(\d+\%)$/'
 
-# Make conan python package for pypi
-deploy:pypi:
-  stage: deploy
+
+gcc-release:
+  stage: build
+  tags:
+    - default_docker
+  image: gitlab.chab.ethz.ch:4567/reiher/docker/scine-gcc:latest
+  script:
+    - python3 -m pip install --upgrade conan sphinx sphinx_rtd_theme pytest numpy
+    - git clone --recursive git@gitlab.chab.ethz.ch:scine/utils-open-source.git
+    - conan create -o scine_utilities:python=True --build=missing utils-open-source
+    - conan create -o scine_molassembler:python=True -o scine_molassembler:docs=True -o scine_molassembler:tests=True --build=missing .
+
+
+clang-release:
+  stage: build
+  tags:
+    - default_docker
+  image: gitlab.chab.ethz.ch:4567/reiher/docker/scine-clang:latest
+  only:
+    - master
+  script:
+    - python3 -m pip install --upgrade conan sphinx sphinx_rtd_theme pytest numpy
+    - git clone --recursive git@gitlab.chab.ethz.ch:scine/utils-open-source.git
+    - conan create -o scine_utilities:python=True --build=missing utils-open-source
+    - conan create -o scine_molassembler:python=True -o scine_molassembler:docs=True -o scine_molassembler:tests=True --build=missing .
+
+
+pypi:
+  stage: build
   tags:
     - default_docker
   image: quay.io/pypa/manylinux2014_x86_64
@@ -153,9 +70,9 @@ deploy:pypi:
     - mkdir -p build
     - cd build
     - git clone --recursive git@gitlab.chab.ethz.ch:scine/utils-open-source.git
-    - conan create -o scine_utilities:shared=False --build=missing utils-open-source
-    - conan install -o scine_molassembler:python=True -o scine_utilities:shared=False --build=missing ..
-    - conan build ..
+    - conan create -o shared=False --build=missing utils-open-source
+    - conan install -o scine_molassembler:python=True -o shared=False --build=missing ..
+    - conan build .. --build
     - cd src/molassembler/python
     - python setup.py bdist_wheel
     - auditwheel show dist/*.whl
@@ -166,19 +83,21 @@ deploy:pypi:
     paths:
     - build/src/molassembler/python/wheelhouse
 
-# Wishful thinking:
-# pages:
-#   # only:
-#   #   - develop
-#   stage: deploy
-#   script:
-#     - mv build_gcc_debug/src/molassembler/python/doc public
+
+license:
+  stage: quality
+  tags:
+    - default_docker
+  image: gitlab.chab.ethz.ch:4567/reiher/docker/scine-gcc:latest
+  script:
+    - bash scripts/license_validity_check.sh
+
+# complexity:
+#   stage: quality
 #   tags:
 #     - default_docker
 #   image: gitlab.chab.ethz.ch:4567/reiher/docker/scine-gcc:latest
-#   dependencies:
-#     - build:gcc_debug
-#   artifacts:
-#     expire_in: 30 days
-#     paths:
-#     - public
+#   script:
+#     - python3 -m pip install lizard
+#     - cd src
+#     - lizard -w -s cyclomatic_complexity -C 30 -x "./extern/*"

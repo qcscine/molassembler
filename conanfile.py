@@ -1,18 +1,14 @@
-from conans import ConanFile, CMake, tools
-from pathlib import Path
+import os
 import sys
-
-
-def conan_paths(build_folder):
-    """Gets the full file path of the generated conan paths"""
-    return str(Path(build_folder) / "conan_paths.cmake")
+from conans import ConanFile, CMake, tools
+from conans.errors import ConanInvalidConfiguration
 
 
 def python_module_dir(package_folder):
     """Generates the package's installed python path"""
     python_dir = "python" + str(sys.version_info.major) + \
         "." + str(sys.version_info.minor)
-    return str(Path(package_folder) / "lib" / python_dir / "site-packages")
+    return os.path.join(package_folder), "lib", python_dir, "site-packages"
 
 
 class MolassemblerConan(ConanFile):
@@ -30,21 +26,41 @@ of multidentate and haptic inorganic molecules from positional data and
 generate non-superposable stereopermutations as output."""
     topics = ("chemistry", "cheminformatics", "molecule")
     settings = "os", "compiler", "build_type", "arch"
-    options = {"shared": [True, False], "python": [True, False]}
-    default_options = {"shared": True, "python": False}
-    generators = "cmake_paths"
-    exports_sources = "src/*", "CMakeLists.txt"
+    options = {key: [True, False]
+               for key in ["shared", "python", "tests", "docs", "coverage"]}
+    default_options = {
+        "shared": True,
+        "python": False,
+        "tests": False,
+        "docs": False,
+        "coverage": False
+    }
+    generators = "cmake"
+    exports_sources = "src/*", "CMakeLists.txt", ".conan_include.cmake"
+    build_requires = [("cmake_installer/[~=3.13.4]@conan/stable")]
     requires = [("scine_utilities/[~=2.1.0]")]
+
+    def config_options(self):
+        if self.options.coverage:
+            if not self.options.tests:
+                raise ConanInvalidConfiguration(
+                    "Coverage testing requires testing to be enabled"
+                )
+
+            if self.settings.build_type != "Debug":
+                raise ConanInvalidConfiguration(
+                    "Coverage testing should be done on a debug build")
 
     def _configure_cmake(self):
         cmake = CMake(self)
         additional_definitions = {
             "SCINE_MARCH": "",
-            "SCINE_BUILD_DOCS": False,
-            "SCINE_BUILD_TESTS": False,
+            "SCINE_BUILD_DOCS": self.options.docs,
+            "SCINE_BUILD_TESTS": self.options.tests,
             "SCINE_BUILD_PYTHON_BINDINGS": self.options.python,
             "PYTHON_EXECUTABLE": sys.executable,
-            "CMAKE_PROJECT_molassembler_INCLUDE": conan_paths(self.build_folder)
+            "CMAKE_PROJECT_molassembler_INCLUDE": ".conan_include.cmake",
+            "COVERAGE": self.options.coverage
         }
         cmake.definitions.update(additional_definitions)
         # Mess with cmake definitions, etc.
@@ -53,11 +69,16 @@ generate non-superposable stereopermutations as output."""
 
     def configure(self):
         tools.check_min_cppstd(self, "14")
+        if self.options.python:
+            self.options["scine_utilities"].python = True
 
-    def build_requirements(self):
-        if self.settings.os == "Windows":
-            self.build_requires("mingw_installer/[~=1.0]@conan/stable")
+    def package_id(self):
+        # Tests and docs do not contribute to package id
+        del self.info.options.tests
+        del self.info.options.docs
+        del self.info.options.coverage
 
+    # def build_requirements(self):
         # TODO: As soon as 2.4.2 is available on conan, prefer this
         # if self.options.python:
         #     self.build_requires("pybind11/2.4.2@conan/stable")
@@ -66,13 +87,16 @@ generate non-superposable stereopermutations as output."""
         cmake = self._configure_cmake()
         cmake.build()
 
+        if self.options.tests:
+            cmake.test(output_on_failure=True)
+
     def package(self):
         cmake = self._configure_cmake()
         cmake.install()
         cmake.patch_config_paths()
 
     def package_info(self):
-        self.cpp_info.libs = ["molassembler"]
+        self.cpp_info.libs = tools.collect_libs(self)
         if self.options.python:
             self.env_info.PYTHONPATH.append(
                 python_module_dir(self.package_folder)
