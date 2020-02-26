@@ -111,8 +111,6 @@ void init_outer_graph(pybind11::module& m) {
       BondType.Double
       >>> compound.graph[BondIndex(1, 2)] # C#N bond by bond subsetting
       BondType.Triple
-      >>> compound.graph[1, 2] # C#N bond by atom index subsetting
-      BondType.Triple
     )delim"
   );
 
@@ -324,13 +322,6 @@ void init_outer_graph(pybind11::module& m) {
     "__getitem__",
     [](const Graph& g, const BondIndex i) -> BondType {
       return g.bondType(i);
-    }
-  );
-
-  outerGraph.def(
-    "__getitem__",
-    [](const Graph& g, const AtomIndex i, const AtomIndex j) -> BondType {
-      return g.bondType(BondIndex(i, j));
     }
   );
 
