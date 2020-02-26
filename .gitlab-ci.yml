@@ -25,7 +25,7 @@ coverage:
     - conan create -o scine_utilities:python=True --build=missing utils-open-source
     - mkdir -p build_coverage
     - cd build_coverage
-    - conan install -o scine_molassembler:python=True -o scine_molassembler:tests=True -o scine_molassembler:docs=True -o scine_molassembler:coverage=True -o scine_molassembler:build_type=Debug ..
+    - conan install -o scine_molassembler:python=True -o scine_molassembler:tests=True -o scine_molassembler:docs=True -o scine_molassembler:coverage=True -s scine_molassembler:build_type=Debug ..
     - conan build ..
     - cd ..
     - python $(which gcovr) -r "$(pwd)/src/" -u --object-directory="$(pwd)/build_coverage/src/" --exclude-dir ".*test.*" --exclude-dir ".*extern.*" --exclude-dir ".*analysis.*" -e ".*extern.*" -e ".*test.*"
@@ -49,6 +49,8 @@ clang-release:
   tags:
     - default_docker
   image: gitlab.chab.ethz.ch:4567/reiher/docker/scine-clang:latest
+  only:
+    - master
   script:
     - python3 -m pip install --upgrade conan sphinx sphinx_rtd_theme pytest numpy
     - git clone --recursive git@gitlab.chab.ethz.ch:scine/utils-open-source.git
