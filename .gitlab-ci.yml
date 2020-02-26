@@ -20,7 +20,7 @@ coverage:
     - default_docker
   image: gitlab.chab.ethz.ch:4567/reiher/docker/scine-gcc:latest
   script:
-    - python3 -m pip install --upgrade sphinx sphinx_rtd_theme pytest numpy
+    - python3 -m pip install --upgrade conan sphinx sphinx_rtd_theme pytest numpy
     - git clone --recursive git@gitlab.chab.ethz.ch:scine/utils-open-source.git
     - conan create -o scine_utilities:python=True --build=missing utils-open-source
     - mkdir -p build_coverage
@@ -49,8 +49,6 @@ clang-release:
   tags:
     - default_docker
   image: gitlab.chab.ethz.ch:4567/reiher/docker/scine-clang:latest
-  only:
-    - master
   script:
     - python3 -m pip install --upgrade conan sphinx sphinx_rtd_theme pytest numpy
     - git clone --recursive git@gitlab.chab.ethz.ch:scine/utils-open-source.git
@@ -92,12 +90,12 @@ license:
   script:
     - bash scripts/license_validity_check.sh
 
-# complexity:
-#   stage: quality
-#   tags:
-#     - default_docker
-#   image: gitlab.chab.ethz.ch:4567/reiher/docker/scine-gcc:latest
-#   script:
-#     - python3 -m pip install lizard
-#     - cd src
-#     - lizard -w -s cyclomatic_complexity -C 30 -x "./extern/*"
+complexity:
+  stage: quality
+  tags:
+    - default_docker
+  image: gitlab.chab.ethz.ch:4567/reiher/docker/scine-gcc:latest
+  script:
+    - python3 -m pip install lizard
+    - cd src
+    - lizard -w -s cyclomatic_complexity -C 30 -x "./extern/*" -W ../.whitelizard.txt

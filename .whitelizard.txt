@@ -1,0 +1,11 @@
+# Needs a refactor
+./molassembler/lib/molassembler/Stereopermutators/AtomStereopermutatorImpl.cpp: Scine::molassembler::AtomStereopermutator::Impl::propagate
+./molassembler/lib/molassembler/Molecule/RankingTree.h: Scine::molassembler::RankingTree::runBFS_
+./molassembler/lib/molassembler/Molecule/RankingTree.cpp: Scine::molassembler::RankingTree::auxiliaryApplySequenceRules_
+./molassembler/lib/molassembler/Molecule/RankingTree.cpp: Scine::molassembler::RankingTree::applySequenceRules_
+./molassembler/lib/molassembler/IO/SmilesMoleculeBuilder.cpp: Scine::molassembler::io::MoleculeBuilder::setBondStereo
+
+# Necessarily complex
+./shapes/analysis/shape.cpp: AlignFive::shape
+./molassembler/lib/molassembler/IO/SmilesMoleculeBuilder.cpp: Scine::molassembler::io::MoleculeBuilder::shapeMap
+./shapes/lib/shapes/PointGroupElements.cpp: Scine::shapes::elements::symmetryElements
