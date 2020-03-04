@@ -40,19 +40,13 @@ generate non-superposable stereopermutations as output."""
     build_requires = [("cmake_installer/[~=3.13.4]@conan/stable")]
     requires = [("scine_utilities/[~=2.1.0]")]
 
-    def config_options(self):
-        if self.options.coverage:
-            if not self.options.tests:
-                raise ConanInvalidConfiguration(
-                    "Coverage testing requires testing to be enabled"
-                )
-
-            if self.settings.build_type != "Debug":
-                raise ConanInvalidConfiguration(
-                    "Coverage testing should be done on a debug build")
+    _cmake = None
 
     def _configure_cmake(self):
-        cmake = CMake(self)
+        if self._cmake:
+            return self._cmake
+
+        self._cmake = CMake(self)
         additional_definitions = {
             "SCINE_MARCH": "",
             "SCINE_BUILD_DOCS": self.options.docs,
@@ -62,15 +56,26 @@ generate non-superposable stereopermutations as output."""
             "CMAKE_PROJECT_molassembler_INCLUDE": ".conan_include.cmake",
             "COVERAGE": self.options.coverage
         }
-        cmake.definitions.update(additional_definitions)
+        self._cmake.definitions.update(additional_definitions)
         # Mess with cmake definitions, etc.
-        cmake.configure()
-        return cmake
+        self._cmake.configure()
+        return self._cmake
 
     def configure(self):
         tools.check_min_cppstd(self, "14")
+
         if self.options.python:
             self.options["scine_utilities"].python = True
+
+        if self.options.coverage:
+            if not self.options.tests:
+                raise ConanInvalidConfiguration(
+                    "Coverage testing requires testing to be enabled"
+                )
+
+            if self.settings.build_type != "Debug":
+                raise ConanInvalidConfiguration(
+                    "Coverage testing should be done on a debug build")
 
     def package_id(self):
         # Tests and docs do not contribute to package id
