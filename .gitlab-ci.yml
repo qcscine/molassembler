@@ -43,6 +43,7 @@ coverage:
     - conan build ..
     - cd ..
     - python3 -m gcovr -r "$(pwd)/src/" -u --object-directory="$(pwd)/build/src/" --exclude-dir ".*test.*" --exclude-dir ".*extern.*" --exclude-dir ".*analysis.*" -e ".*extern.*" -e ".*test.*" --html --html-details -o coverage.html
+    - python3 -m gcovr -r "$(pwd)/src/" -u --object-directory="$(pwd)/build/src/" --exclude-dir ".*test.*" --exclude-dir ".*extern.*" --exclude-dir ".*analysis.*" -e ".*extern.*" -e ".*test.*"
   coverage: '/^TOTAL.*\s+(\d+\%)$/'
   artifacts:
     expire_in: 1 day
