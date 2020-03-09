@@ -51,8 +51,6 @@ clang-release:
   tags:
     - default_docker
   image: gitlab.chab.ethz.ch:4567/reiher/docker/scine-clang:latest
-  only:
-    - master
   script:
     - python3 -m pip install --upgrade conan sphinx sphinx_rtd_theme pytest numpy
     - conan remote add ci-internal $SCINE_DEPLOY_ARTIFACTORY_URL
