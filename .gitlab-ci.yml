@@ -2,13 +2,14 @@ variables:
   GIT_SUBMODULE_STRATEGY: recursive
 
 # SSH Setup
-before_script:
-  - which ssh-agent || (which yum && yum install openssh-clients -y) || (which apt-get && apt-get install openssh-client -y)
-  - eval $(ssh-agent -s)
-  - echo $SCINE_DEPLOY_KEY | base64 -d | ssh-add -
-  - mkdir -p ~/.ssh
-  - chmod 700 ~/.ssh
-  - echo $SCINE_DEPLOY_HOSTS | base64 -d > ~/.ssh/known_hosts
+default:
+  before_script:
+    - which ssh-agent || (which yum && yum install openssh-clients -y) || (which apt-get && apt-get install openssh-client -y)
+    - eval $(ssh-agent -s)
+    - echo $SCINE_DEPLOY_KEY | base64 -d | ssh-add -
+    - mkdir -p ~/.ssh
+    - chmod 700 ~/.ssh
+    - echo $SCINE_DEPLOY_HOSTS | base64 -d > ~/.ssh/known_hosts
 
 stages:
   - build
@@ -21,8 +22,8 @@ coverage:
   image: gitlab.chab.ethz.ch:4567/reiher/docker/scine-gcc:latest
   script:
     - python3 -m pip install --upgrade conan sphinx sphinx_rtd_theme pytest numpy
-    - git clone --recursive git@gitlab.chab.ethz.ch:scine/utils-open-source.git
-    - conan create -o scine_utilities:python=True --build=missing utils-open-source
+    - conan remote add ci-internal $SCINE_DEPLOY_ARTIFACTORY_URL
+    - conan user -p $SCINE_DEPLOY_ARTIFACTORY_PASSWORD -r ci-internal $SCINE_DEPLOY_ARTIFACTORY_USERNAME
     - mkdir -p build_coverage
     - cd build_coverage
     - conan install -o scine_molassembler:python=True -o scine_molassembler:tests=True -o scine_molassembler:docs=True -o scine_molassembler:coverage=True -s scine_molassembler:build_type=Debug ..
@@ -39,9 +40,10 @@ gcc-release:
   image: gitlab.chab.ethz.ch:4567/reiher/docker/scine-gcc:latest
   script:
     - python3 -m pip install --upgrade conan sphinx sphinx_rtd_theme pytest numpy
-    - git clone --recursive git@gitlab.chab.ethz.ch:scine/utils-open-source.git
-    - conan create -o scine_utilities:python=True --build=missing utils-open-source
-    - conan create -o scine_molassembler:python=True -o scine_molassembler:docs=True -o scine_molassembler:tests=True --build=missing .
+    - conan remote add ci-internal $SCINE_DEPLOY_ARTIFACTORY_URL
+    - conan user -p $SCINE_DEPLOY_ARTIFACTORY_PASSWORD -r ci-internal $SCINE_DEPLOY_ARTIFACTORY_USERNAME
+    - conan create -o scine_molassembler:python=True -o scine_molassembler:docs=True -o scine_molassembler:tests=True --build=missing . ci/$CI_COMMIT_REF_SLUG
+    - $CI_COMMIT_REF_PROTECTED && conan upload `conan search scine_molassembler | tail -n1` --all -r ci-internal -c
 
 
 clang-release:
@@ -53,9 +55,10 @@ clang-release:
     - master
   script:
     - python3 -m pip install --upgrade conan sphinx sphinx_rtd_theme pytest numpy
-    - git clone --recursive git@gitlab.chab.ethz.ch:scine/utils-open-source.git
-    - conan create -o scine_utilities:python=True --build=missing utils-open-source
-    - conan create -o scine_molassembler:python=True -o scine_molassembler:docs=True -o scine_molassembler:tests=True --build=missing .
+    - conan remote add ci-internal $SCINE_DEPLOY_ARTIFACTORY_URL
+    - conan user -p $SCINE_DEPLOY_ARTIFACTORY_PASSWORD -r ci-internal $SCINE_DEPLOY_ARTIFACTORY_USERNAME
+    - conan create -o scine_molassembler:python=True -o scine_molassembler:docs=True -o scine_molassembler:tests=True --build=missing . ci/$CI_COMMIT_REF_SLUG
+    - $CI_COMMIT_REF_PROTECTED && conan upload `conan search scine_molassembler | tail -n1` --all -r ci-internal -c
 
 
 pypi:
@@ -68,8 +71,8 @@ pypi:
     - source cp36-cp36m/bin/activate
     - python -m pip install conan wheel
     - mkdir -p build && cd build
-    - git clone --recursive git@gitlab.chab.ethz.ch:scine/utils-open-source.git
-    - conan create -o scine_utilities:python=True -o scine_utilities:shared=False --build=missing utils-open-source
+    - conan remote add ci-internal $SCINE_DEPLOY_ARTIFACTORY_URL
+    - conan user -p $SCINE_DEPLOY_ARTIFACTORY_PASSWORD -r ci-internal $SCINE_DEPLOY_ARTIFACTORY_USERNAME
     - conan install -o scine_molassembler:python=True -o scine_utilities:shared=False -o scine_molassembler:shared=False --build=missing ..
     - conan build ..
     - cd src/molassembler/python
