@@ -106,7 +106,7 @@ complexity:
     - default_docker
   image: gitlab.chab.ethz.ch:4567/reiher/docker/scine-gcc:latest
   script:
-    - python3 -m pip install lizard
+    - python3 -m pip install lizard jinja2
     - cd src
     - lizard -l cpp -m -T nloc=100 -T cyclomatic_complexity=20 -T parameter_count=5 -x "./extern/*" -o lizard.html
     - lizard -l cpp -m -w -s cyclomatic_complexity -T cyclomatic_complexity=30 -x "./extern/*" -W ../.whitelizard.txt
