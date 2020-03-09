@@ -43,7 +43,7 @@ gcc-release:
     - conan remote add ci-internal $SCINE_DEPLOY_ARTIFACTORY_URL
     - conan user -p $SCINE_DEPLOY_ARTIFACTORY_PASSWORD -r ci-internal $SCINE_DEPLOY_ARTIFACTORY_USERNAME
     - conan create -o scine_molassembler:python=True -o scine_molassembler:docs=True -o scine_molassembler:tests=True --build=missing . ci/$CI_COMMIT_REF_SLUG
-    - $CI_COMMIT_REF_PROTECTED && conan upload `conan search scine_molassembler | tail -n1` --all -r ci-internal -c
+    - if [ $CI_COMMIT_REF_PROTECTED ]; then conan upload `conan search scine_molassembler | tail -n1` --all -r ci-internal -c; fi
 
 
 clang-release:
@@ -58,7 +58,7 @@ clang-release:
     - conan remote add ci-internal $SCINE_DEPLOY_ARTIFACTORY_URL
     - conan user -p $SCINE_DEPLOY_ARTIFACTORY_PASSWORD -r ci-internal $SCINE_DEPLOY_ARTIFACTORY_USERNAME
     - conan create -o scine_molassembler:python=True -o scine_molassembler:docs=True -o scine_molassembler:tests=True --build=missing . ci/$CI_COMMIT_REF_SLUG
-    - $CI_COMMIT_REF_PROTECTED && conan upload `conan search scine_molassembler | tail -n1` --all -r ci-internal -c
+    - if [ $CI_COMMIT_REF_PROTECTED ]; then conan upload `conan search scine_molassembler | tail -n1` --all -r ci-internal -c; fi
 
 
 pypi:
