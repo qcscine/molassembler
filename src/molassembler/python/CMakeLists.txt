@@ -11,7 +11,7 @@ set_target_properties(molassembler_python PROPERTIES
   LIBRARY_OUTPUT_NAME "scine_molassembler"
   LIBRARY_OUTPUT_DIRECTORY "scine_molassembler"
 )
-target_include_directories(molassembler_python SYSTEM PRIVATE ${PYBIND11_INCLUDE_DIR})
+target_include_directories(molassembler_python SYSTEM PRIVATE ${pybind11_INCLUDE_DIR} ${PYBIND11_INCLUDE_DIR})
 target_compile_options(molassembler_python PRIVATE ${MOLASSEMBLER_CXX_FLAGS})
 target_link_libraries(molassembler_python PRIVATE ${MOLASSEMBLER_STATIC_TARGET} Eigen3::Eigen)
 
