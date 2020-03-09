@@ -23,14 +23,8 @@ default:
 - conan create -o scine_molassembler:python=True -o scine_molassembler:docs=True -o scine_molassembler:tests=True --build=missing . ci/$CI_COMMIT_REF_SLUG
 - if [ $CI_COMMIT_REF_PROTECTED ]; then conan upload `conan search scine_molassembler | tail -n1` --all -r ci-internal -c; fi
 
-# Stages
-stages:
-  - build
-  - quality
-
-# Build stages
+# Builds
 coverage:
-  stage: build
   tags:
     - default_docker
   image: gitlab.chab.ethz.ch:4567/reiher/docker/scine-gcc:latest
@@ -52,7 +46,6 @@ coverage:
 
 
 gcc-release:
-  stage: build
   tags:
     - default_docker
   image: gitlab.chab.ethz.ch:4567/reiher/docker/scine-gcc:latest
@@ -61,7 +54,6 @@ gcc-release:
 
 
 clang-release:
-  stage: build
   tags:
     - default_docker
   image: gitlab.chab.ethz.ch:4567/reiher/docker/scine-clang:latest
@@ -70,7 +62,6 @@ clang-release:
 
 
 pypi:
-  stage: build
   tags:
     - default_docker
   image: quay.io/pypa/manylinux2014_x86_64
@@ -92,9 +83,8 @@ pypi:
     paths:
     - build/src/molassembler/python/wheelhouse
 
-# Quality stages
+# Quality
 license:
-  stage: quality
   tags:
     - default_docker
   image: gitlab.chab.ethz.ch:4567/reiher/docker/scine-gcc:latest
@@ -102,7 +92,6 @@ license:
     - bash scripts/license_validity_check.sh
 
 complexity:
-  stage: quality
   tags:
     - default_docker
   image: gitlab.chab.ethz.ch:4567/reiher/docker/scine-gcc:latest
