@@ -84,10 +84,9 @@ generate non-superposable stereopermutations as output."""
         del self.info.options.docs
         del self.info.options.coverage
 
-    # def build_requirements(self):
-        # TODO: As soon as 2.4.2 is available on conan, prefer this
-        # if self.options.python:
-        #     self.build_requires("pybind11/2.4.2@conan/stable")
+    def build_requirements(self):
+        if self.options.python:
+            self.build_requires("pybind11/2.4.2@scine/dependencies")
 
     def build(self):
         cmake = self._configure_cmake()
