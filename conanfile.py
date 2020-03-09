@@ -93,7 +93,10 @@ generate non-superposable stereopermutations as output."""
         cmake.build()
 
         if self.options.tests:
+            # Run tests sequentially
+            cmake.parallel = False
             cmake.test(output_on_failure=True)
+            cmake.parallel = True
 
     def package(self):
         cmake = self._configure_cmake()

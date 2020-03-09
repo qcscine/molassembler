@@ -11,26 +11,42 @@ default:
     - chmod 700 ~/.ssh
     - echo $SCINE_DEPLOY_HOSTS | base64 -d > ~/.ssh/known_hosts
 
+# Anchors
+.conan_add_remote: &conan_add_remote
+- conan remote add ci-internal $SCINE_DEPLOY_ARTIFACTORY_URL
+- conan user -p $SCINE_DEPLOY_ARTIFACTORY_PASSWORD -r ci-internal $SCINE_DEPLOY_ARTIFACTORY_USERNAME
+
+.conan_build: &conan_build
+- python3 -m pip install --upgrade conan sphinx sphinx_rtd_theme pytest numpy
+- *conan_add_remote
+- conan create -o scine_molassembler:python=True -o scine_molassembler:docs=True -o scine_molassembler:tests=True --build=missing . ci/$CI_COMMIT_REF_SLUG
+- if [ $CI_COMMIT_REF_PROTECTED ]; then conan upload `conan search scine_molassembler | tail -n1` --all -r ci-internal -c; fi
+
+# Stages
 stages:
   - build
   - quality
 
+# Build stages
 coverage:
   stage: build
   tags:
     - default_docker
   image: gitlab.chab.ethz.ch:4567/reiher/docker/scine-gcc:latest
   script:
-    - python3 -m pip install --upgrade conan sphinx sphinx_rtd_theme pytest numpy
-    - conan remote add ci-internal $SCINE_DEPLOY_ARTIFACTORY_URL
-    - conan user -p $SCINE_DEPLOY_ARTIFACTORY_PASSWORD -r ci-internal $SCINE_DEPLOY_ARTIFACTORY_USERNAME
-    - mkdir -p build_coverage
-    - cd build_coverage
+    - python3 -m pip install --upgrade conan sphinx sphinx_rtd_theme pytest numpy gcovr
+    - *conan_add_remote
+    - mkdir -p build
+    - cd build
     - conan install -o scine_molassembler:python=True -o scine_molassembler:tests=True -o scine_molassembler:docs=True -o scine_molassembler:coverage=True -s scine_molassembler:build_type=Debug ..
     - conan build ..
     - cd ..
-    - python $(which gcovr) -r "$(pwd)/src/" -u --object-directory="$(pwd)/build_coverage/src/" --exclude-dir ".*test.*" --exclude-dir ".*extern.*" --exclude-dir ".*analysis.*" -e ".*extern.*" -e ".*test.*"
+    - python3 -m gcovr -r "$(pwd)/src/" -u --object-directory="$(pwd)/build/src/" --exclude-dir ".*test.*" --exclude-dir ".*extern.*" --exclude-dir ".*analysis.*" -e ".*extern.*" -e ".*test.*" --html --html-details -o coverage.html
   coverage: '/^TOTAL.*\s+(\d+\%)$/'
+  artifacts:
+    expire_in: 1 week
+    paths:
+    - coverage*.html
 
 
 gcc-release:
@@ -39,11 +55,7 @@ gcc-release:
     - default_docker
   image: gitlab.chab.ethz.ch:4567/reiher/docker/scine-gcc:latest
   script:
-    - python3 -m pip install --upgrade conan sphinx sphinx_rtd_theme pytest numpy
-    - conan remote add ci-internal $SCINE_DEPLOY_ARTIFACTORY_URL
-    - conan user -p $SCINE_DEPLOY_ARTIFACTORY_PASSWORD -r ci-internal $SCINE_DEPLOY_ARTIFACTORY_USERNAME
-    - conan create -o scine_molassembler:python=True -o scine_molassembler:docs=True -o scine_molassembler:tests=True --build=missing . ci/$CI_COMMIT_REF_SLUG
-    - if [ $CI_COMMIT_REF_PROTECTED ]; then conan upload `conan search scine_molassembler | tail -n1` --all -r ci-internal -c; fi
+    - *conan_build
 
 
 clang-release:
@@ -52,11 +64,7 @@ clang-release:
     - default_docker
   image: gitlab.chab.ethz.ch:4567/reiher/docker/scine-clang:latest
   script:
-    - python3 -m pip install --upgrade conan sphinx sphinx_rtd_theme pytest numpy
-    - conan remote add ci-internal $SCINE_DEPLOY_ARTIFACTORY_URL
-    - conan user -p $SCINE_DEPLOY_ARTIFACTORY_PASSWORD -r ci-internal $SCINE_DEPLOY_ARTIFACTORY_USERNAME
-    - conan create -o scine_molassembler:python=True -o scine_molassembler:docs=True -o scine_molassembler:tests=True --build=missing . ci/$CI_COMMIT_REF_SLUG
-    - if [ $CI_COMMIT_REF_PROTECTED ]; then conan upload `conan search scine_molassembler | tail -n1` --all -r ci-internal -c; fi
+    - *conan_build
 
 
 pypi:
@@ -68,9 +76,8 @@ pypi:
     - /opt/python/cp36-cp36m/bin/python -m venv cp36-cp36m
     - source cp36-cp36m/bin/activate
     - python -m pip install conan wheel
+    - *conan_add_remote
     - mkdir -p build && cd build
-    - conan remote add ci-internal $SCINE_DEPLOY_ARTIFACTORY_URL
-    - conan user -p $SCINE_DEPLOY_ARTIFACTORY_PASSWORD -r ci-internal $SCINE_DEPLOY_ARTIFACTORY_USERNAME
     - conan install -o scine_molassembler:python=True -o scine_utilities:shared=False -o scine_molassembler:shared=False --build=missing ..
     - conan build ..
     - cd src/molassembler/python
@@ -83,7 +90,7 @@ pypi:
     paths:
     - build/src/molassembler/python/wheelhouse
 
-
+# Quality stages
 license:
   stage: quality
   tags:
