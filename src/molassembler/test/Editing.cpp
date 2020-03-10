@@ -352,10 +352,7 @@ BOOST_AUTO_TEST_CASE(EditingBugfixMesityleneSubstitution) {
 }
 
 BOOST_AUTO_TEST_CASE(EditingBugfixHapticLigands) {
-  Molecule complex {
-    Utils::ElementType::Ru,
-    Utils::ElementType::H
-  };
+  Molecule complex {Utils::ElementType::Ru, Utils::ElementType::H};
 
   { // Variant one: Extend a hydrogen atom to hydrogen molecule, then complexate
     Molecule complexCopy = complex;
@@ -365,10 +362,10 @@ BOOST_AUTO_TEST_CASE(EditingBugfixHapticLigands) {
   }
 
   { // Variant two: Connect two individual bonding hydrogen atoms
-    /*Molecule complexCopy = complex;
+    Molecule complexCopy = complex;
     AtomIndex hydrogenOne = complexCopy.addAtom(Utils::ElementType::H, 0, BondType::Single);
     AtomIndex hydrogenTwo = complexCopy.addAtom(Utils::ElementType::H, 0, BondType::Single);
-    complexCopy.addBond(hydrogenOne, hydrogenTwo, BondType::Single);*/
+    BOOST_CHECK_NO_THROW(complexCopy.addBond(hydrogenOne, hydrogenTwo, BondType::Single));
   }
 }
 

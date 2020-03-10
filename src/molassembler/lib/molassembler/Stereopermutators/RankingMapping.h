@@ -1,3 +1,10 @@
+/*!@file
+ * @copyright This code is licensed under the 3-clause BSD license.
+ *   Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ * @brief Mapping between sites generated from two ranking information instances
+ */
+
 #ifndef INCLUDE_MOLASSEMBLER_RANKING_MAPPING_H
 #define INCLUDE_MOLASSEMBLER_RANKING_MAPPING_H
 
@@ -9,13 +16,8 @@ namespace Scine {
 namespace molassembler {
 
 struct SiteMapping {
-  struct Changes {
-    AtomIndex atom;
-    SiteIndex site;
-  };
-
   std::unordered_map<SiteIndex, SiteIndex, SiteIndex::Hash> map;
-  boost::optional<Changes> changes;
+  boost::optional<SiteIndex> changedSite;
 
   static SiteMapping from(const RankingInformation& a, const RankingInformation& b);
 };

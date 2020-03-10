@@ -427,7 +427,7 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
       }
 
       assert(siteCountChange == -1);
-      assert(siteMapping.changes);
+      assert(siteMapping.changedSite);
 
       /* We can only figure out a mapping if the stereocenter is assigned
        * since otherwise cache_.symmetryPositionMap is empty and the shape
@@ -436,7 +436,7 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
       if(assignmentOption_) {
         return down(
           shape_,
-          shapePositionMap_.at(siteMapping.changes->site)
+          shapePositionMap_.at(siteMapping.changedSite.value())
         );
       }
 
@@ -475,10 +475,10 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
    */
   if(assignmentOption_ && numStereopermutations() > 1) {
     const auto removedVertexOptional = temple::optionals::flatMap(
-      siteMapping.changes,
-      [this, siteCountChange](const SiteMapping::Changes changes) -> boost::optional<shapes::Vertex> {
+      siteMapping.changedSite,
+      [this, siteCountChange](const SiteIndex changedSite) -> boost::optional<shapes::Vertex> {
         if(siteCountChange == -1) {
-          return shapePositionMap_.at(changes.site);
+          return shapePositionMap_.at(changedSite);
         }
 
         return boost::none;
@@ -516,7 +516,7 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
             const shapes::Vertex oldVertex = shapeMappingValue.at(newVertex);
 
             if(siteCountChange == +1 && oldVertex == shapes::size(newShape) - 1)  {
-              return siteMapping.changes->site;
+              return siteMapping.changedSite.value();
             }
 
             return oldSiteIndicesAtOldVertices.at(oldVertex);

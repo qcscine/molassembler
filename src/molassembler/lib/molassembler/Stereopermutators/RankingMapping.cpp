@@ -1,3 +1,9 @@
+/*!@file
+ * @copyright This code is licensed under the 3-clause BSD license.
+ *   Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ */
+
 #include "molassembler/Stereopermutators/RankingMapping.h"
 
 #include "temple/Functional.h"
@@ -5,65 +11,6 @@
 namespace Scine {
 namespace molassembler {
 namespace {
-
-std::vector<AtomIndex> collectSubstituents(const RankingInformation::SiteListType& sites) {
-  std::vector<AtomIndex> substituents;
-  for(const auto& site : sites) {
-    for(const AtomIndex index : site) {
-      substituents.push_back(index);
-    }
-  }
-  temple::inplace::sort(substituents);
-  return substituents;
-}
-
-boost::optional<SiteMapping::Changes> determineChanges(
-  const RankingInformation& a,
-  const RankingInformation& b
-) {
-  auto aSubstituents = collectSubstituents(a.sites);
-  auto bSubstituents = collectSubstituents(b.sites);
-
-  const int substituentCountChange = bSubstituents.size() - aSubstituents.size();
-
-  if(std::abs(substituentCountChange) > 1) {
-    throw std::logic_error("SiteMappings can handle only a single substituent change at once");
-  }
-
-  if(substituentCountChange != 0) {
-    std::vector<AtomIndex> changedSubstituents;
-
-    std::set_symmetric_difference(
-      std::begin(aSubstituents),
-      std::end(aSubstituents),
-      std::begin(bSubstituents),
-      std::end(bSubstituents),
-      std::back_inserter(changedSubstituents)
-    );
-
-    if(changedSubstituents.size() != 1) {
-      throw std::logic_error("Multiple changed substituents");
-    }
-
-    if(substituentCountChange == +1) {
-      // b has a substituent more
-      return SiteMapping::Changes {
-        changedSubstituents.front(),
-        b.getSiteIndexOf(changedSubstituents.front())
-      };
-    }
-
-    if(substituentCountChange == -1) {
-      // a has a subtituent more
-      return SiteMapping::Changes {
-        changedSubstituents.front(),
-        a.getSiteIndexOf(changedSubstituents.front())
-      };
-    }
-  }
-
-  return boost::none;
-}
 
 unsigned symmetricDifferenceSetSize(
   const std::vector<AtomIndex>& a,
@@ -93,8 +40,6 @@ SiteMapping SiteMapping::from(
 ) {
   SiteMapping mapping;
 
-  mapping.changes = determineChanges(a, b);
-
   const unsigned A = a.sites.size();
   const unsigned B = b.sites.size();
 
@@ -111,8 +56,32 @@ SiteMapping SiteMapping::from(
     }
   }
 
-  // If all sites are mapped by this, you're all done
+  // If all sites are mapped by this, you're almost done
   if(mapping.map.size() == std::min(A, B)) {
+    if(A < B) {
+      for(SiteIndex i {0}; i < B; ++i) {
+        if(temple::find(mappedBs, i) == std::end(mappedBs)) {
+          mapping.changedSite = i;
+          break;
+        }
+      }
+
+      if(!mapping.changedSite) {
+        throw std::logic_error("Failed to deduce changed site");
+      }
+    } else if(A > B) {
+      for(SiteIndex i {0}; i < A; ++i) {
+        if(mapping.map.count(i) == 0) {
+          mapping.changedSite = i;
+          break;
+        }
+      }
+
+      if(!mapping.changedSite) {
+        throw std::logic_error("Failed to deduce changed site");
+      }
+    }
+
     return mapping;
   }
 
@@ -146,7 +115,7 @@ SiteMapping SiteMapping::from(
     return distanceSum;
   };
 
-  auto permutation = temple::iota<unsigned>(std::max(UA, UB));
+  auto permutation = temple::iota<unsigned>(UB);
   auto bestPermutation = permutation;
   unsigned bestDistance = calculateDistance(permutation);
 
@@ -160,13 +129,36 @@ SiteMapping SiteMapping::from(
 
   // Use the best permutation to finish the map
   for(unsigned i = 0; i < std::min(UA, UB); ++i) {
-    mapping.map.emplace(
-      unmappedAs.at(i),
-      unmappedBs.at(bestPermutation.at(i))
-    );
+    const SiteIndex mappedB = unmappedBs.at(bestPermutation.at(i));
+    mapping.map.emplace(unmappedAs.at(i), mappedB);
+    mappedBs.push_back(mappedB);
   }
 
   assert(mapping.map.size() == std::min(A, B));
+
+  if(A < B) {
+    for(SiteIndex i {0}; i < B; ++i) {
+      if(temple::find(mappedBs, i) == std::end(mappedBs)) {
+        mapping.changedSite = i;
+        break;
+      }
+    }
+
+    if(!mapping.changedSite) {
+      throw std::logic_error("Failed to deduce changed site");
+    }
+  } else if(A > B) {
+    for(const SiteIndex unmappedA : unmappedAs) {
+      if(mapping.map.count(unmappedA) == 0) {
+        mapping.changedSite = unmappedA;
+        break;
+      }
+    }
+
+    if(!mapping.changedSite) {
+      throw std::logic_error("Failed to deduce changed site");
+    }
+  }
 
   return mapping;
 }
