@@ -34,6 +34,7 @@
 #include "molassembler/Log.h"
 #include "molassembler/Modeling/CommonTrig.h"
 #include "molassembler/Stereopermutators/ShapeVertexMaps.h"
+#include "molassembler/Stereopermutators/RankingMapping.h"
 
 #include "Utils/Geometry/ElementInfo.h"
 
@@ -45,7 +46,7 @@ namespace molassembler {
 
 /* Static functions */
 
-namespace detail {
+namespace {
 
 shapes::Shape pickTransition(
   const shapes::Shape shape,
@@ -170,14 +171,14 @@ std::pair<shapes::Shape, std::vector<shapes::Vertex>> classifyShape(const Eigen:
   );
 }
 
-} // namespace detail
+} // namespace
 
 shapes::Shape AtomStereopermutator::Impl::up(const shapes::Shape shape) {
-  return detail::pickTransition(shape, shapes::size(shape) + 1, boost::none);
+  return pickTransition(shape, shapes::size(shape) + 1, boost::none);
 }
 
 shapes::Shape AtomStereopermutator::Impl::down(const shapes::Shape shape, const shapes::Vertex removedVertex) {
-  return detail::pickTransition(shape, shapes::size(shape) - 1, removedVertex);
+  return pickTransition(shape, shapes::size(shape) - 1, removedVertex);
 }
 
 boost::optional<std::vector<shapes::Vertex>> AtomStereopermutator::Impl::selectTransitionMapping(
@@ -406,124 +407,13 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
     return boost::none;
   }
 
-  /* There are five possible situations that can occur here:
-   * - A substituent is removed, and that substituent was sole constituent of a
-   *   site, leading to a shape size decrease.
-   * - A substituent is removed, but that substituent was part of a site with
-   *   multiple constituents. The shape stays the same.
-   * - No substituent is removed or added, but there is a ranking change. The
-   *   shape stays the same.
-   * - A substituent is added, but to an existing site. The shape stays
-   *   the same.
-   * - A substituent is added that by itself constitutes a new site. The
-   *   shape size increases.
-   */
-  enum class PropagationSituation {
-    Unknown,
-    SiteRemoval,
-    SubstituentRemoval,
-    RankingChange,
-    SubstituentAddition,
-    SiteAddition
-  };
-
-  /* Fully determine in which situation we are and all conditional information
-   * needed to proceed with each.
-   */
-  auto situation = PropagationSituation::Unknown;
-  int siteCountChange = static_cast<int>(newRanking.sites.size() - ranking_.sites.size());
+  const int siteCountChange = static_cast<int>(newRanking.sites.size() - ranking_.sites.size());
   // Complain if more than one site is changed either way
   if(std::abs(siteCountChange) > 1) {
     throw std::logic_error("propagateGraphChange should only ever handle a single site addition or removal at once");
   }
 
-  boost::optional<SiteIndex> alteredSiteIndex;
-  boost::optional<AtomIndex> alteredSubstituentIndex;
-
-  auto countSubstituents = [](const RankingInformation::SiteListType& sites) -> unsigned {
-    return temple::accumulate(
-      sites,
-      0u,
-      [](const unsigned carry, const auto& site) -> unsigned {
-        return carry + site.size();
-      }
-    );
-  };
-
-  int substituentCountChange = static_cast<int>(countSubstituents(newRanking.sites)) - static_cast<int>(countSubstituents(ranking_.sites));
-  // Complain if multiple substituents are changed either way
-  if(std::abs(substituentCountChange) > 1) {
-    throw std::logic_error("propagateGraphChange should only ever handle a single substituent addition or removal at once");
-  }
-
-  // Collect all substituents of a ranking and sort them
-  auto collectSubstituents = [](const RankingInformation::SiteListType& sites) -> std::vector<AtomIndex> {
-    std::vector<AtomIndex> substituents;
-    substituents.reserve(2 * sites.size());
-
-    for(const auto& site : sites) {
-      for(const AtomIndex& index : site) {
-        substituents.push_back(index);
-      }
-    }
-
-    temple::inplace::sort(substituents);
-
-    return substituents;
-  };
-
-  auto determineChangedSubstituentAndSite = [&](
-    const RankingInformation& rankingWithMoreSubstituents,
-    const RankingInformation& rankingWithFewerSubstituents
-  ) {
-    // Figure out which substituent has changed, if any
-    auto largerSubstituentList = collectSubstituents(rankingWithMoreSubstituents.sites);
-    auto smallerSubstituentList = collectSubstituents(rankingWithFewerSubstituents.sites);
-
-    std::vector<AtomIndex> changedSubstituents;
-
-    std::set_difference(
-      std::begin(largerSubstituentList),
-      std::end(largerSubstituentList),
-      std::begin(smallerSubstituentList),
-      std::end(smallerSubstituentList),
-      std::back_inserter(changedSubstituents)
-    );
-
-    /* Just because the count difference is +1 does not mean that only one has
-     * changed, so we diligently recheck:
-     */
-    if(changedSubstituents.size() > 1) {
-      throw std::logic_error("propagateGraphChange should only ever handle a single substituent addition or removal at once");
-    }
-
-    assert(!changedSubstituents.empty());
-
-    alteredSubstituentIndex = changedSubstituents.front();
-    alteredSiteIndex = rankingWithMoreSubstituents.getSiteIndexOf(changedSubstituents.front());
-  };
-
-  /* Determine the situation */
-  if(substituentCountChange == +1) {
-    determineChangedSubstituentAndSite(newRanking, ranking_);
-
-    assert(!newRanking.sites.at(*alteredSiteIndex).empty());
-    if(newRanking.sites.at(*alteredSiteIndex).size() > 1) {
-      situation = PropagationSituation::SubstituentAddition;
-    } else {
-      situation = PropagationSituation::SiteAddition;
-    }
-  } else if(substituentCountChange == -1) {
-    determineChangedSubstituentAndSite(ranking_, newRanking);
-    assert(!ranking_.sites.at(*alteredSiteIndex).empty());
-    if(ranking_.sites.at(*alteredSiteIndex).size() > 1) {
-      situation = PropagationSituation::SubstituentRemoval;
-    } else {
-      situation = PropagationSituation::SiteRemoval;
-    }
-  } else {
-    situation = PropagationSituation::RankingChange;
-  }
+  auto siteMapping = SiteMapping::from(ranking_, newRanking);
 
   /* Decide the new shape */
   shapes::Shape newShape = shapeOption.value_or_eval(
@@ -537,16 +427,16 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
       }
 
       assert(siteCountChange == -1);
-      assert(alteredSiteIndex);
+      assert(siteMapping.changes);
 
       /* We can only figure out a mapping if the stereocenter is assigned
-       * since otherwise cache_.symmetryPositionMap is empty and the symmetry
-       * position being removed is a necessary argument to down.
+       * since otherwise cache_.symmetryPositionMap is empty and the shape
+       * vertex being removed is a necessary argument to down.
        */
       if(assignmentOption_) {
         return down(
           shape_,
-          shapePositionMap_.at(alteredSiteIndex.value())
+          shapePositionMap_.at(siteMapping.changes->site)
         );
       }
 
@@ -581,146 +471,92 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
    * propagate chiral state if the new number of assignments is smaller or
    * equal to the amount we have currently. This is because say we have AABCDE
    * in octahedral, we carry chiral state, and a ranking change leads to
-   * ABCDEF.  There will be multiple ways to split A to F!
+   * ABCDEF. There will be multiple ways to split A to F!
    */
   if(assignmentOption_ && numStereopermutations() > 1) {
-    // A flat map of shape vertex to new site index in the new shape
-    using InvertedMap = temple::StrongIndexFlatMap<shapes::Vertex, SiteIndex>;
-    InvertedMap sitesAtNewShapeVertices;
+    const auto removedVertexOptional = temple::optionals::flatMap(
+      siteMapping.changes,
+      [this, siteCountChange](const SiteMapping::Changes changes) -> boost::optional<shapes::Vertex> {
+        if(siteCountChange == -1) {
+          return shapePositionMap_.at(changes.site);
+        }
 
-    /* Site-level changes */
-    if(situation == PropagationSituation::SiteAddition) {
-      if(
-        const auto shapeMapping = temple::optionals::flatMap(
-          shapes::getMapping(shape_, newShape, boost::none),
-          std::bind(selectTransitionMapping, _1, Options::chiralStatePreservation)
+        return boost::none;
+      }
+    );
+
+    const auto shapeMapping = temple::optionals::flatMap(
+      shapes::getMapping(shape_, newShape, removedVertexOptional),
+      std::bind(selectTransitionMapping, _1, Options::chiralStatePreservation)
+    );
+
+    const auto appliedShapeMapping = temple::optionals::map(
+      shapeMapping,
+      [&](const std::vector<shapes::Vertex>& vertexMap) {
+        if(siteCountChange == +1) {
+          return shapes::properties::applyIndexMapping(newShape, vertexMap);
+        }
+
+        return vertexMap;
+      }
+    );
+
+    if(appliedShapeMapping) {
+      const auto& shapeMappingValue = appliedShapeMapping.value();
+
+      // Use shape map of current assignment to place old site indices at old shape vertices
+      using InvertedMap = temple::StrongIndexFlatMap<shapes::Vertex, SiteIndex>;
+      const InvertedMap oldSiteIndicesAtOldVertices = shapePositionMap_.invert();
+
+      // Use shape mapping if available to transfer old vertices to new vertices
+      const InvertedMap oldSiteIndicesAtNewVertices = InvertedMap(
+        temple::map(
+          temple::iota<shapes::Vertex>(shapes::size(newShape)),
+          [&](const shapes::Vertex newVertex) -> SiteIndex {
+            const shapes::Vertex oldVertex = shapeMappingValue.at(newVertex);
+
+            if(siteCountChange == +1 && oldVertex == shapes::size(newShape) - 1)  {
+              return siteMapping.changes->site;
+            }
+
+            return oldSiteIndicesAtOldVertices.at(oldVertex);
+          }
         )
-      ) {
-        // Apply the mapping to get old shape positions at their places in the new shape
-        auto oldShapePositionsInNewShape = shapes::properties::applyIndexMapping(
-          newShape,
-          shapeMapping.value()
-        );
+      );
 
-        auto oldShapePositionToSiteMap = shapePositionMap_.invert();
-        /* We assume the new site is also merely added to the end!
-         * This may not always be true
-         */
-        oldShapePositionToSiteMap.pushIsometric();
+      // Use site mapping to transfer old site indices to new site indices
+      const InvertedMap sitesAtNewShapeVertices = InvertedMap(
+        temple::map(
+          oldSiteIndicesAtNewVertices,
+          [&](const SiteIndex oldSite) -> SiteIndex {
+            auto findIter = siteMapping.map.find(oldSite);
 
-        // Replace old shape positions by their site indices
-        sitesAtNewShapeVertices = InvertedMap(
-          temple::map(
-            oldShapePositionsInNewShape, // vec<Vertex>
-            temple::functor::at(oldShapePositionToSiteMap) // Vertex -> Site
-          )
-        );
-      }
-    }
+            if(findIter != std::end(siteMapping.map)) {
+              return findIter->second;
+            }
 
-    if(situation == PropagationSituation::SiteRemoval) {
-      if(
-        const auto shapeMapping = temple::optionals::flatMap(
-          shapes::getMapping(shape_, newShape, shapePositionMap_.at(*alteredSiteIndex)),
-          std::bind(selectTransitionMapping, _1, Options::chiralStatePreservation)
+            assert(siteCountChange == +1);
+            return oldSite;
+          }
         )
-      ) {
-        // Invert shapePositionMap to get: site = map.at(shapeVertex)
-        const auto oldShapeVertexToSiteMap = shapePositionMap_.invert();
-
-        // Transfer site indices from current shape to new shape
-        sitesAtNewShapeVertices.resize(shapes::size(newShape));
-        for(shapes::Vertex i {0}; i < shapes::size(newShape); ++i) {
-          // i is a symmetry position
-          sitesAtNewShapeVertices.at(i) = oldShapeVertexToSiteMap.at(
-            shapeMapping->at(i)
-          );
-        }
-      }
-    }
-
-    /* Substituent-level changes */
-    if(situation == PropagationSituation::SubstituentAddition) {
-      /* Add the newSubstituentIndex to the old ranking's appropriate site so
-       * the mapping is 1:1.
-       */
-      RankingInformation::SiteListType oldSites = ranking_.sites;
-      temple::TinySet<AtomIndex>::checked_insert(
-        oldSites.at(*alteredSiteIndex),
-        *alteredSubstituentIndex
       );
 
-      // Generate a flat map of old site indices to new site indices
-      const auto indexInFunctor = temple::functor::indexIn(newRanking.sites);
-      // SiteIndex -> SiteIndex map
-      const auto siteMapping = temple::map(
-        oldSites,
-        [&](const auto& atomIndexSet) -> SiteIndex {
-          return SiteIndex(indexInFunctor(atomIndexSet));
-        }
+      assert(
+        temple::all_of(
+          sitesAtNewShapeVertices,
+          [newShape](const SiteIndex i) { return i < shapes::size(newShape); }
+        )
       );
 
-      // TODO weak indices and faulty categories!
-      std::vector<unsigned> faulty(shapes::size(newShape));
-      for(unsigned i = 0; i < siteMapping.size(); ++i) {
-        faulty.at(i) = siteMapping.at(
-          shapePositionMap_.at(SiteIndex(i))
-        );
-      }
-      sitesAtNewShapeVertices = InvertedMap(faulty);
-    }
-
-    if(situation == PropagationSituation::SubstituentRemoval) {
-      /* Sort sites in the old ranking and new so we can use lexicographical
-       * comparison to figure out a mapping
-       */
-      RankingInformation::SiteListType oldSites = ranking_.sites;
-      temple::inplace::remove(
-        oldSites.at(*alteredSiteIndex),
-        *alteredSubstituentIndex
-      );
-
-      // Calculate the mapping from old sites to new ones
-      const auto indexInFunctor = temple::functor::indexIn(newRanking.sites);
-      const auto siteMapping = temple::map(
-        oldSites,
-        [&](const auto& atomIndexSet) -> SiteIndex {
-          return SiteIndex(indexInFunctor(atomIndexSet));
-        }
-      );
-
-      // TODO weak indices and faulty categories!
-      std::vector<unsigned> faulty(shapes::size(newShape));
-      // Transfer sites to new mapping
-      for(unsigned i = 0; i < siteMapping.size(); ++i) {
-        faulty.at(i) = siteMapping.at(
-          shapePositionMap_.at(SiteIndex(i))
-        );
-      }
-      sitesAtNewShapeVertices = InvertedMap(faulty);
-    }
-
-    /* Ranking-level change */
-    if(
-      situation == PropagationSituation::RankingChange
-      && (
-        newAbstract.permutations.list.size()
-        <= abstract_.permutations.list.size()
-      )
-    ) {
-      sitesAtNewShapeVertices = shapePositionMap_.invert();
-    }
-
-    if(!sitesAtNewShapeVertices.empty()) {
       // Replace the site indices by their new ranking characters
-      auto newStereopermutationCharacters = stereopermutators::Abstract::makeStereopermutationCharacters(
+      const auto newStereopermutationCharacters = stereopermutators::Abstract::makeStereopermutationCharacters(
         newAbstract.canonicalSites,
         newAbstract.symbolicCharacters,
         sitesAtNewShapeVertices
       );
 
       // Create a new assignment with those characters
-      auto trialStereopermutation = stereopermutation::Stereopermutation(
+      const auto trialStereopermutation = stereopermutation::Stereopermutation(
         newStereopermutationCharacters,
         newAbstract.selfReferentialLinks
       );
@@ -835,10 +671,7 @@ void AtomStereopermutator::Impl::propagateVertexRemoval(const AtomIndex removedI
   }
 
   for(auto& link : ranking_.links) {
-    link.cycleSequence = temple::map(
-      link.cycleSequence,
-      updateIndex
-    );
+    link.cycleSequence = temple::map(link.cycleSequence, updateIndex);
   }
 }
 
@@ -891,7 +724,7 @@ void AtomStereopermutator::Impl::fit(
   // Classify the shape and set it
   shapes::Shape fittedShape;
   std::vector<shapes::Vertex> matchingMapping;
-  std::tie(fittedShape, matchingMapping) = detail::classifyShape(sitePositions);
+  std::tie(fittedShape, matchingMapping) = classifyShape(sitePositions);
   /* Drop the centroid, making the remaining sequence viable as an index mapping
    * within the set of shape rotations, i.e. for use in stereopermutation
    * functionality
@@ -998,7 +831,7 @@ boost::optional<unsigned> AtomStereopermutator::Impl::indexOfPermutation() const
 
   return temple::optionals::map(
     assignmentOption_,
-    [&](unsigned a) { return feasible_.indices.at(a); }
+    temple::functor::at(feasible_.indices)
   );
 }
 

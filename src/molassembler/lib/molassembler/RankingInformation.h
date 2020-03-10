@@ -225,7 +225,6 @@ struct RankingInformation::Link {
 //!@}
 };
 
-
 } // namespace molassembler
 } // namespace Scine
 

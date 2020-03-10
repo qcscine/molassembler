@@ -36,6 +36,7 @@ template<typename Tag, typename T>
 class StrongIndex : public crtp::LexicographicComparable<StrongIndex<Tag, T>> {
 public:
   using value_type = T;
+  using Hash = boost::hash<StrongIndex<Tag, T>>;
 
   //! Default constructor does not value initialize
   constexpr StrongIndex() = default;

@@ -74,6 +74,7 @@ set(HEADERS_all
   ${_LIBPREFIX}/Stereopermutators/FeasiblePermutations.h
   ${_LIBPREFIX}/Stereopermutators/StereopermutatorListImpl.h
   ${_LIBPREFIX}/Stereopermutators/ShapeVertexMaps.h
+  ${_LIBPREFIX}/Stereopermutators/RankingMapping.h
   ${_LIBPREFIX}/Subgraphs.h
   ${_LIBPREFIX}/Types.h
 )
@@ -134,6 +135,7 @@ set(SOURCES_all
   ${_LIBPREFIX}/Stereopermutators/BondStereopermutatorImpl.cpp
   ${_LIBPREFIX}/Stereopermutators/CycleFeasibility.cpp
   ${_LIBPREFIX}/Stereopermutators/FeasiblePermutations.cpp
+  ${_LIBPREFIX}/Stereopermutators/RankingMapping.cpp
   ${_LIBPREFIX}/Stereopermutators/ShapeVertexMaps.cpp
   ${_LIBPREFIX}/Stereopermutators/StereopermutatorListImpl.cpp
   ${_LIBPREFIX}/Subgraphs.cpp

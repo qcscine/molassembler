@@ -220,7 +220,7 @@ BOOST_FIXTURE_TEST_CASE(LigandAdditionPropagatedStateSuperposable, LowTemperatur
       passRMSD,
       "RMSD fit from " << shapes::name(source)
       << " to " << shapes::name(stereopermutatorOption->getShape())
-      << " not smaller than 0.5 bohr, is:" << fit.getRMSD()
+      << " not smaller than 0.5 bohr, is: " << fit.getRMSD()
     );
 
     if(!passRMSD) {
