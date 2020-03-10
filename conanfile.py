@@ -39,7 +39,6 @@ generate non-superposable stereopermutations as output."""
     exports_sources = "src/*", "CMakeLists.txt", ".conan_include.cmake", "doc/*"
     build_requires = [("cmake_installer/[~=3.13.4]@conan/stable")]
     requires = [("scine_utilities/[~=2.1.0]@ci/develop")]
-    revision_mode = "scm"
 
     _cmake = None
 
