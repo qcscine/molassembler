@@ -10,6 +10,7 @@ default:
     - mkdir -p ~/.ssh
     - chmod 700 ~/.ssh
     - echo $SCINE_DEPLOY_HOSTS | base64 -d > ~/.ssh/known_hosts
+    - export CONAN_REVISIONS_ENABLED=1
 
 # Anchors
 .conan_add_remote: &conan_add_remote

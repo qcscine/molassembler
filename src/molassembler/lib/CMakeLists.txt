@@ -46,6 +46,7 @@ set(HEADERS_all
   ${_LIBPREFIX}/IO.h
   ${_LIBPREFIX}/IO/Base64.h
   ${_LIBPREFIX}/IO/BinaryHandler.h
+  ${_LIBPREFIX}/IO/SmilesBondStereo.h
   ${_LIBPREFIX}/IO/SmilesMoleculeBuilder.h
   ${_LIBPREFIX}/IO/SmilesParseData.h
   ${_LIBPREFIX}/IO/SmilesParser.h
@@ -110,6 +111,7 @@ set(SOURCES_all
   ${_LIBPREFIX}/IO.cpp
   ${_LIBPREFIX}/IO/Base64.cpp
   ${_LIBPREFIX}/IO/BinaryHandler.cpp
+  ${_LIBPREFIX}/IO/SmilesBondStereo.cpp
   ${_LIBPREFIX}/IO/SmilesMoleculeBuilder.cpp
   ${_LIBPREFIX}/IO/SmilesParser.cpp
   ${_LIBPREFIX}/Interpret.cpp
