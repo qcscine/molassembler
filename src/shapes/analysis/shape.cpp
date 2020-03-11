@@ -20,6 +20,7 @@
 #include "temple/Random.h"
 #include "temple/constexpr/Jsf.h"
 #include "temple/Permutations.h"
+#include "temple/Loops.h"
 
 #include <Eigen/SparseCore>
 #include <Eigen/Eigenvalues>
@@ -1095,89 +1096,75 @@ struct AlignFive final : ShapeAlgorithm {
 
     const auto correctRotations = generateRotations(correctPermutation, shape);
 
-    for(unsigned i = 0; i < N; ++i) {
-      permutation[0] = i;
-      for(unsigned j = 0; j < N; ++j) {
-        if(j == i) {
-          continue;
+    // i != j != k != l != m with {i, j, k, l, m} in [0, N)
+    temple::loops::different(
+      [&](const std::vector<unsigned>& indices) {
+        permutation.clear();
+        for(unsigned i = 0; i < 5; ++i) {
+          permutation.emplace(i, indices[i]);
         }
 
-        permutation[1] = j;
-        for(unsigned k = 0; k < N; ++k) {
-          if(k == i || k == j) {
-            continue;
+        const unsigned i = indices[0];
+        const unsigned j = indices[1];
+        const unsigned k = indices[2];
+        const unsigned l = indices[3];
+        const unsigned m = indices[4];
+
+        Eigen::Matrix3d R = fitQuaternion(positions, shapeCoords, permutation);
+        auto rotatedShape = R * shapeCoords;
+
+        double penalty = (
+          (positions.col(0) - rotatedShape.col(i)).squaredNorm()
+          + (positions.col(1) - rotatedShape.col(j)).squaredNorm()
+          + (positions.col(2) - rotatedShape.col(k)).squaredNorm()
+          + (positions.col(3) - rotatedShape.col(l)).squaredNorm()
+          + (positions.col(4) - rotatedShape.col(m)).squaredNorm()
+        );
+
+        bool inCorrectBranch = temple::any_of(
+          correctRotations,
+          [&](const auto& rot) {
+            return rot[0] == i && rot[1] == j && rot[2] == k && rot[3] == l && rot[4] == m;
           }
+        );
+        if(inCorrectBranch) {
+          std::cerr << "At correct permutation quintuple!\n";
+        }
 
-          permutation[2] = k;
-          for(unsigned l = 0; l < N; ++l) {
-            if(l == i || l == k || l == j) {
-              continue;
-            }
+        if(penalty > minimal.first) {
+          return;
+        }
 
-            permutation[3] = l;
-
-            for(unsigned m = 0; m < N; ++m) {
-              if(m == i || m == j || m == k || m == l) {
-                continue;
-              }
-
-              permutation[4] = m;
-              Eigen::Matrix3d R = fitQuaternion(positions, shapeCoords, permutation);
-              auto rotatedShape = R * shapeCoords;
-
-              double penalty = (
-                (positions.col(0) - rotatedShape.col(i)).squaredNorm()
-                + (positions.col(1) - rotatedShape.col(j)).squaredNorm()
-                + (positions.col(2) - rotatedShape.col(k)).squaredNorm()
-                + (positions.col(3) - rotatedShape.col(l)).squaredNorm()
-                + (positions.col(4) - rotatedShape.col(m)).squaredNorm()
-              );
-
-              bool inCorrectBranch = temple::any_of(
-                correctRotations,
-                [&](const auto& rot) {
-                  return rot[0] == i && rot[1] == j && rot[2] == k && rot[3] == l && rot[4] == m;
-                }
-              );
-              if(inCorrectBranch) {
-                std::cerr << "At correct permutation quintuple!\n";
-              }
-
-              if(penalty > minimal.first) {
-                continue;
-              }
-
-              std::vector<unsigned> freeLeftVertices;
-              freeLeftVertices.reserve(N - 5);
-              for(unsigned a = 5; a < N; ++a) {
-                freeLeftVertices.push_back(a);
-              }
-              std::vector<unsigned> freeRightVertices;
-              freeRightVertices.reserve(N - 5);
-              for(unsigned a = 0; a < N; ++a) {
-                if(a != i && a != j && a != k && a != l && a != m) {
-                  freeRightVertices.push_back(a);
-                }
-              }
-
-              auto narrowed = narrow(
-                positions,
-                rotatedShape,
-                correctRotations,
-                inCorrectBranch,
-                permutation,
-                std::move(freeLeftVertices),
-                std::move(freeRightVertices)
-              );
-
-              if(narrowed.first < minimal.first) {
-                minimal = narrowed;
-              }
-            }
+        std::vector<unsigned> freeLeftVertices;
+        freeLeftVertices.reserve(N - 5);
+        for(unsigned a = 5; a < N; ++a) {
+          freeLeftVertices.push_back(a);
+        }
+        std::vector<unsigned> freeRightVertices;
+        freeRightVertices.reserve(N - 5);
+        for(unsigned a = 0; a < N; ++a) {
+          if(a != i && a != j && a != k && a != l && a != m) {
+            freeRightVertices.push_back(a);
           }
         }
-      }
-    }
+
+        auto narrowed = narrow(
+          positions,
+          rotatedShape,
+          correctRotations,
+          inCorrectBranch,
+          permutation,
+          std::move(freeLeftVertices),
+          std::move(freeRightVertices)
+        );
+
+        if(narrowed.first < minimal.first) {
+          minimal = narrowed;
+        }
+      },
+      5,
+      N
+    );
 
     return minimal;
   }

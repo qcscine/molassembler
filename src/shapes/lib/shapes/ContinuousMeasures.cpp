@@ -13,6 +13,7 @@
 #include "temple/Adaptors/Iota.h"
 #include "temple/Adaptors/Transform.h"
 #include "temple/Functional.h"
+#include "temple/Loops.h"
 #include "temple/Optimization/SO3NelderMead.h"
 #include "temple/constexpr/Numeric.h"
 
@@ -1285,84 +1286,70 @@ ShapeResult shapeHeuristics(
   NarrowType minimalNarrow {std::numeric_limits<double>::max(), {}};
   PartialMapping permutation;
 
-  for(Vertex i {0}; i < N; ++i) {
-    permutation[Vertex(0)] = i;
-    for(Vertex j {0}; j < N; ++j) {
-      if(j == i) {
-        continue;
+  // i != j != k != l != m with {i, j, k, l, m} in [0, N)
+  temple::loops::different(
+    [&](const std::vector<Vertex>& vertices) {
+      permutation.clear();
+      for(unsigned i = 0; i < 5; ++i) {
+        permutation.emplace(i, vertices[i]);
       }
 
-      permutation[Vertex(1)] = j;
-      for(Vertex k {0}; k < N; ++k) {
-        if(k == i || k == j) {
-          continue;
-        }
+      const Vertex i = vertices[0];
+      const Vertex j = vertices[1];
+      const Vertex k = vertices[2];
+      const Vertex l = vertices[3];
+      const Vertex m = vertices[4];
 
-        permutation[Vertex(2)] = k;
-        for(Vertex l {0}; l < N; ++l) {
-          if(l == i || l == k || l == j) {
-            continue;
-          }
+      Eigen::Matrix3d R = fitQuaternion(normalizedPositions, shapeCoords, permutation);
+      auto rotatedShape = R * shapeCoords;
 
-          permutation[Vertex(3)] = l;
+      /* If the total penalty of a five positions fit is already larger
+       * than the tracked minimal penalty, we can discard it already
+       * as it can only increase
+       */
+      double penalty = (
+        (normalizedPositions.col(0) - rotatedShape.col(i)).squaredNorm()
+        + (normalizedPositions.col(1) - rotatedShape.col(j)).squaredNorm()
+        + (normalizedPositions.col(2) - rotatedShape.col(k)).squaredNorm()
+        + (normalizedPositions.col(3) - rotatedShape.col(l)).squaredNorm()
+        + (normalizedPositions.col(4) - rotatedShape.col(m)).squaredNorm()
+      );
 
-          for(Vertex m {0}; m < N; ++m) {
-            if(m == i || m == j || m == k || m == l) {
-              continue;
-            }
+      if(penalty > minimalNarrow.first) {
+        return;
+      }
 
-            permutation[Vertex(4)] = m;
-            Eigen::Matrix3d R = fitQuaternion(normalizedPositions, shapeCoords, permutation);
-            auto rotatedShape = R * shapeCoords;
-
-            /* If the total penalty of a five positions fit is already larger
-             * than the tracked minimal penalty, we can discard it already
-             * as it can only increase
-             */
-            double penalty = (
-              (normalizedPositions.col(0) - rotatedShape.col(i)).squaredNorm()
-              + (normalizedPositions.col(1) - rotatedShape.col(j)).squaredNorm()
-              + (normalizedPositions.col(2) - rotatedShape.col(k)).squaredNorm()
-              + (normalizedPositions.col(3) - rotatedShape.col(l)).squaredNorm()
-              + (normalizedPositions.col(4) - rotatedShape.col(m)).squaredNorm()
-            );
-
-            if(penalty > minimalNarrow.first) {
-              continue;
-            }
-
-            /* Solve the permutational (N-5)! subproblem without realigning all
-             * positions.
-             */
-            std::vector<Vertex> freeLeftVertices;
-            freeLeftVertices.reserve(N - 5);
-            for(Vertex a {5}; a < N; ++a) {
-              freeLeftVertices.push_back(a);
-            }
-            std::vector<Vertex> freeRightVertices;
-            freeRightVertices.reserve(N - 5);
-            for(Vertex a {0}; a < N; ++a) {
-              if(a != i && a != j && a != k && a != l && a != m) {
-                freeRightVertices.push_back(a);
-              }
-            }
-
-            auto narrowed = shapeHeuristicsNarrow(
-              normalizedPositions,
-              rotatedShape,
-              permutation,
-              std::move(freeLeftVertices),
-              std::move(freeRightVertices)
-            );
-
-            if(narrowed.first < minimalNarrow.first) {
-              minimalNarrow = narrowed;
-            }
-          }
+      /* Solve the permutational (N-5)! subproblem without realigning all
+       * positions.
+       */
+      std::vector<Vertex> freeLeftVertices;
+      freeLeftVertices.reserve(N - 5);
+      for(Vertex a {5}; a < N; ++a) {
+        freeLeftVertices.push_back(a);
+      }
+      std::vector<Vertex> freeRightVertices;
+      freeRightVertices.reserve(N - 5);
+      for(Vertex a {0}; a < N; ++a) {
+        if(a != i && a != j && a != k && a != l && a != m) {
+          freeRightVertices.push_back(a);
         }
       }
-    }
-  }
+
+      auto narrowed = shapeHeuristicsNarrow(
+        normalizedPositions,
+        rotatedShape,
+        permutation,
+        std::move(freeLeftVertices),
+        std::move(freeRightVertices)
+      );
+
+      if(narrowed.first < minimalNarrow.first) {
+        minimalNarrow = narrowed;
+      }
+    },
+    5,
+    Vertex {N}
+  );
 
   /* Given the best permutation for the rotational fit, we still have to
    * minimize over the isotropic scaling factor. It is cheaper to reorder the
@@ -1426,86 +1413,73 @@ ShapeResult shapeHeuristicsCentroidLast(
 
   NarrowType minimalNarrow {std::numeric_limits<double>::max(), {}};
   PartialMapping permutation;
-  permutation.emplace(N - 1, N - 1);
 
-  for(Vertex i {0}; i < N - 1; ++i) {
-    permutation[Vertex(0)] = i;
-    for(Vertex j {0}; j < N - 1; ++j) {
-      if(j == i) {
-        continue;
+  // i != j != k != l != m with {i, j, k, l, m} in [0, N - 1)
+  temple::loops::different(
+    [&](const std::vector<Vertex>& vertices) {
+      permutation.clear();
+      permutation.emplace(N - 1, N - 1);
+      for(unsigned i = 0; i < 5; ++i) {
+        permutation.emplace(i, vertices[i]);
       }
 
-      permutation[Vertex(1)] = j;
-      for(Vertex k {0}; k < N - 1; ++k) {
-        if(k == i || k == j) {
-          continue;
-        }
+      const Vertex i = vertices[0];
+      const Vertex j = vertices[1];
+      const Vertex k = vertices[2];
+      const Vertex l = vertices[3];
+      const Vertex m = vertices[4];
 
-        permutation[Vertex(2)] = k;
-        for(Vertex l {0}; l < N - 1; ++l) {
-          if(l == i || l == k || l == j) {
-            continue;
-          }
+      Eigen::Matrix3d R = fitQuaternion(normalizedPositions, shapeCoords, permutation);
+      auto rotatedShape = R * shapeCoords;
 
-          permutation[Vertex(3)] = l;
-          for(Vertex m {0}; m < N - 1; ++m) {
-            if(m == i || m == j || m == k || m == l) {
-              continue;
-            }
+      /* If the total penalty of a five positions fit is already larger
+       * than the tracked minimal penalty, we can discard it already
+       * as it can only increase
+       */
+      double penalty = (
+        (normalizedPositions.col(0) - rotatedShape.col(i)).squaredNorm()
+        + (normalizedPositions.col(1) - rotatedShape.col(j)).squaredNorm()
+        + (normalizedPositions.col(2) - rotatedShape.col(k)).squaredNorm()
+        + (normalizedPositions.col(3) - rotatedShape.col(l)).squaredNorm()
+        + (normalizedPositions.col(4) - rotatedShape.col(m)).squaredNorm()
+        + (normalizedPositions.col(N - 1) - rotatedShape.col(N - 1)).squaredNorm()
+      );
 
-            permutation[Vertex(4)] = m;
-            Eigen::Matrix3d R = fitQuaternion(normalizedPositions, shapeCoords, permutation);
-            auto rotatedShape = R * shapeCoords;
+      if(penalty > minimalNarrow.first) {
+        return;
+      }
 
-            /* If the total penalty of a five positions fit is already larger
-             * than the tracked minimal penalty, we can discard it already
-             * as it can only increase
-             */
-            double penalty = (
-              (normalizedPositions.col(0) - rotatedShape.col(i)).squaredNorm()
-              + (normalizedPositions.col(1) - rotatedShape.col(j)).squaredNorm()
-              + (normalizedPositions.col(2) - rotatedShape.col(k)).squaredNorm()
-              + (normalizedPositions.col(3) - rotatedShape.col(l)).squaredNorm()
-              + (normalizedPositions.col(4) - rotatedShape.col(m)).squaredNorm()
-              + (normalizedPositions.col(N - 1) - rotatedShape.col(N - 1)).squaredNorm()
-            );
-
-            if(penalty > minimalNarrow.first) {
-              continue;
-            }
-
-            /* Solve the permutational (N-5)! subproblem without realigning all
-             * positions.
-             */
-            std::vector<Vertex> freeLeftVertices;
-            freeLeftVertices.reserve(N - 6);
-            for(Vertex a {5}; a < N - 1; ++a) {
-              freeLeftVertices.push_back(a);
-            }
-            std::vector<Vertex> freeRightVertices;
-            freeRightVertices.reserve(N - 6);
-            for(Vertex a {0}; a < N - 1; ++a) {
-              if(a != i && a != j && a != k && a != l && a != m) {
-                freeRightVertices.push_back(a);
-              }
-            }
-
-            auto narrowed = shapeHeuristicsNarrow(
-              normalizedPositions,
-              rotatedShape,
-              permutation,
-              std::move(freeLeftVertices),
-              std::move(freeRightVertices)
-            );
-
-            if(narrowed.first < minimalNarrow.first) {
-              minimalNarrow = narrowed;
-            }
-          }
+      /* Solve the permutational (N-5)! subproblem without realigning all
+       * positions.
+       */
+      std::vector<Vertex> freeLeftVertices;
+      freeLeftVertices.reserve(N - 6);
+      for(Vertex a {5}; a < N - 1; ++a) {
+        freeLeftVertices.push_back(a);
+      }
+      std::vector<Vertex> freeRightVertices;
+      freeRightVertices.reserve(N - 6);
+      for(Vertex a {0}; a < N - 1; ++a) {
+        if(a != i && a != j && a != k && a != l && a != m) {
+          freeRightVertices.push_back(a);
         }
       }
-    }
-  }
+
+      auto narrowed = shapeHeuristicsNarrow(
+        normalizedPositions,
+        rotatedShape,
+        permutation,
+        std::move(freeLeftVertices),
+        std::move(freeRightVertices)
+      );
+
+      if(narrowed.first < minimalNarrow.first) {
+        minimalNarrow = narrowed;
+      }
+    },
+    5,
+    Vertex {N - 1}
+  );
 
   /* Given the best permutation for the rotational fit, we still have to
    * minimize over the isotropic scaling factor. It is cheaper to reorder the
