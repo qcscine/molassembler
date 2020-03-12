@@ -1,28 +1,27 @@
 variables:
   GIT_SUBMODULE_STRATEGY: recursive
 
-# SSH Setup
+.ssh_setup: &ssh_setup
+- which ssh-agent || (which yum && yum install openssh-clients -y) || (which apt-get && apt-get install openssh-client -y)
+- eval $(ssh-agent -s)
+- echo $SCINE_DEPLOY_KEY | base64 -d | ssh-add -
+- mkdir -p ~/.ssh
+- chmod 700 ~/.ssh
+- echo $SCINE_DEPLOY_HOSTS | base64 -d > ~/.ssh/known_hosts
+
+.conan_setup: &conan_setup
+- export CONAN_REVISIONS_ENABLED=1
+- if [[ `python -c 'import sys; print(sys.version_info.major)'` -eq 2 ]]; then alias python=$(which python3); fi
+- python -m pip install --upgrade conan sphinx sphinx_rtd_theme pytest numpy
+- conan remote add ci-internal $SCINE_DEPLOY_ARTIFACTORY_URL
+- conan user -p $SCINE_DEPLOY_ARTIFACTORY_PASSWORD -r ci-internal $SCINE_DEPLOY_ARTIFACTORY_USERNAME
+- conan profile new default --detect
+- sed -i 's/\[build_requires\]/[build_requires]\ncmake_installer\/3.16.3@conan\/stable/' $(conan config home)/profiles/default 
+
 default:
   before_script:
-    - which ssh-agent || (which yum && yum install openssh-clients -y) || (which apt-get && apt-get install openssh-client -y)
-    - eval $(ssh-agent -s)
-    - echo $SCINE_DEPLOY_KEY | base64 -d | ssh-add -
-    - mkdir -p ~/.ssh
-    - chmod 700 ~/.ssh
-    - echo $SCINE_DEPLOY_HOSTS | base64 -d > ~/.ssh/known_hosts
-    - export CONAN_REVISIONS_ENABLED=1
-
-# Anchors
-.conan_add_remote: &conan_add_remote
-- conan remote add ci-internal $SCINE_DEPLOY_ARTIFACTORY_URL
-- conan user -p $SCINE_DEPLOY_ARTIFACTORY_PASSWORD -r ci-internal $SCINE_DEPLOY_ARTIFACTORY_USERNAME
-
-.conan_build: &conan_build
-- python3 -m pip install --upgrade conan sphinx sphinx_rtd_theme pytest numpy
-- conan remote add ci-internal $SCINE_DEPLOY_ARTIFACTORY_URL
-- conan user -p $SCINE_DEPLOY_ARTIFACTORY_PASSWORD -r ci-internal $SCINE_DEPLOY_ARTIFACTORY_USERNAME
-- conan create -o scine_molassembler:python=True -o scine_molassembler:docs=True -o scine_molassembler:tests=True --build=missing --build=scine_molassembler . ci/$CI_COMMIT_REF_SLUG
-- if $CI_COMMIT_REF_PROTECTED; then conan upload `conan search scine_molassembler | tail -n1` --all -r ci-internal -c; fi
+    - *ssh_setup
+    - *conan_setup
 
 # Builds
 coverage:
@@ -30,10 +29,8 @@ coverage:
     - default_docker
   image: gitlab.chab.ethz.ch:4567/reiher/docker/scine-gcc:latest
   script:
-    - python3 -m pip install --upgrade conan sphinx sphinx_rtd_theme pytest numpy gcovr
-    - *conan_add_remote
-    - mkdir -p build
-    - cd build
+    - python -m pip install --upgrade gcovr
+    - mkdir -p build && cd build
     - conan install -o scine_molassembler:python=True -o scine_molassembler:tests=True -o scine_molassembler:docs=True -o scine_molassembler:coverage=True -s scine_molassembler:build_type=Debug ..
     - conan build ..
     - cd ..
@@ -45,32 +42,33 @@ coverage:
     paths:
     - coverage*.html
 
-
-gcc-release:
+.conan_create: &conan_create
   tags:
     - default_docker
-  image: gitlab.chab.ethz.ch:4567/reiher/docker/scine-gcc:latest
   script:
-    - *conan_build
+    - conan create -o scine_molassembler:python=True -o scine_molassembler:docs=True -o scine_molassembler:tests=True --build=missing --build=scine_molassembler . ci/$CI_COMMIT_REF_SLUG
+    - if $CI_COMMIT_REF_PROTECTED; then conan upload `conan search scine_molassembler | tail -n1` --all -r ci-internal -c; fi
+
+gcc-release:
+  <<: *conan_create
+  image: gitlab.chab.ethz.ch:4567/reiher/docker/scine-gcc:latest
 
 
 clang-release:
-  tags:
-    - default_docker
+  <<: *conan_create
   image: gitlab.chab.ethz.ch:4567/reiher/docker/scine-clang:latest
-  script:
-    - *conan_build
 
 
 pypi:
   tags:
     - default_docker
   image: quay.io/pypa/manylinux2014_x86_64
-  script:
+  before_script:
     - /opt/python/cp36-cp36m/bin/python -m venv cp36-cp36m
     - source cp36-cp36m/bin/activate
-    - python -m pip install conan wheel
-    - *conan_add_remote
+    - *conan_setup
+  script:
+    - python -m pip install wheel
     - mkdir -p build && cd build
     - conan install -o scine_molassembler:python=True -o scine_utilities:shared=False -o scine_molassembler:shared=False --build=missing ..
     - conan build ..
@@ -89,6 +87,8 @@ license:
   tags:
     - default_docker
   image: gitlab.chab.ethz.ch:4567/reiher/docker/scine-gcc:latest
+  before_script:
+    - echo "Skip before_script"
   script:
     - bash scripts/license_validity_check.sh
 
@@ -96,8 +96,11 @@ complexity:
   tags:
     - default_docker
   image: gitlab.chab.ethz.ch:4567/reiher/docker/scine-gcc:latest
+  before_script:
+    - echo "Skip before_script"
   script:
-    - python3 -m pip install lizard jinja2
+    - if [[ `python -c 'import sys; print(sys.version_info.major)'` -eq 2 ]]; then alias python=$(which python3); fi
+    - python -m pip install lizard jinja2
     - cd src
     - lizard -l cpp -m -T nloc=100 -T cyclomatic_complexity=15 -T parameter_count=5 -x "./extern/*" -o lizard.html
     - lizard -l cpp -m -w -s cyclomatic_complexity -T cyclomatic_complexity=20 -x "./extern/*" -x "*/analysis/*" -W ../.whitelizard.txt

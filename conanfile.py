@@ -17,13 +17,7 @@ class MolassemblerConan(ConanFile):
     license = "BSD-3-Clause"
     author = "Jan-Grimo Sobez jan-grimo.sobez@phys.chem.ethz.ch"
     url = "https://gitlab.chab.ethz.ch/scine/molassembler"
-    description = """
-Molassembler is a C++ library that aims to facilitate crossings between
-Cartesian and graph representations of molecules. It provides the necessary
-functionality to represent a molecule as a graph, modify it in graph space, and
-generate coordinates from graphs. It can capture the absolute configuration
-of multidentate and haptic inorganic molecules from positional data and
-generate non-superposable stereopermutations as output."""
+    description = "Molecular graph interpretation, modification and conformer generation"
     topics = ("chemistry", "cheminformatics", "molecule")
     settings = "os", "compiler", "build_type", "arch"
     options = {key: [True, False]
@@ -36,8 +30,8 @@ generate non-superposable stereopermutations as output."""
         "coverage": False
     }
     generators = "cmake"
-    exports_sources = "src/*", "CMakeLists.txt", ".conan_include.cmake", "doc/*"
-    build_requires = [("cmake_installer/[~=3.13.4]@conan/stable")]
+    exports_sources = ["src/*", "CMakeLists.txt",
+                       ".conan_include.cmake", "doc/*"]
     requires = [("scine_utilities/[~=2.1.0]@ci/develop")]
     revision_mode = "scm"
 
