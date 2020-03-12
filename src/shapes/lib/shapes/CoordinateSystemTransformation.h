@@ -37,6 +37,8 @@ struct CoordinateSystem {
 
   //! Yields whether the coordinate system is right handed
   bool isRightHanded() const;
+
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };
 
 /**

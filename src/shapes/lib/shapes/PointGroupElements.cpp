@@ -29,7 +29,7 @@ inline bool orthogonal(const Eigen::Vector3d& a, const Eigen::Vector3d& b) {
 }
 
 template<typename T>
-inline auto wrap(T&& element) {
+inline std::unique_ptr<SymmetryElement> wrap(T&& element) {
   using Decayed = std::decay_t<T>;
   return std::make_unique<Decayed>(std::forward<T>(element));
 }
@@ -284,7 +284,7 @@ ElementsList Ih() {
 } // namespace
 
 Identity Identity::E() {
-  return Identity {};
+  return {};
 }
 
 SymmetryElement::Matrix Identity::matrix() const {
@@ -300,7 +300,7 @@ std::string Identity::name() const {
 }
 
 Inversion Inversion::i() {
-  return Inversion {};
+  return {};
 }
 
 SymmetryElement::Matrix Inversion::matrix() const {
@@ -537,7 +537,7 @@ Eigen::Matrix3d reflectionMatrix(const Eigen::Vector3d& planeNormal) {
 }
 
 //! Returns all symmetry elements of a point group
-std::vector<std::unique_ptr<SymmetryElement>> symmetryElements(PointGroup group) noexcept {
+ElementsList symmetryElements(PointGroup group) noexcept {
   if(group == PointGroup::Cinfv) {
     group = PointGroup::C8v;
   }
@@ -889,9 +889,7 @@ unsigned order(const PointGroup group) {
   return orders.at(underlying(group));
 }
 
-NpGroupingsMapType npGroupings(
-  const std::vector<std::unique_ptr<SymmetryElement>>& elements
-) {
+NpGroupingsMapType npGroupings(const ElementsList& elements) {
   assert(elements.front()->matrix() == elements::Identity().matrix());
   const unsigned E = elements.size();
 

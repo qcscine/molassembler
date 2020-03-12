@@ -30,6 +30,8 @@ struct SymmetryElement {
   using Matrix = Eigen::Matrix3d;
   using Ptr = std::unique_ptr<SymmetryElement>;
 
+  virtual ~SymmetryElement() = default;
+
   //! Returns a matrix representation of the symmetry element operation
   virtual Matrix matrix() const = 0;
   //! Returns a spatial vector unaffected by the symmetry element, if that exists
@@ -134,8 +136,8 @@ using ElementsList = std::vector<std::unique_ptr<SymmetryElement>>;
  */
 PURITY_WEAK ElementsList symmetryElements(const PointGroup group) noexcept;
 
+//! Returns the number of symmetry elements in a point group
 unsigned order(const PointGroup group);
-
 
 struct ElementGrouping {
   using ElementIndexGroups = std::vector<std::vector<unsigned>>;
