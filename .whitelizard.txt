@@ -2,4 +2,5 @@
 ./molassembler/lib/molassembler/Molecule/RankingTree.h: Scine::molassembler::RankingTree::runBFS_
 ./molassembler/lib/molassembler/Molecule/RankingTree.cpp: Scine::molassembler::RankingTree::auxiliaryApplySequenceRules_
 ./molassembler/lib/molassembler/Molecule/RankingTree.cpp: Scine::molassembler::RankingTree::applySequenceRules_
-./shapes/analysis/shape.cpp: AlignFive::shape
+./molassembler/lib/molassembler/Molecule/RankingTree.cpp: Scine::molassembler::RankingTree::RankingTree
+./molassembler/lib/molassembler/IO/SmilesMoleculeBuilder.cpp: Scine::molassembler::io::MoleculeBuilder::setBondStereo
