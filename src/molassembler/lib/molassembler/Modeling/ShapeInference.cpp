@@ -96,85 +96,50 @@ boost::optional<shapes::Shape> vsepr(
 
   using shapes::Shape;
 
-  const unsigned xeSum = X + E;
+  switch(X + E) {
+    case 2:
+      return Shape::Line;
 
-  if(xeSum == 2) {
-    return Shape::Line;
+    case 3:
+      switch(X) {
+        case 3: return Shape::EquilateralTriangle;
+        default: return Shape::Bent;
+      }
+
+    case 4:
+      switch(X) {
+        case 4: return Shape::Tetrahedron;
+        case 3: return Shape::VacantTetrahedron;
+        default: return Shape::Bent;
+      }
+
+    case 5:
+      switch(X) {
+        case 5: return Shape::TrigonalBipyramid;
+        case 4: return Shape::Seesaw;
+        case 3: return Shape::T;
+        default: return Shape::Line;
+      }
+
+    case 6:
+      switch(X) {
+        case 6: return Shape::Octahedron;
+        case 5: return Shape::SquarePyramid;
+        default: return Shape::Square;
+      }
+
+    case 7:
+      switch(X) {
+        case 7: return Shape::PentagonalBipyramid;
+        case 6: return Shape::PentagonalPyramid;
+        default: return Shape::Pentagon;
+      }
+
+    case 8:
+      return Shape::SquareAntiprism;
+
+    default: return boost::none;
   }
-
-  if(xeSum == 3) {
-    if(X == 3) {
-      return Shape::EquilateralTriangle;
-    }
-
-    return Shape::Bent;
-  }
-
-  if(xeSum == 4) {
-    if(X == 4) {
-      return Shape::Tetrahedron;
-    }
-
-    if(X == 3) {
-      /* In VSEPR naming, this is Trigonal pyramidal, but that shape exists
-       * too, which is trigonal bipyramidal minus an apical ligand.
-       */
-      return Shape::VacantTetrahedron;
-    }
-
-    return Shape::Bent;
-  }
-
-  if(xeSum == 5) {
-    if(X == 5) {
-      return Shape::TrigonalBipyramid;
-    }
-
-    if(X == 4) {
-      return Shape::Seesaw;
-    }
-
-    if(X == 3) {
-      return Shape::T;
-    }
-
-    return Shape::Line;
-  }
-
-  if(xeSum == 6) {
-    if(X == 6) {
-      return Shape::Octahedron;
-    }
-
-    if(X == 5) {
-      return Shape::SquarePyramid;
-    }
-
-    return Shape::Square;
-  }
-
-  if(xeSum == 7) {
-    if(X == 7) {
-      return Shape::PentagonalBipyramid;
-    }
-
-    if(X == 6) {
-      return Shape::PentagonalPyramid;
-    }
-
-    return Shape::Pentagon;
-  }
-
-  if(xeSum == 8) {
-    return Shape::SquareAntiprism;
-  }
-
-  /* "Could not find a fitting shape for your X + E case: "
-    << "X = " << X << ", E = " << E << ". Maybe your molecular graph is "
-    << " too weird for VSEPR. Have another look at it.";*/
-
-  // Never runs, for static analysis
-  return boost::none;
 }
 
 shapes::Shape firstOfSize(const unsigned size) {
