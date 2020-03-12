@@ -100,7 +100,7 @@ complexity:
     - python3 -m pip install lizard jinja2
     - cd src
     - lizard -l cpp -m -T nloc=100 -T cyclomatic_complexity=15 -T parameter_count=5 -x "./extern/*" -o lizard.html
-    - lizard -l cpp -m -w -s cyclomatic_complexity -T cyclomatic_complexity=20 -x "./extern/*" -W ../.whitelizard.txt
+    - lizard -l cpp -m -w -s cyclomatic_complexity -T cyclomatic_complexity=20 -x "./extern/*" -x "*/analysis/*" -W ../.whitelizard.txt
   artifacts:
     expire_in: 1 day
     paths:
