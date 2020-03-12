@@ -16,7 +16,9 @@ namespace Scine {
 namespace molassembler {
 
 struct SiteMapping {
-  std::unordered_map<SiteIndex, SiteIndex, SiteIndex::Hash> map;
+  using Map = std::unordered_map<SiteIndex, SiteIndex, SiteIndex::Hash>;
+
+  Map map;
   boost::optional<SiteIndex> changedSite;
 
   static SiteMapping from(const RankingInformation& a, const RankingInformation& b);

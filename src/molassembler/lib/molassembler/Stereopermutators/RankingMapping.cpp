@@ -32,6 +32,65 @@ unsigned symmetricDifferenceSetSize(
   return symmetricDifference.size();
 }
 
+boost::optional<SiteIndex> determineChangedSite(
+  const unsigned A,
+  const unsigned B,
+  const SiteMapping::Map& map,
+  const std::vector<SiteIndex> mappedBs
+) {
+  if(A == B) {
+    return boost::none;
+  }
+
+  if(A < B) {
+    for(SiteIndex i {0}; i < B; ++i) {
+      if(temple::find(mappedBs, i) == std::end(mappedBs)) {
+        return i;
+      }
+    }
+  }
+
+  if(A > B) {
+    for(SiteIndex i {0}; i < A; ++i) {
+      if(map.count(i) == 0) {
+        return i;
+      }
+    }
+  }
+
+  throw std::logic_error("Failed to deduce changed site");
+}
+
+boost::optional<SiteIndex> determineChangedSite(
+  const unsigned A,
+  const unsigned B,
+  const SiteMapping::Map& map,
+  const std::vector<SiteIndex> possiblyUnmappedAs,
+  const std::vector<SiteIndex> mappedBs
+) {
+  if(A == B) {
+    return boost::none;
+  }
+
+  if(A < B) {
+    for(SiteIndex i {0}; i < B; ++i) {
+      if(temple::find(mappedBs, i) == std::end(mappedBs)) {
+        return i;
+      }
+    }
+  }
+
+  if(A > B) {
+    for(const SiteIndex unmappedA : possiblyUnmappedAs) {
+      if(map.count(unmappedA) == 0) {
+        return unmappedA;
+      }
+    }
+  }
+
+  throw std::logic_error("Failed to deduce changed site");
+}
+
 } // namespace
 
 SiteMapping SiteMapping::from(
@@ -58,30 +117,7 @@ SiteMapping SiteMapping::from(
 
   // If all sites are mapped by this, you're almost done
   if(mapping.map.size() == std::min(A, B)) {
-    if(A < B) {
-      for(SiteIndex i {0}; i < B; ++i) {
-        if(temple::find(mappedBs, i) == std::end(mappedBs)) {
-          mapping.changedSite = i;
-          break;
-        }
-      }
-
-      if(!mapping.changedSite) {
-        throw std::logic_error("Failed to deduce changed site");
-      }
-    } else if(A > B) {
-      for(SiteIndex i {0}; i < A; ++i) {
-        if(mapping.map.count(i) == 0) {
-          mapping.changedSite = i;
-          break;
-        }
-      }
-
-      if(!mapping.changedSite) {
-        throw std::logic_error("Failed to deduce changed site");
-      }
-    }
-
+    mapping.changedSite = determineChangedSite(A, B, mapping.map, mappedBs);
     return mapping;
   }
 
@@ -136,30 +172,7 @@ SiteMapping SiteMapping::from(
 
   assert(mapping.map.size() == std::min(A, B));
 
-  if(A < B) {
-    for(SiteIndex i {0}; i < B; ++i) {
-      if(temple::find(mappedBs, i) == std::end(mappedBs)) {
-        mapping.changedSite = i;
-        break;
-      }
-    }
-
-    if(!mapping.changedSite) {
-      throw std::logic_error("Failed to deduce changed site");
-    }
-  } else if(A > B) {
-    for(const SiteIndex unmappedA : unmappedAs) {
-      if(mapping.map.count(unmappedA) == 0) {
-        mapping.changedSite = unmappedA;
-        break;
-      }
-    }
-
-    if(!mapping.changedSite) {
-      throw std::logic_error("Failed to deduce changed site");
-    }
-  }
-
+  mapping.changedSite = determineChangedSite(A, B, mapping.map, unmappedAs, mappedBs);
   return mapping;
 }
 
