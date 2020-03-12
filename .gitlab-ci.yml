@@ -15,8 +15,6 @@ variables:
 - python -m pip install --upgrade conan sphinx sphinx_rtd_theme pytest numpy
 - conan remote add ci-internal $SCINE_DEPLOY_ARTIFACTORY_URL
 - conan user -p $SCINE_DEPLOY_ARTIFACTORY_PASSWORD -r ci-internal $SCINE_DEPLOY_ARTIFACTORY_USERNAME
-- conan profile new default --detect
-- sed -i 's/\[build_requires\]/[build_requires]\ncmake_installer\/3.16.3@conan\/stable/' $(conan config home)/profiles/default 
 
 default:
   before_script:
@@ -64,19 +62,19 @@ pypi:
     - default_docker
   image: quay.io/pypa/manylinux2014_x86_64
   before_script:
+    - *ssh_setup
     - /opt/python/cp36-cp36m/bin/python -m venv cp36-cp36m
     - source cp36-cp36m/bin/activate
     - *conan_setup
   script:
     - python -m pip install wheel
     - mkdir -p build && cd build
-    - conan install -o scine_molassembler:python=True -o scine_utilities:shared=False -o scine_molassembler:shared=False --build=missing ..
+    - conan install -o scine_molassembler:python=True -o scine_utilities:shared=False -o scine_molassembler:shared=False -o scine_molassembler:microarch=none --build=missing ..
     - conan build ..
     - cd src/molassembler/python
     - python setup.py bdist_wheel
     - auditwheel show dist/*.whl
     - auditwheel repair dist/*.whl
-  dependencies: []
   artifacts:
     expire_in: 1 day
     paths:

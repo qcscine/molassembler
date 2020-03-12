@@ -1,7 +1,49 @@
 import os
 import sys
+import re
+import subprocess as sp
 from conans import ConanFile, CMake, tools
 from conans.errors import ConanInvalidConfiguration
+
+
+def find_arch_in_output(cmdlist, regex):
+    result = sp.run(cmdlist, stdout=sp.PIPE,
+                    stderr=sp.STDOUT, universal_newlines=True)
+    result.check_returncode()
+    matcher = re.compile(regex)
+
+    for match in matcher.finditer(result.stdout):
+        return match.group("arch")
+
+    for match in matcher.finditer(result.stderr):
+        return match.group("arch")
+
+    return None
+
+
+def determine_arch(conanfile):
+    arch = None
+
+    if conanfile.settings.compiler == "gcc":
+        arch = find_arch_in_output(
+            ["gcc", "-march=native", "-Q", "--help=target"],
+            r"-march=\s+(?P<arch>[A-z0-9]+)"
+        )
+
+    if conanfile.settings.compiler in ["clang", "apple-clang"]:
+        arch = find_arch_in_output(
+            ["clang", "-march=native", "-xc", "-", "-###"],
+            "\"-target-cpu\"\\s+\"(?P<arch>[A-z0-9]+)\""
+        )
+
+    return arch or ""
+
+
+def cmake_at_least(conanfile, version):
+    if not tools.which("cmake"):
+        return False
+
+    return CMake.get_version() >= version
 
 
 def python_module_dir(package_folder):
@@ -20,14 +62,21 @@ class MolassemblerConan(ConanFile):
     description = "Molecular graph interpretation, modification and conformer generation"
     topics = ("chemistry", "cheminformatics", "molecule")
     settings = "os", "compiler", "build_type", "arch"
-    options = {key: [True, False]
-               for key in ["shared", "python", "tests", "docs", "coverage"]}
+    options = {
+        "shared": [True, False],
+        "python": [True, False],
+        "tests": [True, False],
+        "docs": [True, False],
+        "coverage": [True, False],
+        "microarch": ["detect", "none"]
+    }
     default_options = {
         "shared": True,
         "python": False,
         "tests": False,
         "docs": False,
-        "coverage": False
+        "coverage": False,
+        "microarch": "detect"
     }
     generators = "cmake"
     exports_sources = ["src/*", "CMakeLists.txt",
@@ -36,14 +85,24 @@ class MolassemblerConan(ConanFile):
     revision_mode = "scm"
 
     _cmake = None
+    _microarch = ""
+
+    def _ensure_microarch_set(self):
+        if not self._microarch and self.options.microarch == "detect":
+            self._microarch = determine_arch(self)
+            if self._microarch != "":
+                self.output.info(
+                    "Detected microarch: {}".format(self._microarch))
 
     def _configure_cmake(self):
         if self._cmake:
             return self._cmake
 
+        self._ensure_microarch_set()
+
         self._cmake = CMake(self)
         additional_definitions = {
-            "SCINE_MARCH": "",
+            "SCINE_MARCH": self._microarch,
             "SCINE_BUILD_DOCS": self.options.docs,
             "SCINE_BUILD_TESTS": self.options.tests,
             "SCINE_BUILD_PYTHON_BINDINGS": self.options.python,
@@ -62,6 +121,9 @@ class MolassemblerConan(ConanFile):
         if self.options.python:
             self.options["scine_utilities"].python = True
 
+        if self.options.microarch == "none":
+            self.options["scine_utilities"].microarch = "none"
+
         if self.options.coverage:
             if not self.options.tests:
                 raise ConanInvalidConfiguration(
@@ -78,9 +140,15 @@ class MolassemblerConan(ConanFile):
         del self.info.options.docs
         del self.info.options.coverage
 
+        self._ensure_microarch_set()
+        self.info.options["microarch"] = self._microarch
+
     def build_requirements(self):
         if self.options.python:
             self.build_requires("pybind11/2.4.2@scine/dependencies")
+
+        if not cmake_at_least(self, "3.13.4"):
+            self.build_requires("cmake_installer/[~=3.13.4]@conan/stable")
 
     def build(self):
         cmake = self._configure_cmake()
