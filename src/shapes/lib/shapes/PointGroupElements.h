@@ -28,8 +28,7 @@ namespace elements {
 struct SymmetryElement {
   using Vector = Eigen::Vector3d;
   using Matrix = Eigen::Matrix3d;
-
-  virtual ~SymmetryElement() = default;
+  using Ptr = std::unique_ptr<SymmetryElement>;
 
   //! Returns a matrix representation of the symmetry element operation
   virtual Matrix matrix() const = 0;
@@ -41,6 +40,8 @@ struct SymmetryElement {
 
 //! E symmetry element
 struct Identity final : public SymmetryElement {
+  static Identity E();
+
   Matrix matrix() const final;
   boost::optional<Vector> vector() const final;
   std::string name() const final;
@@ -48,6 +49,8 @@ struct Identity final : public SymmetryElement {
 
 //! i symmetry element
 struct Inversion final : public SymmetryElement {
+  static Inversion i();
+
   Matrix matrix() const final;
   boost::optional<Vector> vector() const final;
   std::string name() const final;
@@ -64,6 +67,9 @@ struct Rotation final : public SymmetryElement {
 
   //! Construct a proper rotation symmetry element
   static Rotation Cn(const Eigen::Vector3d& axis, const unsigned n, const unsigned power = 1);
+  static inline Rotation Cn_z(const unsigned n, const unsigned power = 1) {
+    return Cn(Eigen::Vector3d::UnitZ(), n, power);
+  }
   //! Construct an improper rotation symmetry element
   static Rotation Sn(const Eigen::Vector3d& axis, const unsigned n, const unsigned power = 1);
 
@@ -90,6 +96,10 @@ struct Rotation final : public SymmetryElement {
 struct Reflection final : public SymmetryElement {
   Reflection(const Eigen::Vector3d& passNormal);
 
+  static Reflection sigma_xy();
+  static Reflection sigma_xz();
+  static Reflection sigma_yz();
+
   Matrix matrix() const final;
   boost::optional<Vector> vector() const final;
   std::string name() const final;
@@ -99,6 +109,12 @@ struct Reflection final : public SymmetryElement {
 
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };
+
+/* Mixed operators (WARNING: Can only handle case for which rotation axis is
+ * collinear with reflection plane normal)
+ */
+Rotation operator * (const Rotation& rot, const Reflection& reflection);
+Rotation operator * (const Reflection& reflection, const Rotation& rot);
 
 //! Heterogeneous list of symmetry elements
 using ElementsList = std::vector<std::unique_ptr<SymmetryElement>>;

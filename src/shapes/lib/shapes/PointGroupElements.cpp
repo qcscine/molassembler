@@ -13,6 +13,7 @@
 namespace Scine {
 namespace shapes {
 namespace elements {
+namespace {
 
 template<typename EnumType>
 constexpr auto underlying(const EnumType e) {
@@ -27,6 +28,265 @@ inline bool orthogonal(const Eigen::Vector3d& a, const Eigen::Vector3d& b) {
   return std::fabs(a.dot(b) / (a.norm() * b.norm())) <= 1e-8;
 }
 
+template<typename T>
+inline auto wrap(T&& element) {
+  using Decayed = std::decay_t<T>;
+  return std::make_unique<Decayed>(std::forward<T>(element));
+}
+
+void addProperAxisElements(ElementsList& list, const Eigen::Vector3d& axis, const unsigned n) {
+  // C2 gives only a C2, but C3 should also give a C3², etc.
+  const Rotation element = Rotation::Cn(axis, n);
+  Rotation composite = element;
+  for(unsigned i = n; i > 1; --i) {
+    list.push_back(wrap(composite));
+    composite = element * composite;
+  }
+}
+
+void addImproperAxisElements(ElementsList& list, const Eigen::Vector3d& axis, const unsigned n) {
+  const Rotation element = Rotation::Sn(axis, n);
+  Rotation composite = element;
+  for(unsigned i = n; i > 1; --i) {
+    list.push_back(wrap(composite));
+    composite = element * composite;
+  }
+}
+
+ElementsList Cnh(const unsigned n) {
+  const auto sigma_xy = Reflection::sigma_xy();
+
+  ElementsList elements;
+  elements.push_back(wrap(Identity::E()));
+  elements.push_back(wrap(sigma_xy));
+  std::vector<Rotation> rotations;
+  const Rotation element = Rotation::Cn_z(n);
+  Rotation composite = element;
+  for(unsigned i = n; i > 1; --i) {
+    rotations.push_back(composite);
+    composite = element * composite;
+  }
+  const unsigned S = rotations.size();
+  // Add sigma_xy modified Cn axes
+  for(unsigned i = 0; i < S; ++i) {
+    rotations.push_back(sigma_xy * rotations.at(i));
+  }
+  for(auto& rotation : rotations) {
+    elements.emplace_back(
+      wrap(std::move(rotation))
+    );
+  }
+  assert(elements.size() == 2 * n);
+  return elements;
+}
+
+ElementsList Cnv(const unsigned n) {
+  ElementsList elements;
+  elements.push_back(wrap(Identity::E()));
+  addProperAxisElements(elements, Eigen::Vector3d::UnitZ(), n);
+  // Reflection planes include z and increment by pi/n along z
+  const auto rotation = Rotation::Cn_z(2 * n);
+  Eigen::Vector3d planeNormal = Eigen::Vector3d::UnitY();
+  for(unsigned i = 0; i < n; ++i) {
+    elements.push_back(
+      wrap(Reflection(planeNormal))
+    );
+    planeNormal = rotation.matrix() * planeNormal;
+  }
+  assert(elements.size() == 2 * n);
+  return elements;
+}
+
+ElementsList Dn(const unsigned n) {
+  ElementsList elements;
+  elements.push_back(wrap(Identity::E()));
+  addProperAxisElements(elements, Eigen::Vector3d::UnitZ(), n);
+  // Dn groups have C2 axes along pi/n increments in the xy plane
+  const auto rotation = Rotation::Cn_z(2 * n);
+  Eigen::Vector3d c2axis = Eigen::Vector3d::UnitX();
+  for(unsigned i = 0; i < n; ++i) {
+    elements.push_back(wrap(Rotation::Cn(c2axis, 2)));
+    c2axis = rotation.matrix() * c2axis;
+  }
+  assert(elements.size() == 2 * n);
+  return elements;
+}
+
+ElementsList Dnh(const unsigned n) {
+  ElementsList elements;
+  elements.push_back(wrap(Identity::E()));
+  elements.push_back(wrap(Reflection::sigma_xy()));
+  elements.reserve(4 * n);
+  std::vector<Rotation> rotations;
+  const Rotation element = Rotation::Cn_z(n);
+  Rotation composite = element;
+  for(unsigned i = n; i > 1; --i) {
+    rotations.push_back(composite);
+    composite = element * composite;
+  }
+  const unsigned S = rotations.size();
+  // Generate the S_n axes from the sigma_xy * C_n
+  for(unsigned i = 0; i < S; ++i) {
+    rotations.push_back(Reflection::sigma_xy() * rotations.at(i));
+  }
+  for(auto& rotation : rotations) {
+    elements.emplace_back(
+      wrap(std::move(rotation))
+    );
+  }
+
+  /* Dnh groups have C2 axes along pi/n increments in the xy plane
+   * and sigma_v planes perpendicular to those C2 axes
+   */
+  const auto rotation = Rotation::Cn_z(2 * n);
+  Eigen::Vector3d c2axis = Eigen::Vector3d::UnitX();
+  for(unsigned i = 0; i < n; ++i) {
+    elements.push_back(wrap(Rotation::Cn(c2axis, 2)));
+    elements.push_back(
+      wrap(Reflection(
+        Eigen::Vector3d::UnitZ().cross(c2axis)
+      ))
+    );
+    c2axis = rotation.matrix() * c2axis;
+  }
+
+  assert(elements.size() == 4 * n);
+  return elements;
+}
+
+ElementsList Dnd(const unsigned n) {
+  const Eigen::Vector3d e_x = Eigen::Vector3d::UnitX();
+  const Eigen::Vector3d e_z = Eigen::Vector3d::UnitZ();
+
+  ElementsList elements;
+  elements.push_back(wrap(Identity::E()));
+  addImproperAxisElements(elements, e_z, 2 * n);
+  /* C2 axes */
+  const auto rotationMatrix = Rotation::Cn_z(2 * n).matrix();
+  Eigen::Vector3d c2axis = e_x;
+  for(unsigned i = 0; i < n; ++i) {
+    elements.push_back(wrap(Rotation::Cn(c2axis, 2)));
+    c2axis = rotationMatrix * c2axis;
+  }
+  /* sigma_ds */
+  Eigen::Vector3d planeNormal = (e_x + rotationMatrix * e_x).normalized().cross(e_z);
+  for(unsigned i = 0; i < n; ++i) {
+    elements.push_back(wrap(Reflection(planeNormal)));
+    planeNormal = rotationMatrix * planeNormal;
+  }
+  assert(elements.size() == 4 * n);
+  return elements;
+}
+
+ElementsList I() {
+  ElementsList elements;
+  elements.push_back(wrap(Identity::E()));
+  elements.reserve(60);
+
+  const double phi = (1 + std::sqrt(5)) / 2;
+  Eigen::Matrix<double, 3, 6> axes;
+  axes << 0.0, 0.0, phi, -phi, 1.0, 1.0,
+          1.0, 1.0, 0.0, 0.0, phi, -phi,
+          phi, -phi, 1.0, 1.0, 0.0, 0.0;
+
+  /* 12 C5, 12 C5^2 */
+  for(unsigned i = 0; i < 6; ++i) {
+    addProperAxisElements(elements, axes.col(i), 5);
+  }
+
+  /* 15 C2 along sums of two positions*/
+  const Eigen::Matrix3d C5 = Eigen::AngleAxisd(2 * M_PI / 5, axes.col(0).normalized()).toRotationMatrix();
+  Eigen::Matrix3d twoAxesBases;
+  twoAxesBases.col(0) = (axes.col(0) + axes.col(2)) / 2;
+  twoAxesBases.col(1) = (axes.col(2) + axes.col(4)) / 2;
+  twoAxesBases.col(2) = (axes.col(2) - axes.col(3)) / 2;
+  for(unsigned i = 0; i < 3; ++i) {
+    Eigen::Vector3d compoundAxis = twoAxesBases.col(i);
+    for(unsigned j = 0; j < 5; ++j) {
+      elements.push_back(wrap(Rotation::Cn(compoundAxis, 2)));
+      compoundAxis = C5 * compoundAxis;
+    }
+  }
+
+  /* 20 C3 along sums of three positions*/
+  Eigen::Matrix<double, 3, 2> threeAxesBases;
+  threeAxesBases.col(0) = (axes.col(0) + axes.col(2) + axes.col(4)) / 3;
+  threeAxesBases.col(1) = (axes.col(2) + axes.col(4) - axes.col(3)) / 3;
+  for(unsigned i = 0; i < 2; ++i) {
+    Eigen::Vector3d compoundAxis = threeAxesBases.col(i);
+    for(unsigned j = 0; j < 5; ++j) {
+      elements.push_back(wrap(Rotation::Cn(compoundAxis, 3)));
+      elements.push_back(wrap(Rotation::Cn(-compoundAxis, 3)));
+      compoundAxis = C5 * compoundAxis;
+    }
+  }
+
+  assert(elements.size() == 60);
+  return elements;
+}
+
+ElementsList Ih() {
+  ElementsList elements;
+  elements.push_back(wrap(Identity::E()));
+  elements.reserve(120);
+  /* i */
+  elements.push_back(wrap(Inversion::i()));
+  const double phi = (1 + std::sqrt(5)) / 2;
+  Eigen::Matrix<double, 3, 6> axes;
+  axes << 0.0, 0.0, phi, -phi, 1.0, 1.0,
+          1.0, 1.0, 0.0, 0.0, phi, -phi,
+          phi, -phi, 1.0, 1.0, 0.0, 0.0;
+
+  /* 12 S10, 12 S10^3, 12 C5, 12 C5^2 */
+  for(unsigned i = 0; i < 6; ++i) {
+    const auto& axis = axes.col(i);
+    elements.push_back(wrap(Rotation::Sn(axis, 10)));
+    elements.push_back(wrap(Rotation::Sn(-axis, 10)));
+    elements.push_back(wrap(Rotation::Sn(axis, 10, 3)));
+    elements.push_back(wrap(Rotation::Sn(-axis, 10, 3)));
+    // C5, C5^2, C5^3 = -C5^2, C5^4 = -C5
+    addProperAxisElements(elements, axis, 5);
+  }
+
+  /* 15 C2, 15 sigma along sums of two positions */
+  const Eigen::Matrix3d C5 = Eigen::AngleAxisd(2 * M_PI / 5, axes.col(0).normalized()).toRotationMatrix();
+  Eigen::Matrix3d twoAxesBases;
+  twoAxesBases.col(0) = (axes.col(0) + axes.col(2)) / 2;
+  twoAxesBases.col(1) = (axes.col(2) + axes.col(4)) / 2;
+  twoAxesBases.col(2) = (axes.col(2) - axes.col(3)) / 2;
+  for(unsigned i = 0; i < 3; ++i) {
+    Eigen::Vector3d compoundAxis = twoAxesBases.col(i);
+    for(unsigned j = 0; j < 5; ++j) {
+      elements.push_back(wrap(Rotation::Cn(compoundAxis, 2)));
+      elements.push_back(wrap(Reflection(compoundAxis)));
+      compoundAxis = C5 * compoundAxis;
+    }
+  }
+
+  /* 20 S6, 20 C3 along sums of three positions */
+  Eigen::Matrix<double, 3, 2> threeAxesBases;
+  threeAxesBases.col(0) = (axes.col(0) + axes.col(2) + axes.col(4)) / 3;
+  threeAxesBases.col(1) = (axes.col(2) + axes.col(4) - axes.col(3)) / 3;
+  for(unsigned i = 0; i < 2; ++i) {
+    Eigen::Vector3d compoundAxis = threeAxesBases.col(i);
+    for(unsigned j = 0; j < 5; ++j) {
+      elements.push_back(wrap(Rotation::Sn(compoundAxis, 6)));
+      elements.push_back(wrap(Rotation::Sn(-compoundAxis, 6)));
+      elements.push_back(wrap(Rotation::Cn(compoundAxis, 3)));
+      elements.push_back(wrap(Rotation::Cn(-compoundAxis, 3)));
+      compoundAxis = C5 * compoundAxis;
+    }
+  }
+  assert(elements.size() == 120);
+  return elements;
+}
+
+} // namespace
+
+Identity Identity::E() {
+  return Identity {};
+}
+
 SymmetryElement::Matrix Identity::matrix() const {
   return Matrix::Identity();
 }
@@ -37,6 +297,10 @@ boost::optional<SymmetryElement::Vector> Identity::vector() const {
 
 std::string Identity::name() const {
   return "E";
+}
+
+Inversion Inversion::i() {
+  return Inversion {};
 }
 
 SymmetryElement::Matrix Inversion::matrix() const {
@@ -141,6 +405,18 @@ std::string Rotation::name() const {
 }
 
 Reflection::Reflection(const Eigen::Vector3d& passNormal) : normal(passNormal.normalized()) {}
+
+Reflection Reflection::sigma_xy() {
+  return Reflection(Eigen::Vector3d::UnitZ());
+}
+
+Reflection Reflection::sigma_xz() {
+  return Reflection(Eigen::Vector3d::UnitY());
+}
+
+Reflection Reflection::sigma_yz() {
+  return Reflection(Eigen::Vector3d::UnitX());
+}
 
 SymmetryElement::Matrix Reflection::matrix() const {
   Eigen::Matrix3d reflection;
@@ -270,45 +546,21 @@ std::vector<std::unique_ptr<SymmetryElement>> symmetryElements(PointGroup group)
     group = PointGroup::D8h;
   }
 
-  auto make = [](auto element) {
-    using Type = decltype(element);
-    return std::make_unique<Type>(element);
-  };
-
-  Identity E {};
-  Inversion inversion {};
+  const Identity E {};
+  const Inversion inversion {};
 
   const auto e_x = Eigen::Vector3d::UnitX();
   const auto e_y = Eigen::Vector3d::UnitY();
   const auto e_z = Eigen::Vector3d::UnitZ();
 
-  Reflection sigma_xy {e_z};
-  Reflection sigma_xz {e_y};
-  Reflection sigma_yz {e_x};
+  const Reflection sigma_xy {e_z};
+  const Reflection sigma_xz {e_y};
+  const Reflection sigma_yz {e_x};
 
   const double tetrahedronAngle = 2 * std::atan(std::sqrt(2));
 
-  auto addProperAxisElements = [&](ElementsList& list, const Eigen::Vector3d& axis, const unsigned n) {
-    // C2 gives only a C2, but C3 should also give a C3², etc.
-    const Rotation element = Rotation::Cn(axis, n);
-    Rotation composite = element;
-    for(unsigned i = n; i > 1; --i) {
-      list.push_back(make(composite));
-      composite = element * composite;
-    }
-  };
-
-  auto addImproperAxisElements = [&](ElementsList& list, const Eigen::Vector3d& axis, const unsigned n) {
-    const Rotation element = Rotation::Sn(axis, n);
-    Rotation composite = element;
-    for(unsigned i = n; i > 1; --i) {
-      list.push_back(make(composite));
-      composite = element * composite;
-    }
-  };
-
   ElementsList elements;
-  elements.push_back(make(E));
+  elements.push_back(wrap(E));
 
   switch(group) {
     case(PointGroup::C1):
@@ -316,13 +568,13 @@ std::vector<std::unique_ptr<SymmetryElement>> symmetryElements(PointGroup group)
 
     case(PointGroup::Ci):
       {
-        elements.push_back(make(inversion));
+        elements.push_back(wrap(inversion));
         return elements;
       }
 
     case(PointGroup::Cs):
       {
-        elements.push_back(make(sigma_xy));
+        elements.push_back(wrap(sigma_xy));
         return elements;
       }
 
@@ -348,7 +600,6 @@ std::vector<std::unique_ptr<SymmetryElement>> symmetryElements(PointGroup group)
     case(PointGroup::C7h):
     case(PointGroup::C8h):
       {
-        elements.push_back(make(sigma_xy));
         const unsigned n = 2 + underlying(group) - underlying(PointGroup::C2h);
         std::vector<Rotation> rotations;
         const Rotation element = Rotation::Cn(e_z, n);
@@ -362,13 +613,7 @@ std::vector<std::unique_ptr<SymmetryElement>> symmetryElements(PointGroup group)
         for(unsigned i = 0; i < S; ++i) {
           rotations.push_back(sigma_xy * rotations.at(i));
         }
-        for(auto& rotation : rotations) {
-          elements.emplace_back(
-            make(std::move(rotation))
-          );
-        }
-        assert(elements.size() == 2 * n);
-        return elements;
+        return Cnh(2 + underlying(group) - underlying(PointGroup::C2h));
       }
 
     case(PointGroup::C2v):
@@ -379,19 +624,7 @@ std::vector<std::unique_ptr<SymmetryElement>> symmetryElements(PointGroup group)
     case(PointGroup::C7v):
     case(PointGroup::C8v):
       {
-        const unsigned n = 2 + underlying(group) - underlying(PointGroup::C2v);
-        addProperAxisElements(elements, e_z, n);
-        // Reflection planes include z and increment by pi/n along z
-        const auto rotation = Rotation::Cn(e_z, 2 * n);
-        Eigen::Vector3d planeNormal = e_y;
-        for(unsigned i = 0; i < n; ++i) {
-          elements.push_back(
-            make(Reflection(planeNormal))
-          );
-          planeNormal = rotation.matrix() * planeNormal;
-        }
-        assert(elements.size() == 2 * n);
-        return elements;
+        return Cnv(2 + underlying(group) - underlying(PointGroup::C2v));
       }
 
     case(PointGroup::S4):
@@ -412,17 +645,7 @@ std::vector<std::unique_ptr<SymmetryElement>> symmetryElements(PointGroup group)
     case(PointGroup::D7):
     case(PointGroup::D8):
       {
-        const unsigned n = 2 + underlying(group) - underlying(PointGroup::D2);
-        addProperAxisElements(elements, e_z, n);
-        // Dn groups have C2 axes along pi/n increments in the xy plane
-        const auto rotation = Rotation::Cn(e_z, 2 * n);
-        Eigen::Vector3d c2axis = e_x;
-        for(unsigned i = 0; i < n; ++i) {
-          elements.push_back(make(Rotation::Cn(c2axis, 2)));
-          c2axis = rotation.matrix() * c2axis;
-        }
-        assert(elements.size() == 2 * n);
-        return elements;
+        return Dn(2 + underlying(group) - underlying(PointGroup::D2));
       }
 
     case(PointGroup::D2h):
@@ -433,44 +656,7 @@ std::vector<std::unique_ptr<SymmetryElement>> symmetryElements(PointGroup group)
     case(PointGroup::D7h):
     case(PointGroup::D8h):
       {
-        elements.push_back(make(sigma_xy));
-        const unsigned n = 2 + underlying(group) - underlying(PointGroup::D2h);
-        elements.reserve(4 * n);
-        std::vector<Rotation> rotations;
-        const Rotation element = Rotation::Cn(e_z, n);
-        Rotation composite = element;
-        for(unsigned i = n; i > 1; --i) {
-          rotations.push_back(composite);
-          composite = element * composite;
-        }
-        const unsigned S = rotations.size();
-        // Generate the S_n axes from the sigma_xy * C_n
-        for(unsigned i = 0; i < S; ++i) {
-          rotations.push_back(sigma_xy * rotations.at(i));
-        }
-        for(auto& rotation : rotations) {
-          elements.emplace_back(
-            make(std::move(rotation))
-          );
-        }
-
-        /* Dnh groups have C2 axes along pi/n increments in the xy plane
-         * and sigma_v planes perpendicular to those C2 axes
-         */
-        const auto rotation = Rotation::Cn(e_z, 2 * n);
-        Eigen::Vector3d c2axis = e_x;
-        for(unsigned i = 0; i < n; ++i) {
-          elements.push_back(make(Rotation::Cn(c2axis, 2)));
-          elements.push_back(
-            make(Reflection(
-              e_z.cross(c2axis)
-            ))
-          );
-          c2axis = rotation.matrix() * c2axis;
-        }
-
-        assert(elements.size() == 4 * n);
-        return elements;
+        return Dnh(2 + underlying(group) - underlying(PointGroup::D2h));
       }
 
     case(PointGroup::D2d):
@@ -481,23 +667,7 @@ std::vector<std::unique_ptr<SymmetryElement>> symmetryElements(PointGroup group)
     case(PointGroup::D7d):
     case(PointGroup::D8d):
       {
-        const unsigned n = 2 + underlying(group) - underlying(PointGroup::D2d);
-        addImproperAxisElements(elements, e_z, 2 * n);
-        /* C2 axes */
-        const auto rotationMatrix = Rotation::Cn(e_z, 2 * n).matrix();
-        Eigen::Vector3d c2axis = e_x;
-        for(unsigned i = 0; i < n; ++i) {
-          elements.push_back(make(Rotation::Cn(c2axis, 2)));
-          c2axis = rotationMatrix * c2axis;
-        }
-        /* sigma_ds */
-        Eigen::Vector3d planeNormal = (e_x + rotationMatrix * e_x).normalized().cross(e_z);
-        for(unsigned i = 0; i < n; ++i) {
-          elements.push_back(make(Reflection(planeNormal)));
-          planeNormal = rotationMatrix * planeNormal;
-        }
-        assert(elements.size() == 4 * n);
-        return elements;
+        return Dnd(2 + underlying(group) - underlying(PointGroup::D2d));
       }
 
     /* Cubic groups */
@@ -511,9 +681,9 @@ std::vector<std::unique_ptr<SymmetryElement>> symmetryElements(PointGroup group)
         addProperAxisElements(elements, axis_2, 3);
         addProperAxisElements(elements, axis_3, 3);
         addProperAxisElements(elements, axis_4, 3);
-        elements.push_back(make(Rotation::Cn((e_z + axis_2).normalized(), 2)));
-        elements.push_back(make(Rotation::Cn((e_z + axis_3).normalized(), 2)));
-        elements.push_back(make(Rotation::Cn((e_z + axis_4).normalized(), 2)));
+        elements.push_back(wrap(Rotation::Cn((e_z + axis_2).normalized(), 2)));
+        elements.push_back(wrap(Rotation::Cn((e_z + axis_3).normalized(), 2)));
+        elements.push_back(wrap(Rotation::Cn((e_z + axis_4).normalized(), 2)));
         assert(elements.size() == 12);
         return elements;
       }
@@ -542,7 +712,7 @@ std::vector<std::unique_ptr<SymmetryElement>> symmetryElements(PointGroup group)
         for(unsigned i = 0; i < 3; ++i) {
           for(unsigned j = i + 1; j < 4; ++j) {
             elements.push_back(
-              make(Reflection(
+              wrap(Reflection(
                 positions.col(i).cross(positions.col(j))
               ))
             );
@@ -555,40 +725,40 @@ std::vector<std::unique_ptr<SymmetryElement>> symmetryElements(PointGroup group)
       {
         elements.reserve(24);
         /* i */
-        elements.push_back(make(inversion));
+        elements.push_back(wrap(inversion));
         /* 4 S6, 4 C3, 4 C3^2, 4 S6^5 along lin. comb. of three axes */
         { // +++ <-> ---
           const Eigen::Vector3d axis_ppp = (  e_x + e_y + e_z).normalized();
           addProperAxisElements(elements, axis_ppp, 3);
-          elements.push_back(make(Rotation::Sn(axis_ppp, 6)));
-          elements.push_back(make(Rotation::Sn(axis_ppp, 6, 5)));
+          elements.push_back(wrap(Rotation::Sn(axis_ppp, 6)));
+          elements.push_back(wrap(Rotation::Sn(axis_ppp, 6, 5)));
         }
         { // ++- <-> --+
           const Eigen::Vector3d axis_ppm = (  e_x + e_y - e_z).normalized();
           addProperAxisElements(elements, axis_ppm, 3);
-          elements.push_back(make(Rotation::Sn(axis_ppm, 6)));
-          elements.push_back(make(Rotation::Sn(axis_ppm, 6, 5)));
+          elements.push_back(wrap(Rotation::Sn(axis_ppm, 6)));
+          elements.push_back(wrap(Rotation::Sn(axis_ppm, 6, 5)));
         }
         { // +-+ <-> -+-
           const Eigen::Vector3d axis_pmp = (  e_x - e_y + e_z).normalized();
           addProperAxisElements(elements, axis_pmp, 3);
-          elements.push_back(make(Rotation::Sn(axis_pmp, 6)));
-          elements.push_back(make(Rotation::Sn(axis_pmp, 6, 5)));
+          elements.push_back(wrap(Rotation::Sn(axis_pmp, 6)));
+          elements.push_back(wrap(Rotation::Sn(axis_pmp, 6, 5)));
         }
         { // -++ <-> +--
           const Eigen::Vector3d axis_mpp = (- e_x + e_y + e_z).normalized();
           addProperAxisElements(elements, axis_mpp, 3);
-          elements.push_back(make(Rotation::Sn(axis_mpp, 6)));
-          elements.push_back(make(Rotation::Sn(axis_mpp, 6, 5)));
+          elements.push_back(wrap(Rotation::Sn(axis_mpp, 6)));
+          elements.push_back(wrap(Rotation::Sn(axis_mpp, 6, 5)));
         }
         /* 3 C2 along axes */
-        elements.push_back(make(Rotation::Cn(e_x, 2)));
-        elements.push_back(make(Rotation::Cn(e_y, 2)));
-        elements.push_back(make(Rotation::Cn(e_z, 2)));
+        elements.push_back(wrap(Rotation::Cn(e_x, 2)));
+        elements.push_back(wrap(Rotation::Cn(e_y, 2)));
+        elements.push_back(wrap(Rotation::Cn(e_z, 2)));
         /* 3 sigma_h with normals along axes */
-        elements.push_back(make(Reflection(e_x)));
-        elements.push_back(make(Reflection(e_y)));
-        elements.push_back(make(Reflection(e_z)));
+        elements.push_back(wrap(Reflection(e_x)));
+        elements.push_back(wrap(Reflection(e_y)));
+        elements.push_back(wrap(Reflection(e_z)));
         assert(elements.size() == 24);
         return elements;
       }
@@ -618,177 +788,83 @@ std::vector<std::unique_ptr<SymmetryElement>> symmetryElements(PointGroup group)
           addProperAxisElements(elements, axis_mpp, 3);
         }
         /* 6 C2' along combinations of two axes */
-        elements.push_back(make(Rotation::Cn((e_x + e_y).normalized(), 2)));
-        elements.push_back(make(Rotation::Cn((e_x - e_y).normalized(), 2)));
-        elements.push_back(make(Rotation::Cn((e_x + e_z).normalized(), 2)));
-        elements.push_back(make(Rotation::Cn((e_x - e_z).normalized(), 2)));
-        elements.push_back(make(Rotation::Cn((e_y + e_z).normalized(), 2)));
-        elements.push_back(make(Rotation::Cn((e_y - e_z).normalized(), 2)));
+        elements.push_back(wrap(Rotation::Cn((e_x + e_y).normalized(), 2)));
+        elements.push_back(wrap(Rotation::Cn((e_x - e_y).normalized(), 2)));
+        elements.push_back(wrap(Rotation::Cn((e_x + e_z).normalized(), 2)));
+        elements.push_back(wrap(Rotation::Cn((e_x - e_z).normalized(), 2)));
+        elements.push_back(wrap(Rotation::Cn((e_y + e_z).normalized(), 2)));
+        elements.push_back(wrap(Rotation::Cn((e_y - e_z).normalized(), 2)));
         assert(elements.size() == 24);
         return elements;
       }
     case(PointGroup::Oh):
       {
-        elements.push_back(make(inversion));
+        elements.push_back(wrap(inversion));
         elements.reserve(48);
         /* 8 C3 and 8 S6 share the linear combinations of three axes */
         { // +++ <-> ---
           const Eigen::Vector3d axis_ppp = (  e_x + e_y + e_z).normalized();
           addProperAxisElements(elements, axis_ppp, 3);
-          elements.push_back(make(Rotation::Sn(axis_ppp, 6)));
-          elements.push_back(make(Rotation::Sn(-axis_ppp, 6)));
+          elements.push_back(wrap(Rotation::Sn(axis_ppp, 6)));
+          elements.push_back(wrap(Rotation::Sn(-axis_ppp, 6)));
         }
         { // ++- <-> --+
           const Eigen::Vector3d axis_ppm = (  e_x + e_y - e_z).normalized();
           addProperAxisElements(elements, axis_ppm, 3);
-          elements.push_back(make(Rotation::Sn(axis_ppm, 6)));
-          elements.push_back(make(Rotation::Sn(-axis_ppm, 6)));
+          elements.push_back(wrap(Rotation::Sn(axis_ppm, 6)));
+          elements.push_back(wrap(Rotation::Sn(-axis_ppm, 6)));
         }
         { // +-+ <-> -+-
           const Eigen::Vector3d axis_pmp = (  e_x - e_y + e_z).normalized();
           addProperAxisElements(elements, axis_pmp, 3);
-          elements.push_back(make(Rotation::Sn(axis_pmp, 6)));
-          elements.push_back(make(Rotation::Sn(-axis_pmp, 6)));
+          elements.push_back(wrap(Rotation::Sn(axis_pmp, 6)));
+          elements.push_back(wrap(Rotation::Sn(-axis_pmp, 6)));
         }
         { // -++ <-> +--
           const Eigen::Vector3d axis_mpp = (- e_x + e_y + e_z).normalized();
           addProperAxisElements(elements, axis_mpp, 3);
-          elements.push_back(make(Rotation::Sn(axis_mpp, 6)));
-          elements.push_back(make(Rotation::Sn(-axis_mpp, 6)));
+          elements.push_back(wrap(Rotation::Sn(axis_mpp, 6)));
+          elements.push_back(wrap(Rotation::Sn(-axis_mpp, 6)));
         }
         /* 6 C2 along linear combinations of two axes */
-        elements.push_back(make(Rotation::Cn((e_x + e_y).normalized(), 2)));
-        elements.push_back(make(Rotation::Cn((e_x - e_y).normalized(), 2)));
-        elements.push_back(make(Rotation::Cn((e_x + e_z).normalized(), 2)));
-        elements.push_back(make(Rotation::Cn((e_x - e_z).normalized(), 2)));
-        elements.push_back(make(Rotation::Cn((e_y + e_z).normalized(), 2)));
-        elements.push_back(make(Rotation::Cn((e_y - e_z).normalized(), 2)));
+        elements.push_back(wrap(Rotation::Cn((e_x + e_y).normalized(), 2)));
+        elements.push_back(wrap(Rotation::Cn((e_x - e_y).normalized(), 2)));
+        elements.push_back(wrap(Rotation::Cn((e_x + e_z).normalized(), 2)));
+        elements.push_back(wrap(Rotation::Cn((e_x - e_z).normalized(), 2)));
+        elements.push_back(wrap(Rotation::Cn((e_y + e_z).normalized(), 2)));
+        elements.push_back(wrap(Rotation::Cn((e_y - e_z).normalized(), 2)));
         /* 6 C4 and 3 C2 (C4^2) along axes */
         addProperAxisElements(elements, e_x, 4);
         addProperAxisElements(elements, e_y, 4);
         addProperAxisElements(elements, e_z, 4);
         /* 6 S4 along axes */
-        elements.push_back(make(Rotation::Sn(  e_x, 4)));
-        elements.push_back(make(Rotation::Sn(- e_x, 4)));
-        elements.push_back(make(Rotation::Sn(  e_y, 4)));
-        elements.push_back(make(Rotation::Sn(- e_y, 4)));
-        elements.push_back(make(Rotation::Sn(  e_z, 4)));
-        elements.push_back(make(Rotation::Sn(- e_z, 4)));
+        elements.push_back(wrap(Rotation::Sn(  e_x, 4)));
+        elements.push_back(wrap(Rotation::Sn(- e_x, 4)));
+        elements.push_back(wrap(Rotation::Sn(  e_y, 4)));
+        elements.push_back(wrap(Rotation::Sn(- e_y, 4)));
+        elements.push_back(wrap(Rotation::Sn(  e_z, 4)));
+        elements.push_back(wrap(Rotation::Sn(- e_z, 4)));
         /* 3 sigma h along combinations of two axes */
-        elements.push_back(make(sigma_xy));
-        elements.push_back(make(sigma_xz));
-        elements.push_back(make(sigma_yz));
+        elements.push_back(wrap(sigma_xy));
+        elements.push_back(wrap(sigma_xz));
+        elements.push_back(wrap(sigma_yz));
         /* 6 sigma d along linear combinations of three axes */
-        elements.push_back(make(Reflection((e_x + e_y).cross(e_z))));
-        elements.push_back(make(Reflection((e_x - e_y).cross(e_z))));
-        elements.push_back(make(Reflection((e_x + e_z).cross(e_y))));
-        elements.push_back(make(Reflection((e_x - e_z).cross(e_y))));
-        elements.push_back(make(Reflection((e_y + e_z).cross(e_x))));
-        elements.push_back(make(Reflection((e_y - e_z).cross(e_x))));
+        elements.push_back(wrap(Reflection((e_x + e_y).cross(e_z))));
+        elements.push_back(wrap(Reflection((e_x - e_y).cross(e_z))));
+        elements.push_back(wrap(Reflection((e_x + e_z).cross(e_y))));
+        elements.push_back(wrap(Reflection((e_x - e_z).cross(e_y))));
+        elements.push_back(wrap(Reflection((e_y + e_z).cross(e_x))));
+        elements.push_back(wrap(Reflection((e_y - e_z).cross(e_x))));
         assert(elements.size() == 48);
         return elements;
       }
 
     /* Icosahedral groups */
     case(PointGroup::I):
-      {
-        elements.reserve(60);
+        return I();
 
-        const double phi = (1 + std::sqrt(5)) / 2;
-        Eigen::Matrix<double, 3, 6> axes;
-        axes << 0.0, 0.0, phi, -phi, 1.0, 1.0,
-                1.0, 1.0, 0.0, 0.0, phi, -phi,
-                phi, -phi, 1.0, 1.0, 0.0, 0.0;
-
-        /* 12 C5, 12 C5^2 */
-        for(unsigned i = 0; i < 6; ++i) {
-          addProperAxisElements(elements, axes.col(i), 5);
-        }
-
-        /* 15 C2 along sums of two positions*/
-        const Eigen::Matrix3d C5 = Eigen::AngleAxisd(2 * M_PI / 5, axes.col(0).normalized()).toRotationMatrix();
-        Eigen::Matrix3d twoAxesBases;
-        twoAxesBases.col(0) = (axes.col(0) + axes.col(2)) / 2;
-        twoAxesBases.col(1) = (axes.col(2) + axes.col(4)) / 2;
-        twoAxesBases.col(2) = (axes.col(2) - axes.col(3)) / 2;
-        for(unsigned i = 0; i < 3; ++i) {
-          Eigen::Vector3d compoundAxis = twoAxesBases.col(i);
-          for(unsigned j = 0; j < 5; ++j) {
-            elements.push_back(make(Rotation::Cn(compoundAxis, 2)));
-            compoundAxis = C5 * compoundAxis;
-          }
-        }
-
-        /* 20 C3 along sums of three positions*/
-        Eigen::Matrix<double, 3, 2> threeAxesBases;
-        threeAxesBases.col(0) = (axes.col(0) + axes.col(2) + axes.col(4)) / 3;
-        threeAxesBases.col(1) = (axes.col(2) + axes.col(4) - axes.col(3)) / 3;
-        for(unsigned i = 0; i < 2; ++i) {
-          Eigen::Vector3d compoundAxis = threeAxesBases.col(i);
-          for(unsigned j = 0; j < 5; ++j) {
-            elements.push_back(make(Rotation::Cn(compoundAxis, 3)));
-            elements.push_back(make(Rotation::Cn(-compoundAxis, 3)));
-            compoundAxis = C5 * compoundAxis;
-          }
-        }
-
-        assert(elements.size() == 60);
-        return elements;
-      }
     case(PointGroup::Ih):
-      {
-        elements.reserve(120);
-        /* i */
-        elements.push_back(make(inversion));
-        const double phi = (1 + std::sqrt(5)) / 2;
-        Eigen::Matrix<double, 3, 6> axes;
-        axes << 0.0, 0.0, phi, -phi, 1.0, 1.0,
-                1.0, 1.0, 0.0, 0.0, phi, -phi,
-                phi, -phi, 1.0, 1.0, 0.0, 0.0;
-
-        /* 12 S10, 12 S10^3, 12 C5, 12 C5^2 */
-        for(unsigned i = 0; i < 6; ++i) {
-          const auto& axis = axes.col(i);
-          elements.push_back(make(Rotation::Sn(axis, 10)));
-          elements.push_back(make(Rotation::Sn(-axis, 10)));
-          elements.push_back(make(Rotation::Sn(axis, 10, 3)));
-          elements.push_back(make(Rotation::Sn(-axis, 10, 3)));
-          // C5, C5^2, C5^3 = -C5^2, C5^4 = -C5
-          addProperAxisElements(elements, axis, 5);
-        }
-
-        /* 15 C2, 15 sigma along sums of two positions */
-        const Eigen::Matrix3d C5 = Eigen::AngleAxisd(2 * M_PI / 5, axes.col(0).normalized()).toRotationMatrix();
-        Eigen::Matrix3d twoAxesBases;
-        twoAxesBases.col(0) = (axes.col(0) + axes.col(2)) / 2;
-        twoAxesBases.col(1) = (axes.col(2) + axes.col(4)) / 2;
-        twoAxesBases.col(2) = (axes.col(2) - axes.col(3)) / 2;
-        for(unsigned i = 0; i < 3; ++i) {
-          Eigen::Vector3d compoundAxis = twoAxesBases.col(i);
-          for(unsigned j = 0; j < 5; ++j) {
-            elements.push_back(make(Rotation::Cn(compoundAxis, 2)));
-            elements.push_back(make(Reflection(compoundAxis)));
-            compoundAxis = C5 * compoundAxis;
-          }
-        }
-
-        /* 20 S6, 20 C3 along sums of three positions */
-        Eigen::Matrix<double, 3, 2> threeAxesBases;
-        threeAxesBases.col(0) = (axes.col(0) + axes.col(2) + axes.col(4)) / 3;
-        threeAxesBases.col(1) = (axes.col(2) + axes.col(4) - axes.col(3)) / 3;
-        for(unsigned i = 0; i < 2; ++i) {
-          Eigen::Vector3d compoundAxis = threeAxesBases.col(i);
-          for(unsigned j = 0; j < 5; ++j) {
-            elements.push_back(make(Rotation::Sn(compoundAxis, 6)));
-            elements.push_back(make(Rotation::Sn(-compoundAxis, 6)));
-            elements.push_back(make(Rotation::Cn(compoundAxis, 3)));
-            elements.push_back(make(Rotation::Cn(-compoundAxis, 3)));
-            compoundAxis = C5 * compoundAxis;
-          }
-        }
-        assert(elements.size() == 120);
-        return elements;
-      }
+        return Ih();
 
     default:
       return {};
