@@ -30,6 +30,7 @@ if(SCINE_BUILD_TESTS AND PY_PYTEST)
   )
 endif()
 
+# Installation of the python module with pip
 find_python_module(pip)
 if(PY_PIP)
   file(
@@ -81,7 +82,7 @@ if(PY_PIP)
   endif()
   unset(_utils_libtype)
 
-  # Add setup file in order to enable distribution and installation using pip
+  # Add setuptools file
   configure_file(
     ${CMAKE_CURRENT_SOURCE_DIR}/setup.py.in
     ${CMAKE_CURRENT_BINARY_DIR}/setup.py

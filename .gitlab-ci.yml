@@ -12,6 +12,7 @@ variables:
 .conan_setup: &conan_setup
 - export CONAN_REVISIONS_ENABLED=1
 - if [[ `python -c 'import sys; print(sys.version_info.major)'` -eq 2 ]]; then alias python=$(which python3); fi
+- python --version
 - python -m pip install --upgrade conan sphinx sphinx_rtd_theme pytest numpy
 - conan remote add ci-internal $SCINE_DEPLOY_ARTIFACTORY_URL
 - conan user -p $SCINE_DEPLOY_ARTIFACTORY_PASSWORD -r ci-internal $SCINE_DEPLOY_ARTIFACTORY_USERNAME
@@ -44,6 +45,7 @@ coverage:
   tags:
     - default_docker
   script:
+    - if [[ `python -c 'import sys; print(sys.version_info.major)'` -eq 2 ]]; then alias python=$(which python3); fi
     - conan create -o scine_molassembler:python=True -o scine_molassembler:docs=True -o scine_molassembler:tests=True --build=missing --build=scine_molassembler . ci/$CI_COMMIT_REF_SLUG
     - if $CI_COMMIT_REF_PROTECTED; then conan upload `conan search scine_molassembler | tail -n1` --all -r ci-internal -c; fi
 
