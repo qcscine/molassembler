@@ -15,9 +15,9 @@ if(MOLASSEMBLER_IPO)
   if(canLTO)
     # Set default value of IPO for all targets produced
     set(CMAKE_INTERPROCEDURAL_OPTIMIZATION ON)
-    message(STATUS "Interprocedural optimization has been enabled")
+    cmessage(STATUS "Interprocedural optimization has been enabled")
   else()
-    message(WARNING "Interprocedural optimization is not supported: ${LTOOut}")
+    cmessage(WARNING "Interprocedural optimization is not supported: ${LTOOut}")
   endif()
 endif()
 
@@ -43,7 +43,7 @@ else()
 
   # Some GCC-specific compiler options
   if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-    message(STATUS "Enabling GCC specific warning flags")
+    cmessage(STATUS "Enabling GCC specific warning flags")
     # Handle no gnu unique flags
     if(MOLASSEMBLER_NO_GNU_UNIQUE)
       list(APPEND MOLASSEMBLER_CXX_FLAGS --no-gnu-unique)

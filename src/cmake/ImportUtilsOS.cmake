@@ -8,6 +8,7 @@ macro(import_utils_os)
     # Try to find the package locally
     find_package(Scine OPTIONAL_COMPONENTS UtilsOS QUIET)
     if(NOT TARGET Scine::UtilsOS)
+      cmessage(STATUS "Scine Utils not found, trying downloading instead...")
       # Download it instead
       include(DownloadProject)
       download_project(
@@ -30,21 +31,16 @@ macro(import_utils_os)
       endif()
 
       # Final check if all went well
-      if(TARGET Scine::UtilsOS)
-        message(STATUS
-          "Scine::UtilsOS was not found in your PATH, so it was downloaded."
+      if(NOT TARGET Scine::UtilsOS)
+        cmessage(FATAL_ERROR
+          "Scine::UtilsOS was not found in your PATH and could not be "
+          "established through a download. Try specifying Scine_DIR or "
+          "altering CMAKE_PREFIX_PATH to point to a candidate Scine "
+          "installation base directory."
         )
-      else()
-        string(CONCAT error_msg
-          "Scine::UtilsOS was not found in your PATH and could not be established "
-          "through a download. Try specifying Scine_DIR or altering "
-          "CMAKE_PREFIX_PATH to point to a candidate Scine installation base "
-          "directory."
-        )
-        message(FATAL_ERROR ${error_msg})
       endif()
     else()
-      message(STATUS "Scine::UtilsOS found locally at ${Scine_DIR}")
+      cmessage(STATUS "Scine Utilities found locally at ${Scine_DIR}")
     endif()
   endif()
 endmacro()

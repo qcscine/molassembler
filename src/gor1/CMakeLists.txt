@@ -1,6 +1,6 @@
 # dependencies
 if(NOT TARGET Boost::unit_test_framework)
-  find_package(Boost REQUIRED COMPONENTS unit_test_framework)
+  find_package(Boost REQUIRED COMPONENTS unit_test_framework QUIET)
 endif()
 
 # Files

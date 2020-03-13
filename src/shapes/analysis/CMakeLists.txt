@@ -5,11 +5,12 @@ endif()
 if(NOT TARGET Boost::unit_test_framework OR NOT TARGET Boost::program_options OR NOT TARGET Boost::system)
   find_package(Boost REQUIRED
     COMPONENTS unit_test_framework program_options system
+    QUIET
   )
 endif()
 
 if(MOLASSEMBLER_PARALLELIZE AND NOT TARGET OpenMP::OpenMP_CXX)
-  find_package(OpenMP)
+  find_package(OpenMP QUIET)
 endif()
 
 set(analysisFiles

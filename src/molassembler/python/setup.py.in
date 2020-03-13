@@ -13,6 +13,8 @@ of multidentate and haptic inorganic molecules from positional data and
 generate non-superposable stereopermutations as output.
 """
 
+filelist = ["__init__.py", "scine_molassembler.so"@molassembler_PY_DEPS@]
+
 # Define the setup
 setuptools.setup(
     name="scine_molassembler",
@@ -24,8 +26,7 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     url="https://gitlab.chab.ethz.ch/scine/molassembler",
     packages=["scine_molassembler"],
-    package_data={"scine_molassembler": [
-        "__init__.py", "scine_molassembler.so"]},
+    package_data={"scine_molassembler": filelist},
     classifiers=[
         "Programming Language :: Python :: 3",
         "Programming Language :: C++",

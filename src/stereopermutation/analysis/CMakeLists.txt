@@ -1,5 +1,5 @@
 if(NOT TARGET Boost::program_options)
-  find_package(Boost REQUIRED COMPONENTS program_options)
+  find_package(Boost REQUIRED COMPONENTS program_options QUIET)
 endif()
 
 add_executable(stereopermutationProperties properties.cpp)

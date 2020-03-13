@@ -6,7 +6,7 @@
 
 # If the target already exists, do nothing
 if(NOT TARGET Eigen3::Eigen)
-  find_package(Eigen3 REQUIRED)
+  find_package(Eigen3 REQUIRED QUIET)
 endif()
 
 option(SCINE_USE_INTEL_MKL "Use the Intel MKL libraries with Eigen" ON)
@@ -26,8 +26,8 @@ if(NOT ADD_EIGEN_SEARCHED_EXTERNAL_LINALG_LIBRARIES)
   endif()
 
   if(MKL_FOUND)
-    find_package(OpenMP REQUIRED)
-    message(STATUS "Found MKL for use with Eigen3")
+    find_package(OpenMP REQUIRED QUIET)
+    cmessage(STATUS "Found MKL for use with Eigen3")
   else()
     if(SCINE_USE_LAPACK)
       include(FindLAPACK)
@@ -35,7 +35,7 @@ if(NOT ADD_EIGEN_SEARCHED_EXTERNAL_LINALG_LIBRARIES)
     endif()
 
     if(LAPACK_FOUND)
-      message(STATUS "Found LAPACK/BLAS for use with Eigen3")
+      cmessage(STATUS "Found LAPACK/BLAS for use with Eigen3")
     else()
       if(SCINE_USE_BLAS)
         include(FindBLAS)
@@ -43,7 +43,7 @@ if(NOT ADD_EIGEN_SEARCHED_EXTERNAL_LINALG_LIBRARIES)
       endif()
 
       if(BLAS_FOUND)
-        message(STATUS "Found BLAS for use with Eigen3")
+        cmessage(STATUS "Found BLAS for use with Eigen3")
       endif()
     endif()
   endif()

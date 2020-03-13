@@ -1,10 +1,10 @@
 # Dependencies
 if(MOLASSEMBLER_PARALLELIZE)
-  find_package(OpenMP)
+  find_package(OpenMP QUIET)
 endif()
 
 if(NOT TARGET Boost::filesystem OR NOT TARGET Boost::system)
-  find_package(Boost REQUIRED COMPONENTS filesystem system)
+  find_package(Boost REQUIRED COMPONENTS filesystem system QUIET)
 endif()
 
 set(_LIBPREFIX ${CMAKE_CURRENT_SOURCE_DIR}/molassembler)

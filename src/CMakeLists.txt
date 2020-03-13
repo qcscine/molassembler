@@ -8,17 +8,22 @@ endmacro()
 
 # CMake modules
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
+include(ColorMessages)
 
 if(MOLASSEMBLER_SANITIZE)
-  message(STATUS "Adding address and UB sanitizers")
+  cmessage(STATUS "MOLASSEMBLER_SANITIZE: Adding address and UB sanitizers")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address,undefined")
   set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} -fsanitize=address,undefined")
   set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fsanitize=address,undefined")
 
-  message(WARNING "Address sanitiziation can cause ABI incompatibility issues if dependencies have not been compiled the same way. Set MOLASSEMBLER_SANITIZE to OFF to avoid this.")
+  cmessage(WARNING
+    "Address sanitiziation can cause ABI incompatibility issues "
+    "if dependencies have not been compiled the same way."
+  )
 endif()
 
 if(COVERAGE AND CMAKE_BUILD_TYPE STREQUAL "Debug")
+  cmessage(STATUS "COVERAGE: Adding coverage flags")
   set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 -coverage ${CMAKE_CXX_FLAGS_DEBUG}")
 endif()
 

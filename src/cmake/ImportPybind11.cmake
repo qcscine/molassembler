@@ -8,8 +8,9 @@ macro(import_pybind11)
   if(NOT TARGET pybind11::pybind11)
     find_package(pybind11 2.4.2 EXACT QUIET)
     if(TARGET pybind11::pybind11)
-      message(STATUS "Found pybind11 at ${pybind11_DIR}")
+      cmessage(STATUS "Found pybind11 at ${pybind11_DIR}")
     else()
+      cmessage(STATUS "Pybind11 was not found, trying to download it instead...")
       # Download it instead
       include(DownloadProject)
       download_project(
@@ -22,15 +23,8 @@ macro(import_pybind11)
       add_subdirectory(${pybind11_SOURCE_DIR} ${pybind11_BINARY_DIR})
 
       # Final check if all went well
-      if(EXISTS "${pybind11_SOURCE_DIR}/CMakeLists.txt")
-        message(STATUS
-          "Pybind11 was not found in your PATH, so it was downloaded."
-        )
-      else()
-        string(CONCAT error_msg
-          "Pybind11 was not be established through a download."
-        )
-        message(FATAL_ERROR ${error_msg})
+      if(NOT EXISTS "${pybind11_SOURCE_DIR}/CMakeLists.txt")
+        cmessage(FATAL_ERROR "Pybind11 could not be established through a download.")
       endif()
     endif()
   endif()

@@ -3,7 +3,7 @@ if(NOT SCINE_BUILD_TESTS)
 endif()
 
 if(NOT TARGET Boost::unit_test_framework)
-  find_package(Boost REQUIRED COMPONENTS unit_test_framework)
+  find_package(Boost REQUIRED COMPONENTS unit_test_framework QUIET)
 endif()
 
 add_executable(templeTests

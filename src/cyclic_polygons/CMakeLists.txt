@@ -12,7 +12,7 @@ target_link_libraries(cyclic_polygons INTERFACE temple)
 
 # dependencies
 if(NOT TARGET Boost::unit_test_framework)
-  find_package(Boost REQUIRED COMPONENTS unit_test_framework)
+  find_package(Boost REQUIRED COMPONENTS unit_test_framework QUIET)
 endif()
 
 if(SCINE_BUILD_TESTS)

@@ -10,6 +10,7 @@ if(NOT TARGET Boost::regex
 )
   find_package(Boost REQUIRED
     COMPONENTS regex program_options system filesystem
+    QUIET
   )
 endif()
 

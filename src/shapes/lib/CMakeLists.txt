@@ -1,6 +1,6 @@
 # dependencies
 if(NOT TARGET Boost::boost)
-  find_package(Boost REQUIRED)
+  find_package(Boost REQUIRED QUIET)
 endif()
 
 set(HEADERS_All

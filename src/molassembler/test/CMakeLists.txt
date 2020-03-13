@@ -6,7 +6,7 @@ if(NOT TARGET Boost::unit_test_framework
     OR NOT TARGET Boost::regex
     OR NOT TARGET Boost::filesystem
 )
-  find_package(Boost REQUIRED COMPONENTS unit_test_framework regex filesystem)
+  find_package(Boost REQUIRED COMPONENTS unit_test_framework regex filesystem QUIET)
 endif()
 
 set(MainTestFiles

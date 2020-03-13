@@ -4,7 +4,7 @@ if(NOT MOLASSEMBLER_VALIDATION_TESTS)
 endif()
 
 if(NOT TARGET Boost::unit_test_framework OR NOT TARGET Boost::regex)
-  find_package(Boost REQUIRED COMPONENTS unit_test_framework regex)
+  find_package(Boost REQUIRED COMPONENTS unit_test_framework regex QUIET)
 endif()
 
 # Explicitly set all test files

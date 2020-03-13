@@ -7,7 +7,7 @@ set(boost_outcome_VERSION 2.0.0)
 
 set(OUTCOME_SINGLE_HEADER_FILE ${CMAKE_CURRENT_BINARY_DIR}/boost_outcome/outcome.hpp)
 if(NOT EXISTS ${OUTCOME_SINGLE_HEADER_FILE})
-  message(STATUS "Pulling boost outcome single header...")
+  cmessage(STATUS "Pulling boost outcome single header...")
   file(DOWNLOAD
     https://github.com/ned14/outcome/raw/master/single-header/outcome.hpp
     ${CMAKE_CURRENT_BINARY_DIR}/boost_outcome/outcome.hpp
