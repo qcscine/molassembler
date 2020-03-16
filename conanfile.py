@@ -76,7 +76,7 @@ class MolassemblerConan(ConanFile):
         "tests": False,
         "docs": False,
         "coverage": False,
-        "microarch": "detect"
+        "microarch": "none"
     }
     generators = "cmake"
     exports_sources = ["src/*", "CMakeLists.txt",
