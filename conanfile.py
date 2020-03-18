@@ -118,6 +118,8 @@ class MolassemblerConan(ConanFile):
     def configure(self):
         tools.check_min_cppstd(self, "14")
 
+        self.options["scine_utilities"].microarch = self.options.microarch
+
         if self.options.python:
             self.options["scine_utilities"].python = True
 

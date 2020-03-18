@@ -11,7 +11,13 @@ if(NOT EXISTS ${OUTCOME_SINGLE_HEADER_FILE})
   file(DOWNLOAD
     https://github.com/ned14/outcome/raw/master/single-header/outcome.hpp
     ${CMAKE_CURRENT_BINARY_DIR}/boost_outcome/outcome.hpp
+    STATUS OUTCOME_PULL_STATUS
   )
+  list(GET OUTCOME_PULL_STATUS 0 OUTCOME_PULL_RESULT)
+  if(NOT ${OUTCOME_PULL_RESULT} EQUAL 0)
+    list(GET OUTCOME_PULL_STATUS 1 OUTCOME_PULL_ERROR)
+    cmessage(FATAL_ERROR "Could not pull outcome header: ${OUTCOME_PULL_ERROR}")
+  endif()
 endif()
 
 set(OUTCOME_HEADER ${CMAKE_CURRENT_BINARY_DIR}/boost_outcome/outcome.hpp)
