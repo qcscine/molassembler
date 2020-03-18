@@ -15,8 +15,17 @@ if(NOT EXISTS ${OUTCOME_SINGLE_HEADER_FILE})
   )
   list(GET OUTCOME_PULL_STATUS 0 OUTCOME_PULL_RESULT)
   if(NOT ${OUTCOME_PULL_RESULT} EQUAL 0)
+    if(EXISTS ${OUTCOME_SINGLE_HEADER_FILE})
+      file(REMOVE ${OUTCOME_SINGLE_HEADER_FILE})
+    endif()
     list(GET OUTCOME_PULL_STATUS 1 OUTCOME_PULL_ERROR)
-    cmessage(FATAL_ERROR "Could not pull outcome header: ${OUTCOME_PULL_ERROR}")
+    cmessage(FATAL_ERROR
+      "Could not pull outcome header: ${OUTCOME_PULL_ERROR}"
+      "Please download the header at "
+      "https://github.com/ned14/outcome/raw/master/single-header/outcome.hpp "
+      "and place it in your build tree at "
+      "build/src/extern/boost_outcome/boost_outcome/outcome.hpp"
+    )
   endif()
 endif()
 
