@@ -72,6 +72,7 @@ clang-release:
   image: quay.io/pypa/manylinux2014_x86_64
   before_script:
     - *ssh_setup
+    - echo "Python build with ABI $PYABI"
     - /opt/python/$PYABI/bin/python -m venv $PYABI
     - source $PYABI/bin/activate
     - *conan_setup
@@ -84,7 +85,7 @@ clang-release:
     - python setup.py bdist_wheel
     - auditwheel show dist/*.whl
     - auditwheel repair dist/*.whl
-    - cd wheelhouse && python -c 'import os; n=os.listdir()[0]; os.rename(n, n.replace("py3-none", "$PYABI"))'
+    - cd wheelhouse && python -c 'import sys, os; n=os.listdir()[0]; os.rename(n, n.replace("py3-none", sys.argv[1]))' $PYABI
   artifacts:
     expire_in: 1 day
     paths:
