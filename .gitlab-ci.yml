@@ -83,6 +83,7 @@ pypi:
     - python setup.py bdist_wheel
     - auditwheel show dist/*.whl
     - auditwheel repair dist/*.whl
+    - cd wheelhouse && python -c 'import os; n=os.listdir()[0]; os.rename(n, n.replace("py3-none", "cp36-cp36m"))'
   artifacts:
     expire_in: 1 day
     paths:
@@ -105,8 +106,7 @@ complexity:
   before_script:
     - echo "Skip before_script"
   script:
-    - if [[ `python -c 'import sys; print(sys.version_info.major)'` -eq 2 ]]; then alias python=$(which python3); fi
-    - python -m pip install lizard jinja2
+    - python3 -m pip install lizard jinja2
     - cd src
     - lizard -l cpp -m -T nloc=100 -T cyclomatic_complexity=15 -T parameter_count=5 -x "./extern/*" -o lizard.html
     - lizard -l cpp -m -w -s cyclomatic_complexity -T cyclomatic_complexity=20 -x "./extern/*" -x "*/analysis/*" -W ../.whitelizard.txt
