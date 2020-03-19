@@ -65,29 +65,58 @@ clang-release:
   image: gitlab.chab.ethz.ch:4567/reiher/docker/scine-clang:latest
 
 
-pypi:
+# PyPI manylinux python packages
+.pypi_build: &pypi_build
   tags:
     - default_docker
   image: quay.io/pypa/manylinux2014_x86_64
   before_script:
     - *ssh_setup
-    - /opt/python/cp36-cp36m/bin/python -m venv cp36-cp36m
-    - source cp36-cp36m/bin/activate
+    - /opt/python/$PYABI/bin/python -m venv $PYABI
+    - source $PYABI/bin/activate
     - *conan_setup
   script:
     - python -m pip install wheel
     - mkdir -p build && cd build
-    - conan install -o scine_molassembler:python=True -o scine_utilities:shared=False -o scine_molassembler:shared=False -o scine_molassembler:microarch=none --build=missing ..
+    - conan install -o scine_molassembler:python=True -o scine_utilities:shared=False -o scine_molassembler:shared=False --build=missing ..
     - conan build ..
     - cd src/molassembler/python
     - python setup.py bdist_wheel
     - auditwheel show dist/*.whl
     - auditwheel repair dist/*.whl
-    - cd wheelhouse && python -c 'import os; n=os.listdir()[0]; os.rename(n, n.replace("py3-none", "cp36-cp36m"))'
+    - cd wheelhouse && python -c 'import os; n=os.listdir()[0]; os.rename(n, n.replace("py3-none", "$PYABI"))'
   artifacts:
     expire_in: 1 day
     paths:
     - build/src/molassembler/python/wheelhouse
+
+pypi:
+  <<: *pypi_build
+  variables:
+    PYABI: cp36-cp36m
+
+
+# Missing three python abi builds on master
+pypi-cp35:
+  <<: *pypi_build
+  only:
+    - master
+  variables:
+    PYABI: cp35-cp35m
+
+pypi-cp37:
+  <<: *pypi_build
+  only:
+    - master
+  variables:
+    PYABI: cp37-cp37m
+
+pypi-cp38:
+  <<: *pypi_build
+  only:
+    - master
+  variables:
+    PYABI: cp38-cp38m
 
 # Quality
 license:
