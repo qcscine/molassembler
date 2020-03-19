@@ -248,8 +248,8 @@ parallelization in order to reduce wall clock times.
 
 \section{Python bindings on PyPI}
 
-If you want to work with just the Python bindings, those are available as a
-package from PyPI for Linux platforms.\footnote{Caveat: Your CPU architecture
+If you want to experiment with just the Python bindings, those are available as
+a package from PyPI for Linux platforms.\footnote{Caveat: Your CPU architecture
 must be x86--64 or i686.} If you are using Linux, then you can install
 \textsc{Molassembler} with:
 
@@ -263,32 +263,58 @@ particular CPU instruction set and may therefore be slower than if you had
 compiled them yourself.
 
 \section{Conan package}
-\textsc{Molassembler} packages are distributed on the \texttt{conan-center}
-channel. If a package is not available for your particular platform,
-\texttt{conan} will handle the build of \textsc{Molassembler} and its
-dependencies (if needed). You can see if a pre-built package is available for
-you by running:
+Conan\footnote{\texttt{conan.io}} is a Python-based package distribution
+solution. It integrates well with C++ code built with CMake, greatly simplifying
+the installation of libraries with multiple dependencies. Conan is installed
+with \texttt{pip}:
 
 \begin{Verbatim}
-conan install scine_molassembler@conan/stable
+python3 -m pip install conan
 \end{Verbatim}
 
-If a prebuilt package is not available, you can make a local build. Start by
-cloning the remote repository into a folder and enter it. Then run:
+\textsc{Molassembler} packages are distributed on a research group-internal
+remote. You can add this remote with:
 
 \begin{Verbatim}
-mkdir build
-cd build
-conan install --build=missing ..
-conan build ..
+conan remote add scine scine.ethz.ch/artifactory/api/conan/scine
 \end{Verbatim}
 
-If you want conan to build the python bindings as well, add the flag \texttt{-o
-scine\_molassembler:python=True} to the \texttt{conan install} step.
+Before we install \textsc{Molassembler}, consider the options the package 
+provides. They are summarized below, with valid values and the default option
+value in bold face:
 
-Conan package builds default to the lowest common denominator instruction set
-architecture, so once again, the library will not be as fast as if you had
-compiled it fully yourself.
+\begin{itemize} 
+  \item \texttt{shared=[\textbf{True}, False]}: Build molassembler as a shared
+    library
+  \item \texttt{python=[True, \textbf{False}]}: Build the python bindings
+  \item \texttt{docs=[True, \textbf{False}]}: Build documentation
+  \item \texttt{tests=[True, \textbf{False}]}: Build and run tests
+  \item \texttt{microarch=[detect, \textbf{none}]}: Tune build to CPU
+    instruction set
+\end{itemize}
+
+The base command to install \textsc{Molassembler} is:
+
+\begin{Verbatim}
+conan install scine_molassembler/1.0.0@scine/stable
+\end{Verbatim}
+
+Changes to default options can be supplied right after \texttt{conan install}
+with \texttt{-o scine\_molassembler:<option>=<value>}.
+
+For instance, if you want to build the python bindings, your install command
+will be:
+
+\begin{Verbatim}
+conan install -o scine_molassembler:python=True scine_molassembler/1.0.0@scine/stable
+\end{Verbatim}
+
+Conan will proceed to identify your operating system, architecture and compiler.
+It will scan \textsc{Molassembler}'s dependencies and try to find a prebuilt
+package for your system. If any package is not available in binary form for your
+system, \texttt{conan} can handle its build with the addition of
+\texttt{--build=missing} as advised by Conan's error message. If the package is
+available in binary form, it will be downloaded.
 
 
 \section{From source code with CMake}
@@ -334,8 +360,7 @@ This will look through the dependencies to make sure everything needed is there
 and prepare for building. We have specified an installation prefix on the
 command line that we will install into, which you can replace at your leisure.
 
-If you additionally wish to compile and install the python
-bindings~\footnote{You will need to have \texttt{python} installed.}, you can
+If you additionally wish to compile and install the python bindings, you can
 rerun \texttt{cmake} with the following flags added:
 
 \begin{Verbatim}
