@@ -73,6 +73,13 @@ target_link_libraries(DistanceGeometryTests
     Boost::unit_test_framework
     Boost::filesystem
 )
+include(LibType)
+determine_lib_type(Boost::unit_test_framework)
+if(${LIB_TYPE} STREQUAL "SHARED_LIBRARY")
+  target_compile_definitions(MolassemblerTests PRIVATE BOOST_ALL_DYN_LINK)
+  target_compile_definitions(DistanceGeometryTests PRIVATE BOOST_ALL_DYN_LINK)
+endif()
+
 target_compile_options(DistanceGeometryTests PRIVATE ${MOLASSEMBLER_CXX_FLAGS})
 target_include_directories(DistanceGeometryTests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 add_test(
