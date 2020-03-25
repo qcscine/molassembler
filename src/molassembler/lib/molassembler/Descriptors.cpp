@@ -20,7 +20,7 @@ unsigned numRotatableBonds(const Molecule& mol) {
 
   std::unordered_map<BondIndex, unsigned, boost::hash<BondIndex>> smallestCycle;
 
-  for(const auto cycleEdges : cycleData) {
+  for(const auto& cycleEdges : cycleData) {
     const unsigned cycleSize = cycleEdges.size();
 
     for(const BondIndex& edge : cycleEdges) {

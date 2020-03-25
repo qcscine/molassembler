@@ -1336,7 +1336,7 @@ std::vector<BondIndex> SpatialModel::cycleConsistingOfExactly(
   }
 
   for(
-    const auto cycleEdges :
+    const auto& cycleEdges :
     graph.cycles().containing(possibleCycleEdges)
   ) {
     if(cycleEdges.size() == atoms.size()) {

@@ -54,7 +54,7 @@ BOOST_AUTO_TEST_CASE(InertialStandardization) {
     {Shape::Tetrahedron, Top::Spherical}
   };
 
-  for(const auto nameTopPair : tops) {
+  for(const auto& nameTopPair : tops) {
     auto positions = addOrigin(coordinates(nameTopPair.first));
 
     // Apply a random coordinate transformation

@@ -792,7 +792,7 @@ boost::optional<unsigned> smallestCycleContaining(AtomIndex atom, const Cycles& 
 std::unordered_map<AtomIndex, unsigned> makeSmallestCycleMap(const Cycles& cycleData) {
   std::unordered_map<AtomIndex, unsigned> smallestCycle;
 
-  for(const auto cycleEdges : cycleData) {
+  for(const auto& cycleEdges : cycleData) {
     const unsigned cycleSize = cycleEdges.size();
 
     for(const BondIndex& bond : cycleEdges) {
