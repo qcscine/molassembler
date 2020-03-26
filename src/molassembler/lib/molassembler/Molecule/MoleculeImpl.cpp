@@ -1067,23 +1067,28 @@ bool Molecule::Impl::canonicalCompare(
   );
 }
 
-bool Molecule::Impl::modularCompare(
+boost::optional<std::vector<AtomIndex>> Molecule::Impl::modularIsomorphism(
   const Molecule::Impl& other,
   const AtomEnvironmentComponents componentBitmask
 ) const {
   const unsigned thisNumAtoms = graph().N();
 
-  /* TODO use shortcut (same graph test) if
-   * componentBitmask is components used to canonicalize both *this and other
-   */
-
   if(thisNumAtoms != other.graph().N()) {
-    return false;
+    return boost::none;
   }
 
   // Compare number of bonds too
   if(graph().B() != other.graph().B()) {
-    return false;
+    return boost::none;
+  }
+
+  // Shortcut with same graph test if componentBitmask matches canonical components
+  if(canonicalComponents() == componentBitmask && other.canonicalComponents() == componentBitmask) {
+    if(canonicalCompare(other, componentBitmask)) {
+      return temple::iota<AtomIndex>(thisNumAtoms);
+    }
+
+    return boost::none;
   }
 
   /* boost isomorphism will allocate a vector of size maxHash, this is dangerous
@@ -1121,7 +1126,11 @@ bool Molecule::Impl::modularCompare(
     boost::get(boost::vertex_index, otherBGL)
   );
 
-  return isomorphic;
+  if(isomorphic) {
+    return indexMap;
+  }
+
+  return boost::none;
 }
 
 RankingInformation Molecule::Impl::rankPriority(
@@ -1185,7 +1194,10 @@ bool Molecule::Impl::operator == (const Impl& other) const {
     return canonicalCompare(other, AtomEnvironmentComponents::All);
   }
 
-  return modularCompare(other, AtomEnvironmentComponents::All);
+  // Better with newer boost: .has_value()
+  return static_cast<bool>(
+    modularIsomorphism(other, AtomEnvironmentComponents::All)
+  );
 }
 
 bool Molecule::Impl::operator != (const Impl& other) const {

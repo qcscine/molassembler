@@ -222,11 +222,11 @@ bool Molecule::canonicalCompare(
   return pImpl_->canonicalCompare(*other.pImpl_, componentBitmask);
 }
 
-bool Molecule::modularCompare(
+boost::optional<std::vector<AtomIndex>> Molecule::modularIsomorphism(
   const Molecule& other,
   const AtomEnvironmentComponents componentBitmask
 ) const {
-  return pImpl_->modularCompare(*other.pImpl_, componentBitmask);
+  return pImpl_->modularIsomorphism(*other.pImpl_, componentBitmask);
 }
 
 std::string Molecule::str() const {

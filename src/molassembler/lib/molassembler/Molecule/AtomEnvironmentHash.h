@@ -96,7 +96,7 @@ std::vector<BondInformation> gatherBonds(
  */
 WideHashType atomEnvironment(
   const PrivateGraph& inner,
-  const StereopermutatorList& stereopermutators,
+  boost::optional<const StereopermutatorList&> stereopermutators,
   AtomEnvironmentComponents bitmask,
   AtomIndex i
 );
@@ -107,7 +107,7 @@ WideHashType atomEnvironment(
  */
 std::vector<WideHashType> generate(
   const PrivateGraph& inner,
-  const StereopermutatorList& stereopermutators,
+  boost::optional<const StereopermutatorList&> stereopermutatorsOption,
   AtomEnvironmentComponents bitmask
 );
 

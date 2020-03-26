@@ -6,6 +6,9 @@
 
 #include "molassembler/Graph/PrivateGraph.h"
 
+#include "molassembler/Molecule/AtomEnvironmentHash.h"
+#include "boost/graph/isomorphism.hpp"
+#include "boost/graph/graph_utility.hpp"
 #include "boost/graph/breadth_first_search.hpp"
 #include "boost/graph/biconnected_components.hpp"
 #include "boost/graph/connected_components.hpp"
@@ -14,10 +17,8 @@
 #include "temple/Functional.h"
 
 namespace Scine {
-
 namespace molassembler {
-
-namespace detail {
+namespace {
 
 //! Visitor to help split a graph along a bridge edge
 struct BridgeSplittingBFSVisitor {
@@ -63,7 +64,7 @@ struct BridgeSplittingBFSVisitor {
   void black_target(const Edge& /* e */, const Graph& /* g */) {}
 };
 
-} // namespace detail
+} // namespace
 
 constexpr PrivateGraph::Vertex PrivateGraph::removalPlaceholder;
 
@@ -289,6 +290,48 @@ PrivateGraph::Vertex PrivateGraph::B() const {
   return boost::num_edges(graph_);
 }
 
+boost::optional<std::vector<AtomIndex>> PrivateGraph::modularIsomorphism(
+  const PrivateGraph& other,
+  const AtomEnvironmentComponents components
+) const {
+  const unsigned thisNumAtoms = N();
+
+  //! Quick checks
+  if(thisNumAtoms != other.N() || B() != other.B()) {
+    return boost::none;
+  }
+
+  std::vector<hashes::HashType> thisHashes, otherHashes;
+  hashes::HashType maxHash;
+  std::tie(thisHashes, otherHashes, maxHash) = hashes::narrow(
+    hashes::generate(*this, boost::none, components),
+    hashes::generate(other, boost::none, components)
+  );
+
+  std::vector<AtomIndex> indexMap(thisNumAtoms);
+
+  const bool isomorphic = boost::isomorphism(
+    bgl(),
+    other.bgl(),
+    boost::make_safe_iterator_property_map(
+      indexMap.begin(),
+      thisNumAtoms,
+      boost::get(boost::vertex_index, bgl())
+    ),
+    hashes::LookupFunctor(thisHashes),
+    hashes::LookupFunctor(otherHashes),
+    maxHash,
+    boost::get(boost::vertex_index, bgl()),
+    boost::get(boost::vertex_index, other.bgl())
+  );
+
+  if(isomorphic) {
+    return indexMap;
+  }
+
+  return boost::none;
+}
+
 bool PrivateGraph::identicalGraph(const PrivateGraph& other) const {
   assert(N() == other.N() && B() == other.B());
 
@@ -320,7 +363,7 @@ std::pair<
   auto bitsetPtr = std::make_shared<
     std::vector<bool>
   >();
-  detail::BridgeSplittingBFSVisitor visitor(bridge, graph_, bitsetPtr);
+  BridgeSplittingBFSVisitor visitor(bridge, graph_, bitsetPtr);
 
   boost::breadth_first_search(
     graph_,
@@ -380,6 +423,13 @@ PrivateGraph::IncidentEdgeRange PrivateGraph::edges(const Vertex a) const {
     std::move(iters.first),
     std::move(iters.second)
   };
+}
+
+bool PrivateGraph::operator == (const PrivateGraph& other) const {
+  // Better with newer boost: has_value()
+  return static_cast<bool>(
+    modularIsomorphism(other, AtomEnvironmentComponents::All)
+  );
 }
 
 const PrivateGraph::BglType& PrivateGraph::bgl() const {
@@ -476,5 +526,4 @@ Cycles PrivateGraph::generateEtaPreservedCycles_() const {
 }
 
 } // namespace molassembler
-
 } // namespace Scine

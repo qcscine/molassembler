@@ -303,7 +303,7 @@ struct Molecule::Impl {
   ) const;
 
   //! Modular comparison of this Impl with another.
-  bool modularCompare(
+  boost::optional<std::vector<AtomIndex>> modularIsomorphism(
     const Impl& other,
     AtomEnvironmentComponents componentBitmask
   ) const;

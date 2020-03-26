@@ -420,7 +420,7 @@ BOOST_AUTO_TEST_CASE(MoleculeHashes) {
   }
 }
 
-// Isomorphic molecules are recognized as such by modularCompare
+// Isomorphic molecules are recognized as such by modularIsomorphism
 BOOST_AUTO_TEST_CASE(MoleculeIsomorphism) {
   using namespace std::string_literals;
 

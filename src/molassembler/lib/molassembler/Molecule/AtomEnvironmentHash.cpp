@@ -194,7 +194,7 @@ WideHashType hash(
 
 std::vector<BondInformation> gatherBonds(
   const PrivateGraph& inner,
-  const StereopermutatorList& stereopermutators,
+  boost::optional<const StereopermutatorList&> stereopermutators,
   const AtomEnvironmentComponents componentsBitmask,
   const AtomIndex i
 ) {
@@ -208,27 +208,29 @@ std::vector<BondInformation> gatherBonds(
         inner.target(edge)
       };
 
-      auto stereopermutatorOption = stereopermutators.option(bond);
+      if(stereopermutators) {
+        auto stereopermutatorOption = stereopermutators->option(bond);
 
-      if(stereopermutatorOption && stereopermutatorOption->numAssignments() > 1) {
-        bonds.emplace_back(
-          inner.bondType(edge),
-          true,
-          stereopermutatorOption->assigned()
-        );
-      } else {
-        /* Even if a stereopermutator is present, if it has only a single
-         * viable assignment, it is best that it cannot contribute to
-         * differentiating between molecules. This avoids e.g. that spuriously
-         * different interpretations of aromatic cycles due to
-         * close-to-threshold bond ordes lead to false distinctions between
-         * molecules.
-         */
-        bonds.emplace_back(
-          inner.bondType(edge),
-          false,
-          boost::none
-        );
+        if(stereopermutatorOption && stereopermutatorOption->numAssignments() > 1) {
+          bonds.emplace_back(
+            inner.bondType(edge),
+            true,
+            stereopermutatorOption->assigned()
+          );
+        } else {
+          /* Even if a stereopermutator is present, if it has only a single
+           * viable assignment, it is best that it cannot contribute to
+           * differentiating between molecules. This avoids e.g. that spuriously
+           * different interpretations of aromatic cycles due to
+           * close-to-threshold bond ordes lead to false distinctions between
+           * molecules.
+           */
+          bonds.emplace_back(
+            inner.bondType(edge),
+            false,
+            boost::none
+          );
+        }
       }
     }
   } else {
@@ -251,7 +253,7 @@ std::vector<BondInformation> gatherBonds(
 
 WideHashType atomEnvironment(
   const PrivateGraph& inner,
-  const StereopermutatorList& stereopermutators,
+  boost::optional<const StereopermutatorList&> stereopermutators,
   AtomEnvironmentComponents bitmask,
   AtomIndex i
 ) {
@@ -263,9 +265,11 @@ WideHashType atomEnvironment(
     bonds = gatherBonds(inner, stereopermutators, bitmask, i);
   }
 
-  if(auto refOption = stereopermutators.option(i)) {
-    shapeOption = refOption->getShape();
-    assignmentOption = refOption->assigned();
+  if(stereopermutators) {
+    if(auto refOption = stereopermutators->option(i)) {
+      shapeOption = refOption->getShape();
+      assignmentOption = refOption->assigned();
+    }
   }
 
   return hash(
@@ -279,7 +283,7 @@ WideHashType atomEnvironment(
 
 std::vector<WideHashType> generate(
   const PrivateGraph& inner,
-  const StereopermutatorList& stereopermutators,
+  boost::optional<const StereopermutatorList&> stereopermutators,
   const AtomEnvironmentComponents bitmask
 ) {
   const unsigned N = inner.N();

@@ -728,21 +728,19 @@ public:
    * This permits detailed specification of which elements of the molecular
    * information you want to use in the comparison.
    *
-   * Equality comparison is performed in several stages: First, at each atom
-   * position, a hash is computed that encompasses all local information that
-   * is specified to be used in @p componentsBitmask. This hash is then used
-   * during graph isomorphism calculation to avoid finding an isomorphism that
-   * does not consider the specified factors.
-   *
-   * If an isomorphism is found, it is then validated. Bond orders and
-   * stereopermutators across both molecules are compared using the found
-   * isomorphism as an index map.
+   * At each atom position, a hash is computed that encompasses all local
+   * information that is specified to be used in @p componentsBitmask. This
+   * hash is then used during graph isomorphism calculation to avoid finding an
+   * isomorphism that does not consider the specified factors.
    *
    * @complexity{@math{O(V_1 \cdot V_2)}}
    *
    * @param other The other molecule to compare against
    * @param componentBitmask Components of an atom's environment to include
    * in isomorphism tests. May not be None.
+   *
+   * @returns None if the molecules are not isomorphic. Returns an index mapping
+   * from @p this to @p other if the molecules are isomorphic.
    *
    * @note The number of stereopermutations that a stereopermutator has is
    * considered part of the shape ComparisonOptions.
@@ -755,11 +753,10 @@ public:
    * set stereopermutation index. This can lead to unexpected but logically
    * consistent comparison behavior.
    *
-   * @note This function is not faster for molecules stored in any canonical
-   * form. Use Molecule::canonicalCompare for molecules instances that have
-   * been canonicalized.
+   * @note This function forwards to canonicalCompare if @p compentBitmask
+   * matches the canonical components of both molecules involved.
    */
-  bool modularCompare(
+  boost::optional<std::vector<AtomIndex>> modularIsomorphism(
     const Molecule& other,
     AtomEnvironmentComponents componentBitmask
   ) const;
@@ -770,7 +767,7 @@ public:
   /*! @brief Equality operator, performs most strict equality comparison
    *
    * If both molecule instances are fully canonical, calls canonicalCompare().
-   * Otherwise calls modularCompare().
+   * Otherwise calls modularIsomorphism().
    *
    * Implemented as
    * @code{.cpp}
@@ -781,7 +778,7 @@ public:
    *   return canonicalCompare(other, AtomEnvironmentComponents::All);
    * }
    *
-   * return modularCompare(other, AtomEnvironmentComponents::All);
+   * return modularIsomorphism(other, AtomEnvironmentComponents::All);
    * @endcode
    */
   bool operator == (const Molecule& other) const;

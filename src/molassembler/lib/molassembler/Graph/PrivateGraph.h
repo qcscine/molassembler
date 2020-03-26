@@ -232,7 +232,9 @@ public:
    */
   boost::optional<Edge> edgeOption(Vertex a, Vertex b) const;
 
+  //! Source of an edge
   Vertex source(const Edge& edge) const;
+  //! Target of an edge
   Vertex target(const Edge& edge) const;
 
   /*! @brief Number of substituents of a vertex
@@ -245,6 +247,16 @@ public:
   Vertex N() const;
   //! Number of edges in the graph
   Vertex B() const;
+
+  /*! @brief Modular isomorphism comparison
+   *
+   * Returns None if the molecules are not isomorphic. Returns an index mapping
+   * from this to other otherwise.
+   */
+  boost::optional<std::vector<AtomIndex>> modularIsomorphism(
+    const PrivateGraph& other,
+    AtomEnvironmentComponents components = AtomEnvironmentComponents::All
+  ) const;
 
   /*! @brief Checks whether all edges present in *this are present in @p other
    *
@@ -261,7 +273,6 @@ public:
     std::vector<AtomIndex>,
     std::vector<AtomIndex>
   > splitAlongBridge(Edge bridge) const;
-
 //!@}
 
 /*!
@@ -290,6 +301,15 @@ public:
   IncidentEdgeRange edges(Vertex a) const;
 //!@}
 
+//!@name Operators
+//!@{
+  //! Full isomorphism comparison including element types and bond orders
+  bool operator == (const PrivateGraph& other) const;
+  inline bool operator != (const PrivateGraph& other) const {
+    return !(*this == other);
+  }
+//!@}
+
 private:
 //!@name Private types
 //!@{
@@ -308,10 +328,6 @@ private:
   RemovalSafetyData generateRemovalSafetyData_() const;
   Cycles generateCycles_() const;
   Cycles generateEtaPreservedCycles_() const;
-//!@}
-
-//!@name Information
-//!@{
 //!@}
 
 //!@name Private state

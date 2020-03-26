@@ -85,6 +85,16 @@ unsigned Graph::B() const {
   return inner().B();
 }
 
+boost::optional<std::vector<AtomIndex>> Graph::modularIsomorphism(
+  const Graph& other,
+  const AtomEnvironmentComponents components
+) const {
+  return inner().modularIsomorphism(
+    other.inner(),
+    components
+  );
+}
+
 //! Determine which vertices belong to which side of a bridge edge
 std::pair<
   std::vector<AtomIndex>,
@@ -92,6 +102,13 @@ std::pair<
 > Graph::splitAlongBridge(BondIndex bridge) const {
   return inner().splitAlongBridge(
     toInner(bridge, inner())
+  );
+}
+
+bool Graph::operator == (const Graph& other) const {
+  // Better with newer boost: has_value()
+  return static_cast<bool>(
+    modularIsomorphism(other, AtomEnvironmentComponents::All)
   );
 }
 

@@ -256,6 +256,16 @@ public:
    */
   unsigned B() const;
 
+  /*! @brief Modular isomorphism comparison
+   *
+   * Returns None if the molecules are not isomorphic. Returns an index mapping
+   * from this to other otherwise.
+   */
+  boost::optional<std::vector<AtomIndex>> modularIsomorphism(
+    const Graph& other,
+    AtomEnvironmentComponents components = AtomEnvironmentComponents::All
+  ) const;
+
   /*! @brief Determine which vertices belong to which side of a bridge edge
    *
    * @complexity{@math{\Theta(N)}}
@@ -266,6 +276,15 @@ public:
     std::vector<AtomIndex>,
     std::vector<AtomIndex>
   > splitAlongBridge(BondIndex bridge) const;
+//!@}
+
+//!@name Operators
+//!@{
+  //! Full isomorphism comparison including element types and bond orders
+  bool operator == (const Graph& other) const;
+  inline bool operator != (const Graph& other) const {
+    return !(*this == other);
+  }
 //!@}
 
 //!@name Ranges

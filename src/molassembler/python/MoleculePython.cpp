@@ -582,7 +582,7 @@ void init_molecule(pybind11::module& m) {
       comparison will just call this function with all environment components
       considered instead of performing a full isomorphism.
 
-      This function is akin to partial_compare, but faster, since if both
+      This function is similar to modular_isomorphism, but faster, since if both
       molecules are in a canonical form, comparison does not require an
       isomorphism, but merely a same-graph test over the components used.
 
@@ -619,8 +619,8 @@ void init_molecule(pybind11::module& m) {
   );
 
   molecule.def(
-    "partial_compare",
-    &Molecule::modularCompare,
+    "modular_isomorphism",
+    &Molecule::modularIsomorphism,
     pybind11::arg("other"),
     pybind11::arg("components_bitmask"),
     R"delim(
@@ -631,37 +631,37 @@ void init_molecule(pybind11::module& m) {
 
       Equality comparison is performed in several stages: First, at each atom
       position, a hash is computed that encompasses all local information that
-      is specified to be used by the components_bitmask parameter. This hash is
-      then used during graph isomorphism calculation to avoid finding an
-      isomorphism that does not consider the specified factors.
+      is specified to be used by the ``components_bitmask`` parameter. This
+      hash is then used during graph isomorphism calculation to avoid finding
+      an isomorphism that does not consider the specified factors.
 
       If an isomorphism is found, it is then validated. Bond orders and
       stereopermutators across both molecules are compared using the found
       isomorphism as an index map.
 
-      Note that this function is not faster for molecules stored in any
-      (possibly partially) canonical form. Use canonical_compare for molecules
-      that have been canonicalized to some degree. Note also that equality
-      comparison defaults to fast comparisons if both instances are fully
-      canonical.
+      Shortcuts to ``canonical_compare`` if ``components_bitmask`` matches the
+      canonical components of both molecules (see ``canonical_components``).
 
       :param other: The molecule to compare against
       :param components_bitmask: The components of the molecule to use in the
         comparison
+
+      :returns: None if the molecules are not isomorphic, a List[int] index
+        mapping from self to other if the molecules are isomorphic.
 
       >>> a = io.experimental.from_smiles("OCC")
       >>> b = io.experimental.from_smiles("SCC")
       >>> a == b
       False
       >>> # A and B are identical when considered purely by their graph
-      >>> a.partial_compare(b, AtomEnvironmentComponents.Connectivity)
+      >>> a.modular_isomorphism(b, AtomEnvironmentComponents.Connectivity) is not None
       True
       >>> # Another pair that is identical save for a stereopermutation
       >>> c = io.experimental.from_smiles("N[C@](Br)(O)C")
       >>> d = io.experimental.from_smiles("N[C@@](Br)(O)C")
       >>> c == d # Strict equality includes stereopermutation
       False
-      >>> c.partial_compare(d, AtomEnvironmentComponents.ElementsBondsAndShapes)
+      >>> c.modular_isomorphism(d, AtomEnvironmentComponents.ElementsBondsAndShapes) is not None
       True
     )delim"
   );
