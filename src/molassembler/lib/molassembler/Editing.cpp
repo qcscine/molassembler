@@ -20,7 +20,7 @@
 
 namespace Scine {
 namespace molassembler {
-namespace detail {
+namespace {
 
 /**
  * @brief Copy a subset of vertices and edges into another graph
@@ -158,7 +158,7 @@ void transferStereopermutators(
   }
 }
 
-} // namespace detail
+} // namespace
 
 std::pair<Molecule, Molecule> Editing::cleave(const Molecule& a, const BondIndex bridge) {
   if(a.graph().canRemove(bridge)) {
@@ -181,12 +181,12 @@ std::pair<Molecule, Molecule> Editing::cleave(const Molecule& a, const BondIndex
   // Construct separate OuterGraphs for each component of the disconnected graph
   std::pair<PrivateGraph, PrivateGraph> graphs;
   auto vertexMappings = std::make_pair(
-    detail::transferGraph(
+    transferGraph(
       a.graph().inner(),
       graphs.first,
       sides.first
     ),
-    detail::transferGraph(
+    transferGraph(
       a.graph().inner(),
       graphs.second,
       sides.second
@@ -197,13 +197,13 @@ std::pair<Molecule, Molecule> Editing::cleave(const Molecule& a, const BondIndex
    * mappings to either component
    */
   std::pair<StereopermutatorList, StereopermutatorList> stereopermutatorLists;
-  detail::transferStereopermutators(
+  transferStereopermutators(
     a.stereopermutators(),
     stereopermutatorLists.first,
     vertexMappings.first,
     N
   );
-  detail::transferStereopermutators(
+  transferStereopermutators(
     a.stereopermutators(),
     stereopermutatorLists.second,
     vertexMappings.second,
@@ -297,7 +297,7 @@ Molecule Editing::insert(
   PrivateGraph& logInner = log.pImpl_->adjacencies_.inner();
 
   // Copy all vertices from wedge into log
-  auto vertexMapping = detail::transferGraph(
+  auto vertexMapping = transferGraph(
     wedge.graph().inner(),
     logInner,
     {}
@@ -324,7 +324,7 @@ Molecule Editing::insert(
   // Copy in stereopermutators from wedge
   StereopermutatorList& logStereopermutators = log.pImpl_->stereopermutators_;
 
-  detail::transferStereopermutators(
+  transferStereopermutators(
     wedge.stereopermutators(),
     logStereopermutators,
     vertexMapping,
@@ -424,7 +424,7 @@ Molecule Editing::superpose(
 
   PrivateGraph& topInner = top.pImpl_->adjacencies_.inner();
 
-  auto vertexMapping = detail::transferGraph(
+  auto vertexMapping = transferGraph(
     bottom.graph().inner(),
     topInner,
     bottomCopyAtoms
@@ -440,7 +440,7 @@ Molecule Editing::superpose(
   // Copy in stereopermutators from bottom, including ones placed on bottomAtom
   StereopermutatorList& topStereopermutators = top.pImpl_->stereopermutators_;
   vertexMapping[bottomAtom] = topAtom;
-  detail::transferStereopermutators(
+  transferStereopermutators(
     bottom.stereopermutators(),
     topStereopermutators,
     vertexMapping,
@@ -572,13 +572,13 @@ Molecule Editing::substitute(
   );
 
   // Copy over graphs
-  auto leftVertexMapping = detail::transferGraph(
+  auto leftVertexMapping = transferGraph(
     left.graph().inner(),
     innerGraph,
     leftHeavierSide
   );
 
-  auto rightVertexMapping = detail::transferGraph(
+  auto rightVertexMapping = transferGraph(
     right.graph().inner(),
     innerGraph,
     rightHeavierSide
@@ -586,7 +586,7 @@ Molecule Editing::substitute(
 
   // Copy over left stereopermutators
   leftVertexMapping[leftLighterBondSide] = rightVertexMapping.at(rightHeavierBondSide);
-  detail::transferStereopermutators(
+  transferStereopermutators(
     left.stereopermutators(),
     stereopermutators,
     leftVertexMapping,
@@ -596,7 +596,7 @@ Molecule Editing::substitute(
 
   // Copy over right stereopermutators
   rightVertexMapping[rightLighterBondSide] = leftVertexMapping.at(leftHeavierBondSide);
-  detail::transferStereopermutators(
+  transferStereopermutators(
     right.stereopermutators(),
     stereopermutators,
     rightVertexMapping,
@@ -633,14 +633,14 @@ Molecule Editing::connect(
   StereopermutatorList& aStereopermutators = a.pImpl_->stereopermutators_;
 
   // Copy b's graph into a
-  auto vertexMapping = detail::transferGraph(
+  auto vertexMapping = transferGraph(
     b.graph().inner(),
     aInnerGraph,
     {}
   );
 
   // Copy b's stereopermutators into a
-  detail::transferStereopermutators(
+  transferStereopermutators(
     b.stereopermutators(),
     aStereopermutators,
     vertexMapping,
@@ -662,14 +662,14 @@ Molecule Editing::addLigand(
   PrivateGraph& aInnerGraph = a.pImpl_->adjacencies_.inner();
   StereopermutatorList& aStereopermutators = a.pImpl_->stereopermutators_;
 
-  auto vertexMapping = detail::transferGraph(
+  auto vertexMapping = transferGraph(
     ligand.graph().inner(),
     aInnerGraph,
     {}
   );
 
   // Copy b's stereopermutators into a
-  detail::transferStereopermutators(
+  transferStereopermutators(
     ligand.stereopermutators(),
     aStereopermutators,
     vertexMapping,

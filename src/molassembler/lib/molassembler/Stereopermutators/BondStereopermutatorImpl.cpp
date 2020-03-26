@@ -38,7 +38,7 @@
 
 namespace Scine {
 namespace molassembler {
-namespace detail {
+namespace {
 
 template<typename ... Inds>
 inline auto orderMappedSequence(
@@ -108,7 +108,7 @@ const auto& select(
   return std::get<1>(tuple);
 }
 
-} // namespace detail
+} // namespace
 
 struct SymmetryMapHelper {
   static unsigned getSymmetryPositionOf(unsigned siteIndex, const std::vector<unsigned>& map) {
@@ -530,7 +530,7 @@ bool BondStereopermutator::Impl::cycleObviouslyInfeasible(
 //
 //       double absoluteVariance = bondDistance * distance_geometry::SpatialModel::bondRelativeVariance;
 //       bondBounds.emplace(
-//         detail::orderMappedSequence(indexReductionMap, i, j),
+//         orderMappedSequence(indexReductionMap, i, j),
 //         distance_geometry::SpatialModel::makeBoundsFromCentralValue(
 //           bondDistance,
 //           absoluteVariance
@@ -576,7 +576,7 @@ bool BondStereopermutator::Impl::cycleObviouslyInfeasible(
 //       }
 //
 //       angleBounds.emplace(
-//         detail::orderMappedSequence(indexReductionMap, i, j, k),
+//         orderMappedSequence(indexReductionMap, i, j, k),
 //         angleValueBounds
 //       );
 //     }
@@ -599,7 +599,7 @@ bool BondStereopermutator::Impl::cycleObviouslyInfeasible(
 //   assert(temple::makeContainsPredicate(link.cycleSequence)(l));
 //
 //   dihedralBounds.emplace(
-//     detail::orderMappedSequence(indexReductionMap, i, j, k, l),
+//     orderMappedSequence(indexReductionMap, i, j, k, l),
 //     dihedralValueBounds
 //   );
 //
@@ -1013,13 +1013,13 @@ void BondStereopermutator::Impl::propagateGraphChange(
     composite_.orientations().first.identifier == newPermutator.placement()
   );
 
-  const OrientationState& oldOrientation = detail::select(
+  const OrientationState& oldOrientation = select(
     composite_.orientations(),
     changedIsFirstInOldOrientations
   );
 
   // Reuse the OrientationState of the "other" atom stereopermutator
-  const OrientationState& unchangedOrientation = detail::select(
+  const OrientationState& unchangedOrientation = select(
     composite_.orientations(),
     !changedIsFirstInOldOrientations
   );
@@ -1151,12 +1151,12 @@ void BondStereopermutator::Impl::propagateGraphChange(
   std::vector<DihedralTuple> newCompositeDihedrals;
   newCompositeDihedrals.reserve(oldDihedralList.size());
   for(const DihedralTuple& oldDihedral : oldDihedralList) {
-    const shapes::Vertex changedVertex = detail::select(
+    const shapes::Vertex changedVertex = select(
       oldDihedral,
       changedIsFirstInOldOrientations
     );
 
-    const shapes::Vertex unchangedVertex = detail::select(
+    const shapes::Vertex unchangedVertex = select(
       oldDihedral,
       !changedIsFirstInOldOrientations
     );
@@ -1210,7 +1210,7 @@ void BondStereopermutator::Impl::propagateGraphChange(
           return (
             std::get<0>(a) == std::get<0>(b)
             && std::get<1>(a) == std::get<1>(b)
-            && detail::piPeriodicFPCompare(std::get<2>(a), std::get<2>(b))
+            && piPeriodicFPCompare(std::get<2>(a), std::get<2>(b))
           );
         }
       );

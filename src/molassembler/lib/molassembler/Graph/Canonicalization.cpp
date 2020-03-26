@@ -70,8 +70,7 @@ void molassembler_nauty_canonicalize(int nv, size_t nde, size_t* v, int* d, int*
 
 namespace Scine {
 namespace molassembler {
-
-namespace detail {
+namespace {
 
 struct NautySparseGraph {
   // Number of vertices
@@ -195,13 +194,13 @@ struct NautySparseGraph {
   }
 };
 
-} // namespace detail
+} // namespace
 
 std::vector<int> canonicalAutomorphism(
   const PrivateGraph& inner,
   const std::vector<hashes::WideHashType>& hashes
 ) {
-  detail::NautySparseGraph nautyGraph(inner, hashes);
+  NautySparseGraph nautyGraph(inner, hashes);
 
   /* Call the C function with addresses to the start of the underlying arrays
    * and their sizes. The sizes of lab and ptn are known since they have to be

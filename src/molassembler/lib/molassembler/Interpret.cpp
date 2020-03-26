@@ -20,7 +20,7 @@ namespace Scine {
 namespace molassembler {
 namespace interpret {
 
-namespace detail {
+namespace {
 
 Utils::PositionCollection paste(const std::vector<Utils::Position>& positions) {
   const unsigned N = positions.size();
@@ -31,7 +31,7 @@ Utils::PositionCollection paste(const std::vector<Utils::Position>& positions) {
   return matrix;
 }
 
-} // namespace detail
+} // namespace
 
 struct MoleculeParts {
   PrivateGraph graph;
@@ -215,7 +215,7 @@ MoleculesResult molecules(
     for(auto& precursor : parts.precursors) {
       result.molecules.emplace_back(
         Graph {std::move(precursor.graph)},
-        AngstromPositions(detail::paste(precursor.angstromPositions), LengthUnit::Angstrom),
+        AngstromPositions(paste(precursor.angstromPositions), LengthUnit::Angstrom),
         precursor.bondStereopermutatorCandidatesOptional
       );
     }

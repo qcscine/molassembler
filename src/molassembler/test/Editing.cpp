@@ -34,7 +34,7 @@
 using namespace Scine;
 using namespace molassembler;
 
-namespace detail {
+namespace {
 
 auto makeIsBridgePredicate(const Molecule& mol) {
   return [&mol](const BondIndex& bond) -> bool {
@@ -92,7 +92,7 @@ boost::optional<BondIndex> findEdge(const Molecule& mol, UnaryPredicate&& predic
   return boost::none;
 }
 
-} // namespace detail
+} // namespace
 
 BOOST_AUTO_TEST_CASE(EditingCleave) {
   auto makeNMe = []() -> std::pair<Molecule, BondIndex> {
@@ -162,11 +162,11 @@ BOOST_AUTO_TEST_CASE(EditingInsert) {
   biphenyl.canonicalize();
 
   // Find the C-C bridge edge
-  auto bridgeOption = detail::findEdge(
+  auto bridgeOption = findEdge(
     biphenyl,
-    detail::combineUnaryPredicates<BondIndex>(
-      detail::makeIsBridgePredicate(biphenyl),
-      detail::makeBondElementsPredicate(biphenyl, Utils::ElementType::C, Utils::ElementType::C)
+    combineUnaryPredicates<BondIndex>(
+      makeIsBridgePredicate(biphenyl),
+      makeBondElementsPredicate(biphenyl, Utils::ElementType::C, Utils::ElementType::C)
     )
   );
   BOOST_REQUIRE_MESSAGE(bridgeOption, "Could not find bridge edge in biphenyl");
@@ -181,7 +181,7 @@ BOOST_AUTO_TEST_CASE(EditingInsert) {
   Molecule pyrimidine = io::read("cbor/pyrimidine.cbor");
   pyrimidine.canonicalize();
 
-  auto pyrimidineNitrogens = detail::findMultiple(pyrimidine, Utils::ElementType::N);
+  auto pyrimidineNitrogens = findMultiple(pyrimidine, Utils::ElementType::N);
 
   BOOST_REQUIRE_MESSAGE(
     pyrimidineNitrogens.size() >= 2,
@@ -212,13 +212,13 @@ BOOST_AUTO_TEST_CASE(EditingSuperpose) {
   Molecule pyridine = io::read("cbor/pyridine.cbor");
   pyridine.canonicalize();
 
-  auto pyridineNitrogenOption = detail::findSingle(pyridine, Utils::ElementType::N);
+  auto pyridineNitrogenOption = findSingle(pyridine, Utils::ElementType::N);
   BOOST_REQUIRE_MESSAGE(pyridineNitrogenOption, "Could not find N in pyridine");
 
   Molecule methane = io::read("cbor/methane.cbor");
   methane.canonicalize();
 
-  auto methaneHydrogenOption = detail::findSingle(methane, Utils::ElementType::H);
+  auto methaneHydrogenOption = findSingle(methane, Utils::ElementType::H);
   BOOST_REQUIRE_MESSAGE(methaneHydrogenOption, "Could not find H in methane");
 
   Molecule superposition = Editing::superpose(
@@ -235,11 +235,11 @@ BOOST_AUTO_TEST_CASE(EditingSubstitute) {
   Molecule chlorobenzene = io::read("cbor/chlorobenzene.cbor");
   chlorobenzene.canonicalize();
 
-  auto chlorobenzeneBridgeOption = detail::findEdge(
+  auto chlorobenzeneBridgeOption = findEdge(
     chlorobenzene,
-    detail::combineUnaryPredicates<BondIndex>(
-      detail::makeIsBridgePredicate(chlorobenzene),
-      detail::makeBondElementsPredicate(
+    combineUnaryPredicates<BondIndex>(
+      makeIsBridgePredicate(chlorobenzene),
+      makeBondElementsPredicate(
         chlorobenzene,
         Utils::ElementType::C,
         Utils::ElementType::Cl
@@ -250,11 +250,11 @@ BOOST_AUTO_TEST_CASE(EditingSubstitute) {
 
   Molecule phenole = io::read("cbor/phenole.cbor");
   phenole.canonicalize();
-  auto phenoleBridgeOption = detail::findEdge(
+  auto phenoleBridgeOption = findEdge(
     phenole,
-    detail::combineUnaryPredicates<BondIndex>(
-      detail::makeIsBridgePredicate(phenole),
-      detail::makeBondElementsPredicate(
+    combineUnaryPredicates<BondIndex>(
+      makeIsBridgePredicate(phenole),
+      makeBondElementsPredicate(
         phenole,
         Utils::ElementType::C,
         Utils::ElementType::O
@@ -287,7 +287,7 @@ BOOST_AUTO_TEST_CASE(EditingSubstitute) {
 BOOST_AUTO_TEST_CASE(EditingConnect) {
   Molecule pyridine = io::read("cbor/pyridine.cbor");
   pyridine.canonicalize();
-  auto pyridineNitrogenOption = detail::findSingle(pyridine, Utils::ElementType::N);
+  auto pyridineNitrogenOption = findSingle(pyridine, Utils::ElementType::N);
   BOOST_REQUIRE_MESSAGE(pyridineNitrogenOption, "Could not find N in pyridine");
 
   Molecule connected = Editing::connect(
@@ -305,11 +305,11 @@ BOOST_AUTO_TEST_CASE(EditingBugfixMesityleneSubstitution) {
   Molecule mesitylene = io::read("cbor/mesitylene.cbor");
   mesitylene.canonicalize();
 
-  const auto mesityleneSubstitutionEdgeOption = detail::findEdge(
+  const auto mesityleneSubstitutionEdgeOption = findEdge(
     mesitylene,
-    detail::combineUnaryPredicates<BondIndex>(
-      detail::makeIsBridgePredicate(mesitylene),
-      detail::makeBondElementsPredicate(
+    combineUnaryPredicates<BondIndex>(
+      makeIsBridgePredicate(mesitylene),
+      makeBondElementsPredicate(
         mesitylene,
         Utils::ElementType::C,
         Utils::ElementType::H
@@ -373,8 +373,8 @@ BOOST_AUTO_TEST_CASE(EditingAddMultidentateLigand) {
   Molecule ligand = io::read("cbor/multidentate_ligand.cbor");
   ligand.canonicalize();
 
-  auto NOption = detail::findSingle(ligand, Utils::ElementType::N);
-  auto Ps = detail::findMultiple(ligand, Utils::ElementType::P);
+  auto NOption = findSingle(ligand, Utils::ElementType::N);
+  auto Ps = findMultiple(ligand, Utils::ElementType::P);
 
   BOOST_REQUIRE(NOption && Ps.size() == 2);
 
@@ -401,7 +401,7 @@ BOOST_AUTO_TEST_CASE(EditingAddHapticLigand) {
 
   BOOST_REQUIRE_MESSAGE(ligandCycle.size() == 5, "Could not find cycle in haptic_ligand.cbor");
 
-  auto NOption = detail::findSingle(ligand, Utils::ElementType::N);
+  auto NOption = findSingle(ligand, Utils::ElementType::N);
   BOOST_REQUIRE_MESSAGE(NOption, "Could not find nitrogen in haptic_ligand.cbor");
 
   auto ligandBindingAtoms = ligandCycle;

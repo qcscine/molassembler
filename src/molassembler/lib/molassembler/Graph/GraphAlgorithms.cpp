@@ -245,7 +245,7 @@ std::vector<RankingInformation::Link> siteLinks(
   return links;
 }
 
-namespace detail {
+namespace {
 
 bool isHapticSite(
   const std::vector<AtomIndex>& siteAtoms,
@@ -326,7 +326,7 @@ void findSites(
   }
 }
 
-} // namespace detail
+} // namespace
 
 std::vector<
   std::vector<AtomIndex>
@@ -390,12 +390,12 @@ std::vector<
     std::vector<AtomIndex>
   > groupedLigands;
 
-  detail::findSites(
+  findSites(
     graph,
     placement,
     [&](const std::vector<AtomIndex>& ligand) -> void {
       // Make sure all bonds are marked properly
-      if(detail::isHapticSite(ligand, graph)) {
+      if(isHapticSite(ligand, graph)) {
         for(const auto& hapticIndex : ligand) {
           auto edge = graph.edge(placement, hapticIndex);
           if(graph.bondType(edge) != BondType::Eta) {
@@ -449,11 +449,11 @@ void updateEtaBonds(PrivateGraph& graph) {
       continue;
     }
 
-    detail::findSites(
+    findSites(
       graph,
       placement,
       [&](const std::vector<AtomIndex>& ligand) -> void {
-        if(detail::isHapticSite(ligand, graph)) {
+        if(isHapticSite(ligand, graph)) {
           // Mark all bonds to the central atom as haptic bonds
           for(const auto& hapticIndex : ligand) {
             auto edge = graph.edge(placement, hapticIndex);

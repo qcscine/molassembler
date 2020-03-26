@@ -277,7 +277,7 @@ constexpr const char* graphKey = "g";
 constexpr const char* versionKey = "v";
 constexpr const char* canonicalKey = "c";
 
-namespace detail {
+namespace {
 
 void sortAtomStereopermutatorsByCentralIndex(nlohmann::json& m) {
   temple::inplace::sort(
@@ -570,14 +570,14 @@ Molecule deserialize(const nlohmann::json& m) {
   return Molecule {graph, stereopermutators, canonicalComponentsOption};
 }
 
-} // namespace detail
+} // namespace
 
 struct JsonSerialization::Impl {
   explicit Impl(const std::string& jsonString) : serialization(nlohmann::json::parse(jsonString)) {}
-  explicit Impl(const Molecule& molecule) : serialization(detail::serialize(molecule)) {
+  explicit Impl(const Molecule& molecule) : serialization(serialize(molecule)) {
     // If the molecule is fully canonical, make serializations canonical too
     if(molecule.canonicalComponents() == AtomEnvironmentComponents::All) {
-      detail::standardizeJSON(serialization);
+      standardizeJSON(serialization);
     }
   }
 
@@ -601,7 +601,7 @@ struct JsonSerialization::Impl {
   }
 
   operator Molecule() const {
-    return detail::deserialize(serialization);
+    return deserialize(serialization);
   }
 
   BinaryType toBinary(const BinaryFormat format) {
@@ -633,7 +633,7 @@ struct JsonSerialization::Impl {
       throw std::logic_error("Molecule is not fully canonical. Standardizing the JSON representation does not make sense.");
     }
 
-    detail::standardizeJSON(serialization);
+    standardizeJSON(serialization);
   }
 
   nlohmann::json serialization;

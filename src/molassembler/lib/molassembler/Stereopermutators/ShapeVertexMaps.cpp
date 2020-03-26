@@ -16,7 +16,7 @@
 
 namespace Scine {
 namespace molassembler {
-namespace detail {
+namespace {
 
 using PlainGraphType = boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS>;
 using Vertex = typename PlainGraphType::vertex_descriptor;
@@ -115,7 +115,7 @@ void mapUnmappedVertices(
   }
 }
 
-} // namespace detail
+} // namespace
 
 SiteToShapeVertexMap siteToShapeVertexMap(
   const stereopermutation::Stereopermutation& stereopermutation,
@@ -131,12 +131,12 @@ SiteToShapeVertexMap siteToShapeVertexMap(
     }
 
     const unsigned S = stereopermutation.characters.size();
-    detail::PlainGraphType siteGraph(S);
+    PlainGraphType siteGraph(S);
     for(const auto& siteLink : siteLinks) {
       boost::add_edge(siteLink.sites.first, siteLink.sites.second, siteGraph);
     }
 
-    detail::PlainGraphType vertexGraph(S);
+    PlainGraphType vertexGraph(S);
     for(const auto& vertexLink : stereopermutation.links) {
       boost::add_edge(vertexLink.first, vertexLink.second, vertexGraph);
     }
@@ -159,7 +159,7 @@ SiteToShapeVertexMap siteToShapeVertexMap(
       }
     );
 
-    std::vector<detail::Vertex> indexMap(S);
+    std::vector<Vertex> indexMap(S);
     const unsigned maxColor = temple::max(siteRankingColors) + 1;
 
     const bool isomorphic = boost::isomorphism(
@@ -170,8 +170,8 @@ SiteToShapeVertexMap siteToShapeVertexMap(
         S,
         boost::get(boost::vertex_index, siteGraph)
       ),
-      detail::SiteIndexColor(siteRankingColors),
-      detail::VertexColor(stereopermutation),
+      SiteIndexColor(siteRankingColors),
+      VertexColor(stereopermutation),
       maxColor,
       boost::get(boost::vertex_index, siteGraph),
       boost::get(boost::vertex_index, vertexGraph)
@@ -181,13 +181,13 @@ SiteToShapeVertexMap siteToShapeVertexMap(
       throw std::logic_error("Graphs of site and shape vertex links are not isomorphic");
     }
 
-    detail::mapUnmappedVertices(
-      detail::SiteIndexColor(siteRankingColors),
-      detail::VertexColor(stereopermutation),
+    mapUnmappedVertices(
+      SiteIndexColor(siteRankingColors),
+      VertexColor(stereopermutation),
       indexMap
     );
 
-    if(temple::any_of(indexMap, [S](const detail::Vertex i) { return i >= S; })) {
+    if(temple::any_of(indexMap, [S](const Vertex i) { return i >= S; })) {
       throw std::logic_error("Isomorphism index map contains out of bounds vertex indices");
     }
 

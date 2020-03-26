@@ -37,9 +37,9 @@ double dihedralLength(
   );
 }
 
-namespace detail {
+namespace {
 
-void dihedralLength(const Eigen::VectorXd& parameters, double& value, Eigen::Ref<Eigen::VectorXd> gradient) {
+void dihedralLengthFn(const Eigen::VectorXd& parameters, double& value, Eigen::Ref<Eigen::VectorXd> gradient) {
   /* 0 -> a (i-j)
    * 1 -> b (j-k)
    * 2 -> c (k-l)
@@ -81,7 +81,7 @@ struct GradientBasedChecker {
   }
 };
 
-} // namespace detail
+} // namespace
 
 ValueBounds dihedralLengthBounds(
   const ValueBounds& aBounds,
@@ -120,8 +120,8 @@ ValueBounds dihedralLengthBounds(
   auto result = optimizer.maximize(
     parameters,
     box,
-    &detail::dihedralLength,
-    detail::GradientBasedChecker {}
+    &dihedralLengthFn,
+    GradientBasedChecker {}
   );
   const double maxFromMedian = result.value;
 
@@ -129,8 +129,8 @@ ValueBounds dihedralLengthBounds(
   result = optimizer.maximize(
     parameters,
     box,
-    &detail::dihedralLength,
-    detail::GradientBasedChecker {}
+    &dihedralLengthFn,
+    GradientBasedChecker {}
   );
   const double maxFromUpper = result.value;
 
@@ -138,8 +138,8 @@ ValueBounds dihedralLengthBounds(
   result = optimizer.minimize(
     parameters,
     box,
-    &detail::dihedralLength,
-    detail::GradientBasedChecker {}
+    &dihedralLengthFn,
+    GradientBasedChecker {}
   );
   const double minFromMedian = result.value;
 
@@ -147,8 +147,8 @@ ValueBounds dihedralLengthBounds(
   result = optimizer.minimize(
     parameters,
     box,
-    &detail::dihedralLength,
-    detail::GradientBasedChecker {}
+    &dihedralLengthFn,
+    GradientBasedChecker {}
   );
   const double minFromLower = result.value;
 

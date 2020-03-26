@@ -17,7 +17,7 @@
 
 namespace Scine {
 namespace molassembler {
-namespace detail {
+namespace {
 
 inline std::vector<unsigned> intersect(
   const std::vector<unsigned>& a,
@@ -41,7 +41,7 @@ inline std::vector<unsigned> intersect(
   return intersection;
 }
 
-} // namespace detail
+} // namespace
 
 /* Cycles member Type declarations */
 struct Cycles::RdlDataPtrs {
@@ -236,7 +236,7 @@ struct Cycles::RdlCyclePtrs {
   }
 };
 
-namespace detail {
+namespace {
 
 template<typename Arg>
 IteratorRange<Cycles::UrfIdsCycleIterator>
@@ -251,11 +251,11 @@ makeURFIDsCycleIterator(const std::shared_ptr<Cycles::RdlDataPtrs>& dataPtr, Arg
   };
 }
 
-} // namespace detail
+} // namespace
 
 IteratorRange<Cycles::UrfIdsCycleIterator>
 Cycles::containing(const AtomIndex atom) const {
-  return detail::makeURFIDsCycleIterator(rdlPtr_, atom);
+  return makeURFIDsCycleIterator(rdlPtr_, atom);
 }
 
 IteratorRange<Cycles::UrfIdsCycleIterator>
@@ -276,7 +276,7 @@ Cycles::containing(const std::vector<BondIndex>& bonds) const {
 
   std::vector<unsigned> urfs = fetchBondURFs(bonds.front());
   for(unsigned i = 1; i < bonds.size() && !urfs.empty(); ++i) {
-    urfs = detail::intersect(urfs, fetchBondURFs(bonds.at(i)));
+    urfs = intersect(urfs, fetchBondURFs(bonds.at(i)));
   }
 
   Cycles::UrfIdsCycleIterator begin {bonds, std::move(urfs), rdlPtr_};
@@ -512,7 +512,7 @@ struct Cycles::UrfIdsCycleIterator::UrfHelper {
       auto newIDs = getURFs(bonds[i], dataPtrs);
       temple::inplace::sort(newIDs);
 
-      idsIntersection = detail::intersect(idsIntersection, newIDs);
+      idsIntersection = intersect(idsIntersection, newIDs);
 
       if(idsIntersection.empty()) {
         break;

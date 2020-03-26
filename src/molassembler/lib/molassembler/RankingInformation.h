@@ -110,7 +110,7 @@ struct MASM_EXPORT RankingInformation {
    * @brief A list of information on all links between binding sites
    *
    * @note This list is sorted, enabling use of the RankingInformation
-   *   comparatison operators
+   *   comparison operators
    */
   std::vector<Link> links;
 //!@}

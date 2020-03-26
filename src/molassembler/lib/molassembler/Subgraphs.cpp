@@ -29,7 +29,7 @@
 namespace Scine {
 namespace molassembler {
 namespace subgraphs {
-namespace detail {
+namespace {
 
 struct SubgraphCallback {
   AtomIndex N;
@@ -293,7 +293,7 @@ struct EdgeComparator {
   }
 };
 
-} // namespace detail
+} // namespace
 
 std::vector<IndexMap> maximum(
   const Molecule& a,
@@ -303,7 +303,7 @@ std::vector<IndexMap> maximum(
   const bool removeHydrogenPermutations
 ) {
   std::vector<IndexMap> mappings;
-  detail::SubgraphCallback callback {a.graph(), mappings};
+  SubgraphCallback callback {a.graph(), mappings};
 
   boost::mcgregor_common_subgraphs_maximum_unique(
     a.graph().inner().bgl(),
@@ -311,10 +311,10 @@ std::vector<IndexMap> maximum(
     false, // Permit disconnected subgraphs
     callback,
     boost::vertices_equivalent(
-      detail::VertexComparator {a, b, vertexStrictness}
+      VertexComparator {a, b, vertexStrictness}
     ).
     edges_equivalent(
-      detail::EdgeComparator {a, b, edgeStrictness}
+      EdgeComparator {a, b, edgeStrictness}
     )
   );
 

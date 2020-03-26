@@ -12,7 +12,7 @@ namespace Scine {
 namespace molassembler {
 namespace stereopermutators {
 
-namespace detail {
+namespace {
 
 bool distanceToBaseContradictsGraph(
   const double cyclicPolygonDistance,
@@ -121,7 +121,7 @@ bool modelContradictsGraph(
   return false;
 }
 
-} // namespace detail
+} // namespace
 
 bool cycleModelContradictsGraph(
   const std::vector<Utils::ElementType>& elementTypes,
@@ -148,7 +148,7 @@ bool cycleModelContradictsGraph(
   return temple::any_of(
     bases,
     [&](const BaseAtom& base) -> bool {
-      return detail::modelContradictsGraph(elementTypes, cycleEdgeLengths, phis, base);
+      return modelContradictsGraph(elementTypes, cycleEdgeLengths, phis, base);
     }
   );
 }

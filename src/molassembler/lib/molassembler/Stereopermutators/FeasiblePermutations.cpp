@@ -101,7 +101,7 @@ bool Feasible::linkPossiblyFeasible(
    * group of shape positions with lower cross-angles is viable for the
    * link, and will distort accordingly.
    */
-  auto symmetryGroups = shapes::properties::positionGroups(shape);
+  // auto symmetryGroups = shapes::properties::positionGroupCharacters(shape);
 
 
   /* First we need to construct the cyclic polygon of the cycle sequence
