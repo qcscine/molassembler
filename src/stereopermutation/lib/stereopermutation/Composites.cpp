@@ -289,7 +289,7 @@ std::vector<shapes::Vertex> Composite::OrientationState::findReductionMapping(
 }
 
 shapes::Vertex Composite::OrientationState::lowestEqualVertexInShape() const {
-  const auto positionGroupCharacters = shapes::properties::positionGroups(shape);
+  const auto positionGroupCharacters = shapes::properties::positionGroupCharacters(shape);
 
   /* Return the position of the first character that matches that of the fused
    * position

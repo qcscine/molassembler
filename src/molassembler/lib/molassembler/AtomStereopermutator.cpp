@@ -122,6 +122,10 @@ std::string AtomStereopermutator::rankInfo() const {
   return pImpl_->rankInfo();
 }
 
+std::vector<std::vector<SiteIndex>> AtomStereopermutator::siteGroups() const {
+  return pImpl_->siteGroups();
+}
+
 const stereopermutators::Abstract& AtomStereopermutator::getAbstract() const {
   return pImpl_->getAbstract();
 }

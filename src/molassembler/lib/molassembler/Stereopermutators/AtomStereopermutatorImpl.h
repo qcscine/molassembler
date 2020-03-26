@@ -175,6 +175,16 @@ public:
   //! Returns an information string for ranking equality checking purposes
   std::string rankInfo() const;
 
+  /*! @brief Returns site indices grouped by rotational interconversion
+   *
+   * @pre The stereopermutator must be assigned
+   *
+   * @complexity{@math{\Theta(S^2)}}
+   *
+   * @throws std::runtime_error If the stereopermutator is unassigned
+   */
+  std::vector<std::vector<SiteIndex>> siteGroups() const;
+
   /*!
    * @brief Returns the underlying AbstractStereopermutation
    * @note This is library-internal and not part of the public API

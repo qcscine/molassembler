@@ -56,6 +56,12 @@ unsigned rotationPeriodicity(
   const Permutation& rotation
 );
 
+/*! @brief Group shape vertices according to whether they can be interconverted by rotation
+ *
+ * @complexity{@math{\Theta(S^2)}}
+ */
+std::vector<std::vector<Vertex>> positionGroups(Shape shape);
+
 /*! @brief Generate a character representation of a shape's position groups
  *
  * Groups shape vertices according to whether they can be interconverted. Then
@@ -66,7 +72,7 @@ unsigned rotationPeriodicity(
  *
  * @param shape Shape for which to generate the character representation
  */
-std::vector<char> positionGroups(Shape shape);
+std::vector<char> positionGroupCharacters(Shape shape);
 
 /*! @brief Generate the inverse rotation to a shape's rotation
  *

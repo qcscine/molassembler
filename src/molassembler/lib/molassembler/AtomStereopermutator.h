@@ -244,6 +244,8 @@ public:
 //!@{
   /*! @brief Fetches angle between binding sites in the idealized shape
    *
+   * @pre The stereopermutator must be assigned
+   *
    * @param i Site index one
    * @param j Site index two
    *
@@ -310,6 +312,16 @@ public:
    * @complexity{@math{\Theta(1)}}
    */
   std::string rankInfo() const;
+
+  /*! @brief Returns site indices grouped by rotational interconversion
+   *
+   * @pre The stereopermutator must be assigned
+   *
+   * @complexity{@math{\Theta(S^2)}}
+   *
+   * @throws std::runtime_error If the stereopermutator is unassigned
+   */
+  std::vector<std::vector<SiteIndex>> siteGroups() const;
 
   /*! @brief Returns the underlying feasible stereopermutations object
    *

@@ -99,7 +99,7 @@ bool isRotation(const Permutation& rotation) {
   return temple::sort(rotation) == temple::iota<Vertex>(rotation.size());
 }
 
-std::vector<char> positionGroups(const shapes::Shape shape) {
+std::vector<std::vector<Vertex>> positionGroups(const shapes::Shape shape) {
   /* The idea behind this algorithm is that an individual rotation (which is
    * really just an index permutation) could be interpreted as a directed graph
    * whose connected components represent sets of indices that can be
@@ -241,18 +241,21 @@ std::vector<char> positionGroups(const shapes::Shape shape) {
   };
 
   // Merge all rotations and then calculate the connected components
-  auto groups = connectedComponents(
+  return connectedComponents(
     temple::accumulate(
       rotations(shape),
       temple::iota<Vertex>(S), // Identity occupation
       merge
     )
   );
+}
 
+std::vector<char> positionGroupCharacters(const Shape shape) {
+  const unsigned S = size(shape);
   // Transpose to a character-based symbolic representation
   std::vector<char> characterRepresentation (S);
   char currentChar = 'A';
-  for(const auto& equalSet : groups) {
+  for(const auto& equalSet : positionGroups(shape)) {
     for(const auto& equalIndex : equalSet) {
       characterRepresentation.at(equalIndex) = currentChar;
     }

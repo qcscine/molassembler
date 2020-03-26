@@ -932,6 +932,24 @@ std::string AtomStereopermutator::Impl::rankInfo() const {
   );
 }
 
+std::vector<std::vector<SiteIndex>> AtomStereopermutator::Impl::siteGroups() const {
+  if(!assignmentOption_) {
+    throw std::logic_error("Stereopermutator is not assigned");
+  }
+
+  return temple::map(
+    shapes::properties::positionGroups(shape_),
+    [this](const std::vector<shapes::Vertex>& interconvertibleVertices) {
+      return temple::map(
+        interconvertibleVertices,
+        [this](const shapes::Vertex v) -> SiteIndex {
+          return shapePositionMap_.indexOf(v);
+        }
+      );
+    }
+  );
+}
+
 unsigned AtomStereopermutator::Impl::numAssignments() const {
   if(thermalized_) {
     return 1;

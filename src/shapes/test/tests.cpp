@@ -750,13 +750,13 @@ std::ostream& operator << (std::ostream& os, const std::vector<char>& chars) {
 }
 
 BOOST_AUTO_TEST_CASE(PositionGroups) {
-  BOOST_CHECK(properties::positionGroups(Shape::Line) == std::vector<char> (2, 'A'));
-  BOOST_CHECK(properties::positionGroups(Shape::Tetrahedron) == std::vector<char> (4, 'A'));
-  BOOST_CHECK(properties::positionGroups(Shape::TrigonalBipyramid) == (std::vector<char> {'A','A','A','B','B'}));
-  BOOST_CHECK(properties::positionGroups(Shape::CappedTrigonalPrism) == (std::vector<char> {'A','B','C','B','C','D','D'}));
-  BOOST_CHECK(properties::positionGroups(Shape::Octahedron) == std::vector<char> (6, 'A'));
-  BOOST_CHECK(properties::positionGroups(Shape::Cube) == std::vector<char> (8, 'A'));
-  BOOST_CHECK(properties::positionGroups(Shape::Icosahedron) == std::vector<char> (12, 'A'));
+  BOOST_CHECK(properties::positionGroupCharacters(Shape::Line) == std::vector<char> (2, 'A'));
+  BOOST_CHECK(properties::positionGroupCharacters(Shape::Tetrahedron) == std::vector<char> (4, 'A'));
+  BOOST_CHECK(properties::positionGroupCharacters(Shape::TrigonalBipyramid) == (std::vector<char> {'A','A','A','B','B'}));
+  BOOST_CHECK(properties::positionGroupCharacters(Shape::CappedTrigonalPrism) == (std::vector<char> {'A','B','C','B','C','D','D'}));
+  BOOST_CHECK(properties::positionGroupCharacters(Shape::Octahedron) == std::vector<char> (6, 'A'));
+  BOOST_CHECK(properties::positionGroupCharacters(Shape::Cube) == std::vector<char> (8, 'A'));
+  BOOST_CHECK(properties::positionGroupCharacters(Shape::Icosahedron) == std::vector<char> (12, 'A'));
 }
 
 BOOST_AUTO_TEST_CASE(DimensionalityProperty) {

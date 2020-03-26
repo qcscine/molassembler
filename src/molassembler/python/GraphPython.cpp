@@ -4,6 +4,7 @@
  *   See LICENSE.txt
  */
 #include "TypeCasters.h"
+#include "pybind11/operators.h"
 
 #include "molassembler/Cycles.h"
 #include "molassembler/Graph.h"
@@ -13,9 +14,9 @@
 #include "Utils/Geometry/FormulaGenerator.h"
 #include "Utils/Typenames.h"
 
-void init_outer_graph(pybind11::module& m) {
+void init_graph(pybind11::module& m) {
   using namespace Scine::molassembler;
-  pybind11::class_<Graph> outerGraph(
+  pybind11::class_<Graph> graphClass(
     m,
     "Graph",
     R"delim(
@@ -43,7 +44,7 @@ void init_outer_graph(pybind11::module& m) {
     )delim"
   );
 
-  outerGraph.def(
+  graphClass.def(
     "adjacent",
     &Graph::adjacent,
     pybind11::arg("first_atom"),
@@ -59,7 +60,7 @@ void init_outer_graph(pybind11::module& m) {
     )delim"
   );
 
-  outerGraph.def(
+  graphClass.def(
     "atoms_of_element",
     &Graph::atomsOfElement,
     pybind11::arg("element_type"),
@@ -75,7 +76,7 @@ void init_outer_graph(pybind11::module& m) {
     )delim"
   );
 
-  outerGraph.def(
+  graphClass.def(
     "bond_orders",
     &Graph::bondOrders,
     R"delim(
@@ -94,7 +95,7 @@ void init_outer_graph(pybind11::module& m) {
     )delim"
   );
 
-  outerGraph.def(
+  graphClass.def(
     "bond_type",
     &Graph::bondType,
     pybind11::arg("bond_index"),
@@ -114,7 +115,7 @@ void init_outer_graph(pybind11::module& m) {
     )delim"
   );
 
-  outerGraph.def(
+  graphClass.def(
     "can_remove",
     pybind11::overload_cast<AtomIndex>(&Graph::canRemove, pybind11::const_),
     pybind11::arg("atom"),
@@ -130,7 +131,7 @@ void init_outer_graph(pybind11::module& m) {
     )delim"
   );
 
-  outerGraph.def(
+  graphClass.def(
     "can_remove",
     pybind11::overload_cast<const BondIndex&>(&Graph::canRemove, pybind11::const_),
     pybind11::arg("bond_index"),
@@ -152,13 +153,13 @@ void init_outer_graph(pybind11::module& m) {
     )delim"
   );
 
-  outerGraph.def_property_readonly(
+  graphClass.def_property_readonly(
     "cycles",
     &Graph::cycles,
     "Fetch a reference to cycles information"
   );
 
-  outerGraph.def(
+  graphClass.def(
     "degree",
     &Graph::degree,
     pybind11::arg("atom"),
@@ -172,9 +173,8 @@ void init_outer_graph(pybind11::module& m) {
     )delim"
   );
 
-  // TODO rename to elements
-  outerGraph.def(
-    "element_collection",
+  graphClass.def(
+    "elements",
     &Graph::elementCollection,
     R"delim(
       Generates an ElementCollection representation of the molecule's atoms' element types
@@ -182,12 +182,12 @@ void init_outer_graph(pybind11::module& m) {
       >>> # Some isotopes
       >>> import scine_utilities as utils
       >>> m = io.experimental.from_smiles("[1H]C([2H])([3H])[H]")
-      >>> m.graph.element_collection()
+      >>> m.graph.elements()
       [ElementType.H1, ElementType.C, ElementType.D, ElementType.T, ElementType.H]
     )delim"
   );
 
-  outerGraph.def(
+  graphClass.def(
     "element_type",
     &Graph::elementType,
     pybind11::arg("atom"),
@@ -206,10 +206,10 @@ void init_outer_graph(pybind11::module& m) {
     )delim"
   );
 
-  outerGraph.def_property_readonly("N", &Graph::N, "The number of atoms in the graph");
-  outerGraph.def_property_readonly("B", &Graph::B, "The number of bonds in the graph");
+  graphClass.def_property_readonly("N", &Graph::N, "The number of atoms in the graph");
+  graphClass.def_property_readonly("B", &Graph::B, "The number of bonds in the graph");
 
-  outerGraph.def(
+  graphClass.def(
     "split_along_bridge",
     &Graph::splitAlongBridge,
     pybind11::arg("bridge_bond"),
@@ -223,7 +223,7 @@ void init_outer_graph(pybind11::module& m) {
     )delim"
   );
 
-  outerGraph.def(
+  graphClass.def(
     "atoms",
     [](const Graph& graph) {
       auto atomsRange = graph.atoms();
@@ -239,7 +239,7 @@ void init_outer_graph(pybind11::module& m) {
     )delim"
   );
 
-  outerGraph.def(
+  graphClass.def(
     "bonds",
     [](const Graph& graph) {
       auto bondsRange = graph.bonds();
@@ -258,7 +258,7 @@ void init_outer_graph(pybind11::module& m) {
     )delim"
   );
 
-  outerGraph.def(
+  graphClass.def(
     "adjacents",
     [](const Graph& graph, AtomIndex a) {
       auto adjacentsRange = graph.adjacents(a);
@@ -281,7 +281,7 @@ void init_outer_graph(pybind11::module& m) {
     )delim"
   );
 
-  outerGraph.def(
+  graphClass.def(
     "bonds",
     [](const Graph& graph, AtomIndex a) {
       auto bondsRange = graph.bonds(a);
@@ -301,7 +301,7 @@ void init_outer_graph(pybind11::module& m) {
     )delim"
   );
 
-  outerGraph.def(
+  graphClass.def(
     "__repr__",
     [](const Graph& graph) {
       return (
@@ -311,14 +311,19 @@ void init_outer_graph(pybind11::module& m) {
     }
   );
 
-  outerGraph.def(
+  // Comparison operators
+  graphClass.def(pybind11::self == pybind11::self);
+  graphClass.def(pybind11::self != pybind11::self);
+
+  // Square bracket operators
+  graphClass.def(
     "__getitem__",
     [](const Graph& g, const AtomIndex i) -> Scine::Utils::ElementType {
       return g.elementType(i);
     }
   );
 
-  outerGraph.def(
+  graphClass.def(
     "__getitem__",
     [](const Graph& g, const BondIndex i) -> BondType {
       return g.bondType(i);

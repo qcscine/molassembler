@@ -107,8 +107,6 @@ void init_atom_stereopermutator(pybind11::module& m) {
       permutations that do not consider feasibility. This is not necessarily
       equal to the assignment index.
 
-      :example:
-
       >>> # The shipscrew lambda and delta isomers where trans-ligation is impossible
       >>> shipscrew_smiles = "[Fe@OH1+3]123(OC(=O)C(=O)O1)(OC(=O)C(=O)O2)OC(=O)C(=O)O3"
       >>> shipscrew = io.experimental.from_smiles(shipscrew_smiles)
@@ -162,6 +160,18 @@ void init_atom_stereopermutator(pybind11::module& m) {
     "num_stereopermutations",
     &AtomStereopermutator::numStereopermutations,
     "The number of stereopermutations. See index_of_permutation."
+  );
+
+  atomStereopermutator.def(
+    "site_groups",
+    &AtomStereopermutator::siteGroups,
+    R"delim(
+      Site indices grouped by whether their shape vertices are interconvertible
+      by rotation. Can be used to distinguish e.g. apical / equatorial ligands
+      in a square pyramid shape.
+
+      :raises: RuntimeError if the stereopermutator is not assigned
+    )delim"
   );
 
   atomStereopermutator.def(pybind11::self == pybind11::self);
