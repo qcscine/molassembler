@@ -234,6 +234,8 @@ public:
    * @complexity{@math{\Theta(1)}}
    */
   unsigned degree(AtomIndex a) const;
+  //! @brief Dumps a graphviz representation of the graph
+  std::string dumpGraphviz() const;
   /*! @brief Fetch an element collection of all atoms
    *
    * @complexity{@math{\Theta(N)}}

@@ -48,6 +48,10 @@ std::vector<std::string> MolGraphWriter::bondStereopermutatorTooltips(const Bond
 }
 
 void MolGraphWriter::writeBondStereopermutatorNodes(std::ostream& os) const {
+  if(stereopermutatorListPtr == nullptr) {
+    return;
+  }
+
   for(
     const auto& bondStereopermutator :
     stereopermutatorListPtr->bondStereopermutators()
@@ -138,13 +142,15 @@ void MolGraphWriter::operator() (
   std::vector<std::string> tooltipStrings {
   };
 
-  if(auto stereopermutatorOption = stereopermutatorListPtr->option(vertexIndex)) {
-    auto additionalTooltips = atomStereopermutatorTooltips(*stereopermutatorOption);
-    std::move(
-      std::begin(additionalTooltips),
-      std::end(additionalTooltips),
-      std::back_inserter(tooltipStrings)
-    );
+  if(stereopermutatorListPtr != nullptr) {
+    if(auto stereopermutatorOption = stereopermutatorListPtr->option(vertexIndex)) {
+      auto additionalTooltips = atomStereopermutatorTooltips(*stereopermutatorOption);
+      std::move(
+        std::begin(additionalTooltips),
+        std::end(additionalTooltips),
+        std::back_inserter(tooltipStrings)
+      );
+    }
   }
 
   if(!tooltipStrings.empty()) {

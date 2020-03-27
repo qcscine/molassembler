@@ -19,6 +19,8 @@
 #include "boost/process/io.hpp"
 #include "boost/process/search_path.hpp"
 
+namespace {
+
 bool graphvizInPath() {
   return !boost::process::search_path("dot").empty();
 }
@@ -61,6 +63,8 @@ std::string pipeSVG(const Scine::molassembler::Molecule& molecule) {
 
   return os.str();
 }
+
+} // namespace
 
 void init_molecule(pybind11::module& m) {
   using namespace Scine::molassembler;
@@ -670,11 +674,13 @@ void init_molecule(pybind11::module& m) {
   molecule.def(pybind11::self != pybind11::self);
 
   /* Integration with IPython / Jupyter */
-  molecule.def(
-    "_repr_svg_",
-    &::pipeSVG,
-    "Generates an SVG representation of the molecule"
-  );
+  if(graphvizInPath()) {
+    molecule.def(
+      "_repr_svg_",
+      &::pipeSVG,
+      "Generates an SVG representation of the molecule"
+    );
+  }
 
   // Shell integration
   molecule.def(

@@ -32,6 +32,9 @@
 #include "molassembler/Cycles.h"
 #include "molassembler/Graph/Bridge.h"
 #include "molassembler/Modeling/BondDistance.h"
+#include "molassembler/Molecule/MolGraphWriter.h"
+
+#include "boost/graph/graphviz.hpp"
 
 namespace Scine {
 namespace molassembler {
@@ -182,6 +185,22 @@ const PrivateGraph& Graph::inner() const {
 
 unsigned Graph::degree(const AtomIndex a) const {
   return inner().degree(a);
+}
+
+std::string Graph::dumpGraphviz() const {
+  MolGraphWriter propertyWriter(&inner(), nullptr);
+
+  std::stringstream graphvizStream;
+
+  boost::write_graphviz(
+    graphvizStream,
+    inner().bgl(),
+    propertyWriter,
+    propertyWriter,
+    propertyWriter
+  );
+
+  return graphvizStream.str();
 }
 
 IteratorRange<Graph::AtomIterator> Graph::atoms() const {

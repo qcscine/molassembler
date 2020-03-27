@@ -14,6 +14,57 @@
 #include "Utils/Geometry/FormulaGenerator.h"
 #include "Utils/Typenames.h"
 
+#include "boost/process/child.hpp"
+#include "boost/process/io.hpp"
+#include "boost/process/search_path.hpp"
+
+namespace {
+
+bool graphvizInPath() {
+  return !boost::process::search_path("dot").empty();
+}
+
+std::string pipeSVG(const Scine::molassembler::Graph& graph) {
+  std::string callString = "dot -Tsvg";
+  std::stringstream os;
+
+  // Construct pipe streams for redirection
+  boost::process::opstream ips;
+  boost::process::pstream ps;
+  boost::process::pstream err;
+
+  // Start the child process
+  boost::process::child childProcess(callString, boost::process::std_in<ips, boost::process::std_out> ps,
+                                     boost::process::std_err > err);
+
+  // Feed our graphviz into the process
+  ips << graph.dumpGraphviz();
+  ips.flush();
+  ips.pipe().close();
+
+  // Wait for the child process to exit
+  childProcess.wait();
+
+  std::stringstream stderrStream;
+#if BOOST_VERSION >= 107000
+  /* NOTE: This implementation of buffer transfers in boost process has a bug
+   * that isn't fixed before Boost 1.70.
+   */
+  os << ps.rdbuf();
+  stderrStream << err.rdbuf();
+#else
+  // Workaround: cast to a parent class implementing rdbuf() correctly.
+  using BasicIOSReference = std::basic_ios<char, std::char_traits<char>>&;
+  // Feed the results into our ostream
+  os << static_cast<BasicIOSReference>(ps).rdbuf();
+  stderrStream << static_cast<BasicIOSReference>(err).rdbuf();
+#endif
+
+  return os.str();
+}
+
+} // namespace
+
 void init_graph(pybind11::module& m) {
   using namespace Scine::molassembler;
   pybind11::class_<Graph> graphClass(
@@ -310,6 +361,15 @@ void init_graph(pybind11::module& m) {
       );
     }
   );
+
+  // Integration with IPython / Jupyter
+  if(graphvizInPath()) {
+    graphClass.def(
+      "_repr_svg_",
+      &::pipeSVG,
+      "Generates an SVG representation of the graph"
+    );
+  }
 
   // Comparison operators
   graphClass.def(pybind11::self == pybind11::self);
