@@ -8,8 +8,8 @@
 #ifndef INCLUDE_MOLASSEMBLER_STEREOPERMUTATIONS_ROTATION_ENUMERATOR_H
 #define INCLUDE_MOLASSEMBLER_STEREOPERMUTATIONS_ROTATION_ENUMERATOR_H
 
-#include "stereopermutation/Stereopermutation.h"
-#include "shapes/Shapes.h"
+#include "molassembler/Stereopermutation/Stereopermutation.h"
+#include "molassembler/Shapes/Shapes.h"
 #include "boost/functional/hash.hpp"
 #include "boost/optional/optional_fwd.hpp"
 

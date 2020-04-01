@@ -10,7 +10,7 @@
 
 #include <algorithm>
 #include <stdexcept>
-#include "temple/Binding.h"
+#include "molassembler/Temple/Binding.h"
 
 namespace Scine {
 namespace temple {

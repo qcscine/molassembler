@@ -15,7 +15,7 @@
 #include "boost/optional/optional_fwd.hpp"
 
 #include "Utils/Geometry/ElementTypes.h"
-#include "shapes/Shapes.h"
+#include "molassembler/Shapes/Shapes.h"
 
 #include "molassembler/RankingInformation.h"
 

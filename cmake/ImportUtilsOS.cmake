@@ -4,9 +4,9 @@
 # See LICENSE.txt for details.
 #
 macro(import_utils_os)
-  if(NOT TARGET SCINE::UtilsOS)
+  if(NOT TARGET Scine::UtilsOS)
     # Try to find the package locally
-    find_package(Scine OPTIONAL_COMPONENTS UtilsOS QUIET)
+    find_package(ScineUtilsOS QUIET)
     if(NOT TARGET Scine::UtilsOS)
       cmessage(STATUS "Scine Utils not found, trying downloading instead...")
       # Download it instead

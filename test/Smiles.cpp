@@ -10,8 +10,8 @@
 #include "molassembler/Graph.h"
 #include "molassembler/IO/SmilesParser.h"
 
-#include "temple/Functional.h"
-#include "temple/Stringify.h"
+#include "molassembler/Temple/Functional.h"
+#include "molassembler/Temple/Stringify.h"
 
 #include "Fixtures.h"
 

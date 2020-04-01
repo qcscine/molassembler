@@ -9,7 +9,7 @@
 #define INCLUDE_MOLASSEMBLER_RANKING_INFORMATION_H
 
 #include "molassembler/Types.h"
-#include "temple/StrongIndex.h"
+#include "molassembler/Temple/StrongIndex.h"
 
 #include <vector>
 

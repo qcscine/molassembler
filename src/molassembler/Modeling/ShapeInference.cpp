@@ -4,14 +4,14 @@
  *   See LICENSE.txt
  */
 
-#include "temple/Optionals.h"
+#include "molassembler/Temple/Optionals.h"
 #include "molassembler/Modeling/ShapeInference.h"
 
 #include "boost/optional.hpp"
 #include "Utils/Geometry/ElementInfo.h"
 
-#include "shapes/Data.h"
-#include "temple/Functional.h"
+#include "molassembler/Shapes/Data.h"
+#include "molassembler/Temple/Functional.h"
 
 #include "molassembler/Modeling/AtomInfo.h"
 #include "molassembler/Graph.h"

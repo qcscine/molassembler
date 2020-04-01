@@ -11,7 +11,7 @@
 #ifndef INLCUDE_MOLASSEMBLER_TEMPLE_PAIR_H
 #define INLCUDE_MOLASSEMBLER_TEMPLE_PAIR_H
 
-#include "temple/Preprocessor.h"
+#include "molassembler/Temple/Preprocessor.h"
 
 #include <utility>
 

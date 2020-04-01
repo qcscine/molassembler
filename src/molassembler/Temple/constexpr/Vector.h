@@ -12,8 +12,8 @@
 #ifndef INCLUDE_MOLASSEMBLER_TEMPLE_CONSTEXPR_VECTOR_H
 #define INCLUDE_MOLASSEMBLER_TEMPLE_CONSTEXPR_VECTOR_H
 
-#include "temple/constexpr/Math.h"
-#include "temple/Stl17.h"
+#include "molassembler/Temple/constexpr/Math.h"
+#include "molassembler/Temple/Stl17.h"
 
 #include <array>
 

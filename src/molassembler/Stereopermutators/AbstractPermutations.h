@@ -9,7 +9,7 @@
 #define INCLUDE_MOLASSEMBLER_STEREOPERMUTATIONS_ABSTRACT_PERMUTATIONS_H
 
 #include "molassembler/Stereopermutators/ShapeVertexMaps.h"
-#include "stereopermutation/Manipulation.h"
+#include "molassembler/Stereopermutation/Manipulation.h"
 
 namespace Scine {
 namespace molassembler {

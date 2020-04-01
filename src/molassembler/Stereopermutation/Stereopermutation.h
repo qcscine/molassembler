@@ -11,7 +11,7 @@
 #ifndef INCLUDE_MOLASSEMBLER_STEREOPERMUTATIONS_STEREOPERMUTATION_H
 #define INCLUDE_MOLASSEMBLER_STEREOPERMUTATIONS_STEREOPERMUTATION_H
 
-#include "shapes/Data.h"
+#include "molassembler/Shapes/Data.h"
 
 #include <map>
 

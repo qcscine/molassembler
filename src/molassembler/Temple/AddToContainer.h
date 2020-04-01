@@ -16,8 +16,8 @@
 #ifndef INCLUDE_MOLASSEMBLER_TEMPLE_ADD_TO_CONTAINER_H
 #define INCLUDE_MOLASSEMBLER_TEMPLE_ADD_TO_CONTAINER_H
 
-#include "temple/ContainerTraits.h"
-#include "temple/Functor.h"
+#include "molassembler/Temple/ContainerTraits.h"
+#include "molassembler/Temple/Functor.h"
 
 namespace Scine {
 namespace temple {

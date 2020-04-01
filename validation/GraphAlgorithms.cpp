@@ -17,8 +17,8 @@
 #include "molassembler/RankingInformation.h"
 #include "molassembler/StereopermutatorList.h"
 #include "molassembler/IO.h"
-#include "temple/Stringify.h"
-#include "temple/TinySet.h"
+#include "molassembler/Temple/Stringify.h"
+#include "molassembler/Temple/TinySet.h"
 
 #include "boost/graph/graphviz.hpp"
 #include "molassembler/Molecule/MolGraphWriter.h"
@@ -429,7 +429,8 @@ bool testSubstituentLinks(const boost::filesystem::path& filePath) {
       << ". From:\n";
 
     for(const auto& link : links) {
-      std::cout << temple::stringify(link.sites) << ": "
+      std::cout << std::to_string(link.sites.first) << ", "
+        << std::to_string(link.sites.second) << ": "
         << temple::stringify(link.cycleSequence) << "\n";
     }
 

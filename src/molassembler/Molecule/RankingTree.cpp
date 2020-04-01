@@ -11,11 +11,11 @@
 #include "boost/range/iterator_range_core.hpp"
 #include "Utils/Geometry/ElementInfo.h"
 
-#include "shapes/PropertyCaching.h"
-#include "stereopermutation/Composites.h"
-#include "temple/Adaptors/AllPairs.h"
-#include "temple/GroupBy.h"
-#include "temple/Stringify.h"
+#include "molassembler/Shapes/PropertyCaching.h"
+#include "molassembler/Stereopermutation/Composites.h"
+#include "molassembler/Temple/Adaptors/AllPairs.h"
+#include "molassembler/Temple/GroupBy.h"
+#include "molassembler/Temple/Stringify.h"
 
 #include "molassembler/Graph.h"
 #include "molassembler/Graph/GraphAlgorithms.h"

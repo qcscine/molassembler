@@ -4,23 +4,21 @@
  *   See LICENSE.txt for details.
  */
 
-#define BOOST_TEST_MODULE SymmetryTests
-
 #include <boost/test/unit_test.hpp>
 #include <Eigen/Geometry>
 
-#include "temple/Adaptors/AllPairs.h"
-#include "temple/Adaptors/Zip.h"
-#include "temple/Functional.h"
-#include "temple/Functor.h"
-#include "temple/SetAlgorithms.h"
-#include "temple/Stringify.h"
-#include "temple/constexpr/Numeric.h"
-#include "temple/constexpr/ToStl.h"
-#include "temple/constexpr/TupleTypePairs.h"
+#include "molassembler/Temple/Adaptors/AllPairs.h"
+#include "molassembler/Temple/Adaptors/Zip.h"
+#include "molassembler/Temple/Functional.h"
+#include "molassembler/Temple/Functor.h"
+#include "molassembler/Temple/SetAlgorithms.h"
+#include "molassembler/Temple/Stringify.h"
+#include "molassembler/Temple/constexpr/Numeric.h"
+#include "molassembler/Temple/constexpr/ToStl.h"
+#include "molassembler/Temple/constexpr/TupleTypePairs.h"
 
-#include "shapes/PropertyCaching.h"
-#include "shapes/Data.h"
+#include "molassembler/Shapes/PropertyCaching.h"
+#include "molassembler/Shapes/Data.h"
 
 #include <set>
 #include <numeric>

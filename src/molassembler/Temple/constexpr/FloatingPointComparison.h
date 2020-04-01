@@ -13,7 +13,7 @@
 #ifndef INCLUDE_MOLASSEMBLER_TEMPLTE_CONSTEXPR_FP_COMPARISON_H
 #define INCLUDE_MOLASSEMBLER_TEMPLTE_CONSTEXPR_FP_COMPARISON_H
 
-#include "temple/constexpr/Math.h"
+#include "molassembler/Temple/constexpr/Math.h"
 
 #include <tuple>
 #include <cassert>

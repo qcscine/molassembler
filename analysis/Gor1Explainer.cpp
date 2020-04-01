@@ -16,11 +16,11 @@
 #include "molassembler/IO.h"
 #include "molassembler/Molecule.h"
 
-#include "gor1/Gor1.h"
+#include "molassembler/Graph/Gor1.h"
 
 #include "boost/graph/graphviz.hpp"
 
-#include "temple/StringAlgorithms.h"
+#include "molassembler/Temple/StringAlgorithms.h"
 
 #include <random>
 

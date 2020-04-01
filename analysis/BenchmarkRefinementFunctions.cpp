@@ -16,8 +16,8 @@
 #include "molassembler/DistanceGeometry/ConformerGeneration.h"
 
 #include "molassembler/IO.h"
-#include "temple/Functional.h"
-#include "temple/constexpr/Numeric.h"
+#include "molassembler/Temple/Functional.h"
+#include "molassembler/Temple/constexpr/Numeric.h"
 
 #include <Eigen/Dense>
 

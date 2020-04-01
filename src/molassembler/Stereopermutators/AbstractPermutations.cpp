@@ -5,7 +5,7 @@
  */
 #include "molassembler/Stereopermutators/AbstractPermutations.h"
 
-#include "temple/Functional.h"
+#include "molassembler/Temple/Functional.h"
 
 #include <algorithm>
 #include <cassert>

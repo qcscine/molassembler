@@ -8,7 +8,7 @@
 #ifndef INCLUDE_MOLASSEMBLER_IO_SMILES_MOLECULE_BUILDER_H
 #define INCLUDE_MOLASSEMBLER_IO_SMILES_MOLECULE_BUILDER_H
 
-#include "shapes/Data.h"
+#include "molassembler/Shapes/Data.h"
 #include "molassembler/IO/SmilesParseData.h"
 #include "molassembler/Graph/PrivateGraph.h"
 #include "boost/variant.hpp"

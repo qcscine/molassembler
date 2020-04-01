@@ -10,12 +10,12 @@
 #include "boost/graph/isomorphism.hpp"
 #include "boost/test/unit_test.hpp"
 
-#include "shapes/Data.h"
+#include "molassembler/Shapes/Data.h"
 
-#include "temple/constexpr/Bitmask.h"
-#include "temple/Functional.h"
-#include "temple/Stringify.h"
-#include "temple/Optionals.h"
+#include "molassembler/Temple/constexpr/Bitmask.h"
+#include "molassembler/Temple/Functional.h"
+#include "molassembler/Temple/Stringify.h"
+#include "molassembler/Temple/Optionals.h"
 
 #include "molassembler/Cycles.h"
 #include "molassembler/Graph.h"

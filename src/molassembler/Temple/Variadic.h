@@ -10,9 +10,9 @@
 #ifndef INCLUDE_MOLASSEMBLER_TEMPLE_VARIADIC_H
 #define INCLUDE_MOLASSEMBLER_TEMPLE_VARIADIC_H
 
-#include "temple/constexpr/Optional.h"
-#include "temple/constexpr/TupleType.h"
-#include "temple/ContainerTraits.h"
+#include "molassembler/Temple/constexpr/Optional.h"
+#include "molassembler/Temple/constexpr/TupleType.h"
+#include "molassembler/Temple/ContainerTraits.h"
 
 #include <algorithm>
 

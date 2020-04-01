@@ -6,7 +6,7 @@
 
 #include <boost/test/unit_test.hpp>
 
-#include "temple/Optimization/SO3NelderMead.h"
+#include "molassembler/Temple/Optimization/SO3NelderMead.h"
 
 #include <iostream>
 

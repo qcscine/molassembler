@@ -8,8 +8,8 @@
 #define BOOST_FILESYSTEM_NO_DEPRECATED
 #include "boost/filesystem.hpp"
 
-#include "temple/Random.h"
-#include "temple/Stringify.h"
+#include "molassembler/Temple/Random.h"
+#include "molassembler/Temple/Stringify.h"
 
 #include "molassembler/IO.h"
 #include "molassembler/IO/Base64.h"

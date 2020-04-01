@@ -12,10 +12,10 @@
 #include "molassembler/Modeling/CommonTrig.h"
 #include "molassembler/DistanceGeometry/SpatialModel.h"
 
-#include "shapes/PropertyCaching.h"
-#include "temple/Adaptors/CyclicFrame.h"
-#include "temple/Adaptors/Transform.h"
-#include "temple/Functional.h"
+#include "molassembler/Shapes/PropertyCaching.h"
+#include "molassembler/Temple/Adaptors/CyclicFrame.h"
+#include "molassembler/Temple/Adaptors/Transform.h"
+#include "molassembler/Temple/Functional.h"
 
 namespace Scine {
 namespace molassembler {

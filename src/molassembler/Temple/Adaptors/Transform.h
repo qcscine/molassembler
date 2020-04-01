@@ -8,9 +8,9 @@
 #ifndef INCLUDE_MOLASSEMBLER_TEMPLE_TRANSFORM_ADAPTOR_H
 #define INCLUDE_MOLASSEMBLER_TEMPLE_TRANSFORM_ADAPTOR_H
 
-#include "temple/ContainerTraits.h"
-#include "temple/Invoke.h"
-#include "temple/Binding.h"
+#include "molassembler/Temple/ContainerTraits.h"
+#include "molassembler/Temple/Invoke.h"
+#include "molassembler/Temple/Binding.h"
 
 namespace Scine {
 namespace temple {

@@ -10,7 +10,7 @@
 #ifndef INCLUDE_MOLASSEMBLER_TEMPLE_CONSTEXPR_CONTAINERS_H
 #define INCLUDE_MOLASSEMBLER_TEMPLE_CONSTEXPR_CONTAINERS_H
 
-#include "temple/Preprocessor.h"
+#include "molassembler/Temple/Preprocessor.h"
 
 #include <array>
 #include <limits>

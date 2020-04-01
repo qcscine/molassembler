@@ -6,7 +6,7 @@
 
 #include "molassembler/Serialization.h"
 
-#include "shapes/Data.h"
+#include "molassembler/Shapes/Data.h"
 #include "boost/range/adaptor/map.hpp"
 #include "Utils/Typenames.h"
 #include "json/json.hpp"
@@ -21,7 +21,7 @@
 #include "molassembler/StereopermutatorList.h"
 #include "molassembler/Version.h"
 
-#include "temple/Functional.h"
+#include "molassembler/Temple/Functional.h"
 
 namespace nlohmann {
 

@@ -6,17 +6,17 @@
 
 #include "molassembler/Stereopermutators/BondStereopermutatorImpl.h"
 
-#include "shapes/Data.h"
+#include "molassembler/Shapes/Data.h"
 
-#include "temple/Adaptors/AllPairs.h"
-#include "temple/Adaptors/CyclicFrame.h"
-#include "temple/Adaptors/SequentialPairs.h"
-#include "temple/constexpr/Math.h"
-#include "temple/constexpr/Numeric.h"
-#include "temple/Functional.h"
-#include "temple/OrderedPair.h"
-#include "temple/Random.h"
-#include "temple/Stl17.h"
+#include "molassembler/Temple/Adaptors/AllPairs.h"
+#include "molassembler/Temple/Adaptors/CyclicFrame.h"
+#include "molassembler/Temple/Adaptors/SequentialPairs.h"
+#include "molassembler/Temple/constexpr/Math.h"
+#include "molassembler/Temple/constexpr/Numeric.h"
+#include "molassembler/Temple/Functional.h"
+#include "molassembler/Temple/OrderedPair.h"
+#include "molassembler/Temple/Random.h"
+#include "molassembler/Temple/Stl17.h"
 
 #include "molassembler/AngstromPositions.h"
 #include "molassembler/AtomStereopermutator.h"

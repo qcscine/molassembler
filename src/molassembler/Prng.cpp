@@ -6,7 +6,7 @@
 
 #include "Prng.h"
 
-#include "temple/constexpr/Jsf.h"
+#include "molassembler/Temple/constexpr/Jsf.h"
 #include <random>
 
 namespace Scine {

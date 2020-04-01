@@ -8,7 +8,7 @@
 #ifndef INCLUDE_MOLASSEMBLER_TEMPLE_STRINGIFY_H
 #define INCLUDE_MOLASSEMBLER_TEMPLE_STRINGIFY_H
 
-#include "temple/Traits.h"
+#include "molassembler/Temple/Traits.h"
 
 #include <set>
 #include <unordered_set>

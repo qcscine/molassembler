@@ -14,11 +14,11 @@
 #include "molassembler/IO/SmilesParser.h"
 
 #include "Utils/Geometry/ElementTypes.h"
-#include "shapes/Data.h"
+#include "molassembler/Shapes/Data.h"
 
-#include "temple/Optionals.h"
-#include "temple/Functional.h"
-#include "temple/Random.h"
+#include "molassembler/Temple/Optionals.h"
+#include "molassembler/Temple/Functional.h"
+#include "molassembler/Temple/Random.h"
 
 #include "Fixtures.h"
 

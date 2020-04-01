@@ -8,11 +8,11 @@
 #ifndef INCLUDE_MOLASSEMBLER_SHAPES_POINT_GROUP_ELEMENTS_H
 #define INCLUDE_MOLASSEMBLER_SHAPES_POINT_GROUP_ELEMENTS_H
 
-#include "shapes/PointGroups.h"
+#include "molassembler/Shapes/PointGroups.h"
 
 #include <Eigen/Core>
 #include "boost/optional/optional_fwd.hpp"
-#include "temple/Preprocessor.h"
+#include "molassembler/Temple/Preprocessor.h"
 
 #include <vector>
 #include <unordered_map>

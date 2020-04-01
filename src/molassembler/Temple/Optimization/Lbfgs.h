@@ -7,8 +7,8 @@
 #ifndef INCLUDE_TEMPLE_OPTIMIZATION_LBFGS_H
 #define INCLUDE_TEMPLE_OPTIMIZATION_LBFGS_H
 
-#include "temple/Stl17.h"
-#include "temple/Optimization/Common.h"
+#include "molassembler/Temple/Stl17.h"
+#include "molassembler/Temple/Optimization/Common.h"
 
 /* TODO
  * - Detect ill-conditioning of LBFGS? Doesn't do well at all near maxima

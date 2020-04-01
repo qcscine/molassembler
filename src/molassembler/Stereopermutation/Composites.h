@@ -12,10 +12,10 @@
 #ifndef INCLUDE_MOLASSEMBLER_STEREOPERMUTATION_COMPOSITES_H
 #define INCLUDE_MOLASSEMBLER_STEREOPERMUTATION_COMPOSITES_H
 
-#include "shapes/Shapes.h"
-#include "shapes/Data.h"
-#include "temple/OrderedPair.h"
-#include "temple/constexpr/FloatingPointComparison.h"
+#include "molassembler/Shapes/Shapes.h"
+#include "molassembler/Shapes/Data.h"
+#include "molassembler/Temple/OrderedPair.h"
+#include "molassembler/Temple/constexpr/FloatingPointComparison.h"
 
 #include <vector>
 

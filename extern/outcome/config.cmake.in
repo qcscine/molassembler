@@ -1,0 +1,6 @@
+include(${CMAKE_CURRENT_LIST_DIR}/OutcomeTargets.cmake)
+
+@PACKAGE_INIT@
+set_and_check(OUTCOME_INCLUDE_DIR "@PACKAGE_INCLUDE_INSTALL_DIR@")
+
+check_required_components(OUTCOME)

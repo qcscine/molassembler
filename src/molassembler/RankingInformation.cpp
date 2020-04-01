@@ -5,10 +5,10 @@
  */
 #include "molassembler/RankingInformation.h"
 
-#include "temple/Adaptors/Zip.h"
-#include "temple/Functional.h"
-#include "temple/TinySet.h"
-#include "temple/Poset.h"
+#include "molassembler/Temple/Adaptors/Zip.h"
+#include "molassembler/Temple/Functional.h"
+#include "molassembler/Temple/TinySet.h"
+#include "molassembler/Temple/Poset.h"
 
 #include "molassembler/Containers/OrderDiscoveryHelper.h"
 #include "molassembler/Cycles.h"

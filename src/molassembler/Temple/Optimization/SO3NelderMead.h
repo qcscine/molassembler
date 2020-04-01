@@ -11,8 +11,8 @@
 #include <Eigen/Core>
 #include <Eigen/Eigenvalues>
 #include <unsupported/Eigen/MatrixFunctions>
-#include "temple/Adaptors/AllPairs.h"
-#include "temple/Functional.h"
+#include "molassembler/Temple/Adaptors/AllPairs.h"
+#include "molassembler/Temple/Functional.h"
 
 namespace Scine {
 namespace temple {

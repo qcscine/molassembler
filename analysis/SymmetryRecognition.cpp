@@ -14,20 +14,20 @@
 
 #include "molassembler/Detail/Cartesian.h"
 
-#include "shapes/Data.h"
-#include "shapes/ContinuousMeasures.h"
-#include "shapes/InertialMoments.h"
-#include "shapes/Properties.h"
-#include "shapes/TauCriteria.h"
+#include "molassembler/Shapes/Data.h"
+#include "molassembler/Shapes/ContinuousMeasures.h"
+#include "molassembler/Shapes/InertialMoments.h"
+#include "molassembler/Shapes/Properties.h"
+#include "molassembler/Shapes/TauCriteria.h"
 
-#include "temple/Adaptors/AllPairs.h"
-#include "temple/Adaptors/Iota.h"
-#include "temple/Adaptors/Transform.h"
-#include "temple/Functional.h"
-#include "temple/Random.h"
-#include "temple/Stringify.h"
-#include "temple/constexpr/Jsf.h"
-#include "temple/constexpr/Numeric.h"
+#include "molassembler/Temple/Adaptors/AllPairs.h"
+#include "molassembler/Temple/Adaptors/Iota.h"
+#include "molassembler/Temple/Adaptors/Transform.h"
+#include "molassembler/Temple/Functional.h"
+#include "molassembler/Temple/Random.h"
+#include "molassembler/Temple/Stringify.h"
+#include "molassembler/Temple/constexpr/Jsf.h"
+#include "molassembler/Temple/constexpr/Numeric.h"
 
 #include <iostream>
 #include <fstream>

@@ -8,13 +8,13 @@
 #ifndef INCLUDE_MOLASSEMBLER_SHAPES_CONSTEXPR_DATA_H
 #define INCLUDE_MOLASSEMBLER_SHAPES_CONSTEXPR_DATA_H
 
-#include "temple/constexpr/Vector.h"
-#include "temple/constexpr/TupleType.h"
+#include "molassembler/Temple/constexpr/Vector.h"
+#include "molassembler/Temple/constexpr/TupleType.h"
 
-#include "shapes/Shapes.h"
-#include "shapes/PointGroups.h"
-#include "shapes/constexpr/CompileTimeOptions.h"
-#include "shapes/constexpr/AngleLookup.h"
+#include "molassembler/Shapes/Shapes.h"
+#include "molassembler/Shapes/PointGroups.h"
+#include "molassembler/Shapes/constexpr/CompileTimeOptions.h"
+#include "molassembler/Shapes/constexpr/AngleLookup.h"
 
 namespace Scine {
 

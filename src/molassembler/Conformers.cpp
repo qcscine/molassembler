@@ -4,7 +4,7 @@
  *   See LICENSE.txt
  */
 
-#include "temple/Functional.h"
+#include "molassembler/Temple/Functional.h"
 #include "molassembler/DistanceGeometry/ConformerGeneration.h"
 
 namespace Scine {

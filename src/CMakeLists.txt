@@ -1,150 +1,15 @@
 # Dependencies
 if(MOLASSEMBLER_PARALLELIZE)
-  find_package(OpenMP QUIET)
+  find_package(OpenMP REQUIRED QUIET)
 endif()
 
 if(NOT TARGET Boost::filesystem OR NOT TARGET Boost::system)
   find_package(Boost REQUIRED COMPONENTS filesystem system QUIET)
 endif()
 
-set(_LIBPREFIX ${CMAKE_CURRENT_SOURCE_DIR}/molassembler)
-
-set(HEADERS_all
-  ${_LIBPREFIX}/AngstromPositions.h
-  ${_LIBPREFIX}/AtomStereopermutator.h
-  ${_LIBPREFIX}/BondOrders.h
-  ${_LIBPREFIX}/BondStereopermutator.h
-  ${_LIBPREFIX}/Conformers.h
-  ${_LIBPREFIX}/Containers/OrderDiscoveryHelper.h
-  ${_LIBPREFIX}/Cycles.h
-  ${_LIBPREFIX}/Descriptors.h
-  ${_LIBPREFIX}/Detail/BuildTypeSwitch.h
-  ${_LIBPREFIX}/Detail/Cartesian.h
-  ${_LIBPREFIX}/DirectedConformerGenerator.h
-  ${_LIBPREFIX}/DistanceGeometry/ConformerGeneration.h
-  ${_LIBPREFIX}/DistanceGeometry/DirectedConformerGeneratorImpl.h
-  ${_LIBPREFIX}/DistanceGeometry/DistanceBoundsMatrix.h
-  ${_LIBPREFIX}/DistanceGeometry/DistanceGeometry.h
-  ${_LIBPREFIX}/DistanceGeometry/Error.h
-  ${_LIBPREFIX}/DistanceGeometry/ExplicitBoundsGraph.h
-  ${_LIBPREFIX}/DistanceGeometry/Gor1.h
-  ${_LIBPREFIX}/DistanceGeometry/ImplicitBoundsGraphBoost.h
-  ${_LIBPREFIX}/DistanceGeometry/ImplicitBoundsGraph.h
-  ${_LIBPREFIX}/DistanceGeometry/ImplicitBoundsGraphHelpers.h
-  ${_LIBPREFIX}/DistanceGeometry/MetricMatrix.h
-  ${_LIBPREFIX}/DistanceGeometry/RefinementMeta.h
-  ${_LIBPREFIX}/DistanceGeometry/SpatialModel.h
-  ${_LIBPREFIX}/DistanceGeometry/TetrangleSmoothing.h
-  ${_LIBPREFIX}/DistanceGeometry/ValueBounds.h
-  ${_LIBPREFIX}/Editing.h
-  ${_LIBPREFIX}/Graph.h
-  ${_LIBPREFIX}/Graph/Bridge.h
-  ${_LIBPREFIX}/Graph/Canonicalization.h
-  ${_LIBPREFIX}/Graph/GraphAlgorithms.h
-  ${_LIBPREFIX}/Graph/PrivateGraph.h
-  ${_LIBPREFIX}/GraphAlgorithms.h
-  ${_LIBPREFIX}/IO.h
-  ${_LIBPREFIX}/IO/Base64.h
-  ${_LIBPREFIX}/IO/BinaryHandler.h
-  ${_LIBPREFIX}/IO/SmilesBondStereo.h
-  ${_LIBPREFIX}/IO/SmilesMoleculeBuilder.h
-  ${_LIBPREFIX}/IO/SmilesParseData.h
-  ${_LIBPREFIX}/IO/SmilesParser.h
-  ${_LIBPREFIX}/Interpret.h
-  ${_LIBPREFIX}/Isomers.h
-  ${_LIBPREFIX}/IteratorRange.h
-  ${_LIBPREFIX}/Log.h
-  ${_LIBPREFIX}/Modeling/AtomInfo.h
-  ${_LIBPREFIX}/Modeling/BondDistance.h
-  ${_LIBPREFIX}/Modeling/CommonTrig.h
-  ${_LIBPREFIX}/Modeling/ShapeInference.h
-  ${_LIBPREFIX}/Molecule.h
-  ${_LIBPREFIX}/Molecule/AtomEnvironmentHash.h
-  ${_LIBPREFIX}/Molecule/MolGraphWriter.h
-  ${_LIBPREFIX}/Molecule/MoleculeImpl.h
-  ${_LIBPREFIX}/Molecule/RankingTree.h
-  ${_LIBPREFIX}/Options.h
-  ${_LIBPREFIX}/Prng.h
-  ${_LIBPREFIX}/RankingInformation.h
-  ${_LIBPREFIX}/Serialization.h
-  ${_LIBPREFIX}/StereopermutatorList.h
-  ${_LIBPREFIX}/Stereopermutators/AbstractPermutations.h
-  ${_LIBPREFIX}/Stereopermutators/AtomStereopermutatorImpl.h
-  ${_LIBPREFIX}/Stereopermutators/BondStereopermutatorImpl.h
-  ${_LIBPREFIX}/Stereopermutators/CycleFeasibility.h
-  ${_LIBPREFIX}/Stereopermutators/FeasiblePermutations.h
-  ${_LIBPREFIX}/Stereopermutators/StereopermutatorListImpl.h
-  ${_LIBPREFIX}/Stereopermutators/ShapeVertexMaps.h
-  ${_LIBPREFIX}/Stereopermutators/RankingMapping.h
-  ${_LIBPREFIX}/Subgraphs.h
-  ${_LIBPREFIX}/Types.h
-)
-
-# collect sources
-set(SOURCES_all
-  ${_LIBPREFIX}/AngstromPositions.cpp
-  ${_LIBPREFIX}/AtomStereopermutator.cpp
-  ${_LIBPREFIX}/BondOrders.cpp
-  ${_LIBPREFIX}/BondStereopermutator.cpp
-  ${_LIBPREFIX}/Conformers.cpp
-  ${_LIBPREFIX}/Cycles.cpp
-  ${_LIBPREFIX}/Descriptors.cpp
-  ${_LIBPREFIX}/Detail/Cartesian.cpp
-  ${_LIBPREFIX}/DirectedConformerGenerator.cpp
-  ${_LIBPREFIX}/DistanceGeometry/ConformerGeneration.cpp
-  ${_LIBPREFIX}/DistanceGeometry/DirectedConformerGeneratorImpl.cpp
-  ${_LIBPREFIX}/DistanceGeometry/DistanceBoundsMatrix.cpp
-  ${_LIBPREFIX}/DistanceGeometry/DistanceGeometry.cpp
-  ${_LIBPREFIX}/DistanceGeometry/ExplicitBoundsGraph.cpp
-  ${_LIBPREFIX}/DistanceGeometry/ImplicitBoundsGraph.cpp
-  ${_LIBPREFIX}/DistanceGeometry/MetricMatrix.cpp
-  ${_LIBPREFIX}/DistanceGeometry/SpatialModel.cpp
-  ${_LIBPREFIX}/DistanceGeometry/TetrangleSmoothing.cpp
-  ${_LIBPREFIX}/DistanceGeometry/ValueBounds.cpp
-  ${_LIBPREFIX}/Editing.cpp
-  ${_LIBPREFIX}/Graph.cpp
-  ${_LIBPREFIX}/Graph/Canonicalization.cpp
-  ${_LIBPREFIX}/Graph/GraphAlgorithms.cpp
-  ${_LIBPREFIX}/Graph/PrivateGraph.cpp
-  ${_LIBPREFIX}/GraphAlgorithms.cpp
-  ${_LIBPREFIX}/GraphIterators.cpp
-  ${_LIBPREFIX}/IO.cpp
-  ${_LIBPREFIX}/IO/Base64.cpp
-  ${_LIBPREFIX}/IO/BinaryHandler.cpp
-  ${_LIBPREFIX}/IO/SmilesBondStereo.cpp
-  ${_LIBPREFIX}/IO/SmilesMoleculeBuilder.cpp
-  ${_LIBPREFIX}/IO/SmilesParser.cpp
-  ${_LIBPREFIX}/Interpret.cpp
-  ${_LIBPREFIX}/Isomers.cpp
-  ${_LIBPREFIX}/Log.cpp
-  ${_LIBPREFIX}/Modeling/AtomInfo.cpp
-  ${_LIBPREFIX}/Modeling/BondDistance.cpp
-  ${_LIBPREFIX}/Modeling/CommonTrig.cpp
-  ${_LIBPREFIX}/Modeling/ShapeInference.cpp
-  ${_LIBPREFIX}/Molecule.cpp
-  ${_LIBPREFIX}/Molecule/AtomEnvironmentHash.cpp
-  ${_LIBPREFIX}/Molecule/MolGraphWriter.cpp
-  ${_LIBPREFIX}/Molecule/MoleculeImpl.cpp
-  ${_LIBPREFIX}/Molecule/RankingTree.cpp
-  ${_LIBPREFIX}/Options.cpp
-  ${_LIBPREFIX}/Prng.cpp
-  ${_LIBPREFIX}/RankingInformation.cpp
-  ${_LIBPREFIX}/Serialization.cpp
-  ${_LIBPREFIX}/StereopermutatorList.cpp
-  ${_LIBPREFIX}/StereopermutatorListIterators.cpp
-  ${_LIBPREFIX}/Stereopermutators/AbstractPermutations.cpp
-  ${_LIBPREFIX}/Stereopermutators/AtomStereopermutatorImpl.cpp
-  ${_LIBPREFIX}/Stereopermutators/BondStereopermutatorImpl.cpp
-  ${_LIBPREFIX}/Stereopermutators/CycleFeasibility.cpp
-  ${_LIBPREFIX}/Stereopermutators/FeasiblePermutations.cpp
-  ${_LIBPREFIX}/Stereopermutators/RankingMapping.cpp
-  ${_LIBPREFIX}/Stereopermutators/ShapeVertexMaps.cpp
-  ${_LIBPREFIX}/Stereopermutators/StereopermutatorListImpl.cpp
-  ${_LIBPREFIX}/Subgraphs.cpp
-  ${_LIBPREFIX}/Types.cpp
-)
-
-unset(_LIBPREFIX)
+# Collect headers and sources
+file(GLOB_RECURSE HEADERS_all ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/*.h)
+file(GLOB_RECURSE SOURCES_all ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/*.cpp)
 
 configure_file(
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Version.h.in
@@ -153,11 +18,7 @@ configure_file(
 )
 
 # Object library to avoid compiling twice for shared and static variants
-add_library(molassembler_obj OBJECT
-  ${SOURCES_all}
-  ${HEADERS_all}
-  ${CMAKE_CURRENT_BINARY_DIR}/molassembler/Version.h
-)
+add_library(molassembler_obj OBJECT ${SOURCES_all})
 
 include(GenerateExportHeader)
 generate_export_header(molassembler_obj
@@ -178,14 +39,10 @@ if(${CMAKE_VERSION} VERSION_GREATER_EQUAL "3.12.0")
   # available from 3.12 onward. The proper linking an interface population is
   # handled below
   target_link_libraries(molassembler_obj PRIVATE
-    temple
     Boost::boost
     Scine::UtilsOS
-    boost_outcome
+    outcome
     RingDecomposerLibStatic
-    stereopermutation
-    cyclic_polygons
-    gor1
     json
     Boost::filesystem
     Boost::system
@@ -196,15 +53,9 @@ else()
   target_include_directories(molassembler_obj
     PUBLIC
       $<TARGET_PROPERTY:Scine::UtilsOS,INTERFACE_INCLUDE_DIRECTORIES>
-      $<TARGET_PROPERTY:boost_outcome,INTERFACE_INCLUDE_DIRECTORIES>
+      $<TARGET_PROPERTY:outcome,INTERFACE_INCLUDE_DIRECTORIES>
       $<TARGET_PROPERTY:RingDecomposerLibStatic,INTERFACE_INCLUDE_DIRECTORIES>
       $<TARGET_PROPERTY:Boost::boost,INTERFACE_INCLUDE_DIRECTORIES>
-      $<TARGET_PROPERTY:shapes,INTERFACE_INCLUDE_DIRECTORIES>
-    PRIVATE
-      $<TARGET_PROPERTY:temple,INTERFACE_INCLUDE_DIRECTORIES>
-      $<TARGET_PROPERTY:stereopermutation,INTERFACE_INCLUDE_DIRECTORIES>
-      $<TARGET_PROPERTY:cyclic_polygons,INTERFACE_INCLUDE_DIRECTORIES>
-      $<TARGET_PROPERTY:gor1,INTERFACE_INCLUDE_DIRECTORIES>
   )
 endif()
 target_link_eigen(molassembler_obj PRIVATE)
@@ -216,7 +67,7 @@ target_compile_options(molassembler_obj PRIVATE
 target_include_directories(molassembler_obj SYSTEM PRIVATE
   ${Boost_INCLUDE_DIR}
   ${RDL_INCLUDE_DIR}
-  $<TARGET_PROPERTY:boost_outcome,INTERFACE_INCLUDE_DIRECTORIES>
+  $<TARGET_PROPERTY:outcome,INTERFACE_INCLUDE_DIRECTORIES>
   $<TARGET_PROPERTY:Eigen3::Eigen,INTERFACE_INCLUDE_DIRECTORIES>
   $<TARGET_PROPERTY:json,INTERFACE_INCLUDE_DIRECTORIES>
   $<TARGET_PROPERTY:nauty,INTERFACE_INCLUDE_DIRECTORIES>
@@ -250,20 +101,15 @@ function(molassembler_library_links target_name)
   # the library can be built properly, yet not the link dependency.
   # See in particular: https://gitlab.kitware.com/cmake/cmake/issues/15415
   target_include_directories(${target_name} PRIVATE
-    $<TARGET_PROPERTY:cyclic_polygons,INTERFACE_INCLUDE_DIRECTORIES>
-    $<TARGET_PROPERTY:gor1,INTERFACE_INCLUDE_DIRECTORIES>
     $<TARGET_PROPERTY:json,INTERFACE_INCLUDE_DIRECTORIES>
-    $<TARGET_PROPERTY:temple,INTERFACE_INCLUDE_DIRECTORIES>
   )
 
   # And then we link in the rest of the libraries just like in the shared case
   target_link_libraries(${target_name}
     PUBLIC
       Scine::UtilsOS
-      boost_outcome
-      shapes
+      outcome
     PRIVATE
-      stereopermutation
       Boost::filesystem
       Boost::system
       RingDecomposerLibStatic
@@ -304,35 +150,63 @@ else()
   set(MOLASSEMBLER_STATIC_TARGET molassembler PARENT_SCOPE)
 endif()
 
+# Package version and config file
+write_basic_package_version_file(
+  "${CMAKE_CURRENT_BINARY_DIR}/ScineMolassemblerConfigVersion.cmake"
+  VERSION ${Molassembler_VERSION}
+  COMPATIBILITY AnyNewerVersion
+)
+
+configure_package_config_file(
+  "config.cmake.in"
+  "${CMAKE_CURRENT_BINARY_DIR}/ScineMolassemblerConfig.cmake"
+  INSTALL_DESTINATION "lib/cmake/ScineMolassembler"
+)
+
+install(
+  FILES
+    "${CMAKE_CURRENT_BINARY_DIR}/ScineMolassemblerConfigVersion.cmake"
+    "${CMAKE_CURRENT_BINARY_DIR}/ScineMolassemblerConfig.cmake"
+  DESTINATION "lib/cmake/ScineMolassembler"
+)
+
+# Target .cmake file
 install(
   TARGETS molassembler
   EXPORT molassemblerTargets
   DESTINATION lib
 )
 
-molassembler_install_component_cmake_files(
-  COMPONENT molassembler
-  EXPORT_NAME molassemblerTargets
+export(
+  EXPORT molassemblerTargets
+  FILE "${CMAKE_CURRENT_BINARY_DIR}/ScineMolassemblerTargets.cmake"
+  NAMESPACE Scine::
 )
 
-# We wish to install headers only and not install any subdirectories since
-# molassembler's public API is defined via the top-level-directory headers
+install(
+  EXPORT molassemblerTargets
+  FILE "ScineMolassemblerTargets.cmake"
+  DESTINATION "lib/cmake/ScineMolassembler"
+  NAMESPACE Scine::
+)
+
+# Headers
 install(
   DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/molassembler"
-  DESTINATION ${INCLUDE_INSTALL_DIR}
-  COMPONENT molassembler
+  DESTINATION include
   FILES_MATCHING
     PATTERN "*.h"
     PATTERN "*.hpp"
     PATTERN "*.hxx"
 )
+
 install(
   FILES
     ${CMAKE_CURRENT_BINARY_DIR}/molassembler/Version.h
     ${CMAKE_CURRENT_BINARY_DIR}/molassembler/Export.h
-  DESTINATION ${INCLUDE_INSTALL_DIR}/molassembler
-  COMPONENT molassembler
+  DESTINATION include/molassembler
 )
 
+# Source groups
 source_group("Headers" FILES ${HEADERS_All})
 source_group("Sources" FILES ${SOURCES_All})

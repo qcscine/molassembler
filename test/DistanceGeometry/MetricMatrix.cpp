@@ -8,10 +8,10 @@
 
 #include "boost/filesystem.hpp"
 #include "boost/test/unit_test.hpp"
-#include "shapes/Data.h"
+#include "molassembler/Shapes/Data.h"
 #include "Eigen/Eigenvalues"
-#include "temple/Random.h"
-#include "temple/Stringify.h"
+#include "molassembler/Temple/Random.h"
+#include "molassembler/Temple/Stringify.h"
 
 #include "molassembler/Graph/PrivateGraph.h"
 #include "molassembler/DistanceGeometry/DistanceBoundsMatrix.h"

@@ -4,18 +4,18 @@
  *   See LICENSE.txt
  */
 
-#include "shapes/ContinuousMeasures.h"
+#include "molassembler/Shapes/ContinuousMeasures.h"
 
-#include "shapes/Diophantine.h"
-#include "shapes/Partitioner.h"
-#include "shapes/Data.h"
+#include "molassembler/Shapes/Diophantine.h"
+#include "molassembler/Shapes/Partitioner.h"
+#include "molassembler/Shapes/Data.h"
 
-#include "temple/Adaptors/Iota.h"
-#include "temple/Adaptors/Transform.h"
-#include "temple/Functional.h"
-#include "temple/Loops.h"
-#include "temple/Optimization/SO3NelderMead.h"
-#include "temple/constexpr/Numeric.h"
+#include "molassembler/Temple/Adaptors/Iota.h"
+#include "molassembler/Temple/Adaptors/Transform.h"
+#include "molassembler/Temple/Functional.h"
+#include "molassembler/Temple/Loops.h"
+#include "molassembler/Temple/Optimization/SO3NelderMead.h"
+#include "molassembler/Temple/constexpr/Numeric.h"
 
 #include "boost/math/tools/minima.hpp"
 #include <Eigen/Eigenvalues>

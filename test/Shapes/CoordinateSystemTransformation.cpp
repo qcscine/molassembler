@@ -6,7 +6,7 @@
 
 #include <boost/test/unit_test.hpp>
 
-#include "shapes/CoordinateSystemTransformation.h"
+#include "molassembler/Shapes/CoordinateSystemTransformation.h"
 
 using namespace Scine;
 using namespace shapes;

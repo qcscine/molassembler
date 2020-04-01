@@ -10,8 +10,8 @@
 #include "molassembler/Graph.h"
 #include "molassembler/StereopermutatorList.h"
 
-#include "stereopermutation/Composites.h"
-#include "temple/Functional.h"
+#include "molassembler/Stereopermutation/Composites.h"
+#include "molassembler/Temple/Functional.h"
 
 #include "Utils/Geometry/AtomCollection.h"
 

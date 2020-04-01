@@ -18,8 +18,8 @@
 #define INCLUDE_MOLASSEMBLER_ATOM_STEREOPERMUTATOR_H
 
 #include "molassembler/RankingInformation.h"
-#include "shapes/Data.h"
-#include "temple/StrongIndexMap.h"
+#include "molassembler/Shapes/Data.h"
+#include "molassembler/Temple/StrongIndexMap.h"
 
 #include <array>
 #include <memory>

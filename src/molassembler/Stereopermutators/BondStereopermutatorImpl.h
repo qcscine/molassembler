@@ -12,7 +12,7 @@
 
 #include "boost/optional.hpp"
 
-#include "stereopermutation/Composites.h"
+#include "molassembler/Stereopermutation/Composites.h"
 #include "molassembler/DistanceGeometry/DistanceGeometry.h"
 
 namespace Scine {

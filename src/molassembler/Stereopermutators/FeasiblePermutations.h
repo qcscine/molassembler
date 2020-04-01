@@ -13,7 +13,7 @@
 #include "molassembler/RankingInformation.h"
 #include "molassembler/Stereopermutators/ShapeVertexMaps.h"
 
-#include "stereopermutation/Stereopermutation.h"
+#include "molassembler/Stereopermutation/Stereopermutation.h"
 
 namespace Scine {
 namespace molassembler {

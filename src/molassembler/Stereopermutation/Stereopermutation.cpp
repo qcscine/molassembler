@@ -4,14 +4,14 @@
  *   See LICENSE.txt
  */
 
-#include "stereopermutation/Stereopermutation.h"
+#include "molassembler/Stereopermutation/Stereopermutation.h"
 
 #include "boost/functional/hash.hpp"
 #include "boost/optional.hpp"
-#include "shapes/Data.h"
+#include "molassembler/Shapes/Data.h"
 
-#include "temple/Adaptors/Iota.h"
-#include "temple/Functional.h"
+#include "molassembler/Temple/Adaptors/Iota.h"
+#include "molassembler/Temple/Functional.h"
 
 #include <algorithm>
 #include <cassert>

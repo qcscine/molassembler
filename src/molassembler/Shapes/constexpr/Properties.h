@@ -16,14 +16,14 @@
 #ifndef INCLUDE_SHAPE_CONSTEXPR_PROPERTIES_H
 #define INCLUDE_SHAPE_CONSTEXPR_PROPERTIES_H
 
-#include "shapes/Data.h"
-#include "shapes/constexpr/Data.h"
+#include "molassembler/Shapes/Data.h"
+#include "molassembler/Shapes/constexpr/Data.h"
 
-#include "temple/constexpr/Bitset.h"
-#include "temple/constexpr/DynamicSet.h"
-#include "temple/constexpr/FloatingPointComparison.h"
-#include "temple/constexpr/Numeric.h"
-#include "temple/Cache.h"
+#include "molassembler/Temple/constexpr/Bitset.h"
+#include "molassembler/Temple/constexpr/DynamicSet.h"
+#include "molassembler/Temple/constexpr/FloatingPointComparison.h"
+#include "molassembler/Temple/constexpr/Numeric.h"
+#include "molassembler/Temple/Cache.h"
 
 namespace Scine {
 namespace shapes {

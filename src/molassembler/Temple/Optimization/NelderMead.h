@@ -9,7 +9,7 @@
 #define INCLUDE_TEMPLE_OPTIMIZATION_NELDER_MEAD_H
 
 #include <Eigen/Core>
-#include "temple/Functional.h"
+#include "molassembler/Temple/Functional.h"
 
 namespace Scine {
 namespace temple {

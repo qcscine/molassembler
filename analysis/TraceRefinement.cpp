@@ -23,10 +23,10 @@
 #include "molassembler/Log.h"
 #include "molassembler/GraphAlgorithms.h"
 
-#include "temple/Adaptors/Enumerate.h"
-#include "temple/Functional.h"
-#include "temple/Optimization/Lbfgs.h"
-#include "temple/constexpr/Numeric.h"
+#include "molassembler/Temple/Adaptors/Enumerate.h"
+#include "molassembler/Temple/Functional.h"
+#include "molassembler/Temple/Optimization/Lbfgs.h"
+#include "molassembler/Temple/constexpr/Numeric.h"
 
 #include <fstream>
 #include <iomanip>

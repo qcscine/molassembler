@@ -4,7 +4,7 @@
  *   See LICENSE.txt
  */
 #include "TypeCasters.h"
-#include "shapes/Data.h"
+#include "molassembler/Shapes/Data.h"
 
 void init_shape_submodule(pybind11::module& m) {
   using namespace Scine;

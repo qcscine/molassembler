@@ -6,7 +6,7 @@
 
 #include "molassembler/Options.h"
 
-#include "shapes/Data.h"
+#include "molassembler/Shapes/Data.h"
 
 namespace Scine {
 namespace molassembler {

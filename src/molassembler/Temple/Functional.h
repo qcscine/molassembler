@@ -13,9 +13,9 @@
 #ifndef INCLUDE_MOLASSEMBLER_TEMPLE_FUNCTIONAL_H
 #define INCLUDE_MOLASSEMBLER_TEMPLE_FUNCTIONAL_H
 
-#include "temple/Functor.h"
-#include "temple/Invoke.h"
-#include "temple/AddToContainer.h"
+#include "molassembler/Temple/Functor.h"
+#include "molassembler/Temple/Invoke.h"
+#include "molassembler/Temple/AddToContainer.h"
 
 #include <algorithm>
 #include <numeric>

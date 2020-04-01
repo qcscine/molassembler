@@ -6,7 +6,7 @@
 
 #include <boost/test/unit_test.hpp>
 
-#include "temple/Variadic.h"
+#include "molassembler/Temple/Variadic.h"
 
 #include <set>
 #include <vector>

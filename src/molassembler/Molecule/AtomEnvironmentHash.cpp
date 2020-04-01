@@ -7,15 +7,15 @@
 #include "molassembler/Molecule/AtomEnvironmentHash.h"
 
 #include "boost/range/join.hpp"
-#include "shapes/PropertyCaching.h"
+#include "molassembler/Shapes/PropertyCaching.h"
 
 #include "molassembler/AtomStereopermutator.h"
 #include "molassembler/BondStereopermutator.h"
 #include "molassembler/StereopermutatorList.h"
 #include "molassembler/Graph/PrivateGraph.h"
 
-#include "temple/Functional.h"
-#include "temple/Adaptors/Iota.h"
+#include "molassembler/Temple/Functional.h"
+#include "molassembler/Temple/Adaptors/Iota.h"
 
 #include "Utils/Geometry/ElementInfo.h"
 

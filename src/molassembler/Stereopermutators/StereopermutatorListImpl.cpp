@@ -6,7 +6,7 @@
 
 #include "molassembler/Stereopermutators/StereopermutatorListImpl.h"
 
-#include "temple/Functional.h"
+#include "molassembler/Temple/Functional.h"
 #include "boost/range/adaptor/map.hpp"
 
 namespace Scine {

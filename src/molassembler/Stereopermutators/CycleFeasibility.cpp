@@ -6,7 +6,7 @@
 
 #include "molassembler/Stereopermutators/CycleFeasibility.h"
 
-#include "CyclicPolygons.h"
+#include "molassembler/Detail/CyclicPolygons.h"
 
 namespace Scine {
 namespace molassembler {

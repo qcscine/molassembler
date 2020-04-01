@@ -16,7 +16,7 @@
 #include "molassembler/Log.h"
 #include "molassembler/Molecule/RankingTree.h"
 
-#include "temple/StringAlgorithms.h"
+#include "molassembler/Temple/StringAlgorithms.h"
 
 #include <random>
 

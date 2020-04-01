@@ -10,7 +10,7 @@
 #include "boost/graph/bellman_ford_shortest_paths.hpp"
 #include "boost/program_options.hpp"
 
-#include "gor1/Gor1.h"
+#include "molassembler/Graph/Gor1.h"
 #include "molassembler/DistanceGeometry/DistanceBoundsMatrix.h"
 #include "molassembler/DistanceGeometry/ExplicitBoundsGraph.h"
 #include "molassembler/DistanceGeometry/Gor1.h"
@@ -18,8 +18,8 @@
 #include "molassembler/DistanceGeometry/SpatialModel.h"
 #include "molassembler/Graph/PrivateGraph.h"
 #include "molassembler/IO.h"
-#include "temple/Functional.h"
-#include "temple/constexpr/Numeric.h"
+#include "molassembler/Temple/Functional.h"
+#include "molassembler/Temple/constexpr/Numeric.h"
 
 #include <chrono>
 #include <iomanip>

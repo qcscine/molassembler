@@ -39,8 +39,8 @@ coverage:
     - conan install -o scine_molassembler:python=True -o scine_molassembler:tests=True -o scine_molassembler:docs=True -o scine_molassembler:coverage=True -s scine_molassembler:build_type=Debug ..
     - conan build ..
     - cd ..
-    - python3 -m gcovr -r "$(pwd)/src/" -u --object-directory="$(pwd)/build/src/" --exclude-dir ".*test.*" --exclude-dir ".*extern.*" --exclude-dir ".*analysis.*" -e ".*extern.*" -e ".*test.*" --html --html-details -o coverage.html
-    - python3 -m gcovr -r "$(pwd)/src/" -u --object-directory="$(pwd)/build/src/" --exclude-dir ".*test.*" --exclude-dir ".*extern.*" --exclude-dir ".*analysis.*" -e ".*extern.*" -e ".*test.*"
+    - python3 -m gcovr -r "$(pwd)/src/" -u --object-directory="$(pwd)/build/src/" --html --html-details -o coverage.html
+    - python3 -m gcovr -r "$(pwd)/src/" -u --object-directory="$(pwd)/build/src/" 
   coverage: '/^TOTAL.*\s+(\d+\%)$/'
   artifacts:
     expire_in: 1 day
@@ -81,7 +81,7 @@ clang-release:
     - mkdir -p build && cd build
     - conan install -o scine_molassembler:python=True -o scine_utilities:shared=False -o scine_molassembler:shared=False --build=missing ..
     - conan build ..
-    - cd src/molassembler/python
+    - cd python
     - python setup.py bdist_wheel
     - auditwheel show dist/*.whl
     - auditwheel repair dist/*.whl
@@ -138,8 +138,8 @@ complexity:
   script:
     - python3 -m pip install lizard jinja2
     - cd src
-    - lizard -l cpp -m -T nloc=100 -T cyclomatic_complexity=15 -T parameter_count=5 -x "./extern/*" -o lizard.html
-    - lizard -l cpp -m -w -s cyclomatic_complexity -T cyclomatic_complexity=20 -x "./extern/*" -x "*/analysis/*" -W ../.whitelizard.txt
+    - lizard -l cpp -m -T nloc=100 -T cyclomatic_complexity=15 -T parameter_count=5 -o lizard.html
+    - lizard -l cpp -m -w -s cyclomatic_complexity -T cyclomatic_complexity=20 -W ../.whitelizard.txt
   artifacts:
     expire_in: 1 day
     paths:

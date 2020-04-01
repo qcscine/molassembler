@@ -10,7 +10,7 @@
 
 #include "molassembler/Types.h"
 #include "Utils/Typenames.h"
-#include "boost_outcome/outcome.hpp"
+#include "outcome/outcome.hpp"
 #include <vector>
 
 namespace Scine {

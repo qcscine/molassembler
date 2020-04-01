@@ -6,9 +6,9 @@
 
 #include "molassembler/DistanceGeometry/TetrangleSmoothing.h"
 #include "molassembler/DistanceGeometry/ValueBounds.h"
-#include "temple/constexpr/Array.h"
-#include "temple/constexpr/Numeric.h"
-#include "temple/Invoke.h"
+#include "molassembler/Temple/constexpr/Array.h"
+#include "molassembler/Temple/constexpr/Numeric.h"
+#include "molassembler/Temple/Invoke.h"
 
 #include <Eigen/Dense>
 #include <fenv.h>

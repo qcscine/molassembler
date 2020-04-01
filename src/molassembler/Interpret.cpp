@@ -14,7 +14,7 @@
 #include "molassembler/Graph.h"
 #include "molassembler/Graph/PrivateGraph.h"
 
-#include "temple/Functional.h"
+#include "molassembler/Temple/Functional.h"
 
 namespace Scine {
 namespace molassembler {

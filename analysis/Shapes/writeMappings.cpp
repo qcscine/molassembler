@@ -9,11 +9,11 @@
 #include "boost/filesystem.hpp"
 #include "boost/program_options.hpp"
 
-#include "temple/Functional.h"
-#include "temple/Stringify.h"
+#include "molassembler/Temple/Functional.h"
+#include "molassembler/Temple/Stringify.h"
 
-#include "shapes/Data.h"
-#include "shapes/PropertyCaching.h"
+#include "molassembler/Shapes/Data.h"
+#include "molassembler/Shapes/PropertyCaching.h"
 
 #include <fstream>
 #include <iomanip>

@@ -15,8 +15,8 @@
 
 #include "Utils/Typenames.h"
 
-#include "temple/Invoke.h"
-#include "temple/Stringify.h"
+#include "molassembler/Temple/Invoke.h"
+#include "molassembler/Temple/Stringify.h"
 
 #include <fstream>
 #include <iomanip>

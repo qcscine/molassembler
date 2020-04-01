@@ -12,7 +12,7 @@
 #include "molassembler/IO/SmilesParser.h"
 
 #include <iostream>
-#include "temple/Stringify.h"
+#include "molassembler/Temple/Stringify.h"
 
 using namespace Scine;
 using namespace molassembler;

@@ -8,8 +8,8 @@
 #ifndef INCLUDE_MOLASSEMBLER_STEREOPERMUTATION_MANIPULATION_H
 #define INCLUDE_MOLASSEMBLER_STEREOPERMUTATION_MANIPULATION_H
 
-#include "stereopermutation/Stereopermutation.h"
-#include "shapes/Shapes.h"
+#include "molassembler/Stereopermutation/Stereopermutation.h"
+#include "molassembler/Shapes/Shapes.h"
 #include <unordered_set>
 
 namespace Scine {

@@ -4,22 +4,22 @@
  *   See LICENSE.txt
  */
 
-#define BOOST_TEST_MODULE MolassemblerMainTests
+#define BOOST_TEST_MODULE MolassemblerTests
 #define BOOST_FILESYSTEM_NO_DEPRECATED
 
 #include "boost/filesystem.hpp"
 #include "boost/regex.hpp"
 #include "boost/test/unit_test.hpp"
 
-#include "shapes/Data.h"
+#include "molassembler/Shapes/Data.h"
 
-#include "temple/Adaptors/AllPairs.h"
-#include "temple/Adaptors/Iota.h"
-#include "temple/Functional.h"
-#include "temple/Random.h"
-#include "temple/Invoke.h"
-#include "temple/Stringify.h"
-#include "temple/Optionals.h"
+#include "molassembler/Temple/Adaptors/AllPairs.h"
+#include "molassembler/Temple/Adaptors/Iota.h"
+#include "molassembler/Temple/Functional.h"
+#include "molassembler/Temple/Random.h"
+#include "molassembler/Temple/Invoke.h"
+#include "molassembler/Temple/Stringify.h"
+#include "molassembler/Temple/Optionals.h"
 
 #include "molassembler/Graph.h"
 #include "molassembler/Graph/PrivateGraph.h"
@@ -38,7 +38,7 @@
 #include "Utils/Bonds/BondOrderCollection.h"
 #include "Utils/IO/ChemicalFileFormats/ChemicalFileHandler.h"
 
-#include "temple/UnorderedSetAlgorithms.h"
+#include "molassembler/Temple/UnorderedSetAlgorithms.h"
 #include <iostream>
 
 using namespace Scine;

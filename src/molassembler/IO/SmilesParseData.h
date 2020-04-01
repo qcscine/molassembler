@@ -12,7 +12,7 @@
 #include <boost/fusion/include/adapt_struct.hpp>
 
 #include "Utils/Geometry/ElementInfo.h"
-#include "shapes/Shapes.h"
+#include "molassembler/Shapes/Shapes.h"
 #include "boost/optional.hpp"
 #include "molassembler/Types.h"
 

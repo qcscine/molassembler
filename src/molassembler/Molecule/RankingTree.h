@@ -41,7 +41,7 @@
 #include "molassembler/Molecule.h"
 #include "molassembler/Containers/OrderDiscoveryHelper.h"
 
-#include "temple/Adaptors/AllPairs.h"
+#include "molassembler/Temple/Adaptors/AllPairs.h"
 
 using namespace std::string_literals;
 

@@ -11,7 +11,7 @@
 #include <Eigen/Core>
 #include <Eigen/Eigenvalues>
 #include <unsupported/Eigen/NumericalDiff>
-#include "temple/STL17.h"
+#include "molassembler/Temple/STL17.h"
 #include <iostream>
 
 namespace Scine {

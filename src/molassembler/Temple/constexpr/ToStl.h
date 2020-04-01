@@ -11,8 +11,8 @@
 #ifndef INLCUDE_MOLASSEMBLER_TEMPLE_CONSTEXPR_TO_STL_H
 #define INLCUDE_MOLASSEMBLER_TEMPLE_CONSTEXPR_TO_STL_H
 
-#include "temple/constexpr/Array.h"
-#include "temple/constexpr/DynamicMap.h"
+#include "molassembler/Temple/constexpr/Array.h"
+#include "molassembler/Temple/constexpr/DynamicMap.h"
 
 #include <vector>
 #include <map>

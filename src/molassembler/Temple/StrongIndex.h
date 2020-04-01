@@ -7,7 +7,7 @@
 #ifndef INCLUDE_MOLASSEMBLER_TEMPLE_STRONG_INDEX_H
 #define INCLUDE_MOLASSEMBLER_TEMPLE_STRONG_INDEX_H
 
-#include "temple/OperatorSuppliers.h"
+#include "molassembler/Temple/OperatorSuppliers.h"
 #include "boost/functional/hash.hpp"
 #include <tuple>
 

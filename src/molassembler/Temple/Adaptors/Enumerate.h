@@ -12,8 +12,8 @@
 #ifndef INCLUDE_MOLASSEMBLER_TEMPLE_ENUMERATE_ADAPTOR_H
 #define INCLUDE_MOLASSEMBLER_TEMPLE_ENUMERATE_ADAPTOR_H
 
-#include "temple/Preprocessor.h"
-#include "temple/Binding.h"
+#include "molassembler/Temple/Preprocessor.h"
+#include "molassembler/Temple/Binding.h"
 
 #include <memory>
 

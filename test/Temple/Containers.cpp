@@ -6,12 +6,12 @@
 
 #include <boost/test/unit_test.hpp>
 
-#include "temple/BoundedNodeTrie.h"
-#include "temple/OrderedPair.h"
-#include "temple/Poset.h"
-#include "temple/Random.h"
-#include "temple/Stringify.h"
-#include "temple/constexpr/Jsf.h"
+#include "molassembler/Temple/BoundedNodeTrie.h"
+#include "molassembler/Temple/OrderedPair.h"
+#include "molassembler/Temple/Poset.h"
+#include "molassembler/Temple/Random.h"
+#include "molassembler/Temple/Stringify.h"
+#include "molassembler/Temple/constexpr/Jsf.h"
 
 #include <algorithm>
 #include <random>

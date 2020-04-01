@@ -4,9 +4,9 @@
  *   See LICENSE.txt
  */
 
-#include "shapes/PointGroupElements.h"
+#include "molassembler/Shapes/PointGroupElements.h"
 
-#include "temple/Functional.h"
+#include "molassembler/Temple/Functional.h"
 #include "boost/optional.hpp"
 #include <Eigen/Geometry>
 

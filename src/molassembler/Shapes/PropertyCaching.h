@@ -8,8 +8,8 @@
 #ifndef INCLUDE_SHAPE_PROPERTY_CACHING_H
 #define INCLUDE_SHAPE_PROPERTY_CACHING_H
 
-#include "shapes/constexpr/Properties.h"
-#include "shapes/Properties.h"
+#include "molassembler/Shapes/constexpr/Properties.h"
+#include "molassembler/Shapes/Properties.h"
 
 namespace Scine {
 namespace shapes {

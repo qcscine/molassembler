@@ -11,7 +11,7 @@
 #ifndef INCLUDE_MOLASSEMBLER_TEMPLE_BITMASK_H
 #define INCLUDE_MOLASSEMBLER_TEMPLE_BITMASK_H
 
-#include "temple/constexpr/Math.h"
+#include "molassembler/Temple/constexpr/Math.h"
 
 #include <stdexcept>
 

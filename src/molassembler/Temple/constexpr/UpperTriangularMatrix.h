@@ -11,8 +11,8 @@
 #ifndef INCLUDE_MOLASSEMBLER_TEMPLE_CONSTEXPR_TRIANGULAR_MATRIX_H
 #define INCLUDE_MOLASSEMBLER_TEMPLE_CONSTEXPR_TRIANGULAR_MATRIX_H
 
-#include "temple/constexpr/Array.h"
-#include "temple/constexpr/FloatingPointComparison.h"
+#include "molassembler/Temple/constexpr/Array.h"
+#include "molassembler/Temple/constexpr/FloatingPointComparison.h"
 
 namespace Scine {
 namespace temple {

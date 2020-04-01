@@ -6,7 +6,7 @@
 
 #include <boost/test/unit_test.hpp>
 
-#include "temple/constexpr/Numeric.h"
+#include "molassembler/Temple/constexpr/Numeric.h"
 
 #include <iostream>
 

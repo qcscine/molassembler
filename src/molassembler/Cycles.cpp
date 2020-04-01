@@ -9,8 +9,8 @@
 #include "molassembler/Graph/PrivateGraph.h"
 #include "molassembler/Graph.h"
 
-#include "temple/TinySet.h"
-#include "temple/Functional.h"
+#include "molassembler/Temple/TinySet.h"
+#include "molassembler/Temple/Functional.h"
 
 #include "RingDecomposerLib.h"
 #include "boost/variant.hpp"

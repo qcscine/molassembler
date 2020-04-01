@@ -8,7 +8,7 @@
 #ifndef INCLUDE_MOLASSEMBLER_SHAPES_TAU_CRITERIA_H
 #define INCLUDE_MOLASSEMBLER_SHAPES_TAU_CRITERIA_H
 
-#include "temple/constexpr/Math.h"
+#include "molassembler/Temple/constexpr/Math.h"
 #include <algorithm>
 #include <cassert>
 #include <stdexcept>

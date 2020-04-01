@@ -11,8 +11,8 @@ enable_testing()
 option(BUILD_SHARED_LIBS ON)
 
 # Project-specific options
-option(MOLASSEMBLER_ANALYSIS_BINARIES "Compile analysis binaries" OFF)
-option(MOLASSEMBLER_VALIDATION_TESTS "Compile validation tests" OFF)
+option(MOLASSEMBLER_ANALYSIS "Compile analysis binaries" OFF)
+option(MOLASSEMBLER_VALIDATION "Compile validation tests" OFF)
 option(MOLASSEMBLER_PARALLELIZE "Enables OpenMP parallelization" ON)
 option(MOLASSEMBLER_IPO "Try to enable interprocedural optimization" OFF)
 option(MOLASSEMBLER_NO_GNU_UNIQUE "Set --no-gnu-unique GCC flag" OFF)
@@ -40,8 +40,46 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
   )
 endif()
 
-if(SCINE_BUILD_DOCS)
-  add_subdirectory(doc)
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/dev/cmake)
+include(ColorMessages)
+
+# Handle sanitization
+if(MOLASSEMBLER_SANITIZE)
+  cmessage(STATUS "MOLASSEMBLER_SANITIZE: Adding address and UB sanitizers")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address,undefined")
+  set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} -fsanitize=address,undefined")
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fsanitize=address,undefined")
+
+  cmessage(WARNING
+    "Address sanitiziation can cause ABI incompatibility issues "
+    "if dependencies have not been compiled the same way."
+  )
 endif()
 
+# Handle coverage flag
+if(COVERAGE AND CMAKE_BUILD_TYPE STREQUAL "Debug")
+  cmessage(STATUS "COVERAGE: Adding coverage flags")
+  set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 -coverage ${CMAKE_CXX_FLAGS_DEBUG}")
+endif()
+
+# Fetch some dependencies already
+include(ImportUtilsOS)
+import_utils_os()
+include(CompilerSpecificSetup)
+include(TargetLinkEigen)
+set(Boost_USE_MULTITHREADED ON)
+find_package(Boost
+  COMPONENTS regex unit_test_framework program_options filesystem system
+  QUIET
+)
+include(MolassemblerUtils)
+
+# Subdirectories
+add_subdirectory(doc)
+add_subdirectory(extern)
 add_subdirectory(src)
+add_subdirectory(test)
+add_subdirectory(analysis)
+add_subdirectory(validation)
+add_subdirectory(python)

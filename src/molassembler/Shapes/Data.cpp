@@ -4,11 +4,11 @@
  *   See LICENSE.txt
  */
 
-#include "shapes/Data.h"
+#include "molassembler/Shapes/Data.h"
 
-#include "shapes/constexpr/Data.h"
+#include "molassembler/Shapes/constexpr/Data.h"
 #include "boost/optional.hpp"
-#include "temple/constexpr/TupleType.h"
+#include "molassembler/Temple/constexpr/TupleType.h"
 
 #include <unordered_map>
 

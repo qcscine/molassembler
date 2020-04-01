@@ -13,13 +13,13 @@
 #include "molassembler/Molecule.h"
 #include "molassembler/StereopermutatorList.h"
 #include "molassembler/Stereopermutators/ShapeVertexMaps.h"
-#include "stereopermutation/Manipulation.h"
-#include "shapes/Data.h"
-#include "shapes/PropertyCaching.h"
+#include "molassembler/Stereopermutation/Manipulation.h"
+#include "molassembler/Shapes/Data.h"
+#include "molassembler/Shapes/PropertyCaching.h"
 #include "Utils/Math/QuaternionFit.h"
 #include "Utils/Geometry/ElementInfo.h"
 
-#include "temple/Functional.h"
+#include "molassembler/Temple/Functional.h"
 
 #include "Fixtures.h"
 

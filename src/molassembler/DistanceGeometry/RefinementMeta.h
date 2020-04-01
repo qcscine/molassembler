@@ -11,7 +11,7 @@
 #include "molassembler/DistanceGeometry/DistanceBoundsMatrix.h"
 #include "molassembler/Log.h"
 
-#include "temple/Stringify.h"
+#include "molassembler/Temple/Stringify.h"
 
 namespace Scine {
 namespace molassembler {

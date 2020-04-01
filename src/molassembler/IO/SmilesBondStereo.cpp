@@ -9,7 +9,7 @@
 #include "molassembler/Molecule.h"
 #include "molassembler/BondStereopermutator.h"
 #include "molassembler/StereopermutatorList.h"
-#include "temple/Optionals.h"
+#include "molassembler/Temple/Optionals.h"
 
 namespace Scine {
 namespace molassembler {

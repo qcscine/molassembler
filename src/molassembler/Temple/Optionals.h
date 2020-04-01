@@ -12,7 +12,7 @@
 #define INCLUDE_MOLASSEMBLER_TEMPLE_OPTIONALS_H
 
 #include <boost/optional.hpp>
-#include "temple/Traits.h"
+#include "molassembler/Temple/Traits.h"
 
 namespace Scine {
 namespace temple {

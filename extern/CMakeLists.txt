@@ -1,5 +1,5 @@
 add_subdirectory(RingDecomposerLib)
-add_subdirectory(boost_outcome)
+add_subdirectory(outcome)
 add_subdirectory(json)
 add_subdirectory(nauty)
-add_subdirectory(other)
+add_subdirectory(licenses)

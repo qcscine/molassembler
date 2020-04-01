@@ -12,7 +12,7 @@
 #include "boost/optional.hpp"
 #include "Utils/Geometry/ElementTypes.h"
 
-#include "shapes/Shapes.h"
+#include "molassembler/Shapes/Shapes.h"
 
 #include "molassembler/Types.h"
 

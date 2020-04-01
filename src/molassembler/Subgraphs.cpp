@@ -8,10 +8,10 @@
 
 #include "boost/graph/mcgregor_common_subgraphs.hpp"
 
-#include "shapes/PropertyCaching.h"
+#include "molassembler/Shapes/PropertyCaching.h"
 
-#include "shapes/Shapes.h"
-#include "temple/constexpr/UpperTriangularMatrix.h"
+#include "molassembler/Shapes/Shapes.h"
+#include "molassembler/Temple/constexpr/UpperTriangularMatrix.h"
 
 
 #include "molassembler/Graph/Bridge.h"

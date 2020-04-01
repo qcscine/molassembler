@@ -12,10 +12,10 @@
 #ifndef INCLUDE_MOLASSEMBLER_TEMPLE_CONSTEXPR_BTREE_H
 #define INCLUDE_MOLASSEMBLER_TEMPLE_CONSTEXPR_BTREE_H
 
-#include "temple/constexpr/Containers.h"
-#include "temple/constexpr/DynamicArray.h"
-#include "temple/constexpr/Math.h"
-#include "temple/constexpr/Optional.h"
+#include "molassembler/Temple/constexpr/Containers.h"
+#include "molassembler/Temple/constexpr/DynamicArray.h"
+#include "molassembler/Temple/constexpr/Math.h"
+#include "molassembler/Temple/constexpr/Optional.h"
 
 #include <sstream>
 

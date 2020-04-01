@@ -22,8 +22,8 @@
 
 #include "boost/graph/adjacency_list.hpp"
 #include "boost/graph/graphviz.hpp"
-#include "temple/Adaptors/Transform.h"
-#include "temple/Functional.h"
+#include "molassembler/Temple/Adaptors/Transform.h"
+#include "molassembler/Temple/Functional.h"
 
 namespace Scine {
 

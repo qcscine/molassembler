@@ -7,7 +7,7 @@
 #include <boost/test/unit_test.hpp>
 
 #include "molassembler/Modeling/ShapeInference.h"
-#include "shapes/Data.h"
+#include "molassembler/Shapes/Data.h"
 
 #include "boost/optional.hpp"
 

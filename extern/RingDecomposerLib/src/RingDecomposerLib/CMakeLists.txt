@@ -35,13 +35,37 @@ endfunction()
 build_library("${SHARED_LIBRARY}" "SHARED")
 build_library("${STATIC_LIBRARY}" "STATIC")
 
-molassembler_install_component_cmake_files(
-  COMPONENT RingDecomposerLib
-  EXPORT_NAME RingDecomposerLibTargets
+write_basic_package_version_file(
+  "${CMAKE_CURRENT_BINARY_DIR}/RingDecomposerLibConfigVersion.cmake"
+  VERSION ${RingDecomposerLib_VERSION}
+  COMPATIBILITY AnyNewerVersion
+)
+
+configure_package_config_file(
+  "config.cmake.in"
+  "${CMAKE_CURRENT_BINARY_DIR}/RingDecomposerLibConfig.cmake"
+  INSTALL_DESTINATION "lib/cmake/RingDecomposerLib"
 )
 
 install(
-  FILES RingDecomposerLib.h
-  DESTINATION include
-  COMPONENT RingDecomposerLib
+  FILES
+    "${CMAKE_CURRENT_BINARY_DIR}/RingDecomposerLibConfigVersion.cmake"
+    "${CMAKE_CURRENT_BINARY_DIR}/RingDecomposerLibConfig.cmake"
+  DESTINATION "lib/cmake/RingDecomposerLib"
+)
+
+export(
+  EXPORT RingDecomposerLibTargets
+  FILE "${CMAKE_CURRENT_BINARY_DIR}/RingDecomposerLibTargets.cmake"
+)
+
+install(
+  EXPORT RingDecomposerLibTargets
+  FILE "RingDecomposerLibTargets.cmake"
+  DESTINATION "lib/cmake/RingDecomposerLib"
+)
+
+install(
+  FILES ${CMAKE_CURRENT_SOURCE_DIR}/RingDecomposerLib.h
+  DESTINATION include/RingDecomposerLib
 )

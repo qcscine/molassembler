@@ -19,11 +19,11 @@
 #include "molassembler/Modeling/BondDistance.h"
 #include "molassembler/Modeling/ShapeInference.h"
 #include "molassembler/Molecule.h"
-#include "shapes/Data.h"
-#include "shapes/Properties.h"
+#include "molassembler/Shapes/Data.h"
+#include "molassembler/Shapes/Properties.h"
 
-#include "temple/Optionals.h"
-#include "temple/Functional.h"
+#include "molassembler/Temple/Optionals.h"
+#include "molassembler/Temple/Functional.h"
 
 #include <iostream>
 

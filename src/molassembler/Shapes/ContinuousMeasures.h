@@ -8,8 +8,8 @@
 #ifndef INCLUDE_MOLASSEMBLER_SHAPES_CONTINUOUS_MEASURES_H
 #define INCLUDE_MOLASSEMBLER_SHAPES_CONTINUOUS_MEASURES_H
 
-#include "shapes/PointGroupElements.h"
-#include "shapes/Data.h"
+#include "molassembler/Shapes/PointGroupElements.h"
+#include "molassembler/Shapes/Data.h"
 
 namespace Scine {
 namespace shapes {

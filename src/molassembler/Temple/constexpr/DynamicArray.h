@@ -12,7 +12,7 @@
 #ifndef INCLUDE_MOLASSEMBLER_TEMPLE_DYNAMIC_ARRAY_H
 #define INCLUDE_MOLASSEMBLER_TEMPLE_DYNAMIC_ARRAY_H
 
-#include "temple/Preprocessor.h"
+#include "molassembler/Temple/Preprocessor.h"
 #include <array>
 #include <cstddef>
 #include <type_traits>

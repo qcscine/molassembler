@@ -12,7 +12,7 @@
 #include <vector>
 #include <cassert>
 
-#include "temple/Functional.h"
+#include "molassembler/Temple/Functional.h"
 
 #include "boost/dynamic_bitset.hpp"
 

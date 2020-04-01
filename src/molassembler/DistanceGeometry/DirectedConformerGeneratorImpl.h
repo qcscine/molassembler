@@ -11,7 +11,7 @@
 #include "molassembler/DirectedConformerGenerator.h"
 #include "molassembler/Molecule.h"
 
-#include "temple/BoundedNodeTrie.h"
+#include "molassembler/Temple/BoundedNodeTrie.h"
 
 namespace Scine {
 namespace molassembler {

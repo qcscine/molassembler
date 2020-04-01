@@ -7,9 +7,9 @@
 
 #include "molassembler/Stereopermutators/AbstractPermutations.h"
 
-#include "stereopermutation/Stereopermutation.h"
-#include "temple/Functional.h"
-#include "temple/constexpr/Numeric.h"
+#include "molassembler/Stereopermutation/Stereopermutation.h"
+#include "molassembler/Temple/Functional.h"
+#include "molassembler/Temple/constexpr/Numeric.h"
 
 #include "boost/graph/adjacency_list.hpp"
 #include "boost/graph/isomorphism.hpp"

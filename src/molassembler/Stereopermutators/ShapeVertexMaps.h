@@ -10,8 +10,8 @@
 
 #include "molassembler/RankingInformation.h"
 
-#include "temple/StrongIndexMap.h"
-#include "shapes/Data.h"
+#include "molassembler/Temple/StrongIndexMap.h"
+#include "molassembler/Shapes/Data.h"
 
 namespace Scine {
 

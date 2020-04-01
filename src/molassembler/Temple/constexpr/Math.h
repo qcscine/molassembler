@@ -16,7 +16,7 @@
 #ifndef INLCUDE_MOLASSEMBLER_TEMPLE_CONSTEXPR_MATH_H
 #define INLCUDE_MOLASSEMBLER_TEMPLE_CONSTEXPR_MATH_H
 
-#include "temple/Preprocessor.h"
+#include "molassembler/Temple/Preprocessor.h"
 
 #include <cmath>
 #include <limits>

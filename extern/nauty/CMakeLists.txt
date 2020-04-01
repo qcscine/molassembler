@@ -48,7 +48,32 @@ install(
 set_target_properties(nauty PROPERTIES POSITION_INDEPENDENT_CODE ON)
 install(TARGETS nauty EXPORT nautyTargets ARCHIVE DESTINATION lib)
 
-molassembler_install_component_cmake_files(
-  COMPONENT nauty
-  EXPORT_NAME nautyTargets
+write_basic_package_version_file(
+  "${CMAKE_CURRENT_BINARY_DIR}/nautyConfigVersion.cmake"
+  VERSION ${nauty_VERSION}
+  COMPATIBILITY AnyNewerVersion
+)
+
+configure_package_config_file(
+  "config.cmake.in"
+  "${CMAKE_CURRENT_BINARY_DIR}/nautyConfig.cmake"
+  INSTALL_DESTINATION "lib/cmake/nauty"
+)
+
+install(
+  FILES
+    "${CMAKE_CURRENT_BINARY_DIR}/nautyConfigVersion.cmake"
+    "${CMAKE_CURRENT_BINARY_DIR}/nautyConfig.cmake"
+  DESTINATION "lib/cmake/nauty"
+)
+
+export(
+  EXPORT nautyTargets
+  FILE "${CMAKE_CURRENT_BINARY_DIR}/nautyTargets.cmake"
+)
+
+install(
+  EXPORT nautyTargets
+  FILE "nautyTargets.cmake"
+  DESTINATION "lib/cmake/nauty"
 )

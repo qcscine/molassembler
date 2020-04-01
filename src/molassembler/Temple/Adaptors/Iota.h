@@ -8,7 +8,7 @@
 #ifndef INCLUDE_MOLASSEMBLER_TEMPLE_IOTA_ADAPTOR_H
 #define INCLUDE_MOLASSEMBLER_TEMPLE_IOTA_ADAPTOR_H
 
-#include "temple/Traits.h"
+#include "molassembler/Temple/Traits.h"
 
 namespace Scine {
 namespace temple {

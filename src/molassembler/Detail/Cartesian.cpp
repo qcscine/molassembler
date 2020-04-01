@@ -7,7 +7,7 @@
 #include "molassembler/Detail/Cartesian.h"
 
 #include <Eigen/Geometry>
-#include "temple/Functional.h"
+#include "molassembler/Temple/Functional.h"
 
 #include <array>
 

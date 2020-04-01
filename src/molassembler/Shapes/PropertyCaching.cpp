@@ -4,11 +4,11 @@
  *   See LICENSE.txt
  */
 
-#include "shapes/PropertyCaching.h"
+#include "molassembler/Shapes/PropertyCaching.h"
 
-#include "temple/constexpr/ToStl.h"
-#include "temple/constexpr/TupleTypePairs.h"
-#include "temple/Functional.h"
+#include "molassembler/Temple/constexpr/ToStl.h"
+#include "molassembler/Temple/constexpr/TupleTypePairs.h"
+#include "molassembler/Temple/Functional.h"
 
 namespace Scine {
 namespace shapes {

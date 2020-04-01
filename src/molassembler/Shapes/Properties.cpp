@@ -4,19 +4,19 @@
  *   See LICENSE.txt
  */
 
-#include "shapes/Properties.h"
+#include "molassembler/Shapes/Properties.h"
 
 #include "boost/functional/hash.hpp"
 #include <Eigen/Dense>
-#include "temple/Adaptors/Transform.h"
-#include "temple/Functional.h"
-#include "temple/GroupBy.h"
-#include "temple/Optionals.h"
-#include "temple/Permutations.h"
-#include "temple/Variadic.h"
-#include "temple/constexpr/Numeric.h"
+#include "molassembler/Temple/Adaptors/Transform.h"
+#include "molassembler/Temple/Functional.h"
+#include "molassembler/Temple/GroupBy.h"
+#include "molassembler/Temple/Optionals.h"
+#include "molassembler/Temple/Permutations.h"
+#include "molassembler/Temple/Variadic.h"
+#include "molassembler/Temple/constexpr/Numeric.h"
 
-#include "shapes/Data.h"
+#include "molassembler/Shapes/Data.h"
 
 #include <unordered_set>
 

@@ -6,7 +6,7 @@
 
 #include <boost/test/unit_test.hpp>
 
-#include "temple/Optimization/NelderMead.h"
+#include "molassembler/Temple/Optimization/NelderMead.h"
 
 using namespace Scine;
 

@@ -16,8 +16,8 @@
 #ifndef INCLUDE_TEMPLE_CONSTEXPR_NUMERIC_H
 #define INCLUDE_TEMPLE_CONSTEXPR_NUMERIC_H
 
-#include "temple/Traits.h"
-#include "temple/constexpr/Math.h"
+#include "molassembler/Temple/Traits.h"
+#include "molassembler/Temple/constexpr/Math.h"
 
 #include <numeric>
 #include <functional>

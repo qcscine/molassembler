@@ -16,7 +16,7 @@
 
 #include "Utils/Geometry/ElementInfo.h"
 
-#include "temple/Functional.h"
+#include "molassembler/Temple/Functional.h"
 
 namespace Scine {
 namespace molassembler {

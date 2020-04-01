@@ -6,7 +6,7 @@
 
 #include "Partitioner.h"
 
-#include "temple/Functional.h"
+#include "molassembler/Temple/Functional.h"
 
 #include <cassert>
 

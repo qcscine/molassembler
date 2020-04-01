@@ -10,13 +10,13 @@
 #include "boost/graph/two_bit_color_map.hpp"
 #include "boost/test/unit_test.hpp"
 
-#include "temple/Adaptors/Enumerate.h"
-#include "temple/Adaptors/Zip.h"
-#include "temple/Functional.h"
-#include "temple/constexpr/FloatingPointComparison.h"
-#include "temple/constexpr/Numeric.h"
-#include "temple/Random.h"
-#include "temple/Stringify.h"
+#include "molassembler/Temple/Adaptors/Enumerate.h"
+#include "molassembler/Temple/Adaptors/Zip.h"
+#include "molassembler/Temple/Functional.h"
+#include "molassembler/Temple/constexpr/FloatingPointComparison.h"
+#include "molassembler/Temple/constexpr/Numeric.h"
+#include "molassembler/Temple/Random.h"
+#include "molassembler/Temple/Stringify.h"
 
 // DO NOT CHANGE THIS INCLUDE ORDER (implicit graph needs to go first)
 #include "molassembler/DistanceGeometry/ImplicitBoundsGraphBoost.h"
@@ -28,7 +28,7 @@
 #include "molassembler/IO.h"
 #include "molassembler/Molecule.h"
 
-#include "gor1/Gor1.h"
+#include "molassembler/Graph/Gor1.h"
 #include "molassembler/DistanceGeometry/Gor1.h"
 
 

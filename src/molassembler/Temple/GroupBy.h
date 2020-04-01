@@ -11,7 +11,7 @@
 #ifndef INCLUDE_MOLASSEMBLER_TEMPLE_GROUP_BY_H
 #define INCLUDE_MOLASSEMBLER_TEMPLE_GROUP_BY_H
 
-#include "temple/Traits.h"
+#include "molassembler/Temple/Traits.h"
 
 #include <vector>
 #include <map>

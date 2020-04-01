@@ -13,7 +13,7 @@
 #ifndef INCLUDE_MOLASSEMBLER_TEMPLE_CONSTEXPR_DYNAMIC_SET_H
 #define INCLUDE_MOLASSEMBLER_TEMPLE_CONSTEXPR_DYNAMIC_SET_H
 
-#include "temple/constexpr/BTree.h"
+#include "molassembler/Temple/constexpr/BTree.h"
 
 namespace Scine {
 namespace temple {

@@ -14,7 +14,7 @@
 #include "boost/graph/connected_components.hpp"
 #include "boost/optional.hpp"
 
-#include "temple/Functional.h"
+#include "molassembler/Temple/Functional.h"
 
 namespace Scine {
 namespace molassembler {

@@ -1,5 +1,5 @@
 # Early return in case analysis binaries are not to be compiled
-if(NOT MOLASSEMBLER_ANALYSIS_BINARIES)
+if(NOT MOLASSEMBLER_ANALYSIS)
   return()
 endif()
 
@@ -14,25 +14,15 @@ if(NOT TARGET Boost::regex
   )
 endif()
 
-set(analysisFiles
-  ${CMAKE_CURRENT_SOURCE_DIR}/BenchmarkGraphAlgorithms.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/BenchmarkRefinement.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/BenchmarkRefinementFunctions.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/DirectedConformerGeneration.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/Gor1Explainer.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/Interpret.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/MakeIsomorphism.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/RankingExplainer.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/SymmetryRecognition.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/TraceRefinement.cpp
-)
+if(MOLASSEMBLER_PARALLELIZE AND NOT TARGET OpenMP::OpenMP_CXX)
+  find_package(OpenMP QUIET)
+endif()
 
+# Build all C++ files in this directory and below
+file(GLOB_RECURSE analysisFiles ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp)
 foreach(filename ${analysisFiles})
   get_filename_component(targetName ${filename} NAME_WE)
-
-  # add the executable and specify compilation and linking options
   add_executable(${targetName} ${filename})
-
   target_link_libraries(${targetName}
     PRIVATE
       Boost::boost
@@ -41,9 +31,7 @@ foreach(filename ${analysisFiles})
       Boost::system
       Boost::filesystem
       ${MOLASSEMBLER_STATIC_TARGET}
-      shapes
-      gor1
+      $<$<BOOL:${OpenMP_CXX_FOUND}>:OpenMP::OpenMP_CXX>
   )
-
   target_compile_options(${targetName} PRIVATE ${MOLASSEMBLER_CXX_FLAGS})
 endforeach()

@@ -12,7 +12,7 @@
 #ifndef INCLUDE_MOLASSEMBLER_TEMPLE_CONSTEXPR_LOGICAL_OPERATOR_TESTS_H
 #define INCLUDE_MOLASSEMBLER_TEMPLE_CONSTEXPR_LOGICAL_OPERATOR_TESTS_H
 
-#include "temple/constexpr/Math.h"
+#include "molassembler/Temple/constexpr/Math.h"
 
 #include <iostream>
 

@@ -11,8 +11,8 @@
 #ifndef INLCUDE_MOLASSEMBLER_TEMPLE_CONSTEXPR_DYNAMIC_MAP_H
 #define INLCUDE_MOLASSEMBLER_TEMPLE_CONSTEXPR_DYNAMIC_MAP_H
 
-#include "temple/constexpr/DynamicSet.h"
-#include "temple/constexpr/Pair.h"
+#include "molassembler/Temple/constexpr/DynamicSet.h"
+#include "molassembler/Temple/constexpr/Pair.h"
 
 namespace Scine {
 namespace temple {

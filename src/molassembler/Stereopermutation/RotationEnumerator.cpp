@@ -4,10 +4,10 @@
  *   See LICENSE.txt
  */
 
-#include "stereopermutation/RotationEnumerator.h"
+#include "molassembler/Stereopermutation/RotationEnumerator.h"
 
 #include "boost/optional.hpp"
-#include "shapes/Data.h"
+#include "molassembler/Shapes/Data.h"
 
 namespace Scine {
 namespace stereopermutation {

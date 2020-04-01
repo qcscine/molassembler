@@ -16,10 +16,10 @@
 #include "boost/optional/optional_fwd.hpp"
 #include "Eigen/Core"
 
-#include "shapes/Shapes.h"
-#include "shapes/PointGroups.h"
-#include "temple/StrongIndex.h"
-#include "temple/Preprocessor.h"
+#include "molassembler/Shapes/Shapes.h"
+#include "molassembler/Shapes/PointGroups.h"
+#include "molassembler/Temple/StrongIndex.h"
+#include "molassembler/Temple/Preprocessor.h"
 
 #include <vector>
 

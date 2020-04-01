@@ -16,9 +16,9 @@
 #include "molassembler/Molecule/AtomEnvironmentHash.h"
 #include "molassembler/Graph.h"
 
-#include "temple/Adaptors/SequentialPairs.h"
-#include "temple/Adaptors/Iota.h"
-#include "temple/Functional.h"
+#include "molassembler/Temple/Adaptors/SequentialPairs.h"
+#include "molassembler/Temple/Adaptors/Iota.h"
+#include "molassembler/Temple/Functional.h"
 
 extern "C" {
 #include "nauty/nausparse.h"

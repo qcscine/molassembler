@@ -4,12 +4,12 @@
  *   See LICENSE.txt
  */
 
-#include "stereopermutation/Manipulation.h"
+#include "molassembler/Stereopermutation/Manipulation.h"
 
-#include "shapes/Data.h"
-#include "stereopermutation/RotationEnumerator.h"
-#include "temple/Functional.h"
-#include "temple/Permutations.h"
+#include "molassembler/Shapes/Data.h"
+#include "molassembler/Stereopermutation/RotationEnumerator.h"
+#include "molassembler/Temple/Functional.h"
+#include "molassembler/Temple/Permutations.h"
 
 #include "boost/optional.hpp"
 #include "boost/integer/common_factor_rt.hpp"

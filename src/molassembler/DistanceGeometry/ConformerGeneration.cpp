@@ -19,9 +19,9 @@
 #include "molassembler/Graph/GraphAlgorithms.h"
 #include "Utils/Math/QuaternionFit.h"
 
-#include "temple/Optimization/Lbfgs.h"
-#include "temple/Optionals.h"
-#include "temple/Random.h"
+#include "molassembler/Temple/Optimization/Lbfgs.h"
+#include "molassembler/Temple/Optionals.h"
+#include "molassembler/Temple/Random.h"
 
 #include <iostream>
 

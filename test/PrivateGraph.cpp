@@ -8,7 +8,7 @@
 
 #include "molassembler/Graph/PrivateGraph.h"
 
-#include "temple/Functional.h"
+#include "molassembler/Temple/Functional.h"
 
 #include "molassembler/IO/SmilesParser.h"
 #include "molassembler/Molecule.h"

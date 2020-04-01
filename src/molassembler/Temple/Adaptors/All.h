@@ -8,13 +8,13 @@
 #ifndef INCLUDE_MOLASSEMBLER_TEMPLE_ADAPTORS_H
 #define INCLUDE_MOLASSEMBLER_TEMPLE_ADAPTORS_H
 
-#include "temple/Adaptors/AllPairs.h"
-#include "temple/Adaptors/CyclicFrame.h"
-#include "temple/Adaptors/Enumerate.h"
-#include "temple/Adaptors/Filter.h"
-#include "temple/Adaptors/Iota.h"
-#include "temple/Adaptors/SequentialPairs.h"
-#include "temple/Adaptors/Transform.h"
-#include "temple/Adaptors/Zip.h"
+#include "molassembler/Temple/Adaptors/AllPairs.h"
+#include "molassembler/Temple/Adaptors/CyclicFrame.h"
+#include "molassembler/Temple/Adaptors/Enumerate.h"
+#include "molassembler/Temple/Adaptors/Filter.h"
+#include "molassembler/Temple/Adaptors/Iota.h"
+#include "molassembler/Temple/Adaptors/SequentialPairs.h"
+#include "molassembler/Temple/Adaptors/Transform.h"
+#include "molassembler/Temple/Adaptors/Zip.h"
 
 #endif

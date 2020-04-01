@@ -10,9 +10,9 @@
 #include "boost/filesystem.hpp"
 #include "boost/test/unit_test.hpp"
 
-#include "temple/constexpr/Bitmask.h"
-#include "temple/StringAlgorithms.h"
-#include "temple/Stringify.h"
+#include "molassembler/Temple/constexpr/Bitmask.h"
+#include "molassembler/Temple/StringAlgorithms.h"
+#include "molassembler/Temple/Stringify.h"
 
 #include "molassembler/IO.h"
 #include "molassembler/Molecule/RankingTree.h"

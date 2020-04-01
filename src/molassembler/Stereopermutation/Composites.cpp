@@ -4,18 +4,18 @@
  *   See LICENSE.txt
  */
 
-#include "stereopermutation/Composites.h"
+#include "molassembler/Stereopermutation/Composites.h"
 
 #include "boost/dynamic_bitset.hpp"
 #include "Eigen/Geometry"
 
-#include "shapes/Properties.h"
-#include "shapes/Data.h"
-#include "temple/Adaptors/AllPairs.h"
-#include "temple/Functor.h"
-#include "temple/Functional.h"
-#include "temple/Permutations.h"
-#include "temple/Stringify.h"
+#include "molassembler/Shapes/Properties.h"
+#include "molassembler/Shapes/Data.h"
+#include "molassembler/Temple/Adaptors/AllPairs.h"
+#include "molassembler/Temple/Functor.h"
+#include "molassembler/Temple/Functional.h"
+#include "molassembler/Temple/Permutations.h"
+#include "molassembler/Temple/Stringify.h"
 
 namespace Scine {
 namespace stereopermutation {

@@ -8,8 +8,8 @@
 #ifndef INCLUDE_TEMPLE_TUPLE_TYPE_PAIRS_H
 #define INCLUDE_TEMPLE_TUPLE_TYPE_PAIRS_H
 
-#include "temple/constexpr/UpperTriangularMatrix.h"
-#include "temple/constexpr/TupleType.h"
+#include "molassembler/Temple/constexpr/UpperTriangularMatrix.h"
+#include "molassembler/Temple/constexpr/TupleType.h"
 
 namespace Scine {
 namespace temple {

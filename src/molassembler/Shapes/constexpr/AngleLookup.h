@@ -18,7 +18,7 @@
 #ifndef INCLUDE_SYMMETRIES_CONSTEXPR_ANGLES_H
 #define INCLUDE_SYMMETRIES_CONSTEXPR_ANGLES_H
 
-#include "temple/constexpr/UpperTriangularMatrix.h"
+#include "molassembler/Temple/constexpr/UpperTriangularMatrix.h"
 
 namespace Scine {
 

@@ -7,13 +7,13 @@
 #include <boost/test/results_collector.hpp>
 #include <boost/test/unit_test.hpp>
 
-#include "temple/Adaptors/Zip.h"
-#include "temple/Functional.h"
-#include "temple/Random.h"
-#include "temple/Stringify.h"
-#include "temple/constexpr/Array.h"
-#include "temple/constexpr/BTree.h"
-#include "temple/constexpr/Jsf.h"
+#include "molassembler/Temple/Adaptors/Zip.h"
+#include "molassembler/Temple/Functional.h"
+#include "molassembler/Temple/Random.h"
+#include "molassembler/Temple/Stringify.h"
+#include "molassembler/Temple/constexpr/Array.h"
+#include "molassembler/Temple/constexpr/BTree.h"
+#include "molassembler/Temple/constexpr/Jsf.h"
 
 #include <set>
 #include <iostream>

@@ -21,10 +21,10 @@
 
 #include "boost/math/tools/roots.hpp"
 
-#include "temple/Adaptors/Transform.h"
-#include "temple/Adaptors/SequentialPairs.h"
-#include "temple/Functional.h"
-#include "temple/constexpr/Numeric.h"
+#include "molassembler/Temple/Adaptors/Transform.h"
+#include "molassembler/Temple/Adaptors/SequentialPairs.h"
+#include "molassembler/Temple/Functional.h"
+#include "molassembler/Temple/constexpr/Numeric.h"
 
 #include <cmath>
 #include <array>

@@ -10,8 +10,8 @@
 #ifndef INCLUDE_MOLASSEMBLER_TEMPLE_BITSET_H
 #define INCLUDE_MOLASSEMBLER_TEMPLE_BITSET_H
 
-#include "temple/constexpr/Math.h"
-#include "temple/constexpr/Array.h"
+#include "molassembler/Temple/constexpr/Math.h"
+#include "molassembler/Temple/constexpr/Array.h"
 
 namespace Scine {
 namespace temple {

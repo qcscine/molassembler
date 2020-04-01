@@ -11,8 +11,8 @@
 
 #include "Utils/Geometry/ElementInfo.h"
 
-#include "temple/Stringify.h"
-#include "shapes/Data.h"
+#include "molassembler/Temple/Stringify.h"
+#include "molassembler/Shapes/Data.h"
 
 using namespace std::string_literals;
 

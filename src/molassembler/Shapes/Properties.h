@@ -13,8 +13,8 @@
 #include "Eigen/Core"
 #include "boost/optional/optional_fwd.hpp"
 
-#include "shapes/Data.h"
-#include "shapes/Shapes.h"
+#include "molassembler/Shapes/Data.h"
+#include "molassembler/Shapes/Shapes.h"
 
 #include <set>
 #include <vector>

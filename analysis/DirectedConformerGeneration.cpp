@@ -12,7 +12,7 @@
 #include "molassembler/DirectedConformerGenerator.h"
 #include "molassembler/IO.h"
 #include "molassembler/Molecule.h"
-#include "temple/Stringify.h"
+#include "molassembler/Temple/Stringify.h"
 
 using namespace std::string_literals;
 using namespace Scine;

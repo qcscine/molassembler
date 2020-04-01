@@ -17,12 +17,12 @@
 #include "molassembler/Options.h"
 #include "molassembler/Graph/PrivateGraph.h"
 
-#include "temple/Random.h"
+#include "molassembler/Temple/Random.h"
 
 #ifdef MOLASSEMBLER_EXPLICIT_GRAPH_USE_SPECIALIZED_GOR1_ALGORITHM
 #include "molassembler/DistanceGeometry/Gor1.h"
 #else
-#include "gor1/Gor1.h"
+#include "molassembler/Graph/Gor1.h"
 #endif
 
 

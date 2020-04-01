@@ -10,7 +10,7 @@
 #ifndef INCLUDE_MOLASSEMBLER_TEMPLE_RANDOM_H
 #define INCLUDE_MOLASSEMBLER_TEMPLE_RANDOM_H
 
-#include "temple/Traits.h"
+#include "molassembler/Temple/Traits.h"
 
 #include <algorithm>
 #include <array>

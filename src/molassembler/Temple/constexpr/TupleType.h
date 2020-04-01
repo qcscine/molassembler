@@ -8,7 +8,7 @@
 #ifndef INCLUDE_MOLASSEMBLER_TEMPLE_CONSTEXPR_TUPLE_TYPE_H
 #define INCLUDE_MOLASSEMBLER_TEMPLE_CONSTEXPR_TUPLE_TYPE_H
 
-#include "temple/constexpr/Array.h"
+#include "molassembler/Temple/constexpr/Array.h"
 
 #include <tuple>
 

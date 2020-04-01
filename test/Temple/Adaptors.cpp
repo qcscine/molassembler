@@ -6,10 +6,10 @@
 
 #include <boost/test/unit_test.hpp>
 
-#include "temple/Adaptors/All.h"
-#include "temple/Functional.h"
-#include "temple/Stringify.h"
-#include "temple/constexpr/Numeric.h"
+#include "molassembler/Temple/Adaptors/All.h"
+#include "molassembler/Temple/Functional.h"
+#include "molassembler/Temple/Stringify.h"
+#include "molassembler/Temple/constexpr/Numeric.h"
 
 #include <iostream>
 

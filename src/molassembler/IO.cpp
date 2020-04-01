@@ -21,7 +21,7 @@
 #include "Utils/IO/ChemicalFileFormats/ChemicalFileHandler.h"
 #include "Utils/IO/ChemicalFileFormats/OpenBabelStreamHandler.h"
 
-#include "temple/Random.h"
+#include "molassembler/Temple/Random.h"
 
 #include <fstream>
 #include <iomanip>

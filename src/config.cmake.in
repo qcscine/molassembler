@@ -1,7 +1,9 @@
 include(CMakeFindDependencyMacro)
 
-find_dependency(molassembler COMPONENTS RingDecomposerLib boost_outcome temple shapes stereopermutation nauty REQUIRED)
-find_dependency(Scine COMPONENTS UtilsOS REQUIRED)
+find_dependency(RingDecomposerLib REQUIRED)
+find_dependency(nauty REQUIRED)
+find_dependency(Outcome REQUIRED)
+find_dependency(ScineUtilsOS REQUIRED)
 
 if(NOT TARGET Boost::filesystem OR NOT TARGET Boost::system)
   unset(Boost_FOUND)
@@ -14,7 +16,7 @@ endif()
 
 set(MOLASSEMBLER_VERSION @molassembler_VERSION@)
 
-include(${CMAKE_CURRENT_LIST_DIR}/molassemblerTargets.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/ScineMolassemblerTargets.cmake)
 
 @PACKAGE_INIT@
 set_and_check(MOLASSEMBLER_INCLUDE_DIR "@PACKAGE_INCLUDE_INSTALL_DIR@")

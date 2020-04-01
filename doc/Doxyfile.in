@@ -795,12 +795,7 @@ WARN_LOGFILE           = doxygen.errlog
 # spaces. See also FILE_PATTERNS and EXTENSION_MAPPING
 # Note: If this tag is empty the current directory is searched.
 
-INPUT                  = @molassembler_SOURCE_DIR@/src/shapes/lib/shapes \
-                         @molassembler_SOURCE_DIR@/src/cyclic_polygons/CyclicPolygons.h \
-                         @molassembler_SOURCE_DIR@/src/gor1/gor1 \
-                         @molassembler_SOURCE_DIR@/src/molassembler/lib/molassembler \
-                         @molassembler_SOURCE_DIR@/src/stereopermutation/lib/stereopermutation \
-                         @molassembler_SOURCE_DIR@/src/temple/lib/temple \
+INPUT                  = @molassembler_SOURCE_DIR@/src/molassembler/ \
                          @molassembler_SOURCE_DIR@/doc/manual.dox
 
 # This tag can be used to specify the character encoding of the source files

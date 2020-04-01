@@ -9,9 +9,9 @@
 #include "boost/filesystem.hpp"
 #include "boost/test/unit_test.hpp"
 
-#include "temple/Stringify.h"
-#include "temple/Functional.h"
-#include "temple/constexpr/Numeric.h"
+#include "molassembler/Temple/Stringify.h"
+#include "molassembler/Temple/Functional.h"
+#include "molassembler/Temple/constexpr/Numeric.h"
 
 #include "molassembler/IO.h"
 #include "molassembler/Cycles.h"

@@ -8,9 +8,9 @@
 #ifndef INCLUDE_MOLASSEMBLER_TEMPLE_FILTER_ADAPTOR_H
 #define INCLUDE_MOLASSEMBLER_TEMPLE_FILTER_ADAPTOR_H
 
-#include "temple/ContainerTraits.h"
-#include "temple/Binding.h"
-#include "temple/constexpr/TupleType.h"
+#include "molassembler/Temple/ContainerTraits.h"
+#include "molassembler/Temple/Binding.h"
+#include "molassembler/Temple/constexpr/TupleType.h"
 #include <cassert>
 
 namespace Scine {

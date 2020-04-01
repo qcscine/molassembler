@@ -4,14 +4,14 @@
  *   See LICENSE.txt
  */
 
-#include "shapes/InertialMoments.h"
+#include "molassembler/Shapes/InertialMoments.h"
 
-#include "shapes/CoordinateSystemTransformation.h"
-#include "shapes/ContinuousMeasures.h"
+#include "molassembler/Shapes/CoordinateSystemTransformation.h"
+#include "molassembler/Shapes/ContinuousMeasures.h"
 #include <Eigen/Eigenvalues>
 
-#include "temple/Functional.h"
-#include "temple/Adaptors/Iota.h"
+#include "molassembler/Temple/Functional.h"
+#include "molassembler/Temple/Adaptors/Iota.h"
 
 namespace Scine {
 namespace shapes {

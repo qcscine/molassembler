@@ -4,22 +4,21 @@
  *   See LICENSE.txt
  */
 
-#define BOOST_TEST_MODULE CyclicPolygonsTests
 #include <boost/test/unit_test.hpp>
 
-#include "CyclicPolygons.h"
+#include "molassembler/Detail/CyclicPolygons.h"
 
-#include "temple/Random.h"
-#include "temple/Stringify.h"
-#include "temple/constexpr/Jsf.h"
+#include "molassembler/Temple/Random.h"
+#include "molassembler/Temple/Stringify.h"
+#include "molassembler/Temple/constexpr/Jsf.h"
 
 #include <iostream>
 #include <fstream>
 
 using namespace Scine;
-temple::Generator<> generator;
-
 using namespace std::string_literals;
+
+extern temple::Generator<> generator;
 
 void writeAngleAnalysisFiles(
   const std::vector<double>& edgeLengths,
