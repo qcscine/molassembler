@@ -1,9 +1,0 @@
-include(CMakeFindDependencyMacro)
-find_dependency(Eigen3 3.1.1 REQUIRED)
-
-include(${CMAKE_CURRENT_LIST_DIR}/templeTargets.cmake)
-
-@PACKAGE_INIT@
-set_and_check(TEMPLE_INCLUDE_DIR "@PACKAGE_INCLUDE_INSTALL_DIR@")
-
-check_required_components(TEMPLE)
