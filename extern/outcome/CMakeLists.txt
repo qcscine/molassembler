@@ -38,6 +38,7 @@ target_include_directories(outcome INTERFACE
 
 install(TARGETS outcome EXPORT outcomeTargets)
 
+include(CMakePackageConfigHelpers)
 write_basic_package_version_file(
   "${CMAKE_CURRENT_BINARY_DIR}/OutcomeConfigVersion.cmake"
   VERSION ${Outcome_VERSION}
