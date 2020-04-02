@@ -1,6 +1,6 @@
 # Needs a refactor
-./molassembler/lib/molassembler/Molecule/RankingTree.h: Scine::molassembler::RankingTree::runBFS_
-./molassembler/lib/molassembler/Molecule/RankingTree.cpp: Scine::molassembler::RankingTree::auxiliaryApplySequenceRules_
-./molassembler/lib/molassembler/Molecule/RankingTree.cpp: Scine::molassembler::RankingTree::applySequenceRules_
-./molassembler/lib/molassembler/Molecule/RankingTree.cpp: Scine::molassembler::RankingTree::RankingTree
-./molassembler/lib/molassembler/IO/SmilesMoleculeBuilder.cpp: Scine::molassembler::io::MoleculeBuilder::setBondStereo
+./molassembler/Molecule/RankingTree.h: Scine::molassembler::RankingTree::runBFS_
+./molassembler/Molecule/RankingTree.cpp: Scine::molassembler::RankingTree::auxiliaryApplySequenceRules_
+./molassembler/Molecule/RankingTree.cpp: Scine::molassembler::RankingTree::applySequenceRules_
+./molassembler/Molecule/RankingTree.cpp: Scine::molassembler::RankingTree::RankingTree
+./molassembler/IO/SmilesMoleculeBuilder.cpp: Scine::molassembler::io::MoleculeBuilder::setBondStereo

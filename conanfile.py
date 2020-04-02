@@ -79,9 +79,16 @@ class MolassemblerConan(ConanFile):
         "microarch": "none"
     }
     generators = "cmake"
-    exports_sources = ["src/*", "CMakeLists.txt",
-                       ".conan_include.cmake", "doc/*"]
-    requires = [("scine_utilities/[~=2.1.0]@ci/develop")]
+    exports_sources = [
+        "cmake/*",
+        "src/*",
+        "doc/*",
+        "tests/*",
+        "python/*",
+        "CMakeLists.txt",
+        ".conan_include.cmake",
+    ]
+    requires = "scine_utilities/[~=2.1.0]@ci/develop"
     revision_mode = "scm"
 
     _cmake = None
