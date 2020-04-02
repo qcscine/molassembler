@@ -24,7 +24,11 @@ target_link_libraries(MolassemblerTests
 )
 target_compile_options(MolassemblerTests PRIVATE ${MOLASSEMBLER_CXX_FLAGS})
 target_include_directories(MolassemblerTests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-add_test(NAME Molassembler COMMAND MolassemblerTests)
+add_test(
+  NAME Molassembler
+  COMMAND MolassemblerTests
+  WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/data
+)
 
 include(LibType)
 determine_lib_type(Boost::unit_test_framework)
