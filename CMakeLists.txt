@@ -67,13 +67,12 @@ endif()
 include(ImportUtilsOS)
 import_utils_os()
 include(CompilerSpecificSetup)
-include(TargetLinkEigen)
+include(AddEigen)
 set(Boost_USE_MULTITHREADED ON)
 find_package(Boost
   COMPONENTS regex unit_test_framework program_options filesystem system
   QUIET
 )
-include(MolassemblerUtils)
 
 # Subdirectories
 add_subdirectory(extern)

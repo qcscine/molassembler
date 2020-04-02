@@ -58,7 +58,7 @@ else()
       $<TARGET_PROPERTY:Boost::boost,INTERFACE_INCLUDE_DIRECTORIES>
   )
 endif()
-target_link_eigen(molassembler_obj PRIVATE)
+add_eigen(molassembler_obj PRIVATE)
 target_compile_options(molassembler_obj PRIVATE
   ${MOLASSEMBLER_CXX_FLAGS}
   $<$<BOOL:${OpenMP_CXX_FOUND}>:${OpenMP_CXX_FLAGS}>
@@ -117,37 +117,37 @@ function(molassembler_library_links target_name)
       $<$<BOOL:${OpenMP_CXX_FOUND}>:OpenMP::OpenMP_CXX>
   )
 
-  target_link_eigen(${target_name} PUBLIC)
+  add_eigen(${target_name} PUBLIC)
 endfunction()
 
 # Main library, of type as determined by BUILD_SHARED_LIBS
-add_library(molassembler
+add_library(Molassembler
   $<TARGET_OBJECTS:molassembler_obj>
   ${CMAKE_CURRENT_BINARY_DIR}/molassembler/Version.h
   ${CMAKE_CURRENT_BINARY_DIR}/molassembler/Export.h
 )
-molassembler_includes_and_properties(molassembler)
-molassembler_library_links(molassembler)
-add_library(molassembler::molassembler ALIAS molassembler)
+molassembler_includes_and_properties(Molassembler)
+molassembler_library_links(Molassembler)
+add_library(Scine::Molassembler ALIAS Molassembler)
 
 if(BUILD_SHARED_LIBS)
   # If molassembler is shared, we still need a static variant for linking into
   # the tests and other binaries that hook deeper into molassembler than the
   # public API
-  add_library(molassembler_static STATIC
+  add_library(MolassemblerStatic STATIC
     $<TARGET_OBJECTS:molassembler_obj>
     ${CMAKE_CURRENT_BINARY_DIR}/molassembler/Version.h
     ${CMAKE_CURRENT_BINARY_DIR}/molassembler/Export.h
   )
-  molassembler_includes_and_properties(molassembler_static)
-  molassembler_library_links(molassembler_static)
-  add_library(molassembler::molassembler_static ALIAS molassembler_static)
+  molassembler_includes_and_properties(MolassemblerStatic)
+  molassembler_library_links(MolassemblerStatic)
+  add_library(Scine::MolassemblerStatic ALIAS MolassemblerStatic)
 
   # Target name for others to hook into where needed
-  set(MOLASSEMBLER_STATIC_TARGET molassembler_static PARENT_SCOPE)
+  set(MOLASSEMBLER_STATIC_TARGET MolassemblerStatic PARENT_SCOPE)
 else()
   # If molassembler is static, then that's all we need
-  set(MOLASSEMBLER_STATIC_TARGET molassembler PARENT_SCOPE)
+  set(MOLASSEMBLER_STATIC_TARGET Molassembler PARENT_SCOPE)
 endif()
 
 # Package version and config file
@@ -173,7 +173,7 @@ install(
 
 # Target .cmake file
 install(
-  TARGETS molassembler
+  TARGETS Molassembler
   EXPORT molassemblerTargets
   DESTINATION lib
 )

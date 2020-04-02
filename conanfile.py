@@ -80,7 +80,9 @@ class MolassemblerConan(ConanFile):
     }
     generators = "cmake"
     exports_sources = [
+        "dev/cmake/*",
         "cmake/*",
+        "extern/*",
         "src/*",
         "doc/*",
         "test/*",
