@@ -1,7 +1,3 @@
-if(NOT SCINE_BUILD_PYTHON_BINDINGS)
-  return()
-endif()
-
 include(ImportPybind11)
 import_pybind11()
 set(PYBIND11_PYTHON_VERSION ${PYTHONVERSION})

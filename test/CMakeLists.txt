@@ -1,7 +1,3 @@
-if(NOT SCINE_BUILD_TESTS)
-  return()
-endif()
-
 if(NOT TARGET Boost::unit_test_framework
     OR NOT TARGET Boost::regex
     OR NOT TARGET Boost::filesystem

@@ -1,8 +1,3 @@
-# Early return in case validation tests are not to be compiled
-if(NOT MOLASSEMBLER_VALIDATION)
-  return()
-endif()
-
 if(NOT TARGET Boost::unit_test_framework OR NOT TARGET Boost::regex)
   find_package(Boost REQUIRED COMPONENTS unit_test_framework regex QUIET)
 endif()

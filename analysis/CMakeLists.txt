@@ -1,8 +1,3 @@
-# Early return in case analysis binaries are not to be compiled
-if(NOT MOLASSEMBLER_ANALYSIS)
-  return()
-endif()
-
 if(NOT TARGET Boost::regex
   OR NOT TARGET Boost::program_options
   OR NOT TARGET Boost::system

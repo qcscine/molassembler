@@ -83,7 +83,7 @@ class MolassemblerConan(ConanFile):
         "cmake/*",
         "src/*",
         "doc/*",
-        "tests/*",
+        "test/*",
         "python/*",
         "CMakeLists.txt",
         ".conan_include.cmake",

@@ -1,7 +1,3 @@
-if(NOT SCINE_BUILD_DOCS)
-  return()
-endif()
-
 # Check for Doxygen, if not found, return
 find_package(Doxygen)
 if(NOT DOXYGEN_FOUND)
