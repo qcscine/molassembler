@@ -1,138 +1,39 @@
 variables:
   GIT_SUBMODULE_STRATEGY: recursive
+  GIT_DEPTH: 1
+  CONAN_CREATE_OPTIONS: "-o scine_molassembler:python=True -o scine_molassembler:tests=True -o scine_molassembler:docs=True"
+  CONAN_PYPI_OPTIONS: "-o scine_molassembler:python=True -o scine_utilities:shared=False -o scine_molassembler:shared=False"
+  GCOVR_OPTIONS: "-r src/ -u --object-directory=build/src/"
 
-.ssh_setup: &ssh_setup
-- which ssh-agent || (which yum && yum install openssh-clients -y) || (which apt-get && apt-get install openssh-client -y)
-- eval $(ssh-agent -s)
-- echo $SCINE_DEPLOY_KEY | base64 -d | ssh-add -
-- mkdir -p ~/.ssh
-- chmod 700 ~/.ssh
-- echo $SCINE_DEPLOY_HOSTS | base64 -d > ~/.ssh/known_hosts
+include:
+  - project: 'scine/development-utils'
+    file: '/ci/jobs.yml'
 
-.update_alternatives: &update_alternatives
-- python --version
-- update-alternatives --install /usr/bin/python python $(which python2) 1
-- update-alternatives --install /usr/bin/python python $(which python3) 2
-- python --version
+conan-gcc:
+  extends:
+    - .gcc
+    - .conan_create
 
-.conan_setup: &conan_setup
-- export CONAN_REVISIONS_ENABLED=1
-- python --version
-- python -m pip install --upgrade conan sphinx sphinx_rtd_theme pytest numpy
-- conan remote add ci-internal $SCINE_DEPLOY_ARTIFACTORY_URL
-- conan user -p $SCINE_DEPLOY_ARTIFACTORY_PASSWORD -r ci-internal $SCINE_DEPLOY_ARTIFACTORY_USERNAME
+conan-clang:
+  extends:
+    - .clang
+    - .conan_create
 
-default:
-  before_script:
-    - *ssh_setup
-    - *update_alternatives
-    - *conan_setup
+conan-coverage:
+  extends:
+    - .conan_coverage
 
-# Builds
-coverage:
-  tags:
-    - default_docker
-  image: gitlab.chab.ethz.ch:4567/reiher/docker/scine-gcc:latest
-  script:
-    - python -m pip install --upgrade gcovr
-    - mkdir -p build && cd build
-    - conan install -o scine_molassembler:python=True -o scine_molassembler:tests=True -o scine_molassembler:docs=True -o scine_molassembler:coverage=True -s scine_molassembler:build_type=Debug ..
-    - conan build ..
-    - cd ..
-    - python3 -m gcovr -r "$(pwd)/src/" -u --object-directory="$(pwd)/build/src/" --html --html-details -o coverage.html
-    - python3 -m gcovr -r "$(pwd)/src/" -u --object-directory="$(pwd)/build/src/" 
-  coverage: '/^TOTAL.*\s+(\d+\%)$/'
-  artifacts:
-    expire_in: 1 day
-    paths:
-    - coverage*.html
+pypi-cp36:
+  extends:
+    - .pypi
 
-.conan_create: &conan_create
-  tags:
-    - default_docker
-  script:
-    - python --version
-    - conan create -o scine_molassembler:python=True -o scine_molassembler:docs=True -o scine_molassembler:tests=True --build=missing --build=scine_molassembler . ci/$CI_COMMIT_REF_SLUG
-    - if $CI_COMMIT_REF_PROTECTED; then conan upload `conan search scine_molassembler | tail -n1` --all -r ci-internal -c; fi
-
-gcc-release:
-  <<: *conan_create
-  image: gitlab.chab.ethz.ch:4567/reiher/docker/scine-gcc:latest
-
-
-clang-release:
-  <<: *conan_create
-  image: gitlab.chab.ethz.ch:4567/reiher/docker/scine-clang:latest
-
-
-# PyPI manylinux python packages
-.pypi_build: &pypi_build
-  tags:
-    - default_docker
-  image: quay.io/pypa/manylinux2014_x86_64
-  before_script:
-    - *ssh_setup
-    - echo "Python build with ABI $PYABI"
-    - /opt/python/$PYABI/bin/python -m venv $PYABI
-    - source $PYABI/bin/activate
-    - *conan_setup
-  script:
-    - python -m pip install wheel
-    - mkdir -p build && cd build
-    - conan install -o scine_molassembler:python=True -o scine_utilities:shared=False -o scine_molassembler:shared=False --build=missing ..
-    - conan build ..
-    - cd python
-    - python setup.py bdist_wheel
-    - auditwheel show dist/*.whl
-    - auditwheel repair dist/*.whl
-    - cd wheelhouse && python -c 'import sys, os; n=os.listdir()[0]; os.rename(n, n.replace("py3-none", sys.argv[1]))' $PYABI
-  artifacts:
-    expire_in: 1 day
-    paths:
-    - build/src/molassembler/python/wheelhouse
-
-pypi:
-  <<: *pypi_build
-  variables:
-    PYABI: cp36-cp36m
-
-
-# Missing three python abi builds on master
-pypi-cp35:
-  <<: *pypi_build
-  only:
-    - master
-  variables:
-    PYABI: cp35-cp35m
-
-pypi-cp37:
-  <<: *pypi_build
-  only:
-    - master
-  variables:
-    PYABI: cp37-cp37m
-
-pypi-cp38:
-  <<: *pypi_build
-  only:
-    - master
-  variables:
-    PYABI: cp38-cp38m
-
-# Quality
 license:
-  tags:
-    - default_docker
-  image: gitlab.chab.ethz.ch:4567/reiher/docker/scine-gcc:latest
-  before_script:
-    - echo "Skip before_script"
-  script:
-    - bash scripts/license_validity_check.sh
+  extends: .license
+
 
 complexity:
-  tags:
-    - default_docker
-  image: gitlab.chab.ethz.ch:4567/reiher/docker/scine-gcc:latest
+  extends:
+    .gcc
   before_script:
     - echo "Skip before_script"
   script:
@@ -144,3 +45,29 @@ complexity:
     expire_in: 1 day
     paths:
       - src/lizard.html
+
+
+# Missing three python ABI builds on master
+pypi-cp35:
+  extends:
+    - .manylinux
+  only:
+    - master
+  variables:
+    PYABI: cp35-cp35m
+
+pypi-cp37:
+  extends:
+    - .manylinux
+  only:
+    - master
+  variables:
+    PYABI: cp37-cp37m
+
+pypi-cp38:
+  extends:
+    - .manylinux
+  only:
+    - master
+  variables:
+    PYABI: cp38-cp38m
