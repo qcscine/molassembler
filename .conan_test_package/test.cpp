@@ -1,9 +1,10 @@
-#include "Utils/Geometry/ElementInfo.h"
+#include "molassembler/Types.h"
 
-using namespace Scine::Utils;
+using namespace Scine::molassembler;
 
 int main() {
-  if(ElementInfo::element(1) == ElementType::H) {
+  BondIndex f {4, 3};
+  if(f.first == 3) {
     return 0;
   }
 

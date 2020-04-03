@@ -1,6 +1,1 @@
 include(${CMAKE_CURRENT_LIST_DIR}/RingDecomposerLibTargets.cmake)
-
-@PACKAGE_INIT@
-set_and_check(RDL_INCLUDE_DIR "@PACKAGE_INCLUDE_INSTALL_DIR@")
-
-check_required_components(RDL)

@@ -1,5 +1,5 @@
 import os
-from conans import ConanFile, CMake
+from conans import ConanFile, CMake, tools
 
 
 def conan_paths_str(build_folder):
@@ -9,12 +9,15 @@ def conan_paths_str(build_folder):
 class TestPackageConan(ConanFile):
     settings = "os", "compiler", "build_type", "arch"
     generators = "cmake_paths"
-    build_requires = [("cmake_installer/[~=3.13.4]@conan/stable")]
     exports_sources = "CMakeLists.txt", "test.cpp"
+
+    def build_requirements(self):
+        if not tools.which("cmake") or CMake.get_version() < "3.13.4":
+            self.build_requires("cmake_installer/[~=3.13.4]@conan/stable")
 
     def _configure(self):
         cmake = CMake(self)
-        cmake.definitions["CMAKE_PROJECT_UtilsTestPackage_INCLUDE"] = conan_paths_str(
+        cmake.definitions["CMAKE_PROJECT_MolassemblerTestPackage_INCLUDE"] = conan_paths_str(
             self.build_folder)
         cmake.configure()
         return cmake
