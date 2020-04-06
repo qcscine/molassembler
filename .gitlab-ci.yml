@@ -28,7 +28,9 @@ pypi-cp36:
     - .pypi
 
 license:
-  extends: .license
+  extends: .clang
+  script:
+    - x=0; for f in $(find src -name "*.h" -or -name "*.cpp"); do grep "@copyright" &> /dev/null $f; x=$(($x | $?)); done; exit $x
 
 
 complexity:

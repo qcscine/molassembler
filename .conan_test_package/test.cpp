@@ -4,6 +4,7 @@ using namespace Scine::molassembler;
 
 int main() {
   BondIndex f {4, 3};
+
   if(f.first == 3) {
     return 0;
   }
