@@ -202,7 +202,7 @@ PURITY_STRONG constexpr T lnSeries(const T x) {
  */
 template<typename T>
 PURITY_STRONG constexpr T asinApprox(const T x) {
-  if(!(0.0 < x && x <= 1.0)) {
+  if(!(0.0 <= x && x <= 1.0)) {
     throw "Asin approximation domain error: only applicable for 0 < x < 1!";
   }
 
@@ -422,7 +422,7 @@ PURITY_STRONG constexpr traits::enableIfFloatingWithReturn<T, T> asin(const T x)
   }
 
   if(temple::Math::abs(x) > 0.92) {
-    return (x > 0) ? detail::asinApprox(x) : -detail::asinApprox(-x);
+    return (x >= 0) ? detail::asinApprox(x) : -detail::asinApprox(-x);
   }
 
   const T epsilon = std::numeric_limits<T>::epsilon();
@@ -441,7 +441,7 @@ PURITY_STRONG constexpr traits::enableIfFloatingWithReturn<T, T> asin(const T x)
     ) * pow(x, 2 * n + 1) / (2 * n + 1);
 
     if(traits::isnan(term)) {
-      break;
+      throw "Implementation failed!";
     }
 
     value += term;

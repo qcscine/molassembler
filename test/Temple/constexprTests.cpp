@@ -93,7 +93,7 @@ BOOST_AUTO_TEST_CASE( mathApproxEqual ) {
   );
 
   // sqrt
-  auto sqrt_failures = temple::copy_if(
+  const auto sqrt_failures = temple::copy_if(
     temple::random::getN<double>(0, 1e6, numTests, generator.engine),
     [&](const double randomPositiveNumber) -> bool {
       return !temple::floating::isCloseRelative(
@@ -123,13 +123,13 @@ BOOST_AUTO_TEST_CASE( mathApproxEqual ) {
 
   // asin
   const auto randomInverseTrigNumbers = temple::random::getN<double>(
-    -1 + std::numeric_limits<double>::epsilon(),
-    1 - std::numeric_limits<double>::epsilon(),
+    std::nexttoward(-1.0, 0.0),
+    std::nexttoward(1.0, 0.0),
     numTests,
     generator.engine
   );
 
-  auto asin_failures = temple::copy_if(
+  const auto asin_failures = temple::copy_if(
     randomInverseTrigNumbers,
     [&](const double randomInverseTrigNumber) -> bool {
       return !temple::floating::isCloseRelative(
@@ -161,11 +161,7 @@ BOOST_AUTO_TEST_CASE( mathApproxEqual ) {
     const double test = temple::Math::pow(number, exponent);
     const double reference = std::pow(number, exponent);
 
-    bool passes = temple::floating::isCloseRelative(
-      test,
-      reference,
-      accuracy
-    );
+    bool passes = temple::floating::isCloseRelative(test, reference, accuracy);
 
     if(!passes) {
       std::cout << "  x = " << std::setw(12) << number
@@ -173,12 +169,8 @@ BOOST_AUTO_TEST_CASE( mathApproxEqual ) {
         << ", pow = " << std::setw(12) << test
         << ", std::pow = " << std::setw(12) << reference
         << ", |Δ| = " << std::setw(12) << std::fabs(test - reference) << ", max permissible diff: "
-        << (
-          accuracy * std::max(
-            std::fabs(test),
-            std::fabs(reference)
-          )
-        ) << std::endl;
+        << accuracy * std::max(std::fabs(test), std::fabs(reference))
+        << std::endl;
     }
 
     return passes;
@@ -198,11 +190,7 @@ BOOST_AUTO_TEST_CASE( mathApproxEqual ) {
     const double test = temple::Math::recPow(number, exponent);
     const double reference = std::pow(number, exponent);
 
-    bool passes = temple::floating::isCloseRelative(
-      test,
-      reference,
-      accuracy
-    );
+    bool passes = temple::floating::isCloseRelative(test, reference, accuracy);
 
     if(!passes) {
       std::cout << "  x = " << std::setw(12) << number
@@ -210,12 +198,8 @@ BOOST_AUTO_TEST_CASE( mathApproxEqual ) {
         << ", recPow = " << std::setw(12) << test
         << ", std::pow = " << std::setw(12) << reference
         << ", |Δ| = " << std::setw(12) << std::fabs(test - reference) << ", max permissible diff: "
-        << (
-          accuracy * std::max(
-            std::fabs(test),
-            std::fabs(reference)
-          )
-        ) << std::endl;
+        << accuracy * std::max(std::fabs(test), std::fabs(reference))
+        << std::endl;
     }
 
     return passes;
