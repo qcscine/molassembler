@@ -47,9 +47,9 @@ This library requires the C++14 standard.
 
 Dependencies:
 
-- SCINE Utils (BSD-3 license) > 1.0.0
-- Boost (Boost license) >= 1.64 (lowest tested, prefer recent)
-- Eigen (MPL 2.0 license) >= 3
+- SCINE Utils (BSD-3 license) > 2.1.0
+- Boost (Boost license) >= 1.65 (lowest tested, prefer recent)
+- Eigen (MPL 2.0 license) >= 3.3.2
 - (BLAS library, added if detected during compilation)
 
 
