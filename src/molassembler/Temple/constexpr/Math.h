@@ -441,7 +441,7 @@ PURITY_STRONG constexpr traits::enableIfFloatingWithReturn<T, T> asin(const T x)
     ) * pow(x, 2 * n + 1) / (2 * n + 1);
 
     if(traits::isnan(term)) {
-      throw "Implementation failed!";
+      break;
     }
 
     value += term;
