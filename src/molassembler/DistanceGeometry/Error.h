@@ -1,7 +1,7 @@
 /*!@file
  * @copyright This code is licensed under the 3-clause BSD license.
  *   Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
- *   See LICENSE.txt
+ *   See LICENSE.txt for details.
  * @brief Defines DG result type error categories and strings for boost::outcome
  *
  * Contains the DG error_category definitions for use with boost::outcome

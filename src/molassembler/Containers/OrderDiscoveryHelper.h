@@ -1,7 +1,7 @@
 /*!@file
  * @copyright This code is licensed under the 3-clause BSD license.
  *   Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
- *   See LICENSE.txt
+ *   See LICENSE.txt for details.
  * @brief Graph class to help in gradual discovery of ordering relations
  *
  * Implements a class that aids in the gradual discovery of ordering relations

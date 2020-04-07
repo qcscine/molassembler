@@ -1,7 +1,7 @@
 /*!@file
  * @copyright This code is licensed under the 3-clause BSD license.
  *   Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
- *   See LICENSE.txt
+ *   See LICENSE.txt for details.
  * @brief 3D Vector class with some operations defined
  *
  * Provides a very basic \c constexpr three-dimensional vector class with some

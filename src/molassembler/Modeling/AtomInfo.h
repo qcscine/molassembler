@@ -1,7 +1,7 @@
 /*!@file
  * @copyright This code is licensed under the 3-clause BSD license.
  *   Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
- *   See LICENSE.txt
+ *   See LICENSE.txt for details.
  * @brief Element type information classes
  *
  * A set of electron-counting helper functions. We keep a dataset of s-p-d-f

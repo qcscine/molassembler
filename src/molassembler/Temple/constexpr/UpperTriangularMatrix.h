@@ -1,7 +1,7 @@
 /*!@file
  * @copyright This code is licensed under the 3-clause BSD license.
  *   Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
- *   See LICENSE.txt
+ *   See LICENSE.txt for details.
  * @brief Matrix-like class that stores only upper triangular part
  *
  * Provides a \c constexpr class that stores the data of an upper-triangular

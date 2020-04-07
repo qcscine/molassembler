@@ -2,7 +2,7 @@
  * @brief Engine wrapper around temple's JSF PRNG for centralized re-seeding
  * @copyright This code is licensed under the 3-clause BSD license.
  *   Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
- *   See LICENSE.txt
+ *   See LICENSE.txt for details.
  */
 
 #ifndef INCLUDE_MOLASSEMBLER_PRNG_H

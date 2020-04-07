@@ -1,7 +1,7 @@
 /*!@file
  * @copyright This code is licensed under the 3-clause BSD license.
  *   Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
- *   See LICENSE.txt
+ *   See LICENSE.txt for details.
  * @brief Traits definitions for use of ImplicitBoundsGraph with Boost Graph Library
  *
  * Includes graph trait, property map and property trait type definitions
