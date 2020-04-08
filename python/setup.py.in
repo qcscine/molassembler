@@ -45,7 +45,7 @@ setuptools.setup(
         "Topic :: Scientific/Engineering :: Chemistry"
     ],
     zip_safe=False,
-    install_requires=["numpy"],
+    install_requires=["numpy", "scine_utilities"],
     test_suite="pytest",
     tests_require=["pytest"],
     ext_modules=EmptyListWithLength()

@@ -83,7 +83,7 @@ if(PY_PIP)
   install(CODE
     "execute_process(
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-      COMMAND ${PYTHON_EXECUTABLE} -m pip install --prefix=${CMAKE_INSTALL_PREFIX} --upgrade .
+      COMMAND ${PYTHON_EXECUTABLE} -m pip install --prefix=${CMAKE_INSTALL_PREFIX} --upgrade --no-deps .
       RESULT_VARIABLE retcode
     )
     if(NOT \$\{retcode\} EQUAL 0)
