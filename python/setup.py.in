@@ -15,6 +15,14 @@ generate non-superposable stereopermutations as output.
 
 filelist = ["__init__.py", "scine_molassembler.so"@molassembler_PY_DEPS@]
 
+
+class EmptyListWithLength(list):
+    """ Makes the wheel a binary distribution and platlib compliant. """
+
+    def __len__(self):
+        return 1
+
+
 # Define the setup
 setuptools.setup(
     name="scine_molassembler",
@@ -39,5 +47,6 @@ setuptools.setup(
     zip_safe=False,
     install_requires=["numpy"],
     test_suite="pytest",
-    tests_require=["pytest"]
+    tests_require=["pytest"],
+    ext_modules=EmptyListWithLength()
 )
