@@ -34,8 +34,12 @@ endif()
 find_python_module(pip)
 if(PY_PIP)
   file(
-    COPY ${CMAKE_CURRENT_SOURCE_DIR}/__init__.py
+    COPY ${CMAKE_CURRENT_SOURCE_DIR}/pkginit.py
     DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/scine_molassembler
+  )
+  file(
+    RENAME ${CMAKE_CURRENT_BINARY_DIR}/scine_molassembler/pkginit.py
+    ${CMAKE_CURRENT_BINARY_DIR}/scine_molassembler/__init__.py
   )
 
   # Copy utils and core libraries into the package if utils is shared If utils
@@ -131,7 +135,7 @@ if(SCINE_BUILD_DOCS)
       if(PY_SCINE_UTILITIES OR SCINE_UTILS_PYTHON_BINARY_PATH)
         add_test(
           NAME PythonBindingsDoctest
-          COMMAND ${PYTHON_EXECUTABLE} -c "import sys, doctest, scine_molassembler; (f, _) = doctest.testmod(scine_molassembler.scine_molassembler); sys.exit(f > 0)"
+          COMMAND ${PYTHON_EXECUTABLE} -c "import sys, doctest, scine_molassembler; (f, _) = doctest.testmod(scine_molassembler); sys.exit(f > 0)"
           WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
         )
 
