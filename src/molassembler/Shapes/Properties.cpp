@@ -170,7 +170,7 @@ std::vector<std::vector<Vertex>> positionGroups(const shapes::Shape shape) {
         continue;
       }
 
-      // Now we have to figure out which vertices from b's loop aren't yet in a
+      // Figure out which vertices from b's loop aren't yet in a
       auto bLoopVertices = temple::sort(loopVertices(b, i));
       temple::inplace::sort(aLoopVertices);
       std::vector<Vertex> bVerticesNotInA;
@@ -182,7 +182,7 @@ std::vector<std::vector<Vertex>> positionGroups(const shapes::Shape shape) {
         std::back_inserter(bVerticesNotInA)
       );
 
-      // And now we have to add in any vertices from loops in a that bVerticesNotInA have
+      // Add in any vertices from loops in a that bVerticesNotInA have
       const unsigned t = bVerticesNotInA.size();
       for(Vertex j {0}; j < t; ++j) {
         for(Vertex k : loopVertices(a, bVerticesNotInA.at(j))) {
@@ -217,7 +217,7 @@ std::vector<std::vector<Vertex>> positionGroups(const shapes::Shape shape) {
   };
 
   // Extract all loop groups from a rotation
-  auto connectedComponents = [&nestedFind](const Permutation& rotation) -> IndexGroups {
+  auto connectedComponents = [&](const Permutation& rotation) -> IndexGroups {
     const unsigned R = rotation.size();
 
     IndexGroups groups;
@@ -227,26 +227,16 @@ std::vector<std::vector<Vertex>> positionGroups(const shapes::Shape shape) {
         continue;
       }
 
-      std::vector<Vertex> group {i};
-      Vertex j = rotation.at(i);
-      while(j != i) {
-        group.push_back(j);
-        j = rotation.at(j);
-      }
-
-      groups.push_back(group);
+      groups.push_back(loopVertices(rotation, i));
     }
 
     return groups;
   };
 
   // Merge all rotations and then calculate the connected components
+  const auto identity = temple::iota<Vertex>(S);
   return connectedComponents(
-    temple::accumulate(
-      rotations(shape),
-      temple::iota<Vertex>(S), // Identity occupation
-      merge
-    )
+    temple::accumulate(rotations(shape), identity, merge)
   );
 }
 

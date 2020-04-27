@@ -62,18 +62,18 @@ struct Inversion final : public SymmetryElement {
 struct Rotation final : public SymmetryElement {
   Rotation(
     const Eigen::Vector3d& passAxis,
-    const unsigned passN,
-    const unsigned passPower,
-    const bool passReflect
+    unsigned passN,
+    unsigned passPower,
+    bool passReflect
   );
 
   //! Construct a proper rotation symmetry element
-  static Rotation Cn(const Eigen::Vector3d& axis, const unsigned n, const unsigned power = 1);
+  static Rotation Cn(const Eigen::Vector3d& axis, unsigned n, unsigned power = 1);
   static inline Rotation Cn_z(const unsigned n, const unsigned power = 1) {
     return Cn(Eigen::Vector3d::UnitZ(), n, power);
   }
   //! Construct an improper rotation symmetry element
-  static Rotation Sn(const Eigen::Vector3d& axis, const unsigned n, const unsigned power = 1);
+  static Rotation Sn(const Eigen::Vector3d& axis, unsigned n, unsigned power = 1);
 
   //! Multiply this rotation element by another
   Rotation operator * (const Rotation& rhs) const;
@@ -134,10 +134,10 @@ using ElementsList = std::vector<std::unique_ptr<SymmetryElement>>;
  *
  * @return a list of symmetry elements
  */
-PURITY_WEAK ElementsList symmetryElements(const PointGroup group) noexcept;
+PURITY_WEAK ElementsList symmetryElements(PointGroup group) noexcept;
 
 //! Returns the number of symmetry elements in a point group
-unsigned order(const PointGroup group);
+unsigned order(PointGroup group);
 
 struct ElementGrouping {
   using ElementIndexGroups = std::vector<std::vector<unsigned>>;
@@ -158,7 +158,7 @@ using NpGroupingsMapType = std::unordered_map<
   unsigned,
   std::vector<ElementGrouping>,
   std::hash<unsigned>,
-  std::equal_to<unsigned>,
+  std::equal_to<>,
   Eigen::aligned_allocator<std::pair<const unsigned, std::vector<ElementGrouping>>>
 >;
 

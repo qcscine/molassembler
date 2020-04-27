@@ -55,7 +55,7 @@ void rotateCoordinates(
 
   // Adapted from https://math.stackexchange.com/q/476311
   // Cross product of the unit vectors
-  Eigen::Vector3d v = unitSource.cross(unitTarget);
+  const Eigen::Vector3d v = unitSource.cross(unitTarget);
 
   // Skew-symmetric cross product matrix
   Eigen::Matrix3d v_x;
@@ -64,7 +64,7 @@ void rotateCoordinates(
         -v.y(),  v.x(),      0;
 
   // Dot product (essentially the cosine of the angle for these unit vectors)
-  double c = unitSource.dot(unitTarget);
+  const double c = unitSource.dot(unitTarget);
 
   // Calculate the rotation matrix
   Eigen::Matrix3d rotation;
@@ -94,9 +94,9 @@ double dihedral(
   const Eigen::Vector3d& k,
   const Eigen::Vector3d& l
 ) {
-  Eigen::Vector3d a = j - i;
-  Eigen::Vector3d b = k - j;
-  Eigen::Vector3d c = l - k;
+  const Eigen::Vector3d a = j - i;
+  const Eigen::Vector3d b = k - j;
+  const Eigen::Vector3d c = l - k;
 
   return std::atan2(
     (

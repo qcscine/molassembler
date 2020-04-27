@@ -179,10 +179,8 @@ Uniques uniques(
   }
 
   const unsigned C = unordered.list.size();
-  std::vector<unsigned> order = temple::iota<unsigned>(C);
-  std::sort(
-    std::begin(order),
-    std::end(order),
+  const std::vector<unsigned> order = temple::sort(
+    temple::iota<unsigned>(C),
     [&](const unsigned i, const unsigned j) -> bool {
       return unordered.list.at(i) < unordered.list.at(j);
     }
@@ -199,7 +197,7 @@ Uniques uniques(
   }
 
   // Divide the weights by their gcd
-  unsigned d = gcd(ordered.weights);
+  const unsigned d = gcd(ordered.weights);
   for(unsigned& x : ordered.weights) {
     x /= d;
   }

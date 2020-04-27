@@ -167,10 +167,8 @@ struct NautySparseGraph {
      */
 
     // We use the hashes to order our vertices
-    lab = temple::iota<int>(nv);
-    std::sort(
-      std::begin(lab),
-      std::end(lab),
+    lab = temple::sort(
+      temple::iota<int>(nv),
       [&hashes](const int a, const int b) -> bool {
         return hashes.at(a) < hashes.at(b);
       }
@@ -180,9 +178,7 @@ struct NautySparseGraph {
     ptn = temple::map(
       temple::adaptors::sequentialPairs(lab),
       [&hashes](const int a, const int b) -> int {
-        return static_cast<int>(
-          hashes.at(a) == hashes.at(b)
-        );
+        return static_cast<int>(hashes.at(a) == hashes.at(b));
       }
     );
 

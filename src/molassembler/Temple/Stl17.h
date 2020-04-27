@@ -28,7 +28,7 @@ constexpr const T& clamp( const T& v, const T& lo, const T& hi ) {
     return clamp( v, lo, hi, std::less<T>() );
 }
 
-template <class T>
+template<class T>
 constexpr std::add_const_t<T>& as_const(T& t) noexcept {
     return t;
 }

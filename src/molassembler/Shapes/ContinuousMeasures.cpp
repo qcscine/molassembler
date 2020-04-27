@@ -68,9 +68,9 @@ Eigen::Matrix3d fitQuaternion(
 
   Eigen::Matrix4d b = Eigen::Matrix4d::Zero();
   // generate decomposable matrix per atom and add them
-  for(auto& iterPair : p) {
-    auto& statorCol = stator.col(iterPair.first);
-    auto& rotorCol = rotor.col(iterPair.second);
+  for(const auto& iterPair : p) {
+    const auto& statorCol = stator.col(iterPair.first);
+    const auto& rotorCol = rotor.col(iterPair.second);
 
     Eigen::Matrix4d a = Eigen::Matrix4d::Zero();
     a.block<1, 3>(0, 1) = (rotorCol - statorCol).transpose();
@@ -1307,7 +1307,7 @@ ShapeResult shapeHeuristics(
        * than the tracked minimal penalty, we can discard it already
        * as it can only increase
        */
-      double penalty = (
+      const double penalty = (
         (normalizedPositions.col(0) - rotatedShape.col(i)).squaredNorm()
         + (normalizedPositions.col(1) - rotatedShape.col(j)).squaredNorm()
         + (normalizedPositions.col(2) - rotatedShape.col(k)).squaredNorm()
@@ -1436,7 +1436,7 @@ ShapeResult shapeHeuristicsCentroidLast(
        * than the tracked minimal penalty, we can discard it already
        * as it can only increase
        */
-      double penalty = (
+      const double penalty = (
         (normalizedPositions.col(0) - rotatedShape.col(i)).squaredNorm()
         + (normalizedPositions.col(1) - rotatedShape.col(j)).squaredNorm()
         + (normalizedPositions.col(2) - rotatedShape.col(k)).squaredNorm()

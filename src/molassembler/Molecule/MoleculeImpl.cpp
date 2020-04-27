@@ -1111,7 +1111,7 @@ boost::optional<std::vector<AtomIndex>> Molecule::Impl::modularIsomorphism(
   const auto& thisBGL = adjacencies_.inner().bgl();
   const auto& otherBGL = other.adjacencies_.inner().bgl();
 
-  bool isomorphic = boost::isomorphism(
+  const bool isomorphic = boost::isomorphism(
     thisBGL,
     otherBGL,
     boost::make_safe_iterator_property_map(

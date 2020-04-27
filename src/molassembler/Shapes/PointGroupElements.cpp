@@ -338,15 +338,17 @@ Rotation Rotation::operator * (const Rotation& rhs) const {
   if(collinear(axis, rhs.axis)) {
     if(n == rhs.n) {
       return Rotation(axis, n, power + rhs.power, reflect xor rhs.reflect);
-    } else {
-      throw std::logic_error("Rotation data model cannot handle collinear multiplication of axes of different order n");
     }
-  } else if(orthogonal(axis, rhs.axis)) {
+
+    throw std::logic_error("Rotation data model cannot handle collinear multiplication of axes of different order n");
+  }
+
+  if(orthogonal(axis, rhs.axis)) {
     // Rotate rhs' axis by *this, but keep everything else
     return Rotation(matrix() * rhs.axis, rhs.n, rhs.power, rhs.reflect);
-  } else {
-    throw std::logic_error("Rotation data model cannot handle non-orthogonal multiplication of rotations");
   }
+
+  throw std::logic_error("Rotation data model cannot handle non-orthogonal multiplication of rotations");
 }
 
 SymmetryElement::Matrix Rotation::matrix() const {
