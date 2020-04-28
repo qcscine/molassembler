@@ -46,8 +46,6 @@ struct MolGraphWriter {
   /* Information */
   Utils::ElementType getElementType(PrivateGraph::Vertex vertexIndex) const;
 
-  void writeBondStereopermutatorNodes(std::ostream& os) const;
-
   // Global options
   void operator() (std::ostream& os) const;
 

@@ -47,60 +47,11 @@ std::vector<std::string> MolGraphWriter::bondStereopermutatorTooltips(const Bond
   return {};
 }
 
-void MolGraphWriter::writeBondStereopermutatorNodes(std::ostream& os) const {
-  if(stereopermutatorListPtr == nullptr) {
-    return;
-  }
-
-  for(
-    const auto& bondStereopermutator :
-    stereopermutatorListPtr->bondStereopermutators()
-  ) {
-    std::string state;
-    if(bondStereopermutator.assigned()) {
-      state = std::to_string(bondStereopermutator.assigned().value());
-    } else {
-      state = "u";
-    }
-
-    state += "/"s + std::to_string(bondStereopermutator.numAssignments());
-
-    std::string graphNodeName = "BS"
-      + std::to_string(bondStereopermutator.placement().first)
-      + std::to_string(bondStereopermutator.placement().second);
-
-    std::vector<std::string> tooltipStrings {bondStereopermutator.info()};
-
-    auto additionalTooltips = this->bondStereopermutatorTooltips(bondStereopermutator);
-    std::move(
-      std::begin(additionalTooltips),
-      std::end(additionalTooltips),
-      std::back_inserter(tooltipStrings)
-    );
-
-    os << "  " << graphNodeName << R"( [label=")" << state
-      << R"(", fillcolor="steelblue", shape="box", fontcolor="white", )"
-      << R"(tooltip=")"
-      << temple::condense(tooltipStrings, "&#10;"s)
-      << R"("];)" << "\n";
-
-    // Add connections to the vertices (although those don't exist yet)
-    os << "  " << graphNodeName << " -- " << bondStereopermutator.placement().first
-      << R"( [color="gray", dir="forward", len="2"];)"
-      << "\n";
-    os << "  " << graphNodeName << " -- " << bondStereopermutator.placement().second
-      << R"( [color="gray", dir="forward", len="2"];)"
-      << "\n";
-  }
-}
-
 // Global options
 void MolGraphWriter::operator() (std::ostream& os) const {
   os << "graph [fontname = \"Arial\", layout=\"neato\"];\n"
     << "node [fontname = \"Arial\", shape = circle, style = filled];\n"
     << "edge [fontname = \"Arial\"];\n";
-
-  writeBondStereopermutatorNodes(os);
 }
 
 // Vertex options
@@ -178,7 +129,22 @@ void MolGraphWriter::operator() (
 
   os << ", penwidth=3";
 
-  auto tooltips = edgeTooltips(inner.source(edgeIndex), inner.target(edgeIndex));
+  std::vector<std::string> tooltips = edgeTooltips(
+    inner.source(edgeIndex),
+    inner.target(edgeIndex)
+  );
+
+  const BondIndex b {inner.source(edgeIndex), inner.target(edgeIndex)};
+  if(auto permutatorOption = stereopermutatorListPtr->option(b)) {
+    if(permutatorOption->numAssignments() > 1) {
+      os << R"(, color="tomato")";
+    } else {
+      os << R"(, color="steelblue")";
+    }
+
+    tooltips.push_back(permutatorOption->info());
+  }
+
   if(!tooltips.empty()) {
     os << R"(, edgetooltip=")"
       << temple::condense(tooltips, "&#10;"s)
