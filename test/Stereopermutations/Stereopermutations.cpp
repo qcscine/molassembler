@@ -448,7 +448,7 @@ BOOST_AUTO_TEST_CASE(OrientationStateTests) {
   }
 }
 
-BOOST_AUTO_TEST_CASE(compositesTests) {
+BOOST_AUTO_TEST_CASE(CompositeExamples) {
   constexpr unsigned leftIdentifier = 0;
   constexpr unsigned rightIdentifier = 1;
 
@@ -551,9 +551,29 @@ BOOST_AUTO_TEST_CASE(compositesTests) {
     e.permutations() == 2,
     "Expected 2 permutations, got " << e.permutations()
   );
+
+  Composite f {
+    Composite::OrientationState {
+      shapes::Shape::Line,
+      0_v,
+      {'A', 'B'},
+      leftIdentifier
+    },
+    Composite::OrientationState {
+      shapes::Shape::Line,
+      0_v,
+      {'A', 'B'},
+      rightIdentifier
+    }
+  };
+
+  BOOST_CHECK_MESSAGE(
+    f.permutations() == 0,
+    "Expected 0 permutations, got " << f.permutations()
+  );
 }
 
-BOOST_AUTO_TEST_CASE(compositesAlignment) {
+BOOST_AUTO_TEST_CASE(CompositeAlignment) {
   constexpr unsigned leftIdentifier = 0;
   constexpr unsigned rightIdentifier = 1;
 

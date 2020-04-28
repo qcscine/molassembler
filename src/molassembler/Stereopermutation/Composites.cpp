@@ -183,7 +183,7 @@ void Composite::OrientationState::revert(const std::vector<shapes::Vertex>& reve
 }
 
 std::vector<shapes::Vertex> Composite::OrientationState::findReductionMapping(
-  shapes::Vertex reducedFusedVertex
+  const shapes::Vertex reducedFusedVertex
 ) const {
   /* NOTE: The implementation below is VERY similar to
    * Stereopermutation::generateAllRotation_'s generation work.
@@ -313,7 +313,7 @@ Composite::AngleGroup Composite::OrientationState::smallestAngleGroup() const {
   angleGroup.vertices.reserve(shapes::size(shape));
   angleGroup.angle = M_PI;
 
-  // Go through all symmetry positions excluding the fused shape position
+  // Go through all shape vertices excluding the fused shape position
   for(shapes::Vertex i {0}; i < shapes::size(shape); ++i) {
     if(i == fusedVertex) {
       continue;
@@ -325,7 +325,7 @@ Composite::AngleGroup Composite::OrientationState::smallestAngleGroup() const {
     if(fpComparator.isLessThan(angleToFusedPosition, angleGroup.angle)) {
       angleGroup.vertices = {i};
       angleGroup.angle = angleToFusedPosition;
-    } else if(fpComparator.isEqual(angleToFusedPosition, angleGroup.angle)) {
+    } else if(fpComparator.isEqual(angleToFusedPosition, angleGroup.angle) && angleGroup.angle != M_PI) {
       angleGroup.vertices.push_back(i);
     }
   }
@@ -334,14 +334,12 @@ Composite::AngleGroup Composite::OrientationState::smallestAngleGroup() const {
    * ligands at this angle group are all the same.
    */
   if(angleGroup.vertices.size() == 1) {
-    // A single relevant symmetry position is not isotropic
+    // A single relevant shape vertex is not isotropic
     angleGroup.isotropic = false;
   } else {
-    auto relevantCharacters = temple::map(
+    const auto relevantCharacters = temple::map(
       angleGroup.vertices,
-      [&](const unsigned symmetryPosition) -> char {
-        return characters.at(symmetryPosition);
-      }
+      temple::functor::at(characters)
     );
 
     angleGroup.isotropic = temple::all_of(
@@ -363,17 +361,17 @@ Composite::AngleGroup Composite::OrientationState::smallestAngleGroup() const {
 }
 
 double Composite::perpendicularSubstituentAngle(
-  const double angleFromBoundSymmetryPosition,
+  const double angleFromBoundShapeVertex,
   const double angleBetweenSubstituents
 ) {
-  assert(angleFromBoundSymmetryPosition != M_PI);
+  assert(angleFromBoundShapeVertex != M_PI);
 
   return std::acos(
     1.0 - (
       1.0 - std::cos(angleBetweenSubstituents)
     ) / (
       std::pow(
-        std::sin(angleFromBoundSymmetryPosition),
+        std::sin(angleFromBoundShapeVertex),
         2
       )
     )
@@ -398,13 +396,13 @@ std::vector<shapes::Vertex> Composite::generateRotation(
   auto rotationAltersPositions = [&](const std::vector<shapes::Vertex>& rotation) -> bool {
     return temple::all_of(
       changedVertices,
-      [&rotation](const unsigned symmetryPosition) -> bool {
-        return rotation.at(symmetryPosition) != symmetryPosition;
+      [&rotation](const unsigned shapeVertex) -> bool {
+        return rotation.at(shapeVertex) != shapeVertex;
       }
     );
   };
 
-  // Which rotation indicates a rotation around the bound symmetry position?
+  // Which rotation indicates a rotation around the bound shape vertex?
   std::vector<unsigned> rotationUses (periodicities.size(), 0);
   ++rotationUses.back();
 
@@ -470,7 +468,7 @@ std::vector<shapes::Vertex> Composite::rotation(
     /* There are multiple elements in perpendicularPlanePositions. We have to
      * generate a rotation that keeps fixedVertex fixed but rotates the
      * perpendicularPlanePositions, ideally with a periodicity equivalent to the
-     * amount of symmetry positions involved.
+     * amount of shape vertices involved.
      */
     auto candidateRotation = generateRotation(
       shape,
@@ -497,7 +495,7 @@ std::vector<shapes::Vertex> Composite::rotation(
 
   if(perpendicularPlanePositions.size() == 1) {
     /* There is a single element in perpendicularPlanePositions. The resulting
-     * rotation within that symmetry is the identity rotation, because this
+     * rotation within that shape is the identity rotation, because this
      * single index can be rotated any which way to satisfy the other side.
      */
     return {shapes::Vertex(1)};
@@ -569,53 +567,43 @@ Composite::Composite(
   assert(orientations_.first.identifier != orientations_.second.identifier);
 
   /* In order to get meaningful indices of permutation, combinations of
-   * symmetries across fused positions within the same group of symmetry
-   * positions (e.g. equatorial or apical in square pyramidal) must be the same.
+   * shapes across fused positions within the same group of shape
+   * vertices (e.g. equatorial or apical in square pyramidal) must be the same.
    *
    * In order to achieve this, the OrientationStates is transformed by a
    * rotation that temporarily places the fused position at the lowest index
-   * symmetry position in its symmetry. After permutation are generated,
+   * shape vertex in its shape. After permutation are generated,
    * the orientation state is transformed back.
    */
-  auto firstReversionMapping = orientations_.first.transformToCanonical();
-  auto secondReversionMapping = orientations_.second.transformToCanonical();
+  const auto firstReversionMapping = orientations_.first.transformToCanonical();
+  const auto secondReversionMapping = orientations_.second.transformToCanonical();
 
-  /* Find the group of symmetry positions with the smallest angle to the
+  /* Find the group of shape vertices with the smallest angle to the
    * fused position (these are the only important ones when considering
    * relative arrangements across the bond).
    */
-  auto angleGroups = orientations_.map(
+  const auto angleGroups = orientations_.map(
     [](const OrientationState& orientation) -> AngleGroup {
-      return orientation.smallestAngleGroup();
-    }
-  );
-
-  /* Reorder both AngleGroups' vertices by descending ranking and
-   * index to get canonical initial combinations
-   */
-  temple::inplace::sort(
-    angleGroups.first.vertices,
-    [&](const unsigned a, const unsigned b) -> bool {
-      return (
-        std::tie(orientations_.first.characters.at(a), a)
-        > std::tie(orientations_.first.characters.at(b), b)
+      auto angleGroup = orientation.smallestAngleGroup();
+      /* Order both AngleGroups' vertices by descending ranking and
+       * index to get canonical initial combinations
+       */
+      temple::inplace::sort(
+        angleGroup.vertices,
+        [&](const unsigned a, const unsigned b) -> bool {
+          return (
+            std::tie(orientation.characters.at(a), a)
+            > std::tie(orientation.characters.at(b), b)
+          );
+        }
       );
-    }
-  );
-
-  temple::inplace::sort(
-    angleGroups.second.vertices,
-    [&](const unsigned a, const unsigned b) -> bool {
-      return (
-        std::tie(orientations_.second.characters.at(a), a)
-        > std::tie(orientations_.second.characters.at(b), b)
-      );
+      return angleGroup;
     }
   );
 
   /* From the angle groups' characters, we can figure out if all
    * stereopermutations that are generated will be ranking-wise equivalent
-   * spatially despite differing in the symmetry positions at which the equally
+   * spatially despite differing in the shape vertex at which the equally
    * ranked substituents are placed. This is important information for deciding
    * whether a Composite yields a stereogenic object.
    */
@@ -625,20 +613,20 @@ Composite::Composite(
    * which can then be indexed
    *
    * Range of combinatorial possibilities:
-   * - Either side has zero symmetry positions in the smallest angle group:
+   * - Either side has zero shape vertices in the smallest angle group:
    *   No relative positioning possible, this Composite has zero
    *   stereopermutations
-   * - Both sides have one symmetry position in the smallest angle group:
+   * - Both sides have one shape vertex in the smallest angle group:
    *   Dihedrals for both can be cis / trans
-   * - One side has one symmetry position in the smallest angle group:
-   *   Dihedral is 0 to one symmetry position of the larger side, X to the others
-   * - Both sides have multiple symmetry positions in the smallest angle group:
+   * - One side has one shape vertices in the smallest angle group:
+   *   Dihedral is 0 to one shape vertex of the larger side, X to the others
+   * - Both sides have multiple shape vertices in the smallest angle group:
    *   Figure out the relative angles between positions in each angle group and
    *   try to find matches across groups -> these can be arranged in a coplanar
    *   fashion. Then each rotation on one side generates a new overlay
    *   possibility.
    *
-   * NOTE: The central atom of both symmetries is always placed at the origin
+   * NOTE: The central atom of both shapes is always placed at the origin
    * in the coordinate definitions.
    */
   auto firstCoordinates = shapes::coordinates(orientations_.first.shape);
@@ -676,7 +664,7 @@ Composite::Composite(
    * of cis dihedrals is maximal.
    *
    * This is essentially brute-forcing the problem. I'm having a hard time
-   * thinking up an elegant solution that can satisfy all possible symmetries.
+   * thinking up an elegant solution that can satisfy all possible shapes..
    */
 
   // Generate all arrangements regardless of whether the Composite is isotropic
@@ -703,14 +691,14 @@ Composite::Composite(
       double offsetAngle = 0;
       if(alignment == Alignment::Staggered) {
         /* The offset angle for a staggered arrangement is half of the angle
-         * to the next symmetry position in some direction. We'll go for most
+         * to the next shape vertex in some direction. We'll go for most
          * negative.
          */
 
         const auto dihedrals = temple::map(
           angleGroups.second.vertices,
-          [&](const shapes::Vertex secondSymmetryPosition) -> double {
-            double dihedral = getDihedral(f, secondSymmetryPosition);
+          [&](const shapes::Vertex secondShapeVertex) -> double {
+            double dihedral = getDihedral(f, secondShapeVertex);
             if(dihedral >= -1e-10) {
               dihedral -= 2 * M_PI;
             }
@@ -723,7 +711,7 @@ Composite::Composite(
           std::end(dihedrals)
         ) - std::begin(dihedrals);
 
-        // std::cout << "Next symmetry position in rotor is " << angleGroups.second.vertices.at(maximumIndex) << " with dihedral of " << dihedrals.at(maximumIndex) << "\n";
+        // std::cout << "Next shape vertex in rotor is " << angleGroups.second.vertices.at(maximumIndex) << " with dihedral of " << dihedrals.at(maximumIndex) << "\n";
 
         offsetAngle = dihedrals.at(maximumIndex) / 2;
       }
@@ -777,7 +765,7 @@ Composite::Composite(
     }
   );
 
-  /* For situations in which only one position exists in both symmetries, add
+  /* For situations in which only one position exists in both shapes, add
    * the trans dihedral possibility explicitly
    */
   if(

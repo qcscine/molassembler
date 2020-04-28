@@ -2,9 +2,9 @@
  * @copyright This code is licensed under the 3-clause BSD license.
  *   Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
  *   See LICENSE.txt for details.
- * @brief Generate rotational orientations of two symmetries fused over a bond
+ * @brief Generate rotational orientations of two shapes fused over a bond
  *
- * Enables the computation of relative orientations of arbitrary symmetries
+ * Enables the computation of relative orientations of arbitrary shapes
  * fused at arbitrary positions that yield indices of permutations that are
  * meaningful for ranking computations.
  */
