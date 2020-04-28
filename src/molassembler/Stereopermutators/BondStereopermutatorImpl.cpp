@@ -1284,7 +1284,7 @@ unsigned BondStereopermutator::Impl::numStereopermutations() const {
 std::string BondStereopermutator::Impl::info() const {
   using namespace std::string_literals;
 
-  std::string returnString =  "B on ";
+  std::string returnString =  "";
 
   returnString += std::to_string(composite_.orientations().first.identifier);
   returnString += "-";
@@ -1293,21 +1293,22 @@ std::string BondStereopermutator::Impl::info() const {
   const unsigned A = numAssignments();
 
   if(A == 1) {
-    returnString += ". Is non-stereogenic.";
+    returnString += ": Is non-stereogenic.";
   } else {
-    returnString += ". Is ";
+    returnString += ": Is ";
     if(assignment_) {
       returnString += std::to_string(assignment_.value());
     } else {
       returnString += "u";
     }
 
-    returnString += "/"s + std::to_string(A);
+    returnString += " ("s + std::to_string(A);
 
     const unsigned P = numStereopermutations();
     if(P != A) {
-      returnString += " ("s + std::to_string(P) + ")"s;
+      returnString += ", "s + std::to_string(P);
     }
+    returnString += ")";
   }
 
   return returnString;

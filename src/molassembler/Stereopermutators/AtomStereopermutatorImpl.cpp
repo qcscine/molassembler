@@ -884,8 +884,7 @@ AtomStereopermutator::Impl::minimalChiralConstraints(const bool enforce) const {
 }
 
 std::string AtomStereopermutator::Impl::info() const {
-  std::string returnString = "A on "s
-    + std::to_string(centerAtom_) + " ("s + shapes::name(shape_) +", "s;
+  std::string returnString = std::to_string(centerAtom_) + ": "s + shapes::name(shape_) +", "s;
 
   const auto& characters = abstract_.symbolicCharacters;
   std::copy(
@@ -898,7 +897,7 @@ std::string AtomStereopermutator::Impl::info() const {
     returnString += ", "s + characters.at(link.first) + "-"s + characters.at(link.second);
   }
 
-  returnString += "): "s;
+  returnString += ", "s;
 
   if(assignmentOption_) {
     returnString += std::to_string(assignmentOption_.value());
@@ -907,12 +906,14 @@ std::string AtomStereopermutator::Impl::info() const {
   }
 
   const unsigned A = numAssignments();
-  returnString += "/"s + std::to_string(A);
+  returnString += " ("s + std::to_string(A);
 
   const unsigned P = numStereopermutations();
   if(P != A) {
-    returnString += " ("s + std::to_string(P) + ")"s;
+    returnString += ", "s + std::to_string(P);
   }
+
+  returnString += ")";
 
   return returnString;
 }
