@@ -181,7 +181,7 @@ void init_io(pybind11::module& m) {
     pybind11::arg("molecule"),
     R"delim(
       Write a :class:`Molecule` serialization with the endings json/cbor/bson
-      or a graph representation with ending dot to a file.
+      or a graph representation with ending dot/svg to a file.
 
       :param filename: File to write to. File format is interpreted from this
         parameter's file extension

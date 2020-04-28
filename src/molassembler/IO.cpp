@@ -8,6 +8,9 @@
 
 #define BOOST_FILESYSTEM_NO_DEPRECATED
 #include "boost/filesystem.hpp"
+#include "boost/process/child.hpp"
+#include "boost/process/io.hpp"
+#include "boost/process/search_path.hpp"
 
 #include "molassembler/IO/BinaryHandler.h"
 #include "molassembler/Interpret.h"
@@ -28,10 +31,49 @@
 #include <ctime>
 
 namespace Scine {
-
 namespace molassembler {
-
 namespace io {
+namespace {
+
+std::string pipeSvg(const Scine::molassembler::Molecule& m) {
+  std::stringstream os;
+
+  // Construct pipe streams for redirection
+  boost::process::opstream ips;
+  boost::process::pstream ps;
+  boost::process::pstream err;
+
+  // Start the child process
+  boost::process::child childProcess("dot -Tsvg", boost::process::std_in<ips, boost::process::std_out> ps,
+                                     boost::process::std_err > err);
+
+  // Feed our graphviz into the process
+  ips << m.dumpGraphviz();
+  ips.flush();
+  ips.pipe().close();
+
+  // Wait for the child process to exit
+  childProcess.wait();
+
+  std::stringstream stderrStream;
+#if BOOST_VERSION >= 107000
+  /* NOTE: This implementation of buffer transfers in boost process has a bug
+   * that isn't fixed before Boost 1.70.
+   */
+  os << ps.rdbuf();
+  stderrStream << err.rdbuf();
+#else
+  // Workaround: cast to a parent class implementing rdbuf() correctly.
+  using BasicIOSReference = std::basic_ios<char, std::char_traits<char>>&;
+  // Feed the results into our ostream
+  os << static_cast<BasicIOSReference>(ps).rdbuf();
+  stderrStream << static_cast<BasicIOSReference>(err).rdbuf();
+#endif
+
+  return os.str();
+}
+
+} // namespace
 
 const bool& LineNotation::enabled() {
   static bool enable = Utils::OpenBabelStreamHandler::checkForBinary();
@@ -244,6 +286,17 @@ void write(const std::string& filename, const Molecule& molecule) {
     return;
   }
 
+  if(filepath.extension() == ".svg") {
+    if(boost::process::search_path("dot").empty()) {
+      throw std::runtime_error("Graphviz 'dot' binary not found in PATH");
+    } else {
+      std::ofstream svgfile(filename);
+      svgfile << pipeSvg(molecule);
+      svgfile.close();
+      return;
+    }
+  }
+
   if(filepath.extension() == ".cbor") {
     BinaryHandler::write(
       filename,
@@ -273,7 +326,5 @@ void write(const std::string& filename, const Molecule& molecule) {
 }
 
 } // namespace io
-
 } // namespace molassembler
-
 } // namespace Scine

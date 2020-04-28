@@ -136,11 +136,13 @@ MASM_EXPORT void write(
   const Utils::PositionCollection& positions
 );
 
-/*! @brief Writer function for Molecule serializations and graphviz representation
+/*! @brief Writer function for Molecule serializations and graphviz representations
  *
  * @complexity{@math{\Theta(V + E + A + B)}}
  * @note Canonicalization state is retained using the molecule serializations.
- * @throws If the file extension does not match .cbor, .bson, .json or .dot
+ * @throws std::logic_error If the file extension does not match .cbor, .bson, .json, .dot or .svg
+ * @throws std::runtime_error If the file extension is .svg but the dot binary
+ *   is not found in the path
  */
 MASM_EXPORT void write(const std::string& filename, const Molecule& molecule);
 
