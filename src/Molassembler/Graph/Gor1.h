@@ -22,7 +22,7 @@
 
 namespace boost {
 
-namespace Detail {
+namespace detail {
 
 /*!
  * @brief A Dummy Visitor object demonstrating the interface needed to enable
@@ -140,7 +140,7 @@ void gor1_simplified_scan(
   }
 }
 
-} // namespace Detail
+} // namespace detail
 
 /*!
  * @brief Simplified GOR1 single source shortest paths algorithm
@@ -170,6 +170,31 @@ void gor1_simplified_scan(
  * @param color_map The map of vertices to their color
  * @param distance_map The map of vertices to their distance
  * @param visitor A visitor that matches the DummyGor1Visitor interface
+ *
+ * @note This function, in boost style, expects you to set up some of the
+ * data structures used internally in the algorithm, whether you care about
+ * them or not for the off chance you want all of them and structured bindings
+ * weren't a thing when boost came about.
+ *
+ * @code{.cpp}
+ * // Setup prior to call
+ * const unsigned N = boost::num_vertices(g);
+ * std::vector<double> distances(N);
+ * std::vector<VertexType> predecessors(N);
+ *
+ * auto predecessor_map = boost::make_iterator_property_map(
+ *   predecessors.begin(),
+ *   get(boost::vertex_index, g)
+ * );
+
+ * auto distance_map = boost::make_iterator_property_map(
+ *   distances.begin(),
+ *   get(boost::vertex_index, g)
+ * );
+
+ * using ColorMapType = boost::two_bit_color_map<>;
+ * ColorMapType color_map {N};
+ * @endcode
  */
 template<
   class IncidenceGraph,
@@ -232,7 +257,7 @@ bool gor1_simplified_shortest_paths(
         put(color_map, v, Color::black());
         visitor.mark_black(v, graph);
 
-        Detail::gor1_simplified_scan(
+        detail::gor1_simplified_scan(
           v,
           graph,
           predecessor_map,
@@ -252,7 +277,7 @@ bool gor1_simplified_shortest_paths(
       visitor.a_pop(v, graph);
 
       // Scan
-      Detail::gor1_simplified_scan(
+      detail::gor1_simplified_scan(
         v,
         graph,
         predecessor_map,
@@ -289,13 +314,13 @@ bool gor1_simplified_shortest_paths(
   /* This function is needed since binding an rvalue to a lvalue reference is
    * not permitted in:
    *
-   * template<..., Visitor = Detail::DummyGor1Visitor>
+   * template<..., Visitor = detail::DummyGor1Visitor>
    * bool shortest_paths(
    *   ...,
    *   Visitor& visitor = Visitor {}
    * )
    */
-  Detail::DummyGor1Visitor visitor;
+  detail::DummyGor1Visitor visitor;
 
   return gor1_simplified_shortest_paths(
     graph,

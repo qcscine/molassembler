@@ -48,7 +48,7 @@ This library requires the C++14 standard.
 Dependencies:
 
 - SCINE Utils (BSD-3 license) > 2.1.0
-- Boost (Boost license) >= 1.65 (lowest tested, prefer recent)
+- Boost (Boost license) >= 1.65 (lowest tested, prefer newest)
 - Eigen (MPL 2.0 license) >= 3.3.2
 - (BLAS library, added if detected during compilation)
 
@@ -85,7 +85,7 @@ $ make
 ## Tests
 
 We recommend running the tests in a release build of the library. The debug
-builds can run for a good 20-30 minutes. After building the library and tests,
+builds can run for a good 10 minutes. After building the library and tests,
 run `make test`. The python bindings are tested with `pytest` and `doctest`, if
 available.
 
