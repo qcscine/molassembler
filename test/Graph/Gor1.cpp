@@ -9,7 +9,7 @@
 #include "boost/graph/bellman_ford_shortest_paths.hpp"
 #include "boost/graph/two_bit_color_map.hpp"
 
-#include "molassembler/Graph/Gor1.h"
+#include "Molassembler/Graph/Gor1.h"
 
 #include <random>
 

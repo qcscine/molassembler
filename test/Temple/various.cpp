@@ -9,13 +9,13 @@
 
 #include "boost/optional.hpp"
 
-#include "molassembler/Temple/Functional.h"
-#include "molassembler/Temple/Functor.h"
-#include "molassembler/Temple/OperatorSuppliers.h"
-#include "molassembler/Temple/Stringify.h"
-#include "molassembler/Temple/constexpr/Numeric.h"
-#include "molassembler/Temple/constexpr/Optional.h"
-#include "molassembler/Temple/constexpr/Jsf.h"
+#include "Molassembler/Temple/Functional.h"
+#include "Molassembler/Temple/Functor.h"
+#include "Molassembler/Temple/OperatorSuppliers.h"
+#include "Molassembler/Temple/Stringify.h"
+#include "Molassembler/Temple/constexpr/Numeric.h"
+#include "Molassembler/Temple/constexpr/Optional.h"
+#include "Molassembler/Temple/constexpr/Jsf.h"
 
 #include <chrono>
 #include <cmath>

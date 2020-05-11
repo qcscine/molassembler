@@ -9,10 +9,10 @@
 #include "boost/filesystem.hpp"
 #include "boost/program_options.hpp"
 
-#include "molassembler/DirectedConformerGenerator.h"
-#include "molassembler/IO.h"
-#include "molassembler/Molecule.h"
-#include "molassembler/Temple/Stringify.h"
+#include "Molassembler/DirectedConformerGenerator.h"
+#include "Molassembler/IO.h"
+#include "Molassembler/Molecule.h"
+#include "Molassembler/Temple/Stringify.h"
 
 using namespace std::string_literals;
 using namespace Scine;

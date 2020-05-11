@@ -6,9 +6,9 @@
 
 #include "boost/test/unit_test.hpp"
 
-#include "molassembler/Containers/OrderDiscoveryHelper.h"
+#include "Molassembler/Containers/OrderDiscoveryHelper.h"
 
-#include "molassembler/Temple/Stringify.h"
+#include "Molassembler/Temple/Stringify.h"
 
 using namespace Scine;
 using namespace Molassembler;

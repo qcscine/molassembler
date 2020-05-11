@@ -5,9 +5,9 @@
  */
 #include "TypeCasters.h"
 
-#include "molassembler/Interpret.h"
-#include "molassembler/Molecule.h"
-#include "molassembler/Graph.h"
+#include "Molassembler/Interpret.h"
+#include "Molassembler/Molecule.h"
+#include "Molassembler/Graph.h"
 
 #include "Utils/Bonds/BondOrderCollection.h"
 #include "Utils/Geometry/AtomCollection.h"

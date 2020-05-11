@@ -6,7 +6,7 @@
 
 #include <boost/test/unit_test.hpp>
 
-#include "molassembler/Shapes/CoordinateSystemTransformation.h"
+#include "Molassembler/Shapes/CoordinateSystemTransformation.h"
 
 BOOST_AUTO_TEST_CASE(CoordinateSystemTransformation) {
   using namespace Scine::Molassembler::Shapes;

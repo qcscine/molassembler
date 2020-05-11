@@ -9,15 +9,15 @@
 #include "boost/filesystem.hpp"
 #include "boost/program_options.hpp"
 
-#include "molassembler/DistanceGeometry/DistanceBoundsMatrix.h"
-#include "molassembler/DistanceGeometry/ExplicitBoundsGraph.h"
-#include "molassembler/DistanceGeometry/MetricMatrix.h"
-#include "molassembler/DistanceGeometry/EigenRefinement.h"
-#include "molassembler/DistanceGeometry/ConformerGeneration.h"
+#include "Molassembler/DistanceGeometry/DistanceBoundsMatrix.h"
+#include "Molassembler/DistanceGeometry/ExplicitBoundsGraph.h"
+#include "Molassembler/DistanceGeometry/MetricMatrix.h"
+#include "Molassembler/DistanceGeometry/EigenRefinement.h"
+#include "Molassembler/DistanceGeometry/ConformerGeneration.h"
 
-#include "molassembler/IO.h"
-#include "molassembler/Temple/Functional.h"
-#include "molassembler/Temple/constexpr/Numeric.h"
+#include "Molassembler/IO.h"
+#include "Molassembler/Temple/Functional.h"
+#include "Molassembler/Temple/constexpr/Numeric.h"
 
 #include <Eigen/Dense>
 

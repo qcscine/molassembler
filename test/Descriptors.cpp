@@ -9,9 +9,9 @@
 #include "boost/test/unit_test.hpp"
 #include "boost/filesystem.hpp"
 
-#include "molassembler/Descriptors.h"
-#include "molassembler/Molecule.h"
-#include "molassembler/IO.h"
+#include "Molassembler/Descriptors.h"
+#include "Molassembler/Molecule.h"
+#include "Molassembler/IO.h"
 
 #include <iostream>
 

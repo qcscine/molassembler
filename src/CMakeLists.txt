@@ -8,12 +8,12 @@ if(NOT TARGET Boost::filesystem OR NOT TARGET Boost::system)
 endif()
 
 # Collect headers and sources
-file(GLOB_RECURSE HEADERS_all ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/*.h)
-file(GLOB_RECURSE SOURCES_all ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/*.cpp)
+file(GLOB_RECURSE HEADERS_all ${CMAKE_CURRENT_SOURCE_DIR}/Molassembler/*.h)
+file(GLOB_RECURSE SOURCES_all ${CMAKE_CURRENT_SOURCE_DIR}/Molassembler/*.cpp)
 
 configure_file(
-  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Version.h.in
-  ${CMAKE_CURRENT_BINARY_DIR}/molassembler/Version.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/Molassembler/Version.h.in
+  ${CMAKE_CURRENT_BINARY_DIR}/Molassembler/Version.h
   @ONLY
 )
 
@@ -23,7 +23,7 @@ add_library(molassembler_obj OBJECT ${SOURCES_all})
 include(GenerateExportHeader)
 generate_export_header(molassembler_obj
   BASE_NAME masm
-  EXPORT_FILE_NAME ${CMAKE_CURRENT_BINARY_DIR}/molassembler/Export.h
+  EXPORT_FILE_NAME ${CMAKE_CURRENT_BINARY_DIR}/Molassembler/Export.h
 )
 
 set_target_properties(molassembler_obj PROPERTIES POSITION_INDEPENDENT_CODE ON)
@@ -123,8 +123,8 @@ endfunction()
 # Main library, of type as determined by BUILD_SHARED_LIBS
 add_library(Molassembler
   $<TARGET_OBJECTS:molassembler_obj>
-  ${CMAKE_CURRENT_BINARY_DIR}/molassembler/Version.h
-  ${CMAKE_CURRENT_BINARY_DIR}/molassembler/Export.h
+  ${CMAKE_CURRENT_BINARY_DIR}/Molassembler/Version.h
+  ${CMAKE_CURRENT_BINARY_DIR}/Molassembler/Export.h
 )
 molassembler_includes_and_properties(Molassembler)
 molassembler_library_links(Molassembler)
@@ -136,8 +136,8 @@ if(BUILD_SHARED_LIBS)
   # public API
   add_library(MolassemblerStatic STATIC
     $<TARGET_OBJECTS:molassembler_obj>
-    ${CMAKE_CURRENT_BINARY_DIR}/molassembler/Version.h
-    ${CMAKE_CURRENT_BINARY_DIR}/molassembler/Export.h
+    ${CMAKE_CURRENT_BINARY_DIR}/Molassembler/Version.h
+    ${CMAKE_CURRENT_BINARY_DIR}/Molassembler/Export.h
   )
   molassembler_includes_and_properties(MolassemblerStatic)
   molassembler_library_links(MolassemblerStatic)
@@ -193,7 +193,7 @@ install(
 
 # Headers
 install(
-  DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/molassembler"
+  DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/Molassembler"
   DESTINATION include
   FILES_MATCHING
     PATTERN "*.h"
@@ -203,9 +203,9 @@ install(
 
 install(
   FILES
-    ${CMAKE_CURRENT_BINARY_DIR}/molassembler/Version.h
-    ${CMAKE_CURRENT_BINARY_DIR}/molassembler/Export.h
-  DESTINATION include/molassembler
+    ${CMAKE_CURRENT_BINARY_DIR}/Molassembler/Version.h
+    ${CMAKE_CURRENT_BINARY_DIR}/Molassembler/Export.h
+  DESTINATION include/Molassembler
 )
 
 # Source groups

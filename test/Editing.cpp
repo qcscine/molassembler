@@ -6,13 +6,13 @@
 
 #include <boost/test/unit_test.hpp>
 
-#include "molassembler/Cycles.h"
-#include "molassembler/Editing.h"
-#include "molassembler/IO.h"
-#include "molassembler/IO/SmilesParser.h"
-#include "molassembler/Molecule.h"
-#include "molassembler/Graph.h"
-#include "molassembler/Subgraphs.h"
+#include "Molassembler/Cycles.h"
+#include "Molassembler/Editing.h"
+#include "Molassembler/IO.h"
+#include "Molassembler/IO/SmilesParser.h"
+#include "Molassembler/Molecule.h"
+#include "Molassembler/Graph.h"
+#include "Molassembler/Subgraphs.h"
 
 /* SMILES for molecules imported here
  * - caffeine: "CN1C=NC2=C1C(=O)N(C(=O)N2C)C"

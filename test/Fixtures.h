@@ -7,7 +7,7 @@
 #ifndef INCLUDE_MOLASSEMBLER_TEST_FIXTURES_H
 #define INCLUDE_MOLASSEMBLER_TEST_FIXTURES_H
 
-#include "molassembler/Options.h"
+#include "Molassembler/Options.h"
 
 namespace Scine {
 namespace Molassembler {

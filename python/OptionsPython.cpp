@@ -4,7 +4,7 @@
  *   See LICENSE.txt for details.
  */
 #include "TypeCasters.h"
-#include "molassembler/Options.h"
+#include "Molassembler/Options.h"
 
 void init_options(pybind11::module& m) {
   using namespace Scine::Molassembler;

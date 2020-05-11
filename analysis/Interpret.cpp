@@ -9,10 +9,10 @@
 #include "boost/filesystem.hpp"
 #include "boost/program_options.hpp"
 
-#include "molassembler/IO.h"
-#include "molassembler/Interpret.h"
-#include "molassembler/Graph.h"
-#include "molassembler/Molecule.h"
+#include "Molassembler/IO.h"
+#include "Molassembler/Interpret.h"
+#include "Molassembler/Graph.h"
+#include "Molassembler/Molecule.h"
 
 #include "Utils/Geometry/AtomCollection.h"
 #include "Utils/Bonds/BondOrderCollection.h"

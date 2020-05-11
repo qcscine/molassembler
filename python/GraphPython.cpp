@@ -6,9 +6,9 @@
 #include "TypeCasters.h"
 #include "pybind11/operators.h"
 
-#include "molassembler/Cycles.h"
-#include "molassembler/Graph.h"
-#include "molassembler/GraphAlgorithms.h"
+#include "Molassembler/Cycles.h"
+#include "Molassembler/Graph.h"
+#include "Molassembler/GraphAlgorithms.h"
 
 #include "Utils/Bonds/BondOrderCollection.h"
 #include "Utils/Geometry/FormulaGenerator.h"

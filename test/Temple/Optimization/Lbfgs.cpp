@@ -6,7 +6,7 @@
 
 #include <boost/test/unit_test.hpp>
 
-#include "molassembler/Temple/Optimization/Lbfgs.h"
+#include "Molassembler/Temple/Optimization/Lbfgs.h"
 
 using namespace Scine::Molassembler;
 

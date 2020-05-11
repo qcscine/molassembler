@@ -10,9 +10,9 @@
 #include "boost/graph/graph_concepts.hpp"
 #include "boost/test/unit_test.hpp"
 
-#include "molassembler/DistanceGeometry/ExplicitBoundsGraph.h"
-#include "molassembler/DistanceGeometry/SpatialModel.h"
-#include "molassembler/IO.h"
+#include "Molassembler/DistanceGeometry/ExplicitBoundsGraph.h"
+#include "Molassembler/DistanceGeometry/SpatialModel.h"
+#include "Molassembler/IO.h"
 #include "ShortestPathsGraphTests.h"
 
 #include <iostream>

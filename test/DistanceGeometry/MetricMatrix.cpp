@@ -8,18 +8,18 @@
 
 #include "boost/filesystem.hpp"
 #include "boost/test/unit_test.hpp"
-#include "molassembler/Shapes/Data.h"
+#include "Molassembler/Shapes/Data.h"
 #include "Eigen/Eigenvalues"
-#include "molassembler/Temple/Random.h"
-#include "molassembler/Temple/Stringify.h"
+#include "Molassembler/Temple/Random.h"
+#include "Molassembler/Temple/Stringify.h"
 
-#include "molassembler/Graph/PrivateGraph.h"
-#include "molassembler/DistanceGeometry/DistanceBoundsMatrix.h"
-#include "molassembler/DistanceGeometry/ExplicitBoundsGraph.h"
-#include "molassembler/DistanceGeometry/MetricMatrix.h"
-#include "molassembler/DistanceGeometry/ConformerGeneration.h"
-#include "molassembler/IO.h"
-#include "molassembler/Options.h"
+#include "Molassembler/Graph/PrivateGraph.h"
+#include "Molassembler/DistanceGeometry/DistanceBoundsMatrix.h"
+#include "Molassembler/DistanceGeometry/ExplicitBoundsGraph.h"
+#include "Molassembler/DistanceGeometry/MetricMatrix.h"
+#include "Molassembler/DistanceGeometry/ConformerGeneration.h"
+#include "Molassembler/IO.h"
+#include "Molassembler/Options.h"
 
 #include <iostream>
 #include <random>

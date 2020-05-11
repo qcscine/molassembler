@@ -6,6 +6,6 @@
 
 #include <boost/test/unit_test.hpp>
 
-#include "molassembler/Temple/constexpr/Jsf.h"
+#include "Molassembler/Temple/constexpr/Jsf.h"
 
 Scine::Molassembler::Temple::Generator<> generator;

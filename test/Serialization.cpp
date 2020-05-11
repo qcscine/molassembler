@@ -8,15 +8,15 @@
 #define BOOST_FILESYSTEM_NO_DEPRECATED
 #include "boost/filesystem.hpp"
 
-#include "molassembler/Temple/Random.h"
-#include "molassembler/Temple/Stringify.h"
+#include "Molassembler/Temple/Random.h"
+#include "Molassembler/Temple/Stringify.h"
 
-#include "molassembler/IO.h"
-#include "molassembler/IO/Base64.h"
-#include "molassembler/Interpret.h"
-#include "molassembler/Molecule.h"
-#include "molassembler/Options.h"
-#include "molassembler/Serialization.h"
+#include "Molassembler/IO.h"
+#include "Molassembler/IO/Base64.h"
+#include "Molassembler/Interpret.h"
+#include "Molassembler/Molecule.h"
+#include "Molassembler/Options.h"
+#include "Molassembler/Serialization.h"
 
 #include "Utils/Geometry/AtomCollection.h"
 #include "Utils/Bonds/BondOrderCollection.h"

@@ -4,7 +4,7 @@
  *   See LICENSE.txt for details.
  */
 #include "TypeCasters.h"
-#include "molassembler/Prng.h"
+#include "Molassembler/Prng.h"
 
 void init_random_engine(pybind11::module& m) {
   using namespace Scine::Molassembler;

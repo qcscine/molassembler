@@ -6,19 +6,19 @@
 
 #include <boost/test/unit_test.hpp>
 
-#include "molassembler/Conformers.h"
-#include "molassembler/DistanceGeometry/ConformerGeneration.h"
+#include "Molassembler/Conformers.h"
+#include "Molassembler/DistanceGeometry/ConformerGeneration.h"
 
-#include "molassembler/RankingInformation.h"
-#include "molassembler/IO.h"
-#include "molassembler/IO/SmilesParser.h"
+#include "Molassembler/RankingInformation.h"
+#include "Molassembler/IO.h"
+#include "Molassembler/IO/SmilesParser.h"
 
 #include "Utils/Geometry/ElementTypes.h"
-#include "molassembler/Shapes/Data.h"
+#include "Molassembler/Shapes/Data.h"
 
-#include "molassembler/Temple/Optionals.h"
-#include "molassembler/Temple/Functional.h"
-#include "molassembler/Temple/Random.h"
+#include "Molassembler/Temple/Optionals.h"
+#include "Molassembler/Temple/Functional.h"
+#include "Molassembler/Temple/Random.h"
 
 #include "Fixtures.h"
 

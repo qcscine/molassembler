@@ -6,8 +6,8 @@
 
 #include "boost/test/unit_test.hpp"
 
-#include "molassembler/DistanceGeometry/DistanceBoundsMatrix.h"
-#include "molassembler/DistanceGeometry/TetrangleSmoothing.h"
+#include "Molassembler/DistanceGeometry/DistanceBoundsMatrix.h"
+#include "Molassembler/DistanceGeometry/TetrangleSmoothing.h"
 
 using namespace Scine::Molassembler;
 using namespace DistanceGeometry;

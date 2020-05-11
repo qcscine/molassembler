@@ -4,7 +4,7 @@
  *   See LICENSE.txt for details.
  */
 #include "TypeCasters.h"
-#include "molassembler/Version.h"
+#include "Molassembler/Version.h"
 
 void init_version(pybind11::module& m) {
   using namespace Scine::Molassembler;

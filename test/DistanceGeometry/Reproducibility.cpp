@@ -6,13 +6,13 @@
 
 #include "boost/test/unit_test.hpp"
 
-#include "molassembler/Conformers.h"
-#include "molassembler/IO.h"
-#include "molassembler/Molecule.h"
-#include "molassembler/Options.h"
+#include "Molassembler/Conformers.h"
+#include "Molassembler/IO.h"
+#include "Molassembler/Molecule.h"
+#include "Molassembler/Options.h"
 
-#include "molassembler/Temple/Functional.h"
-#include "molassembler/Temple/Stringify.h"
+#include "Molassembler/Temple/Functional.h"
+#include "Molassembler/Temple/Stringify.h"
 
 using namespace Scine::Molassembler;
 

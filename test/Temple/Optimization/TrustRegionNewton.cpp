@@ -6,7 +6,7 @@
 
 #include <boost/test/unit_test.hpp>
 
-#include "molassembler/Temple/Optimization/TrustRegion.h"
+#include "Molassembler/Temple/Optimization/TrustRegion.h"
 using namespace Scine::Molassembler;
 
 struct Himmelblau {

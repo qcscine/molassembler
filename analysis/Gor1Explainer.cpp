@@ -11,16 +11,16 @@
 #include "boost/program_options.hpp"
 #include "boost/regex.hpp"
 
-#include "molassembler/DistanceGeometry/ImplicitBoundsGraphBoost.h"
-#include "molassembler/DistanceGeometry/SpatialModel.h"
-#include "molassembler/IO.h"
-#include "molassembler/Molecule.h"
+#include "Molassembler/DistanceGeometry/ImplicitBoundsGraphBoost.h"
+#include "Molassembler/DistanceGeometry/SpatialModel.h"
+#include "Molassembler/IO.h"
+#include "Molassembler/Molecule.h"
 
-#include "molassembler/Graph/Gor1.h"
+#include "Molassembler/Graph/Gor1.h"
 
 #include "boost/graph/graphviz.hpp"
 
-#include "molassembler/Temple/StringAlgorithms.h"
+#include "Molassembler/Temple/StringAlgorithms.h"
 
 #include <random>
 

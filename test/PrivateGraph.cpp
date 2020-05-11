@@ -6,13 +6,13 @@
 
 #include <boost/test/unit_test.hpp>
 
-#include "molassembler/Graph/PrivateGraph.h"
+#include "Molassembler/Graph/PrivateGraph.h"
 
-#include "molassembler/Temple/Functional.h"
+#include "Molassembler/Temple/Functional.h"
 
-#include "molassembler/IO/SmilesParser.h"
-#include "molassembler/Molecule.h"
-#include "molassembler/Graph.h"
+#include "Molassembler/IO/SmilesParser.h"
+#include "Molassembler/Molecule.h"
+#include "Molassembler/Graph.h"
 
 using namespace Scine;
 using namespace Molassembler;

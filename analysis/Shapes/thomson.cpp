@@ -8,13 +8,13 @@
 #define BOOST_FILESYSTEM_NO_DEPRECATED
 #include "boost/filesystem.hpp"
 
-#include "molassembler/Shapes/Data.h"
-#include "molassembler/Shapes/ContinuousMeasures.h"
+#include "Molassembler/Shapes/Data.h"
+#include "Molassembler/Shapes/ContinuousMeasures.h"
 
-#include "molassembler/Temple/Optimization/Lbfgs.h"
-#include "molassembler/Temple/Adaptors/Iota.h"
-#include "molassembler/Temple/Adaptors/AllPairs.h"
-#include "molassembler/Temple/Functional.h"
+#include "Molassembler/Temple/Optimization/Lbfgs.h"
+#include "Molassembler/Temple/Adaptors/Iota.h"
+#include "Molassembler/Temple/Adaptors/AllPairs.h"
+#include "Molassembler/Temple/Functional.h"
 
 #include <Eigen/Core>
 #include <iostream>

@@ -5,7 +5,7 @@
  */
 #include "TypeCasters.h"
 
-#include "molassembler/Cycles.h"
+#include "Molassembler/Cycles.h"
 
 void init_cycles(pybind11::module& m) {
   using namespace Scine::Molassembler;

@@ -10,26 +10,26 @@
 #include "boost/graph/two_bit_color_map.hpp"
 #include "boost/test/unit_test.hpp"
 
-#include "molassembler/Temple/Adaptors/Enumerate.h"
-#include "molassembler/Temple/Adaptors/Zip.h"
-#include "molassembler/Temple/Functional.h"
-#include "molassembler/Temple/constexpr/FloatingPointComparison.h"
-#include "molassembler/Temple/constexpr/Numeric.h"
-#include "molassembler/Temple/Random.h"
-#include "molassembler/Temple/Stringify.h"
+#include "Molassembler/Temple/Adaptors/Enumerate.h"
+#include "Molassembler/Temple/Adaptors/Zip.h"
+#include "Molassembler/Temple/Functional.h"
+#include "Molassembler/Temple/constexpr/FloatingPointComparison.h"
+#include "Molassembler/Temple/constexpr/Numeric.h"
+#include "Molassembler/Temple/Random.h"
+#include "Molassembler/Temple/Stringify.h"
 
 // DO NOT CHANGE THIS INCLUDE ORDER (implicit graph needs to go first)
-#include "molassembler/DistanceGeometry/ImplicitBoundsGraphBoost.h"
+#include "Molassembler/DistanceGeometry/ImplicitBoundsGraphBoost.h"
 
-#include "molassembler/DistanceGeometry/DistanceBoundsMatrix.h"
-#include "molassembler/DistanceGeometry/ExplicitBoundsGraph.h"
-#include "molassembler/DistanceGeometry/SpatialModel.h"
-#include "molassembler/Graph/PrivateGraph.h"
-#include "molassembler/IO.h"
-#include "molassembler/Molecule.h"
+#include "Molassembler/DistanceGeometry/DistanceBoundsMatrix.h"
+#include "Molassembler/DistanceGeometry/ExplicitBoundsGraph.h"
+#include "Molassembler/DistanceGeometry/SpatialModel.h"
+#include "Molassembler/Graph/PrivateGraph.h"
+#include "Molassembler/IO.h"
+#include "Molassembler/Molecule.h"
 
-#include "molassembler/Graph/Gor1.h"
-#include "molassembler/DistanceGeometry/Gor1.h"
+#include "Molassembler/Graph/Gor1.h"
+#include "Molassembler/DistanceGeometry/Gor1.h"
 
 
 // This include order may seem weird, but it is necessary like this

@@ -6,10 +6,10 @@
 #include "TypeCasters.h"
 #include "pybind11/operators.h"
 
-#include "molassembler/Molecule.h"
-#include "molassembler/Graph.h"
-#include "molassembler/StereopermutatorList.h"
-#include "molassembler/Serialization.h"
+#include "Molassembler/Molecule.h"
+#include "Molassembler/Graph.h"
+#include "Molassembler/StereopermutatorList.h"
+#include "Molassembler/Serialization.h"
 
 #include "Utils/Geometry/ElementTypes.h"
 #include "Utils/Geometry/AtomCollection.h"

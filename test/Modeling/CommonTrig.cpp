@@ -6,10 +6,10 @@
 
 #include "boost/test/unit_test.hpp"
 
-#include "molassembler/Modeling/CommonTrig.h"
-#include "molassembler/Options.h"
-#include "molassembler/Temple/Random.h"
-#include "molassembler/Temple/Stringify.h"
+#include "Molassembler/Modeling/CommonTrig.h"
+#include "Molassembler/Options.h"
+#include "Molassembler/Temple/Random.h"
+#include "Molassembler/Temple/Stringify.h"
 
 template<typename T>
 bool isApproxAbs(

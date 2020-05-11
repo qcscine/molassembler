@@ -6,24 +6,24 @@
 
 #include <boost/test/unit_test.hpp>
 
-#include "molassembler/Temple/Adaptors/Zip.h"
-#include "molassembler/Temple/Functional.h"
-#include "molassembler/Temple/Random.h"
-#include "molassembler/Temple/Stringify.h"
+#include "Molassembler/Temple/Adaptors/Zip.h"
+#include "Molassembler/Temple/Functional.h"
+#include "Molassembler/Temple/Random.h"
+#include "Molassembler/Temple/Stringify.h"
 
-#include "molassembler/Temple/constexpr/Array.h"
-#include "molassembler/Temple/constexpr/Bitmask.h"
-#include "molassembler/Temple/constexpr/Bitset.h"
-#include "molassembler/Temple/constexpr/Containers.h"
-#include "molassembler/Temple/constexpr/DynamicArray.h"
-#include "molassembler/Temple/constexpr/DynamicMap.h"
-#include "molassembler/Temple/constexpr/DynamicSet.h"
-#include "molassembler/Temple/constexpr/FloatingPointComparison.h"
-#include "molassembler/Temple/constexpr/Jsf.h"
-#include "molassembler/Temple/constexpr/LogicalOperatorTests.h"
-#include "molassembler/Temple/constexpr/Math.h"
-#include "molassembler/Temple/constexpr/TupleType.h"
-#include "molassembler/Temple/constexpr/TupleTypePairs.h"
+#include "Molassembler/Temple/constexpr/Array.h"
+#include "Molassembler/Temple/constexpr/Bitmask.h"
+#include "Molassembler/Temple/constexpr/Bitset.h"
+#include "Molassembler/Temple/constexpr/Containers.h"
+#include "Molassembler/Temple/constexpr/DynamicArray.h"
+#include "Molassembler/Temple/constexpr/DynamicMap.h"
+#include "Molassembler/Temple/constexpr/DynamicSet.h"
+#include "Molassembler/Temple/constexpr/FloatingPointComparison.h"
+#include "Molassembler/Temple/constexpr/Jsf.h"
+#include "Molassembler/Temple/constexpr/LogicalOperatorTests.h"
+#include "Molassembler/Temple/constexpr/Math.h"
+#include "Molassembler/Temple/constexpr/TupleType.h"
+#include "Molassembler/Temple/constexpr/TupleTypePairs.h"
 
 #include <iostream>
 #include <iomanip>

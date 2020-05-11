@@ -12,10 +12,10 @@
 #include <functional>
 
 #include "boost/program_options.hpp"
-#include "molassembler/Temple/Stringify.h"
-#include "molassembler/Shapes/Data.h"
+#include "Molassembler/Temple/Stringify.h"
+#include "Molassembler/Shapes/Data.h"
 
-#include "molassembler/Stereopermutation/Manipulation.h"
+#include "Molassembler/Stereopermutation/Manipulation.h"
 
 std::ostream& nl(std::ostream& os) {
   os << '\n';

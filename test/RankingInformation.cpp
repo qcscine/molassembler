@@ -6,8 +6,8 @@
 
 #include <boost/test/unit_test.hpp>
 
-#include "molassembler/RankingInformation.h"
-#include "molassembler/Temple/Stringify.h"
+#include "Molassembler/RankingInformation.h"
+#include "Molassembler/Temple/Stringify.h"
 
 using namespace Scine;
 using namespace Molassembler;

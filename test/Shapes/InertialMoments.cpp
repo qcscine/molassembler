@@ -6,11 +6,11 @@
 
 #include <boost/test/unit_test.hpp>
 
-#include "molassembler/Shapes/CoordinateSystemTransformation.h"
-#include "molassembler/Shapes/InertialMoments.h"
-#include "molassembler/Shapes/ContinuousMeasures.h"
-#include "molassembler/Shapes/Shapes.h"
-#include "molassembler/Shapes/Data.h"
+#include "Molassembler/Shapes/CoordinateSystemTransformation.h"
+#include "Molassembler/Shapes/InertialMoments.h"
+#include "Molassembler/Shapes/ContinuousMeasures.h"
+#include "Molassembler/Shapes/Shapes.h"
+#include "Molassembler/Shapes/Data.h"
 
 using namespace Scine::Molassembler;
 using namespace Shapes;

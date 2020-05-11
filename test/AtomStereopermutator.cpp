@@ -6,20 +6,20 @@
 
 #include "boost/test/unit_test.hpp"
 
-#include "molassembler/AtomStereopermutator.h"
-#include "molassembler/Conformers.h"
-#include "molassembler/Graph.h"
-#include "molassembler/IO.h"
-#include "molassembler/Molecule.h"
-#include "molassembler/StereopermutatorList.h"
-#include "molassembler/Stereopermutators/ShapeVertexMaps.h"
-#include "molassembler/Stereopermutation/Manipulation.h"
-#include "molassembler/Shapes/Data.h"
-#include "molassembler/Shapes/PropertyCaching.h"
+#include "Molassembler/AtomStereopermutator.h"
+#include "Molassembler/Conformers.h"
+#include "Molassembler/Graph.h"
+#include "Molassembler/IO.h"
+#include "Molassembler/Molecule.h"
+#include "Molassembler/StereopermutatorList.h"
+#include "Molassembler/Stereopermutators/ShapeVertexMaps.h"
+#include "Molassembler/Stereopermutation/Manipulation.h"
+#include "Molassembler/Shapes/Data.h"
+#include "Molassembler/Shapes/PropertyCaching.h"
 #include "Utils/Math/QuaternionFit.h"
 #include "Utils/Geometry/ElementInfo.h"
 
-#include "molassembler/Temple/Functional.h"
+#include "Molassembler/Temple/Functional.h"
 
 #include "Fixtures.h"
 

@@ -6,7 +6,7 @@
 
 #include <boost/test/unit_test.hpp>
 
-#include "molassembler/Shapes/Diophantine.h"
+#include "Molassembler/Shapes/Diophantine.h"
 
 using namespace Scine::Molassembler::Shapes;
 

@@ -6,8 +6,8 @@
 #include "TypeCasters.h"
 #include "pybind11/eigen.h"
 
-#include "molassembler/Conformers.h"
-#include "molassembler/Molecule.h"
+#include "Molassembler/Conformers.h"
+#include "Molassembler/Molecule.h"
 
 using VariantType = boost::variant<
   Scine::Utils::PositionCollection,

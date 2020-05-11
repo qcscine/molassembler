@@ -9,16 +9,16 @@
 #include "boost/filesystem.hpp"
 #include "boost/program_options.hpp"
 
-#include "molassembler/Shapes/Data.h"
-#include "molassembler/Shapes/ContinuousMeasures.h"
-#include "molassembler/Shapes/InertialMoments.h"
-#include "molassembler/Shapes/Diophantine.h"
+#include "Molassembler/Shapes/Data.h"
+#include "Molassembler/Shapes/ContinuousMeasures.h"
+#include "Molassembler/Shapes/InertialMoments.h"
+#include "Molassembler/Shapes/Diophantine.h"
 
-#include "molassembler/Temple/Adaptors/Iota.h"
-#include "molassembler/Temple/Functional.h"
-#include "molassembler/Temple/Stringify.h"
-#include "molassembler/Temple/constexpr/Jsf.h"
-#include "molassembler/Temple/constexpr/Numeric.h"
+#include "Molassembler/Temple/Adaptors/Iota.h"
+#include "Molassembler/Temple/Functional.h"
+#include "Molassembler/Temple/Stringify.h"
+#include "Molassembler/Temple/constexpr/Jsf.h"
+#include "Molassembler/Temple/constexpr/Numeric.h"
 
 #include <Eigen/Core>
 #include <random>

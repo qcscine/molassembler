@@ -6,12 +6,12 @@
 
 #include "boost/test/unit_test.hpp"
 
-#include "molassembler/Molecule.h"
-#include "molassembler/Graph.h"
-#include "molassembler/IO/SmilesParser.h"
+#include "Molassembler/Molecule.h"
+#include "Molassembler/Graph.h"
+#include "Molassembler/IO/SmilesParser.h"
 
-#include "molassembler/Temple/Functional.h"
-#include "molassembler/Temple/Stringify.h"
+#include "Molassembler/Temple/Functional.h"
+#include "Molassembler/Temple/Stringify.h"
 
 #include "Fixtures.h"
 

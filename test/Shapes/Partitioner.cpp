@@ -6,7 +6,7 @@
 
 #include <boost/test/unit_test.hpp>
 
-#include "molassembler/Shapes/Partitioner.h"
+#include "Molassembler/Shapes/Partitioner.h"
 
 using namespace Scine::Molassembler;
 using namespace Shapes;

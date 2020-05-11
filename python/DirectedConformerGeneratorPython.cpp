@@ -6,9 +6,9 @@
 #include "TypeCasters.h"
 #include "pybind11/eigen.h"
 
-#include "molassembler/Molecule.h"
-#include "molassembler/DirectedConformerGenerator.h"
-#include "molassembler/BondStereopermutator.h"
+#include "Molassembler/Molecule.h"
+#include "Molassembler/DirectedConformerGenerator.h"
+#include "Molassembler/BondStereopermutator.h"
 
 #include "Utils/Geometry/AtomCollection.h"
 

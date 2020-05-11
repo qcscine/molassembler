@@ -6,7 +6,7 @@
 
 #include <boost/test/unit_test.hpp>
 
-#include "molassembler/Temple/StrongIndex.h"
+#include "Molassembler/Temple/StrongIndex.h"
 #include <vector>
 
 using namespace Scine::Molassembler;

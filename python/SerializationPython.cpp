@@ -5,8 +5,8 @@
  */
 #include "TypeCasters.h"
 
-#include "molassembler/Molecule.h"
-#include "molassembler/Serialization.h"
+#include "Molassembler/Molecule.h"
+#include "Molassembler/Serialization.h"
 
 /* Note: if you ever want to, you can get python objects from nlohmann's json
  * representation using the code from here:

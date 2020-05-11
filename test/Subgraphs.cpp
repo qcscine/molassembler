@@ -6,13 +6,13 @@
 
 #include <boost/test/unit_test.hpp>
 
-#include "molassembler/Subgraphs.h"
-#include "molassembler/Molecule.h"
-#include "molassembler/IO.h"
-#include "molassembler/IO/SmilesParser.h"
+#include "Molassembler/Subgraphs.h"
+#include "Molassembler/Molecule.h"
+#include "Molassembler/IO.h"
+#include "Molassembler/IO/SmilesParser.h"
 
 #include <iostream>
-#include "molassembler/Temple/Stringify.h"
+#include "Molassembler/Temple/Stringify.h"
 
 using namespace Scine;
 using namespace Molassembler;

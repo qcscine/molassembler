@@ -10,13 +10,13 @@
 #include "boost/filesystem.hpp"
 #include "boost/test/unit_test.hpp"
 
-#include "molassembler/Temple/constexpr/Bitmask.h"
-#include "molassembler/Temple/StringAlgorithms.h"
-#include "molassembler/Temple/Stringify.h"
+#include "Molassembler/Temple/constexpr/Bitmask.h"
+#include "Molassembler/Temple/StringAlgorithms.h"
+#include "Molassembler/Temple/Stringify.h"
 
-#include "molassembler/IO.h"
-#include "molassembler/Molecule/RankingTree.h"
-#include "molassembler/StereopermutatorList.h"
+#include "Molassembler/IO.h"
+#include "Molassembler/Molecule/RankingTree.h"
+#include "Molassembler/StereopermutatorList.h"
 
 using namespace Scine;
 using namespace Molassembler;

@@ -6,7 +6,7 @@
 #include "TypeCasters.h"
 #include "pybind11/operators.h"
 
-#include "molassembler/Types.h"
+#include "Molassembler/Types.h"
 
 void init_types(pybind11::module& m) {
   using namespace std::string_literals;

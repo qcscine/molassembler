@@ -10,11 +10,11 @@
 #define BOOST_FILESYSTEM_NO_DEPRECATED
 #include "boost/filesystem.hpp"
 
-#include "molassembler/Conformers.h"
-#include "molassembler/DistanceGeometry/SpatialModel.h"
-#include "molassembler/IO.h"
-#include "molassembler/Molecule.h"
-#include "molassembler/StereopermutatorList.h"
+#include "Molassembler/Conformers.h"
+#include "Molassembler/DistanceGeometry/SpatialModel.h"
+#include "Molassembler/IO.h"
+#include "Molassembler/Molecule.h"
+#include "Molassembler/StereopermutatorList.h"
 
 #include <iostream>
 

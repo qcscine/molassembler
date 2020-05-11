@@ -4,20 +4,20 @@
  *   See LICENSE.txt for details.
  */
 
-#include "molassembler/Shapes/Data.h"
-#include "molassembler/Shapes/PropertyCaching.h"
+#include "Molassembler/Shapes/Data.h"
+#include "Molassembler/Shapes/PropertyCaching.h"
 
 #include <iostream>
 #include <iomanip>
 #include <numeric>
 #include <fstream>
 
-#include "molassembler/Temple/GroupBy.h"
-#include "molassembler/Temple/Adaptors/Transform.h"
-#include "molassembler/Temple/Functional.h"
-#include "molassembler/Temple/Stringify.h"
-#include "molassembler/Temple/constexpr/FloatingPointComparison.h"
-#include "molassembler/Temple/constexpr/Numeric.h"
+#include "Molassembler/Temple/GroupBy.h"
+#include "Molassembler/Temple/Adaptors/Transform.h"
+#include "Molassembler/Temple/Functional.h"
+#include "Molassembler/Temple/Stringify.h"
+#include "Molassembler/Temple/constexpr/FloatingPointComparison.h"
+#include "Molassembler/Temple/constexpr/Numeric.h"
 
 #include <Eigen/Geometry>
 

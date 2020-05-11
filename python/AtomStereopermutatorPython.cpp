@@ -6,7 +6,7 @@
 #include "TypeCasters.h"
 #include "pybind11/operators.h"
 
-#include "molassembler/AtomStereopermutator.h"
+#include "Molassembler/AtomStereopermutator.h"
 
 void init_atom_stereopermutator(pybind11::module& m) {
   using namespace Scine::Molassembler;

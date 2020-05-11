@@ -10,19 +10,19 @@
 #include "boost/graph/isomorphism.hpp"
 #include "boost/test/unit_test.hpp"
 
-#include "molassembler/Shapes/Data.h"
+#include "Molassembler/Shapes/Data.h"
 
-#include "molassembler/Temple/constexpr/Bitmask.h"
-#include "molassembler/Temple/Functional.h"
-#include "molassembler/Temple/Stringify.h"
-#include "molassembler/Temple/Optionals.h"
+#include "Molassembler/Temple/constexpr/Bitmask.h"
+#include "Molassembler/Temple/Functional.h"
+#include "Molassembler/Temple/Stringify.h"
+#include "Molassembler/Temple/Optionals.h"
 
-#include "molassembler/Cycles.h"
-#include "molassembler/Graph.h"
-#include "molassembler/Graph/GraphAlgorithms.h"
-#include "molassembler/IO.h"
-#include "molassembler/Molecule/RankingTree.h"
-#include "molassembler/StereopermutatorList.h"
+#include "Molassembler/Cycles.h"
+#include "Molassembler/Graph.h"
+#include "Molassembler/Graph/GraphAlgorithms.h"
+#include "Molassembler/IO.h"
+#include "Molassembler/Molecule/RankingTree.h"
+#include "Molassembler/StereopermutatorList.h"
 
 #include <random>
 #include <fstream>

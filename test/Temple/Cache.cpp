@@ -6,7 +6,7 @@
 
 #include <boost/test/unit_test.hpp>
 
-#include "molassembler/Temple/Cache.h"
+#include "Molassembler/Temple/Cache.h"
 
 using namespace Scine::Molassembler;
 

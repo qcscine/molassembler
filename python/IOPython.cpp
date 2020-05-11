@@ -6,9 +6,9 @@
 #include "TypeCasters.h"
 #include "pybind11/eigen.h"
 
-#include "molassembler/IO.h"
-#include "molassembler/IO/SmilesParser.h"
-#include "molassembler/Molecule.h"
+#include "Molassembler/IO.h"
+#include "Molassembler/IO/SmilesParser.h"
+#include "Molassembler/Molecule.h"
 
 #include "Utils/Typenames.h"
 

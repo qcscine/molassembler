@@ -9,13 +9,13 @@
 #include "boost/filesystem.hpp"
 #include "boost/test/unit_test.hpp"
 
-#include "molassembler/Conformers.h"
-#include "molassembler/IO.h"
-#include "molassembler/Molecule.h"
-#include "molassembler/Graph.h"
-#include "molassembler/AtomStereopermutator.h"
-#include "molassembler/BondStereopermutator.h"
-#include "molassembler/StereopermutatorList.h"
+#include "Molassembler/Conformers.h"
+#include "Molassembler/IO.h"
+#include "Molassembler/Molecule.h"
+#include "Molassembler/Graph.h"
+#include "Molassembler/AtomStereopermutator.h"
+#include "Molassembler/BondStereopermutator.h"
+#include "Molassembler/StereopermutatorList.h"
 
 #include <iostream>
 

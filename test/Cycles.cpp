@@ -9,14 +9,14 @@
 #include "boost/filesystem.hpp"
 #include "boost/test/unit_test.hpp"
 
-#include "molassembler/Temple/Stringify.h"
-#include "molassembler/Temple/Functional.h"
-#include "molassembler/Temple/constexpr/Numeric.h"
+#include "Molassembler/Temple/Stringify.h"
+#include "Molassembler/Temple/Functional.h"
+#include "Molassembler/Temple/constexpr/Numeric.h"
 
-#include "molassembler/IO.h"
-#include "molassembler/Cycles.h"
-#include "molassembler/Graph.h"
-#include "molassembler/Molecule.h"
+#include "Molassembler/IO.h"
+#include "Molassembler/Cycles.h"
+#include "Molassembler/Graph.h"
+#include "Molassembler/Molecule.h"
 #include <iostream>
 #include <array>
 #include <iterator>

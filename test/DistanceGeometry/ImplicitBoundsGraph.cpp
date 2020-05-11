@@ -9,11 +9,11 @@
 #include "boost/filesystem.hpp"
 #include "boost/test/unit_test.hpp"
 
-#include "molassembler/DistanceGeometry/ImplicitBoundsGraphBoost.h"
-#include "molassembler/DistanceGeometry/SpatialModel.h"
+#include "Molassembler/DistanceGeometry/ImplicitBoundsGraphBoost.h"
+#include "Molassembler/DistanceGeometry/SpatialModel.h"
 
 #include "boost/graph/graph_concepts.hpp"
-#include "molassembler/IO.h"
+#include "Molassembler/IO.h"
 #include "ShortestPathsGraphTests.h"
 
 #include <iostream>

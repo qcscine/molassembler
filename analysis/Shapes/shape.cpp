@@ -6,21 +6,21 @@
 
 #include "boost/program_options.hpp"
 
-#include "molassembler/Shapes/ContinuousMeasures.h"
+#include "Molassembler/Shapes/ContinuousMeasures.h"
 
-#include "molassembler/Shapes/Data.h"
-#include "molassembler/Shapes/PropertyCaching.h"
+#include "Molassembler/Shapes/Data.h"
+#include "Molassembler/Shapes/PropertyCaching.h"
 
 #include "boost/math/tools/minima.hpp"
-#include "molassembler/Temple/constexpr/Numeric.h"
-#include "molassembler/Temple/Adaptors/AllPairs.h"
-#include "molassembler/Temple/Adaptors/Iota.h"
-#include "molassembler/Temple/Functional.h"
-#include "molassembler/Temple/Stringify.h"
-#include "molassembler/Temple/Random.h"
-#include "molassembler/Temple/constexpr/Jsf.h"
-#include "molassembler/Temple/Permutations.h"
-#include "molassembler/Temple/Loops.h"
+#include "Molassembler/Temple/constexpr/Numeric.h"
+#include "Molassembler/Temple/Adaptors/AllPairs.h"
+#include "Molassembler/Temple/Adaptors/Iota.h"
+#include "Molassembler/Temple/Functional.h"
+#include "Molassembler/Temple/Stringify.h"
+#include "Molassembler/Temple/Random.h"
+#include "Molassembler/Temple/constexpr/Jsf.h"
+#include "Molassembler/Temple/Permutations.h"
+#include "Molassembler/Temple/Loops.h"
 
 #include <Eigen/SparseCore>
 #include <Eigen/Eigenvalues>

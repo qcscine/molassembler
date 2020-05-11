@@ -12,22 +12,22 @@
 #include "boost/mpl/for_each.hpp"
 #include "boost/mpl/size.hpp"
 
-#include "molassembler/Detail/Cartesian.h"
+#include "Molassembler/Detail/Cartesian.h"
 
-#include "molassembler/Shapes/Data.h"
-#include "molassembler/Shapes/ContinuousMeasures.h"
-#include "molassembler/Shapes/InertialMoments.h"
-#include "molassembler/Shapes/Properties.h"
-#include "molassembler/Shapes/TauCriteria.h"
+#include "Molassembler/Shapes/Data.h"
+#include "Molassembler/Shapes/ContinuousMeasures.h"
+#include "Molassembler/Shapes/InertialMoments.h"
+#include "Molassembler/Shapes/Properties.h"
+#include "Molassembler/Shapes/TauCriteria.h"
 
-#include "molassembler/Temple/Adaptors/AllPairs.h"
-#include "molassembler/Temple/Adaptors/Iota.h"
-#include "molassembler/Temple/Adaptors/Transform.h"
-#include "molassembler/Temple/Functional.h"
-#include "molassembler/Temple/Random.h"
-#include "molassembler/Temple/Stringify.h"
-#include "molassembler/Temple/constexpr/Jsf.h"
-#include "molassembler/Temple/constexpr/Numeric.h"
+#include "Molassembler/Temple/Adaptors/AllPairs.h"
+#include "Molassembler/Temple/Adaptors/Iota.h"
+#include "Molassembler/Temple/Adaptors/Transform.h"
+#include "Molassembler/Temple/Functional.h"
+#include "Molassembler/Temple/Random.h"
+#include "Molassembler/Temple/Stringify.h"
+#include "Molassembler/Temple/constexpr/Jsf.h"
+#include "Molassembler/Temple/constexpr/Numeric.h"
 
 #include <iostream>
 #include <fstream>

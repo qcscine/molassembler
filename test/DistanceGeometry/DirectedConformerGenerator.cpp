@@ -9,14 +9,14 @@
 #include "boost/filesystem.hpp"
 #include "boost/test/unit_test.hpp"
 
-#include "molassembler/DirectedConformerGenerator.h"
-#include "molassembler/Molecule.h"
-#include "molassembler/IO.h"
+#include "Molassembler/DirectedConformerGenerator.h"
+#include "Molassembler/Molecule.h"
+#include "Molassembler/IO.h"
 
 #include "Utils/Typenames.h"
 
-#include "molassembler/Temple/Invoke.h"
-#include "molassembler/Temple/Stringify.h"
+#include "Molassembler/Temple/Invoke.h"
+#include "Molassembler/Temple/Stringify.h"
 
 #include <fstream>
 #include <iomanip>

@@ -6,9 +6,9 @@
 
 #include <boost/test/unit_test.hpp>
 
-#include "molassembler/Detail/Cartesian.h"
-#include "molassembler/Temple/Random.h"
-#include "molassembler/Options.h"
+#include "Molassembler/Detail/Cartesian.h"
+#include "Molassembler/Temple/Random.h"
+#include "Molassembler/Options.h"
 
 #include <Eigen/Geometry>
 

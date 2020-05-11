@@ -5,8 +5,8 @@
  */
 #include "TypeCasters.h"
 
-#include "molassembler/Editing.h"
-#include "molassembler/Molecule.h"
+#include "Molassembler/Editing.h"
+#include "Molassembler/Molecule.h"
 
 void init_editing(pybind11::module& m) {
   using namespace Scine::Molassembler;

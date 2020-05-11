@@ -6,11 +6,11 @@
 
 #include <boost/test/unit_test.hpp>
 
-#include "molassembler/Detail/CyclicPolygons.h"
+#include "Molassembler/Detail/CyclicPolygons.h"
 
-#include "molassembler/Temple/Random.h"
-#include "molassembler/Temple/Stringify.h"
-#include "molassembler/Temple/constexpr/Jsf.h"
+#include "Molassembler/Temple/Random.h"
+#include "Molassembler/Temple/Stringify.h"
+#include "Molassembler/Temple/constexpr/Jsf.h"
 
 #include <iostream>
 #include <fstream>

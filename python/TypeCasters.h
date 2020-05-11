@@ -11,7 +11,7 @@
 
 #include "boost/variant.hpp"
 #include "boost/optional.hpp"
-#include "molassembler/RankingInformation.h"
+#include "Molassembler/RankingInformation.h"
 
 namespace pybind11 {
 namespace detail {

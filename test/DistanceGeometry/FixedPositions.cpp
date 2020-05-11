@@ -9,9 +9,9 @@
 #include "boost/filesystem.hpp"
 #include "boost/test/unit_test.hpp"
 
-#include "molassembler/Conformers.h"
-#include "molassembler/Molecule.h"
-#include "molassembler/IO.h"
+#include "Molassembler/Conformers.h"
+#include "Molassembler/Molecule.h"
+#include "Molassembler/IO.h"
 
 #include "Utils/Typenames.h"
 

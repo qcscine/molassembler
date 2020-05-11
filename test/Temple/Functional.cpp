@@ -6,9 +6,9 @@
 
 #include <boost/test/unit_test.hpp>
 
-#include "molassembler/Temple/Adaptors/All.h"
-#include "molassembler/Temple/Functional.h"
-#include "molassembler/Temple/constexpr/Numeric.h"
+#include "Molassembler/Temple/Adaptors/All.h"
+#include "Molassembler/Temple/Functional.h"
+#include "Molassembler/Temple/constexpr/Numeric.h"
 
 // boost algorithm replacements
 #include <boost/algorithm/cxx11/all_of.hpp>

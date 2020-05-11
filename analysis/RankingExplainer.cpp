@@ -10,13 +10,13 @@
 #include "boost/program_options.hpp"
 #include "boost/regex.hpp"
 
-#include "molassembler/Cycles.h"
-#include "molassembler/Graph/GraphAlgorithms.h"
-#include "molassembler/IO.h"
-#include "molassembler/Log.h"
-#include "molassembler/Molecule/RankingTree.h"
+#include "Molassembler/Cycles.h"
+#include "Molassembler/Graph/GraphAlgorithms.h"
+#include "Molassembler/IO.h"
+#include "Molassembler/Log.h"
+#include "Molassembler/Molecule/RankingTree.h"
 
-#include "molassembler/Temple/StringAlgorithms.h"
+#include "Molassembler/Temple/StringAlgorithms.h"
 
 #include <random>
 

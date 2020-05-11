@@ -1,4 +1,4 @@
-#include "molassembler/Types.h"
+#include "Molassembler/Types.h"
 
 using namespace Scine::Molassembler;
 

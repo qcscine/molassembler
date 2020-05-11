@@ -7,19 +7,19 @@
 #include <boost/test/unit_test.hpp>
 #include <Eigen/Geometry>
 
-#include "molassembler/Temple/Adaptors/AllPairs.h"
-#include "molassembler/Temple/Adaptors/Zip.h"
-#include "molassembler/Temple/Functional.h"
-#include "molassembler/Temple/Functor.h"
-#include "molassembler/Temple/SetAlgorithms.h"
-#include "molassembler/Temple/Stringify.h"
-#include "molassembler/Temple/Stl17.h"
-#include "molassembler/Temple/constexpr/Numeric.h"
-#include "molassembler/Temple/constexpr/ToStl.h"
-#include "molassembler/Temple/constexpr/TupleTypePairs.h"
+#include "Molassembler/Temple/Adaptors/AllPairs.h"
+#include "Molassembler/Temple/Adaptors/Zip.h"
+#include "Molassembler/Temple/Functional.h"
+#include "Molassembler/Temple/Functor.h"
+#include "Molassembler/Temple/SetAlgorithms.h"
+#include "Molassembler/Temple/Stringify.h"
+#include "Molassembler/Temple/Stl17.h"
+#include "Molassembler/Temple/constexpr/Numeric.h"
+#include "Molassembler/Temple/constexpr/ToStl.h"
+#include "Molassembler/Temple/constexpr/TupleTypePairs.h"
 
-#include "molassembler/Shapes/PropertyCaching.h"
-#include "molassembler/Shapes/Data.h"
+#include "Molassembler/Shapes/PropertyCaching.h"
+#include "Molassembler/Shapes/Data.h"
 
 #include <set>
 #include <numeric>

@@ -12,17 +12,17 @@
 #include <functional>
 #include <numeric>
 
-#include "molassembler/Shapes/Data.h"
-#include "molassembler/Shapes/Properties.h"
+#include "Molassembler/Shapes/Data.h"
+#include "Molassembler/Shapes/Properties.h"
 
-#include "molassembler/Stereopermutation/Manipulation.h"
-#include "molassembler/Stereopermutation/Composites.h"
-#include "molassembler/Stereopermutation/RotationEnumerator.h"
+#include "Molassembler/Stereopermutation/Manipulation.h"
+#include "Molassembler/Stereopermutation/Composites.h"
+#include "Molassembler/Stereopermutation/RotationEnumerator.h"
 
-#include "molassembler/Temple/Functional.h"
-#include "molassembler/Temple/Random.h"
-#include "molassembler/Temple/Stringify.h"
-#include "molassembler/Temple/constexpr/LogicalOperatorTests.h"
+#include "Molassembler/Temple/Functional.h"
+#include "Molassembler/Temple/Random.h"
+#include "Molassembler/Temple/Stringify.h"
+#include "Molassembler/Temple/constexpr/LogicalOperatorTests.h"
 
 using namespace Scine::Molassembler;
 using namespace Stereopermutations;
