@@ -17,7 +17,7 @@
 #include "molassembler/Shapes/constexpr/AngleLookup.h"
 
 namespace Scine {
-
+namespace Molassembler {
 namespace Shapes {
 
 //! A placeholder value for constexpr tetrahedra specification of origin
@@ -800,7 +800,7 @@ struct TrigonalPrism {
     {-0.377964, -0.654654, -0.654654}
   }};
   static constexpr auto angleLookupTable = Temple::makeUpperTriangularMatrix(
-    detail::makeArray<size>(coordinates)
+    Detail::makeArray<size>(coordinates)
   );
   static constexpr double angleFunction(const unsigned a, const unsigned b) {
     if(a == b) {
@@ -1063,7 +1063,7 @@ struct CappedOctahedron {
     { 0.389831, -0.675207, -0.626200}
   }};
   static constexpr auto angleLookupTable = Temple::makeUpperTriangularMatrix(
-    detail::makeArray<size>(coordinates)
+    Detail::makeArray<size>(coordinates)
   );
   static constexpr double angleFunction(const unsigned a, const unsigned b) {
     if(a == b) {
@@ -1116,7 +1116,7 @@ struct CappedTrigonalPrism {
     { -0.413726, -0.413726, -0.810964}
   }};
   static constexpr auto angleLookupTable = Temple::makeUpperTriangularMatrix(
-    detail::makeArray<size>(coordinates)
+    Detail::makeArray<size>(coordinates)
   );
   static constexpr double angleFunction(const unsigned a, const unsigned b) {
     if(a == b) {
@@ -1193,7 +1193,7 @@ struct SquareAntiprism {
  * degrees using the square antiprismatic reference coordinates
  */
   static constexpr auto angleLookupTable = Temple::makeUpperTriangularMatrix(
-    detail::makeArray<size>(coordinates)
+    Detail::makeArray<size>(coordinates)
   );
 
   static constexpr double angleFunction(const unsigned a, const unsigned b) {
@@ -1263,7 +1263,7 @@ struct Cube {
     { -0.577350,  0.577350, -0.577350}
   }};
   static constexpr auto angleLookupTable = Temple::makeUpperTriangularMatrix(
-    detail::makeArray<size>(coordinates)
+    Detail::makeArray<size>(coordinates)
   );
   static constexpr double angleFunction(const unsigned a, const unsigned b) {
     if(a == b) {
@@ -1312,7 +1312,7 @@ struct TrigonalDodecahedron {
     {  0.000000, -0.950273, -0.311417}
   }};
   static constexpr auto angleLookupTable = Temple::makeUpperTriangularMatrix(
-    detail::makeArray<size>(coordinates)
+    Detail::makeArray<size>(coordinates)
   );
   static constexpr double angleFunction(const unsigned a, const unsigned b) {
     if(a == b) {
@@ -1363,7 +1363,7 @@ struct HexagonalBipyramid {
     { 0.000000,  0.000000, -1.000000}
   }};
   static constexpr auto angleLookupTable = Temple::makeUpperTriangularMatrix(
-    detail::makeArray<size>(coordinates)
+    Detail::makeArray<size>(coordinates)
   );
   static constexpr double angleFunction(const unsigned a, const unsigned b) {
     if(a == b) {
@@ -1417,7 +1417,7 @@ struct TricappedTrigonalPrism {
     { 0.610701141906, -0.322016246902,  0.723429092590}
   }};
   static constexpr auto angleLookupTable = Temple::makeUpperTriangularMatrix(
-    detail::makeArray<size>(coordinates)
+    Detail::makeArray<size>(coordinates)
   );
   static constexpr double angleFunction(const unsigned a, const unsigned b) {
     if(a == b) {
@@ -1469,7 +1469,7 @@ struct CappedSquareAntiprism {
     {  0.000000,  0.000000,  1.000000}
   }};
   static constexpr auto angleLookupTable = Temple::makeUpperTriangularMatrix(
-    detail::makeArray<size>(coordinates)
+    Detail::makeArray<size>(coordinates)
   );
   static constexpr double angleFunction(const unsigned a, const unsigned b) {
     if(a == b) {
@@ -1518,7 +1518,7 @@ struct HeptagonalBipyramid {
     { 0.000000,  0.000000, -1.000000}
   }};
   static constexpr auto angleLookupTable = Temple::makeUpperTriangularMatrix(
-    detail::makeArray<size>(coordinates)
+    Detail::makeArray<size>(coordinates)
   );
   static constexpr double angleFunction(const unsigned a, const unsigned b) {
     if(a == b) {
@@ -1572,7 +1572,7 @@ struct BicappedSquareAntiprism {
     {-0.978696887344, -0.074682599351, -0.191245685067}
   }};
   static constexpr auto angleLookupTable = Temple::makeUpperTriangularMatrix(
-    detail::makeArray<size>(coordinates)
+    Detail::makeArray<size>(coordinates)
   );
   static constexpr double angleFunction(const unsigned a, const unsigned b) {
     if(a == b) {
@@ -1628,7 +1628,7 @@ struct EdgeContractedIcosahedron {
     {-0.773718984882, -0.203685975092,  0.599892453681}
   }};
   static constexpr auto angleLookupTable = Temple::makeUpperTriangularMatrix(
-    detail::makeArray<size>(coordinates)
+    Detail::makeArray<size>(coordinates)
   );
   static constexpr double angleFunction(const unsigned a, const unsigned b) {
     if(a == b) {
@@ -1681,7 +1681,7 @@ struct Icosahedron {
     { 0.000000, -0.850651, -0.525731}
   }};
   static constexpr auto angleLookupTable = Temple::makeUpperTriangularMatrix(
-    detail::makeArray<size>(coordinates)
+    Detail::makeArray<size>(coordinates)
   );
   static constexpr double angleFunction(const unsigned a, const unsigned b) {
     if(a == b) {
@@ -1737,7 +1737,7 @@ struct Cuboctahedron {
     { 0.000000, -0.707107, -0.707107}
   }};
   static constexpr auto angleLookupTable = Temple::makeUpperTriangularMatrix(
-    detail::makeArray<size>(coordinates)
+    Detail::makeArray<size>(coordinates)
   );
   static constexpr double angleFunction(const unsigned a, const unsigned b) {
     if(a == b) {
@@ -1805,9 +1805,8 @@ using allShapeDataTypes = std::tuple<
 >;
 
 } // namespace Data
-
 } // namespace Shapes
-
+} // namespace Molassembler
 } // namespace Scine
 
 #endif

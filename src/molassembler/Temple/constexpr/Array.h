@@ -19,6 +19,7 @@
 #include <utility>
 
 namespace Scine {
+namespace Molassembler {
 namespace Temple {
 
 template<typename T, size_t nItems>
@@ -492,6 +493,7 @@ constexpr auto makeArray(T head, Tail... tail) -> Array<T, 1 + sizeof...(Tail)> 
 }
 
 } // namespace Temple
+} // namespace Molassembler
 } // namespace Scine
 
 #endif

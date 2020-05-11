@@ -18,9 +18,10 @@
 #include <memory>
 
 namespace Scine {
+namespace Molassembler {
 namespace Temple {
-namespace adaptors {
-namespace detail {
+namespace Adaptors {
+namespace Detail {
 
 template<class Container>
 class Enumerator : public Binding<Container> {
@@ -116,7 +117,7 @@ public:
   }
 };
 
-} // namespace detail
+} // namespace Detail
 
 /*! Returns an EnerateTemporary for use with range-for expressions that
  * generates a struct with members index and value for every contained element.
@@ -130,14 +131,15 @@ public:
  * [], and for these, use this.
  */
 template<class Container>
-detail::Enumerator<Container> enumerate(Container&& container) {
-  return detail::Enumerator<Container>(
+Detail::Enumerator<Container> enumerate(Container&& container) {
+  return Detail::Enumerator<Container>(
     std::forward<Container>(container)
   );
 }
 
-} // namespace adaptors
+} // namespace Adaptors
 } // namespace Temple
+} // namespace Molassembler
 } // namespace Scine
 
 #endif

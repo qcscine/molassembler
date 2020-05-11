@@ -12,6 +12,7 @@
 #include <functional>
 
 namespace Scine {
+namespace Molassembler {
 namespace Temple {
 
 /*! @brief Calculate the index of permutation of elements in a container
@@ -45,7 +46,7 @@ std::size_t permutationIndex(const Container& container) {
   return index;
 }
 
-namespace inplace {
+namespace InPlace {
 
 //! Calls std::next_permutation
 template<class Container>
@@ -114,8 +115,9 @@ bool nextCombinationPermutation(
   return true;
 }
 
-} // namespace inplace
+} // namespace InPlace
 } // namespace Temple
+} // namespace Molassembler
 } // namespace Scine
 
 #endif

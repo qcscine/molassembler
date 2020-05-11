@@ -13,6 +13,7 @@
 #include <array>
 
 namespace Scine {
+namespace Molassembler {
 namespace Temple {
 
 /* Heavily modified from:
@@ -312,6 +313,7 @@ struct Generator {
 };
 
 } // namespace Temple
+} // namespace Molassembler
 } // namespace Scine
 
 #endif

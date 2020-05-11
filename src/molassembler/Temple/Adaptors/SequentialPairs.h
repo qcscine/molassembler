@@ -14,9 +14,10 @@
 #include <vector>
 
 namespace Scine {
+namespace Molassembler {
 namespace Temple {
-namespace adaptors {
-namespace detail {
+namespace Adaptors {
+namespace Detail {
 
 template<class Container>
 struct SequentialPairGenerator : public Binding<Container> {
@@ -128,17 +129,18 @@ struct SequentialPairGenerator : public Binding<Container> {
 //!@}
 };
 
-} // namespace detail
+} // namespace Detail
 
 template<class Container>
 auto sequentialPairs(Container&& container) {
-  return detail::SequentialPairGenerator<Container>(
+  return Detail::SequentialPairGenerator<Container>(
     std::forward<Container>(container)
   );
 }
 
-} // namespace adaptors
+} // namespace Adaptors
 } // namespace Temple
+} // namespace Molassembler
 } // namespace Scine
 
 #endif

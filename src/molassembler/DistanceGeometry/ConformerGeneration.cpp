@@ -28,7 +28,7 @@
 namespace Scine {
 namespace Molassembler {
 namespace DistanceGeometry {
-namespace detail {
+namespace Detail {
 
 Eigen::MatrixXd gather(const Eigen::VectorXd& vectorizedPositions) {
   constexpr unsigned dimensionality = 4;
@@ -188,7 +188,7 @@ struct GradientOrIterLimitStop {
   double gradNorm = 1e-5;
 };
 
-} // namespace detail
+} // namespace Detail
 
 MoleculeDGInformation gatherDGInformation(
   const Molecule& molecule,
@@ -269,7 +269,7 @@ outcome::result<AngstromPositions> refine(
    */
   unsigned firstStageIterations = 0;
   if(initiallyCorrectChiralConstraints < 1) {
-    detail::InversionOrIterLimitStop<FullRefinementType> inversionChecker {
+    Detail::InversionOrIterLimitStop<FullRefinementType> inversionChecker {
       configuration.refinementStepLimit,
       refinementFunctor
     };
@@ -302,7 +302,7 @@ outcome::result<AngstromPositions> refine(
   refinementFunctor.compressFourthDimension = true;
 
   unsigned secondStageIterations = 0;
-  detail::GradientOrIterLimitStop<FloatType> gradientChecker;
+  Detail::GradientOrIterLimitStop<FloatType> gradientChecker;
   gradientChecker.gradNorm = 1e-3;
   gradientChecker.iterLimit = configuration.refinementStepLimit - firstStageIterations;
 
@@ -331,7 +331,7 @@ outcome::result<AngstromPositions> refine(
 
   /* Add dihedral terms and refine again */
   unsigned thirdStageIterations = 0;
-  gradientChecker = detail::GradientOrIterLimitStop<FloatType> {};
+  gradientChecker = Detail::GradientOrIterLimitStop<FloatType> {};
   gradientChecker.gradNorm = 1e-3;
   gradientChecker.iterLimit = (
     configuration.refinementStepLimit
@@ -369,15 +369,15 @@ outcome::result<AngstromPositions> refine(
     return DgError::RefinedStructureInacceptable;
   }
 
-  auto gatheredPositions = detail::gather(transformedPositions);
+  auto gatheredPositions = Detail::gather(transformedPositions);
 
   if(!configuration.fixedPositions.empty()) {
-    return detail::convertToAngstromPositions(
-      detail::fitAndSetFixedPositions(gatheredPositions, configuration)
+    return Detail::convertToAngstromPositions(
+      Detail::fitAndSetFixedPositions(gatheredPositions, configuration)
     );
   }
 
-  return detail::convertToAngstromPositions(gatheredPositions);
+  return Detail::convertToAngstromPositions(gatheredPositions);
 }
 
 outcome::result<AngstromPositions> generateConformer(
@@ -388,7 +388,7 @@ outcome::result<AngstromPositions> generateConformer(
   Random::Engine& engine
 ) {
   if(regenerateDGDataEachStep) {
-    auto moleculeCopy = detail::narrow(molecule, engine);
+    auto moleculeCopy = Detail::narrow(molecule, engine);
 
     if(moleculeCopy.stereopermutators().hasZeroAssignmentStereopermutators()) {
       return DgError::ZeroAssignmentStereopermutators;
@@ -483,7 +483,7 @@ std::vector<
   /* If a seed is supplied, the global prng state is not to be advanced.
    * We create a random engine from the seed here if a seed is supplied.
    */
-  auto engineOption = Temple::optionals::map(
+  auto engineOption = Temple::Optionals::map(
     seedOption,
     [](unsigned seed) { return Random::Engine(seed); }
   );

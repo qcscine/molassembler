@@ -15,8 +15,9 @@
 #include "molassembler/Temple/Traits.h"
 
 namespace Scine {
+namespace Molassembler {
 namespace Temple {
-namespace optionals {
+namespace Optionals {
 
 /*! @brief Monadic bind with function of signature T -> U
  *
@@ -62,8 +63,9 @@ auto flatMap(const OptionalType<T>& optional, UnaryFunction&& function) {
   return OptionalU {};
 }
 
-} // namespace optionals
+} // namespace Optionals
 } // namespace Temple
+} // namespace Molassembler
 } // namespace Scine
 
 #endif

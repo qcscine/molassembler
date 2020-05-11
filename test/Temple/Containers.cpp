@@ -16,7 +16,7 @@
 #include <algorithm>
 #include <random>
 
-using namespace Scine;
+using namespace Scine::Molassembler;
 
 extern Temple::Generator<> generator;
 

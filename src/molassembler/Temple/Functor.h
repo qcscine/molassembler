@@ -13,6 +13,7 @@
 #include "molassembler/Temple/Binding.h"
 
 namespace Scine {
+namespace Molassembler {
 namespace Temple {
 
 //! @brief Functors for transformations
@@ -125,6 +126,7 @@ constexpr Get<1> second;
 
 } // namespace Functor
 } // namespace Temple
+} // namespace Molassembler
 } // namespace Scine
 
 #endif

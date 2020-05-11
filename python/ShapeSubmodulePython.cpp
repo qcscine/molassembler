@@ -7,7 +7,7 @@
 #include "molassembler/Shapes/Data.h"
 
 void init_shape_submodule(pybind11::module& m) {
-  using namespace Scine;
+  using namespace Scine::Molassembler;
 
   auto symmetrySubmodule = m.def_submodule("shapes");
   symmetrySubmodule.doc() = R"(Shape submodule)";

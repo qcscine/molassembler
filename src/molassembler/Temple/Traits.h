@@ -11,13 +11,14 @@
 #include <vector>
 
 namespace Scine {
+namespace Molassembler {
 namespace Temple {
 
 //! @brief Compile-time reflective trait objects
 namespace Traits {
 
 // Get the base type a container holds via the begin iterator
-namespace detail {
+namespace Detail {
   template<class ContainerType>
   struct getValueTypeImpl {
     using type = typename std::remove_const<
@@ -36,10 +37,10 @@ namespace detail {
   struct getValueTypeImpl<std::vector<bool>> {
     using type = bool;
   };
-} // namespace detail
+} // namespace Detail
 
 template<class ContainerType>
-using getValueType = typename detail::getValueTypeImpl<ContainerType>::type;
+using getValueType = typename Detail::getValueTypeImpl<ContainerType>::type;
 
 template<class Function, typename ...Args>
 using functionReturnType = std::result_of_t<Function(Args...)>;
@@ -54,6 +55,7 @@ struct FunctionPointerReturnType<ReturnType (*)(Args...)> {
 
 } // namespace Traits
 } // namespace Temple
+} // namespace Molassembler
 } // namespace Scine
 
 #endif

@@ -24,7 +24,7 @@
 #include "molassembler/Temple/Stringify.h"
 #include "molassembler/Temple/constexpr/LogicalOperatorTests.h"
 
-using namespace Scine;
+using namespace Scine::Molassembler;
 using namespace Stereopermutations;
 
 template<typename T>

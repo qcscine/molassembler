@@ -79,7 +79,7 @@ struct RefinementData {
   std::string spatialModelGraphviz;
 };
 
-namespace detail {
+namespace Detail {
 
 template<typename EigenRefinementType>
 struct InversionOrIterLimitStop {
@@ -122,7 +122,7 @@ struct GradientOrIterLimitStop {
   double gradNorm = 1e-5;
 };
 
-} // namespace detail
+} // namespace Detail
 
 MoleculeDGInformation gatherDGInformation(
   const Molecule& molecule,
@@ -248,7 +248,7 @@ std::list<RefinementData> debugRefinement(
     ++currentStructureNumber
   ) {
     if(regenerateEachStep) {
-      auto moleculeCopy = detail::narrow(molecule, randomnessEngine());
+      auto moleculeCopy = Detail::narrow(molecule, randomnessEngine());
 
       if(moleculeCopy.stereopermutators().hasZeroAssignmentStereopermutators()) {
         Log::log(Log::Level::Warning)
@@ -281,7 +281,7 @@ std::list<RefinementData> debugRefinement(
       failures += 1;
 
       if(regenerateEachStep) {
-        auto moleculeCopy = detail::narrow(molecule, randomnessEngine());
+        auto moleculeCopy = Detail::narrow(molecule, randomnessEngine());
 
         SpatialModel model {moleculeCopy, configuration};
         model.writeGraphviz("DG-failure-spatial-model-" + std::to_string(currentStructureNumber) + ".dot");
@@ -418,7 +418,7 @@ std::list<RefinementData> debugRefinement(
      */
     unsigned firstStageIterations = 0;
     if(initiallyCorrectChiralConstraints < 1.0) {
-      detail::InversionOrIterLimitStop<FullRefinementType> inversionChecker {
+      Detail::InversionOrIterLimitStop<FullRefinementType> inversionChecker {
         configuration.refinementStepLimit,
         refinementFunctor
       };
@@ -462,7 +462,7 @@ std::list<RefinementData> debugRefinement(
 
 
     unsigned secondStageIterations = 0;
-    detail::GradientOrIterLimitStop<FloatType> gradientChecker;
+    Detail::GradientOrIterLimitStop<FloatType> gradientChecker;
     gradientChecker.gradNorm = 1e-3;
     gradientChecker.iterLimit = configuration.refinementStepLimit - firstStageIterations;
 
@@ -514,7 +514,7 @@ std::list<RefinementData> debugRefinement(
 
     /* Add dihedral terms and refine again */
     unsigned thirdStageIterations = 0;
-    gradientChecker = detail::GradientOrIterLimitStop<FloatType> {};
+    gradientChecker = Detail::GradientOrIterLimitStop<FloatType> {};
     gradientChecker.gradNorm = 1e-3;
     gradientChecker.iterLimit = (
       configuration.refinementStepLimit
@@ -616,8 +616,8 @@ void writeProgressFile(
   const Eigen::VectorXd& positions
 ) {
   const std::string filename = baseFilename + "-" + std::to_string(index) + ".mol";
-  AngstromPositions angstromWrapper = DistanceGeometry::detail::convertToAngstromPositions(
-    DistanceGeometry::detail::gather(positions)
+  AngstromPositions angstromWrapper = DistanceGeometry::Detail::convertToAngstromPositions(
+    DistanceGeometry::Detail::gather(positions)
   );
   IO::write(filename, mol, angstromWrapper);
 }
@@ -667,7 +667,7 @@ void writeProgressFiles(
       );
     }
   } else {
-    for(const auto enumPair : Temple::adaptors::enumerate(refinementData.steps)) {
+    for(const auto enumPair : Temple::Adaptors::enumerate(refinementData.steps)) {
       writeProgressFile(
         mol,
         baseFilename,
@@ -847,7 +847,7 @@ int main(int argc, char* argv[]) {
     printBounds
   );
 
-  for(const auto& enumPair : Temple::adaptors::enumerate(debugData)) {
+  for(const auto& enumPair : Temple::Adaptors::enumerate(debugData)) {
     const auto& structNum = enumPair.index;
     const auto& refinementData = enumPair.value;
 
@@ -858,8 +858,8 @@ int main(int argc, char* argv[]) {
     IO::write(
       structBaseName + "-last.mol"s,
       mol,
-      DistanceGeometry::detail::convertToAngstromPositions(
-        DistanceGeometry::detail::gather(refinementData.steps.back().positions)
+      DistanceGeometry::Detail::convertToAngstromPositions(
+        DistanceGeometry::Detail::gather(refinementData.steps.back().positions)
       )
     );
 

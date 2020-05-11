@@ -17,6 +17,7 @@
 #include <unordered_map>
 
 namespace Scine {
+namespace Molassembler {
 namespace Stereopermutations {
 
 inline unsigned gcd(const std::vector<unsigned>& c) {
@@ -120,7 +121,7 @@ Uniques uniques(
    */
   if(removeTransSpanningGroups) {
     while(hasTransArrangedLinks(stereopermutation, shape)) {
-      bool wasLastPermutation = !Temple::inplace::next_permutation(permutation);
+      bool wasLastPermutation = !Temple::InPlace::next_permutation(permutation);
       if(wasLastPermutation) {
         /* This can happen, e.g. in square-planar AAAB with
          * links: {0, 3}, {1, 3}, {2, 3}, every possible permutation contains
@@ -153,7 +154,7 @@ Uniques uniques(
   }
 
   // Go through all possible permutations of columns
-  while(Temple::inplace::next_permutation(permutation)) {
+  while(Temple::InPlace::next_permutation(permutation)) {
     stereopermutation = base.applyPermutation(permutation);
     if(removeTransSpanningGroups && hasTransArrangedLinks(stereopermutation, shape)) {
       continue;
@@ -206,4 +207,5 @@ Uniques uniques(
 }
 
 } // namespace Stereopermutations
+} // namespace Molassembler
 } // namespace Scine

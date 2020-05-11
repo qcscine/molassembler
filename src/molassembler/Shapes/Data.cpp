@@ -13,6 +13,7 @@
 #include <unordered_map>
 
 namespace Scine {
+namespace Molassembler {
 namespace Shapes {
 
 //! Dynamic shape information data struct
@@ -337,4 +338,5 @@ bool threeDimensional(const Shape shape) {
 }
 
 } // namespace Shapes
+} // namespace Molassembler
 } // namespace Scine

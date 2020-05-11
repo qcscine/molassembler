@@ -188,7 +188,7 @@ BOOST_FIXTURE_TEST_CASE(AtomStereopermutationCGFitCoherence, LowTemperatureFixtu
 
 void testIdenticalReinterpret(const Molecule& mol, const AtomIndex checkPosition) {
   auto fetchAssignment = [&](const Molecule& molecule) {
-    return Temple::optionals::flatMap(
+    return Temple::Optionals::flatMap(
       molecule.stereopermutators().option(checkPosition),
       [](const auto& f) { return f.assigned(); }
     );
@@ -249,7 +249,7 @@ BOOST_AUTO_TEST_CASE(Shipscrews) {
   const std::string shipscrew_smiles = "[Fe@OH1+3]123(OC(=O)C(=O)O1)(OC(=O)C(=O)O2)OC(=O)C(=O)O3";
   auto shipscrew = IO::experimental::parseSmilesSingleMolecule(shipscrew_smiles);
 
-  const auto numAssignments = Temple::optionals::flatMap(
+  const auto numAssignments = Temple::Optionals::flatMap(
     shipscrew.stereopermutators().option(0),
     [](const auto& p) { return p.numAssignments(); }
   );

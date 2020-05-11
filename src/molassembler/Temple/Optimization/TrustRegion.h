@@ -17,8 +17,9 @@
 #include <iostream>
 
 namespace Scine {
+namespace Molassembler {
 namespace Temple {
-namespace detail {
+namespace Detail {
 
 template<typename Derived>
 auto resolve(const Eigen::MatrixBase<Derived>& matrix) -> typename Eigen::MatrixBase<Derived>::Scalar {
@@ -39,7 +40,7 @@ struct TROFloatingPointTolerances<float> {
   static constexpr unsigned rootBitAccuracy = 10;
 };
 
-} // namespace detail
+} // namespace Detail
 
 /**
  * @brief Trust region Newton-Raphson minimizer with 2D subspace minimization
@@ -96,8 +97,8 @@ struct TrustRegionOptimizer {
       ;
       check.shouldContinue(
         iterations,
-        stl17::as_const(step.values.current),
-        stl17::as_const(step.gradients.current)
+        Stl17::as_const(step.values.current),
+        Stl17::as_const(step.gradients.current)
       );
       ++iterations
     ) {
@@ -219,7 +220,7 @@ private:
         std::nextafter(FloatType {0.0}, FloatType {1.0}),
         FloatType {100.0},
         boost::math::tools::eps_tolerance<FloatType> {
-          detail::TROFloatingPointTolerances<FloatType>::rootBitAccuracy
+          Detail::TROFloatingPointTolerances<FloatType>::rootBitAccuracy
         },
         iterations
       );
@@ -301,8 +302,8 @@ private:
     FloatType modelAgreement() const {
       const FloatType predictedValue = (
         values.current
-        + detail::resolve(gradients.current.transpose() * direction)
-        + detail::resolve(FloatType {0.5} * direction.transpose() * hessians.current * direction)
+        + Detail::resolve(gradients.current.transpose() * direction)
+        + Detail::resolve(FloatType {0.5} * direction.transpose() * hessians.current * direction)
       );
 
       return (
@@ -324,6 +325,7 @@ private:
 };
 
 } // namespace Temple
+} // namespace Molassembler
 } // namespace Scine
 
 #endif

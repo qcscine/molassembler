@@ -17,13 +17,13 @@
 #include "boost/optional.hpp"
 
 namespace Scine {
+namespace Molassembler {
+
 namespace Shapes {
 namespace Properties {
 struct ShapeTransitionGroup;
 } // namespace Properties
 } // namespace Shapes
-
-namespace Molassembler {
 
 class AtomStereopermutator::Impl : public Temple::Crtp::LexicographicComparable<Impl> {
 public:

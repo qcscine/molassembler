@@ -132,7 +132,7 @@ std::vector<RankingInformation::Link> siteLinks(
     }
   }
 
-  Temple::inplace::sort(links);
+  Temple::InPlace::sort(links);
   return links;
 }
 
@@ -184,7 +184,7 @@ std::vector<RankingInformation::Link> siteLinks(
   > siteIndicesToLinksPositionMap;
 
   Temple::forEach(
-    Temple::adaptors::allPairs(sourceAdjacents),
+    Temple::Adaptors::allPairs(sourceAdjacents),
     [&](const AtomIndex a, const AtomIndex b) {
       for(
         auto cycleOuterEdges :
@@ -241,7 +241,7 @@ std::vector<RankingInformation::Link> siteLinks(
   );
 
   // Sort the links before passing them out in order to ease comparisons
-  Temple::inplace::sort(links);
+  Temple::InPlace::sort(links);
   return links;
 }
 
@@ -435,7 +435,7 @@ std::vector<
   );
 
   for(auto& ligand : groupedLigands) {
-    Temple::inplace::sort(ligand);
+    Temple::InPlace::sort(ligand);
   }
 
   return groupedLigands;

@@ -7,9 +7,9 @@
 #include "CoordinateSystemTransformation.h"
 
 namespace Scine {
+namespace Molassembler {
 namespace Shapes {
-
-namespace detail {
+namespace Detail {
 
 inline double angle(const Eigen::Vector3d& a, const Eigen::Vector3d& b) {
   return std::acos(
@@ -26,12 +26,12 @@ inline double signedAngle(const Eigen::Vector3d& a, const Eigen::Vector3d& b, co
   );
 }
 
-} // namespace detail
+} // namespace Detail
 
 CoordinateSystem::CoordinateSystem() : x(Eigen::Vector3d::UnitX()), y(Eigen::Vector3d::UnitY()), z(Eigen::Vector3d::UnitZ()) {}
 CoordinateSystem::CoordinateSystem(const Eigen::Vector3d& a, const Eigen::Vector3d& b) : x(a.normalized()), y(b.normalized()), z(x.cross(y).normalized()) {
   // a and b need to be at right angles
-  assert(std::fabs(detail::angle(a, b) - M_PI / 2) < 1e-4);
+  assert(std::fabs(Detail::angle(a, b) - M_PI / 2) < 1e-4);
 }
 
 CoordinateSystem CoordinateSystem::random() {
@@ -59,7 +59,7 @@ Eigen::Matrix3d rotationMatrix(const CoordinateSystem& a, const CoordinateSystem
    */
   if(a.z.isApprox(b.z, 1e-8)) {
     const Eigen::Matrix3d R = Eigen::AngleAxisd(
-      detail::signedAngle(a.x, b.x, a.z),
+      Detail::signedAngle(a.x, b.x, a.z),
       a.z.normalized()
     ).toRotationMatrix();
     assert(isRotationMatrix(R));
@@ -71,7 +71,7 @@ Eigen::Matrix3d rotationMatrix(const CoordinateSystem& a, const CoordinateSystem
    */
   if(a.z.isApprox(-b.z, 1e-8)) {
     const Eigen::Matrix3d R = -Eigen::AngleAxisd(
-      -detail::signedAngle(a.x, b.x, a.z),
+      -Detail::signedAngle(a.x, b.x, a.z),
       a.z.normalized()
     ).toRotationMatrix();
     assert(isRotationMatrix(R));
@@ -84,9 +84,9 @@ Eigen::Matrix3d rotationMatrix(const CoordinateSystem& a, const CoordinateSystem
    * - beta: z and z' viewed from N
    * - gamma: N and x' viewed from z'
    */
-  const double alpha = detail::signedAngle(a.x, N, a.z);
-  const double beta = detail::signedAngle(a.z, b.z, N);
-  const double gamma = detail::signedAngle(N, b.x, b.z);
+  const double alpha = Detail::signedAngle(a.x, N, a.z);
+  const double beta = Detail::signedAngle(a.z, b.z, N);
+  const double gamma = Detail::signedAngle(N, b.x, b.z);
 
   assert(!std::isnan(alpha) && !std::isnan(beta) && !std::isnan(gamma));
 
@@ -100,4 +100,5 @@ Eigen::Matrix3d rotationMatrix(const CoordinateSystem& a, const CoordinateSystem
 }
 
 } // namespace Shapes
+} // namespace Molassembler
 } // namespace Scine

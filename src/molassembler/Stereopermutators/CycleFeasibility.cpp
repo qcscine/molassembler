@@ -128,7 +128,7 @@ bool cycleModelContradictsGraph(
   const std::vector<double>& cycleEdgeLengths,
   const std::vector<BaseAtom>& bases
 ) {
-  if(!cyclic_polygons::exists(cycleEdgeLengths)) {
+  if(!CyclicPolygons::exists(cycleEdgeLengths)) {
     return true;
   }
 
@@ -143,7 +143,7 @@ bool cycleModelContradictsGraph(
    * cycleEdgeLengths: A-I, ..., X-B, B-A
    * phis: A-I-J, ..., X-B-A, B-A-I
    */
-  const auto phis = cyclic_polygons::internalAngles(cycleEdgeLengths);
+  const auto phis = CyclicPolygons::internalAngles(cycleEdgeLengths);
 
   return Temple::any_of(
     bases,

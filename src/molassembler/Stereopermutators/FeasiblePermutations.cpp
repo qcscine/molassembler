@@ -109,7 +109,7 @@ bool Feasible::linkPossiblyFeasible(
    */
   assert(link.cycleSequence.front() == placement);
   auto cycleEdgeLengths = Temple::map(
-    Temple::adaptors::cyclicFrame<2>(link.cycleSequence),
+    Temple::Adaptors::cyclicFrame<2>(link.cycleSequence),
     [&](const auto& i, const auto& j) -> double {
       return DistanceGeometry::SpatialModel::modelDistance(i, j, graph.inner());
     }
@@ -266,7 +266,7 @@ Feasible::Feasible(
     !ranking.links.empty()
     // OR there are haptic sites
     || Temple::sum(
-      Temple::adaptors::transform(
+      Temple::Adaptors::transform(
         ranking.sites,
         [](const auto& siteAtomsList) -> unsigned {
           if(siteAtomsList.size() == 1) {

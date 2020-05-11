@@ -11,6 +11,7 @@
 #include "molassembler/Temple/Functional.h"
 
 namespace Scine {
+namespace Molassembler {
 namespace Shapes {
 
 constexpr Temple::Array<std::pair<double, double>, nShapes> symmetryAngleBounds = Temple::Tuples::map<
@@ -237,4 +238,5 @@ bool hasMultipleUnlinkedStereopermutations(
 }
 
 } // namespace Shapes
+} // namespace Molassembler
 } // namespace Scine

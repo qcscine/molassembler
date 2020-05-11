@@ -8,4 +8,4 @@
 
 #include "molassembler/Temple/constexpr/Jsf.h"
 
-Scine::Temple::Generator<> generator;
+Scine::Molassembler::Temple::Generator<> generator;

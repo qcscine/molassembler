@@ -17,6 +17,7 @@
 #include <iostream>
 
 namespace Scine {
+namespace Molassembler {
 namespace Temple {
 namespace TypeTests {
 
@@ -84,6 +85,7 @@ void explainLogicalOperatorFailures(const T& a, const T& b) {
 
 } // namespace TypeTests
 } // namespace Temple
+} // namespace Molassembler
 } // namespace Scine
 
 #endif

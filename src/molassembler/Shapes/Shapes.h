@@ -14,6 +14,7 @@
 #include "molassembler/Export.h"
 
 namespace Scine {
+namespace Molassembler {
 
 /**
  * @brief Symmetry definitions and properties
@@ -113,7 +114,7 @@ constexpr unsigned nShapes = 30;
 static_assert(nShapes == static_cast<unsigned>(Shape::Cuboctahedron) + 1, "Miscounted?");
 
 } // namespace Shapes
-
+} // namespace Molassembler
 } // namespace Scine
 
 #endif

@@ -20,6 +20,7 @@
 #include <vector>
 
 namespace Scine {
+namespace Molassembler {
 namespace Temple {
 
 //! A minimal wrapper around a map class with cache semantics
@@ -238,7 +239,8 @@ private:
   > generationMap_;
 };
 
-} //  namespace Temple
+} // namespace Temple
+} // namespace Molassembler
 } // namespace Scine
 
 #endif

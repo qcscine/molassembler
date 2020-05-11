@@ -227,7 +227,7 @@ struct AllPermutations {
       if(permutationEnergy < minimal.first) {
         minimal = {permutationEnergy, permutation};
       }
-    } while(Temple::inplace::next_permutation(permutation));
+    } while(Temple::InPlace::next_permutation(permutation));
 
     return minimal;
   }
@@ -310,7 +310,7 @@ struct Anneal final : OldShapeAlgorithm {
     decltype(parameters) prospectiveParameters;
 
     double temperatureMultiplier = Temple::accumulate(
-      Temple::adaptors::range(10),
+      Temple::Adaptors::range(10),
       0.0,
       [&](const double carry, unsigned /* i */) -> double {
         Temple::Random::shuffle(parameters, prng);
@@ -1054,7 +1054,7 @@ struct AlignFive final : ShapeAlgorithm {
       } else if(inCorrectBranch && isCorrectBranch(subPermutation)) {
         std::cerr << "Excluding correct branch due to cost " << cost << " > " << minimalCost << "\n";
       }
-    } while(Temple::inplace::next_permutation(subPermutation));
+    } while(Temple::InPlace::next_permutation(subPermutation));
 
     // Fuse permutation and subpermutation
     for(unsigned i = 0; i < V; ++i) {
@@ -1067,7 +1067,7 @@ struct AlignFive final : ShapeAlgorithm {
     auto rotated = R * rotor;
 
     const double energy = Temple::accumulate(
-      Temple::adaptors::range(N),
+      Temple::Adaptors::range(N),
       0.0,
       [&](const double carry, const unsigned i) -> double {
         return carry + (
@@ -1097,7 +1097,7 @@ struct AlignFive final : ShapeAlgorithm {
     const auto correctRotations = generateRotations(correctPermutation, shape);
 
     // i != j != k != l != m with {i, j, k, l, m} in [0, N)
-    Temple::loops::different(
+    Temple::Loops::different(
       [&](const std::vector<unsigned>& indices) {
         permutation.clear();
         for(unsigned i = 0; i < 5; ++i) {
@@ -1205,7 +1205,7 @@ void writeEnergyStatistics() {
     rFile << "shape" << shapeNumber << " <- c(";
     auto permutation = Temple::iota<Vertex>(N);
     rFile << energy(permutation);
-    while(Temple::inplace::next_permutation(permutation)) {
+    while(Temple::InPlace::next_permutation(permutation)) {
       rFile << ", " << energy(permutation);
     }
     rFile << ")\n";

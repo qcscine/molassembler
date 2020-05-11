@@ -15,9 +15,10 @@
 #include <cassert>
 
 namespace Scine {
+namespace Molassembler {
 namespace Temple {
-namespace adaptors {
-namespace detail {
+namespace Adaptors {
+namespace Detail {
 
 template<typename T, std::size_t size, std::size_t ... Inds>
 auto splitArrayHelper(const std::array<T, size>& arr, std::index_sequence<Inds ...> /* inds */) {
@@ -152,17 +153,18 @@ struct CyclicFrameAdaptor : public Binding<Container> {
 //!@}
 };
 
-} // namespace detail
+} // namespace Detail
 
 template<unsigned frameSize, class Container>
 auto cyclicFrame(Container&& container) {
-  return detail::CyclicFrameAdaptor<Container, frameSize>(
+  return Detail::CyclicFrameAdaptor<Container, frameSize>(
     std::forward<Container>(container)
   );
 }
 
-} // namespace adaptors
+} // namespace Adaptors
 } // namespace Temple
+} // namespace Molassembler
 } // namespace Scine
 
 #endif

@@ -52,7 +52,7 @@ std::vector<RankingInformation::Link> siteLinks(
   const std::vector<AtomIndex>& excludeAdjacents
 );
 
-namespace detail {
+namespace Detail {
 
 /*! @brief Predicate to determine if a site is haptic
  *
@@ -75,7 +75,7 @@ void findSites(
   const std::function<void(const std::vector<AtomIndex>&)>& callback
 );
 
-} // namespace detail
+} // namespace Detail
 
 /*!
  * @brief Differentiate adjacent vertices of a central index into sites

@@ -11,6 +11,7 @@
 #include <cassert>
 
 namespace Scine {
+namespace Molassembler {
 namespace Shapes {
 
 Partitioner::Partitioner(const unsigned s, const unsigned e) : S(s), E(e), mapping(S * E) {
@@ -166,4 +167,5 @@ bool Partitioner::isOrderedMapping(const std::vector<unsigned>& mapping) {
 }
 
 } // namespace Shapes
+} // namespace Molassembler
 } // namespace Scine

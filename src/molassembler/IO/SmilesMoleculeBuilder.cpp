@@ -569,7 +569,7 @@ void MoleculeBuilder::setBondStereo(
     }
 
     auto bondTypeOption = [&](const PrivateGraph::Vertex a, const PrivateGraph::Vertex b) {
-      return Temple::optionals::map(
+      return Temple::Optionals::map(
         mol.graph().bond(
           indexInComponentMap.at(a),
           indexInComponentMap.at(b)

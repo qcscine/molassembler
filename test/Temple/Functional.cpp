@@ -17,7 +17,7 @@
 #include <boost/range/numeric.hpp>
 #include <boost/range/algorithm/transform.hpp>
 
-using namespace Scine;
+using namespace Scine::Molassembler;
 
 PURITY_STRONG double divByThree (unsigned a) {
   return static_cast<double>(a) / 3.0;
@@ -41,7 +41,7 @@ BOOST_AUTO_TEST_CASE( sumTest ) {
   BOOST_CHECK(mapped == bmapped);
 
   auto pairwiseSum = Temple::map(
-    Temple::adaptors::sequentialPairs(instance),
+    Temple::Adaptors::sequentialPairs(instance),
     std::plus<>()
   );
 
@@ -57,7 +57,7 @@ BOOST_AUTO_TEST_CASE( sumTest ) {
 
   auto pairwiseSmaller = Temple::accumulate(
     Temple::map(
-      Temple::adaptors::sequentialPairs(instance),
+      Temple::Adaptors::sequentialPairs(instance),
       std::less<>()
     ),
     true,
@@ -108,7 +108,7 @@ BOOST_AUTO_TEST_CASE( sumTest ) {
   BOOST_CHECK(
     Temple::sum(
       Temple::map(
-        Temple::adaptors::allPairs(unsignedVector),
+        Temple::Adaptors::allPairs(unsignedVector),
         [](const unsigned a, const unsigned b) -> unsigned {
           return a + b;
         }
@@ -130,7 +130,7 @@ BOOST_AUTO_TEST_CASE( sumTest ) {
   BOOST_CHECK(
     Temple::sum(
       Temple::map(
-        Temple::adaptors::allPairs(doubleVector),
+        Temple::Adaptors::allPairs(doubleVector),
         [](const double a, const double b) -> double {
           return a + b;
         }

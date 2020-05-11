@@ -20,6 +20,7 @@
 #include <sstream>
 
 namespace Scine {
+namespace Molassembler {
 namespace Temple {
 namespace BTreeProperties {
 
@@ -1196,6 +1197,7 @@ private:
 };
 
 } // namespace Temple
+} // namespace Molassembler
 } // namespace Scine
 
 #endif

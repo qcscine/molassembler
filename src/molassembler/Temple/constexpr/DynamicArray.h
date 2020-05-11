@@ -19,6 +19,7 @@
 #include <utility>
 
 namespace Scine {
+namespace Molassembler {
 namespace Temple {
 
 template<typename T, std::size_t nItems>
@@ -789,6 +790,7 @@ DynamicArray<T, N> merge(
 }
 
 } // namespace Temple
+} // namespace Molassembler
 } // namespace Scine
 
 #endif

@@ -16,6 +16,7 @@
 #include <stdexcept>
 
 namespace Scine {
+namespace Molassembler {
 namespace Temple {
 
 /**
@@ -131,6 +132,7 @@ constexpr Bitmask<EnumType> make_bitmask(EnumType a) {
 }
 
 } // namespace Temple
+} // namespace Molassembler
 } // namespace Scine
 
 #endif

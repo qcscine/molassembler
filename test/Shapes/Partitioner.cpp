@@ -8,7 +8,7 @@
 
 #include "molassembler/Shapes/Partitioner.h"
 
-using namespace Scine;
+using namespace Scine::Molassembler;
 using namespace Shapes;
 
 BOOST_AUTO_TEST_CASE(Partitions) {

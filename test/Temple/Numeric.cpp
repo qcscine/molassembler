@@ -10,7 +10,7 @@
 
 #include <iostream>
 
-using namespace Scine;
+using namespace Scine::Molassembler;
 
 BOOST_AUTO_TEST_CASE(numericAverageStdDev) {
   const std::vector<double> values {29, 30, 31, 32, 33};

@@ -74,9 +74,9 @@ struct AngularDeviation {
           std::numeric_limits<double>::max(),
           [&](const double minAngularDeviation, const auto& rotation) -> double {
             const double angleDeviation = Temple::sum(
-              Temple::adaptors::transform(
-                Temple::adaptors::allPairs(
-                  Temple::adaptors::range(S)
+              Temple::Adaptors::transform(
+                Temple::Adaptors::allPairs(
+                  Temple::Adaptors::range(S)
                 ),
                 [&](const unsigned siteI, const unsigned siteJ) -> double {
                   return f(
@@ -149,7 +149,7 @@ struct AngularDeviationGeometryIndexHybrid final : public Recognizer {
       const double tau = Shapes::tau(
         Temple::sort(
           Temple::map(
-            Temple::adaptors::allPairs(Temple::adaptors::range(S)),
+            Temple::Adaptors::allPairs(Temple::Adaptors::range(S)),
             [&](const unsigned i, const unsigned j) -> double {
               return Molassembler::cartesian::angle(
                 positions.col(1 + i),
@@ -211,9 +211,9 @@ struct AngularDeviationGeometryIndexHybrid final : public Recognizer {
           std::numeric_limits<double>::max(),
           [&](const double minAngularDeviation, const auto& rotation) -> double {
             const double angleDeviation = Temple::sum(
-              Temple::adaptors::transform(
-                Temple::adaptors::allPairs(
-                  Temple::adaptors::range(S)
+              Temple::Adaptors::transform(
+                Temple::Adaptors::allPairs(
+                  Temple::Adaptors::range(S)
                 ),
                 [&](const unsigned siteI, const unsigned siteJ) -> double {
                   const double deviation = (
@@ -429,7 +429,7 @@ struct CShMPathDev final : public Recognizer {
      */
     using CarryType = std::tuple<unsigned, unsigned, double>;
     auto closestTuple = Temple::accumulate(
-      Temple::adaptors::allPairs(Temple::adaptors::range(matchingSizeShapes.size())),
+      Temple::Adaptors::allPairs(Temple::Adaptors::range(matchingSizeShapes.size())),
       CarryType {0, 0, std::numeric_limits<double>::max()},
       [&](const CarryType& carry, const std::pair<unsigned, unsigned>& p) -> CarryType {
         const double cshm_a = shapeMeasures.at(p.first);
@@ -541,7 +541,7 @@ struct CShMPathDevBiased final : public Recognizer {
      */
     using CarryType = std::tuple<unsigned, unsigned, double>;
     auto closestTuple = Temple::accumulate(
-      Temple::adaptors::allPairs(Temple::adaptors::range(matchingSizeShapes.size())),
+      Temple::Adaptors::allPairs(Temple::Adaptors::range(matchingSizeShapes.size())),
       CarryType {0, 0, std::numeric_limits<double>::max()},
       [&](const CarryType& carry, const std::pair<unsigned, unsigned>& p) -> CarryType {
         const double cshm_a = shapeMeasures.at(p.first);

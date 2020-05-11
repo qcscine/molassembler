@@ -13,6 +13,7 @@
 #include <unordered_set>
 
 namespace Scine {
+namespace Molassembler {
 namespace Stereopermutations {
 
 using UnorderedStereopermutations = std::unordered_set<Stereopermutation, boost::hash<Stereopermutation>>;
@@ -100,6 +101,7 @@ MASM_EXPORT Uniques uniques(
 );
 
 } // namespace Stereopermutations
+} // namespace Molassembler
 } // namespace Scine
 
 #endif

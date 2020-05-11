@@ -23,6 +23,7 @@
 #include <type_traits>
 
 namespace Scine {
+namespace Molassembler {
 namespace Temple {
 namespace Math {
 namespace Traits {
@@ -138,7 +139,7 @@ constexpr Traits::enableIfFloatingWithReturn<T, T> atan(T x);
 
 /* Implementations begin here ------------------------------------------------*/
 
-namespace detail { // Implementation helpers
+namespace Detail { // Implementation helpers
 
 // Specialization of TPPSum for empty parameter pack
 constexpr unsigned TPPSum() {
@@ -224,11 +225,11 @@ PURITY_STRONG constexpr T asinApprox(const T x) {
   );
 }
 
-} // namespace detail
+} // namespace Detail
 
 template<typename ... Bools>
 constexpr bool XOR(Bools ... bools) {
-  return detail::TPPSum(bools ...) == 1;
+  return Detail::TPPSum(bools ...) == 1;
 }
 
 template<typename T>
@@ -383,7 +384,7 @@ PURITY_STRONG constexpr Traits::enableIfFloatingWithReturn<T, T> ln(const T x) {
     decimalReduction += 1;
   }
 
-  return detail::lnSeries(calcX) + decimalReduction * M_LN10;
+  return Detail::lnSeries(calcX) + decimalReduction * M_LN10;
 }
 
 template<typename T>
@@ -422,7 +423,7 @@ PURITY_STRONG constexpr Traits::enableIfFloatingWithReturn<T, T> asin(const T x)
   }
 
   if(Temple::Math::abs(x) > 0.92) {
-    return (x >= 0) ? detail::asinApprox(x) : -detail::asinApprox(-x);
+    return (x >= 0) ? Detail::asinApprox(x) : -Detail::asinApprox(-x);
   }
 
   const T epsilon = std::numeric_limits<T>::epsilon();
@@ -472,6 +473,7 @@ PURITY_STRONG constexpr Traits::enableIfFloatingWithReturn<T, T> atan(const T x)
 
 } // namespace Math
 } // namespace Temple
+} // namespace Molassembler
 } // namespace Scine
 
 #endif

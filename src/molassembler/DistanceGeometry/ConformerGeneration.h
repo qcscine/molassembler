@@ -20,7 +20,7 @@ namespace Molassembler {
 namespace outcome = OUTCOME_V2_NAMESPACE;
 
 namespace DistanceGeometry {
-namespace detail {
+namespace Detail {
 
 /*! @brief Collects four-dimensional linear positions into three-dimensional matrix
  *
@@ -65,7 +65,7 @@ Eigen::MatrixXd fitAndSetFixedPositions(
  */
 Molecule narrow(Molecule molecule, Random::Engine& engine);
 
-} // namespace detail
+} // namespace Detail
 
 //! Intermediate conformational data about a Molecule given by a spatial model
 struct MoleculeDGInformation {

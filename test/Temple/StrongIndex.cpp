@@ -9,7 +9,7 @@
 #include "molassembler/Temple/StrongIndex.h"
 #include <vector>
 
-using namespace Scine;
+using namespace Scine::Molassembler;
 
 BOOST_AUTO_TEST_CASE(StrongIndices) {
   struct foo_tag;

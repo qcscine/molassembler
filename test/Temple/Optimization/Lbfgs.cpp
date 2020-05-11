@@ -8,7 +8,7 @@
 
 #include "molassembler/Temple/Optimization/Lbfgs.h"
 
-using namespace Scine;
+using namespace Scine::Molassembler;
 
 template<typename FloatType>
 struct GradientBasedChecker {

@@ -12,7 +12,7 @@
 #include "molassembler/Shapes/Shapes.h"
 #include "molassembler/Shapes/Data.h"
 
-using namespace Scine;
+using namespace Scine::Molassembler;
 using namespace Shapes;
 
 // From ContinuousMeasures.cpp

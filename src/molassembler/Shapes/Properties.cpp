@@ -21,8 +21,9 @@
 #include <unordered_set>
 
 namespace Scine {
+namespace Molassembler {
 namespace Shapes {
-namespace detail {
+namespace Detail {
 
 /*!
  * Generates a vector containing strictly monotonically increasing natural
@@ -47,7 +48,7 @@ std::vector<NumericType> range(
   return values;
 }
 
-} // namespace detail
+} // namespace Detail
 
 namespace Properties {
 
@@ -172,7 +173,7 @@ std::vector<std::vector<Vertex>> positionGroups(const Shapes::Shape shape) {
 
       // Figure out which vertices from b's loop aren't yet in a
       auto bLoopVertices = Temple::sort(loopVertices(b, i));
-      Temple::inplace::sort(aLoopVertices);
+      Temple::InPlace::sort(aLoopVertices);
       std::vector<Vertex> bVerticesNotInA;
       std::set_difference(
         std::begin(bLoopVertices),
@@ -332,7 +333,7 @@ boost::optional<Vertex> propagateIndexOptionalThroughMapping(
   const boost::optional<Vertex>& indexOptional,
   const std::vector<Vertex>& indexMapping
 ) {
-  return Temple::optionals::map(
+  return Temple::Optionals::map(
     indexOptional,
     [&](const Vertex v) -> Vertex {
       return indexMapping.at(v);
@@ -641,7 +642,7 @@ std::vector<DistortionInfo> ligandLossTransitionMappings(
    */
   std::vector<Vertex> indexMapping = Temple::variadic::concatenate(
     Temple::iota<Vertex>(positionInSourceShape),
-    detail::range(Vertex(positionInSourceShape + 1), Vertex(Shapes::size(from)))
+    Detail::range(Vertex(positionInSourceShape + 1), Vertex(Shapes::size(from)))
   );
 
   /* NOTE: From here the algorithm is identical to shapeTransitionMappings
@@ -721,7 +722,7 @@ ShapeTransitionGroup selectBestTransitionMappings(
     )
   ).chiralDistortion;
 
-  Temple::inplace::remove_if(
+  Temple::InPlace::remove_if(
     viableDistortions,
     [&](const unsigned a) -> bool {
       return distortions.at(a).chiralDistortion > lowestChiralDistortion + floatingPointEqualityThreshold;
@@ -789,7 +790,7 @@ bool hasMultipleUnlinkedStereopermutations(
     std::make_move_iterator(std::end(initialRotations))
   };
 
-  while(Temple::inplace::next_permutation(indices)) {
+  while(Temple::InPlace::next_permutation(indices)) {
     if(rotations.count(indices) == 0) {
       return true;
     }
@@ -831,4 +832,5 @@ Shape mostSymmetric(const unsigned shapeSize) {
 
 } // namespace Properties
 } // namespace Shapes
+} // namespace Molassembler
 } // namespace Scine

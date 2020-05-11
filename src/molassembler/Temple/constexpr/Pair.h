@@ -16,6 +16,7 @@
 #include <utility>
 
 namespace Scine {
+namespace Molassembler {
 namespace Temple {
 
 /*! @brief Heterogeneous pair type.
@@ -105,6 +106,7 @@ struct Pair {
 };
 
 } // namespace Temple
+} // namespace Molassembler
 } // namespace Scine
 
 #endif

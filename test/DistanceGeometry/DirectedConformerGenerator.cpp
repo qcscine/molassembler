@@ -23,8 +23,7 @@
 #include <iostream>
 
 using namespace std::string_literals;
-using namespace Scine;
-using namespace Molassembler;
+using namespace Scine::Molassembler;
 
 BOOST_AUTO_TEST_CASE(DirectedConformerGeneration) {
   std::vector<

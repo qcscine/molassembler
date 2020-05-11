@@ -15,6 +15,7 @@
 #include <iostream>
 
 namespace Scine {
+namespace Molassembler {
 namespace Temple {
 
 /**
@@ -129,8 +130,8 @@ struct NewtonRaphson {
     while(
       check.shouldContinue(
         iteration,
-        stl17::as_const(value),
-        stl17::as_const(gradients)
+        Stl17::as_const(value),
+        Stl17::as_const(gradients)
       )
     ) {
       // Solve HΔx = g, then apply x_(n+1) = x_n - Δx
@@ -166,6 +167,7 @@ struct NewtonRaphson {
 };
 
 } // namespace Temple
+} // namespace Molassembler
 } // namespace Scine
 
 #endif

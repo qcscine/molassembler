@@ -13,6 +13,7 @@
 #include <cassert>
 
 namespace Scine {
+namespace Molassembler {
 namespace Shapes {
 namespace Diophantine {
 
@@ -131,4 +132,5 @@ bool first_solution(
 
 } // namespace Diophantine
 } // namespace Shapes
+} // namespace Molassembler
 } // namespace Scine

@@ -12,6 +12,7 @@
 #define INCLUDE_MOLASSEMBLER_TEMPLE_OPERATOR_SUPPLIERS_H
 
 namespace Scine {
+namespace Molassembler {
 namespace Temple {
 
 //! @brief Curiously recurring template pattern classes
@@ -112,6 +113,7 @@ struct LexicographicComparable {
 
 } // namespace Crtp
 } // namespace Temple
+} // namespace Molassembler
 } // namespace Scine
 
 #endif

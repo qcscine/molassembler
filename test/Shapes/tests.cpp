@@ -26,7 +26,7 @@
 #include <iostream>
 #include <iomanip>
 
-using namespace Scine;
+using namespace Scine::Molassembler;
 using namespace Shapes;
 
 template<typename EnumType>
@@ -138,7 +138,7 @@ BOOST_AUTO_TEST_CASE(AnglesMatchCoordinates) {
     for(Vertex i {0}; i < size(shape); i++) {
       for(Vertex j {i + 1}; j < size(shape); j++) {
         const double angleInCoordinates = std::acos(
-          Temple::stl17::clamp(
+          Temple::Stl17::clamp(
             getCoordinates(i).dot(getCoordinates(j)) / (
               getCoordinates(i).norm() * getCoordinates(j).norm()
             ),
@@ -249,7 +249,7 @@ BOOST_AUTO_TEST_CASE(TetrahedraDefinitionIndicesUnique) {
 BOOST_AUTO_TEST_CASE(SmallestAngleValueCorrect) {
   auto shapeSmallestAngle = [](const Shape shape) -> double {
     return Temple::accumulate(
-      Temple::adaptors::allPairs(
+      Temple::Adaptors::allPairs(
         Temple::iota<Vertex>(Vertex(size(shape)))
       ),
       M_PI,

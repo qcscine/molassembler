@@ -16,6 +16,7 @@
 #include <unordered_set>
 
 namespace Scine {
+namespace Molassembler {
 namespace Stereopermutations {
 
 /*! @brief Enumerate rotations of stereopermutations in shapes
@@ -70,6 +71,7 @@ private:
 };
 
 } // namespace Stereopermutations
+} // namespace Molassembler
 } // namespace Scine
 
 #endif

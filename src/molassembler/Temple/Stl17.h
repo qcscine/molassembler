@@ -13,8 +13,9 @@
 #include <functional>
 
 namespace Scine {
+namespace Molassembler {
 namespace Temple {
-namespace stl17 {
+namespace Stl17 {
 
 // From cppreference, possible C++17 clamp implementation
 template<class T, class Compare>
@@ -33,8 +34,9 @@ constexpr std::add_const_t<T>& as_const(T& t) noexcept {
     return t;
 }
 
-} // namespace stl17
+} // namespace Stl17
 } // namespace Temple
+} // namespace Molassembler
 } // namespace Scine
 
 #endif

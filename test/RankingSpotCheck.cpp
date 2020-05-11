@@ -143,7 +143,7 @@ bool noCarbonsAreTrigonalPyramidal(const Molecule& molecule) {
   for(AtomIndex i : molecule.graph().atoms()) {
     if(
       molecule.graph().elementType(i) == Utils::ElementType::C
-      && Temple::optionals::map(
+      && Temple::Optionals::map(
         molecule.stereopermutators().option(i),
         [](const AtomStereopermutator& a) -> bool {
           return a.getShape() == Shapes::Shape::TrigonalPyramid;

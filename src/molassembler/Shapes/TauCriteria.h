@@ -16,8 +16,9 @@
 #include <vector>
 
 namespace Scine {
+namespace Molassembler {
 namespace Shapes {
-namespace detail {
+namespace Detail {
 
 constexpr unsigned binomial(const unsigned n, const unsigned k) {
   return Temple::Math::factorial(n) / (
@@ -47,7 +48,7 @@ double tauFive(const std::vector<double>& angles) {
   ) / Temple::Math::toRadians(60.0);
 }
 
-} // namespace detail
+} // namespace Detail
 
 /**
  * @brief Calculates the tau value for four and five angle symmetries
@@ -60,15 +61,15 @@ double tauFive(const std::vector<double>& angles) {
  * @return τ₄' or τ₅
  */
 MASM_EXPORT double tau(const std::vector<double>& angles) {
-  constexpr unsigned anglesInSymmetryOfSizeFour = detail::binomial(4, 2);
-  constexpr unsigned anglesInSymmetryOfSizeFive = detail::binomial(5, 2);
+  constexpr unsigned anglesInSymmetryOfSizeFour = Detail::binomial(4, 2);
+  constexpr unsigned anglesInSymmetryOfSizeFive = Detail::binomial(5, 2);
 
   if(angles.size() == anglesInSymmetryOfSizeFour) {
-    return detail::tauFourPrime(angles);
+    return Detail::tauFourPrime(angles);
   }
 
   if(angles.size() == anglesInSymmetryOfSizeFive) {
-    return detail::tauFive(angles);
+    return Detail::tauFive(angles);
   }
 
   throw std::invalid_argument(
@@ -78,6 +79,7 @@ MASM_EXPORT double tau(const std::vector<double>& angles) {
 }
 
 } // namespace Shapes
+} // namespace Molassembler
 } // namespace Scine
 
 #endif

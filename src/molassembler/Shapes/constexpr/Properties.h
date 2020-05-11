@@ -26,6 +26,7 @@
 #include "molassembler/Temple/Cache.h"
 
 namespace Scine {
+namespace Molassembler {
 namespace Shapes {
 
 /**
@@ -943,6 +944,7 @@ constexpr bool hasMultipleUnlinkedStereopermutations(const unsigned nIdenticalLi
 
 } // namespace ConstexprProperties
 } // namespace Shapes
+} // namespace Molassembler
 } // namespace Scine
 
 #endif

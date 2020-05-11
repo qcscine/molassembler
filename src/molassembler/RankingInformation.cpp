@@ -243,7 +243,7 @@ bool RankingInformation::operator == (const RankingInformation& other) const {
   // Combined comparison of siteRanking with sites
   if(
     !Temple::all_of(
-      Temple::adaptors::zip(
+      Temple::Adaptors::zip(
         siteRanking,
         other.siteRanking
       ),

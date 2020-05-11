@@ -13,9 +13,10 @@
 #include <stdexcept>
 
 namespace Scine {
+namespace Molassembler {
 namespace Temple {
-namespace loops {
-namespace detail {
+namespace Loops {
+namespace Detail {
 
 template<typename T, typename F>
 void different(F&& f, const unsigned depth, const T start, const T end, std::vector<T>& indices) {
@@ -34,7 +35,7 @@ void different(F&& f, const unsigned depth, const T start, const T end, std::vec
   }
 }
 
-} // namespace detail
+} // namespace Detail
 
 /**
  * @brief Call a function for every distinct combination of N indices within a range
@@ -54,7 +55,7 @@ void different(F&& f, const unsigned count, const T start, const T end) {
 
   std::vector<T> indices(count, start);
   for(; indices[0] < end; ++indices[0]) {
-    detail::different(f, count - 1, start, end, indices);
+    Detail::different(f, count - 1, start, end, indices);
   }
 }
 
@@ -69,8 +70,9 @@ void different(F&& f, const unsigned count, const T end) {
   different(std::forward<F>(f), count, T {0}, end);
 }
 
-} // namespace loops
+} // namespace Loops
 } // namespace Temple
+} // namespace Molassembler
 } // namespace Scine
 
 #endif

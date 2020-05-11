@@ -80,7 +80,7 @@ BOOST_FUSION_ADAPT_STRUCT(
 
 BOOST_FUSION_ADAPT_STRUCT(
   Scine::Molassembler::IO::ChiralData,
-  (Scine::Shapes::Shape, shape),
+  (Scine::Molassembler::Shapes::Shape, shape),
   (unsigned, chiralIndex)
 )
 

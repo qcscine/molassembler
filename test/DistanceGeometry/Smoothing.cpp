@@ -9,8 +9,7 @@
 #include "molassembler/DistanceGeometry/DistanceBoundsMatrix.h"
 #include "molassembler/DistanceGeometry/TetrangleSmoothing.h"
 
-using namespace Scine;
-using namespace Molassembler;
+using namespace Scine::Molassembler;
 using namespace DistanceGeometry;
 
 

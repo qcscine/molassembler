@@ -13,6 +13,7 @@
 #include <vector>
 
 namespace Scine {
+namespace Molassembler {
 namespace Temple {
 
 inline std::vector<std::string> split(const std::string& s, char delimiter) {
@@ -30,6 +31,7 @@ inline std::vector<std::string> split(const std::string& s, char delimiter) {
 }
 
 } // namespace Temple
+} // namespace Molassembler
 } // namespace Scine
 
 #endif

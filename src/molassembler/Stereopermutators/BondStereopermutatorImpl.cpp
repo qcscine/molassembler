@@ -359,7 +359,7 @@ bool BondStereopermutator::Impl::cycleObviouslyInfeasible(
       mu_m = (b - A.x()) / DMinusA.x();
     }
 
-    const double lambda_m = Temple::stl17::clamp(lambda, 0.0, 1.0);
+    const double lambda_m = Temple::Stl17::clamp(lambda, 0.0, 1.0);
 
     P = lambda_m * C;
     Q = A + mu_m * DMinusA;
@@ -412,7 +412,7 @@ bool BondStereopermutator::Impl::cycleObviouslyInfeasible(
 
   /* Mangle cycle sequence to get {i ... l} */
   auto cycleIndices = link.cycleSequence;
-  Temple::inplace::remove_if(
+  Temple::InPlace::remove_if(
     cycleIndices,
     [&](const AtomIndex x) -> bool {
       return x == j || x == k;
@@ -446,7 +446,7 @@ bool BondStereopermutator::Impl::cycleObviouslyInfeasible(
   );
 
   auto cycleEdgeLengths = Temple::map(
-    Temple::adaptors::sequentialPairs(cycleIndices),
+    Temple::Adaptors::sequentialPairs(cycleIndices),
     modelDistance
   );
   cycleEdgeLengths.push_back((D-A).norm());
@@ -500,7 +500,7 @@ bool BondStereopermutator::Impl::cycleObviouslyInfeasible(
 //
 //   // Copy bonds
 //   Temple::forEach(
-//     Temple::adaptors::cyclicFrame<2>(link.cycleSequence),
+//     Temple::Adaptors::cyclicFrame<2>(link.cycleSequence),
 //     [&](const AtomIndex i, const AtomIndex j) {
 //       minimalInner.addEdge(
 //         indexReductionMap.at(i),
@@ -516,7 +516,7 @@ bool BondStereopermutator::Impl::cycleObviouslyInfeasible(
 //   // Model all bond distances
 //   DistanceGeometry::SpatialModel::BoundsMapType<2> bondBounds;
 //   Temple::forEach(
-//     Temple::adaptors::cyclicFrame<2>(link.cycleSequence),
+//     Temple::Adaptors::cyclicFrame<2>(link.cycleSequence),
 //     [&](const AtomIndex i, const AtomIndex j) {
 //       const BondType bondType = graph.bondType(
 //         graph.edge(i, j)
@@ -542,7 +542,7 @@ bool BondStereopermutator::Impl::cycleObviouslyInfeasible(
 //   // Model all angles
 //   DistanceGeometry::SpatialModel::BoundsMapType<3> angleBounds;
 //   Temple::forEach(
-//     Temple::adaptors::cyclicFrame<3>(link.cycleSequence),
+//     Temple::Adaptors::cyclicFrame<3>(link.cycleSequence),
 //     [&](const AtomIndex i, const AtomIndex j, const AtomIndex k) {
 //       // Is there an AtomStereopermutator here?
 //       DistanceGeometry::ValueBounds angleValueBounds {

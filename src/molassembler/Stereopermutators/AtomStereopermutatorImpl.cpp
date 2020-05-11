@@ -474,7 +474,7 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
    * ABCDEF. There will be multiple ways to split A to F!
    */
   if(assignmentOption_ && numStereopermutations() > 1) {
-    const auto removedVertexOptional = Temple::optionals::flatMap(
+    const auto removedVertexOptional = Temple::Optionals::flatMap(
       siteMapping.changedSite,
       [this, siteCountChange](const SiteIndex changedSite) -> boost::optional<Shapes::Vertex> {
         if(siteCountChange == -1) {
@@ -485,12 +485,12 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
       }
     );
 
-    const auto shapeMapping = Temple::optionals::flatMap(
+    const auto shapeMapping = Temple::Optionals::flatMap(
       Shapes::getMapping(shape_, newShape, removedVertexOptional),
       std::bind(selectTransitionMapping, _1, Options::chiralStatePreservation)
     );
 
-    const auto appliedShapeMapping = Temple::optionals::map(
+    const auto appliedShapeMapping = Temple::Optionals::map(
       shapeMapping,
       [&](const std::vector<Shapes::Vertex>& vertexMap) {
         if(siteCountChange == +1) {
@@ -582,7 +582,7 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
   /* If we have discovered a stereopermutation to map to, we must still figure
    * out its assignment index (assuming it is feasible)
    */
-  auto newAssignmentOption = Temple::optionals::flatMap(
+  auto newAssignmentOption = Temple::Optionals::flatMap(
     newStereopermutationOption,
     [&](const unsigned stereopermutationIndex) -> boost::optional<unsigned> {
       auto assignmentFindIter = std::find(
@@ -814,7 +814,7 @@ double AtomStereopermutator::Impl::angle(
 
 boost::optional<unsigned> AtomStereopermutator::Impl::assigned() const {
   if(thermalized_) {
-    return Temple::optionals::map(assignmentOption_, [](unsigned /* a */) { return 0u; });
+    return Temple::Optionals::map(assignmentOption_, [](unsigned /* a */) { return 0u; });
   }
 
   return assignmentOption_;
@@ -826,10 +826,10 @@ AtomIndex AtomStereopermutator::Impl::placement() const {
 
 boost::optional<unsigned> AtomStereopermutator::Impl::indexOfPermutation() const {
   if(thermalized_) {
-    return Temple::optionals::map(assignmentOption_, [](unsigned /* a */) { return 0u; });
+    return Temple::Optionals::map(assignmentOption_, [](unsigned /* a */) { return 0u; });
   }
 
-  return Temple::optionals::map(
+  return Temple::Optionals::map(
     assignmentOption_,
     Temple::Functor::at(feasible_.indices)
   );
@@ -870,7 +870,7 @@ AtomStereopermutator::Impl::minimalChiralConstraints(const bool enforce) const {
         return Temple::map_stl(
           tetrahedron,
           [&](const auto& shapeVertexOptional) -> boost::optional<SiteIndex> {
-            return Temple::optionals::map(
+            return Temple::Optionals::map(
               shapeVertexOptional,
               Temple::Functor::at(invertedShapeMap)
             );

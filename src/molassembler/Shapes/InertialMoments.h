@@ -9,6 +9,7 @@
 #include "molassembler/Export.h"
 
 namespace Scine {
+namespace Molassembler {
 namespace Shapes {
 
 using InertialPositionsType = Eigen::Matrix<double, 3, Eigen::Dynamic>;
@@ -70,4 +71,5 @@ MASM_EXPORT Top standardizeTop(Eigen::Ref<InertialPositionsType> normalizedPosit
 MASM_EXPORT unsigned reorientAsymmetricTop(Eigen::Ref<InertialPositionsType> normalizedPositions);
 
 } // namespace Shapes
+} // namespace Molassembler
 } // namespace Scine

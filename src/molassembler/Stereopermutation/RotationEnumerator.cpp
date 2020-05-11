@@ -10,6 +10,7 @@
 #include "molassembler/Shapes/Data.h"
 
 namespace Scine {
+namespace Molassembler {
 namespace Stereopermutations {
 
 RotationEnumerator::Link::Link(const unsigned i, Stereopermutation s) : rotationIndex(i), permutation(std::move(s)) {}
@@ -92,4 +93,5 @@ const RotationEnumerator::RotationSetType& RotationEnumerator::all() {
 }
 
 } // namespace Stereopermutations
+} // namespace Molassembler
 } // namespace Scine

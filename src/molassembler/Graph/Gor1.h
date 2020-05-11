@@ -22,7 +22,7 @@
 
 namespace boost {
 
-namespace detail {
+namespace Detail {
 
 /*!
  * @brief A Dummy Visitor object demonstrating the interface needed to enable
@@ -140,7 +140,7 @@ void gor1_simplified_scan(
   }
 }
 
-} // namespace detail
+} // namespace Detail
 
 /*!
  * @brief Simplified GOR1 single source shortest paths algorithm
@@ -232,7 +232,7 @@ bool gor1_simplified_shortest_paths(
         put(color_map, v, Color::black());
         visitor.mark_black(v, graph);
 
-        detail::gor1_simplified_scan(
+        Detail::gor1_simplified_scan(
           v,
           graph,
           predecessor_map,
@@ -252,7 +252,7 @@ bool gor1_simplified_shortest_paths(
       visitor.a_pop(v, graph);
 
       // Scan
-      detail::gor1_simplified_scan(
+      Detail::gor1_simplified_scan(
         v,
         graph,
         predecessor_map,
@@ -289,13 +289,13 @@ bool gor1_simplified_shortest_paths(
   /* This function is needed since binding an rvalue to a lvalue reference is
    * not permitted in:
    *
-   * template<..., Visitor = detail::DummyGor1Visitor>
+   * template<..., Visitor = Detail::DummyGor1Visitor>
    * bool shortest_paths(
    *   ...,
    *   Visitor& visitor = Visitor {}
    * )
    */
-  detail::DummyGor1Visitor visitor;
+  Detail::DummyGor1Visitor visitor;
 
   return gor1_simplified_shortest_paths(
     graph,

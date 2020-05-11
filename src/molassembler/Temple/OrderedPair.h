@@ -18,6 +18,7 @@
 #include <iterator>
 
 namespace Scine {
+namespace Molassembler {
 namespace Temple {
 
 /*!
@@ -129,6 +130,7 @@ struct OrderedPair : Crtp::LexicographicComparable<OrderedPair<T>> {
 };
 
 } // namespace Temple
+} // namespace Molassembler
 } // namespace Scine
 
 #endif

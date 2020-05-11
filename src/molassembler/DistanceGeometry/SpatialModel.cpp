@@ -132,7 +132,7 @@ SpatialModel::SpatialModel(
 
   // Add all information pertaining to fixed positions immediately
   Temple::forEach(
-    Temple::adaptors::allPairs(configuration.fixedPositions),
+    Temple::Adaptors::allPairs(configuration.fixedPositions),
     [&](const auto& indexPositionPairA, const auto& indexPositionPairB) {
       double spatialDistance = cartesian::distance(
         indexPositionPairA.second,
@@ -329,7 +329,7 @@ void SpatialModel::addAtomStereopermutatorInformation(
 
       // and so are the site constituting atom to site constituting atom angles
       Temple::forEach(
-        Temple::adaptors::allPairs(ranking.sites.at(siteI)),
+        Temple::Adaptors::allPairs(ranking.sites.at(siteI)),
         [&](const AtomIndex i, const AtomIndex j) {
           const double angle = cartesian::angle(
             fixedAngstromPositions.at(i),
@@ -373,7 +373,7 @@ void SpatialModel::addAtomStereopermutatorInformation(
        * - Maximally 2 * the upper cone angle (but not more than M_PI)
        */
       Temple::forEach(
-        Temple::adaptors::allPairs(ranking.sites.at(siteI)),
+        Temple::Adaptors::allPairs(ranking.sites.at(siteI)),
         [&](const AtomIndex i, const AtomIndex j) {
           setAngleBoundsIfEmpty(
             orderedSequence(i, centerAtom, j),
@@ -409,7 +409,7 @@ void SpatialModel::addAtomStereopermutatorInformation(
       if(centerFixed && siteFixed.at(i) && siteFixed.at(j)) {
         // All angles are known exactly!
         Temple::forEach(
-          Temple::adaptors::allPairs(
+          Temple::Adaptors::allPairs(
             ranking.sites.at(i),
             ranking.sites.at(j)
           ),
@@ -431,7 +431,7 @@ void SpatialModel::addAtomStereopermutatorInformation(
          * constituting each site
          */
         Temple::forEach(
-          Temple::adaptors::allPairs(
+          Temple::Adaptors::allPairs(
             ranking.sites.at(i),
             ranking.sites.at(j)
           ),
@@ -571,7 +571,7 @@ void SpatialModel::addBondStereopermutatorInformation(
 
     // Set per-atom sequence dihedral distance bounds
     Temple::forEach(
-      Temple::adaptors::allPairs(
+      Temple::Adaptors::allPairs(
         firstStereopermutator.getRanking().sites.at(iAtFirst),
         secondStereopermutator.getRanking().sites.at(lAtSecond)
       ),
@@ -625,7 +625,7 @@ bool bondInformationIsPresent(
 
   // Check that the bond information in the sequence is present
   return Temple::all_of(
-    Temple::adaptors::sequentialPairs(indices),
+    Temple::Adaptors::sequentialPairs(indices),
     [&bounds](const AtomIndex i, const AtomIndex j) -> bool {
       return (
         bounds.lowerBound(i, j) != DistanceBoundsMatrix::defaultLower
@@ -923,7 +923,7 @@ double SpatialModel::siteCentralAngle(
   }
 
   // Model the cyclic polygon
-  auto internalAngles = cyclic_polygons::internalAngles(
+  auto internalAngles = CyclicPolygons::internalAngles(
     Temple::map(
       minimalCycle,
       [&](const BondIndex& bond) -> double {
@@ -1043,13 +1043,13 @@ ChiralConstraint SpatialModel::makeChiralConstraint(
    * tetrahedron is zero and the definition is nonsense).
    */
   for(unsigned i = 0; i < 4; ++i) {
-    const auto iBoundsOption = Temple::optionals::map(
+    const auto iBoundsOption = Temple::Optionals::map(
       minimalConstraint.at(i),
       Temple::Functor::at(feasiblePermutations.siteDistances)
     );
 
     for(unsigned j = i + 1; j < 4; ++j) {
-      const auto jBoundsOption = Temple::optionals::map(
+      const auto jBoundsOption = Temple::Optionals::map(
         minimalConstraint.at(j),
         Temple::Functor::at(feasiblePermutations.siteDistances)
       );
@@ -1106,7 +1106,7 @@ ChiralConstraint SpatialModel::makeChiralConstraint(
   auto tetrahedronSites = Temple::map(
     minimalConstraint,
     [&](const boost::optional<SiteIndex>& siteIndexOptional) -> std::vector<AtomIndex> {
-      return Temple::optionals::map(
+      return Temple::Optionals::map(
         siteIndexOptional,
         Temple::Functor::at(ranking.sites)
       ).value_or_eval(
@@ -1316,7 +1316,7 @@ std::vector<BondIndex> SpatialModel::cycleConsistingOfExactly(
 
   // Collect all graph edges between atoms of the cycle
   Temple::forEach(
-    Temple::adaptors::allPairs(atoms),
+    Temple::Adaptors::allPairs(atoms),
     [&](const AtomIndex i, const AtomIndex j) {
       auto edgeOption = graph.edgeOption(i, j);
       if(edgeOption) {
@@ -1398,13 +1398,13 @@ boost::optional<ValueBounds> SpatialModel::coneAngle(
     );
 
     auto distances = Temple::map(
-      Temple::adaptors::cyclicFrame<2>(ringIndexSequence),
+      Temple::Adaptors::cyclicFrame<2>(ringIndexSequence),
       [&](const AtomIndex i, const AtomIndex j) -> double {
         return modelDistance(i, j, graph.inner());
       }
     );
 
-    auto lowerCircumradiusResult = cyclic_polygons::detail::convexCircumradius(
+    auto lowerCircumradiusResult = CyclicPolygons::Detail::convexCircumradius(
       Temple::map(
         distances,
         [&](const double distance) -> double {
@@ -1413,7 +1413,7 @@ boost::optional<ValueBounds> SpatialModel::coneAngle(
       )
     );
 
-    auto upperCircumradiusResult = cyclic_polygons::detail::convexCircumradius(
+    auto upperCircumradiusResult = CyclicPolygons::Detail::convexCircumradius(
       Temple::map(
         distances,
         [&](const double distance) -> double {
@@ -1485,7 +1485,7 @@ ValueBounds SpatialModel::siteDistanceFromCenter(
   } else {
     // Haptic binding site
     distance = 0.9 * Temple::average(
-      Temple::adaptors::transform(
+      Temple::Adaptors::transform(
         siteAtomList,
         [&](AtomIndex atomIndex) -> double {
           return modelDistance(
@@ -1508,7 +1508,7 @@ double SpatialModel::smallestCycleDistortionMultiplier(
   const AtomIndex i,
   const Cycles& cycles
 ) {
-  return Temple::optionals::map(
+  return Temple::Optionals::map(
     smallestCycleContaining(i, cycles),
     [](const unsigned cycleSize) -> double {
       if(cycleSize == 3) {
@@ -1542,13 +1542,13 @@ ValueBounds SpatialModel::clamp(
   ValueBounds bounds,
   const ValueBounds& clampBounds
 ) {
-  bounds.lower = Temple::stl17::clamp(
+  bounds.lower = Temple::Stl17::clamp(
     bounds.lower,
     clampBounds.lower,
     clampBounds.upper
   );
 
-  bounds.upper = Temple::stl17::clamp(
+  bounds.upper = Temple::Stl17::clamp(
     bounds.upper,
     clampBounds.lower,
     clampBounds.upper
@@ -1629,7 +1629,7 @@ void SpatialModel::addDefaultAngles_() {
   const AtomIndex N = molecule_.graph().N();
   for(AtomIndex center = 0; center < N; ++center) {
     Temple::forEach(
-      Temple::adaptors::allPairs(
+      Temple::Adaptors::allPairs(
         inner.adjacents(center)
       ),
       [&](const AtomIndex i, const AtomIndex j) -> void {
@@ -1652,7 +1652,7 @@ void SpatialModel::addDefaultDihedrals_() {
     const AtomIndex targetIndex = inner.target(edgeDescriptor);
 
     Temple::forEach(
-      Temple::adaptors::allPairs(
+      Temple::Adaptors::allPairs(
         inner.adjacents(sourceIndex),
         inner.adjacents(targetIndex)
       ),
@@ -1787,10 +1787,10 @@ void SpatialModel::modelFlatCycles_(
       /* First, we fetch the angles that maximize the cycle area using the
        * cyclic polygon library.
        */
-      const auto cycleInternalAngles = cyclic_polygons::internalAngles(
+      const auto cycleInternalAngles = CyclicPolygons::internalAngles(
         // Map sequential index pairs to their purported bond length
         Temple::map(
-          Temple::adaptors::cyclicFrame<2>(indexSequence),
+          Temple::Adaptors::cyclicFrame<2>(indexSequence),
           [&](const AtomIndex i, const AtomIndex j) -> double {
             return Bond::calculateBondDistance(
               inner.elementType(i),
@@ -1827,7 +1827,7 @@ void SpatialModel::modelFlatCycles_(
          */
         unsigned angleIndex = 0;
         Temple::forEach(
-          Temple::adaptors::cyclicFrame<3>(indexSequence),
+          Temple::Adaptors::cyclicFrame<3>(indexSequence),
           [&](const AtomIndex i, const AtomIndex j, const AtomIndex k) {
             setAngleBoundsIfEmpty(
               orderedSequence(i, j, k),
@@ -1965,7 +1965,7 @@ void SpatialModel::modelSpirocenters_(
             ValueBounds secondAngleBounds = angleBounds_.at(secondSequence);
 
             // Increases in cycle angles yield decrease in the cross angle
-            double crossAngleLower = Temple::stl17::clamp(
+            double crossAngleLower = Temple::Stl17::clamp(
               spiroCrossAngle(
                 firstAngleBounds.upper,
                 secondAngleBounds.upper
@@ -1974,7 +1974,7 @@ void SpatialModel::modelSpirocenters_(
               M_PI
             );
 
-            double crossAngleUpper = Temple::stl17::clamp(
+            double crossAngleUpper = Temple::Stl17::clamp(
               spiroCrossAngle(
                 firstAngleBounds.lower,
                 secondAngleBounds.lower
@@ -1989,7 +1989,7 @@ void SpatialModel::modelSpirocenters_(
             };
 
             Temple::forEach(
-              Temple::adaptors::allPairs(
+              Temple::Adaptors::allPairs(
                 firstAdjacents,
                 secondAdjacents
               ),

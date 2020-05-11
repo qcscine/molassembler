@@ -11,9 +11,10 @@
 #include "molassembler/Temple/Traits.h"
 
 namespace Scine {
+namespace Molassembler {
 namespace Temple {
-namespace adaptors {
-namespace detail {
+namespace Adaptors {
+namespace Detail {
 
 template<typename T>
 class Iota {
@@ -128,20 +129,21 @@ private:
 //!@}
 };
 
-} // namespace detail
+} // namespace Detail
 
 template<typename T>
 auto range(T lower, T upper) {
-  return detail::Iota<T>(lower, upper);
+  return Detail::Iota<T>(lower, upper);
 }
 
 template<typename T>
 auto range(T upper) {
-  return detail::Iota<T>(upper);
+  return Detail::Iota<T>(upper);
 }
 
-} // namespace adaptors
+} // namespace Adaptors
 } // namespace Temple
+} // namespace Molassembler
 } // namespace Scine
 
 #endif

@@ -20,7 +20,7 @@
 namespace Scine {
 namespace Molassembler {
 
-namespace detail {
+namespace Detail {
 
 //! C++'s modulo yields sign of the dividend, but we want nonnegative-always
 int euclideanModulo(const int a, const int base) {
@@ -115,7 +115,7 @@ struct BoundedNodeTrieChooseFunctor {
   }
 };
 
-} // namespace detail
+} // namespace Detail
 
 unsigned DirectedConformerGenerator::Impl::distance(
   const DecisionList& a,
@@ -129,7 +129,7 @@ unsigned DirectedConformerGenerator::Impl::distance(
   unsigned distance = 0;
   for(unsigned i = 0; i < bounds.size(); ++i) {
     assert(a[i] < bounds[i] && b[i] < bounds[i]);
-    distance += detail::distance(a[i], b[i], bounds[i]);
+    distance += Detail::distance(a[i], b[i], bounds[i]);
   }
 
   return distance;
@@ -264,7 +264,7 @@ DirectedConformerGenerator::Impl::Impl(
   }
 
   // Sort the relevant bonds and shrink
-  Temple::inplace::sort(relevantBonds_);
+  Temple::InPlace::sort(relevantBonds_);
   relevantBonds_.shrink_to_fit();
 
   /* In case there are no bonds to consider, then we're done. No other work
@@ -308,7 +308,7 @@ DirectedConformerGenerator::Impl::generateNewDecisionList() {
     throw std::logic_error("List of relevant bonds is empty!");
   }
 
-  detail::BoundedNodeTrieChooseFunctor<std::uint8_t> chooseFunctor {};
+  Detail::BoundedNodeTrieChooseFunctor<std::uint8_t> chooseFunctor {};
   return decisionLists_.generateNewEntry(chooseFunctor);
 }
 

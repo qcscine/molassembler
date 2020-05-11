@@ -21,6 +21,7 @@
 #include "boost/optional.hpp"
 
 namespace Scine {
+namespace Molassembler {
 namespace Temple {
 
 /*!
@@ -79,7 +80,7 @@ template<class Container> std::enable_if_t<
   return representation;
 }
 
-namespace detail {
+namespace Detail {
 
 template<class T, class R = void>
 struct enable_if_type { typedef R type; };
@@ -90,7 +91,7 @@ struct isMapType : std::false_type {};
 template<class T>
 struct isMapType<T, typename enable_if_type<typename T::mapped_type>::type> : std::true_type {};
 
-} // namespace detail
+} // namespace Detail
 
 using namespace std::string_literals;
 
@@ -145,7 +146,7 @@ std::string stringify(const std::tuple<Ts...>& tuple);
 
 template<typename T>
 std::enable_if_t<
-  detail::isMapType<T>::value,
+  Detail::isMapType<T>::value,
   std::string
 > stringifyMap(const T& map);
 
@@ -245,7 +246,7 @@ std::enable_if_t<
 
 template<typename T>
 std::enable_if_t<
-  detail::isMapType<T>::value,
+  Detail::isMapType<T>::value,
   std::string
 > stringifyMap(const T& map) {
   std::string representation = "{";
@@ -301,6 +302,7 @@ std::string stringifyTuple(
 }
 
 } // namespace Temple
+} // namespace Molassembler
 } // namespace Scine
 
 #endif

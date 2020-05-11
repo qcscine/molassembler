@@ -162,7 +162,7 @@ Eigen::VectorXd transformToAngles(M m) {
 
   assert(
     Temple::all_of(
-      Temple::adaptors::allPairs(Temple::adaptors::range(N)),
+      Temple::Adaptors::allPairs(Temple::Adaptors::range(N)),
       [&](const unsigned i, const unsigned j) -> bool {
         return !angles.template segment<2>(2 * i).isApprox(
           angles.template segment<2>(2 * j),

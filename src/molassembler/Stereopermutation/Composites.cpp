@@ -18,8 +18,9 @@
 #include "molassembler/Temple/Stringify.h"
 
 namespace Scine {
+namespace Molassembler {
 namespace Stereopermutations {
-namespace detail {
+namespace Detail {
 
 template<typename T>
 std::pair<T, T> makeOrderedPair(T a, T b) {
@@ -114,7 +115,7 @@ double dihedral(
   );
 }
 
-} // namespace detail
+} // namespace Detail
 
 constexpr Temple::Floating::ExpandedAbsoluteEqualityComparator<double> Composite::fpComparator;
 
@@ -419,7 +420,7 @@ std::vector<Shapes::Vertex> Composite::generateRotation(
       }
     }
 
-    Temple::inplace::sort(rotationIndexApplicationSequence);
+    Temple::InPlace::sort(rotationIndexApplicationSequence);
 
     do {
       // Create the rotation using the index application sequence front-to-back
@@ -442,12 +443,12 @@ std::vector<Shapes::Vertex> Composite::generateRotation(
       }
     } while(
       !rotationFound
-      && Temple::inplace::next_permutation(rotationIndexApplicationSequence)
+      && Temple::InPlace::next_permutation(rotationIndexApplicationSequence)
     );
 
   } while(
     !rotationFound
-    && Temple::inplace::nextCombinationPermutation(rotationUses, periodicities)
+    && Temple::InPlace::nextCombinationPermutation(rotationUses, periodicities)
   );
 
   if(rotationFound) {
@@ -518,7 +519,7 @@ Composite::PerpendicularAngleGroups Composite::inGroupAngles(
   >;
 
   Temple::forEach(
-    Temple::adaptors::allPairs(angleGroup.vertices),
+    Temple::Adaptors::allPairs(angleGroup.vertices),
     [&](const Shapes::Vertex a, const Shapes::Vertex b) -> void {
       const double perpendicularAngle = perpendicularSubstituentAngle(
         angleGroup.angle,
@@ -542,12 +543,12 @@ Composite::PerpendicularAngleGroups Composite::inGroupAngles(
         // No equal angles exist, add one yourself
         groups.emplace_back(
           std::vector<double> {perpendicularAngle},
-          RecordVector {detail::makeOrderedPair(a, b)}
+          RecordVector {Detail::makeOrderedPair(a, b)}
         );
       } else {
         findIter->first.push_back(perpendicularAngle);
         findIter->second.emplace_back(
-          detail::makeOrderedPair(a, b)
+          Detail::makeOrderedPair(a, b)
         );
       }
     }
@@ -588,7 +589,7 @@ Composite::Composite(
       /* Order both AngleGroups' vertices by descending ranking and
        * index to get canonical initial combinations
        */
-      Temple::inplace::sort(
+      Temple::InPlace::sort(
         angleGroup.vertices,
         [&](const unsigned a, const unsigned b) -> bool {
           return (
@@ -631,7 +632,7 @@ Composite::Composite(
    */
   auto firstCoordinates = Shapes::coordinates(orientations_.first.shape);
   // Rotate left fused position onto <1, 0, 0>
-  detail::rotateCoordinates(
+  Detail::rotateCoordinates(
     firstCoordinates,
     firstCoordinates.col(orientations_.first.fusedVertex).normalized(),
     Eigen::Vector3d::UnitX()
@@ -639,20 +640,20 @@ Composite::Composite(
 
   auto secondCoordinates = Shapes::coordinates(orientations_.second.shape);
   // Rotate right fused position onto <-1, 0, 0>
-  detail::rotateCoordinates(
+  Detail::rotateCoordinates(
     secondCoordinates,
     secondCoordinates.col(orientations_.second.fusedVertex).normalized(),
     -Eigen::Vector3d::UnitX()
   );
 
   // Translate positions by <1, 0, 0>
-  detail::translateCoordinates(
+  Detail::translateCoordinates(
     secondCoordinates,
     Eigen::Vector3d::UnitX()
   );
 
   auto getDihedral = [&](const Shapes::Vertex f, const Shapes::Vertex s) -> double {
-    return detail::dihedral(
+    return Detail::dihedral(
       firstCoordinates.col(f),
       Eigen::Vector3d::Zero(),
       Eigen::Vector3d::UnitX(),
@@ -669,7 +670,7 @@ Composite::Composite(
 
   // Generate all arrangements regardless of whether the Composite is isotropic
   Temple::forEach(
-    Temple::adaptors::allPairs(
+    Temple::Adaptors::allPairs(
       angleGroups.first.vertices,
       angleGroups.second.vertices
     ),
@@ -726,7 +727,7 @@ Composite::Composite(
       }
 
       auto dihedralList = Temple::map(
-        Temple::adaptors::allPairs(
+        Temple::Adaptors::allPairs(
           angleGroups.first.vertices,
           angleGroups.second.vertices
         ),
@@ -890,4 +891,5 @@ bool Composite::operator != (const Composite& other) const {
 }
 
 } // namespace Stereopermutations
+} // namespace Molassembler
 } // namespace Scine

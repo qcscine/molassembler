@@ -18,6 +18,7 @@
 #include <array>
 
 namespace Scine {
+namespace Molassembler {
 namespace Temple {
 
 //! Constexpr three-dimensional vector math class.
@@ -141,7 +142,7 @@ struct Vector {
  */
 PURITY_WEAK constexpr double angle(const Vector& a, const Vector& b) {
   return Math::acos(
-    stl17::clamp(
+    Stl17::clamp(
       a.dot(b) / (
         a.norm() * b.norm()
       ),
@@ -152,6 +153,7 @@ PURITY_WEAK constexpr double angle(const Vector& a, const Vector& b) {
 }
 
 } // namespace Temple
+} // namespace Molassembler
 } // namespace Scine
 
 #endif

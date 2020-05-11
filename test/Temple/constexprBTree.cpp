@@ -18,7 +18,7 @@
 #include <set>
 #include <iostream>
 
-using namespace Scine;
+using namespace Scine::Molassembler;
 
 extern Temple::Generator<> generator;
 
@@ -229,7 +229,7 @@ BOOST_AUTO_TEST_CASE(constexprBTreeTests) {
 
     BOOST_REQUIRE_MESSAGE(
       Temple::all_of(
-        Temple::adaptors::zip(tree, inTree),
+        Temple::Adaptors::zip(tree, inTree),
         [&](const unsigned treeValue, const unsigned testValue) -> bool {
           if(treeValue != testValue) {
             std::cout << "Expected " << testValue << ", got " << treeValue << std::endl;

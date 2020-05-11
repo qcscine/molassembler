@@ -11,6 +11,7 @@
 #include <utility>
 
 namespace Scine {
+namespace Molassembler {
 namespace Temple {
 
 /**
@@ -51,6 +52,7 @@ struct Binding {
 };
 
 } // namespace Temple
+} // namespace Molassembler
 } // namespace Scine
 
 #endif

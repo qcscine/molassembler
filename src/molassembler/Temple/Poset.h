@@ -16,6 +16,7 @@
 #include <stdexcept>
 
 namespace Scine {
+namespace Molassembler {
 namespace Temple {
 
 /*!
@@ -335,6 +336,7 @@ private:
 };
 
 } // namespace Temple
+} // namespace Molassembler
 } // namespace Scine
 
 #endif

@@ -22,7 +22,7 @@
 #include <vector>
 #include <array>
 
-using namespace Scine;
+using namespace Scine::Molassembler;
 
 template<typename T>
 std::ostream& operator << (std::ostream& os, const boost::optional<T>& valueOptional) {

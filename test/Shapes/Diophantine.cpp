@@ -8,7 +8,7 @@
 
 #include "molassembler/Shapes/Diophantine.h"
 
-using namespace Scine::Shapes;
+using namespace Scine::Molassembler::Shapes;
 
 BOOST_AUTO_TEST_CASE(DiophantineExample) {
   std::vector<unsigned> x;

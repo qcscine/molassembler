@@ -15,8 +15,9 @@
  */
 
 namespace Scine {
+namespace Molassembler {
 namespace Temple {
-namespace detail {
+namespace Detail {
 
 template<typename FloatType> constexpr FloatType cfabs(FloatType x) noexcept {
   return (x >= 0) ? x : -x;
@@ -66,7 +67,7 @@ auto clampFunction(
   );
 }
 
-namespace boxes {
+namespace Boxes {
 
 template<typename VectorType>
 void clampToBounds(Eigen::Ref<VectorType> /* parameters */) {}
@@ -119,8 +120,8 @@ void adjustDirection(
   box.adjustDirection(direction, parameters, gradient);
 }
 
-} // namespace boxes
-} // namespace detail
+} // namespace Boxes
+} // namespace Detail
 
 /**
  * @brief LBFGS optimizer with optional boxing
@@ -264,7 +265,7 @@ public:
 
       // Initialize current values and gradients
       function(parameters.current, values.current, gradients.current);
-      detail::boxes::adjustGradient<VectorType>(gradients.current, parameters.current, boxes ...);
+      Detail::Boxes::adjustGradient<VectorType>(gradients.current, parameters.current, boxes ...);
 
       // Initialize new with a small steepest descent step
       VectorType direction;
@@ -288,9 +289,9 @@ public:
       const Boxes& ... boxes
     ) {
       parameters.proposed.noalias() = parameters.current + multiplier * direction;
-      detail::boxes::clampToBounds<VectorType>(parameters.proposed, boxes ...);
+      Detail::Boxes::clampToBounds<VectorType>(parameters.proposed, boxes ...);
       function(parameters.proposed, values.proposed, gradients.proposed);
-      detail::boxes::adjustGradient<VectorType>(gradients.proposed, parameters.proposed, boxes ...);
+      Detail::Boxes::adjustGradient<VectorType>(gradients.proposed, parameters.proposed, boxes ...);
     }
 
     /**
@@ -338,7 +339,7 @@ public:
   template<
     typename UpdateFunction,
     typename Checker,
-    typename Observer = detail::DoNothingObserver
+    typename Observer = Detail::DoNothingObserver
   > OptimizationReturnType minimize(
     Eigen::Ref<VectorType> parameters,
     UpdateFunction&& function,
@@ -373,7 +374,7 @@ public:
   template<
     typename UpdateFunction,
     typename Checker,
-    typename Observer = detail::DoNothingObserver
+    typename Observer = Detail::DoNothingObserver
   > OptimizationReturnType maximize(
     Eigen::Ref<VectorType> parameters,
     UpdateFunction&& function,
@@ -419,7 +420,7 @@ public:
   template<
     typename UpdateFunction,
     typename Checker,
-    typename Observer = detail::DoNothingObserver
+    typename Observer = Detail::DoNothingObserver
   > OptimizationReturnType minimize(
     Eigen::Ref<VectorType> parameters,
     const Box& box,
@@ -457,7 +458,7 @@ public:
   template<
     typename UpdateFunction,
     typename Checker,
-    typename Observer = detail::DoNothingObserver
+    typename Observer = Detail::DoNothingObserver
   > OptimizationReturnType maximize(
     Eigen::Ref<VectorType> parameters,
     const Box& box,
@@ -651,7 +652,7 @@ private:
       }
 
       generateNewDirection(direction, step.gradients.proposed);
-      detail::boxes::adjustDirection(
+      Detail::Boxes::adjustDirection(
         direction,
         step.parameters.proposed,
         step.gradients.proposed,
@@ -724,7 +725,7 @@ private:
       constexpr FloatType shortenFactor = 0.5;
       constexpr FloatType lengthenFactor = 1.5;
       static_assert(
-        detail::cfabs(shortenFactor * lengthenFactor - 1.0) > 0.1,
+        Detail::cfabs(shortenFactor * lengthenFactor - 1.0) > 0.1,
         "Shortening and lengthening factor should not multiply to give "
         "approximately one, this can cause oscillation"
       );
@@ -778,7 +779,7 @@ private:
     Boxes&& ... boxes
   ) {
     // If there is a box, make sure the parameters are valid
-    assert(detail::boxes::validate(parameters, boxes ...));
+    assert(Detail::Boxes::validate(parameters, boxes ...));
 
     // Set up a first small conjugate gradient step
     StepValues step;
@@ -795,7 +796,7 @@ private:
     unsigned iteration;
     for(
       iteration = 1;
-      check.shouldContinue(iteration, stl17::as_const(step));
+      check.shouldContinue(iteration, Stl17::as_const(step));
       ++iteration
     ) {
       // Line search the chosen direction
@@ -828,6 +829,7 @@ private:
 };
 
 } // namespace Temple
+} // namespace Molassembler
 } // namespace Scine
 
 #endif

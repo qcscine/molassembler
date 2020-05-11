@@ -17,6 +17,7 @@
 #include <cassert>
 
 namespace Scine {
+namespace Molassembler {
 namespace Stereopermutations {
 
 Stereopermutation::Stereopermutation(
@@ -47,7 +48,7 @@ Stereopermutation::Stereopermutation(
 
   // Fix unsorted links
   if(!std::is_sorted(std::begin(links), std::end(links))) {
-    Temple::inplace::sort(links);
+    Temple::InPlace::sort(links);
   }
 }
 
@@ -165,4 +166,5 @@ std::size_t hash_value(const Stereopermutation& assignment) {
 }
 
 } // namespace Stereopermutations
+} // namespace Molassembler
 } // namespace Scine

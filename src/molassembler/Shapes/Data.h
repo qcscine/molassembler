@@ -25,6 +25,7 @@
 #include <vector>
 
 namespace Scine {
+namespace Molassembler {
 namespace Shapes {
 
 //! @brief Index of a shape vertex
@@ -66,15 +67,15 @@ using TetrahedronList = std::vector<Tetrahedron>;
 //! Representation of idealized shape coordinates (does not include centroid)
 using Coordinates = Eigen::Matrix<double, 3, Eigen::Dynamic>;
 
-namespace detail {
+namespace Detail {
 template<size_t ... Inds>
 constexpr auto makeAllShapes(std::index_sequence<Inds...> /* seq */) {
   return std::array<Shape, nShapes> {{ static_cast<Shape>(Inds)... }};
 }
-} // namespace detail
+} // namespace Detail
 
 //! A list of all the enum class values
-constexpr std::array<Shape, nShapes> allShapes = detail::makeAllShapes(
+constexpr std::array<Shape, nShapes> allShapes = Detail::makeAllShapes(
   std::make_index_sequence<nShapes>()
 );
 
@@ -153,6 +154,7 @@ MASM_EXPORT const TetrahedronList& tetrahedra(const Shape shape);
 PURITY_STRONG MASM_EXPORT bool threeDimensional(const Shape shape);
 
 } // namespace Shapes
+} // namespace Molassembler
 } // namespace Scine
 
 #endif

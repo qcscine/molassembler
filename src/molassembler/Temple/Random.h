@@ -17,6 +17,7 @@
 #include <random>
 
 namespace Scine {
+namespace Molassembler {
 namespace Temple {
 namespace Random {
 
@@ -142,6 +143,7 @@ void shuffle(
 
 } // namespace Random
 } // namespace Temple
+} // namespace Molassembler
 } // namespace Scine
 
 #endif

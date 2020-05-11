@@ -17,10 +17,11 @@
 #include <functional>
 
 namespace Scine {
+namespace Molassembler {
 
 //! @brief Template shorthands, optimizers and constexpr data types
 namespace Temple {
-namespace detail {
+namespace Detail {
 
 template<typename TupleType, typename Function, size_t ... Inds>
 auto boostTupleInvokeHelper(
@@ -33,7 +34,7 @@ auto boostTupleInvokeHelper(
   );
 }
 
-} // namespace detail
+} // namespace Detail
 
 //! Invokes a function with all values in a given boost tuple
 template<
@@ -44,7 +45,7 @@ template<
   Function&& function,
   const boost::tuples::cons<HT, TT>& tuple
 ) {
-  return detail::boostTupleInvokeHelper(
+  return Detail::boostTupleInvokeHelper(
     function,
     tuple,
     std::make_index_sequence<
@@ -56,7 +57,7 @@ template<
   );
 }
 
-namespace detail {
+namespace Detail {
 
 template<class> struct sfinae_true : std::true_type {};
 
@@ -125,7 +126,7 @@ static auto isTupleCallableTest(long) -> std::false_type;
 template<typename Function, typename TupleType, typename... Args>
 struct isTupleCallable : decltype(isTupleCallableTest<Function, TupleType, Args...>(0)) {};
 
-} // namespace detail
+} // namespace Detail
 
 /*!
  * @brief If a callable can be called by unpacking a supplied tuple of
@@ -139,14 +140,14 @@ template<
   typename Function,
   typename TupleType,
   std::enable_if_t<
-    detail::isTupleCallable<Function, TupleType>::value,
+    Detail::isTupleCallable<Function, TupleType>::value,
     int
   > = 0
 > auto invoke(
   Function&& function,
   const TupleType& tuple
 ) {
-  return detail::invokeHelper(
+  return Detail::invokeHelper(
     std::forward<Function>(function),
     tuple,
     std::make_index_sequence<
@@ -167,7 +168,7 @@ template<
   typename Fn,
   typename... Args,
   std::enable_if_t<
-    !(sizeof...(Args) == 1 && detail::isTupleCallable<Fn, Args...>::value)
+    !(sizeof...(Args) == 1 && Detail::isTupleCallable<Fn, Args...>::value)
     && std::is_member_pointer<std::decay_t<Fn>>{},
     int
   > = 0
@@ -189,7 +190,7 @@ template<
   typename Fn,
   typename... Args,
   std::enable_if_t<
-    !(sizeof...(Args) == 1 && detail::isTupleCallable<Fn, Args...>::value)
+    !(sizeof...(Args) == 1 && Detail::isTupleCallable<Fn, Args...>::value)
     && !std::is_member_pointer<std::decay_t<Fn>>{},
     int
   > = 0
@@ -199,7 +200,7 @@ template<
   return std::forward<Fn>(f)(std::forward<Args>(args)...);
 }
 
-namespace detail {
+namespace Detail {
 
 template<typename Functor>
 struct Invoker {
@@ -213,14 +214,15 @@ struct Invoker {
   }
 };
 
-} // namespace detail
+} // namespace Detail
 
 template<typename Functor>
 auto make_tuple_callable(Functor&& functor) {
-  return detail::Invoker<Functor>(std::forward<Functor>(functor));
+  return Detail::Invoker<Functor>(std::forward<Functor>(functor));
 }
 
 } // namespace Temple
+} // namespace Molassembler
 } // namespace Scine
 
 #endif

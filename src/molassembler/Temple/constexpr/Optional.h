@@ -13,6 +13,7 @@
 #include <utility>
 
 namespace Scine {
+namespace Molassembler {
 namespace Temple {
 
 /*! @brief An Option monadic type
@@ -342,6 +343,7 @@ private:
 };
 
 } // namespace Temple
+} // namespace Molassembler
 } // namespace Scine
 
 #endif

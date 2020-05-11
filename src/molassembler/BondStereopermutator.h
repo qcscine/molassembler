@@ -16,18 +16,17 @@
 #include <string>
 
 namespace Scine {
+namespace Molassembler {
+
+/* Forward-declarations */
 namespace Stereopermutations {
-
 class Composite;
-
 } // namespace Stereopermutations
 
-namespace Molassembler {
 namespace Random {
 class Engine;
 } // namespace Random
 
-// Forward-declarations
 class AngstromPositions;
 class PrivateGraph;
 class StereopermutatorList;

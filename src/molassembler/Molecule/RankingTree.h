@@ -362,7 +362,7 @@ private:
   ) const {
     for(const auto& undecidedSet : undecidedSets) {
       Temple::forEach(
-        Temple::adaptors::allPairs(undecidedSet),
+        Temple::Adaptors::allPairs(undecidedSet),
         [&](const TreeVertexIndex a, const TreeVertexIndex b) {
           if(multisetCompare_(comparisonSets.at(a), comparisonSets.at(b))) {
             orderingHelper.addLessThanRelationship(a, b);

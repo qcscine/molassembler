@@ -32,8 +32,7 @@
 #include <iostream>
 
 using namespace std::string_literals;
-using namespace Scine;
-using namespace Molassembler;
+using namespace Scine::Molassembler;
 using namespace DistanceGeometry;
 
 struct RefinementBaseData {

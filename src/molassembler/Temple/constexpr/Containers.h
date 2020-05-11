@@ -16,6 +16,7 @@
 #include <limits>
 
 namespace Scine {
+namespace Molassembler {
 namespace Temple {
 namespace Traits {
 
@@ -25,7 +26,7 @@ using functionReturnType = std::result_of_t<Function(Args...)>;
 
 } // namespace Traits
 
-namespace detail {
+namespace Detail {
 
 //!  Implementation of mapping with a unary function for any array type.
 template<
@@ -47,7 +48,7 @@ template<
   };
 }
 
-} // namespace detail
+} // namespace Detail
 
 /*! @brief Maps all elements of any array-like container with a unary function
  *
@@ -62,7 +63,7 @@ template<
   const ArrayType<T, size>& array,
   UnaryFunction&& function
 ) {
-  return detail::mapImpl(
+  return Detail::mapImpl(
     array,
     std::forward<UnaryFunction>(function),
     std::make_index_sequence<size>{}
@@ -117,7 +118,7 @@ template<
   return sum;
 }
 
-namespace detail {
+namespace Detail {
 
 
 template<
@@ -131,7 +132,7 @@ template<
   return ArrayType<T, size> { static_cast<T>(Inds)...  };
 }
 
-} // namespace detail
+} // namespace Detail
 
 //! Iota for any array type
 template<
@@ -142,12 +143,12 @@ template<
   std::is_arithmetic<T>::value,
   ArrayType<T, size>
 > iota() {
-  return detail::iotaHelper<ArrayType, T, size>(
+  return Detail::iotaHelper<ArrayType, T, size>(
     std::make_index_sequence<size>()
   );
 }
 
-namespace detail {
+namespace Detail {
 
 template<
   template<typename, size_t> class ArrayType,
@@ -163,7 +164,7 @@ template<
   };
 }
 
-} // namespace detail
+} // namespace Detail
 
 //! Range for any array type
 template<
@@ -172,12 +173,12 @@ template<
   size_t begin, // inclusive
   size_t end // exclusive
 > constexpr ArrayType<T, (end - begin)> range() {
-  return detail::rangeHelper<ArrayType, T, begin, end>(
+  return Detail::rangeHelper<ArrayType, T, begin, end>(
     std::make_index_sequence<(end - begin)>()
   );
 }
 
-namespace detail {
+namespace Detail {
 
 //! Implementation helper of array-like type concatenation.
 template<
@@ -200,7 +201,7 @@ constexpr ArrayType<T, N1+N2> arrayConcatenateImpl(
   };
 }
 
-} // namespace detail
+} // namespace Detail
 
 //! Concatenation of two instances of an array-like class
 template<
@@ -213,7 +214,7 @@ constexpr ArrayType<T, N1+N2> arrayConcatenate(
   const ArrayType<T, N1>& a,
   const ArrayType<T, N2>& b
 ) {
-  return detail::arrayConcatenateImpl(
+  return Detail::arrayConcatenateImpl(
     a,
     b,
     std::make_index_sequence<N1>{},
@@ -221,7 +222,7 @@ constexpr ArrayType<T, N1+N2> arrayConcatenate(
   );
 }
 
-namespace detail {
+namespace Detail {
 
 template<
   template<typename, size_t> class ArrayType,
@@ -253,7 +254,7 @@ template<
   );
 }
 
-} // namespace detail
+} // namespace Detail
 
 //! Variadic concatenation of multiple array-like class instances
 template<
@@ -265,7 +266,7 @@ template<
   const ArrayType<T, N>& startingArray,
   const ArrayType<T, Ns>& ... remainingArrays
 ) {
-  return detail::concatenateHelper(startingArray, remainingArrays...);
+  return Detail::concatenateHelper(startingArray, remainingArrays...);
 }
 
 /*! @brief Array-like container lexicographic equality comparaotr
@@ -679,7 +680,7 @@ template<
   return index;
 }
 
-namespace detail {
+namespace Detail {
   template<class ContainerType>
   struct getValueTypeImpl {
     using type = typename std::remove_const<
@@ -692,11 +693,11 @@ namespace detail {
       >::type
     >::type;
   };
-} // namespace detail
+} // namespace Detail
 
 //! Figures out the value type of a container via its iterators
 template<class ContainerType>
-using getValueType = typename detail::getValueTypeImpl<ContainerType>::type;
+using getValueType = typename Detail::getValueTypeImpl<ContainerType>::type;
 
 /*! @brief Checks if a container is partially ordered
  *
@@ -780,6 +781,7 @@ template<
 }
 
 } // namespace Temple
+} // namespace Molassembler
 } // namespace Scine
 
 #endif

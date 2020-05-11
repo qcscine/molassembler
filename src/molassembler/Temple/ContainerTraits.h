@@ -16,6 +16,7 @@
 #include <utility>
 
 namespace Scine {
+namespace Molassembler {
 namespace Temple {
 namespace Traits {
 
@@ -26,7 +27,7 @@ namespace Traits {
 template<class>
 struct sfinae_true : std::true_type{};
 
-namespace detail {
+namespace Detail {
 
 /* Short explanation: If the expression EXPR in sfinae_true<EXPR> returns a
  * valid type, sfinae_true can be instantiated, and the default-interpretation
@@ -47,12 +48,12 @@ static auto testHasInsert(int)
 
 template<class Container>
 static auto testHasInsert(long) -> std::false_type;
-} // namespace detail
+} // namespace Detail
 
 template<class Container>
-struct hasInsert : decltype(detail::testHasInsert<Container>(0)){};
+struct hasInsert : decltype(Detail::testHasInsert<Container>(0)){};
 
-namespace detail {
+namespace Detail {
 template<class Container>
 static auto testHasPushBack(int)
   -> sfinae_true<
@@ -67,12 +68,12 @@ static auto testHasPushBack(int)
 
 template<class Container>
 static auto testHasPushBack(long) -> std::false_type;
-} // namespace detail
+} // namespace Detail
 
 template<class Container>
-struct hasPushBack : decltype(detail::testHasPushBack<Container>(0)){};
+struct hasPushBack : decltype(Detail::testHasPushBack<Container>(0)){};
 
-namespace detail {
+namespace Detail {
 template<class Container>
 static auto testHasEmplace(int)
   -> sfinae_true<
@@ -87,12 +88,12 @@ static auto testHasEmplace(int)
 
 template<class Container>
 static auto testHasEmplace(long) -> std::false_type;
-} // namespace detail
+} // namespace Detail
 
 template<class Container>
-struct hasEmplace : decltype(detail::testHasEmplace<Container>(0)){};
+struct hasEmplace : decltype(Detail::testHasEmplace<Container>(0)){};
 
-namespace detail {
+namespace Detail {
 template<class Container>
 static auto testHasEmplaceBack(int)
   -> sfinae_true<
@@ -107,13 +108,13 @@ static auto testHasEmplaceBack(int)
 
 template<class Container>
 static auto testHasEmplaceBack(long) -> std::false_type;
-} // namespace detail
+} // namespace Detail
 
 template<class Container>
-struct hasEmplaceBack : decltype(detail::testHasEmplaceBack<Container>(0)){};
+struct hasEmplaceBack : decltype(Detail::testHasEmplaceBack<Container>(0)){};
 
 
-namespace detail {
+namespace Detail {
 template<class Container>
 static auto testHasSize(int)
   -> sfinae_true<
@@ -124,12 +125,12 @@ static auto testHasSize(int)
 
 template<class Container>
 static auto testHasSize(long) -> std::false_type;
-} // namespace detail
+} // namespace Detail
 
 template<class Container>
-struct hasSize : decltype(detail::testHasSize<Container>(0)){};
+struct hasSize : decltype(Detail::testHasSize<Container>(0)){};
 
-namespace detail {
+namespace Detail {
 template<class Container>
 static auto testHasReserve(int)
   -> sfinae_true<
@@ -140,13 +141,14 @@ static auto testHasReserve(int)
 
 template<class Container>
 static auto testHasReserve(long) -> std::false_type;
-} // namespace detail
+} // namespace Detail
 
 template<class Container>
-struct hasReserve : decltype(detail::testHasReserve<Container>(0)){};
+struct hasReserve : decltype(Detail::testHasReserve<Container>(0)){};
 
 } // namespace Traits
 } // namespace Temple
+} // namespace Molassembler
 } // namespace Scine
 
 #endif

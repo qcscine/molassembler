@@ -24,8 +24,7 @@
 /* TODO add further tests for free functions
  */
 
-using namespace Scine;
-using namespace Molassembler;
+using namespace Scine::Molassembler;
 
 
 struct ExpectationData {
@@ -92,7 +91,7 @@ void readAndDecompose(const boost::filesystem::path& filePath) {
 
     BOOST_CHECK(!cycleSizes.empty());
 
-    Temple::inplace::sort(cycleSizes);
+    Temple::InPlace::sort(cycleSizes);
 
     BOOST_CHECK_MESSAGE(
       cycleSizes == findIter->second.cycleSizes,

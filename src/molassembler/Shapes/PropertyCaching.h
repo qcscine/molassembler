@@ -12,6 +12,7 @@
 #include "molassembler/Shapes/Properties.h"
 
 namespace Scine {
+namespace Molassembler {
 namespace Shapes {
 
 //! Precomputed min and max angle values in radians for all symmetries
@@ -132,6 +133,7 @@ MASM_EXPORT bool hasMultipleUnlinkedStereopermutations(
 );
 
 } // namespace Shapes
+} // namespace Molassembler
 } // namespace Scine
 
 #endif

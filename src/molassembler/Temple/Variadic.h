@@ -17,13 +17,14 @@
 #include <algorithm>
 
 namespace Scine {
+namespace Molassembler {
 namespace Temple {
 namespace variadic {
-namespace detail {
+namespace Detail {
 
 template<typename Container>
 std::enable_if_t<
-  ::Scine::Temple::Traits::hasSize<Container>::value,
+  ::Scine::Molassembler::Temple::Traits::hasSize<Container>::value,
   Optional<std::size_t>
 > size(const Container& container) {
   return Optional<std::size_t> {container.size()};
@@ -31,13 +32,13 @@ std::enable_if_t<
 
 template<typename Container>
 std::enable_if_t<
-  !::Scine::Temple::Traits::hasSize<Container>::value,
+  !::Scine::Molassembler::Temple::Traits::hasSize<Container>::value,
   Optional<std::size_t>
 > size(const Container& /* container */) {
   return {};
 }
 
-} // namespace detail
+} // namespace Detail
 
 /**
  * @brief Calculates a lower bound to the size of multiple containers, i.e. sums
@@ -50,7 +51,7 @@ std::enable_if_t<
 template<typename ... Containers>
 std::size_t sizeLowerBound(const Containers& ... containers) {
   std::array<Optional<std::size_t>, sizeof...(containers)> sizeOptionals {{
-    detail::size(containers)...
+    Detail::size(containers)...
   }};
 
   std::size_t sum = 0;
@@ -64,7 +65,7 @@ std::size_t sizeLowerBound(const Containers& ... containers) {
   return sum;
 }
 
-namespace detail {
+namespace Detail {
 
 template<typename Vector>
 Vector concatenateHelper(Vector& vector) {
@@ -86,7 +87,7 @@ Vector concatenateHelper(
   return concatenateHelper(vector, containers...);
 }
 
-} // namespace detail
+} // namespace Detail
 
 /*!
  * @brief Concatenate various types of containers together with the same ValueType
@@ -113,11 +114,12 @@ auto concatenate(const Containers& ... containers) {
 
   concatenated.reserve(sizeLowerBound(containers...));
 
-  return detail::concatenateHelper(concatenated, containers...);
+  return Detail::concatenateHelper(concatenated, containers...);
 }
 
 } // namespace variadic
 } // namespace Temple
+} // namespace Molassembler
 } // namespace Scine
 
 #endif

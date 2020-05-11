@@ -286,7 +286,7 @@ int main(int argc, char* argv[]) {
       }
     }
 
-    Temple::inplace::sort(
+    Temple::InPlace::sort(
       ambiguities,
       [](const auto& a, const auto& b) -> bool {
         return a.ambiguity < b.ambiguity;

@@ -21,10 +21,9 @@
 #include "molassembler/Temple/constexpr/UpperTriangularMatrix.h"
 
 namespace Scine {
-
+namespace Molassembler {
 namespace Shapes {
-
-namespace detail {
+namespace Detail {
 
 /*! @brief Calculate the i-th element of the angle upper triangular matrix
  *
@@ -86,10 +85,9 @@ constexpr std::array<double, size * (size - 1) / 2> makeArray(
   );
 }
 
-} // namespace detail
-
+} // namespace Detail
 } // namespace Shapes
-
+} // namespace Molassembler
 } // namespace Scine
 
 #endif

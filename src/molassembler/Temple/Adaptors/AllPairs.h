@@ -14,9 +14,10 @@
 #include <tuple>
 
 namespace Scine {
+namespace Molassembler {
 namespace Temple {
-namespace adaptors {
-namespace detail {
+namespace Adaptors {
+namespace Detail {
 
 template<class Base>
 struct EmptySizeSupplier {};
@@ -286,25 +287,26 @@ struct TwoContainersAllPairsGenerator
 //!@}
 };
 
-} // namespace detail
+} // namespace Detail
 
 template<class Container>
 auto allPairs(Container&& container) {
-  return detail::SingleContainerPairsGenerator<Container>(
+  return Detail::SingleContainerPairsGenerator<Container>(
     std::forward<Container>(container)
   );
 }
 
 template<class ContainerT, class ContainerU>
 auto allPairs(ContainerT&& t, ContainerU&& u) {
-  return detail::TwoContainersAllPairsGenerator<ContainerT, ContainerU>(
+  return Detail::TwoContainersAllPairsGenerator<ContainerT, ContainerU>(
     std::forward<ContainerT>(t),
     std::forward<ContainerU>(u)
   );
 }
 
-} // namespace adaptors
+} // namespace Adaptors
 } // namespace Temple
+} // namespace Molassembler
 } // namespace Scine
 
 #endif

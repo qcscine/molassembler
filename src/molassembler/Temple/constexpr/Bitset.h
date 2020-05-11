@@ -14,6 +14,7 @@
 #include "molassembler/Temple/constexpr/Array.h"
 
 namespace Scine {
+namespace Molassembler {
 namespace Temple {
 
 /**
@@ -126,6 +127,7 @@ private:
 };
 
 } // namespace Temple
+} // namespace Molassembler
 } // namespace Scine
 
 #endif

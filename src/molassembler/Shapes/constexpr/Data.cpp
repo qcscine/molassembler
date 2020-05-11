@@ -20,6 +20,7 @@
   constexpr decltype(ShapeClass::angleLookupTable) ShapeClass::angleLookupTable;
 
 namespace Scine {
+namespace Molassembler {
 namespace Shapes {
 namespace concepts {
 
@@ -235,4 +236,5 @@ DECLARE_CONSTEXPR_ANGLE_LOOKUP(Cuboctahedron)
 
 } // namespace Data
 } // namespace Shapes
+} // namespace Molassembler
 } // namespace Scine

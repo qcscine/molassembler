@@ -176,7 +176,7 @@ struct NautySparseGraph {
 
     // And then generate the partition from checking adjacent hash equality
     ptn = Temple::map(
-      Temple::adaptors::sequentialPairs(lab),
+      Temple::Adaptors::sequentialPairs(lab),
       [&hashes](const int a, const int b) -> int {
         return static_cast<int>(hashes.at(a) == hashes.at(b));
       }

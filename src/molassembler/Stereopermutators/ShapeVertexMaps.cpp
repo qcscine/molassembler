@@ -84,7 +84,7 @@ void mapUnmappedVertices(
       mapped2.push_back(mappedVertex);
     }
   }
-  Temple::inplace::sort(mapped2);
+  Temple::InPlace::sort(mapped2);
 
   auto allVertices = Temple::iota<Vertex>(V);
   std::vector<Vertex> unmapped2;

@@ -20,6 +20,7 @@
 #include <memory>
 
 namespace Scine {
+namespace Molassembler {
 namespace Shapes {
 
 //! @brief Namespace for classes and data of point group symmetry elements
@@ -175,6 +176,7 @@ MASM_EXPORT NpGroupingsMapType npGroupings(const ElementsList& elements);
 
 } // namespace Elements
 } // namespace Shapes
+} // namespace Molassembler
 } // namespace Scine
 
 #endif

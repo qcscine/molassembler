@@ -24,8 +24,7 @@ inline std::ostream& nl(std::ostream& os) {
 }
 
 BOOST_AUTO_TEST_CASE(ExplicitBoundsGraphStructure) {
-  using namespace Scine;
-  using namespace Molassembler;
+  using namespace Scine::Molassembler;
 
   for(
     const boost::filesystem::path& currentFilePath :

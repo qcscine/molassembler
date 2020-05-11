@@ -15,6 +15,7 @@
 #include <algorithm>
 
 namespace Scine {
+namespace Molassembler {
 namespace Temple {
 
 /*!
@@ -553,6 +554,7 @@ struct TinySet {
 };
 
 } // namespace Temple
+} // namespace Molassembler
 } // namespace Scine
 
 #endif

@@ -12,6 +12,7 @@
 #include "molassembler/Temple/Functional.h"
 
 namespace Scine {
+namespace Molassembler {
 namespace Temple {
 
 /**
@@ -101,7 +102,7 @@ struct NelderMead {
       vertex = bestVertex + shrinkCoefficient * (vertex - bestVertex);
       value.value = function(vertex);
     }
-    Temple::inplace::sort(pairs);
+    Temple::InPlace::sort(pairs);
   }
 
   static void replaceWorst(
@@ -220,6 +221,7 @@ struct NelderMead {
 };
 
 } // namespace Temple
+} // namespace Molassembler
 } // namespace Scine
 
 #endif

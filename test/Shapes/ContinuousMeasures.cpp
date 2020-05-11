@@ -18,7 +18,7 @@
 #include <iostream>
 #include "molassembler/Temple/Stringify.h"
 
-using namespace Scine;
+using namespace Scine::Molassembler;
 using namespace Shapes;
 
 // From InertialMoments.cpp
@@ -216,7 +216,7 @@ BOOST_AUTO_TEST_CASE(PointGroupElementGroupings) {
 //
 //   const double expectedTdCSM = 0.17;
 //   const double calculatedTd = csm::pointGroup(
-//     detail::normalize(tetrahedralPositions),
+//     Detail::normalize(tetrahedralPositions),
 //     PointGroup::Td
 //   ).value_or(1000);
 //
@@ -236,7 +236,7 @@ BOOST_AUTO_TEST_CASE(PointGroupElementGroupings) {
 //
 //   const double expectedC3vCSM = 1.16;
 //   const double calculatedC3v = csm::pointGroup(
-//     detail::normalize(c3vPositions),
+//     Detail::normalize(c3vPositions),
 //     PointGroup::C3v
 //   ).value_or(1000);
 //

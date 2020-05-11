@@ -20,6 +20,7 @@
 #include <vector>
 
 namespace Scine {
+namespace Molassembler {
 namespace Stereopermutations {
 
 /**
@@ -316,6 +317,7 @@ private:
 };
 
 } // namespace Stereopermutations
+} // namespace Molassembler
 } // namespace Scine
 
 #endif

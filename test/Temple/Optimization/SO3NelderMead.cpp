@@ -10,7 +10,7 @@
 
 #include <iostream>
 
-using namespace Scine;
+using namespace Scine::Molassembler;
 
 BOOST_AUTO_TEST_CASE(SO3NelderMead) {
   struct EigenValueDecomposition {

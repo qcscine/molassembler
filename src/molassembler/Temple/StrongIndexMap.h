@@ -12,6 +12,7 @@
 #include <stdexcept>
 
 namespace Scine {
+namespace Molassembler {
 namespace Temple {
 
 template<typename T, typename U>
@@ -97,6 +98,7 @@ private:
 };
 
 } // namespace Temple
+} // namespace Molassembler
 } // namespace Scine
 
 #endif

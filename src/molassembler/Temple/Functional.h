@@ -21,6 +21,7 @@
 #include <numeric>
 
 namespace Scine {
+namespace Molassembler {
 namespace Temple {
 
 template<
@@ -266,7 +267,7 @@ bool any_of(const Container& container, UnaryPredicate&& predicate = UnaryPredic
   return false;
 }
 
-namespace inplace {
+namespace InPlace {
 
 //! Calls std::sort on a container
 template<class Container>
@@ -336,7 +337,7 @@ void remove_if(
   );
 }
 
-} // namespace inplace
+} // namespace InPlace
 
 // C++17 nodiscard
 template<class Container, class Predicate>
@@ -355,21 +356,21 @@ Container copy_if(const Container& container, Predicate&& predicate) {
 // C++17 nodiscard
 template<class Container>
 Container sort(Container container) {
-  inplace::sort(container);
+  InPlace::sort(container);
   return container;
 }
 
 // C++17 nodiscard
 template<class Container, typename Comparator>
 Container sort(Container container, Comparator&& comparator) {
-  inplace::sort(container, std::forward<Comparator>(comparator));
+  InPlace::sort(container, std::forward<Comparator>(comparator));
   return container;
 }
 
 // C++17 nodiscard
 template<class Container, class UnaryFunction>
 Container transform(Container container, UnaryFunction&& function) {
-  inplace::transform(container, std::forward<UnaryFunction>(function));
+  InPlace::transform(container, std::forward<UnaryFunction>(function));
   return container;
 }
 
@@ -396,7 +397,7 @@ auto find_if(const Container& container, UnaryPredicate&& predicate) {
 //! @brief Copying std::reverse shorthand
 template<class Container>
 Container reverse(Container container) {
-  inplace::reverse(container);
+  InPlace::reverse(container);
   return container;
 }
 
@@ -406,7 +407,7 @@ Container remove(
   Container container,
   const T& value
 ) {
-  inplace::remove(container, value);
+  InPlace::remove(container, value);
   return container;
 }
 
@@ -416,7 +417,7 @@ Container remove_if(
   Container container,
   UnaryFunction&& predicate
 ) {
-  inplace::remove_if(container, std::forward<UnaryFunction>(predicate));
+  InPlace::remove_if(container, std::forward<UnaryFunction>(predicate));
   return container;
 }
 
@@ -449,6 +450,7 @@ auto makeContainsPredicate(const Container& container) {
 }
 
 } // namespace Temple
+} // namespace Molassembler
 } // namespace Scine
 
 #endif

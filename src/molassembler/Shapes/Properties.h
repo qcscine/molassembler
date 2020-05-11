@@ -20,6 +20,7 @@
 #include <vector>
 
 namespace Scine {
+namespace Molassembler {
 namespace Shapes {
 
 //! @brief Runtime-computed properties of shapes
@@ -304,6 +305,7 @@ PURITY_WEAK MASM_EXPORT Shape mostSymmetric(unsigned shapeSize);
 
 } // namespace Properties
 } // namespace Shapes
+} // namespace Molassembler
 } // namespace Scine
 
 #endif

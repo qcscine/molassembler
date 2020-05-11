@@ -14,12 +14,10 @@
 #include "molassembler/Shapes/Data.h"
 
 namespace Scine {
-
+namespace Molassembler {
 namespace Stereopermutations {
 class Stereopermutation;
 } // namespace Stereopermutations
-
-namespace Molassembler {
 
 using SiteToShapeVertexMap = Temple::StrongIndexFlatMap<SiteIndex, Shapes::Vertex>;
 

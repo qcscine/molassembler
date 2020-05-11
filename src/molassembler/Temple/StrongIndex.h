@@ -12,6 +12,7 @@
 #include <tuple>
 
 namespace Scine {
+namespace Molassembler {
 namespace Temple {
 
 /**
@@ -77,6 +78,7 @@ std::size_t hash_value(const StrongIndex<Tag, T>& v) {
 }
 
 } // namespace Temple
+} // namespace Molassembler
 } // namespace Scine
 
 #endif

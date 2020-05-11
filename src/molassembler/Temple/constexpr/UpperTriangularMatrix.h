@@ -15,6 +15,7 @@
 #include "molassembler/Temple/constexpr/FloatingPointComparison.h"
 
 namespace Scine {
+namespace Molassembler {
 namespace Temple {
 namespace UpperTriangularMatrixImpl {
 
@@ -179,6 +180,7 @@ template<
 }
 
 } // namespace Temple
+} // namespace Molassembler
 } // namespace Scine
 
 #endif

@@ -19,6 +19,7 @@
 #include <cassert>
 
 namespace Scine {
+namespace Molassembler {
 namespace Temple {
 
 //! @brief Floating-point comparison helpers
@@ -47,7 +48,7 @@ constexpr std::enable_if_t<
 
 
 // Implementation details
-namespace detail {
+namespace Detail {
 
 template<typename T>
 constexpr std::enable_if_t<
@@ -100,7 +101,7 @@ PURITY_STRONG constexpr std::enable_if_t<
   );
 }
 
-} // namespace detail
+} // namespace Detail
 
 template<typename T>
 PURITY_STRONG constexpr std::enable_if_t<
@@ -111,7 +112,7 @@ PURITY_STRONG constexpr std::enable_if_t<
   const T b,
   const T relativeTolerance
 ) {
-  return detail::isCloseRelativeOrAbsolute(
+  return Detail::isCloseRelativeOrAbsolute(
     a,
     b,
     relativeTolerance,
@@ -128,7 +129,7 @@ PURITY_STRONG constexpr std::enable_if_t<
   const T b,
   const T absoluteTolerance
 ) {
-  return detail::isCloseRelativeOrAbsolute(
+  return Detail::isCloseRelativeOrAbsolute(
     a,
     b,
     T {0},
@@ -199,7 +200,7 @@ public:
 
   PURITY_STRONG constexpr bool isLessThan(const T a, const T b) const {
     return (
-      (a < b) && !detail::isCloseRelativeOrAbsolute(
+      (a < b) && !Detail::isCloseRelativeOrAbsolute(
         a,
         b,
         relativeTolerance_,
@@ -210,7 +211,7 @@ public:
 
   PURITY_STRONG constexpr bool isMoreThan(const T a, const T b) const {
     return (
-      (a > b) && !detail::isCloseRelativeOrAbsolute(
+      (a > b) && !Detail::isCloseRelativeOrAbsolute(
         a,
         b,
         relativeTolerance_,
@@ -221,7 +222,7 @@ public:
 
   PURITY_STRONG constexpr bool isLessOrEqual(const T a, const T b) const {
     return (
-      (a < b) || detail::isCloseRelativeOrAbsolute(
+      (a < b) || Detail::isCloseRelativeOrAbsolute(
         a,
         b,
         relativeTolerance_,
@@ -232,7 +233,7 @@ public:
 
   PURITY_STRONG constexpr bool isMoreOrEqual(const T a, const T b) const {
     return (
-      (a > b) || detail::isCloseRelativeOrAbsolute(
+      (a > b) || Detail::isCloseRelativeOrAbsolute(
         a,
         b,
         relativeTolerance_,
@@ -242,7 +243,7 @@ public:
   }
 
   PURITY_STRONG constexpr bool isEqual(const T a, const T b) const {
-    return detail::isCloseRelativeOrAbsolute(
+    return Detail::isCloseRelativeOrAbsolute(
       a,
       b,
       relativeTolerance_,
@@ -251,7 +252,7 @@ public:
   }
 
   PURITY_STRONG constexpr bool isUnequal(const T a, const T b) const {
-    return !detail::isCloseRelativeOrAbsolute(
+    return !Detail::isCloseRelativeOrAbsolute(
       a,
       b,
       relativeTolerance_,
@@ -267,6 +268,7 @@ public:
 
 } // namespace Floating
 } // namespace Temple
+} // namespace Molassembler
 } // namespace Scine
 
 #endif

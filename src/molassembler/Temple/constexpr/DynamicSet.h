@@ -16,6 +16,7 @@
 #include "molassembler/Temple/constexpr/BTree.h"
 
 namespace Scine {
+namespace Molassembler {
 namespace Temple {
 
 /**
@@ -125,6 +126,7 @@ template<
 }
 
 } // namespace Temple
+} // namespace Molassembler
 } // namespace Scine
 
 #endif

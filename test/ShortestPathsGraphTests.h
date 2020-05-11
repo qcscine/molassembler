@@ -10,7 +10,7 @@
 /* Helper file to test shortest paths graph concepts
  */
 
-namespace detail {
+namespace Detail {
 
 template<class>
 struct sfinae_true : std::true_type {};
@@ -26,7 +26,7 @@ static auto testHasTarget(long) -> std::false_type;
 template<class Iterator>
 struct hasTarget : decltype(testHasTarget<Iterator>(0)) {};
 
-} // namespace detail
+} // namespace Detail
 
 struct ShortestPathsGraphConcept {
   template<typename Graph, typename LeftFunctor, typename RightFunctor>
@@ -118,7 +118,7 @@ struct ShortestPathsGraphConcept {
   }
 
   template<typename Iter, typename VertexDescriptor>
-  static std::enable_if_t<detail::hasTarget<Iter>::value, void> checkIterShortcuts(
+  static std::enable_if_t<Detail::hasTarget<Iter>::value, void> checkIterShortcuts(
     const Iter& iter,
     const VertexDescriptor source,
     const VertexDescriptor target,
@@ -139,7 +139,7 @@ struct ShortestPathsGraphConcept {
   }
 
   template<typename Iter, typename VertexDescriptor>
-  static std::enable_if_t<!detail::hasTarget<Iter>::value, void> checkIterShortcuts(
+  static std::enable_if_t<!Detail::hasTarget<Iter>::value, void> checkIterShortcuts(
     const Iter& /* iter */,
     const VertexDescriptor /* source */,
     const VertexDescriptor /* target */,

@@ -312,7 +312,7 @@ bool identityCompare(
   assert(aGraph.N() == bGraph.N());
 
   return Temple::all_of(
-    Temple::adaptors::range(aGraph.N()),
+    Temple::Adaptors::range(aGraph.N()),
     [&](const AtomIndex i) -> WideHashType {
       return atomEnvironment(
         aGraph,

@@ -15,6 +15,7 @@
 #include "molassembler/Temple/Functional.h"
 
 namespace Scine {
+namespace Molassembler {
 namespace Temple {
 
 /**
@@ -214,7 +215,7 @@ struct SO3NelderMead {
       value.value = function(vertex);
       // NOTE: No need to worry about ball radius in shrink operation
     }
-    Temple::inplace::sort(values);
+    Temple::InPlace::sort(values);
   }
 
   static void replaceWorst(
@@ -267,7 +268,7 @@ struct SO3NelderMead {
     constexpr FloatType ballRadiusSquared = M_PI * M_PI;
     if(
       Temple::any_of(
-        Temple::adaptors::allPairs(Temple::iota<unsigned>(4)),
+        Temple::Adaptors::allPairs(Temple::iota<unsigned>(4)),
         [&points](const unsigned i, const unsigned j) -> bool {
           return Manifold::distanceSquared(points.at(i), points.at(j)) >= ballRadiusSquared;
         }
@@ -376,6 +377,7 @@ struct SO3NelderMead {
 };
 
 } // namespace Temple
+} // namespace Molassembler
 } // namespace Scine
 
 #endif

@@ -168,7 +168,7 @@ void writeSymmetryTransitionDotFile(
 
     if(!distortionsMap.empty()) {
       double maxDistortion = Temple::max(
-        Temple::adaptors::transform(
+        Temple::Adaptors::transform(
           distortionsMap,
           [](const auto& mapIteratorPair) -> double {
             const auto& ligandGainReturnStruct = mapIteratorPair.second;

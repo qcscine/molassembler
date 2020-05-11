@@ -12,6 +12,7 @@
 #include <set>
 
 namespace Scine {
+namespace Molassembler {
 namespace Temple {
 
 template<
@@ -84,6 +85,7 @@ std::set<T, Comparator<T>, Allocator<T>> set_symmetric_difference(
 }
 
 } // namespace Temple
+} // namespace Molassembler
 } // namespace Scine
 
 #endif

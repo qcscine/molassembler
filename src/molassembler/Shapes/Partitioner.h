@@ -12,6 +12,7 @@
 #include "molassembler/Export.h"
 
 namespace Scine {
+namespace Molassembler {
 namespace Shapes {
 
 /**
@@ -91,4 +92,5 @@ private:
 };
 
 } // namespace Shapes
+} // namespace Molassembler
 } // namespace Scine

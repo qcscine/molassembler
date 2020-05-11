@@ -280,7 +280,7 @@ constexpr const char* canonicalKey = "c";
 namespace {
 
 void sortAtomStereopermutatorsByCentralIndex(nlohmann::json& m) {
-  Temple::inplace::sort(
+  Temple::InPlace::sort(
     m.at(atomStereopermutatorKey),
     [&](const nlohmann::json& lhs, const nlohmann::json& rhs) -> bool {
       assert(lhs.count("c") > 0 && rhs.count("c") > 0);
@@ -305,7 +305,7 @@ void standardizeAtomStereopermutatorRepresentation(nlohmann::json& permutator) {
   assert(sortedSubstituents.is_array());
   for(json& subList : sortedSubstituents) {
     assert(subList.is_array());
-    Temple::inplace::sort(subList);
+    Temple::InPlace::sort(subList);
   }
 
   // Sort ligands' sub-lists
@@ -314,7 +314,7 @@ void standardizeAtomStereopermutatorRepresentation(nlohmann::json& permutator) {
   assert(ligands.is_array());
   for(json& subList : ligands) {
     assert(subList.is_array());
-    Temple::inplace::sort(subList);
+    Temple::InPlace::sort(subList);
   }
 
   /* Sort ligands lists lexicographically (and their ranking
@@ -325,7 +325,7 @@ void standardizeAtomStereopermutatorRepresentation(nlohmann::json& permutator) {
   assert(ligandsRanking.is_array());
 
   json unsortedLigands = ligands;
-  Temple::inplace::sort(ligands);
+  Temple::InPlace::sort(ligands);
 
   auto newLigandIndex = [&](unsigned oldLigandIndex) -> unsigned {
     const auto& ligandIndices = unsortedLigands.at(oldLigandIndex);
@@ -341,7 +341,7 @@ void standardizeAtomStereopermutatorRepresentation(nlohmann::json& permutator) {
     }
 
     // Sort the sub list, too
-    Temple::inplace::sort(equallyRankedLigandsList);
+    Temple::InPlace::sort(equallyRankedLigandsList);
   }
 
   // Changing ligands also means that links' ligand indices have to be adapted
@@ -363,7 +363,7 @@ void standardizeAtomStereopermutatorRepresentation(nlohmann::json& permutator) {
     }
 
     // Sort links by their index pair
-    Temple::inplace::sort(
+    Temple::InPlace::sort(
       links,
       [](const json& lhs, const json& rhs) -> bool {
         assert(lhs.is_object() && lhs.count("p") > 0);
@@ -376,7 +376,7 @@ void standardizeAtomStereopermutatorRepresentation(nlohmann::json& permutator) {
 }
 
 void sortBondStereopermutatorsByEdge(nlohmann::json& m) {
-  Temple::inplace::sort(
+  Temple::InPlace::sort(
     m.at(bondStereopermutatorKey),
     [&](const nlohmann::json& lhs, const nlohmann::json& rhs) -> bool {
       assert(lhs.count("e") > 0 && rhs.count("e") > 0);
@@ -422,7 +422,7 @@ void standardizeJSON(nlohmann::json& m) {
   }
 
   /* Sort the list of edges */
-  Temple::inplace::sort(m.at(graphKey).at("E"));
+  Temple::InPlace::sort(m.at(graphKey).at("E"));
 }
 
 nlohmann::json serialize(const Molecule& molecule) {

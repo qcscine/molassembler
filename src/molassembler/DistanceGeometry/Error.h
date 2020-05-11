@@ -124,7 +124,7 @@ namespace std {
   template<> struct is_error_code_enum<DgError> : std::true_type {};
 } // namespace std
 
-namespace detail {
+namespace Detail {
   struct DGError_category : public std::error_category {
     virtual const char* name() const noexcept override final {
       return "DistanceGeometryError";
@@ -153,10 +153,10 @@ namespace detail {
       };
     }
   };
-} // namespace detail
+} // namespace Detail
 
-extern inline const detail::DGError_category& DGError_category() {
-  static detail::DGError_category c;
+extern inline const Detail::DGError_category& DGError_category() {
+  static Detail::DGError_category c;
   return c;
 }
 

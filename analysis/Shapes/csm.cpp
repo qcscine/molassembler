@@ -89,7 +89,7 @@ template<typename PRNG, typename F>
 std::vector<double> averageRandomCsm(const unsigned N, PRNG& prng, F&& f) {
   assert(N >= 2);
   return Temple::map(
-    Temple::adaptors::range(nExperiments),
+    Temple::Adaptors::range(nExperiments),
     [&](unsigned /* i */) -> double {
       auto normalized = Continuous::normalize(generateCoordinates(N, prng));
       Top top = standardizeTop(normalized);
@@ -314,7 +314,7 @@ int main(int argc, char* argv[]) {
          * symmetry and evaluate the CSM
          */
         const auto values = Temple::map(
-          Temple::adaptors::range(nExperiments),
+          Temple::Adaptors::range(nExperiments),
           [&](unsigned /* i */) -> double {
             auto normalized = Continuous::normalize(generateCoordinates(N, prng));
             Top top = standardizeTop(normalized);

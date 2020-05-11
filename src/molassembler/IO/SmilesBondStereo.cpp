@@ -38,10 +38,10 @@ unsigned SmilesBondStereo::findAssignment(
   for(unsigned i = 0; i < 2; ++i) {
     stereopermutator.assign(i);
 
-    auto upOfLeftSiteIndex = Temple::optionals::map(upOfLeft, getSiteIndexLeft);
-    auto downOfLeftSiteIndex = Temple::optionals::map(downOfLeft, getSiteIndexLeft);
-    auto upOfRightSiteIndex = Temple::optionals::map(upOfRight, getSiteIndexRight);
-    auto downOfRightSiteIndex = Temple::optionals::map(downOfRight, getSiteIndexRight);
+    auto upOfLeftSiteIndex = Temple::Optionals::map(upOfLeft, getSiteIndexLeft);
+    auto downOfLeftSiteIndex = Temple::Optionals::map(downOfLeft, getSiteIndexLeft);
+    auto upOfRightSiteIndex = Temple::Optionals::map(upOfRight, getSiteIndexRight);
+    auto downOfRightSiteIndex = Temple::Optionals::map(downOfRight, getSiteIndexRight);
 
     if(upOfLeftSiteIndex) {
       if(upOfRightSiteIndex) {

@@ -30,7 +30,7 @@
 
 #include <boost/test/results_collector.hpp>
 
-using namespace Scine;
+using namespace Scine::Molassembler;
 extern Temple::Generator<> generator;
 
 inline bool lastTestPassed() {
@@ -178,7 +178,7 @@ BOOST_AUTO_TEST_CASE( mathApproxEqual ) {
 
   BOOST_CHECK(
     Temple::all_of(
-      Temple::adaptors::zip(
+      Temple::Adaptors::zip(
         Temple::Random::getN<double>(-1e5, 1e5, numTests, generator.engine),
         Temple::Random::getN<int>(-40, 40, numTests, generator.engine)
       ),
@@ -207,7 +207,7 @@ BOOST_AUTO_TEST_CASE( mathApproxEqual ) {
 
   BOOST_CHECK(
     Temple::all_of(
-      Temple::adaptors::zip(
+      Temple::Adaptors::zip(
         Temple::Random::getN<double>(-1e5, 1e5, numTests, generator.engine),
         Temple::Random::getN<unsigned>(0, 40, numTests, generator.engine)
       ),

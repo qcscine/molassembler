@@ -24,6 +24,7 @@
 #include <cassert>
 
 namespace Scine {
+namespace Molassembler {
 namespace Temple {
 
 /*! @brief Summation with zero-initialization
@@ -201,6 +202,7 @@ constexpr auto max(const ContainerType& container) {
 }
 
 } // namespace Temple
+} // namespace Molassembler
 } // namespace Scine
 
 #endif

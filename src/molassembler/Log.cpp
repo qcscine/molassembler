@@ -9,21 +9,21 @@
 namespace Scine {
 namespace Molassembler {
 namespace Log {
-namespace detail {
+namespace Detail {
 
 int NullBuffer::overflow(int c) { return c; }
 
 NullBuffer nullBuffer {};
 std::ostream nullStream(&nullBuffer);
 
-} // namespace detail
+} // namespace Detail
 
 std::ostream& log(const Level& decisionLevel) {
   if(decisionLevel >= level) {
     return std::cout;
   }
 
-  return detail::nullStream;
+  return Detail::nullStream;
 }
 
 std::ostream& log(const Particulars& particular) {
@@ -31,7 +31,7 @@ std::ostream& log(const Particulars& particular) {
     return std::cout;
   }
 
-  return detail::nullStream;
+  return Detail::nullStream;
 }
 
 bool isSet(const Particulars particular) {

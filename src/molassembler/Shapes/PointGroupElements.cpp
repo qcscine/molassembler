@@ -11,6 +11,7 @@
 #include <Eigen/Geometry>
 
 namespace Scine {
+namespace Molassembler {
 namespace Shapes {
 namespace Elements {
 namespace {
@@ -977,4 +978,5 @@ NpGroupingsMapType npGroupings(const ElementsList& elements) {
 
 } // namespace Elements
 } // namespace Shapes
+} // namespace Molassembler
 } // namespace Scine

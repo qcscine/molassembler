@@ -11,6 +11,7 @@
 #include <Eigen/Core>
 
 namespace Scine {
+namespace Molassembler {
 namespace Temple {
 
 //! @brief Functionality common to multiple optimizers
@@ -152,6 +153,7 @@ auto numericalHessian(
 
 } // namespace Optimization
 } // namespace Temple
+} // namespace Molassembler
 } // namespace Scine
 
 #endif

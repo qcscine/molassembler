@@ -7,7 +7,7 @@
 #include <boost/test/unit_test.hpp>
 
 #include "molassembler/Temple/Optimization/TrustRegion.h"
-using namespace Scine;
+using namespace Scine::Molassembler;
 
 struct Himmelblau {
   double operator() (const Eigen::VectorXd& parameters) {

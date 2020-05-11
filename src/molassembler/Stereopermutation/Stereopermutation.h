@@ -16,6 +16,7 @@
 #include <map>
 
 namespace Scine {
+namespace Molassembler {
 
 //! @brief Data classes for permutational spatial arrangement modeling
 namespace Stereopermutations {
@@ -119,6 +120,7 @@ public:
 PURITY_WEAK MASM_EXPORT std::size_t hash_value(const Stereopermutation& assignment);
 
 } // namespace Stereopermutations
+} // namespace Molassembler
 } // namespace Scine
 
 #endif

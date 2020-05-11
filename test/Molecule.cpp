@@ -107,7 +107,7 @@ BOOST_AUTO_TEST_CASE(MoleculeRuleOfFiveTrivial) {
 
   BOOST_CHECK_MESSAGE(
     Temple::all_of(
-      Temple::adaptors::allPairs(allJustHydrogen),
+      Temple::Adaptors::allPairs(allJustHydrogen),
       std::equal_to<>()
     ),
     "Basic construction does not generate equal molecules"
@@ -132,7 +132,7 @@ std::string repr(const HashArgumentsType& hashArgs) {
         return (
           "bty " + std::to_string(static_cast<unsigned>(b.bondType))
           + ", s = " + std::to_string(b.stereopermutatorOnBond)
-          + ", a = " + Temple::optionals::map(
+          + ", a = " + Temple::Optionals::map(
             b.assignmentOptional,
             [](const unsigned i) -> std::string {
               return std::to_string(i);
@@ -143,14 +143,14 @@ std::string repr(const HashArgumentsType& hashArgs) {
     )
   );
   representation += ", s = ";
-  representation += Temple::optionals::map(
+  representation += Temple::Optionals::map(
     std::get<2>(hashArgs),
     [](const Shapes::Shape s) -> std::string {
       return Shapes::name(s);
     }
   ).value_or("N");
   representation += ", a = ";
-  representation += Temple::optionals::map(
+  representation += Temple::Optionals::map(
     std::get<3>(hashArgs),
     [](const unsigned p) -> std::string {
       return std::to_string(p);
@@ -225,7 +225,7 @@ BOOST_AUTO_TEST_CASE(AtomEnvironmentHashesDoNotCollide) {
   for(unsigned N = 0; N < 1e6; ++N) {
     auto arguments = randomArguments();
 
-    auto result = Temple::detail::invokeHelper(
+    auto result = Temple::Detail::invokeHelper(
       Hashes::hash,
       std::tuple_cat(bitmaskTuple, arguments),
       std::make_index_sequence<5> {}
@@ -339,7 +339,7 @@ BOOST_AUTO_TEST_CASE(MoleculeCanonicalizationAtomMap) {
 
     BOOST_CHECK_MESSAGE(
       Temple::all_of(
-        Temple::adaptors::range(m.graph().N()),
+        Temple::Adaptors::range(m.graph().N()),
         [&](const unsigned oldIndex) -> bool {
           unsigned newIndex = indexMap.at(oldIndex);
           return n.graph().elementType(newIndex) == m.graph().elementType(oldIndex);
@@ -469,7 +469,7 @@ BOOST_AUTO_TEST_CASE(MoleculeIsomorphism) {
 
   BOOST_CHECK_MESSAGE(
     Temple::all_of(
-      Temple::adaptors::allPairs(originals),
+      Temple::Adaptors::allPairs(originals),
       std::not_equal_to<>()
     ),
     "Some originals in the isomorphism test folder match one another!"
@@ -748,13 +748,13 @@ void checkAtomStereopermutator(
   const Shapes::Shape shape
 ) {
   BOOST_CHECK_MESSAGE(
-    Temple::optionals::map(
+    Temple::Optionals::map(
       m.stereopermutators().option(i),
       [&](const AtomStereopermutator& permutator) {
         return permutator.getShape() == shape;
       }
     ).value_or(false),
-    Temple::optionals::map(
+    Temple::Optionals::map(
       m.stereopermutators().option(i),
       [&](const AtomStereopermutator& permutator) {
         return Shapes::name(permutator.getShape());

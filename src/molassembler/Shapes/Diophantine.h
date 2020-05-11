@@ -9,6 +9,7 @@
 #include "molassembler/Export.h"
 
 namespace Scine {
+namespace Molassembler {
 namespace Shapes {
 
 /*! @brief Functions to help treat a particular linear diophantine equation
@@ -106,4 +107,5 @@ MASM_EXPORT bool first_solution(
 
 } // namespace Diophantine
 } // namespace Shapes
+} // namespace Molassembler
 } // namespace Scine

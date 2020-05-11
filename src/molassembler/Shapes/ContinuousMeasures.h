@@ -13,6 +13,7 @@
 #include "molassembler/Export.h"
 
 namespace Scine {
+namespace Molassembler {
 namespace Shapes {
 
 //! @brief Symmetry element, point group, and polyhedral shape continuous metrics
@@ -283,6 +284,7 @@ MASM_EXPORT double minimalDistortionPathDeviation(const PositionCollection& posi
 
 } // namespace Continuous
 } // namespace Shapes
+} // namespace Molassembler
 } // namespace Scine
 
 #endif

@@ -13,9 +13,10 @@
 #include "molassembler/Temple/Binding.h"
 
 namespace Scine {
+namespace Molassembler {
 namespace Temple {
-namespace adaptors {
-namespace detail {
+namespace Adaptors {
+namespace Detail {
 
 template<class Container, typename UnaryFunction>
 struct Transformer {
@@ -127,21 +128,22 @@ struct Transformer {
 //!@}
 };
 
-} // namespace detail
+} // namespace Detail
 
 template<class Container, typename UnaryFunction>
 auto transform(
   Container&& container,
   UnaryFunction&& function
 ) {
-  return detail::Transformer<Container, UnaryFunction>(
+  return Detail::Transformer<Container, UnaryFunction>(
     std::forward<Container>(container),
     std::forward<UnaryFunction>(function)
   );
 }
 
-} // namespace adaptors
+} // namespace Adaptors
 } // namespace Temple
+} // namespace Molassembler
 } // namespace Scine
 
 #endif

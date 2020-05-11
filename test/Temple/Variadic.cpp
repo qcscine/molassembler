@@ -11,7 +11,7 @@
 #include <set>
 #include <vector>
 
-using namespace Scine;
+using namespace Scine::Molassembler;
 
 BOOST_AUTO_TEST_CASE(concatenateTests) {
   std::set<unsigned> f {5, 9, 3}; // Note these get reordered

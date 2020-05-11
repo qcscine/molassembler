@@ -12,9 +12,10 @@
 #include "molassembler/Temple/Binding.h"
 
 namespace Scine {
+namespace Molassembler {
 namespace Temple {
-namespace adaptors {
-namespace detail {
+namespace Adaptors {
+namespace Detail {
 
 template<class ContainerT, class ContainerU>
 struct Zipper {
@@ -161,18 +162,19 @@ struct Zipper {
 //!@}
 };
 
-} // namespace detail
+} // namespace Detail
 
 template<class ContainerT, class ContainerU>
 auto zip(ContainerT&& containerT, ContainerU&& containerU) {
-  return detail::Zipper<ContainerT, ContainerU>(
+  return Detail::Zipper<ContainerT, ContainerU>(
     std::forward<ContainerT>(containerT),
     std::forward<ContainerU>(containerU)
   );
 }
 
-} // namespace adaptors
+} // namespace Adaptors
 } // namespace Temple
+} // namespace Molassembler
 } // namespace Scine
 
 #endif

@@ -14,9 +14,10 @@
 #include <cassert>
 
 namespace Scine {
+namespace Molassembler {
 namespace Temple {
-namespace adaptors {
-namespace detail {
+namespace Adaptors {
+namespace Detail {
 
 template<class Container, typename UnaryPredicate>
 struct FilterAdaptor {
@@ -115,7 +116,7 @@ struct FilterAdaptor {
 //!@}
 };
 
-} // namespace detail
+} // namespace Detail
 
 /**
  * @brief Keeps elements satifying a predicate (i.e. "keep filter")
@@ -127,14 +128,15 @@ struct FilterAdaptor {
  */
 template<class Container, typename UnaryPredicate>
 auto filter(Container&& container, UnaryPredicate&& predicate) {
-  return detail::FilterAdaptor<Container, UnaryPredicate>(
+  return Detail::FilterAdaptor<Container, UnaryPredicate>(
     std::forward<Container>(container),
     std::forward<UnaryPredicate>(predicate)
   );
 }
 
-} // namespace adaptors
+} // namespace Adaptors
 } // namespace Temple
+} // namespace Molassembler
 } // namespace Scine
 
 #endif

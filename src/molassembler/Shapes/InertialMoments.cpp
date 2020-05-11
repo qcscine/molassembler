@@ -14,8 +14,9 @@
 #include "molassembler/Temple/Adaptors/Iota.h"
 
 namespace Scine {
+namespace Molassembler {
 namespace Shapes {
-namespace detail {
+namespace Detail {
 //! Determine degeneracy of intertial moments
 unsigned degeneracy(const Eigen::Vector3d& inertialMoments) {
   constexpr double degeneracyEpsilon = 0.05;
@@ -38,7 +39,7 @@ unsigned degeneracy(const Eigen::Vector3d& inertialMoments) {
   return 1 + (mdeg + 1) / 2;
 }
 
-} // namespace detail
+} // namespace Detail
 
 InertialMoments principalInertialMoments(
   const InertialPositionsType& normalizedPositions
@@ -71,7 +72,7 @@ Top standardizeTop(Eigen::Ref<InertialPositionsType> normalizedPositions) {
 
   InertialMoments moments = principalInertialMoments(normalizedPositions);
 
-  const unsigned degeneracy = detail::degeneracy(moments.moments);
+  const unsigned degeneracy = Detail::degeneracy(moments.moments);
 
   auto rotateEverything = [&](const CoordinateSystem& sourceSystem) {
     const CoordinateSystem defaultCoordinateSystem {};
@@ -250,4 +251,5 @@ unsigned reorientAsymmetricTop(Eigen::Ref<InertialPositionsType> normalizedPosit
 }
 
 } // namespace Shapes
+} // namespace Molassembler
 } // namespace Scine

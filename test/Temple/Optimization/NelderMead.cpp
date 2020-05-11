@@ -8,7 +8,7 @@
 
 #include "molassembler/Temple/Optimization/NelderMead.h"
 
-using namespace Scine;
+using namespace Scine::Molassembler;
 
 struct NelderMeadHimmelblau {
   double operator() (const Eigen::VectorXd& parameters) {

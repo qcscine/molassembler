@@ -1361,7 +1361,7 @@ void RankingTree::applySequenceRules_(
 
       // Compare variants in a branch based on mixed depth
       Temple::forEach(
-        Temple::adaptors::allPairs(variantSet),
+        Temple::Adaptors::allPairs(variantSet),
         [&](const auto& a, const auto& b) {
           auto aDepth = boost::apply_visitor(depthFetcher, a);
           auto bDepth = boost::apply_visitor(depthFetcher, b);
@@ -1504,7 +1504,7 @@ void RankingTree::applySequenceRules_(
 
     for(const auto& undecidedSet : undecidedBranchSets) {
       Temple::forEach(
-        Temple::adaptors::allPairs(undecidedSet),
+        Temple::Adaptors::allPairs(undecidedSet),
         [&](const auto& branchA, const auto& branchB) {
           // Do nothing if neither have representative stereodescriptors
           if(
@@ -1562,7 +1562,7 @@ void RankingTree::applySequenceRules_(
 
               // Count A-branch like pairs
               Temple::forEach(
-                Temple::adaptors::allPairs(
+                Temple::Adaptors::allPairs(
                   *branchAStereopermutatorGroupIter,
                   representativeStereodescriptors.at(branchA)
                 ),
@@ -1581,7 +1581,7 @@ void RankingTree::applySequenceRules_(
 
               // Count B-branch like pairs
               Temple::forEach(
-                Temple::adaptors::allPairs(
+                Temple::Adaptors::allPairs(
                   *branchBStereopermutatorGroupIter,
                   representativeStereodescriptors.at(branchB)
                 ),
@@ -2101,7 +2101,7 @@ std::vector<
 
       // Compare based on depth
       Temple::forEach(
-        Temple::adaptors::allPairs(variantSet),
+        Temple::Adaptors::allPairs(variantSet),
         [&](const auto& a, const auto& b) {
           auto aDepth = boost::apply_visitor(depthFetcher, a);
           auto bDepth = boost::apply_visitor(depthFetcher, b);
@@ -2216,7 +2216,7 @@ std::vector<
 
     for(const auto& undecidedSet : undecidedBranchSets) {
       Temple::forEach(
-        Temple::adaptors::allPairs(undecidedSet),
+        Temple::Adaptors::allPairs(undecidedSet),
         [&](const auto& branchA, const auto& branchB) {
           // Do nothing if neither have representative stereodescriptors
           if(
@@ -2274,7 +2274,7 @@ std::vector<
 
               // Count A-branch like pairs
               Temple::forEach(
-                Temple::adaptors::allPairs(
+                Temple::Adaptors::allPairs(
                   *branchAStereopermutatorGroupIter,
                   representativeStereodescriptors.at(branchA)
                 ),
@@ -2293,7 +2293,7 @@ std::vector<
 
               // Count B-branch like pairs
               Temple::forEach(
-                Temple::adaptors::allPairs(
+                Temple::Adaptors::allPairs(
                   *branchBStereopermutatorGroupIter,
                   representativeStereodescriptors.at(branchB)
                 ),

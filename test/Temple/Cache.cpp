@@ -8,7 +8,7 @@
 
 #include "molassembler/Temple/Cache.h"
 
-using namespace Scine;
+using namespace Scine::Molassembler;
 
 unsigned int ackermann(unsigned int m, unsigned int n) {
   if (m == 0) {

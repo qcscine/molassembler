@@ -42,8 +42,7 @@ std::ostream& nl(std::ostream& os) {
   return os;
 }
 
-using namespace Scine;
-using namespace Molassembler;
+using namespace Scine::Molassembler;
 using namespace DistanceGeometry;
 
 template<class Graph>
@@ -110,9 +109,9 @@ struct Gor1Functor {
 };
 
 // Use specialized GOR1 implementation for ImplicitBoundsGraph
-std::vector<double> Gor1IG (const Molassembler::DistanceGeometry::ImplicitBoundsGraph& graph, unsigned sourceVertex) {
+std::vector<double> Gor1IG (const DistanceGeometry::ImplicitBoundsGraph& graph, unsigned sourceVertex) {
   /* Prep */
-  using Graph = Molassembler::DistanceGeometry::ImplicitBoundsGraph;
+  using Graph = DistanceGeometry::ImplicitBoundsGraph;
   using Vertex = typename boost::graph_traits<Graph>::vertex_descriptor;
 
   unsigned N = boost::num_vertices(graph);
@@ -146,11 +145,11 @@ std::vector<double> Gor1IG (const Molassembler::DistanceGeometry::ImplicitBounds
 }
 
 struct DBM_FW_Functor {
-  const Molassembler::DistanceGeometry::DistanceBoundsMatrix& boundsRef;
+  const DistanceGeometry::DistanceBoundsMatrix& boundsRef;
 
-  DBM_FW_Functor(const Molassembler::DistanceGeometry::DistanceBoundsMatrix& bounds) : boundsRef(bounds) {}
+  DBM_FW_Functor(const DistanceGeometry::DistanceBoundsMatrix& bounds) : boundsRef(bounds) {}
 
-  Molassembler::DistanceGeometry::DistanceBoundsMatrix operator() () {
+  DistanceGeometry::DistanceBoundsMatrix operator() () {
     auto boundsCopy = boundsRef;
 
     boundsCopy.smooth();
@@ -273,7 +272,7 @@ bool shortestPathsRepresentInequalities(
 
     if(
       !Temple::all_of(
-        Temple::adaptors::zip(
+        Temple::Adaptors::zip(
           BF_EG_distances,
           Gor_EG_distances
         ),
@@ -301,7 +300,7 @@ bool shortestPathsRepresentInequalities(
 
     if(
       !Temple::all_of(
-        Temple::adaptors::enumerate(BF_EG_distances),
+        Temple::Adaptors::enumerate(BF_EG_distances),
         [&boundsMatrix, &outerVertex](const auto& enumPair) -> bool {
           const auto& index = enumPair.index;
           const auto& distance = enumPair.value;
@@ -385,7 +384,7 @@ bool shortestGraphsAlgorithmsResultsMatch(
 
     if(
       !Temple::all_of(
-        Temple::adaptors::zip(BF_IG_distances, Gor_IG_distances),
+        Temple::Adaptors::zip(BF_IG_distances, Gor_IG_distances),
         [](const double a, const double b) -> bool {
           return Temple::Floating::isCloseRelative(a, b, 1e-8);
         }
@@ -400,7 +399,7 @@ bool shortestGraphsAlgorithmsResultsMatch(
 
     if(
       !Temple::all_of(
-        Temple::adaptors::zip(Gor_IG_distances, spec_Gor_IG_distances),
+        Temple::Adaptors::zip(Gor_IG_distances, spec_Gor_IG_distances),
         [](const double a, const double b) -> bool {
           return Temple::Floating::isCloseRelative(a, b, 1e-8);
         }
@@ -427,7 +426,7 @@ bool shortestGraphsAlgorithmsResultsMatch(
 
     if(
       !Temple::all_of(
-        Temple::adaptors::enumerate(BF_IG_distances),
+        Temple::Adaptors::enumerate(BF_IG_distances),
         [&boundsMatrix, &outerVertex](const auto& enumPair) -> bool {
           const auto& index = enumPair.index;
           const auto& distance = enumPair.value;

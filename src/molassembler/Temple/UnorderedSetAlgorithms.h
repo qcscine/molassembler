@@ -9,6 +9,7 @@
 #define INCLUDE_MOLASSEMBLER_TEMPLE_UNORDERED_SETS_H
 
 namespace Scine {
+namespace Molassembler {
 namespace Temple {
 
 template<class UnorderedSetContainer>
@@ -82,6 +83,7 @@ UnorderedSetContainer unorderedSetUnion(
 }
 
 } // namespace Temple
+} // namespace Molassembler
 } // namespace Scine
 
 #endif

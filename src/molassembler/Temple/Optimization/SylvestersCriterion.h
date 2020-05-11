@@ -12,6 +12,7 @@
 #include <Eigen/Core>
 
 namespace Scine {
+namespace Molassembler {
 namespace Temple {
 
 /**
@@ -156,6 +157,7 @@ bool positiveSemidefinite(const Eigen::MatrixBase<Derived>& matrix) {
 }
 
 } // namespace Temple
+} // namespace Molassembler
 } // namespace Scine
 
 #endif

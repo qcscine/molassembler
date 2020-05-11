@@ -16,7 +16,7 @@ namespace Scine {
 namespace Molassembler {
 namespace Log {
 
-namespace detail {
+namespace Detail {
 class NullBuffer : public std::streambuf {
 public:
   int overflow(int c);
@@ -25,7 +25,7 @@ public:
 // Some objects we need
 extern NullBuffer nullBuffer;
 extern std::ostream nullStream;
-} // namespace detail
+} // namespace Detail
 
 //! Level of logging
 enum class MASM_EXPORT Level : unsigned {

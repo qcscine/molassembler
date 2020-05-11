@@ -25,8 +25,7 @@
  *   - correct bond type and shape inferral in aromatic cycles and heterocycles
  */
 
-using namespace Scine;
-using namespace Molassembler;
+using namespace Scine::Molassembler;
 
 Molecule expectSingle(std::vector<Molecule>&& a) {
   if(a.size() == 1) {

@@ -12,9 +12,10 @@
 #include "molassembler/Temple/constexpr/TupleType.h"
 
 namespace Scine {
+namespace Molassembler {
 namespace Temple {
 namespace Tuples {
-namespace detail {
+namespace Detail {
 
 /*!
  * Implementation of a special case of mapping in which all possible pairs of
@@ -49,7 +50,7 @@ template<
   );
 }
 
-} // namespace detail
+} // namespace Detail
 
 /*! @brief Map all pairs of types in a tuple typedefs into a template function
  *
@@ -75,13 +76,14 @@ template<
 > constexpr auto mapAllPairs() {
   constexpr size_t N = std::tuple_size<TupleType>::value;
 
-  return detail::mapAllPairsHelper<TupleType, TemplateFunction>(
+  return Detail::mapAllPairsHelper<TupleType, TemplateFunction>(
     std::make_index_sequence<(N * N - N) / 2>()
   );
 }
 
 } // namespace Tuples
 } // namespace Temple
+} // namespace Molassembler
 } // namespace Scine
 
 #endif

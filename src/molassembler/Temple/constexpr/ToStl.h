@@ -19,6 +19,7 @@
 #include <set>
 
 namespace Scine {
+namespace Molassembler {
 namespace Temple {
 
 //! Converts an Array into a std::array
@@ -53,6 +54,7 @@ std::set<T> toSTL(const DynamicSet<T, size>& dynamicSet) {
 }
 
 } // namespace Temple
+} // namespace Molassembler
 } // namespace Scine
 
 #endif

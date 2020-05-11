@@ -15,8 +15,7 @@
 
 #include <iostream>
 
-using namespace Scine;
-using namespace Molassembler;
+using namespace Scine::Molassembler;
 
 std::map<
   std::string,

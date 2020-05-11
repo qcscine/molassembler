@@ -13,11 +13,12 @@
 #include <tuple>
 
 namespace Scine {
+namespace Molassembler {
 namespace Temple {
 
 //! @brief template metaprogramming metafunctions on tuple types
 namespace Tuples {
-namespace detail {
+namespace Detail {
 
 //! Value variant handler for functions, returns the function call result.
 template<typename T>
@@ -119,7 +120,7 @@ struct RepeatTypeHelper {
   -> std::tuple<std::tuple_element_t<Inds * 0, BaseType>...> {}
 };
 
-} // namespace detail
+} // namespace Detail
 
 /*!
  * Takes a tuple type and a template function that accepts all of the tuple's
@@ -130,7 +131,7 @@ template<
   typename Tuple,
   template<typename ...> class TemplateFunction
 > constexpr auto unpackToFunction() {
-  return detail::unpackHelper<Tuple, TemplateFunction>(
+  return Detail::unpackHelper<Tuple, TemplateFunction>(
     std::make_index_sequence<
       std::tuple_size<Tuple>::value
     >()
@@ -146,7 +147,7 @@ template<
   typename TupleType,
   template<typename> class TemplateFunction
 > constexpr auto map() {
-  return detail::mapHelper<TupleType, TemplateFunction>(
+  return Detail::mapHelper<TupleType, TemplateFunction>(
     std::make_index_sequence<
       std::tuple_size<TupleType>::value
     >()
@@ -158,7 +159,7 @@ template<
   typename TupleType,
   typename T
 > constexpr unsigned countType() {
-  return detail::countTypeHelper<TupleType, T>(
+  return Detail::countTypeHelper<TupleType, T>(
     std::make_index_sequence<
       std::tuple_size<TupleType>::value
     >()
@@ -190,7 +191,7 @@ template<
 template<typename T, unsigned repeats>
 struct RepeatType {
   using type = decltype(
-    detail::RepeatTypeHelper<T>::value(
+    Detail::RepeatTypeHelper<T>::value(
       std::make_index_sequence<repeats>()
     )
   );
@@ -198,6 +199,7 @@ struct RepeatType {
 
 } // namespace Tuples
 } // namespace Temple
+} // namespace Molassembler
 } // namespace Scine
 
 #endif

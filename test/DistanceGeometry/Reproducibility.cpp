@@ -14,8 +14,7 @@
 #include "molassembler/Temple/Functional.h"
 #include "molassembler/Temple/Stringify.h"
 
-using namespace Scine;
-using namespace Molassembler;
+using namespace Scine::Molassembler;
 
 BOOST_AUTO_TEST_CASE(ReproducibleConformers) {
   const unsigned seed = 6564;

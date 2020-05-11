@@ -21,6 +21,7 @@
 #include <Eigen/Eigenvalues>
 
 namespace Scine {
+namespace Molassembler {
 namespace Shapes {
 namespace Continuous {
 
@@ -287,8 +288,8 @@ double element(
     if(diophantineMultipliers.front() == 0) {
       /* All points are symmetrized to the plane */
       const double csm = Temple::sum(
-        Temple::adaptors::transform(
-          Temple::adaptors::range(P),
+        Temple::Adaptors::transform(
+          Temple::Adaptors::range(P),
           [&](const unsigned i) -> double {
             return std::pow(plane.absDistance(normalizedPositions.col(i)), 2);
           }
@@ -1036,7 +1037,7 @@ ShapeResult shapeFaithfulPaperImplementation(
   };
 }
 
-namespace detail {
+namespace Detail {
 
 template<typename EndFunctor>
 ShapeResult shapeAlternateImplementationBase(
@@ -1145,16 +1146,16 @@ struct BackIter {
   }
 };
 
-} // namespace detail
+} // namespace Detail
 
 ShapeResult shapeAlternateImplementation(
   const PositionCollection& normalizedPositions,
   const Shape shape
 ) {
-  return detail::shapeAlternateImplementationBase(
+  return Detail::shapeAlternateImplementationBase(
     normalizedPositions,
     shape,
-    detail::EndIter {}
+    Detail::EndIter {}
   );
 }
 
@@ -1162,10 +1163,10 @@ ShapeResult shapeAlternateImplementationCentroidLast(
   const PositionCollection& normalizedPositions,
   const Shape shape
 ) {
-  return detail::shapeAlternateImplementationBase(
+  return Detail::shapeAlternateImplementationBase(
     normalizedPositions,
     shape,
-    detail::BackIter {}
+    Detail::BackIter {}
   );
 }
 
@@ -1229,7 +1230,7 @@ NarrowType shapeHeuristicsNarrow(
   auto rotated = R * rotor;
 
   const double energy = Temple::accumulate(
-    Temple::adaptors::range(Vertex(N)),
+    Temple::Adaptors::range(Vertex(N)),
     0.0,
     [&](const double carry, const Vertex i) -> double {
       return carry + (
@@ -1287,7 +1288,7 @@ ShapeResult shapeHeuristics(
   PartialMapping permutation;
 
   // i != j != k != l != m with {i, j, k, l, m} in [0, N)
-  Temple::loops::different(
+  Temple::Loops::different(
     [&](const std::vector<Vertex>& vertices) {
       permutation.clear();
       for(unsigned i = 0; i < 5; ++i) {
@@ -1415,7 +1416,7 @@ ShapeResult shapeHeuristicsCentroidLast(
   PartialMapping permutation;
 
   // i != j != k != l != m with {i, j, k, l, m} in [0, N - 1)
-  Temple::loops::different(
+  Temple::Loops::different(
     [&](const std::vector<Vertex>& vertices) {
       permutation.clear();
       permutation.emplace(N - 1, N - 1);
@@ -1598,4 +1599,5 @@ double minimalDistortionPathDeviation(
 
 } // namespace Continuous
 } // namespace Shapes
+} // namespace Molassembler
 } // namespace Scine

@@ -20,6 +20,7 @@
 #include "molassembler/Temple/Functor.h"
 
 namespace Scine {
+namespace Molassembler {
 namespace Temple {
 
 /*!
@@ -74,7 +75,7 @@ template<
   SizeModifierUnary&& sourceModifierUnary = SizeModifierUnary {}
 );
 
-namespace detail {
+namespace Detail {
 
 //! Calls push_back on a container with a passed value if push_back exists
 template<class Container, typename T>
@@ -172,14 +173,14 @@ std::enable_if_t<
   /* do nothing */
 }
 
-} // namespace detail
+} // namespace Detail
 
 template<class Container, typename T>
 void addToContainer(
   Container& container,
   const T& value
 ) {
-  detail::insertOrPushBack(container, value);
+  Detail::insertOrPushBack(container, value);
 }
 
 template<class Container, typename T>
@@ -187,7 +188,7 @@ void addToContainer(
   Container& container,
   T&& value
 ) {
-  detail::emplaceOrEmplaceBack(
+  Detail::emplaceOrEmplaceBack(
     container,
     std::forward<T>(value)
   );
@@ -202,7 +203,7 @@ template<
   const SourceContainer& source,
   SizeModifierUnary&& sourceModifierUnary
 ) {
-  return detail::reserve(
+  return Detail::reserve(
     target,
     source,
     std::forward<SizeModifierUnary>(sourceModifierUnary)
@@ -210,6 +211,7 @@ template<
 }
 
 } // namespace Temple
+} // namespace Molassembler
 } // namespace Scine
 
 #endif

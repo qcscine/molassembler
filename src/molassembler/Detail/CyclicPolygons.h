@@ -29,8 +29,10 @@
 #include <cmath>
 #include <array>
 
-namespace cyclic_polygons {
-namespace detail {
+namespace Scine {
+namespace Molassembler {
+namespace CyclicPolygons {
+namespace Detail {
 
 /*!
  * @brief Helper function to calculate an angle from three side lengths in a
@@ -135,7 +137,7 @@ std::vector<FloatType> centralAngles(
   const FloatType circumradius,
   const std::vector<FloatType>& edgeLengths
 ) {
-  return Scine::Temple::map(
+  return Temple::map(
     edgeLengths,
     [&](const FloatType edgeLength) -> FloatType {
       return centralAnglesHelper(edgeLength, circumradius);
@@ -157,7 +159,7 @@ FloatType centralAnglesDeviation(
   const FloatType circumradius,
   const std::vector<FloatType>& edgeLengths
 ) {
-  return Scine::Temple::sum(
+  return Temple::sum(
     centralAngles(circumradius, edgeLengths)
   ) - 2 * M_PI;
 }
@@ -168,8 +170,8 @@ FloatType centralAnglesDeviationDerivative(
   const FloatType circumradius,
   const std::vector<FloatType>& edgeLengths
 ) {
-  return Scine::Temple::sum(
-    Scine::Temple::adaptors::transform(
+  return Temple::sum(
+    Temple::Adaptors::transform(
       edgeLengths,
       [&](const FloatType a) -> FloatType {
         return -2 * a / (
@@ -190,8 +192,8 @@ FloatType centralAnglesDeviationSecondDerivative(
 ) {
   const FloatType squareCircumradius = circumradius * circumradius;
 
-  return Scine::Temple::sum(
-    Scine::Temple::adaptors::transform(
+  return Temple::sum(
+    Temple::Adaptors::transform(
       edgeLengths,
       [&](const FloatType a) -> FloatType {
         const auto temp = 4 * squareCircumradius - a * a;
@@ -218,7 +220,7 @@ std::vector<FloatType> centralAngles(
   const std::vector<FloatType>& edgeLengths,
   const FloatType longestEdge
 ) {
-  return Scine::Temple::map(
+  return Temple::map(
     edgeLengths,
     [&](const FloatType edgeLength) -> FloatType {
       if(edgeLength == longestEdge) {
@@ -247,7 +249,7 @@ FloatType centralAnglesDeviation(
 ) {
   assert(circumradius > longestEdge / 2);
 
-  return Scine::Temple::sum(
+  return Temple::sum(
     centralAngles(circumradius, edgeLengths, longestEdge)
   ) - 2 * M_PI;
 }
@@ -259,8 +261,8 @@ FloatType centralAnglesDeviationDerivative(
   const std::vector<FloatType>& edgeLengths,
   const FloatType longestEdge
 ) {
-  return Scine::Temple::sum(
-    Scine::Temple::adaptors::transform(
+  return Temple::sum(
+    Temple::Adaptors::transform(
       edgeLengths,
       [&](const FloatType a) -> FloatType {
         FloatType value = -2 * a / (
@@ -288,8 +290,8 @@ FloatType centralAnglesDeviationSecondDerivative(
 ) {
   const FloatType squareCircumradius = circumradius * circumradius;
 
-  return Scine::Temple::sum(
-    Scine::Temple::adaptors::transform(
+  return Temple::sum(
+    Temple::Adaptors::transform(
       edgeLengths,
       [&](const FloatType a) -> FloatType {
         const auto temp = 4 * squareCircumradius - a * a;
@@ -335,7 +337,7 @@ template<typename FloatType>
 std::pair<FloatType, bool> convexCircumradius(const std::vector<FloatType>& edgeLengths) {
   const unsigned bitPrecision = 6 * sizeof(FloatType);
 
-  const FloatType longestEdge = Scine::Temple::max(edgeLengths);
+  const FloatType longestEdge = Temple::max(edgeLengths);
 
   const FloatType lowerBound = longestEdge / 2 + 1e-10;
 
@@ -344,7 +346,7 @@ std::pair<FloatType, bool> convexCircumradius(const std::vector<FloatType>& edge
   FloatType rootGuess = regularCircumradius(
     edgeLengths.size(),
     std::max(
-      Scine::Temple::average(edgeLengths),
+      Temple::average(edgeLengths),
       lowerBound
     )
   );
@@ -432,11 +434,11 @@ std::vector<FloatType> generalizedInternalAngles(
   auto lengthsCopy = edgeLengths;
   lengthsCopy.emplace_back(lengthsCopy.front());
 
-  double longestEdge = Scine::Temple::max(edgeLengths);
+  double longestEdge = Temple::max(edgeLengths);
 
   if(circumcenterInside) {
-    return Scine::Temple::map(
-      Scine::Temple::adaptors::sequentialPairs(lengthsCopy),
+    return Temple::map(
+      Temple::Adaptors::sequentialPairs(lengthsCopy),
       [&](const FloatType a, const FloatType b) -> FloatType {
         return std::acos(a / doubleR) + std::acos(b / doubleR);
       }
@@ -453,15 +455,15 @@ std::vector<FloatType> generalizedInternalAngles(
     return value;
   };
 
-  return Scine::Temple::map(
-    Scine::Temple::adaptors::sequentialPairs(lengthsCopy),
+  return Temple::map(
+    Temple::Adaptors::sequentialPairs(lengthsCopy),
     [&](const FloatType a, const FloatType b) -> FloatType {
       return delta(a) + delta(b);
     }
   );
 }
 
-} // namespace detail
+} // namespace Detail
 
 
 /*!
@@ -487,9 +489,9 @@ bool exists(const std::vector<FloatType>& edgeLengths) {
    * sum of remainder, no need to check all of them.
    */
 
-  const FloatType maxValue = Scine::Temple::max(edgeLengths);
+  const FloatType maxValue = Temple::max(edgeLengths);
 
-  return maxValue < Scine::Temple::sum(edgeLengths) - maxValue - 0.01 * maxValue;
+  return maxValue < Temple::sum(edgeLengths) - maxValue - 0.01 * maxValue;
 }
 
 /*!
@@ -526,7 +528,7 @@ std::enable_if_t<
     && "It is unreasonable to call this for less than three edges."
   );
   assert(
-    Scine::Temple::all_of(
+    Temple::all_of(
       edgeLengths,
       [&](const FloatType length) -> bool {
         return length != 0;
@@ -537,23 +539,25 @@ std::enable_if_t<
   );
 
   if(edgeLengths.size() == 3) {
-    return detail::triangleShortcut<FloatType>(edgeLengths);
+    return Detail::triangleShortcut<FloatType>(edgeLengths);
   }
 
   if(edgeLengths.size() == 4) {
-    return detail::quadrilateralShortcut<FloatType>(edgeLengths);
+    return Detail::quadrilateralShortcut<FloatType>(edgeLengths);
   }
 
-  auto circumradiusResult = detail::convexCircumradius(edgeLengths);
+  auto circumradiusResult = Detail::convexCircumradius(edgeLengths);
 
   // General solving scheme
-  return detail::generalizedInternalAngles(
+  return Detail::generalizedInternalAngles(
     edgeLengths,
     circumradiusResult.first,
     circumradiusResult.second
   );
 }
 
-} // namespace cyclic_polygons
+} // namespace CyclicPolygons
+} // namespace Molassembler
+} // namespace Scine
 
 #endif
