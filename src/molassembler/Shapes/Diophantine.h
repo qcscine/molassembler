@@ -6,6 +6,7 @@
  */
 
 #include <vector>
+#include "molassembler/Export.h"
 
 namespace Scine {
 namespace shapes {
@@ -26,7 +27,7 @@ namespace diophantine {
  * @returns whether `gcd(a_1, ..., a_n)` is a divisor of b. If so, the diophantine
  *   has a solution.
  */
-bool has_solution(
+MASM_EXPORT bool has_solution(
   const std::vector<unsigned>& a,
   const int b
 );
@@ -61,7 +62,7 @@ bool has_solution(
  *   values) and non-zero.
  * @param b The sought inner product result
  */
-bool next_solution(
+MASM_EXPORT bool next_solution(
   std::vector<unsigned>& x,
   const std::vector<unsigned>& a,
   const int b
@@ -97,7 +98,7 @@ bool next_solution(
  *   values) and non-zero.
  * @param b The sought inner product result
  */
-bool first_solution(
+MASM_EXPORT bool first_solution(
   std::vector<unsigned>& x,
   const std::vector<unsigned>& a,
   const int b

@@ -25,7 +25,7 @@ using UnorderedStereopermutations = std::unordered_set<Stereopermutation, boost:
  * @complexity{@math{O(\prod_i^Rm_i)} where @math{R} is the set of rotations and
  * @math{m_i} is the multiplicity of rotation @math{i}}
  */
-std::vector<Stereopermutation> generateAllRotations(
+MASM_EXPORT std::vector<Stereopermutation> generateAllRotations(
   Stereopermutation s,
   shapes::Shape shape
 );
@@ -34,7 +34,7 @@ std::vector<Stereopermutation> generateAllRotations(
  *
  * @complexity{As generateAllRotations}
  */
-bool rotationallySuperimposable(
+MASM_EXPORT bool rotationallySuperimposable(
   Stereopermutation a,
   const Stereopermutation& b,
   shapes::Shape shape
@@ -52,7 +52,7 @@ bool rotationallySuperimposable(
  * @return false If the shape has enantiomers, and this is not the
  *   enantiomeric to @p other
  */
-boost::optional<bool> enantiomer(
+MASM_EXPORT boost::optional<bool> enantiomer(
   const Stereopermutation& a,
   const Stereopermutation& b,
   shapes::Shape shape
@@ -62,12 +62,12 @@ boost::optional<bool> enantiomer(
  *
  * @complexity{@math{O(L)}}
  */
-bool hasTransArrangedLinks(
+MASM_EXPORT bool hasTransArrangedLinks(
   const Stereopermutation& s,
   shapes::Shape shape
 );
 
-struct Uniques {
+struct MASM_EXPORT Uniques {
   std::vector<Stereopermutation> list;
   std::vector<unsigned> weights;
 };
@@ -93,7 +93,7 @@ struct Uniques {
  *
  * @complexity{@math{O(S!)} where @math{S} is the size of the involved symmetry}
  */
-Uniques uniques(
+MASM_EXPORT Uniques uniques(
   const Stereopermutation& base,
   shapes::Shape shape,
   bool removeTransSpanningGroups = false

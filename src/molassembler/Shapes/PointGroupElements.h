@@ -13,6 +13,7 @@
 #include <Eigen/Core>
 #include "boost/optional/optional_fwd.hpp"
 #include "molassembler/Temple/Preprocessor.h"
+#include "molassembler/Export.h"
 
 #include <vector>
 #include <unordered_map>
@@ -25,7 +26,7 @@ namespace shapes {
 namespace elements {
 
 //! Base class for symmetry elements
-struct SymmetryElement {
+struct MASM_EXPORT SymmetryElement {
   using Vector = Eigen::Vector3d;
   using Matrix = Eigen::Matrix3d;
   using Ptr = std::unique_ptr<SymmetryElement>;
@@ -41,7 +42,7 @@ struct SymmetryElement {
 };
 
 //! E symmetry element
-struct Identity final : public SymmetryElement {
+struct MASM_EXPORT Identity final : public SymmetryElement {
   static Identity E();
 
   Matrix matrix() const final;
@@ -50,7 +51,7 @@ struct Identity final : public SymmetryElement {
 };
 
 //! i symmetry element
-struct Inversion final : public SymmetryElement {
+struct MASM_EXPORT Inversion final : public SymmetryElement {
   static Inversion i();
 
   Matrix matrix() const final;
@@ -59,7 +60,7 @@ struct Inversion final : public SymmetryElement {
 };
 
 //! Abstraction of Cn and Sn symmetry elements
-struct Rotation final : public SymmetryElement {
+struct MASM_EXPORT Rotation final : public SymmetryElement {
   Rotation(
     const Eigen::Vector3d& passAxis,
     unsigned passN,
@@ -95,7 +96,7 @@ struct Rotation final : public SymmetryElement {
 };
 
 //! Reflection by a plane symmetry element
-struct Reflection final : public SymmetryElement {
+struct MASM_EXPORT Reflection final : public SymmetryElement {
   Reflection(const Eigen::Vector3d& passNormal);
 
   static Reflection sigma_xy();
@@ -115,8 +116,8 @@ struct Reflection final : public SymmetryElement {
 /* Mixed operators (WARNING: Can only handle case for which rotation axis is
  * collinear with reflection plane normal)
  */
-Rotation operator * (const Rotation& rot, const Reflection& reflection);
-Rotation operator * (const Reflection& reflection, const Rotation& rot);
+MASM_EXPORT Rotation operator * (const Rotation& rot, const Reflection& reflection);
+MASM_EXPORT Rotation operator * (const Reflection& reflection, const Rotation& rot);
 
 //! Heterogeneous list of symmetry elements
 using ElementsList = std::vector<std::unique_ptr<SymmetryElement>>;
@@ -134,12 +135,12 @@ using ElementsList = std::vector<std::unique_ptr<SymmetryElement>>;
  *
  * @return a list of symmetry elements
  */
-PURITY_WEAK ElementsList symmetryElements(PointGroup group) noexcept;
+PURITY_WEAK MASM_EXPORT ElementsList symmetryElements(PointGroup group) noexcept;
 
 //! Returns the number of symmetry elements in a point group
-unsigned order(PointGroup group);
+PURITY_STRONG MASM_EXPORT unsigned order(PointGroup group);
 
-struct ElementGrouping {
+struct MASM_EXPORT ElementGrouping {
   using ElementIndexGroups = std::vector<std::vector<unsigned>>;
 
   Eigen::Vector3d probePoint;
@@ -170,7 +171,7 @@ using NpGroupingsMapType = std::unordered_map<
  *
  * @return Groups of symmetry elements
  */
-NpGroupingsMapType npGroupings(const ElementsList& elements);
+MASM_EXPORT NpGroupingsMapType npGroupings(const ElementsList& elements);
 
 } // namespace elements
 } // namespace shapes

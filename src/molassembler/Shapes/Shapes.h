@@ -11,6 +11,8 @@
 #ifndef INCLUDE_MOLASSEMBLER_SHAPES_NAMES_H
 #define INCLUDE_MOLASSEMBLER_SHAPES_NAMES_H
 
+#include "molassembler/Export.h"
+
 namespace Scine {
 
 /**
@@ -22,7 +24,7 @@ namespace shapes {
  *
  * List is in order of the number of symmetry positions
  */
-enum class Shape : unsigned {
+enum class MASM_EXPORT Shape : unsigned {
   /* 2 */
   //! See data::Line
   Line,

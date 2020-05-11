@@ -12,7 +12,7 @@
 namespace Scine {
 namespace stereopermutation {
 
-RotationEnumerator::Link::Link(unsigned i, Stereopermutation s) : rotationIndex(i), permutation(std::move(s)) {}
+RotationEnumerator::Link::Link(const unsigned i, Stereopermutation s) : rotationIndex(i), permutation(std::move(s)) {}
 
 RotationEnumerator::RotationEnumerator(Stereopermutation initial, const shapes::Shape s)
   : shape(s),

@@ -10,6 +10,7 @@
 
 #include "molassembler/Shapes/PointGroupElements.h"
 #include "molassembler/Shapes/Data.h"
+#include "molassembler/Export.h"
 
 namespace Scine {
 namespace shapes {
@@ -24,7 +25,7 @@ using PositionCollection = Eigen::Matrix<double, 3, Eigen::Dynamic>;
  * Reframes to center of mass frame (although no masses exist) and rescales
  * vectors so that the maximum distance is 1)
  */
-PositionCollection normalize(const PositionCollection& positions);
+MASM_EXPORT PositionCollection normalize(const PositionCollection& positions);
 
 //! @brief Continuous symmetry measures for fixed symmetry elements
 namespace fixed {
@@ -41,7 +42,7 @@ namespace fixed {
  *
  * @return The CSM along the fixed axis of rotation
  */
-double element(
+MASM_EXPORT double element(
   const PositionCollection& normalizedPositions,
   const elements::Rotation& rotation
 );
@@ -54,7 +55,7 @@ double element(
  *
  * @return The CSM along the reflection plane
  */
-double element(
+MASM_EXPORT double element(
   const PositionCollection& normalizedPositions,
   const elements::Reflection& reflection
 );
@@ -67,7 +68,7 @@ double element(
  *
  * @return The CSM along the fixed axis
  */
-double Cinf(
+MASM_EXPORT double Cinf(
   const PositionCollection& normalizedPositions,
   const Eigen::Vector3d& axis
 );
@@ -78,7 +79,7 @@ double Cinf(
  * @brief Optimizes the axis of a rotational symmetry element and calculates the
  *   continuous symmetry measure
  */
-std::pair<double, elements::Rotation> element(
+MASM_EXPORT std::pair<double, elements::Rotation> element(
   const PositionCollection& normalizedPositions,
   elements::Rotation rotation
 );
@@ -87,7 +88,7 @@ std::pair<double, elements::Rotation> element(
  * @brief Optimizes the norm of a reflection symmetry element and calculates the
  *   continuous symmetry measure
  */
-std::pair<double, elements::Reflection> element(
+MASM_EXPORT std::pair<double, elements::Reflection> element(
   const PositionCollection& normalizedPositions,
   elements::Reflection reflection
 );
@@ -96,14 +97,14 @@ std::pair<double, elements::Reflection> element(
  *
  * @note An inversion element cannot be optimized.
  */
-double element(
+MASM_EXPORT double element(
   const PositionCollection& normalizedPositions,
   const elements::Inversion& /* inversion */
 );
 
 /*! @brief Calculates the continuous symmetry measure for an infinite order rotation axis
  */
-double Cinf(const PositionCollection& normalizedPositions);
+MASM_EXPORT double Cinf(const PositionCollection& normalizedPositions);
 
 /** @brief Calculates the continuous symmetry measure for a set of particles
  *   and a particular point group
@@ -113,13 +114,13 @@ double Cinf(const PositionCollection& normalizedPositions);
  *
  * @return The continuous symmetry measure
  */
-double pointGroup(
+MASM_EXPORT double pointGroup(
   const PositionCollection& normalizedPositions,
   PointGroup pointGroup
 );
 
 //! Result of a continuous shape measure calculation
-struct ShapeResult {
+struct MASM_EXPORT ShapeResult {
   //! Lowest value mapping from position indices to shape indices
   std::vector<Vertex> mapping;
   //! Continuous shape measure value
@@ -138,7 +139,7 @@ struct ShapeResult {
  *
  * @return
  */
-ShapeResult shapeFaithfulPaperImplementation(
+MASM_EXPORT ShapeResult shapeFaithfulPaperImplementation(
   const PositionCollection& normalizedPositions,
   Shape shape
 );
@@ -164,13 +165,13 @@ ShapeResult shapeFaithfulPaperImplementation(
  *
  * @return
  */
-ShapeResult shapeAlternateImplementation(
+MASM_EXPORT ShapeResult shapeAlternateImplementation(
   const PositionCollection& normalizedPositions,
   Shape shape
 );
 
 //! Like shapeAlternateImplementation, but the centroid is the last position
-ShapeResult shapeAlternateImplementationCentroidLast(
+MASM_EXPORT ShapeResult shapeAlternateImplementationCentroidLast(
   const PositionCollection& normalizedPositions,
   Shape shape
 );
@@ -205,13 +206,13 @@ ShapeResult shapeAlternateImplementationCentroidLast(
  *
  * @return The continuous shape measure determined by heuristics
  */
-ShapeResult shapeHeuristics(
+MASM_EXPORT ShapeResult shapeHeuristics(
   const PositionCollection& normalizedPositions,
   Shape shape
 );
 
 //! @brief Same as shapeHeuristics(), except with set centroid mapping, so faster
-ShapeResult shapeHeuristicsCentroidLast(
+MASM_EXPORT ShapeResult shapeHeuristicsCentroidLast(
   const PositionCollection& normalizedPositions,
   Shape shape
 );
@@ -224,13 +225,13 @@ ShapeResult shapeHeuristicsCentroidLast(
  * release builds, forwards its call to shapeHeuristics() from shape size 9
  * onwards.
  */
-ShapeResult shape(
+MASM_EXPORT ShapeResult shape(
   const PositionCollection& normalizedPositions,
   Shape shape
 );
 
 //! @brief Same as shape(), except with set centroid mapping
-ShapeResult shapeCentroidLast(
+MASM_EXPORT ShapeResult shapeCentroidLast(
   const PositionCollection& normalizedPositions,
   const Shape shape
 );
@@ -246,7 +247,7 @@ ShapeResult shapeCentroidLast(
  *
  * @complexity{One continuous shape calculation.}
  */
-double minimumDistortionAngle(Shape a, Shape b);
+MASM_EXPORT double minimumDistortionAngle(Shape a, Shape b);
 
 /*! @brief Calculates deviation of positions from minimal distortion path between two shapes
  *
@@ -266,7 +267,7 @@ double minimumDistortionAngle(Shape a, Shape b);
  *
  * @complexity{Two continuous shape calculations.}
  */
-double minimalDistortionPathDeviation(
+MASM_EXPORT double minimalDistortionPathDeviation(
   const PositionCollection& positions,
   Shape a,
   Shape b,
@@ -277,7 +278,7 @@ double minimalDistortionPathDeviation(
  *
  * @complexity{Three continuous shape calculations.}
  */
-double minimalDistortionPathDeviation(const PositionCollection& positions, Shape a, Shape b);
+MASM_EXPORT double minimalDistortionPathDeviation(const PositionCollection& positions, Shape a, Shape b);
 
 
 } // namespace continuous

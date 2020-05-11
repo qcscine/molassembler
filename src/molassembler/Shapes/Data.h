@@ -16,6 +16,7 @@
 #include "boost/optional/optional_fwd.hpp"
 #include "Eigen/Core"
 
+#include "molassembler/Export.h"
 #include "molassembler/Shapes/Shapes.h"
 #include "molassembler/Shapes/PointGroups.h"
 #include "molassembler/Temple/StrongIndex.h"
@@ -82,74 +83,74 @@ constexpr std::array<Shape, nShapes> allShapes = detail::makeAllShapes(
  *
  * @complexity{@math{\Theta(1)}}
  */
-const std::string& name(const Shape shape);
+MASM_EXPORT const std::string& name(const Shape shape);
 
 /*! @brief Fetch the shape name from its string
  *
  * @complexity{@math{\Theta(S)}}
  * @throws std::logic_error if no matching shape can be found
  */
-Shape nameFromString(const std::string& shapeNameString);
+MASM_EXPORT Shape nameFromString(const std::string& shapeNameString);
 
 /*! @brief Fetch a space-free string of a shape for file naming
  *
  * @complexity{@math{\Theta(1)}}
  */
-std::string spaceFreeName(Shape shape);
+MASM_EXPORT std::string spaceFreeName(Shape shape);
 
 /*! @brief Fetch the number of vertices of a shape
  *
  * @complexity{@math{\Theta(1)}}
  */
-PURITY_STRONG unsigned size(const Shape shape);
+PURITY_STRONG MASM_EXPORT unsigned size(const Shape shape);
 
 /*! @brief Fetches a shape's list of rotations
  *
  * @complexity{@math{\Theta(1)}}
  */
-const RotationsList& rotations(const Shape shape);
+MASM_EXPORT const RotationsList& rotations(const Shape shape);
 
 /*! @brief Fetches the mirror index mapping for a particular shape
  *
  * @complexity{@math{\Theta(1)}}
  */
-const Permutation& mirror(const Shape shape);
+MASM_EXPORT const Permutation& mirror(const Shape shape);
 
 /*! @brief Gets a shape's angle function
  *
  * @complexity{@math{\Theta(1)}}
  */
-AngleFunction angleFunction(const Shape shape);
+MASM_EXPORT AngleFunction angleFunction(const Shape shape);
 
 /*! @brief Fetch a shape's idealized coordiantes
  *
  * @complexity{@math{\Theta(1)}}
  */
-Coordinates coordinates(const Shape shape);
+MASM_EXPORT Coordinates coordinates(const Shape shape);
 
 /*! @brief Get a shape's point group
  *
  * @complexity{@math{\Theta(1)}}
  */
-PURITY_STRONG PointGroup pointGroup(const Shape shape);
+PURITY_STRONG MASM_EXPORT PointGroup pointGroup(const Shape shape);
 
 /*! @brief Returns the index of a shape within allShapes
  *
  * @complexity{@math{\Theta(S)}}
  */
-PURITY_STRONG unsigned nameIndex(Shape shape);
+PURITY_STRONG MASM_EXPORT unsigned nameIndex(Shape shape);
 
 /*! @brief Fetches the list of tetrahedra defined in a shape
  *
  * @complexity{@math{\Theta(1)}}
  */
-const TetrahedronList& tetrahedra(const Shape shape);
+MASM_EXPORT const TetrahedronList& tetrahedra(const Shape shape);
 
 /*! @brief Returns whether a shape is three dimensional
  *
  * @complexity{@math{\Theta(1)}}
  */
-PURITY_STRONG bool threeDimensional(const Shape shape);
+PURITY_STRONG MASM_EXPORT bool threeDimensional(const Shape shape);
 
 } // namespace shapes
 } // namespace Scine

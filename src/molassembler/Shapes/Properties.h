@@ -31,7 +31,7 @@ constexpr double floatingPointEqualityThreshold [[gnu::unused]] = 1e-4;
  *
  * @complexity{@math{\Theta(S)}}
  */
-Permutation applyPermutation(
+MASM_EXPORT Permutation applyPermutation(
   const Permutation& occupation,
   const Permutation& permutation
 );
@@ -40,7 +40,7 @@ Permutation applyPermutation(
  *
  * @complexity{@math{\Theta(S)}}
  */
-std::vector<Vertex> applyRotation(
+MASM_EXPORT std::vector<Vertex> applyRotation(
   const Permutation& occupation,
   Shape shape,
   unsigned rotationFunctionIndex
@@ -51,7 +51,7 @@ std::vector<Vertex> applyRotation(
  * @complexity{@math{\Theta(M S)} where @math{M} is the multiplicity of the
  * rotation and @math{S} is the shape size}
  */
-unsigned rotationPeriodicity(
+MASM_EXPORT unsigned rotationPeriodicity(
   Shape shape,
   const Permutation& rotation
 );
@@ -60,7 +60,7 @@ unsigned rotationPeriodicity(
  *
  * @complexity{@math{\Theta(S^2)}}
  */
-std::vector<std::vector<Vertex>> positionGroups(Shape shape);
+PURITY_WEAK MASM_EXPORT std::vector<std::vector<Vertex>> positionGroups(Shape shape);
 
 /*! @brief Generate a character representation of a shape's position groups
  *
@@ -72,7 +72,7 @@ std::vector<std::vector<Vertex>> positionGroups(Shape shape);
  *
  * @param shape Shape for which to generate the character representation
  */
-std::vector<char> positionGroupCharacters(Shape shape);
+MASM_EXPORT std::vector<char> positionGroupCharacters(Shape shape);
 
 /*! @brief Generate the inverse rotation to a shape's rotation
  *
@@ -81,7 +81,7 @@ std::vector<char> positionGroupCharacters(Shape shape);
  *
  * @complexity{@math{\Theta(N)}}
  */
-Permutation inverseRotation(const Permutation& rotation);
+MASM_EXPORT Permutation inverseRotation(const Permutation& rotation);
 
 /*! @brief Gets the coordinates of an indexOptional for a specific shape.
  *
@@ -90,7 +90,7 @@ Permutation inverseRotation(const Permutation& rotation);
  *
  * @complexity{@math{\Theta(1)}}
  */
-Eigen::Vector3d getCoordinates(
+MASM_EXPORT Eigen::Vector3d getCoordinates(
   Shape shape,
   const boost::optional<Vertex>& vertexOption
 );
@@ -102,7 +102,7 @@ Eigen::Vector3d getCoordinates(
  *
  * @complexity{@math{\Theta(1)}}
  */
-double getTetrahedronVolume(
+MASM_EXPORT double getTetrahedronVolume(
   const Eigen::Vector3d& i,
   const Eigen::Vector3d& j,
   const Eigen::Vector3d& k,
@@ -117,7 +117,7 @@ double getTetrahedronVolume(
  *
  * @complexity{@math{\Theta(S^2)}}
  */
-double calculateAngleDistortion(
+MASM_EXPORT double calculateAngleDistortion(
   Shape from,
   Shape to,
   const std::vector<Vertex>& indexMapping
@@ -132,7 +132,7 @@ double calculateAngleDistortion(
  *
  * @complexity{@math{\Theta(1)}}
  */
-boost::optional<Vertex> propagateIndexOptionalThroughMapping(
+MASM_EXPORT boost::optional<Vertex> propagateIndexOptionalThroughMapping(
   const boost::optional<Vertex>& indexOptional,
   const std::vector<Vertex>& indexMapping
 );
@@ -146,7 +146,7 @@ boost::optional<Vertex> propagateIndexOptionalThroughMapping(
  * @complexity{@math{\Theta(T)} where @math{T} is the number of tetrahedra for
  * the shape, typically small}
  */
-double calculateChiralDistortion(
+MASM_EXPORT double calculateChiralDistortion(
   Shape from,
   Shape to,
   const std::vector<Vertex>& indexMapping
@@ -156,6 +156,7 @@ double calculateChiralDistortion(
  *
  * @complexity{At most maxRotation iterations}
  */
+MASM_EXPORT
 std::set<
   std::vector<Vertex>
 > generateAllRotations(
@@ -174,7 +175,7 @@ std::set<
  * @param mapping An index mapping that specifies how indices are mapped
  *   from a source shape to a target shape
  */
-std::vector<Vertex> applyIndexMapping(
+MASM_EXPORT std::vector<Vertex> applyIndexMapping(
   Shape to,
   const std::vector<Vertex>& mapping
 );
@@ -182,7 +183,7 @@ std::vector<Vertex> applyIndexMapping(
 /**
  * @brief Data type grouping distortions between shapes
  */
-struct DistortionInfo {
+struct MASM_EXPORT DistortionInfo {
   std::vector<Vertex> indexMapping;
   double angularDistortion;
   double chiralDistortion;
@@ -208,7 +209,7 @@ struct DistortionInfo {
  *
  * @pre shapes::size(from) + {0, 1} == shapes::size(to)
  */
-std::vector<DistortionInfo> shapeTransitionMappings(
+MASM_EXPORT std::vector<DistortionInfo> shapeTransitionMappings(
   Shape from,
   Shape to
 );
@@ -226,14 +227,14 @@ std::vector<DistortionInfo> shapeTransitionMappings(
  *
  * @pre shapes::size(from) == shapes::size(to) + 1
  */
-std::vector<DistortionInfo> ligandLossTransitionMappings(
+MASM_EXPORT std::vector<DistortionInfo> ligandLossTransitionMappings(
   Shape from,
   Shape to,
   Vertex positionInSourceShape
 );
 
 //! A grouping of index mappings of equal angular and chiral distortion
-struct ShapeTransitionGroup {
+struct MASM_EXPORT ShapeTransitionGroup {
   /*!
    * @brief A list of index mappings that share the same @p angularDistortion
    *   and @p chiralDistortion
@@ -263,7 +264,7 @@ struct ShapeTransitionGroup {
  *
  * @complexity{@math{\Theta(N)}}
  */
-ShapeTransitionGroup selectBestTransitionMappings(
+MASM_EXPORT ShapeTransitionGroup selectBestTransitionMappings(
   const std::vector<DistortionInfo>& distortions
 );
 
@@ -273,7 +274,7 @@ ShapeTransitionGroup selectBestTransitionMappings(
  *
  * @complexity{@math{\Theta(S!)}}
  */
-unsigned numUnlinkedStereopermutations(
+PURITY_WEAK MASM_EXPORT unsigned numUnlinkedStereopermutations(
   Shape shape,
   unsigned nIdenticalLigands
 );
@@ -284,7 +285,7 @@ unsigned numUnlinkedStereopermutations(
  *
  * @complexity{@math{\Theta(S!)}}
  */
-bool hasMultipleUnlinkedStereopermutations(
+PURITY_WEAK MASM_EXPORT bool hasMultipleUnlinkedStereopermutations(
   Shape shape,
   unsigned nIdenticalLigands
 );
@@ -293,13 +294,13 @@ bool hasMultipleUnlinkedStereopermutations(
  *
  * @complexity{@math{\Theta(1)}}
  */
-Shape mostSymmetric(std::vector<Shape> selection);
+PURITY_WEAK MASM_EXPORT Shape mostSymmetric(std::vector<Shape> selection);
 
 /*! @brief Yields the shape with the most rotations of a particular size
  *
  * @complexity{@math{\Theta(1)}}
  */
-Shape mostSymmetric(unsigned shapeSize);
+PURITY_WEAK MASM_EXPORT Shape mostSymmetric(unsigned shapeSize);
 
 } // namespace properties
 } // namespace shapes

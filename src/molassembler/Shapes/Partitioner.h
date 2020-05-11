@@ -9,6 +9,7 @@
  */
 
 #include <vector>
+#include "molassembler/Export.h"
 
 namespace Scine {
 namespace shapes {
@@ -29,7 +30,7 @@ namespace shapes {
  * There are two orders at play here, the sets are lexicographically ordered
  * and the elements within them are too.
  */
-class Partitioner {
+class MASM_EXPORT Partitioner {
 public:
   /*! @brief Constructor
    *

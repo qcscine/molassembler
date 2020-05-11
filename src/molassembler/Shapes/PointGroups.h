@@ -8,13 +8,15 @@
 #ifndef INCLUDE_MOLASSEMBLER_SHAPES_POINT_GROUPS_H
 #define INCLUDE_MOLASSEMBLER_SHAPES_POINT_GROUPS_H
 
+#include "molassembler/Export.h"
+
 namespace Scine {
 namespace shapes {
 
 /**
  * @brief Point groups
  */
-enum class PointGroup : unsigned {
+enum class MASM_EXPORT PointGroup : unsigned {
   C1, Ci, Cs,
   C2, C3, C4, C5, C6, C7, C8,
   C2h, C3h, C4h, C5h, C6h, C7h, C8h,

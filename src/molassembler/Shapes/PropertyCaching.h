@@ -24,14 +24,15 @@ extern const temple::Array<std::pair<double, double>, nShapes> symmetryAngleBoun
  * @complexity{@math{\Theta(S^2)}}
  * @see constexpr_properties::calculateSmallestAngle
  */
-double minimumAngle(Shape symmetryName);
+MASM_EXPORT double minimumAngle(Shape symmetryName);
+
 /*! @brief Calculate the maximum angle in a symmetry
  *
  * Calculates the maximum angle between symmetry positions in a symmetry class
  *
  * @complexity{@math{\Theta(S^2)}}
  */
-double maximumAngle(Shape symmetryName);
+MASM_EXPORT double maximumAngle(Shape symmetryName);
 
 /* Derived stored constexpr data */
 /*! @brief The smallest angle between ligands in all symmetries
@@ -125,7 +126,7 @@ extern temple::MinimalCache<
  * @returns Whether there are multiple stereopermutations assuming no ligands
  *   are linked
  */
-bool hasMultipleUnlinkedStereopermutations(
+MASM_EXPORT bool hasMultipleUnlinkedStereopermutations(
   Shape symmetryName,
   unsigned nIdenticalLigands
 );

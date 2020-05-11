@@ -9,15 +9,14 @@
 #define INCLUDE_MOLASSEMBLER_SHAPES_TAU_CRITERIA_H
 
 #include "molassembler/Temple/constexpr/Math.h"
+#include "molassembler/Export.h"
 #include <algorithm>
 #include <cassert>
 #include <stdexcept>
 #include <vector>
 
 namespace Scine {
-
 namespace shapes {
-
 namespace detail {
 
 constexpr unsigned binomial(const unsigned n, const unsigned k) {
@@ -60,7 +59,7 @@ double tauFive(const std::vector<double>& angles) {
  *
  * @return τ₄' or τ₅
  */
-double tau(const std::vector<double>& angles) {
+MASM_EXPORT double tau(const std::vector<double>& angles) {
   constexpr unsigned anglesInSymmetryOfSizeFour = detail::binomial(4, 2);
   constexpr unsigned anglesInSymmetryOfSizeFive = detail::binomial(5, 2);
 
@@ -79,7 +78,6 @@ double tau(const std::vector<double>& angles) {
 }
 
 } // namespace shapes
-
 } // namespace Scine
 
 #endif

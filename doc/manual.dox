@@ -160,8 +160,8 @@ Molassembler ships with an experimental SMILES parser that, pending some
 bugfixes and some more implementation details, should achieve full openSMILES
 standard-compliance and be stabilized in a future release.
 
-It's not yet part of the public API, but it can already do a lot, which is
-why you'll see it in some of these examples.
+It's still marked experimental, but it can already do a lot, which is why
+you'll see it in some of these examples.
 @endparblock
 
 @subsection manual-recipes-alanine Alanine enantiomers
@@ -621,17 +621,17 @@ systems would require special care in the following places:
 
 v1.0.0
 ------
+
 All headers in the top-level library directory of molassembler and files
 included from there form the public interface. None of the files in deeper
-directories are part of the public interface.
+directories are part of the public interface and should be depended upon. Even
+the sub-libraries Temple, Shapes and Stereopermutation should be considered
+unstable, although they contain types that make up the public interface such as
+Shapes::Shape.
 
-The auxiliary library headers that are by inclusion also part of the public
-interface are currently:
-
-@verbatim
-- shapes/
-  - Shapes
-@endverbatim
+The top-level headers can be considered stable and future releases will do
+their best to maintain their stability. No guarantees are made regarding ABI
+stability and it is disadvised to relink without recompiling.
 
 In general, API types follow the private implementation pattern and do not
 expose implementation types. All top-level include headers comprise the library

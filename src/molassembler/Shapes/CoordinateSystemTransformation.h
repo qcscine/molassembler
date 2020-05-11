@@ -8,13 +8,15 @@
 #include <Eigen/Geometry>
 #include <Eigen/Core>
 
+#include "molassembler/Export.h"
+
 namespace Scine {
 namespace shapes {
 
 /**
  * @brief Coordinate system axis data class
  */
-struct CoordinateSystem {
+struct MASM_EXPORT CoordinateSystem {
   //! Axes
   Eigen::Vector3d x, y, z;
 
@@ -52,7 +54,7 @@ struct CoordinateSystem {
  *
  * @return Rotation matrix transforming points from system @p a into @p b
  */
-Eigen::Matrix3d rotationMatrix(const CoordinateSystem& a, const CoordinateSystem& b);
+MASM_EXPORT Eigen::Matrix3d rotationMatrix(const CoordinateSystem& a, const CoordinateSystem& b);
 
 } // namespace shapes
 } // namespace Scine

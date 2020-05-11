@@ -28,7 +28,7 @@ namespace stereopermutation {
  * a systematic generation of all possible configurations. It is generalized
  * over a number of shapes which are encoded in a separate library.
  */
-class Stereopermutation : public temple::crtp::LexicographicComparable<Stereopermutation> {
+class MASM_EXPORT Stereopermutation : public temple::crtp::LexicographicComparable<Stereopermutation> {
 public:
 //!@name Member types
 //!@{
@@ -116,7 +116,7 @@ public:
 //!@}
 };
 
-PURITY_WEAK std::size_t hash_value(const Stereopermutation& assignment);
+PURITY_WEAK MASM_EXPORT std::size_t hash_value(const Stereopermutation& assignment);
 
 } // namespace stereopermutation
 } // namespace Scine

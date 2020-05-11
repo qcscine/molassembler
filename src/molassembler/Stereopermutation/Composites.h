@@ -29,7 +29,7 @@ namespace stereopermutation {
  * Acts as a container-like type for the generated stereopermutations after
  * construction.
  */
-class Composite {
+class MASM_EXPORT Composite {
 public:
 //!@name Member types
 //!@{

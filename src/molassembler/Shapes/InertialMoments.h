@@ -6,6 +6,7 @@
  */
 
 #include <Eigen/Core>
+#include "molassembler/Export.h"
 
 namespace Scine {
 namespace shapes {
@@ -13,7 +14,7 @@ namespace shapes {
 using InertialPositionsType = Eigen::Matrix<double, 3, Eigen::Dynamic>;
 
 //! Inertial moments data struct
-struct InertialMoments {
+struct MASM_EXPORT InertialMoments {
   //! Moments values
   Eigen::Vector3d moments;
   //! Moment axes (column-wise)
@@ -26,12 +27,12 @@ struct InertialMoments {
  *
  * @pre Assumes @p positions are in an inertial frame (COM is origin)
  */
-InertialMoments principalInertialMoments(const InertialPositionsType& positions);
+MASM_EXPORT InertialMoments principalInertialMoments(const InertialPositionsType& positions);
 
 /**
  * @brief What kind of top is the particle collection?
  */
-enum class Top {
+enum class MASM_EXPORT Top {
   //! Line top: 0 ≅ IA << IB = IC
   Line,
   //! Asymmetric top: IA < IB < IC, degeneracy 0
@@ -52,7 +53,7 @@ enum class Top {
  *
  * @return The top of the molecule
  */
-Top standardizeTop(Eigen::Ref<InertialPositionsType> normalizedPositions);
+MASM_EXPORT Top standardizeTop(Eigen::Ref<InertialPositionsType> normalizedPositions);
 
 /**
  * @brief Searches for Cn axes along the coordinate system axes, aligns the
@@ -66,7 +67,7 @@ Top standardizeTop(Eigen::Ref<InertialPositionsType> normalizedPositions);
  *   the coordinate system axes, the result is 1, and particle positions are
  *   unaffected.
  */
-unsigned reorientAsymmetricTop(Eigen::Ref<InertialPositionsType> normalizedPositions);
+MASM_EXPORT unsigned reorientAsymmetricTop(Eigen::Ref<InertialPositionsType> normalizedPositions);
 
 } // namespace shapes
 } // namespace Scine
