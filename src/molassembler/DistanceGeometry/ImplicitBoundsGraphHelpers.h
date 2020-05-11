@@ -19,10 +19,10 @@ namespace boost {
 
 /* VertexListGraph concept */
 inline std::pair<
-  Scine::molassembler::distance_geometry::ImplicitBoundsGraph::vertex_iterator,
-  Scine::molassembler::distance_geometry::ImplicitBoundsGraph::vertex_iterator
+  Scine::Molassembler::DistanceGeometry::ImplicitBoundsGraph::vertex_iterator,
+  Scine::Molassembler::DistanceGeometry::ImplicitBoundsGraph::vertex_iterator
 > vertices(
-  const Scine::molassembler::distance_geometry::ImplicitBoundsGraph& g
+  const Scine::Molassembler::DistanceGeometry::ImplicitBoundsGraph& g
 ) {
   return {
     g.vbegin(),
@@ -30,109 +30,109 @@ inline std::pair<
   };
 }
 
-inline Scine::molassembler::distance_geometry::ImplicitBoundsGraph::VertexDescriptor num_vertices(
-  const Scine::molassembler::distance_geometry::ImplicitBoundsGraph& g
+inline Scine::Molassembler::DistanceGeometry::ImplicitBoundsGraph::VertexDescriptor num_vertices(
+  const Scine::Molassembler::DistanceGeometry::ImplicitBoundsGraph& g
 ) {
   return g.num_vertices();
 }
 
 /* EdgeListGraph concept */
 inline std::pair<
-  Scine::molassembler::distance_geometry::ImplicitBoundsGraph::edge_iterator,
-  Scine::molassembler::distance_geometry::ImplicitBoundsGraph::edge_iterator
-> edges(const Scine::molassembler::distance_geometry::ImplicitBoundsGraph& g) {
+  Scine::Molassembler::DistanceGeometry::ImplicitBoundsGraph::edge_iterator,
+  Scine::Molassembler::DistanceGeometry::ImplicitBoundsGraph::edge_iterator
+> edges(const Scine::Molassembler::DistanceGeometry::ImplicitBoundsGraph& g) {
   return {
     g.ebegin(),
     g.eend()
   };
 }
 
-inline Scine::molassembler::distance_geometry::ImplicitBoundsGraph::VertexDescriptor num_edges(
-  const Scine::molassembler::distance_geometry::ImplicitBoundsGraph& g
+inline Scine::Molassembler::DistanceGeometry::ImplicitBoundsGraph::VertexDescriptor num_edges(
+  const Scine::Molassembler::DistanceGeometry::ImplicitBoundsGraph& g
 ) {
   return g.num_edges();
 }
 
-inline Scine::molassembler::distance_geometry::ImplicitBoundsGraph::VertexDescriptor source(
-  const Scine::molassembler::distance_geometry::ImplicitBoundsGraph::EdgeDescriptor& e,
-  const Scine::molassembler::distance_geometry::ImplicitBoundsGraph& g
+inline Scine::Molassembler::DistanceGeometry::ImplicitBoundsGraph::VertexDescriptor source(
+  const Scine::Molassembler::DistanceGeometry::ImplicitBoundsGraph::EdgeDescriptor& e,
+  const Scine::Molassembler::DistanceGeometry::ImplicitBoundsGraph& g
 ) {
   return g.source(e);
 }
 
-inline Scine::molassembler::distance_geometry::ImplicitBoundsGraph::VertexDescriptor target(
-  const Scine::molassembler::distance_geometry::ImplicitBoundsGraph::EdgeDescriptor& e,
-  const Scine::molassembler::distance_geometry::ImplicitBoundsGraph& g
+inline Scine::Molassembler::DistanceGeometry::ImplicitBoundsGraph::VertexDescriptor target(
+  const Scine::Molassembler::DistanceGeometry::ImplicitBoundsGraph::EdgeDescriptor& e,
+  const Scine::Molassembler::DistanceGeometry::ImplicitBoundsGraph& g
 ) {
   return g.target(e);
 }
 
 /* AdjacencyMatrix concept */
 inline std::pair<
-  Scine::molassembler::distance_geometry::ImplicitBoundsGraph::EdgeDescriptor,
+  Scine::Molassembler::DistanceGeometry::ImplicitBoundsGraph::EdgeDescriptor,
   bool
 > edge(
-  const Scine::molassembler::distance_geometry::ImplicitBoundsGraph::VertexDescriptor& u,
-  const Scine::molassembler::distance_geometry::ImplicitBoundsGraph::VertexDescriptor& v,
-  const Scine::molassembler::distance_geometry::ImplicitBoundsGraph& g
+  const Scine::Molassembler::DistanceGeometry::ImplicitBoundsGraph::VertexDescriptor& u,
+  const Scine::Molassembler::DistanceGeometry::ImplicitBoundsGraph::VertexDescriptor& v,
+  const Scine::Molassembler::DistanceGeometry::ImplicitBoundsGraph& g
 ) {
   return g.edge(u, v);
 }
 
 /* PropertyGraph concept */
-inline const Scine::molassembler::distance_geometry::ImplicitBoundsGraph::EdgeWeightMap get(
+inline const Scine::Molassembler::DistanceGeometry::ImplicitBoundsGraph::EdgeWeightMap get(
   const boost::edge_weight_t&,
-  const Scine::molassembler::distance_geometry::ImplicitBoundsGraph& g
+  const Scine::Molassembler::DistanceGeometry::ImplicitBoundsGraph& g
 ) {
   return g.getEdgeWeightPropertyMap();
 }
 
-inline Scine::molassembler::distance_geometry::ImplicitBoundsGraph::EdgeWeightMap get(
+inline Scine::Molassembler::DistanceGeometry::ImplicitBoundsGraph::EdgeWeightMap get(
   const boost::edge_weight_t&,
-  Scine::molassembler::distance_geometry::ImplicitBoundsGraph& g
+  Scine::Molassembler::DistanceGeometry::ImplicitBoundsGraph& g
 ) {
   return g.getEdgeWeightPropertyMap();
 }
 
 inline double get(
   const boost::edge_weight_t& p,
-  Scine::molassembler::distance_geometry::ImplicitBoundsGraph& g,
-  const Scine::molassembler::distance_geometry::ImplicitBoundsGraph::EdgeDescriptor& x
+  Scine::Molassembler::DistanceGeometry::ImplicitBoundsGraph& g,
+  const Scine::Molassembler::DistanceGeometry::ImplicitBoundsGraph::EdgeDescriptor& x
 ) {
   return get(p, g)[x];
 }
 
 inline double get(
   const boost::edge_weight_t& p,
-  const Scine::molassembler::distance_geometry::ImplicitBoundsGraph& g,
-  const Scine::molassembler::distance_geometry::ImplicitBoundsGraph::EdgeDescriptor& x
+  const Scine::Molassembler::DistanceGeometry::ImplicitBoundsGraph& g,
+  const Scine::Molassembler::DistanceGeometry::ImplicitBoundsGraph::EdgeDescriptor& x
 ) {
   return get(p, g)[x];
 }
 
 inline void put(
   const boost::edge_weight_t&,
-  Scine::molassembler::distance_geometry::ImplicitBoundsGraph&,
-  const Scine::molassembler::distance_geometry::ImplicitBoundsGraph::EdgeDescriptor&,
+  Scine::Molassembler::DistanceGeometry::ImplicitBoundsGraph&,
+  const Scine::Molassembler::DistanceGeometry::ImplicitBoundsGraph::EdgeDescriptor&,
   double
 ) {
   /* do nothing */
 }
 
-inline Scine::molassembler::distance_geometry::ImplicitBoundsGraph::VertexIndexMap get(
+inline Scine::Molassembler::DistanceGeometry::ImplicitBoundsGraph::VertexIndexMap get(
   const boost::vertex_index_t&,
-  const Scine::molassembler::distance_geometry::ImplicitBoundsGraph&
+  const Scine::Molassembler::DistanceGeometry::ImplicitBoundsGraph&
 ) {
-  return Scine::molassembler::distance_geometry::ImplicitBoundsGraph::VertexIndexMap {};
+  return Scine::Molassembler::DistanceGeometry::ImplicitBoundsGraph::VertexIndexMap {};
 }
 
 /* IncidenceGraph concept */
 inline std::pair<
-  Scine::molassembler::distance_geometry::ImplicitBoundsGraph::edge_iterator,
-  Scine::molassembler::distance_geometry::ImplicitBoundsGraph::edge_iterator
+  Scine::Molassembler::DistanceGeometry::ImplicitBoundsGraph::edge_iterator,
+  Scine::Molassembler::DistanceGeometry::ImplicitBoundsGraph::edge_iterator
 > out_edges(
-  const Scine::molassembler::distance_geometry::ImplicitBoundsGraph::VertexDescriptor& u,
-  const Scine::molassembler::distance_geometry::ImplicitBoundsGraph& g
+  const Scine::Molassembler::DistanceGeometry::ImplicitBoundsGraph::VertexDescriptor& u,
+  const Scine::Molassembler::DistanceGeometry::ImplicitBoundsGraph& g
 ) {
   return {
     g.obegin(u),
@@ -142,7 +142,7 @@ inline std::pair<
 
 inline unsigned long out_degree(
   const unsigned long& u,
-  const Scine::molassembler::distance_geometry::ImplicitBoundsGraph& g
+  const Scine::Molassembler::DistanceGeometry::ImplicitBoundsGraph& g
 ) {
   return g.out_degree(u);
 }

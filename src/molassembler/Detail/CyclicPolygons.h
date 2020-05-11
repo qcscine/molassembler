@@ -135,7 +135,7 @@ std::vector<FloatType> centralAngles(
   const FloatType circumradius,
   const std::vector<FloatType>& edgeLengths
 ) {
-  return Scine::temple::map(
+  return Scine::Temple::map(
     edgeLengths,
     [&](const FloatType edgeLength) -> FloatType {
       return centralAnglesHelper(edgeLength, circumradius);
@@ -157,7 +157,7 @@ FloatType centralAnglesDeviation(
   const FloatType circumradius,
   const std::vector<FloatType>& edgeLengths
 ) {
-  return Scine::temple::sum(
+  return Scine::Temple::sum(
     centralAngles(circumradius, edgeLengths)
   ) - 2 * M_PI;
 }
@@ -168,8 +168,8 @@ FloatType centralAnglesDeviationDerivative(
   const FloatType circumradius,
   const std::vector<FloatType>& edgeLengths
 ) {
-  return Scine::temple::sum(
-    Scine::temple::adaptors::transform(
+  return Scine::Temple::sum(
+    Scine::Temple::adaptors::transform(
       edgeLengths,
       [&](const FloatType a) -> FloatType {
         return -2 * a / (
@@ -190,8 +190,8 @@ FloatType centralAnglesDeviationSecondDerivative(
 ) {
   const FloatType squareCircumradius = circumradius * circumradius;
 
-  return Scine::temple::sum(
-    Scine::temple::adaptors::transform(
+  return Scine::Temple::sum(
+    Scine::Temple::adaptors::transform(
       edgeLengths,
       [&](const FloatType a) -> FloatType {
         const auto temp = 4 * squareCircumradius - a * a;
@@ -218,7 +218,7 @@ std::vector<FloatType> centralAngles(
   const std::vector<FloatType>& edgeLengths,
   const FloatType longestEdge
 ) {
-  return Scine::temple::map(
+  return Scine::Temple::map(
     edgeLengths,
     [&](const FloatType edgeLength) -> FloatType {
       if(edgeLength == longestEdge) {
@@ -247,7 +247,7 @@ FloatType centralAnglesDeviation(
 ) {
   assert(circumradius > longestEdge / 2);
 
-  return Scine::temple::sum(
+  return Scine::Temple::sum(
     centralAngles(circumradius, edgeLengths, longestEdge)
   ) - 2 * M_PI;
 }
@@ -259,8 +259,8 @@ FloatType centralAnglesDeviationDerivative(
   const std::vector<FloatType>& edgeLengths,
   const FloatType longestEdge
 ) {
-  return Scine::temple::sum(
-    Scine::temple::adaptors::transform(
+  return Scine::Temple::sum(
+    Scine::Temple::adaptors::transform(
       edgeLengths,
       [&](const FloatType a) -> FloatType {
         FloatType value = -2 * a / (
@@ -288,8 +288,8 @@ FloatType centralAnglesDeviationSecondDerivative(
 ) {
   const FloatType squareCircumradius = circumradius * circumradius;
 
-  return Scine::temple::sum(
-    Scine::temple::adaptors::transform(
+  return Scine::Temple::sum(
+    Scine::Temple::adaptors::transform(
       edgeLengths,
       [&](const FloatType a) -> FloatType {
         const auto temp = 4 * squareCircumradius - a * a;
@@ -335,7 +335,7 @@ template<typename FloatType>
 std::pair<FloatType, bool> convexCircumradius(const std::vector<FloatType>& edgeLengths) {
   const unsigned bitPrecision = 6 * sizeof(FloatType);
 
-  const FloatType longestEdge = Scine::temple::max(edgeLengths);
+  const FloatType longestEdge = Scine::Temple::max(edgeLengths);
 
   const FloatType lowerBound = longestEdge / 2 + 1e-10;
 
@@ -344,7 +344,7 @@ std::pair<FloatType, bool> convexCircumradius(const std::vector<FloatType>& edge
   FloatType rootGuess = regularCircumradius(
     edgeLengths.size(),
     std::max(
-      Scine::temple::average(edgeLengths),
+      Scine::Temple::average(edgeLengths),
       lowerBound
     )
   );
@@ -432,11 +432,11 @@ std::vector<FloatType> generalizedInternalAngles(
   auto lengthsCopy = edgeLengths;
   lengthsCopy.emplace_back(lengthsCopy.front());
 
-  double longestEdge = Scine::temple::max(edgeLengths);
+  double longestEdge = Scine::Temple::max(edgeLengths);
 
   if(circumcenterInside) {
-    return Scine::temple::map(
-      Scine::temple::adaptors::sequentialPairs(lengthsCopy),
+    return Scine::Temple::map(
+      Scine::Temple::adaptors::sequentialPairs(lengthsCopy),
       [&](const FloatType a, const FloatType b) -> FloatType {
         return std::acos(a / doubleR) + std::acos(b / doubleR);
       }
@@ -453,8 +453,8 @@ std::vector<FloatType> generalizedInternalAngles(
     return value;
   };
 
-  return Scine::temple::map(
-    Scine::temple::adaptors::sequentialPairs(lengthsCopy),
+  return Scine::Temple::map(
+    Scine::Temple::adaptors::sequentialPairs(lengthsCopy),
     [&](const FloatType a, const FloatType b) -> FloatType {
       return delta(a) + delta(b);
     }
@@ -487,9 +487,9 @@ bool exists(const std::vector<FloatType>& edgeLengths) {
    * sum of remainder, no need to check all of them.
    */
 
-  const FloatType maxValue = Scine::temple::max(edgeLengths);
+  const FloatType maxValue = Scine::Temple::max(edgeLengths);
 
-  return maxValue < Scine::temple::sum(edgeLengths) - maxValue - 0.01 * maxValue;
+  return maxValue < Scine::Temple::sum(edgeLengths) - maxValue - 0.01 * maxValue;
 }
 
 /*!
@@ -526,7 +526,7 @@ std::enable_if_t<
     && "It is unreasonable to call this for less than three edges."
   );
   assert(
-    Scine::temple::all_of(
+    Scine::Temple::all_of(
       edgeLengths,
       [&](const FloatType length) -> bool {
         return length != 0;

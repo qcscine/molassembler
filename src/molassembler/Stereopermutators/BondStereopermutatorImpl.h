@@ -16,27 +16,27 @@
 #include "molassembler/DistanceGeometry/DistanceGeometry.h"
 
 namespace Scine {
-namespace molassembler {
+namespace Molassembler {
 
 class StereopermutatorList;
 
-struct BondStereopermutator::Impl : public temple::crtp::LexicographicComparable<Impl> {
+struct BondStereopermutator::Impl : public Temple::Crtp::LexicographicComparable<Impl> {
   /* Make sure static_cast-ing our Alignment enum to Composite's Alignment is
    * safe and correct:
    */
   static_assert(
     std::is_same<
-      std::underlying_type_t<stereopermutation::Composite::Alignment>,
+      std::underlying_type_t<Stereopermutations::Composite::Alignment>,
       std::underlying_type_t<BondStereopermutator::Alignment>
     >::value,
     "Underlying type of stereopermutation's Alignment and BondStereopermutator's must match"
   );
   static_assert(
-    static_cast<stereopermutation::Composite::Alignment>(BondStereopermutator::Alignment::Staggered) == stereopermutation::Composite::Alignment::Staggered,
+    static_cast<Stereopermutations::Composite::Alignment>(BondStereopermutator::Alignment::Staggered) == Stereopermutations::Composite::Alignment::Staggered,
     "Staggered Alignment values do not match across Alignment types"
   );
   static_assert(
-    static_cast<stereopermutation::Composite::Alignment>(BondStereopermutator::Alignment::Eclipsed) == stereopermutation::Composite::Alignment::Eclipsed,
+    static_cast<Stereopermutations::Composite::Alignment>(BondStereopermutator::Alignment::Eclipsed) == Stereopermutations::Composite::Alignment::Eclipsed,
     "Eclipsed Alignment values do not match across Alignment types"
   );
 
@@ -58,7 +58,7 @@ struct BondStereopermutator::Impl : public temple::crtp::LexicographicComparable
   static std::vector<unsigned> notObviouslyInfeasibleStereopermutations(
     const PrivateGraph& graph,
     const StereopermutatorList& stereopermutators,
-    const stereopermutation::Composite& composite
+    const Stereopermutations::Composite& composite
   );
 //!@}
 
@@ -86,7 +86,7 @@ struct BondStereopermutator::Impl : public temple::crtp::LexicographicComparable
 
   void assign(boost::optional<unsigned> assignment);
 
-  void assignRandom(random::Engine& engine);
+  void assignRandom(Random::Engine& engine);
 
   void applyPermutation(const std::vector<AtomIndex>& permutation);
 
@@ -109,7 +109,7 @@ struct BondStereopermutator::Impl : public temple::crtp::LexicographicComparable
 
   boost::optional<unsigned> assigned() const;
 
-  const stereopermutation::Composite& composite() const;
+  const Stereopermutations::Composite& composite() const;
 
   double dihedral(
     const AtomStereopermutator& stereopermutatorA,
@@ -142,7 +142,7 @@ private:
    * Object representing union of both atom stereopermutators, yields abstract
    * spatial arrangements
    */
-  stereopermutation::Composite composite_;
+  Stereopermutations::Composite composite_;
   //! Edge this stereopermutator is placed on
   BondIndex edge_;
   //! List of stereopermutations of composite_ that are not obviously infeasible
@@ -156,19 +156,19 @@ private:
     const AtomStereopermutator::ShapeMap& shapeVertexMap
   );
 
-  static stereopermutation::Composite constructComposite_(
+  static Stereopermutations::Composite constructComposite_(
     const StereopermutatorList& stereopermutators,
     BondIndex edge,
     Alignment alignment
   );
 
-  static stereopermutation::Composite::OrientationState makeOrientationState_(
+  static Stereopermutations::Composite::OrientationState makeOrientationState_(
     const AtomStereopermutator& focalStereopermutator,
     const AtomStereopermutator& attachedStereopermutator
   );
 };
 
-} // namespace molassembler
+} // namespace Molassembler
 } // namespace Scine
 
 #endif

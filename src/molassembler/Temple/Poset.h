@@ -16,7 +16,7 @@
 #include <stdexcept>
 
 namespace Scine {
-namespace temple {
+namespace Temple {
 
 /*!
  * @brief Data structure for partially ordered sets with support for gradual
@@ -334,7 +334,7 @@ private:
   std::vector<Subset> subsets;
 };
 
-} // namespace temple
+} // namespace Temple
 } // namespace Scine
 
 #endif

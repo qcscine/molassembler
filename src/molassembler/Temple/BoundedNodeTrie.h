@@ -17,7 +17,7 @@
 #include "boost/dynamic_bitset.hpp"
 
 namespace Scine {
-namespace temple {
+namespace Temple {
 
 /*!
  * @brief Data structure to store chains of discrete choices with an finite range
@@ -144,7 +144,7 @@ public:
     assert(!bounds_.empty());
     // For there to be a decision, there need to be at least two options
     assert(
-      temple::all_of(
+      Temple::all_of(
         bounds_,
         [](const ChoiceIndex value) -> bool {
           return value > 1;
@@ -323,7 +323,7 @@ private:
 
       const ChoiceIndex choice = choosingFunction(viableIndices, existingChildren);
       assert(choice < N);
-      assert(temple::makeContainsPredicate(viableIndices)(choice));
+      assert(Temple::makeContainsPredicate(viableIndices)(choice));
 
       values.push_back(choice);
       NodePtr& childPtr = children.at(choice);
@@ -410,7 +410,7 @@ private:
 
       const ChoiceIndex choice = choosingFunction(viableIndices, children);
       assert(choice < N);
-      assert(temple::makeContainsPredicate(viableIndices)(choice));
+      assert(Temple::makeContainsPredicate(viableIndices)(choice));
 
       InsertResult result;
       result.insertedSomething = !children.test(choice);
@@ -444,7 +444,7 @@ private:
   }
 
   void establishCapacity_() {
-    capacity_ = temple::accumulate(
+    capacity_ = Temple::accumulate(
       bounds_,
       1u,
       std::multiplies<>()
@@ -461,7 +461,7 @@ private:
 //!@}
 };
 
-} // namespace temple
+} // namespace Temple
 } // namespace Scine
 
 #endif

@@ -13,10 +13,10 @@
 #include "molassembler/Export.h"
 
 namespace Scine {
-namespace shapes {
+namespace Shapes {
 
 //! @brief Symmetry element, point group, and polyhedral shape continuous metrics
-namespace continuous {
+namespace Continuous {
 
 using PositionCollection = Eigen::Matrix<double, 3, Eigen::Dynamic>;
 
@@ -28,7 +28,7 @@ using PositionCollection = Eigen::Matrix<double, 3, Eigen::Dynamic>;
 MASM_EXPORT PositionCollection normalize(const PositionCollection& positions);
 
 //! @brief Continuous symmetry measures for fixed symmetry elements
-namespace fixed {
+namespace Fixed {
 
 /**
  * @brief Returns the CSM for a Rotation symmetry element along the rotation
@@ -44,7 +44,7 @@ namespace fixed {
  */
 MASM_EXPORT double element(
   const PositionCollection& normalizedPositions,
-  const elements::Rotation& rotation
+  const Elements::Rotation& rotation
 );
 
 /**
@@ -57,7 +57,7 @@ MASM_EXPORT double element(
  */
 MASM_EXPORT double element(
   const PositionCollection& normalizedPositions,
-  const elements::Reflection& reflection
+  const Elements::Reflection& reflection
 );
 
 /**
@@ -73,24 +73,24 @@ MASM_EXPORT double Cinf(
   const Eigen::Vector3d& axis
 );
 
-} // namespace fixed
+} // namespace Fixed
 
 /**
  * @brief Optimizes the axis of a rotational symmetry element and calculates the
  *   continuous symmetry measure
  */
-MASM_EXPORT std::pair<double, elements::Rotation> element(
+MASM_EXPORT std::pair<double, Elements::Rotation> element(
   const PositionCollection& normalizedPositions,
-  elements::Rotation rotation
+  Elements::Rotation rotation
 );
 
 /**
  * @brief Optimizes the norm of a reflection symmetry element and calculates the
  *   continuous symmetry measure
  */
-MASM_EXPORT std::pair<double, elements::Reflection> element(
+MASM_EXPORT std::pair<double, Elements::Reflection> element(
   const PositionCollection& normalizedPositions,
-  elements::Reflection reflection
+  Elements::Reflection reflection
 );
 
 /*! @brief Calculates the CSM for centroid inversion
@@ -99,7 +99,7 @@ MASM_EXPORT std::pair<double, elements::Reflection> element(
  */
 MASM_EXPORT double element(
   const PositionCollection& normalizedPositions,
-  const elements::Inversion& /* inversion */
+  const Elements::Inversion& /* inversion */
 );
 
 /*! @brief Calculates the continuous symmetry measure for an infinite order rotation axis
@@ -281,8 +281,8 @@ MASM_EXPORT double minimalDistortionPathDeviation(
 MASM_EXPORT double minimalDistortionPathDeviation(const PositionCollection& positions, Shape a, Shape b);
 
 
-} // namespace continuous
-} // namespace shapes
+} // namespace Continuous
+} // namespace Shapes
 } // namespace Scine
 
 #endif

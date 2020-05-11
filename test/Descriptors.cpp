@@ -16,7 +16,7 @@
 #include <iostream>
 
 using namespace Scine;
-using namespace molassembler;
+using namespace Molassembler;
 
 std::map<
   std::string,
@@ -39,7 +39,7 @@ BOOST_AUTO_TEST_CASE(RotatableBondsDescriptorsExamples) {
     const boost::filesystem::path& currentFilePath :
     boost::filesystem::recursive_directory_iterator("descriptor_test_set")
   ) {
-    auto molecule = io::read(currentFilePath.string());
+    auto molecule = IO::read(currentFilePath.string());
 
     std::string moleculeName = currentFilePath.stem().string();
 

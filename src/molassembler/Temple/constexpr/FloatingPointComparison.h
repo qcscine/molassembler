@@ -19,10 +19,10 @@
 #include <cassert>
 
 namespace Scine {
-namespace temple {
+namespace Temple {
 
 //! @brief Floating-point comparison helpers
-namespace floating {
+namespace Floating {
 
 // Floating point comparison helpers
 template<typename T>
@@ -265,8 +265,8 @@ public:
   }
 };
 
-} // namespace floating
-} // namespace temple
+} // namespace Floating
+} // namespace Temple
 } // namespace Scine
 
 #endif

@@ -15,7 +15,7 @@
 namespace Scine {
 
 //! @brief Central library namespace
-namespace molassembler {
+namespace Molassembler {
 
 /*!
  * @brief Discrete bond type numeration
@@ -109,7 +109,7 @@ enum class MASM_EXPORT AtomEnvironmentComponents : unsigned {
   All = ElementTypes | BondOrders | Shapes | Stereopermutations
 };
 
-} // namespace molassembler
+} // namespace Molassembler
 } // namespace Scine
 
 /* Operators for bitmask-like manipulation of AtomEnvironmentComponents must be
@@ -120,10 +120,10 @@ enum class MASM_EXPORT AtomEnvironmentComponents : unsigned {
  * @return Whether the bitmasks share components
  */
 constexpr inline bool operator & (
-  const Scine::molassembler::AtomEnvironmentComponents a,
-  const Scine::molassembler::AtomEnvironmentComponents b
+  const Scine::Molassembler::AtomEnvironmentComponents a,
+  const Scine::Molassembler::AtomEnvironmentComponents b
 ) {
-  using T = Scine::molassembler::AtomEnvironmentComponents;
+  using T = Scine::Molassembler::AtomEnvironmentComponents;
   return (
     static_cast<std::underlying_type_t<T>>(a)
     & static_cast<std::underlying_type_t<T>>(b)
@@ -133,11 +133,11 @@ constexpr inline bool operator & (
 /**
  * @brief Compose an atom environment components bitmask from parts
  */
-constexpr inline Scine::molassembler::AtomEnvironmentComponents operator | (
-  const Scine::molassembler::AtomEnvironmentComponents a,
-  const Scine::molassembler::AtomEnvironmentComponents b
+constexpr inline Scine::Molassembler::AtomEnvironmentComponents operator | (
+  const Scine::Molassembler::AtomEnvironmentComponents a,
+  const Scine::Molassembler::AtomEnvironmentComponents b
 ) {
-  using T = Scine::molassembler::AtomEnvironmentComponents;
+  using T = Scine::Molassembler::AtomEnvironmentComponents;
 
   return static_cast<T>(
     static_cast<std::underlying_type_t<T>>(a)

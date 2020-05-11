@@ -32,8 +32,8 @@ struct type_caster<boost::optional<T>> : optional_caster<boost::optional<T>> {};
 
 /* Type caster for SiteIndex <-> number */
 template<>
-struct type_caster<Scine::molassembler::SiteIndex> {
-  PYBIND11_TYPE_CASTER(Scine::molassembler::SiteIndex, _("SiteIndex"));
+struct type_caster<Scine::Molassembler::SiteIndex> {
+  PYBIND11_TYPE_CASTER(Scine::Molassembler::SiteIndex, _("SiteIndex"));
 
   bool load(handle src, bool) {
     PyObject* source = src.ptr();
@@ -45,7 +45,7 @@ struct type_caster<Scine::molassembler::SiteIndex> {
 
     PyObject* exc = nullptr;
     const auto pyIndex = PyNumber_AsSsize_t(tmp, exc);
-    value = Scine::molassembler::SiteIndex(pyIndex);
+    value = Scine::Molassembler::SiteIndex(pyIndex);
     Py_DECREF(tmp);
     if(exc) {
       return false;
@@ -55,7 +55,7 @@ struct type_caster<Scine::molassembler::SiteIndex> {
   }
 
   static handle cast(
-    Scine::molassembler::SiteIndex src,
+    Scine::Molassembler::SiteIndex src,
     return_value_policy /* policy */,
     handle /* parent */
   ) {

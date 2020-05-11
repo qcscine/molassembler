@@ -11,8 +11,8 @@
 #include <Eigen/Geometry>
 
 namespace Scine {
-namespace shapes {
-namespace elements {
+namespace Shapes {
+namespace Elements {
 namespace {
 
 template<typename EnumType>
@@ -892,7 +892,7 @@ unsigned order(const PointGroup group) {
 }
 
 NpGroupingsMapType npGroupings(const ElementsList& elements) {
-  assert(elements.front()->matrix() == elements::Identity().matrix());
+  assert(elements.front()->matrix() == Elements::Identity().matrix());
   const unsigned E = elements.size();
 
   NpGroupingsMapType npGroupings;
@@ -900,7 +900,7 @@ NpGroupingsMapType npGroupings(const ElementsList& elements) {
   auto testVector = [&](const Eigen::Vector3d& v) {
     // Check if there is already a grouping for this vector
     for(const auto& iterPair : npGroupings) {
-      if(temple::any_of(
+      if(Temple::any_of(
         iterPair.second,
         [&v](const ElementGrouping& grouping) -> bool {
           return grouping.probePoint.isApprox(v, 1e-8);
@@ -948,7 +948,7 @@ NpGroupingsMapType npGroupings(const ElementsList& elements) {
     } else {
       auto& groupingsList = findIter->second;
       if(
-        !temple::any_of(
+        !Temple::any_of(
           groupingsList,
           [&grouping](const ElementGrouping& group) -> bool {
             return grouping.groups == group.groups;
@@ -975,6 +975,6 @@ NpGroupingsMapType npGroupings(const ElementsList& elements) {
   return npGroupings;
 }
 
-} // namespace elements
-} // namespace shapes
+} // namespace Elements
+} // namespace Shapes
 } // namespace Scine

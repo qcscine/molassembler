@@ -15,7 +15,7 @@
 #include <iostream>
 
 namespace Scine {
-namespace temple {
+namespace Temple {
 
 /**
  * @brief A very basic newton-raphson minimizer
@@ -165,7 +165,7 @@ struct NewtonRaphson {
   FloatType trustRadius = 0.5;
 };
 
-} // namespace temple
+} // namespace Temple
 } // namespace Scine
 
 #endif

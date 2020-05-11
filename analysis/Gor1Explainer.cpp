@@ -25,7 +25,7 @@
 #include <random>
 
 using namespace Scine;
-using namespace molassembler;
+using namespace Molassembler;
 
 std::ostream& nl(std::ostream& os) {
   os << '\n';
@@ -34,9 +34,9 @@ std::ostream& nl(std::ostream& os) {
 
 namespace Scine {
 
-namespace molassembler {
+namespace Molassembler {
 
-namespace distance_geometry {
+namespace DistanceGeometry {
 
 struct WriterState {
   using Graph = ImplicitBoundsGraph;
@@ -327,9 +327,9 @@ public:
   }
 };
 
-} // namespace distance_geometry
+} // namespace DistanceGeometry
 
-} // namespace molassembler
+} // namespace Molassembler
 
 } // namespace Scine
 
@@ -378,17 +378,17 @@ int main(int argc, char* argv[]) {
       return 1;
     }
 
-    auto mol = io::read(filename);
+    auto mol = IO::read(filename);
 
-    distance_geometry::SpatialModel spatialModel {mol, distance_geometry::Configuration {}};
+    DistanceGeometry::SpatialModel spatialModel {mol, DistanceGeometry::Configuration {}};
 
-    distance_geometry::ImplicitBoundsGraph shortestPathsGraph {
+    DistanceGeometry::ImplicitBoundsGraph shortestPathsGraph {
       mol.graph().inner(),
       spatialModel.makePairwiseBounds()
     };
 
     /* Prep */
-    using Vertex = typename boost::graph_traits<distance_geometry::ImplicitBoundsGraph>::vertex_descriptor;
+    using Vertex = typename boost::graph_traits<DistanceGeometry::ImplicitBoundsGraph>::vertex_descriptor;
 
     unsigned N = boost::num_vertices(shortestPathsGraph);
     std::vector<double> distances(N);
@@ -414,14 +414,14 @@ int main(int argc, char* argv[]) {
     using ColorMapType = boost::two_bit_color_map<>;
     ColorMapType color_map {N};
 
-    distance_geometry::GraphvizWriter writer {
+    DistanceGeometry::GraphvizWriter writer {
       shortestPathsGraph,
       distances,
       predecessors,
       color_map
     };
 
-    distance_geometry::VisualizationVisitor visitor {
+    DistanceGeometry::VisualizationVisitor visitor {
       predecessors,
       writer
     };
@@ -474,7 +474,7 @@ int main(int argc, char* argv[]) {
       boost::filesystem::path newPath {"./"s + folderName};
       newPath /= iter->path().filename();
 
-      auto splat = temple::split(iter->path().filename().string(), '-');
+      auto splat = Temple::split(iter->path().filename().string(), '-');
       auto step = std::stoul(splat.at(2));
       auto graphIndex = std::stoul(splat.at(3));
 

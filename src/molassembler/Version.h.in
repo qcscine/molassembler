@@ -14,10 +14,8 @@
 #include <string>
 
 namespace Scine {
-
-namespace molassembler {
-
-namespace version {
+namespace Molassembler {
+namespace Version {
 
 //! The major version number. Incremented on incompatible API changes
 constexpr unsigned major = @molassembler_VERSION_MAJOR@;
@@ -32,7 +30,7 @@ inline std::string majorMinor() {
 }
 
 //! Major.minor.patch string
-inline std::string fullVersion() {
+inline std::string full() {
   return (
     std::to_string(major)
     + "." + std::to_string(minor)
@@ -40,10 +38,8 @@ inline std::string fullVersion() {
   );
 }
 
-} // namespace version
-
-} // namespace molassembler
-
+} // namespace Version
+} // namespace Molassembler
 } // namespace Scine
 
 #endif

@@ -13,12 +13,12 @@
 #include <vector>
 
 namespace Scine {
-namespace molassembler {
+namespace Molassembler {
 
 /**
  * @brief Randomness source for the library
  */
-namespace random {
+namespace Random {
 
 //! @brief Drives a PRNG
 class MASM_EXPORT Engine {
@@ -64,8 +64,8 @@ private:
   std::unique_ptr<Impl> pImpl_;
 };
 
-} // namespace random
-} // namespace molassembler
+} // namespace Random
+} // namespace Molassembler
 } // namespace Scine
 
 #endif

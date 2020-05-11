@@ -17,8 +17,8 @@
 #include <random>
 
 namespace Scine {
-namespace temple {
-namespace random {
+namespace Temple {
+namespace Random {
 
 //! Generate N floating point values in the range [lower, upper)
 template<typename T, typename Engine>
@@ -140,8 +140,8 @@ void shuffle(
   );
 }
 
-} // namespace random
-} // namespace temple
+} // namespace Random
+} // namespace Temple
 } // namespace Scine
 
 #endif

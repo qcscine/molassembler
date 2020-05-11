@@ -21,7 +21,7 @@
 #include <random>
 
 using namespace Scine;
-using namespace molassembler;
+using namespace Molassembler;
 
 std::ostream& nl(std::ostream& os) {
   os << '\n';
@@ -32,7 +32,7 @@ void writeExpandedTree(
   const std::string& fileName,
   const AtomIndex expandOnIndex
 ) {
-  auto molecule = io::read(
+  auto molecule = IO::read(
     "../tests/mol_files/ranking_tree_molecules/"s
     + fileName
   );
@@ -99,7 +99,7 @@ int main(int argc, char* argv[]) {
     }
 
     // This triggers all debug messages during tree instantiations and ranking
-    auto mol = io::read(filename);
+    auto mol = IO::read(filename);
 
     std::cout << mol << std::endl;
 
@@ -139,7 +139,7 @@ int main(int argc, char* argv[]) {
       boost::filesystem::path newPath(folderName);
       newPath /= iter->path().filename();
 
-      auto splat = temple::split(iter->path().filename().string(), '-');
+      auto splat = Temple::split(iter->path().filename().string(), '-');
       auto step = std::stoul(splat.at(2));
       auto graphIndex = std::stoul(splat.at(3));
 

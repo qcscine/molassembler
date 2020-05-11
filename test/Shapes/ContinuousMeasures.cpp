@@ -19,11 +19,11 @@
 #include "molassembler/Temple/Stringify.h"
 
 using namespace Scine;
-using namespace shapes;
+using namespace Shapes;
 
 // From InertialMoments.cpp
 extern const std::string& topName(Top top);
-extern void randomlyRotate(Eigen::Ref<continuous::PositionCollection> vs);
+extern void randomlyRotate(Eigen::Ref<Continuous::PositionCollection> vs);
 
 inline Vertex operator "" _v (unsigned long long v) { return Vertex(v); }
 
@@ -32,9 +32,9 @@ constexpr inline auto underlying(const EnumType e) {
   return static_cast<std::underlying_type_t<EnumType>>(e);
 }
 
-continuous::PositionCollection addOrigin(const continuous::PositionCollection& vs) {
+Continuous::PositionCollection addOrigin(const Continuous::PositionCollection& vs) {
   const unsigned N = vs.cols();
-  continuous::PositionCollection positions(3, N + 1);
+  Continuous::PositionCollection positions(3, N + 1);
   for(unsigned i = 0; i < N; ++i) {
     positions.col(i) = vs.col(i);
   }
@@ -44,7 +44,7 @@ continuous::PositionCollection addOrigin(const continuous::PositionCollection& v
   return positions;
 }
 
-void distort(Eigen::Ref<continuous::PositionCollection> positions, const double distortionNorm = 0.01) {
+void distort(Eigen::Ref<Continuous::PositionCollection> positions, const double distortionNorm = 0.01) {
   const unsigned N = positions.cols();
   for(unsigned i = 0; i < N; ++i) {
     positions.col(i) += distortionNorm * Eigen::Vector3d::Random().normalized();
@@ -91,7 +91,7 @@ BOOST_AUTO_TEST_CASE(PointGroupMeasures) {
 
     auto positions = addOrigin(coordinates(shape));
     // distort(positions);
-    auto normalized = continuous::normalize(positions);
+    auto normalized = Continuous::normalize(positions);
 
     // Add a random coordinate transformation
     normalized = Eigen::Quaterniond::UnitRandom().toRotationMatrix() * normalized;
@@ -102,7 +102,7 @@ BOOST_AUTO_TEST_CASE(PointGroupMeasures) {
       reorientAsymmetricTop(normalized);
     }
 
-    const double pgCSM = continuous::pointGroup(
+    const double pgCSM = Continuous::pointGroup(
       normalized,
       pointGroup(shape)
     );
@@ -112,7 +112,7 @@ BOOST_AUTO_TEST_CASE(PointGroupMeasures) {
     if(pgCSM >= 0.01) {
       BOOST_TEST_MESSAGE(
         "Expected CSM(" << pointGroupString(pointGroup(shape))
-        << ") < 0.01 for " << shapes::name(shape)
+        << ") < 0.01 for " << Shapes::name(shape)
         << "shape, got " << pgCSM << " (top is " << topName(top) << ")"
       );
     } else {
@@ -127,8 +127,8 @@ BOOST_AUTO_TEST_CASE(PointGroupMeasures) {
 }
 
 std::ostream& operator << (std::ostream& os, const PointGroup group) {
-  const auto elements = elements::symmetryElements(group);
-  const auto groupings = elements::npGroupings(elements);
+  const auto elements = Elements::symmetryElements(group);
+  const auto groupings = Elements::npGroupings(elements);
   os << pointGroupString(group) << ": {";
   for(const auto& element : elements) {
     os << element -> name() << ", ";
@@ -136,11 +136,11 @@ std::ostream& operator << (std::ostream& os, const PointGroup group) {
   os << "}\n";
   for(const auto& iterPair : groupings) {
     for(const auto& grouping : iterPair.second) {
-      os << "  np = " << iterPair.first << " along " << grouping.probePoint.transpose() << " -> " << temple::stringify(grouping.groups) << "\n";
+      os << "  np = " << iterPair.first << " along " << grouping.probePoint.transpose() << " -> " << Temple::stringify(grouping.groups) << "\n";
       os << "  ";
-      os << temple::stringifyContainer(grouping.groups,
+      os << Temple::stringifyContainer(grouping.groups,
         [&](const auto& grp) -> std::string {
-          return temple::stringifyContainer(grp,
+          return Temple::stringifyContainer(grp,
             [&elements](const unsigned elementIdx) -> std::string {
               return elements.at(elementIdx)->name();
             }
@@ -157,8 +157,8 @@ BOOST_AUTO_TEST_CASE(PointGroupElementGroupings) {
   const PointGroup limit = PointGroup::Ih;
   for(unsigned g = 0; g <= underlying(limit); ++g) {
     const PointGroup pointGroup = static_cast<PointGroup>(g);
-    const auto elements = elements::symmetryElements(pointGroup);
-    const auto groupings = elements::npGroupings(elements);
+    const auto elements = Elements::symmetryElements(pointGroup);
+    const auto groupings = Elements::npGroupings(elements);
 
     BOOST_CHECK_MESSAGE(
       groupings.count(1) > 0,
@@ -174,11 +174,11 @@ BOOST_AUTO_TEST_CASE(PointGroupElementGroupings) {
         << ", group size = " << sizeGroupingsPair.first
       );
 
-      bool pass = temple::all_of(
+      bool pass = Temple::all_of(
         sizeGroupingsPair.second,
-        [&](const elements::ElementGrouping& grouping) -> bool {
+        [&](const Elements::ElementGrouping& grouping) -> bool {
           const auto size = grouping.groups.front().size();
-          return temple::all_of(
+          return Temple::all_of(
             grouping.groups,
             [&](const auto& groupSubVector) -> bool {
               return groupSubVector.size() == size;
@@ -245,8 +245,8 @@ BOOST_AUTO_TEST_CASE(PointGroupElementGroupings) {
 // }
 
 BOOST_AUTO_TEST_CASE(SquareC4D4PointGroups) {
-  const double pointGroupCSM = continuous::pointGroup(
-    continuous::normalize(coordinates(Shape::Square)),
+  const double pointGroupCSM = Continuous::pointGroup(
+    Continuous::normalize(coordinates(Shape::Square)),
     PointGroup::C4
   );
   BOOST_CHECK_MESSAGE(
@@ -254,8 +254,8 @@ BOOST_AUTO_TEST_CASE(SquareC4D4PointGroups) {
     "C4 point group CSM on square planar coordinates is not zero, but " << pointGroupCSM
   );
 
-  const double D4CSM = continuous::pointGroup(
-    continuous::normalize(coordinates(Shape::Square)),
+  const double D4CSM = Continuous::pointGroup(
+    Continuous::normalize(coordinates(Shape::Square)),
     PointGroup::D4
   );
 
@@ -293,14 +293,14 @@ BOOST_AUTO_TEST_CASE(FixedCnAxis) {
     auto positions = addOrigin(coordinates(nameOrderPair.first));
     distort(positions);
 
-    auto normalizedPositions = continuous::normalize(positions);
+    auto normalizedPositions = Continuous::normalize(positions);
     standardizeTop(normalizedPositions);
 
     boost::optional<unsigned> highestFoundOrder;
     for(unsigned i = 0; i < 3; ++i) {
       Eigen::Vector3d axis = axes.col(i);
       for(unsigned n = 2; n < 6; ++n) {
-        const double cn = continuous::fixed::element(normalizedPositions, elements::Rotation::Cn(axis, n));
+        const double cn = Continuous::Fixed::element(normalizedPositions, Elements::Rotation::Cn(axis, n));
 
         if(cn < acceptanceThreshold) {
           highestFoundOrder = n;
@@ -311,7 +311,7 @@ BOOST_AUTO_TEST_CASE(FixedCnAxis) {
     BOOST_CHECK_MESSAGE(
       highestFoundOrder,
       "No Cn axis found along any principal moment axis for "
-      << shapes::name(nameOrderPair.first)
+      << Shapes::name(nameOrderPair.first)
     );
     if(highestFoundOrder) {
       BOOST_CHECK_MESSAGE(
@@ -323,33 +323,33 @@ BOOST_AUTO_TEST_CASE(FixedCnAxis) {
 }
 
 BOOST_AUTO_TEST_CASE(AlleneS4) {
-  continuous::PositionCollection allenePositions(3, 7);
+  Continuous::PositionCollection allenePositions(3, 7);
   allenePositions << 0.0, 0.0, 0.0, 0.0, 0.0, 0.928334, -0.928334,
                      0.0, 0.0, 0.0, 0.928334, -0.928334, 0.0, 0.0,
                      0.0, 1.3102, -1.3102, 1.866201, 1.866201, -1.866201, -1.866201;
 
-  auto normalizedPositions = continuous::normalize(allenePositions);
+  auto normalizedPositions = Continuous::normalize(allenePositions);
   const Top top = standardizeTop(normalizedPositions);
   BOOST_CHECK_MESSAGE(
     top == Top::Prolate,
     "Top isn't prolate, but " << topName(top)
   );
 
-  const double S4CSM = continuous::fixed::element(normalizedPositions, elements::Rotation::Sn(Eigen::Vector3d::UnitZ(), 4));
+  const double S4CSM = Continuous::Fixed::element(normalizedPositions, Elements::Rotation::Sn(Eigen::Vector3d::UnitZ(), 4));
   BOOST_CHECK_MESSAGE(
     S4CSM < 0.1,
     "CSM(S4) = " << S4CSM << " of allene is over recognition threshold (0.1)"
   );
 
-  const double D2dCSM = continuous::pointGroup(normalizedPositions, PointGroup::D2d);
+  const double D2dCSM = Continuous::pointGroup(normalizedPositions, PointGroup::D2d);
   BOOST_CHECK_MESSAGE(
     D2dCSM < 0.1,
     "CSM(D2d) = " << D2dCSM << " of allene is over recognition threshold (0.1)"
   );
 
-  const auto optimizedS4Result = continuous::element(
+  const auto optimizedS4Result = Continuous::element(
     normalizedPositions,
-    elements::Rotation::Sn(
+    Elements::Rotation::Sn(
       Eigen::Vector3d::UnitZ() + 0.1 * Eigen::Vector3d::Random().normalized(),
       4
     )
@@ -365,25 +365,25 @@ BOOST_AUTO_TEST_CASE(AlleneS4) {
 
 BOOST_AUTO_TEST_CASE(ReflectionPlaneOptimization) {
   // Generate 8 points in the xy plane
-  continuous::PositionCollection planarPositions(3, 8);
+  Continuous::PositionCollection planarPositions(3, 8);
   for(unsigned i = 0; i < 8; ++i) {
     Eigen::Vector3d v = 3 * Eigen::Vector3d::Random();
     v.z() = 0;
     planarPositions.col(i) = v;
   }
 
-  auto normalized = continuous::normalize(planarPositions);
+  auto normalized = Continuous::normalize(planarPositions);
 
-  const double zPlaneCSM = continuous::fixed::element(
+  const double zPlaneCSM = Continuous::Fixed::element(
     normalized,
-    elements::Reflection {Eigen::Vector3d::UnitZ()}
+    Elements::Reflection {Eigen::Vector3d::UnitZ()}
   );
 
   BOOST_CHECK_LT(zPlaneCSM, 0.1);
 
-  const auto optimizedSigma = continuous::element(
+  const auto optimizedSigma = Continuous::element(
     normalized,
-    elements::Reflection {
+    Elements::Reflection {
       Eigen::Vector3d::UnitZ() + 0.1 * Eigen::Vector3d::Random().normalized()
     }
   );
@@ -405,7 +405,7 @@ BOOST_AUTO_TEST_CASE(AsymmetricTopStandardization) {
 
   for(const Shape shape : asymmetricTopsWithC2) {
     auto shapeCoordinates = addOrigin(coordinates(shape));
-    auto normalizedPositions = continuous::normalize(shapeCoordinates);
+    auto normalizedPositions = Continuous::normalize(shapeCoordinates);
     const Top top = standardizeTop(normalizedPositions);
     BOOST_CHECK_MESSAGE(
       top == Top::Asymmetric,
@@ -417,9 +417,9 @@ BOOST_AUTO_TEST_CASE(AsymmetricTopStandardization) {
     BOOST_CHECK_EQUAL(highestAxisOrder, 2);
 
     // Ensure rotation of highest order axis to z worked
-    const double CnCSM = continuous::fixed::element(
+    const double CnCSM = Continuous::Fixed::element(
       normalizedPositions,
-      elements::Rotation::Cn(Eigen::Vector3d::UnitZ(), 2)
+      Elements::Rotation::Cn(Eigen::Vector3d::UnitZ(), 2)
     );
     BOOST_CHECK_MESSAGE(
       CnCSM < 1e-10,
@@ -431,20 +431,20 @@ BOOST_AUTO_TEST_CASE(AsymmetricTopStandardization) {
 BOOST_AUTO_TEST_CASE(ShapeMeasuresYieldForwardPermutation) {
   const Shape testShape = Shape::Tetrahedron;
 
-  auto shapeCoordinates = continuous::normalize(
+  auto shapeCoordinates = Continuous::normalize(
     addOrigin(coordinates(testShape))
   );
 
-  continuous::PositionCollection shuffled (3, shapeCoordinates.cols());
+  Continuous::PositionCollection shuffled (3, shapeCoordinates.cols());
   BOOST_REQUIRE_MESSAGE(size(testShape) == 4, "Test setup is no longer valid");
   const std::vector<Vertex> shufflePermutation {{3_v, 4_v, 0_v, 2_v, 1_v}};
   for(unsigned i = 0; i < 5; ++i) {
     shuffled.col(shufflePermutation.at(i)) = shapeCoordinates.col(i);
   }
 
-  auto faithful = continuous::shapeFaithfulPaperImplementation(shuffled, testShape);
-  auto alternate = continuous::shapeAlternateImplementation(shuffled, testShape);
-  auto heuristics = continuous::shapeHeuristics(shuffled, testShape);
+  auto faithful = Continuous::shapeFaithfulPaperImplementation(shuffled, testShape);
+  auto alternate = Continuous::shapeAlternateImplementation(shuffled, testShape);
+  auto heuristics = Continuous::shapeHeuristics(shuffled, testShape);
 
   BOOST_CHECK_CLOSE(faithful.measure, alternate.measure, 1);
   BOOST_CHECK_CLOSE(faithful.measure, heuristics.measure, 1);
@@ -476,31 +476,31 @@ BOOST_AUTO_TEST_CASE(ShapeMeasuresYieldForwardPermutation) {
 
   BOOST_CHECK_MESSAGE(
     !isBackwardsMapping(faithful.mapping),
-    "Faithful mapping is not a forward mapping: " << temple::condense(faithful.mapping)
+    "Faithful mapping is not a forward mapping: " << Temple::condense(faithful.mapping)
   );
 
   BOOST_CHECK_MESSAGE(
     !isBackwardsMapping(alternate.mapping),
-    "Alternate mapping is not a forward mapping: " << temple::condense(alternate.mapping)
+    "Alternate mapping is not a forward mapping: " << Temple::condense(alternate.mapping)
   );
 
   BOOST_CHECK_MESSAGE(
     !isBackwardsMapping(heuristics.mapping),
-    "Heuristics mapping is not a forward mapping: " << temple::condense(heuristics.mapping)
+    "Heuristics mapping is not a forward mapping: " << Temple::condense(heuristics.mapping)
   );
 
   BOOST_CHECK_MESSAGE(
     faithful.mapping == alternate.mapping,
     "Faithful mapping does not match alternate mapping.\n"
-    << "Faithful: " << temple::condense(faithful.mapping) << "\n"
-    << "Alternate: " << temple::condense(alternate.mapping)
+    << "Faithful: " << Temple::condense(faithful.mapping) << "\n"
+    << "Alternate: " << Temple::condense(alternate.mapping)
   );
 
   BOOST_CHECK_MESSAGE(
     faithful.mapping == heuristics.mapping,
     "Faithful mapping does not match heuristics mapping.\n"
-    << "Faithful: " << temple::condense(faithful.mapping) << "\n"
-    << "Heuristics: " << temple::condense(heuristics.mapping)
+    << "Faithful: " << Temple::condense(faithful.mapping) << "\n"
+    << "Heuristics: " << Temple::condense(heuristics.mapping)
   );
 }
 
@@ -516,16 +516,16 @@ BOOST_AUTO_TEST_CASE(ShapeMeasuresAlternateAlgorithm) {
       continue;
     }
 
-    auto shapeCoordinates = continuous::normalize(
+    auto shapeCoordinates = Continuous::normalize(
       addOrigin(coordinates(shape))
     );
-    const double unrotated = continuous::shapeAlternateImplementation(shapeCoordinates, shape).measure;
+    const double unrotated = Continuous::shapeAlternateImplementation(shapeCoordinates, shape).measure;
     BOOST_CHECK_MESSAGE(
       unrotated < 1e-10,
       "Expected CShM < 1e-10 for unrotated coordinates of " << name(shape) << ", but got " << unrotated
     );
     randomlyRotate(shapeCoordinates);
-    const double rotated = continuous::shapeAlternateImplementation(shapeCoordinates, shape).measure;
+    const double rotated = Continuous::shapeAlternateImplementation(shapeCoordinates, shape).measure;
     BOOST_CHECK_MESSAGE(
       rotated < 0.1,
       "Expected CShM < 1e-2 for rotated coordinates of " << name(shape) << ", but got " << rotated
@@ -535,13 +535,13 @@ BOOST_AUTO_TEST_CASE(ShapeMeasuresAlternateAlgorithm) {
       const double distortionNorm = 0.1 * i;
       auto distorted = shapeCoordinates;
       distort(distorted, distortionNorm);
-      distorted = continuous::normalize(distorted);
+      distorted = Continuous::normalize(distorted);
 
-      const double faithful = continuous::shapeFaithfulPaperImplementation(
+      const double faithful = Continuous::shapeFaithfulPaperImplementation(
         distorted,
         shape
       ).measure;
-      const double alternate = continuous::shapeAlternateImplementation(distorted, shape).measure;
+      const double alternate = Continuous::shapeAlternateImplementation(distorted, shape).measure;
       BOOST_CHECK_CLOSE(faithful, alternate, 1);
     }
   }
@@ -566,7 +566,7 @@ BOOST_AUTO_TEST_CASE(ShapeMeasuresHeuristics) {
       continue;
     }
 
-    auto shapeCoordinates = continuous::normalize(
+    auto shapeCoordinates = Continuous::normalize(
       addOrigin(coordinates(shape))
     );
 
@@ -578,11 +578,11 @@ BOOST_AUTO_TEST_CASE(ShapeMeasuresHeuristics) {
       for(unsigned j = 0; j < repeats; ++j) {
         auto distorted = shapeCoordinates;
         distort(distorted, distortionNorm);
-        distorted = continuous::normalize(distorted);
+        distorted = Continuous::normalize(distorted);
 
-        const double alternate = continuous::shapeAlternateImplementation(distorted, shape).measure;
+        const double alternate = Continuous::shapeAlternateImplementation(distorted, shape).measure;
         referenceValues.push_back(alternate);
-        const double heuristic = continuous::shapeHeuristics(distorted, shape).measure;
+        const double heuristic = Continuous::shapeHeuristics(distorted, shape).measure;
         const double error = std::fabs(alternate - heuristic);
 
         if(error > 1e-2) {
@@ -591,8 +591,8 @@ BOOST_AUTO_TEST_CASE(ShapeMeasuresHeuristics) {
         errors.push_back(std::fabs(alternate - heuristic));
       }
 
-      const double referenceAverage = temple::accumulate(referenceValues, 0.0, std::plus<>()) / repeats;
-      const double errorAverage = temple::accumulate(errors, 0.0, std::plus<>()) / repeats;
+      const double referenceAverage = Temple::accumulate(referenceValues, 0.0, std::plus<>()) / repeats;
+      const double errorAverage = Temple::accumulate(errors, 0.0, std::plus<>()) / repeats;
       BOOST_CHECK_MESSAGE(
         errorAverage < 0.01 * referenceAverage,
         "Expected error average below 1% of reference value average, but mu(error) = "
@@ -666,13 +666,13 @@ BOOST_AUTO_TEST_CASE(MinimumDistortionConstants) {
 
   auto testF = [](const Shape a, const Shape b, const double expectedMinimumDistortion) {
     auto makeShapeCoordinates = [](const Shape shape) {
-      return continuous::normalize(
+      return Continuous::normalize(
         addOrigin(coordinates(shape))
       );
     };
 
-    const double ab = continuous::shapeAlternateImplementation(makeShapeCoordinates(a), b).measure;
-    const double ba = continuous::shapeAlternateImplementation(makeShapeCoordinates(b), a).measure;
+    const double ab = Continuous::shapeAlternateImplementation(makeShapeCoordinates(a), b).measure;
+    const double ba = Continuous::shapeAlternateImplementation(makeShapeCoordinates(b), a).measure;
 
     BOOST_CHECK_CLOSE(ab, ba, 0.1);
 
@@ -680,5 +680,5 @@ BOOST_AUTO_TEST_CASE(MinimumDistortionConstants) {
     BOOST_CHECK_CLOSE(calculatedMinimumDistortion, expectedMinimumDistortion, 2);
   };
 
-  temple::forEach(minimumDistortionConstants, testF);
+  Temple::forEach(minimumDistortionConstants, testF);
 }

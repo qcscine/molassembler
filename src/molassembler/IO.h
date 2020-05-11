@@ -29,14 +29,14 @@ class AtomCollection;
 class BondOrderCollection;
 } // namespace Utils
 
-namespace molassembler {
+namespace Molassembler {
 
 // More forward declarations
 class Molecule;
 class AngstromPositions;
 
 //! Input and output
-namespace io {
+namespace IO {
 
 /**
  * @brief Provides Molecule instances from line notations of molecules such
@@ -146,8 +146,8 @@ MASM_EXPORT void write(
  */
 MASM_EXPORT void write(const std::string& filename, const Molecule& molecule);
 
-} // namespace io
-} // namespace molassembler
+} // namespace IO
+} // namespace Molassembler
 } // namespace Scine
 
 #endif

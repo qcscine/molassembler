@@ -16,7 +16,7 @@
 #include "Utils/Typenames.h"
 
 namespace Scine {
-namespace molassembler {
+namespace Molassembler {
 
 /**
  * @brief A wrapper class around Utils' PositionCollection to emphasize

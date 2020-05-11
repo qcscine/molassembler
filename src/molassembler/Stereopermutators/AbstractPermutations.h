@@ -12,10 +12,10 @@
 #include "molassembler/Stereopermutation/Manipulation.h"
 
 namespace Scine {
-namespace molassembler {
+namespace Molassembler {
 
 //! @brief Stereopermutator implementation details
-namespace stereopermutators {
+namespace Stereopermutators {
 
 /**
  * @brief Class to compute the set of abstract permutations from ranking
@@ -76,7 +76,7 @@ struct Abstract {
    * selfReferentialTransform(links, canonicalSites) = {3, 4}
    * @endverbatim
    */
-  static stereopermutation::Stereopermutation::OrderedLinks selfReferentialTransform(
+  static Stereopermutations::Stereopermutation::OrderedLinks selfReferentialTransform(
     const std::vector<RankingInformation::Link>& rankingLinks,
     const RankingInformation::RankedSitesType& canonicalSites
   );
@@ -90,7 +90,7 @@ struct Abstract {
   static std::vector<char> makeStereopermutationCharacters(
     const RankingInformation::RankedSitesType& canonicalSites,
     const std::vector<char>& canonicalStereopermutationCharacters,
-    const temple::StrongIndexFlatMap<shapes::Vertex, SiteIndex>& sitesAtShapeVertices
+    const Temple::StrongIndexFlatMap<Shapes::Vertex, SiteIndex>& sitesAtShapeVertices
   );
 //!@}
 
@@ -111,7 +111,7 @@ struct Abstract {
    */
   Abstract(
     const RankingInformation& ranking,
-    shapes::Shape shape
+    Shapes::Shape shape
   );
 //!@}
 
@@ -124,15 +124,15 @@ struct Abstract {
   std::vector<char> symbolicCharacters;
 
   //! Self-referential representation of links
-  stereopermutation::Stereopermutation::OrderedLinks selfReferentialLinks;
+  Stereopermutations::Stereopermutation::OrderedLinks selfReferentialLinks;
 
   //! Vector of rotationally unique stereopermutations with associated weights
-  stereopermutation::Uniques permutations;
+  Stereopermutations::Uniques permutations;
 //!@}
 };
 
-} // namespace stereopermutators
-} // namespace molassembler
+} // namespace Stereopermutators
+} // namespace Molassembler
 } // namespace Scine
 
 

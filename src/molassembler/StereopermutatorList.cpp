@@ -9,7 +9,7 @@
 #include "boost/optional.hpp"
 
 namespace Scine {
-namespace molassembler {
+namespace Molassembler {
 
 StereopermutatorList::StereopermutatorList() : impl_(std::make_unique<Impl>()) {}
 StereopermutatorList::StereopermutatorList(StereopermutatorList&& other) noexcept = default;
@@ -175,5 +175,5 @@ bool StereopermutatorList::operator != (const StereopermutatorList& other) const
   return !(*impl_ == *other.impl_);
 }
 
-} // namespace molassembler
+} // namespace Molassembler
 } // namespace Scine

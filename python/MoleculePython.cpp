@@ -25,7 +25,7 @@ bool graphvizInPath() {
   return !boost::process::search_path("dot").empty();
 }
 
-std::string pipeSVG(const Scine::molassembler::Molecule& molecule) {
+std::string pipeSVG(const Scine::Molassembler::Molecule& molecule) {
   std::string callString = "dot -Tsvg";
   std::stringstream os;
 
@@ -67,7 +67,7 @@ std::string pipeSVG(const Scine::molassembler::Molecule& molecule) {
 } // namespace
 
 void init_molecule(pybind11::module& m) {
-  using namespace Scine::molassembler;
+  using namespace Scine::Molassembler;
   using namespace Scine::Utils;
 
   pybind11::class_<Molecule> molecule(

@@ -10,7 +10,7 @@
 
 namespace Scine {
 
-namespace molassembler {
+namespace Molassembler {
 
 namespace Bond {
 
@@ -20,12 +20,12 @@ double calculateBondDistance(
   const BondType bondType
 ) {
   return (
-    atom_info::bondRadius(a)
-    + atom_info::bondRadius(b)
+    AtomInfo::bondRadius(a)
+    + AtomInfo::bondRadius(b)
     - ( // bond-order correction
       bondOrderCorrectionLambda * (
-        atom_info::bondRadius(a)
-        + atom_info::bondRadius(b)
+        AtomInfo::bondRadius(a)
+        + AtomInfo::bondRadius(b)
       ) * log(
         bondOrderMap.at(
           static_cast<unsigned>(bondType)
@@ -42,10 +42,10 @@ double calculateBondOrder(
 ) {
   return std::exp(
     (
-      atom_info::bondRadius(a) + atom_info::bondRadius(b) - distance
+      AtomInfo::bondRadius(a) + AtomInfo::bondRadius(b) - distance
     ) / (
       bondOrderCorrectionLambda * (
-        atom_info::bondRadius(a) + atom_info::bondRadius(b)
+        AtomInfo::bondRadius(a) + AtomInfo::bondRadius(b)
       )
     )
   );
@@ -53,6 +53,6 @@ double calculateBondOrder(
 
 } // namespace Bond
 
-} // namespace molassembler
+} // namespace Molassembler
 
 } // namespace Scine

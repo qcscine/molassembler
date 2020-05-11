@@ -23,16 +23,16 @@
 #include "Utils/IO/ChemicalFileFormats/ChemicalFileHandler.h"
 
 using namespace Scine;
-using namespace molassembler;
+using namespace Molassembler;
 
 BOOST_AUTO_TEST_CASE(Base64Reversibility) {
   // Fuzz the encode/decode pair
 
   const unsigned N = 100;
   for(unsigned i = 0; i < N; ++i) {
-    unsigned messageLength = temple::random::getSingle<unsigned>(90, 110, randomnessEngine());
+    unsigned messageLength = Temple::Random::getSingle<unsigned>(90, 110, randomnessEngine());
 
-    auto sample = temple::random::getN<std::uint8_t>(
+    auto sample = Temple::Random::getN<std::uint8_t>(
       std::numeric_limits<std::uint8_t>::min(),
       std::numeric_limits<std::uint8_t>::max(),
       messageLength,
@@ -45,9 +45,9 @@ BOOST_AUTO_TEST_CASE(Base64Reversibility) {
     BOOST_CHECK_MESSAGE(
       decoded == sample,
       "Encode / decode pair failed for message of length " << messageLength
-        << ": {" << temple::condense(sample) << "}.\n"
+        << ": {" << Temple::condense(sample) << "}.\n"
         << "Encoded : {" << encoded << "}\n"
-        << "Decoded : {" << temple::condense(decoded) << "}"
+        << "Decoded : {" << Temple::condense(decoded) << "}"
     );
   }
 }
@@ -57,7 +57,7 @@ BOOST_AUTO_TEST_CASE(MoleculeSerializationReversibility) {
     const boost::filesystem::path& currentFilePath :
     boost::filesystem::recursive_directory_iterator("ranking_tree_molecules")
   ) {
-    auto molecule = io::read(currentFilePath.string());
+    auto molecule = IO::read(currentFilePath.string());
 
     std::string json = JsonSerialization(molecule);
     Molecule decoded = JsonSerialization(json);
@@ -85,15 +85,15 @@ BOOST_AUTO_TEST_CASE(MoleculeCanonicalSerialization) {
     }
 
     auto readData = Utils::ChemicalFileHandler::read(currentFilePath.string());
-    auto permutedData = io::shuffle(readData.first, readData.second);
+    auto permutedData = IO::shuffle(readData.first, readData.second);
 
     auto interpretSingle = [](const Utils::AtomCollection& ac, const Utils::BondOrderCollection& boc) -> Molecule {
-      interpret::MoleculesResult interpretation;
+      Interpret::MoleculesResult interpretation;
       if(boc.empty()) {
         // Unfortunately, the file type does not include bond order information
-        interpretation = interpret::molecules(ac, interpret::BondDiscretizationOption::RoundToNearest);
+        interpretation = Interpret::molecules(ac, Interpret::BondDiscretizationOption::RoundToNearest);
       } else {
-        interpretation = interpret::molecules(ac, boc, interpret::BondDiscretizationOption::RoundToNearest);
+        interpretation = Interpret::molecules(ac, boc, Interpret::BondDiscretizationOption::RoundToNearest);
       }
 
       if(interpretation.molecules.size() > 1) {

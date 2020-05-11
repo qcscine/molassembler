@@ -26,9 +26,9 @@ inline std::ostream& nl(std::ostream& os) {
 
 BOOST_AUTO_TEST_CASE(ImplicitBoundsGraphConcepts) {
   using namespace Scine;
-  using namespace molassembler;
+  using namespace Molassembler;
 
-  using GraphType = molassembler::distance_geometry::ImplicitBoundsGraph;
+  using GraphType = Molassembler::DistanceGeometry::ImplicitBoundsGraph;
 
   BOOST_CONCEPT_ASSERT(( boost::VertexListGraphConcept<GraphType> ));
   BOOST_CONCEPT_ASSERT(( boost::EdgeListGraphConcept<GraphType> ));
@@ -53,19 +53,19 @@ BOOST_AUTO_TEST_CASE(ImplicitBoundsGraphConcepts) {
 
 BOOST_AUTO_TEST_CASE(ImplicitBoundsGraphStructure) {
   using namespace Scine;
-  using namespace molassembler;
+  using namespace Molassembler;
 
   for(
     const boost::filesystem::path& currentFilePath :
     boost::filesystem::recursive_directory_iterator("stereocenter_detection_molecules")
   ) {
-    Molecule molecule = io::read(
+    Molecule molecule = IO::read(
       currentFilePath.string()
     );
 
-    using IG = distance_geometry::ImplicitBoundsGraph;
+    using IG = DistanceGeometry::ImplicitBoundsGraph;
 
-    distance_geometry::SpatialModel spatialModel {molecule, distance_geometry::Configuration {}};
+    DistanceGeometry::SpatialModel spatialModel {molecule, DistanceGeometry::Configuration {}};
 
     IG ig {
       molecule.graph().inner(),

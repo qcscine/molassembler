@@ -24,10 +24,10 @@
 #include "Fixtures.h"
 
 using namespace Scine;
-using namespace molassembler;
+using namespace Molassembler;
 
-inline shapes::Vertex operator "" _v(unsigned long long v) {
-  return shapes::Vertex(v);
+inline Shapes::Vertex operator "" _v(unsigned long long v) {
+  return Shapes::Vertex(v);
 }
 
 inline SiteIndex operator "" _s(unsigned long long s) {
@@ -36,20 +36,20 @@ inline SiteIndex operator "" _s(unsigned long long s) {
 
 BOOST_AUTO_TEST_CASE(ShipscrewShapeVertexMap) {
   // M[(A-A)_3] lambda/delta isomer "shipscrews"
-  const stereopermutation::Stereopermutation shipscrew {
+  const Stereopermutations::Stereopermutation shipscrew {
     std::vector<char>(6, 'A'),
     {{0_v, 1_v}, {2_v, 4_v}, {3_v, 5_v}}
   };
 
   const auto shipscrewEnantiomer = shipscrew.applyPermutation(
-    shapes::mirror(shapes::Shape::Octahedron)
+    Shapes::mirror(Shapes::Shape::Octahedron)
   );
 
   BOOST_REQUIRE_MESSAGE(
-    !stereopermutation::rotationallySuperimposable(
+    !Stereopermutations::rotationallySuperimposable(
       shipscrew,
       shipscrewEnantiomer,
-      shapes::Shape::Octahedron
+      Shapes::Shape::Octahedron
     ),
     "enantiomers are superimposable: " << shipscrew.toString() << " and " << shipscrewEnantiomer.toString()
   );
@@ -64,7 +64,7 @@ BOOST_AUTO_TEST_CASE(ShipscrewShapeVertexMap) {
     {{4_s, 5_s}, {0, 5, 6}, 0}
   };
 
-  const auto maps = temple::map_stl(
+  const auto maps = Temple::map_stl(
     std::make_pair(shipscrew, shipscrewEnantiomer),
     [&](const auto& s) {
       return siteToShapeVertexMap(s, canonicalSites, siteLinks);
@@ -78,7 +78,7 @@ BOOST_AUTO_TEST_CASE(ShipscrewShapeVertexMap) {
 }
 
 BOOST_AUTO_TEST_CASE(AtomStereopermutatorUpDown) {
-  using namespace shapes;
+  using namespace Shapes;
 
   // Copy out preservation mode and set for test
   auto prior = Options::chiralStatePreservation;
@@ -104,10 +104,10 @@ BOOST_AUTO_TEST_CASE(AtomStereopermutatorUpDown) {
   }
 
   std::vector<
-    std::tuple<Shape, shapes::Vertex, Shape>
+    std::tuple<Shape, Shapes::Vertex, Shape>
   > downTuples {
-    {Shape::SquarePyramid, shapes::Vertex(4), Shape::Square},
-    {Shape::SquarePyramid, shapes::Vertex(0), Shape::Tetrahedron},
+    {Shape::SquarePyramid, Shapes::Vertex(4), Shape::Square},
+    {Shape::SquarePyramid, Shapes::Vertex(0), Shape::Tetrahedron},
   };
 
   for(const auto& tuple: downTuples) {
@@ -121,8 +121,8 @@ BOOST_AUTO_TEST_CASE(AtomStereopermutatorUpDown) {
   Options::chiralStatePreservation = ChiralStatePreservation::Unique;
 
   BOOST_CHECK_MESSAGE(
-    AtomStereopermutator::down(Shape::TrigonalPrism, shapes::Vertex(0)) == Shape::Pentagon,
-    "Expected down(trig prism, 0) == pentagonal planar, got " << name(AtomStereopermutator::down(Shape::TrigonalPrism, shapes::Vertex(0))) << " instead."
+    AtomStereopermutator::down(Shape::TrigonalPrism, Shapes::Vertex(0)) == Shape::Pentagon,
+    "Expected down(trig prism, 0) == pentagonal planar, got " << name(AtomStereopermutator::down(Shape::TrigonalPrism, Shapes::Vertex(0))) << " instead."
   );
 
   // Restore prior state
@@ -135,13 +135,13 @@ BOOST_FIXTURE_TEST_CASE(LigandAdditionPropagatedStateSuperposable, LowTemperatur
    */
   BOOST_REQUIRE(Options::chiralStatePreservation == ChiralStatePreservation::EffortlessAndUnique);
 
-  auto trySymmetryPropagation = [](const shapes::Shape source) -> bool {
-    assert(shapes::size(source) != shapes::constexpr_properties::maxShapeSize);
-    assert(shapes::hasMultipleUnlinkedStereopermutations(source, 0));
+  auto trySymmetryPropagation = [](const Shapes::Shape source) -> bool {
+    assert(Shapes::size(source) != Shapes::ConstexprProperties::maxShapeSize);
+    assert(Shapes::hasMultipleUnlinkedStereopermutations(source, 0));
 
     Molecule priorMol {Utils::ElementType::Ru, Utils::ElementType::H, BondType::Single};
 
-    while(priorMol.graph().degree(0) != shapes::size(source)) {
+    while(priorMol.graph().degree(0) != Shapes::size(source)) {
       priorMol.addAtom(
         Utils::ElementInfo::element(priorMol.graph().N()),
         0u,
@@ -182,8 +182,8 @@ BOOST_FIXTURE_TEST_CASE(LigandAdditionPropagatedStateSuperposable, LowTemperatur
     stereopermutatorOption = postMol.stereopermutators().option(0u);
     BOOST_REQUIRE(stereopermutatorOption);
     BOOST_REQUIRE(
-      shapes::size(stereopermutatorOption->getShape())
-      == shapes::size(source) + 1
+      Shapes::size(stereopermutatorOption->getShape())
+      == Shapes::size(source) + 1
     );
 
     /* If the stereopermutator is unassigned, then no state was propagated.
@@ -218,20 +218,20 @@ BOOST_FIXTURE_TEST_CASE(LigandAdditionPropagatedStateSuperposable, LowTemperatur
 
     BOOST_CHECK_MESSAGE(
       passRMSD,
-      "RMSD fit from " << shapes::name(source)
-      << " to " << shapes::name(stereopermutatorOption->getShape())
+      "RMSD fit from " << Shapes::name(source)
+      << " to " << Shapes::name(stereopermutatorOption->getShape())
       << " not smaller than 0.5 bohr, is: " << fit.getRMSD()
     );
 
     if(!passRMSD) {
-      io::write(
-        "sym-" + std::to_string(shapes::nameIndex(source)) + "-prior.mol",
+      IO::write(
+        "sym-" + std::to_string(Shapes::nameIndex(source)) + "-prior.mol",
         priorMol,
         priorConformerResult.value()
       );
 
-      io::write(
-        "sym-" + std::to_string(shapes::nameIndex(source)) + "-post.mol",
+      IO::write(
+        "sym-" + std::to_string(Shapes::nameIndex(source)) + "-post.mol",
         postMol,
         postConformerResult.value()
       );
@@ -242,14 +242,14 @@ BOOST_FIXTURE_TEST_CASE(LigandAdditionPropagatedStateSuperposable, LowTemperatur
 
   unsigned skippedCount = 0;
   unsigned testedCount = 0;
-  for(const shapes::Shape shape : shapes::allShapes) {
-    if(shapes::size(shape) > 6) {
+  for(const Shapes::Shape shape : Shapes::allShapes) {
+    if(Shapes::size(shape) > 6) {
       continue;
     }
 
     if(
-      shapes::size(shape) != shapes::constexpr_properties::maxShapeSize
-      && shapes::hasMultipleUnlinkedStereopermutations(shape, 0u)
+      Shapes::size(shape) != Shapes::ConstexprProperties::maxShapeSize
+      && Shapes::hasMultipleUnlinkedStereopermutations(shape, 0u)
     ) {
       if(trySymmetryPropagation(shape)) {
         ++testedCount;
@@ -278,14 +278,14 @@ BOOST_FIXTURE_TEST_CASE(AtomStereopermutatorContinuity, LowTemperatureFixture) {
    * shape and the source shape is selected from the source shape.
    */
   std::vector<
-    std::pair<shapes::Shape, shapes::Shape>
+    std::pair<Shapes::Shape, Shapes::Shape>
   > reversibleSymmetryShapes {
-    {shapes::Shape::Seesaw, shapes::Shape::TrigonalBipyramid},
-    {shapes::Shape::SquarePyramid, shapes::Shape::Octahedron},
-    {shapes::Shape::PentagonalPyramid, shapes::Shape::PentagonalBipyramid},
-    {shapes::Shape::T, shapes::Shape::Square},
-    {shapes::Shape::VacantTetrahedron, shapes::Shape::Tetrahedron},
-    {shapes::Shape::TrigonalPyramid, shapes::Shape::TrigonalBipyramid}
+    {Shapes::Shape::Seesaw, Shapes::Shape::TrigonalBipyramid},
+    {Shapes::Shape::SquarePyramid, Shapes::Shape::Octahedron},
+    {Shapes::Shape::PentagonalPyramid, Shapes::Shape::PentagonalBipyramid},
+    {Shapes::Shape::T, Shapes::Shape::Square},
+    {Shapes::Shape::VacantTetrahedron, Shapes::Shape::Tetrahedron},
+    {Shapes::Shape::TrigonalPyramid, Shapes::Shape::TrigonalBipyramid}
   };
 
   const std::array<Utils::ElementType, 7> substituentElements {
@@ -299,10 +299,10 @@ BOOST_FIXTURE_TEST_CASE(AtomStereopermutatorContinuity, LowTemperatureFixture) {
   };
 
   auto testSymmetryPair = [&substituentElements](
-    const shapes::Shape source,
-    const shapes::Shape target
+    const Shapes::Shape source,
+    const Shapes::Shape target
   ) {
-    if(shapes::size(source) + 1 != shapes::size(target)) {
+    if(Shapes::size(source) + 1 != Shapes::size(target)) {
       throw std::logic_error("Test is not set up right, symmetries are not increment size apart");
     }
 
@@ -310,7 +310,7 @@ BOOST_FIXTURE_TEST_CASE(AtomStereopermutatorContinuity, LowTemperatureFixture) {
     Molecule mol {Utils::ElementType::Ru, Utils::ElementType::H, BondType::Single};
 
     // Add different substituents until we reach the source size
-    while(mol.graph().degree(0) != shapes::size(source)) {
+    while(mol.graph().degree(0) != Shapes::size(source)) {
       mol.addAtom(substituentElements.at(mol.graph().N() - 2), 0u, BondType::Single);
     }
 

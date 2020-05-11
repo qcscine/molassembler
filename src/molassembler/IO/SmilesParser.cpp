@@ -58,8 +58,8 @@
  */
 
 namespace Scine {
-namespace molassembler {
-namespace io {
+namespace Molassembler {
+namespace IO {
 
 namespace qi = boost::spirit::qi;
 namespace ascii = boost::spirit::ascii;
@@ -124,15 +124,15 @@ struct element_symbols_ : qi::symbols<char, ElementData> {
 struct chiral_subset_ : qi::symbols<char, ChiralData> {
   chiral_subset_() {
     add
-      ("@", {shapes::Shape::Tetrahedron, 1})
-      ("@@", {shapes::Shape::Tetrahedron, 2})
-      ("@TH1", {shapes::Shape::Tetrahedron, 1}) // Same as @
-      ("@TH2", {shapes::Shape::Tetrahedron, 2}) // Same as @@
-      // ("@AL1", {shapes::Shape::Tetrahedron, 1}) // Allene
-      // ("@AL2", {shapes::Shape::Tetrahedron, 2}) // Allene
-      ("@SP1", {shapes::Shape::Square, 1})
-      ("@SP2", {shapes::Shape::Square, 2})
-      ("@SP3", {shapes::Shape::Square, 3});
+      ("@", {Shapes::Shape::Tetrahedron, 1})
+      ("@@", {Shapes::Shape::Tetrahedron, 2})
+      ("@TH1", {Shapes::Shape::Tetrahedron, 1}) // Same as @
+      ("@TH2", {Shapes::Shape::Tetrahedron, 2}) // Same as @@
+      // ("@AL1", {Shapes::Shape::Tetrahedron, 1}) // Allene
+      // ("@AL2", {Shapes::Shape::Tetrahedron, 2}) // Allene
+      ("@SP1", {Shapes::Shape::Square, 1})
+      ("@SP2", {Shapes::Shape::Square, 2})
+      ("@SP3", {Shapes::Shape::Square, 3});
   }
 } chiral_subset;
 
@@ -190,11 +190,11 @@ struct openSMILES : qi::grammar<Iterator> {
     // chiral ::= lots of cases (see chiral_subset and the @TB(num) @OH(num) cases here
     chiral = (
       (
-        lit("@TB")[at_c<0>(_val) = shapes::Shape::TrigonalBipyramid]
+        lit("@TB")[at_c<0>(_val) = Shapes::Shape::TrigonalBipyramid]
         >> digits<1, 2>()[at_c<1>(_val) = _1]
       )
       | (
-        lit("@OH")[at_c<0>(_val) = shapes::Shape::Octahedron]
+        lit("@OH")[at_c<0>(_val) = Shapes::Shape::Octahedron]
         >> digits<1, 2>()[at_c<1>(_val) = _1]
       )
       | symbols::chiral_subset[_val = _1]
@@ -377,6 +377,6 @@ Molecule parseSmilesSingleMolecule(const std::string& smiles) {
 }
 
 } // namespace experimental
-} // namespace io
-} // namespace molassembler
+} // namespace IO
+} // namespace Molassembler
 } // namespace Scine

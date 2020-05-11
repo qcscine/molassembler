@@ -15,12 +15,12 @@
 
 namespace Scine {
 
-namespace molassembler {
+namespace Molassembler {
 
 // Forward-declarations
 class Molecule;
 
-namespace io {
+namespace IO {
 
 //! Binary file IO
 struct BinaryHandler {
@@ -45,9 +45,9 @@ struct BinaryHandler {
   static BinaryType read(const std::string& filename);
 };
 
-} // namespace io
+} // namespace IO
 
-} // namespace molassembler
+} // namespace Molassembler
 
 } // namespace Scine
 

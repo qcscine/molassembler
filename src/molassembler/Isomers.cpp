@@ -17,7 +17,7 @@
 #include "molassembler/Shapes/Data.h"
 
 namespace Scine {
-namespace molassembler {
+namespace Molassembler {
 
 bool enantiomeric(const Molecule& a, const Molecule& b) {
   // Check the precondition
@@ -43,8 +43,8 @@ bool enantiomeric(const Molecule& a, const Molecule& b) {
     );
   }
 
-  const auto aHashes = hashes::generate(a.graph().inner(), a.stereopermutators(), bitmask);
-  const auto bHashes = hashes::generate(b.graph().inner(), b.stereopermutators(), bitmask);
+  const auto aHashes = Hashes::generate(a.graph().inner(), a.stereopermutators(), bitmask);
+  const auto bHashes = Hashes::generate(b.graph().inner(), b.stereopermutators(), bitmask);
 
   if(aHashes != bHashes) {
     throw std::logic_error("Both molecules are fully canonical but weaker hashes do not match.");
@@ -122,7 +122,7 @@ bool enantiomeric(const Molecule& a, const Molecule& b) {
     );
 
     // Stereopermutation enantiomerism comparison
-    boost::optional<bool> enantiomericPairOption = stereopermutation::enantiomer(
+    boost::optional<bool> enantiomericPairOption = Stereopermutations::enantiomer(
       aPermutation,
       bPermutation,
       aPermutator.getShape()
@@ -156,7 +156,7 @@ Molecule enantiomer(const Molecule& a) {
     }
 
     // If there are no enantiomers for this shape, we skip the permutator
-    const auto& mirrorPermutation = shapes::mirror(permutator.getShape());
+    const auto& mirrorPermutation = Shapes::mirror(permutator.getShape());
     if(mirrorPermutation.empty()) {
       continue;
     }
@@ -175,7 +175,7 @@ Molecule enantiomer(const Molecule& a) {
       std::begin(permutationsList),
       std::end(permutationsList),
       [&](const auto& permutation) -> bool {
-        return stereopermutation::rotationallySuperimposable(
+        return Stereopermutations::rotationallySuperimposable(
           permutation,
           mirrored,
           permutator.getShape()
@@ -219,5 +219,5 @@ Molecule enantiomer(const Molecule& a) {
   };
 }
 
-} // namespace molassembler
+} // namespace Molassembler
 } // namespace Scine

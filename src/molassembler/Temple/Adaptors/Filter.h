@@ -14,7 +14,7 @@
 #include <cassert>
 
 namespace Scine {
-namespace temple {
+namespace Temple {
 namespace adaptors {
 namespace detail {
 
@@ -25,7 +25,7 @@ struct FilterAdaptor {
   // See tricks documentation
   using BoundContainer = typename Binding<Container>::type;
 
-  using ContainerValueType = traits::getValueType<Container>;
+  using ContainerValueType = Traits::getValueType<Container>;
 
   using ContainerIteratorType = decltype(
     std::begin(std::declval<const Container>())
@@ -134,7 +134,7 @@ auto filter(Container&& container, UnaryPredicate&& predicate) {
 }
 
 } // namespace adaptors
-} // namespace temple
+} // namespace Temple
 } // namespace Scine
 
 #endif

@@ -12,7 +12,7 @@
 #include <vector>
 
 namespace Scine {
-namespace molassembler {
+namespace Molassembler {
 
 class Molecule;
 
@@ -154,7 +154,7 @@ struct MASM_EXPORT Editing {
   );
 };
 
-} // namespace molassembler
+} // namespace Molassembler
 } // namespace Scine
 
 #endif

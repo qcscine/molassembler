@@ -21,18 +21,18 @@
 #include <numeric>
 
 namespace Scine {
-namespace temple {
+namespace Temple {
 
 template<
   class Container,
-  std::enable_if_t<traits::hasSize<Container>::value, int> = 0
+  std::enable_if_t<Traits::hasSize<Container>::value, int> = 0
 > auto size(const Container& container) {
   return container.size();
 }
 
 template<
   class Container,
-  std::enable_if_t<!traits::hasSize<Container>::value, int> = 0
+  std::enable_if_t<!Traits::hasSize<Container>::value, int> = 0
 > auto size(const Container& container) {
   return std::distance(
     std::begin(container),
@@ -240,7 +240,7 @@ template<
  *
  * @complexity{@math{O(N)}}
  */
-template<class Container, class UnaryPredicate = functor::Identity>
+template<class Container, class UnaryPredicate = Functor::Identity>
 bool all_of(const Container& container, UnaryPredicate&& predicate = UnaryPredicate {}) {
   for(const auto& element : container) {
     if(!invoke(predicate, element)) {
@@ -255,7 +255,7 @@ bool all_of(const Container& container, UnaryPredicate&& predicate = UnaryPredic
  *
  * @complexity{@math{O(N)}}
  */
-template<class Container, class UnaryPredicate = functor::Identity>
+template<class Container, class UnaryPredicate = Functor::Identity>
 bool any_of(const Container& container, UnaryPredicate&& predicate = UnaryPredicate {}) {
   for(const auto& element : container) {
     if(invoke(predicate, element)) {
@@ -437,7 +437,7 @@ std::vector<T> iota(unsigned upperBound) {
 //! @brief Creates a predicate that uses std::find for the container's value type
 template<class Container>
 auto makeContainsPredicate(const Container& container) {
-  using T = traits::getValueType<Container>;
+  using T = Traits::getValueType<Container>;
 
   return [&container](const T& element) -> bool {
     return std::find(
@@ -448,7 +448,7 @@ auto makeContainsPredicate(const Container& container) {
   };
 }
 
-} // namespace temple
+} // namespace Temple
 } // namespace Scine
 
 #endif

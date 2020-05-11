@@ -9,16 +9,16 @@
 
 namespace Scine {
 
-namespace molassembler {
+namespace Molassembler {
 
 std::vector<
   outcome::result<Utils::PositionCollection>
 > generateRandomEnsemble(
   const Molecule& molecule,
   const unsigned numStructures,
-  const distance_geometry::Configuration& configuration
+  const DistanceGeometry::Configuration& configuration
 ) {
-  auto result = distance_geometry::run(molecule, numStructures, configuration, boost::none);
+  auto result = DistanceGeometry::run(molecule, numStructures, configuration, boost::none);
 
   /* Convert the AngstromPositionss into PositionCollections */
   std::vector<
@@ -45,9 +45,9 @@ std::vector<
   const Molecule& molecule,
   const unsigned numStructures,
   const unsigned seed,
-  const distance_geometry::Configuration& configuration
+  const DistanceGeometry::Configuration& configuration
 ) {
-  auto result = distance_geometry::run(molecule, numStructures, configuration, seed);
+  auto result = DistanceGeometry::run(molecule, numStructures, configuration, seed);
 
   /* Convert the AngstromPositionss into PositionCollections */
   std::vector<
@@ -70,9 +70,9 @@ std::vector<
 
 outcome::result<Utils::PositionCollection> generateRandomConformation(
   const Molecule& molecule,
-  const distance_geometry::Configuration& configuration
+  const DistanceGeometry::Configuration& configuration
 ) {
-  auto result = distance_geometry::run(molecule, 1, configuration, boost::none);
+  auto result = DistanceGeometry::run(molecule, 1, configuration, boost::none);
 
   assert(result.size() == 1);
   auto& wrapperResult = result.front();
@@ -87,9 +87,9 @@ outcome::result<Utils::PositionCollection> generateRandomConformation(
 outcome::result<Utils::PositionCollection> generateConformation(
   const Molecule& molecule,
   const unsigned seed,
-  const distance_geometry::Configuration& configuration
+  const DistanceGeometry::Configuration& configuration
 ) {
-  auto result = distance_geometry::run(molecule, 1, configuration, seed);
+  auto result = DistanceGeometry::run(molecule, 1, configuration, seed);
 
   assert(result.size() == 1);
   auto& wrapperResult = result.front();
@@ -101,6 +101,6 @@ outcome::result<Utils::PositionCollection> generateConformation(
   return wrapperResult.as_failure();
 }
 
-} // namespace molassembler
+} // namespace Molassembler
 
 } // namespace Scine

@@ -7,25 +7,25 @@
 #include "molassembler/Version.h"
 
 void init_version(pybind11::module& m) {
-  using namespace Scine::molassembler;
+  using namespace Scine::Molassembler;
 
-  m.attr("__version__") = Scine::molassembler::version::fullVersion();
+  m.attr("__version__") = Scine::Molassembler::Version::full();
 
   auto versionSubmodule = m.def_submodule("version");
 
-  versionSubmodule.attr("MAJOR") = pybind11::int_(version::major);
-  versionSubmodule.attr("MINOR") = pybind11::int_(version::minor);
-  versionSubmodule.attr("PATCH") = pybind11::int_(version::patch);
+  versionSubmodule.attr("MAJOR") = pybind11::int_(Version::major);
+  versionSubmodule.attr("MINOR") = pybind11::int_(Version::minor);
+  versionSubmodule.attr("PATCH") = pybind11::int_(Version::patch);
 
   versionSubmodule.def(
     "major_minor",
-    &version::majorMinor,
+    &Version::majorMinor,
     "Returns a major.minor formatted string of the molassembler version"
   );
 
   versionSubmodule.def(
     "full_version",
-    &version::fullVersion,
+    &Version::full,
     "Returns a major.minor.patch formatted string of the molassembler version"
   );
 

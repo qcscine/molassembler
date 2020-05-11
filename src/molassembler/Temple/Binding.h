@@ -11,7 +11,7 @@
 #include <utility>
 
 namespace Scine {
-namespace temple {
+namespace Temple {
 
 /**
  * @brief Type that will own rvalues, reference lvalues
@@ -50,7 +50,7 @@ struct Binding {
   type value;
 };
 
-} // namespace temple
+} // namespace Temple
 } // namespace Scine
 
 #endif

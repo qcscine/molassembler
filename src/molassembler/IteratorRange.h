@@ -12,7 +12,7 @@
 #include <utility>
 
 namespace Scine {
-namespace molassembler {
+namespace Molassembler {
 
 /**
  * @brief Homogeneous pair of iterators with begin and end member fns
@@ -39,7 +39,7 @@ struct MASM_EXPORT IteratorRange {
   }
 };
 
-} // namespace molassembler
+} // namespace Molassembler
 } // namespace Scine
 
 #endif

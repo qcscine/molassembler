@@ -22,7 +22,7 @@ using ElementTypeCollection = std::vector<ElementType>;
 class AtomCollection;
 } // namespace Utils
 
-namespace molassembler {
+namespace Molassembler {
 
 // Forward declarations
 class Graph;
@@ -345,7 +345,7 @@ public:
    * default if the default argument for @p engine is chosen.
    * @endparblock
    */
-  void assignStereopermutatorRandomly(AtomIndex a, random::Engine& engine = randomnessEngine());
+  void assignStereopermutatorRandomly(AtomIndex a, Random::Engine& engine = randomnessEngine());
 
   /*!
    * @brief Assigns a bond stereopermutator to a random assignment
@@ -373,7 +373,7 @@ public:
    * default if the default argument for @p engine is chosen.
    * @endparblock
    */
-  void assignStereopermutatorRandomly(const BondIndex& e, random::Engine& engine = randomnessEngine());
+  void assignStereopermutatorRandomly(const BondIndex& e, Random::Engine& engine = randomnessEngine());
 
   /** @brief Transform the molecule to a canonical form. Invalidates all atom
    *   and bond indices.
@@ -543,7 +543,7 @@ public:
    */
   void setShapeAtAtom(
     AtomIndex a,
-    shapes::Shape shape
+    Shapes::Shape shape
   );
 //!@}
 
@@ -583,7 +583,7 @@ public:
    *   not a transition metal, and returns the first shape of appropriate
    *   size otherwise.
    */
-  boost::optional<shapes::Shape> inferShape(
+  boost::optional<Shapes::Shape> inferShape(
     AtomIndex index,
     const RankingInformation& ranking
   ) const;
@@ -803,13 +803,13 @@ private:
   friend class DirectedConformerGenerator;
 };
 
-} // namespace molassembler
+} // namespace Molassembler
 } // namespace Scine
 
 //! @brief Writes some information about a molecule to a stream
 MASM_EXPORT std::ostream& operator << (
   std::ostream& os,
-  const Scine::molassembler::Molecule& molecule
+  const Scine::Molassembler::Molecule& molecule
 );
 
 #endif

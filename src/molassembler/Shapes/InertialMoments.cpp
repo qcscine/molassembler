@@ -14,7 +14,7 @@
 #include "molassembler/Temple/Adaptors/Iota.h"
 
 namespace Scine {
-namespace shapes {
+namespace Shapes {
 namespace detail {
 //! Determine degeneracy of intertial moments
 unsigned degeneracy(const Eigen::Vector3d& inertialMoments) {
@@ -215,14 +215,14 @@ unsigned reorientAsymmetricTop(Eigen::Ref<InertialPositionsType> normalizedPosit
     }
   };
 
-  auto orderedAxisBest = temple::sort(
-    temple::map(
-      temple::iota<unsigned>(3),
+  auto orderedAxisBest = Temple::sort(
+    Temple::map(
+      Temple::iota<unsigned>(3),
       [&](const unsigned axisIndex) -> AxisBest {
         const Eigen::Vector3d axis = axes.col(axisIndex);
         AxisBest best {axisIndex};
         for(unsigned n = 2; n <= P; ++n) {
-          const double axisCSM = continuous::fixed::element(normalizedPositions, elements::Rotation::Cn(axis, n));
+          const double axisCSM = Continuous::Fixed::element(normalizedPositions, Elements::Rotation::Cn(axis, n));
           if(axisCSM < best.csm) {
             best.order = n;
             best.csm = axisCSM;
@@ -249,5 +249,5 @@ unsigned reorientAsymmetricTop(Eigen::Ref<InertialPositionsType> normalizedPosit
   return orderedAxisBest.front().order;
 }
 
-} // namespace shapes
+} // namespace Shapes
 } // namespace Scine

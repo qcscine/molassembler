@@ -18,7 +18,7 @@
 #include "boost/variant.hpp"
 
 namespace Scine {
-namespace molassembler {
+namespace Molassembler {
 
 namespace detail {
 
@@ -264,7 +264,7 @@ DirectedConformerGenerator::Impl::Impl(
   }
 
   // Sort the relevant bonds and shrink
-  temple::inplace::sort(relevantBonds_);
+  Temple::inplace::sort(relevantBonds_);
   relevantBonds_.shrink_to_fit();
 
   /* In case there are no bonds to consider, then we're done. No other work
@@ -282,7 +282,7 @@ DirectedConformerGenerator::Impl::Impl(
   }
 
   // Collect the bounds on each stereopermutator's permutations for the trie
-  auto bounds = temple::map(
+  auto bounds = Temple::map(
     relevantBonds_,
     [&](const BondIndex& bond) -> std::uint8_t {
       auto stereoOption = molecule_.stereopermutators().option(bond);
@@ -332,9 +332,9 @@ const Molecule& DirectedConformerGenerator::Impl::conformationMolecule(const Dec
 outcome::result<Utils::PositionCollection>
 DirectedConformerGenerator::Impl::generateRandomConformation(
   const DecisionList& decisionList,
-  const distance_geometry::Configuration& configuration
+  const DistanceGeometry::Configuration& configuration
 ) {
-  return Scine::molassembler::generateRandomConformation(
+  return Scine::Molassembler::generateRandomConformation(
     conformationMolecule(decisionList),
     configuration
   );
@@ -344,9 +344,9 @@ outcome::result<Utils::PositionCollection>
 DirectedConformerGenerator::Impl::generateConformation(
   const DecisionList& decisionList,
   const unsigned seed,
-  const distance_geometry::Configuration& configuration
+  const DistanceGeometry::Configuration& configuration
 ) {
-  return Scine::molassembler::generateConformation(
+  return Scine::Molassembler::generateConformation(
     conformationMolecule(decisionList),
     seed,
     configuration
@@ -359,7 +359,7 @@ DirectedConformerGenerator::Impl::getDecisionList(
   const BondStereopermutator::FittingMode mode
 ) {
   if(
-    !temple::all_of(
+    !Temple::all_of(
       molecule_.graph().atoms(),
       [&](const AtomIndex i) -> bool {
         return atomCollection.getElement(i) == molecule_.graph().elementType(i);
@@ -380,7 +380,7 @@ DirectedConformerGenerator::Impl::getDecisionList(
   AngstromPositions angstromPositions {positions};
 
   if(
-    !temple::all_of(
+    !Temple::all_of(
       relevantBonds_,
       [&](const BondIndex& bondIndex) -> bool {
         const auto& permutators = molecule_.pImpl_->stereopermutators_;
@@ -395,7 +395,7 @@ DirectedConformerGenerator::Impl::getDecisionList(
     throw std::logic_error("Underlying molecule permutator preconditions unmet!");
   }
 
-  return temple::map(
+  return Temple::map(
     relevantBonds_,
     [&](const BondIndex& bondIndex) -> std::uint8_t {
       auto firstAtom = molecule_.pImpl_->stereopermutators_.option(bondIndex.first);
@@ -410,5 +410,5 @@ DirectedConformerGenerator::Impl::getDecisionList(
   );
 }
 
-} // namespace molassembler
+} // namespace Molassembler
 } // namespace Scine

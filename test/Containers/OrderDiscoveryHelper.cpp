@@ -11,7 +11,7 @@
 #include "molassembler/Temple/Stringify.h"
 
 using namespace Scine;
-using namespace molassembler;
+using namespace Molassembler;
 using namespace std::string_literals;
 
 #include <set>
@@ -22,20 +22,20 @@ std::string showDiscoveryState(
 ) {
   return (
     "Sets: "s
-    + temple::condense(
-      temple::map(
+    + Temple::condense(
+      Temple::map(
         orderingHelper.getSets(),
         [](const auto& set) -> std::string {
-          return "{"s + temple::condense(set) + "}"s;
+          return "{"s + Temple::condense(set) + "}"s;
         }
       )
     )
     + ", Undecided"s
-    + temple::condense(
-      temple::map(
+    + Temple::condense(
+      Temple::map(
         orderingHelper.getUndecidedSets(),
         [](const auto& set) -> std::string {
-          return "{"s + temple::condense(set) + "}"s;
+          return "{"s + Temple::condense(set) + "}"s;
         }
       )
     )

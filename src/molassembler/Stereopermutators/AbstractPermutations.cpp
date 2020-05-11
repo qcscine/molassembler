@@ -11,8 +11,8 @@
 #include <cassert>
 
 namespace Scine {
-namespace molassembler {
-namespace stereopermutators {
+namespace Molassembler {
+namespace Stereopermutators {
 
 RankingInformation::RankedSitesType Abstract::canonicalize(
   RankingInformation::RankedSitesType rankedSites
@@ -47,13 +47,13 @@ std::vector<char> Abstract::transferToSymbolicCharacters(
   return characters;
 }
 
-stereopermutation::Stereopermutation::OrderedLinks
+Stereopermutations::Stereopermutation::OrderedLinks
 Abstract::selfReferentialTransform(
   const std::vector<RankingInformation::Link>& rankingLinks,
   const RankingInformation::RankedSitesType& canonicalSites
 ) {
   if(
-    temple::any_of(
+    Temple::any_of(
       rankingLinks,
       [](auto&& l) { return l.sites.first == l.sites.second; }
     )
@@ -61,8 +61,8 @@ Abstract::selfReferentialTransform(
     throw std::out_of_range("Links are invalid");
   }
 
-  auto getRankedVertex = [&canonicalSites](const SiteIndex site) -> shapes::Vertex {
-    shapes::Vertex vertex(0);
+  auto getRankedVertex = [&canonicalSites](const SiteIndex site) -> Shapes::Vertex {
+    Shapes::Vertex vertex(0);
     for(const auto& equalSitesSet : canonicalSites) {
       for(const SiteIndex& rankedSiteIndex : equalSitesSet) {
         if(rankedSiteIndex == site) {
@@ -76,10 +76,10 @@ Abstract::selfReferentialTransform(
     throw std::logic_error("Site index not found in ranked sites");
   };
 
-  return temple::sort(
-    temple::map(
+  return Temple::sort(
+    Temple::map(
       rankingLinks,
-      [&](const auto& link) -> stereopermutation::Stereopermutation::Link {
+      [&](const auto& link) -> Stereopermutations::Stereopermutation::Link {
         auto firstVertex = getRankedVertex(link.sites.first);
         auto secondVertex = getRankedVertex(link.sites.second);
 
@@ -100,7 +100,7 @@ Abstract::selfReferentialTransform(
 std::vector<char> Abstract::makeStereopermutationCharacters(
   const RankingInformation::RankedSitesType& canonicalSites,
   const std::vector<char>& canonicalStereopermutationCharacters,
-  const temple::StrongIndexFlatMap<shapes::Vertex, SiteIndex>& sitesAtShapeVertices
+  const Temple::StrongIndexFlatMap<Shapes::Vertex, SiteIndex>& sitesAtShapeVertices
 ) {
   // Replace the site indices by their new ranking characters
   std::vector<SiteIndex> flattenedIndices;
@@ -133,13 +133,13 @@ std::vector<char> Abstract::makeStereopermutationCharacters(
 
 Abstract::Abstract(
   const RankingInformation& ranking,
-  const shapes::Shape shape
+  const Shapes::Shape shape
 ) : canonicalSites(canonicalize(ranking.siteRanking)),
     symbolicCharacters(transferToSymbolicCharacters(canonicalSites)),
     selfReferentialLinks(selfReferentialTransform(ranking.links, canonicalSites)),
     permutations(
-      stereopermutation::uniques(
-        stereopermutation::Stereopermutation {
+      Stereopermutations::uniques(
+        Stereopermutations::Stereopermutation {
           symbolicCharacters,
           selfReferentialLinks
         },
@@ -149,6 +149,6 @@ Abstract::Abstract(
     )
 {}
 
-} // namespace stereopermutators
-} // namespace molassembler
+} // namespace Stereopermutators
+} // namespace Molassembler
 } // namespace Scine

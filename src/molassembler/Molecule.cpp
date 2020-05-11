@@ -8,7 +8,7 @@
 #include "molassembler/RankingInformation.h"
 
 namespace Scine {
-namespace molassembler {
+namespace Molassembler {
 
 Utils::AtomCollection Molecule::applyCanonicalizationMap(
   const std::vector<AtomIndex>& canonicalizationIndexMap,
@@ -117,14 +117,14 @@ void Molecule::assignStereopermutator(
 
 void Molecule::assignStereopermutatorRandomly(
   const AtomIndex a,
-  random::Engine& engine
+  Random::Engine& engine
 ) {
   pImpl_->assignStereopermutatorRandomly(a, engine);
 }
 
 void Molecule::assignStereopermutatorRandomly(
   const BondIndex& e,
-  random::Engine& engine
+  Random::Engine& engine
 ) {
   pImpl_->assignStereopermutatorRandomly(e, engine);
 }
@@ -169,7 +169,7 @@ void Molecule::setElementType(
 
 void Molecule::setShapeAtAtom(
   const AtomIndex a,
-  const shapes::Shape shape
+  const Shapes::Shape shape
 ) {
   pImpl_->setShapeAtAtom(a, shape);
 }
@@ -180,7 +180,7 @@ boost::optional<AtomEnvironmentComponents> Molecule::canonicalComponents() const
   return pImpl_->canonicalComponents();
 }
 
-boost::optional<shapes::Shape> Molecule::inferShape(
+boost::optional<Shapes::Shape> Molecule::inferShape(
   const AtomIndex index,
   const RankingInformation& ranking
 ) const {
@@ -251,12 +251,12 @@ bool Molecule::operator != (const Molecule& other) const {
 }
 
 
-} // namespace molassembler
+} // namespace Molassembler
 } // namespace Scine
 
 std::ostream& operator << (
   std::ostream& os,
-  const Scine::molassembler::Molecule& molecule
+  const Scine::Molassembler::Molecule& molecule
 ) {
   os << molecule.str();
   return os;

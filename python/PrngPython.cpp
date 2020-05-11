@@ -7,9 +7,9 @@
 #include "molassembler/Prng.h"
 
 void init_random_engine(pybind11::module& m) {
-  using namespace Scine::molassembler;
+  using namespace Scine::Molassembler;
 
-  pybind11::class_<random::Engine> engine(
+  pybind11::class_<Random::Engine> engine(
     m,
     "PRNG",
     R"delim(
@@ -21,7 +21,7 @@ void init_random_engine(pybind11::module& m) {
 
   engine.def(
     "seed",
-    pybind11::overload_cast<int>(&random::Engine::seed),
+    pybind11::overload_cast<int>(&Random::Engine::seed),
     pybind11::arg("seed_number"),
     "Seed the PRNG with state"
   );

@@ -19,7 +19,7 @@
 #include <vector>
 
 namespace Scine {
-namespace molassembler {
+namespace Molassembler {
 
 class AtomStereopermutator;
 class BondStereopermutator;
@@ -315,6 +315,6 @@ private:
   std::unique_ptr<Impl> impl_;
 };
 
-} // namespace molassembler
+} // namespace Molassembler
 } // namespace Scine
 #endif

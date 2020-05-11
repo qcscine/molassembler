@@ -14,8 +14,8 @@
 #include <fenv.h>
 
 namespace Scine {
-namespace molassembler {
-namespace distance_geometry {
+namespace Molassembler {
+namespace DistanceGeometry {
 
 struct LU {
   Eigen::Matrix4d L = Eigen::Matrix4d::Zero();
@@ -493,7 +493,7 @@ bool foldCallableArgsPairLogicalOr(
    * The CallableArgPair is created in limitAnyOfHelper and consists of a
    * LimitTester and a part of the arguments needed to call it.
    */
-  return temple::invoke(a.first, std::tuple_cat(args, std::tie(a.second)));
+  return Temple::invoke(a.first, std::tuple_cat(args, std::tie(a.second)));
 }
 
 // C++17 fold
@@ -628,15 +628,15 @@ TriCheckResult triCheck(
 
   /* We set u3 and l3 from the minimum and maximum of the calculated bounds */
   result.klUpperBound = std::min(
-    temple::min(upperTriangleBounds), // min(U[i, j, k])
-    temple::min(upperTetrangleBounds) // min(U[i, j, k, l])
+    Temple::min(upperTriangleBounds), // min(U[i, j, k])
+    Temple::min(upperTetrangleBounds) // min(U[i, j, k, l])
   );
 
   result.klLowerBound = std::max({
     0.0, // L[0] := 0
-    temple::max(lowerTriangleBounds), // min(L[i, j, k])
-    temple::max(firstLowerTetrangleBounds), // min(L[i, j, k, l]) of first pattern
-    temple::max(secondLowerTetrangleBounds) // min(L[i, j, k, l]) of second pattern
+    Temple::max(lowerTriangleBounds), // min(L[i, j, k])
+    Temple::max(firstLowerTetrangleBounds), // min(L[i, j, k, l]) of first pattern
+    Temple::max(secondLowerTetrangleBounds) // min(L[i, j, k, l]) of second pattern
   });
 
   /* Now we determine u_col and l_col. These are "true whenever the triangle
@@ -657,7 +657,7 @@ TriCheckResult triCheck(
 
   const auto lowerArgs = std::tie(lower, upper, result.klLowerBound);
   result.l_col = (
-    temple::invoke(zeroBoundTest, lowerArgs)
+    Temple::invoke(zeroBoundTest, lowerArgs)
     || limitAnyOf<LowerTriangleIndexSets, false>(lowerArgs, lowerTriangleBounds)
     || limitAnyOf<FirstLowerTetrangleIndexSets, false>(lowerArgs, firstLowerTetrangleBounds)
     || limitAnyOf<SecondLowerTetrangleIndexSets, false>(lowerArgs, secondLowerTetrangleBounds)
@@ -812,9 +812,9 @@ double upperTetrangleLimit(
    * an overload set.
    */
   return std::max({
-    temple::invoke(CMUpper, m::fetchAppropriateBounds(bounds, b, m::l, m::u, m::u, m::u, m::u)),
-    temple::invoke(CMUpper, m::fetchAppropriateBounds(bounds, b, m::u, m::l, m::l, m::u, m::u)),
-    temple::invoke(CMUpper, m::fetchAppropriateBounds(bounds, b, m::u, m::u, m::u, m::l, m::l))
+    Temple::invoke(CMUpper, m::fetchAppropriateBounds(bounds, b, m::l, m::u, m::u, m::u, m::u)),
+    Temple::invoke(CMUpper, m::fetchAppropriateBounds(bounds, b, m::u, m::l, m::l, m::u, m::u)),
+    Temple::invoke(CMUpper, m::fetchAppropriateBounds(bounds, b, m::u, m::u, m::u, m::l, m::l))
   });
 }
 
@@ -824,15 +824,15 @@ double lowerTetrangleLimit(
 ) {
   // See upperTetrangleLimit to explain the matrix below
   return std::min({
-    temple::invoke(CMLower, m::fetchAppropriateBounds(bounds, b, m::u, m::u, m::l, m::l, m::u)),
-    temple::invoke(CMLower, m::fetchAppropriateBounds(bounds, b, m::u, m::l, m::u, m::u, m::l)),
-    temple::invoke(CMLower, m::fetchAppropriateBounds(bounds, b, m::l, m::l, m::u, m::l, m::u)),
-    temple::invoke(CMLower, m::fetchAppropriateBounds(bounds, b, m::l, m::u, m::l, m::u, m::l))
+    Temple::invoke(CMLower, m::fetchAppropriateBounds(bounds, b, m::u, m::u, m::l, m::l, m::u)),
+    Temple::invoke(CMLower, m::fetchAppropriateBounds(bounds, b, m::u, m::l, m::u, m::u, m::l)),
+    Temple::invoke(CMLower, m::fetchAppropriateBounds(bounds, b, m::l, m::l, m::u, m::l, m::u)),
+    Temple::invoke(CMLower, m::fetchAppropriateBounds(bounds, b, m::l, m::u, m::l, m::u, m::l))
   });
 }
 
 struct TetrangleLimits {
-  distance_geometry::ValueBounds klLimits;
+  DistanceGeometry::ValueBounds klLimits;
   bool boundViolation;
 
   TetrangleLimits(
@@ -933,6 +933,6 @@ unsigned tetrangleSmooth(Eigen::Ref<Eigen::MatrixXd> bounds) {
   return iterations;
 }
 
-} // namespace distance_geometry
-} // namespace molassembler
+} // namespace DistanceGeometry
+} // namespace Molassembler
 } // namespace Scine

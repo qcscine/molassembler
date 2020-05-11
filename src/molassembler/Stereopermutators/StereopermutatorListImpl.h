@@ -17,7 +17,7 @@
 #include <unordered_map>
 
 namespace Scine {
-namespace molassembler {
+namespace Molassembler {
 
 struct StereopermutatorList::Impl {
   using AtomMapType = std::unordered_map<AtomIndex, AtomStereopermutator>;
@@ -221,6 +221,6 @@ struct StereopermutatorList::Impl {
   BondMapType bondStereopermutators;
 };
 
-} // namespace molassembler
+} // namespace Molassembler
 } // namespace Scine
 #endif

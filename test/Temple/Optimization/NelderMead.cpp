@@ -35,7 +35,7 @@ BOOST_AUTO_TEST_CASE(NelderMead) {
     }
   };
 
-  auto optimizationResult = temple::NelderMead<>::minimize(
+  auto optimizationResult = Temple::NelderMead<>::minimize(
     simplexVertices,
     NelderMeadHimmelblau {},
     NelderMeadChecker {}

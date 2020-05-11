@@ -12,8 +12,8 @@
 #include "molassembler/Temple/constexpr/TupleType.h"
 
 namespace Scine {
-namespace temple {
-namespace tuples {
+namespace Temple {
+namespace Tuples {
 namespace detail {
 
 /*!
@@ -80,8 +80,8 @@ template<
   );
 }
 
-} // namespace tuples
-} // namespace temple
+} // namespace Tuples
+} // namespace Temple
 } // namespace Scine
 
 #endif

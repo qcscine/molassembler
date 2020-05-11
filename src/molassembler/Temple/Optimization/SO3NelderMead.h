@@ -15,7 +15,7 @@
 #include "molassembler/Temple/Functional.h"
 
 namespace Scine {
-namespace temple {
+namespace Temple {
 
 /**
  * @brief Nelder-Mead optimization on SO(3) manifold
@@ -152,8 +152,8 @@ struct SO3NelderMead {
       do {
         R = Manifold::randomRotation();
       } while(
-        temple::any_of(
-          temple::iota<unsigned>(i),
+        Temple::any_of(
+          Temple::iota<unsigned>(i),
           [&](const unsigned j) -> bool {
             return Manifold::distanceSquared(R, parameters.at(j)) >= ballRadiusSquared;
           }
@@ -177,7 +177,7 @@ struct SO3NelderMead {
   static FloatType valueStandardDeviation(const std::vector<IndexValuePair>& sortedPairs) {
     const unsigned V = sortedPairs.size();
     // Calculate standard deviation of values
-    const FloatType average = temple::accumulate(
+    const FloatType average = Temple::accumulate(
       sortedPairs,
       FloatType {0},
       [](const FloatType carry, const IndexValuePair& pair) -> FloatType {
@@ -185,7 +185,7 @@ struct SO3NelderMead {
       }
     ) / V;
     return std::sqrt(
-      temple::accumulate(
+      Temple::accumulate(
         sortedPairs,
         FloatType {0},
         [average](const FloatType carry, const IndexValuePair& pair) -> FloatType {
@@ -214,7 +214,7 @@ struct SO3NelderMead {
       value.value = function(vertex);
       // NOTE: No need to worry about ball radius in shrink operation
     }
-    temple::inplace::sort(values);
+    Temple::inplace::sort(values);
   }
 
   static void replaceWorst(
@@ -266,8 +266,8 @@ struct SO3NelderMead {
      */
     constexpr FloatType ballRadiusSquared = M_PI * M_PI;
     if(
-      temple::any_of(
-        temple::adaptors::allPairs(temple::iota<unsigned>(4)),
+      Temple::any_of(
+        Temple::adaptors::allPairs(Temple::iota<unsigned>(4)),
         [&points](const unsigned i, const unsigned j) -> bool {
           return Manifold::distanceSquared(points.at(i), points.at(j)) >= ballRadiusSquared;
         }
@@ -279,9 +279,9 @@ struct SO3NelderMead {
     }
 
     // Sort the vertex values
-    std::vector<IndexValuePair> values = temple::sort(
-      temple::map(
-        temple::iota<unsigned>(4),
+    std::vector<IndexValuePair> values = Temple::sort(
+      Temple::map(
+        Temple::iota<unsigned>(4),
         [&](const unsigned i) -> IndexValuePair {
           return {
             i,
@@ -375,7 +375,7 @@ struct SO3NelderMead {
   }
 };
 
-} // namespace temple
+} // namespace Temple
 } // namespace Scine
 
 #endif

@@ -7,7 +7,7 @@
 #include "molassembler/Options.h"
 
 void init_options(pybind11::module& m) {
-  using namespace Scine::molassembler;
+  using namespace Scine::Molassembler;
 
   /* Temperature regime */
   pybind11::enum_<TemperatureRegime>(

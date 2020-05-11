@@ -20,7 +20,7 @@
 
 int main(int argc, char* argv[]) {
   using namespace Scine;
-  using namespace molassembler;
+  using namespace Molassembler;
 
   // Set up option parsing
   boost::program_options::options_description options_description("Recognized options");
@@ -50,7 +50,7 @@ int main(int argc, char* argv[]) {
     // This can throw in lots of cases
     auto readData = Utils::ChemicalFileHandler::read(filepath.string());
 
-    auto shuffledData = io::shuffle(readData.first, readData.second);
+    auto shuffledData = IO::shuffle(readData.first, readData.second);
 
     Utils::ChemicalFileHandler::write(
       filepath.stem().string() + "isomorphism_.mol",

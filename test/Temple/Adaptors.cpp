@@ -24,18 +24,18 @@ BOOST_AUTO_TEST_CASE(pairAdaptorTests) {
   const std::vector<unsigned> i {5, 3, 9, 11};
   const std::vector<unsigned> j {3, 4};
 
-  auto adjacents = temple::adaptors::sequentialPairs(i);
+  auto adjacents = Temple::adaptors::sequentialPairs(i);
 
   BOOST_CHECK(adjacents.size() == 3);
   BOOST_CHECK(iteratorDistance(adjacents) == adjacents.size());
 
   BOOST_CHECK(
-    temple::sum(
-      temple::adaptors::transform(adjacents, std::plus<>())
+    Temple::sum(
+      Temple::adaptors::transform(adjacents, std::plus<>())
     ) == 8 + 12 + 20
   );
 
-  auto singlePairs = temple::adaptors::allPairs(i);
+  auto singlePairs = Temple::adaptors::allPairs(i);
 
   BOOST_CHECK(singlePairs.size() == 6);
   BOOST_CHECK(
@@ -43,12 +43,12 @@ BOOST_AUTO_TEST_CASE(pairAdaptorTests) {
   );
 
   BOOST_CHECK(
-    temple::sum(
-      temple::adaptors::transform(singlePairs, std::plus<>())
+    Temple::sum(
+      Temple::adaptors::transform(singlePairs, std::plus<>())
     ) == 8 + 14 + 16 + 12 + 14 + 20
   );
 
-  auto twoPairs = temple::adaptors::allPairs(i, j);
+  auto twoPairs = Temple::adaptors::allPairs(i, j);
 
   BOOST_CHECK(twoPairs.size() == 8);
   BOOST_CHECK(
@@ -56,36 +56,36 @@ BOOST_AUTO_TEST_CASE(pairAdaptorTests) {
   );
 
   BOOST_CHECK(
-    temple::sum(
-      temple::adaptors::transform(twoPairs, std::plus<>())
+    Temple::sum(
+      Temple::adaptors::transform(twoPairs, std::plus<>())
     ) == 8 + 9 + 6 + 7 + 12 + 13 + 14 + 15
   );
 }
 
 BOOST_AUTO_TEST_CASE(iotaAdaptorTests) {
-  auto a = temple::adaptors::range(5U);
+  auto a = Temple::adaptors::range(5U);
 
   BOOST_CHECK(a.size() == 5);
   BOOST_CHECK(iteratorDistance(a) == a.size());
-  BOOST_CHECK(temple::sum(a) == 10U);
+  BOOST_CHECK(Temple::sum(a) == 10U);
 
-  auto b = temple::adaptors::range(4U, 7U);
+  auto b = Temple::adaptors::range(4U, 7U);
 
   BOOST_CHECK(b.size() == 3);
   BOOST_CHECK(iteratorDistance(b) == b.size());
-  BOOST_CHECK(temple::sum(b) == 15U);
+  BOOST_CHECK(Temple::sum(b) == 15U);
 }
 
 BOOST_AUTO_TEST_CASE(zipAdaptorTests) {
   const std::vector<unsigned> i {5, 3, 9, 11}, j {3, 4};
 
-  auto zipRange = temple::adaptors::zip(i, j);
+  auto zipRange = Temple::adaptors::zip(i, j);
 
   BOOST_CHECK(zipRange.size() == 2);
   BOOST_CHECK(iteratorDistance(zipRange) == zipRange.size());
   BOOST_CHECK(
-    temple::sum(
-      temple::adaptors::transform(zipRange, std::plus<>())
+    Temple::sum(
+      Temple::adaptors::transform(zipRange, std::plus<>())
     ) == 15U
   );
 }
@@ -93,7 +93,7 @@ BOOST_AUTO_TEST_CASE(zipAdaptorTests) {
 BOOST_AUTO_TEST_CASE(transformAdaptorTests) {
   const std::vector<unsigned> i {5, 3, 9, 11};
 
-  auto transformRange = temple::adaptors::transform(
+  auto transformRange = Temple::adaptors::transform(
     i,
     [](unsigned x) -> int {return static_cast<int>(x) - 10;}
   );
@@ -101,7 +101,7 @@ BOOST_AUTO_TEST_CASE(transformAdaptorTests) {
   BOOST_CHECK(transformRange.size() == 4);
   BOOST_CHECK(iteratorDistance(transformRange) == transformRange.size());
   BOOST_CHECK(
-    temple::sum(transformRange) == static_cast<int>(temple::sum(i)) - 4 * 10
+    Temple::sum(transformRange) == static_cast<int>(Temple::sum(i)) - 4 * 10
   );
 }
 
@@ -109,7 +109,7 @@ BOOST_AUTO_TEST_CASE( enumerateTests) {
   std::vector<unsigned> testVec {5, 2, 3, 4};
 
   bool pass = true;
-  for(const auto& enumPair : temple::adaptors::enumerate(testVec)) {
+  for(const auto& enumPair : Temple::adaptors::enumerate(testVec)) {
     if(testVec.at(enumPair.index) != enumPair.value) {
       pass = false;
       break;
@@ -118,9 +118,9 @@ BOOST_AUTO_TEST_CASE( enumerateTests) {
 
   BOOST_CHECK(pass);
 
-  auto weirdSum = temple::sum(
-    temple::map(
-      temple::adaptors::enumerate(testVec),
+  auto weirdSum = Temple::sum(
+    Temple::map(
+      Temple::adaptors::enumerate(testVec),
       [](const auto& enumPair) -> unsigned {
         return enumPair.index + enumPair.value;
       }
@@ -132,25 +132,25 @@ BOOST_AUTO_TEST_CASE( enumerateTests) {
 
 
 BOOST_AUTO_TEST_CASE(compoundAdaptorOwnership) {
-  auto pairsOfRange = temple::adaptors::allPairs(
-    temple::adaptors::range(4U)
+  auto pairsOfRange = Temple::adaptors::allPairs(
+    Temple::adaptors::range(4U)
   );
 
-  auto selfOwningRange = temple::adaptors::range(4U);
-  auto referenceOwningPairs = temple::adaptors::allPairs(selfOwningRange);
+  auto selfOwningRange = Temple::adaptors::range(4U);
+  auto referenceOwningPairs = Temple::adaptors::allPairs(selfOwningRange);
 
   auto checkPairs = [](const auto& rangeObject) -> void {
     BOOST_CHECK(rangeObject.size() == 6);
     BOOST_CHECK(iteratorDistance(rangeObject) == rangeObject.size());
     BOOST_CHECK(
-      temple::invoke(std::plus<>(), *std::begin(rangeObject)) == 1U
+      Temple::invoke(std::plus<>(), *std::begin(rangeObject)) == 1U
     );
 
     BOOST_CHECK(
-      temple::sum(
-        temple::adaptors::transform(
-          temple::adaptors::allPairs(
-            temple::adaptors::range(4U)
+      Temple::sum(
+        Temple::adaptors::transform(
+          Temple::adaptors::allPairs(
+            Temple::adaptors::range(4U)
           ),
           [](const unsigned i, const unsigned j) -> unsigned {
             return i * j;
@@ -165,12 +165,12 @@ BOOST_AUTO_TEST_CASE(compoundAdaptorOwnership) {
 
   std::vector<unsigned> i {1, 4, 9}, j {5, 2};
 
-  auto pairFromTwoReferences = temple::adaptors::allPairs(i, j);
-  auto pairFromTwoRValues = temple::adaptors::allPairs(
+  auto pairFromTwoReferences = Temple::adaptors::allPairs(i, j);
+  auto pairFromTwoRValues = Temple::adaptors::allPairs(
     std::vector<unsigned> {1, 4, 9},
     std::vector<unsigned> {5, 2}
   );
-  auto pairFromMixed = temple::adaptors::allPairs(
+  auto pairFromMixed = Temple::adaptors::allPairs(
     std::vector<unsigned> {1, 4, 9},
     j
   );
@@ -179,12 +179,12 @@ BOOST_AUTO_TEST_CASE(compoundAdaptorOwnership) {
     BOOST_CHECK(rangeObject.size() == 6);
     BOOST_CHECK(iteratorDistance(rangeObject) == rangeObject.size());
     BOOST_CHECK(
-      temple::invoke(std::plus<>(), *std::begin(rangeObject)) == 6
+      Temple::invoke(std::plus<>(), *std::begin(rangeObject)) == 6
     );
 
     BOOST_CHECK(
-      temple::sum(
-        temple::adaptors::transform(
+      Temple::sum(
+        Temple::adaptors::transform(
           rangeObject,
           std::plus<>()
         )
@@ -217,19 +217,19 @@ BOOST_AUTO_TEST_CASE(adaptorShortRanges) {
   };
 
   checkRangeLength(
-    temple::adaptors::allPairs(std::vector<unsigned> {4}),
+    Temple::adaptors::allPairs(std::vector<unsigned> {4}),
     0,
     "single-element all-pairs"
   );
 
   checkRangeLength(
-    temple::adaptors::allPairs(std::vector<unsigned> {}),
+    Temple::adaptors::allPairs(std::vector<unsigned> {}),
     0,
     "no-element all-pairs"
   );
 
   checkRangeLength(
-    temple::adaptors::allPairs(
+    Temple::adaptors::allPairs(
       std::vector<unsigned> {4},
       std::vector<unsigned> {6}
     ),
@@ -238,7 +238,7 @@ BOOST_AUTO_TEST_CASE(adaptorShortRanges) {
   );
 
   checkRangeLength(
-    temple::adaptors::allPairs(
+    Temple::adaptors::allPairs(
       std::vector<unsigned> {},
       std::vector<unsigned> {6}
     ),
@@ -247,7 +247,7 @@ BOOST_AUTO_TEST_CASE(adaptorShortRanges) {
   );
 
   checkRangeLength(
-    temple::adaptors::allPairs(
+    Temple::adaptors::allPairs(
       std::vector<unsigned> {},
       std::vector<unsigned> {}
     ),
@@ -256,13 +256,13 @@ BOOST_AUTO_TEST_CASE(adaptorShortRanges) {
   );
 
   checkRangeLength(
-    temple::adaptors::sequentialPairs(std::vector<unsigned> {4}),
+    Temple::adaptors::sequentialPairs(std::vector<unsigned> {4}),
     0,
     "one-element sequential pairs"
   );
 
   checkRangeLength(
-    temple::adaptors::sequentialPairs(std::vector<unsigned> {}),
+    Temple::adaptors::sequentialPairs(std::vector<unsigned> {}),
     0,
     "no-element sequential pairs"
   );
@@ -288,45 +288,45 @@ void checkRangeLengthTempl(
 
 BOOST_AUTO_TEST_CASE(frameAdaptorTest) {
   checkRangeLengthTempl(
-    temple::adaptors::cyclicFrame<1>(std::vector<unsigned> {}),
+    Temple::adaptors::cyclicFrame<1>(std::vector<unsigned> {}),
     0,
     "no-element cyclic frame of size 1"
   );
 
   checkRangeLengthTempl(
-    temple::adaptors::cyclicFrame<1>(std::vector<unsigned> {1}),
+    Temple::adaptors::cyclicFrame<1>(std::vector<unsigned> {1}),
     1,
     "single-element cyclic frame of size 1"
   );
 
   checkRangeLengthTempl(
-    temple::adaptors::cyclicFrame<1>(std::vector<unsigned> {1, 2}),
+    Temple::adaptors::cyclicFrame<1>(std::vector<unsigned> {1, 2}),
     2,
     "two-element cyclic frame of size 1"
   );
 
   checkRangeLengthTempl(
-    temple::adaptors::cyclicFrame<2>(std::vector<unsigned> {1, 2}),
+    Temple::adaptors::cyclicFrame<2>(std::vector<unsigned> {1, 2}),
     2,
     "two-element cyclic frame of size 2"
   );
 
   checkRangeLengthTempl(
-    temple::adaptors::cyclicFrame<2>(std::vector<unsigned> {1, 2, 3}),
+    Temple::adaptors::cyclicFrame<2>(std::vector<unsigned> {1, 2, 3}),
     3,
     "three-element cyclic frame of size 2"
   );
 
   checkRangeLengthTempl(
-    temple::adaptors::cyclicFrame<4>(std::vector<unsigned> {1, 2, 3}),
+    Temple::adaptors::cyclicFrame<4>(std::vector<unsigned> {1, 2, 3}),
     0,
     "three-element cyclic frame of size 4"
   );
 
   BOOST_CHECK(
-    temple::sum(
-      temple::map(
-        temple::adaptors::cyclicFrame<2>(std::vector<unsigned> {1, 2, 3}),
+    Temple::sum(
+      Temple::map(
+        Temple::adaptors::cyclicFrame<2>(std::vector<unsigned> {1, 2, 3}),
         [](unsigned i, unsigned j) -> unsigned {
           return i * j;
         }
@@ -337,7 +337,7 @@ BOOST_AUTO_TEST_CASE(frameAdaptorTest) {
 
 BOOST_AUTO_TEST_CASE(filterAdaptorTests) {
   const auto filterDistance = iteratorDistance(
-    temple::adaptors::filter(
+    Temple::adaptors::filter(
       std::vector<unsigned> {1, 2, 3},
       [](const unsigned x) -> bool {return x % 2 == 0;}
     )
@@ -349,10 +349,10 @@ BOOST_AUTO_TEST_CASE(filterAdaptorTests) {
   );
 
   // BOOST_CHECK_MESSAGE(
-  //   temple::sum(
-  //     temple::map(
-  //       temple::adaptors::allPairs(
-  //         temple::adaptors::filter(std::vector<unsigned> {1, 2, 3, 4, 5}, [](const unsigned x) -> bool {return x < 4;})
+  //   Temple::sum(
+  //     Temple::map(
+  //       Temple::adaptors::allPairs(
+  //         Temple::adaptors::filter(std::vector<unsigned> {1, 2, 3, 4, 5}, [](const unsigned x) -> bool {return x < 4;})
   //       ),
   //       std::plus<>{}
   //     )

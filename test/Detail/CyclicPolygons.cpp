@@ -18,7 +18,7 @@
 using namespace Scine;
 using namespace std::string_literals;
 
-extern temple::Generator<> generator;
+extern Temple::Generator<> generator;
 
 void writeAngleAnalysisFiles(
   const std::vector<double>& edgeLengths,
@@ -26,7 +26,7 @@ void writeAngleAnalysisFiles(
 ) {
   using namespace cyclic_polygons;
 
-  const double longestEdge = temple::max(edgeLengths);
+  const double longestEdge = Temple::max(edgeLengths);
   const double minR = longestEdge / 2 + 1e-10;
   const double lowerBound = minR;
   const double upperBound = std::max(
@@ -36,7 +36,7 @@ void writeAngleAnalysisFiles(
 
   double rootGuess = detail::regularCircumradius(
     edgeLengths.size(),
-    std::max(temple::average(edgeLengths), minR)
+    std::max(Temple::average(edgeLengths), minR)
   );
 
   if(rootGuess < lowerBound) {
@@ -89,9 +89,9 @@ BOOST_AUTO_TEST_CASE(centralAngleRootFinding) {
 
   for(unsigned nSides = 3; nSides < 10; ++nSides) {
     for(unsigned testNumber = 0; testNumber < nTests; testNumber++) {
-      std::vector<double> edgeLengths = temple::random::getN<double>(lowerLimit, upperLimit, nSides, generator.engine);
+      std::vector<double> edgeLengths = Temple::Random::getN<double>(lowerLimit, upperLimit, nSides, generator.engine);
       while(!cyclic_polygons::exists(edgeLengths)) {
-        edgeLengths = temple::random::getN<double>(lowerLimit, upperLimit, nSides, generator.engine);
+        edgeLengths = Temple::Random::getN<double>(lowerLimit, upperLimit, nSides, generator.engine);
       }
 
       double circumradius = std::nan("");
@@ -116,7 +116,7 @@ BOOST_AUTO_TEST_CASE(centralAngleRootFinding) {
         deviation = cyclic_polygons::detail::circumcenterOutside::centralAnglesDeviation(
           circumradius,
           edgeLengths,
-          temple::max(edgeLengths)
+          Temple::max(edgeLengths)
         );
       }
 
@@ -124,11 +124,11 @@ BOOST_AUTO_TEST_CASE(centralAngleRootFinding) {
 
       BOOST_CHECK_MESSAGE(
         pass,
-        "Central angle deviation norm is not smaller than 1e-5 for " << temple::stringify(edgeLengths)
+        "Central angle deviation norm is not smaller than 1e-5 for " << Temple::stringify(edgeLengths)
           << ", circumcenter is inside: " << circumcenterInside << ", deviation: " << deviation
       );
 
-      auto internalAngleSumDeviation = temple::sum(
+      auto internalAngleSumDeviation = Temple::sum(
         cyclic_polygons::detail::generalizedInternalAngles(edgeLengths, circumradius, circumcenterInside)
       ) - (nSides - 2) * M_PI;
 
@@ -137,7 +137,7 @@ BOOST_AUTO_TEST_CASE(centralAngleRootFinding) {
       BOOST_CHECK_MESSAGE(
         std::fabs(internalAngleSumDeviation) < 1e-5,
         "Internal angle sum deviation from " << (nSides - 2)
-          <<  "π for edge lengths " << temple::stringify(edgeLengths)
+          <<  "π for edge lengths " << Temple::stringify(edgeLengths)
           << " is " << internalAngleSumDeviation
           << ", whose norm is not less than 1e-5"
       );

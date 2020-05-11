@@ -11,9 +11,9 @@
 
 namespace Scine {
 
-namespace molassembler {
+namespace Molassembler {
 
-namespace io {
+namespace IO {
 
 bool BinaryHandler::canRead(const std::string& filename) {
   boost::filesystem::path filepath {filename};
@@ -56,8 +56,8 @@ BinaryHandler::BinaryType BinaryHandler::read(const std::string& filename) {
   return data;
 }
 
-} // namespace io
+} // namespace IO
 
-} // namespace molassembler
+} // namespace Molassembler
 
 } // namespace Scine

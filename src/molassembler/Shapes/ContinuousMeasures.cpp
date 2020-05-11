@@ -21,8 +21,8 @@
 #include <Eigen/Eigenvalues>
 
 namespace Scine {
-namespace shapes {
-namespace continuous {
+namespace Shapes {
+namespace Continuous {
 
 using Matrix = Eigen::Matrix<double, 3, Eigen::Dynamic>;
 
@@ -93,13 +93,13 @@ bool isNormalized(const PositionCollection& positions) {
    */
   const unsigned P = positions.cols();
   return (
-    temple::all_of(
-      temple::iota<unsigned>(P),
+    Temple::all_of(
+      Temple::iota<unsigned>(P),
       [&](const unsigned i) -> bool {
         return positions.col(i).norm() <= (1 + 1e-5);
       }
-    ) && temple::any_of(
-      temple::iota<unsigned>(P),
+    ) && Temple::any_of(
+      Temple::iota<unsigned>(P),
       [&](const unsigned i) -> bool {
         return std::fabs(positions.col(i).norm() - 1) < 1e-5;
       }
@@ -118,11 +118,11 @@ PositionCollection normalize(const PositionCollection& positions) {
   return transformed;
 }
 
-namespace fixed {
+namespace Fixed {
 
 double element(
   const PositionCollection& normalizedPositions,
-  const elements::Rotation& rotation
+  const Elements::Rotation& rotation
 ) {
   assert(rotation.power == 1);
   assert(std::fabs(rotation.axis.norm() - 1) < 1e-10);
@@ -139,12 +139,12 @@ double element(
   );
 
   std::vector<unsigned> diophantineConstants {rotation.n, 1};
-  if(!diophantine::has_solution(diophantineConstants, P)) {
+  if(!Diophantine::has_solution(diophantineConstants, P)) {
     return 100;
   }
 
   std::vector<unsigned> diophantineMultipliers;
-  if(!diophantine::first_solution(diophantineMultipliers, diophantineConstants, P)) {
+  if(!Diophantine::first_solution(diophantineMultipliers, diophantineConstants, P)) {
     throw std::logic_error("Diophantine failure! Couldn't find first solution");
   }
 
@@ -228,7 +228,7 @@ double element(
       do {
         double partitionCSM = 0;
         for(auto&& partitionIndices : partitioner.partitions()) {
-          auto partitionParticleIndices = temple::map(partitionIndices, temple::functor::at(indicesToPartition));
+          auto partitionParticleIndices = Temple::map(partitionIndices, Temple::Functor::at(indicesToPartition));
           const double subpartitionCSM = calculateBestPermutationCSM(partitionParticleIndices);
           partitionCSM += subpartitionCSM;
         }
@@ -240,14 +240,14 @@ double element(
       diophantineCSM = std::min(diophantineCSM, permutationCSM);
     } while(std::next_permutation(std::begin(partitionOrAxisSymmetrize), std::end(partitionOrAxisSymmetrize)));
     value = std::min(value, diophantineCSM);
-  } while(diophantine::next_solution(diophantineMultipliers, diophantineConstants, P));
+  } while(Diophantine::next_solution(diophantineMultipliers, diophantineConstants, P));
 
   return 100 * value;
 }
 
 double element(
   const PositionCollection& normalizedPositions,
-  const elements::Reflection& reflection
+  const Elements::Reflection& reflection
 ) {
   /* calculateReflectionCSM could be memoized across its a,b arguments, and
    * so could other elements' basic calculation fns. But no reason to optimize
@@ -262,9 +262,9 @@ double element(
   assert(reflectMatrix.inverse().isApprox(reflectMatrix, 1e-10));
 
   const std::vector<unsigned> diophantineConstants {2, 1};
-  assert(diophantine::has_solution(diophantineConstants, P));
+  assert(Diophantine::has_solution(diophantineConstants, P));
   std::vector<unsigned> diophantineMultipliers;
-  if(!diophantine::first_solution(diophantineMultipliers, diophantineConstants, P)) {
+  if(!Diophantine::first_solution(diophantineMultipliers, diophantineConstants, P)) {
     throw std::logic_error("Diophantine failure! Couldn't find first solution");
   }
 
@@ -286,9 +286,9 @@ double element(
   do {
     if(diophantineMultipliers.front() == 0) {
       /* All points are symmetrized to the plane */
-      const double csm = temple::sum(
-        temple::adaptors::transform(
-          temple::adaptors::range(P),
+      const double csm = Temple::sum(
+        Temple::adaptors::transform(
+          Temple::adaptors::range(P),
           [&](const unsigned i) -> double {
             return std::pow(plane.absDistance(normalizedPositions.col(i)), 2);
           }
@@ -337,7 +337,7 @@ double element(
       diophantineCSM = std::min(diophantineCSM, permutationCSM);
     } while(std::next_permutation(std::begin(pairOrPlaneSymmetrize), std::end(pairOrPlaneSymmetrize)));
     value = std::min(value, diophantineCSM);
-  } while(diophantine::next_solution(diophantineMultipliers, diophantineConstants, P));
+  } while(Diophantine::next_solution(diophantineMultipliers, diophantineConstants, P));
 
   return 100 * value;
 }
@@ -358,13 +358,13 @@ double Cinf(
   return 100 * value / P;
 }
 
-} // namespace fixed
+} // namespace Fixed
 
-std::pair<double, elements::Rotation> element(
+std::pair<double, Elements::Rotation> element(
   const PositionCollection& normalizedPositions,
-  elements::Rotation rotation
+  Elements::Rotation rotation
 ) {
-  using MinimizerType = temple::SO3NelderMead<>;
+  using MinimizerType = Temple::SO3NelderMead<>;
 
   MinimizerType::Parameters simplex;
   simplex.at(0) = Eigen::Matrix3d::Identity();
@@ -381,7 +381,7 @@ std::pair<double, elements::Rotation> element(
   auto minimizationResult = MinimizerType::minimize(
     simplex,
     [&](const Eigen::Matrix3d& R) -> double {
-      return fixed::element(R * normalizedPositions, rotation);
+      return Fixed::element(R * normalizedPositions, rotation);
     },
     NelderMeadChecker {}
   );
@@ -395,11 +395,11 @@ std::pair<double, elements::Rotation> element(
 }
 
 
-std::pair<double, elements::Reflection> element(
+std::pair<double, Elements::Reflection> element(
   const PositionCollection& normalizedPositions,
-  elements::Reflection reflection
+  Elements::Reflection reflection
 ) {
-  using MinimizerType = temple::SO3NelderMead<>;
+  using MinimizerType = Temple::SO3NelderMead<>;
 
   MinimizerType::Parameters simplex;
   simplex.at(0) = Eigen::Matrix3d::Identity();
@@ -416,14 +416,14 @@ std::pair<double, elements::Reflection> element(
   auto minimizationResult = MinimizerType::minimize(
     simplex,
     [&](const Eigen::Matrix3d& R) -> double {
-      return fixed::element(R * normalizedPositions, reflection);
+      return Fixed::element(R * normalizedPositions, reflection);
     },
     NelderMeadChecker {}
   );
 
   return {
     minimizationResult.value,
-    elements::Reflection {
+    Elements::Reflection {
       simplex.at(minimizationResult.minimalIndex).inverse() * reflection.normal
     }
   };
@@ -431,7 +431,7 @@ std::pair<double, elements::Reflection> element(
 
 double element(
   const PositionCollection& normalizedPositions,
-  const elements::Inversion& /* inversion */
+  const Elements::Inversion& /* inversion */
 ) {
   auto calculateInversionCSM = [&](
     const unsigned a,
@@ -506,13 +506,13 @@ double Cinf(const PositionCollection& normalizedPositions) {
     Functor(const PositionCollection& normalizedPositions) : coordinates(normalizedPositions) {}
     double operator() (const Eigen::Matrix3d& rotation) const {
       const PositionCollection rotatedCoordinates = rotation * coordinates;
-      return fixed::Cinf(rotatedCoordinates, Eigen::Vector3d::UnitZ());
+      return Fixed::Cinf(rotatedCoordinates, Eigen::Vector3d::UnitZ());
     }
   };
 
   Functor functor {normalizedPositions};
 
-  using MinimizerType = temple::SO3NelderMead<>;
+  using MinimizerType = Temple::SO3NelderMead<>;
 
   // Set up the initial simplex to capture asymmetric tops and x/y mixups
   MinimizerType::Parameters simplex;
@@ -569,12 +569,12 @@ double calculateCSM(
   const Eigen::Matrix<double, 3, Eigen::Dynamic>& unfoldMatrices,
   const Eigen::Matrix<double, 3, Eigen::Dynamic>& foldMatrices,
   const std::vector<unsigned>& particles,
-  const elements::ElementGrouping& elementGrouping
+  const Elements::ElementGrouping& elementGrouping
 ) {
   const unsigned p = particles.size();
   const unsigned l = elementGrouping.groups.front().size();
   assert(p * l == unfoldMatrices.cols() / 3);
-  assert(temple::all_of(elementGrouping.groups, [l](const auto& group) { return group.size() == l; }));
+  assert(Temple::all_of(elementGrouping.groups, [l](const auto& group) { return group.size() == l; }));
 
   /* Fold points and average */
   Eigen::Vector3d averagePoint = Eigen::Vector3d::Zero();
@@ -649,7 +649,7 @@ double groupedSymmetryElements(
   std::vector<unsigned> particleIndices,
   const Eigen::Matrix<double, 3, Eigen::Dynamic>& unfoldMatrices,
   const Eigen::Matrix<double, 3, Eigen::Dynamic>& foldMatrices,
-  const std::vector<elements::ElementGrouping>& elementGroupings
+  const std::vector<Elements::ElementGrouping>& elementGroupings
 ) {
   /* The number of groups in element grouping must match the number of particles
    * permutated here
@@ -688,18 +688,18 @@ struct OrientationCSMFunctor {
   const PositionCollection& coordinates;
   const MatrixType unfoldMatrices;
   const MatrixType foldMatrices;
-  const elements::NpGroupingsMapType npGroups;
+  const Elements::NpGroupingsMapType npGroups;
 
   OrientationCSMFunctor(
     const PositionCollection& normalizedPositions,
     const PointGroup group
   ) : coordinates(normalizedPositions),
-      unfoldMatrices(makeUnfoldMatrices(elements::symmetryElements(group))),
+      unfoldMatrices(makeUnfoldMatrices(Elements::symmetryElements(group))),
       foldMatrices(makeFoldMatrices(unfoldMatrices)),
-      npGroups(elements::npGroupings(elements::symmetryElements(group)))
+      npGroups(Elements::npGroupings(Elements::symmetryElements(group)))
   {}
 
-  static MatrixType makeUnfoldMatrices(const elements::ElementsList& elements) {
+  static MatrixType makeUnfoldMatrices(const Elements::ElementsList& elements) {
     MatrixType unfold(3, elements.size() * 3);
     const unsigned G = elements.size();
     for(unsigned i = 0; i < G; ++i) {
@@ -725,7 +725,7 @@ struct OrientationCSMFunctor {
     const unsigned P = particleIndices.size();
     const unsigned G = foldMatrices.cols() / 3;
     std::vector<unsigned> subdivisionMultipliers;
-    if(!diophantine::first_solution(subdivisionMultipliers, subdivisionGroupSizes, P)) {
+    if(!Diophantine::first_solution(subdivisionMultipliers, subdivisionGroupSizes, P)) {
       throw std::logic_error("Diophantine failure! Couldn't find first solution");
     }
 
@@ -795,7 +795,7 @@ struct OrientationCSMFunctor {
             do {
               double partitionCSMSum = 0;
               for(auto&& partitionIndices : partitioner.partitions()) {
-                auto partitionParticles = temple::map(
+                auto partitionParticles = Temple::map(
                   partitionIndices,
                   [&](const unsigned indexOfParticle) -> unsigned {
                     return particleIndices.at(
@@ -835,7 +835,7 @@ struct OrientationCSMFunctor {
               /* Map all the way back to actual particle indices:
                * partition -> same size particles -> particle
                */
-              auto partitionParticles = temple::map(
+              auto partitionParticles = Temple::map(
                 partitionIndices,
                 [&](const unsigned indexOfParticle) -> unsigned {
                   return particleIndices.at(
@@ -866,7 +866,7 @@ struct OrientationCSMFunctor {
 
         value = std::min(value, partitionCSM);
       } while(std::next_permutation(std::begin(flatGroupMap), std::end(flatGroupMap)));
-    } while(diophantine::next_solution(subdivisionMultipliers, subdivisionGroupSizes, P));
+    } while(Diophantine::next_solution(subdivisionMultipliers, subdivisionGroupSizes, P));
 
     return value;
   }
@@ -891,11 +891,11 @@ struct OrientationCSMFunctor {
       std::end(subdivisionGroupSizes),
       std::greater<>()
     );
-    if(diophantine::has_solution(subdivisionGroupSizes, P)) {
+    if(Diophantine::has_solution(subdivisionGroupSizes, P)) {
       return diophantine_csm(
         positions,
         subdivisionGroupSizes,
-        temple::iota<unsigned>(P)
+        Temple::iota<unsigned>(P)
       );
     }
 
@@ -919,7 +919,7 @@ double pointGroup(
     return Cinf(normalizedPositions);
   }
 
-  const auto elements = elements::symmetryElements(group);
+  const auto elements = Elements::symmetryElements(group);
   const auto npGroups = npGroupings(elements);
 
   const unsigned G = elements.size();
@@ -946,13 +946,13 @@ double pointGroup(
     std::greater<>()
   );
 
-  if(!diophantine::has_solution(subdivisionGroupSizes, P)) {
+  if(!Diophantine::has_solution(subdivisionGroupSizes, P)) {
     throw std::logic_error("Cannot calculate a CSM for this number of points and this point group. This is most likely an implementation error.");
   }
 
   OrientationCSMFunctor functor {normalizedPositions, group};
 
-  using MinimizerType = temple::SO3NelderMead<>;
+  using MinimizerType = Temple::SO3NelderMead<>;
   // Set up the initial simplex to capture asymmetric tops and x/y mixups
   MinimizerType::Parameters simplex;
   simplex.at(0) = Eigen::Matrix3d::Identity();
@@ -986,7 +986,7 @@ ShapeResult shapeFaithfulPaperImplementation(
     throw std::logic_error("Mismatched number of positions between supplied coordinates and shape!");
   }
 
-  auto permutation = temple::iota<Vertex>(N);
+  auto permutation = Temple::iota<Vertex>(N);
 
   // Add the origin
   Matrix shapeCoordinates(3, N);
@@ -1073,7 +1073,7 @@ ShapeResult shapeAlternateImplementationBase(
     throw std::logic_error("Mismatched number of positions between supplied coordinates and shape!");
   }
 
-  auto permutation = temple::iota<Vertex>(N);
+  auto permutation = Temple::iota<Vertex>(N);
 
   // Add the origin
   Matrix shapeCoordinates(3, N);
@@ -1200,7 +1200,7 @@ NarrowType shapeHeuristicsNarrow(
    * particular mapping choice whose expected rotational fit penalty we can sum
    * up from the previous matrix.
    */
-  auto subPermutation = temple::iota<Vertex>(V);
+  auto subPermutation = Temple::iota<Vertex>(V);
   decltype(subPermutation) bestPermutation;
   double minimalCost = std::numeric_limits<double>::max();
   do {
@@ -1228,8 +1228,8 @@ NarrowType shapeHeuristicsNarrow(
   auto R = fitQuaternion(stator, rotor, permutation);
   auto rotated = R * rotor;
 
-  const double energy = temple::accumulate(
-    temple::adaptors::range(Vertex(N)),
+  const double energy = Temple::accumulate(
+    Temple::adaptors::range(Vertex(N)),
     0.0,
     [&](const double carry, const Vertex i) -> double {
       return carry + (
@@ -1287,7 +1287,7 @@ ShapeResult shapeHeuristics(
   PartialMapping permutation;
 
   // i != j != k != l != m with {i, j, k, l, m} in [0, N)
-  temple::loops::different(
+  Temple::loops::different(
     [&](const std::vector<Vertex>& vertices) {
       permutation.clear();
       for(unsigned i = 0; i < 5; ++i) {
@@ -1415,7 +1415,7 @@ ShapeResult shapeHeuristicsCentroidLast(
   PartialMapping permutation;
 
   // i != j != k != l != m with {i, j, k, l, m} in [0, N - 1)
-  temple::loops::different(
+  Temple::loops::different(
     [&](const std::vector<Vertex>& vertices) {
       permutation.clear();
       permutation.emplace(N - 1, N - 1);
@@ -1596,6 +1596,6 @@ double minimalDistortionPathDeviation(
   );
 }
 
-} // namespace continuous
-} // namespace shapes
+} // namespace Continuous
+} // namespace Shapes
 } // namespace Scine

@@ -16,7 +16,7 @@
 
 BOOST_AUTO_TEST_CASE(dihedralTests) {
   using namespace Scine;
-  using namespace molassembler;
+  using namespace Molassembler;
 
   Scine::Utils::PositionCollection positions(4, 3);
   positions.row(0) = Scine::Utils::Position {1, 0, 0};
@@ -29,11 +29,11 @@ BOOST_AUTO_TEST_CASE(dihedralTests) {
 
   for(
     const double randomAngle :
-    temple::random::getN<double>(
+    Temple::Random::getN<double>(
       -M_PI + 0.01,
       M_PI - 0.01,
       100,
-      Scine::molassembler::randomnessEngine()
+      Scine::Molassembler::randomnessEngine()
     )
   ) {
 

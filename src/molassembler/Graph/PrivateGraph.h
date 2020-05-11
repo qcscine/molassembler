@@ -16,7 +16,7 @@
 #include <limits>
 
 namespace Scine {
-namespace molassembler {
+namespace Molassembler {
 
 /**
  * @brief Library internal graph class wrapping BGL types
@@ -339,6 +339,6 @@ private:
 //!@}
 };
 
-} // namespace molassembler
+} // namespace Molassembler
 } // namespace Scine
 #endif

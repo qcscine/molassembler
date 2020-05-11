@@ -12,7 +12,7 @@
 #include "molassembler/Export.h"
 
 namespace Scine {
-namespace shapes {
+namespace Shapes {
 
 /**
  * @brief Given S * E distinguishable objects, this class helps enumerate all
@@ -90,5 +90,5 @@ private:
 
 };
 
-} // namespace shapes
+} // namespace Shapes
 } // namespace Scine

@@ -23,9 +23,9 @@
 #include <type_traits>
 
 namespace Scine {
-namespace temple {
+namespace Temple {
 namespace Math {
-namespace traits {
+namespace Traits {
 
 template<typename T, typename U>
 using enableIfFloatingWithReturn = std::enable_if_t<
@@ -54,7 +54,7 @@ PURITY_STRONG constexpr inline std::enable_if_t<
   return x != x;
 }
 
-} // namespace traits
+} // namespace Traits
 
 /* Logic */
 //! Template parameter-pack exclusive or of booleans
@@ -64,60 +64,60 @@ constexpr bool XOR(Bools ... bools);
 /* Some very basic math functions for arithmetic types */
 //! Absolute value
 template<typename T>
-inline constexpr traits::enableIfArithmeticWithReturn<T, T> abs(T x) noexcept;
+inline constexpr Traits::enableIfArithmeticWithReturn<T, T> abs(T x) noexcept;
 
 //! Maximum of two values
 template<typename T>
-constexpr traits::enableIfArithmeticWithReturn<T, T> max(T a, T b) noexcept;
+constexpr Traits::enableIfArithmeticWithReturn<T, T> max(T a, T b) noexcept;
 
 //! Minimum of two values
 template<typename T>
-constexpr traits::enableIfArithmeticWithReturn<T, T> min(T a, T b) noexcept;
+constexpr Traits::enableIfArithmeticWithReturn<T, T> min(T a, T b) noexcept;
 
 /* Floating-point math functions */
 
 //! Convert angular degrees to radians
 template<typename T>
-constexpr traits::enableIfFloatingWithReturn<T, T> toRadians(T inDegrees) noexcept;
+constexpr Traits::enableIfFloatingWithReturn<T, T> toRadians(T inDegrees) noexcept;
 
 //! Convert angular radians to degrees
 template<typename T>
-constexpr traits::enableIfFloatingWithReturn<T, T> toDegrees(T inRadians) noexcept;
+constexpr Traits::enableIfFloatingWithReturn<T, T> toDegrees(T inRadians) noexcept;
 
 //! Ceiling function
 template<typename T>
-constexpr traits::enableIfFloatingWithReturn<T, int> ceil(T value) noexcept;
+constexpr Traits::enableIfFloatingWithReturn<T, int> ceil(T value) noexcept;
 
 //! Floor function
 template<typename T>
-constexpr traits::enableIfFloatingWithReturn<T, int> floor(T value) noexcept;
+constexpr Traits::enableIfFloatingWithReturn<T, int> floor(T value) noexcept;
 
 //! Power of a number
 template<typename T>
-constexpr traits::enableIfArithmeticWithReturn<T, T> pow(T base, unsigned exponent) noexcept;
+constexpr Traits::enableIfArithmeticWithReturn<T, T> pow(T base, unsigned exponent) noexcept;
 
 template<typename T>
-constexpr traits::enableIfArithmeticWithReturn<T, double> pow(T base, int exponent) noexcept;
+constexpr Traits::enableIfArithmeticWithReturn<T, double> pow(T base, int exponent) noexcept;
 
 //! Square root
 template<typename T>
-constexpr traits::enableIfFloatingWithReturn<T, T> sqrt(T x);
+constexpr Traits::enableIfFloatingWithReturn<T, T> sqrt(T x);
 
 //! Factorial
 template<typename T>
-constexpr traits::enableIfIntegralWithReturn<T, T> factorial(T x);
+constexpr Traits::enableIfIntegralWithReturn<T, T> factorial(T x);
 
 //! Natural logarithm
 template<typename T>
-constexpr traits::enableIfFloatingWithReturn<T, T> ln(T x);
+constexpr Traits::enableIfFloatingWithReturn<T, T> ln(T x);
 
 //! Base-10 logarithm
 template<typename T>
-constexpr traits::enableIfFloatingWithReturn<T, T> log10(T x);
+constexpr Traits::enableIfFloatingWithReturn<T, T> log10(T x);
 
 //! Arbitrary base logarithm
 template<typename T>
-constexpr traits::enableIfFloatingWithReturn<T, T> log(T x, T base);
+constexpr Traits::enableIfFloatingWithReturn<T, T> log(T x, T base);
 
 // Inverse trigonometry
 /*! Computes the inverse sine function.
@@ -125,15 +125,15 @@ constexpr traits::enableIfFloatingWithReturn<T, T> log(T x, T base);
  * NOTE: Accurate to only ~1e-9 absolute deviation close to domain boundaries
  */
 template<typename T>
-constexpr traits::enableIfFloatingWithReturn<T, T> asin(T x);
+constexpr Traits::enableIfFloatingWithReturn<T, T> asin(T x);
 
 //! Inverse cosine
 template<typename T>
-constexpr traits::enableIfFloatingWithReturn<T, T> acos(T x);
+constexpr Traits::enableIfFloatingWithReturn<T, T> acos(T x);
 
 //! Inverse tangens
 template<typename T>
-constexpr traits::enableIfFloatingWithReturn<T, T> atan(T x);
+constexpr Traits::enableIfFloatingWithReturn<T, T> atan(T x);
 
 
 /* Implementations begin here ------------------------------------------------*/
@@ -182,7 +182,7 @@ PURITY_STRONG constexpr T lnSeries(const T x) {
   // Term n = 0
   T previous {0};
 
-  for(unsigned n = 3; temple::Math::abs(previous - value) > epsilon; n += 2) {
+  for(unsigned n = 3; Temple::Math::abs(previous - value) > epsilon; n += 2) {
     // previous iteration
     previous = value;
 
@@ -232,32 +232,32 @@ constexpr bool XOR(Bools ... bools) {
 }
 
 template<typename T>
-PURITY_STRONG inline constexpr traits::enableIfArithmeticWithReturn<T, T> abs(const T x) noexcept {
+PURITY_STRONG inline constexpr Traits::enableIfArithmeticWithReturn<T, T> abs(const T x) noexcept {
   return (x >= 0) ? x : -x;
 }
 
 template<typename T>
-PURITY_STRONG constexpr traits::enableIfArithmeticWithReturn<T, T> max(const T a, const T b) noexcept {
+PURITY_STRONG constexpr Traits::enableIfArithmeticWithReturn<T, T> max(const T a, const T b) noexcept {
   return (a > b) ? a : b;
 }
 
 template<typename T>
-PURITY_STRONG constexpr traits::enableIfArithmeticWithReturn<T, T> min(const T a, const T b) noexcept {
+PURITY_STRONG constexpr Traits::enableIfArithmeticWithReturn<T, T> min(const T a, const T b) noexcept {
   return (a < b) ? a : b;
 }
 
 template<typename T>
-PURITY_STRONG constexpr traits::enableIfFloatingWithReturn<T, T> toRadians(const T inDegrees) noexcept {
+PURITY_STRONG constexpr Traits::enableIfFloatingWithReturn<T, T> toRadians(const T inDegrees) noexcept {
   return M_PI * inDegrees / 180;
 }
 
 template<typename T>
-PURITY_STRONG constexpr traits::enableIfFloatingWithReturn<T, T> toDegrees(const T inRadians) noexcept {
+PURITY_STRONG constexpr Traits::enableIfFloatingWithReturn<T, T> toDegrees(const T inRadians) noexcept {
   return 180 * inRadians / M_PI;
 }
 
 template<typename T>
-PURITY_STRONG constexpr traits::enableIfFloatingWithReturn<T, int> ceil(const T value) noexcept {
+PURITY_STRONG constexpr Traits::enableIfFloatingWithReturn<T, int> ceil(const T value) noexcept {
   // Truncate to an int
   const auto truncated = static_cast<int>(value);
 
@@ -269,7 +269,7 @@ PURITY_STRONG constexpr traits::enableIfFloatingWithReturn<T, int> ceil(const T 
 }
 
 template<typename T>
-PURITY_STRONG constexpr traits::enableIfFloatingWithReturn<T, int> floor(const T value) noexcept {
+PURITY_STRONG constexpr Traits::enableIfFloatingWithReturn<T, int> floor(const T value) noexcept {
   // Truncate to an int
   const auto truncated = static_cast<int>(value);
 
@@ -282,7 +282,7 @@ PURITY_STRONG constexpr traits::enableIfFloatingWithReturn<T, int> floor(const T
 
 // Really weak first implementation
 template<typename T>
-PURITY_STRONG constexpr traits::enableIfArithmeticWithReturn<T, T> pow(const T base, const unsigned exponent) noexcept {
+PURITY_STRONG constexpr Traits::enableIfArithmeticWithReturn<T, T> pow(const T base, const unsigned exponent) noexcept {
   if(exponent == 0) {
     return 1;
   }
@@ -319,9 +319,9 @@ PURITY_STRONG constexpr T recPow(const T base, const unsigned exponent) noexcept
  * @warning lots can go wrong here!
  */
 template<typename T>
-PURITY_STRONG constexpr traits::enableIfArithmeticWithReturn<T, double> pow(const T base, const int exponent) noexcept {
+PURITY_STRONG constexpr Traits::enableIfArithmeticWithReturn<T, double> pow(const T base, const int exponent) noexcept {
   if(exponent < 0) {
-    return 1.0 / pow(base, static_cast<unsigned>(temple::Math::abs(exponent)));
+    return 1.0 / pow(base, static_cast<unsigned>(Temple::Math::abs(exponent)));
   }
 
   if(exponent == 0) {
@@ -334,7 +334,7 @@ PURITY_STRONG constexpr traits::enableIfArithmeticWithReturn<T, double> pow(cons
 /* Implements Newton's iteration to compute the square root of a positive number
  */
 template<typename T>
-PURITY_STRONG constexpr traits::enableIfFloatingWithReturn<T, T> sqrt(const T x) {
+PURITY_STRONG constexpr Traits::enableIfFloatingWithReturn<T, T> sqrt(const T x) {
   if(x < 0) {
     throw "Square-root domain error: Only real if x >= 0!";
   }
@@ -343,7 +343,7 @@ PURITY_STRONG constexpr traits::enableIfFloatingWithReturn<T, T> sqrt(const T x)
   T value = 1;
   T previous = 2;
 
-  while(temple::Math::abs(previous - value) > epsilon) {
+  while(Temple::Math::abs(previous - value) > epsilon) {
     // store the previous value
     previous = value;
 
@@ -355,7 +355,7 @@ PURITY_STRONG constexpr traits::enableIfFloatingWithReturn<T, T> sqrt(const T x)
 }
 
 template<typename T>
-PURITY_STRONG constexpr traits::enableIfIntegralWithReturn<T, T> factorial(const T x) {
+PURITY_STRONG constexpr Traits::enableIfIntegralWithReturn<T, T> factorial(const T x) {
   if(x < 0) {
     throw "Factorial domain error!";
   }
@@ -368,7 +368,7 @@ PURITY_STRONG constexpr traits::enableIfIntegralWithReturn<T, T> factorial(const
 }
 
 template<typename T>
-PURITY_STRONG constexpr traits::enableIfFloatingWithReturn<T, T> ln(const T x) {
+PURITY_STRONG constexpr Traits::enableIfFloatingWithReturn<T, T> ln(const T x) {
   unsigned decimalReduction = 0;
   T calcX = x;
 
@@ -387,7 +387,7 @@ PURITY_STRONG constexpr traits::enableIfFloatingWithReturn<T, T> ln(const T x) {
 }
 
 template<typename T>
-PURITY_STRONG constexpr traits::enableIfFloatingWithReturn<T, T> log10(const T x) {
+PURITY_STRONG constexpr Traits::enableIfFloatingWithReturn<T, T> log10(const T x) {
   if(x <= 0) {
     throw "Log10 domain error!";
   }
@@ -399,7 +399,7 @@ PURITY_STRONG constexpr traits::enableIfFloatingWithReturn<T, T> log10(const T x
 }
 
 template<typename T>
-PURITY_STRONG constexpr traits::enableIfFloatingWithReturn<T, T> log(const T x, const T base) {
+PURITY_STRONG constexpr Traits::enableIfFloatingWithReturn<T, T> log(const T x, const T base) {
   if(x <= 0) {
     throw "Log domain error!";
   }
@@ -416,12 +416,12 @@ PURITY_STRONG constexpr traits::enableIfFloatingWithReturn<T, T> log(const T x, 
  * form there?
  */
 template<typename T>
-PURITY_STRONG constexpr traits::enableIfFloatingWithReturn<T, T> asin(const T x) {
+PURITY_STRONG constexpr Traits::enableIfFloatingWithReturn<T, T> asin(const T x) {
   if(!(-1 <= x && x <= 1)) {
     throw "Inverse sine domain error: only real if -1 < x < 1!";
   }
 
-  if(temple::Math::abs(x) > 0.92) {
+  if(Temple::Math::abs(x) > 0.92) {
     return (x >= 0) ? detail::asinApprox(x) : -detail::asinApprox(-x);
   }
 
@@ -432,7 +432,7 @@ PURITY_STRONG constexpr traits::enableIfFloatingWithReturn<T, T> asin(const T x)
   T lower_factorial = 1;
   T term = 1;
 
-  for(unsigned n = 1; temple::Math::abs(term) > epsilon; ++n) {
+  for(unsigned n = 1; Temple::Math::abs(term) > epsilon; ++n) {
     upper_factorial *= 2 * (n - 1) + 1;
     lower_factorial *= 2 * n;
 
@@ -440,7 +440,7 @@ PURITY_STRONG constexpr traits::enableIfFloatingWithReturn<T, T> asin(const T x)
       upper_factorial / lower_factorial
     ) * pow(x, 2 * n + 1) / (2 * n + 1);
 
-    if(traits::isnan(term)) {
+    if(Traits::isnan(term)) {
       break;
     }
 
@@ -451,7 +451,7 @@ PURITY_STRONG constexpr traits::enableIfFloatingWithReturn<T, T> asin(const T x)
 }
 
 template<typename T>
-PURITY_STRONG constexpr traits::enableIfFloatingWithReturn<T, T> acos(const T x) {
+PURITY_STRONG constexpr Traits::enableIfFloatingWithReturn<T, T> acos(const T x) {
   if(!(-1 <= x && x <= 1)) {
     throw "Inverse cosine domain error: only real if -1 <= x <= 1!";
   }
@@ -460,7 +460,7 @@ PURITY_STRONG constexpr traits::enableIfFloatingWithReturn<T, T> acos(const T x)
 }
 
 template<typename T>
-PURITY_STRONG constexpr traits::enableIfFloatingWithReturn<T, T> atan(const T x) {
+PURITY_STRONG constexpr Traits::enableIfFloatingWithReturn<T, T> atan(const T x) {
   if(!(-M_PI / 2 < x && x < M_PI / 2)) {
     throw "Inverse cosine domain error: only real if -1 < x < 1!";
   }
@@ -471,7 +471,7 @@ PURITY_STRONG constexpr traits::enableIfFloatingWithReturn<T, T> atan(const T x)
 }
 
 } // namespace Math
-} // namespace temple
+} // namespace Temple
 } // namespace Scine
 
 #endif

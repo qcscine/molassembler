@@ -12,10 +12,10 @@
 #define INCLUDE_MOLASSEMBLER_TEMPLE_OPERATOR_SUPPLIERS_H
 
 namespace Scine {
-namespace temple {
+namespace Temple {
 
 //! @brief Curiously recurring template pattern classes
-namespace crtp {
+namespace Crtp {
 
 //! Supplies the inequality operator from an implemented equality operator
 template<typename T>
@@ -110,8 +110,8 @@ struct LexicographicComparable {
   }
 };
 
-} // namespace crtp
-} // namespace temple
+} // namespace Crtp
+} // namespace Temple
 } // namespace Scine
 
 #endif

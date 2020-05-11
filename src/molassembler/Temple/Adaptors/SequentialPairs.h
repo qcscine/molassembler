@@ -14,7 +14,7 @@
 #include <vector>
 
 namespace Scine {
-namespace temple {
+namespace Temple {
 namespace adaptors {
 namespace detail {
 
@@ -38,7 +38,7 @@ struct SequentialPairGenerator : public Binding<Container> {
 //!@name Information
 //!@{
   std::enable_if_t<
-    traits::hasSize<Container>::value,
+    Traits::hasSize<Container>::value,
     std::size_t
   > size() const {
     if(ContainerBinding::value.size() > 0) {
@@ -138,7 +138,7 @@ auto sequentialPairs(Container&& container) {
 }
 
 } // namespace adaptors
-} // namespace temple
+} // namespace Temple
 } // namespace Scine
 
 #endif

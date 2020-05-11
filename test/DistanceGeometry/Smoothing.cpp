@@ -10,8 +10,8 @@
 #include "molassembler/DistanceGeometry/TetrangleSmoothing.h"
 
 using namespace Scine;
-using namespace molassembler;
-using namespace distance_geometry;
+using namespace Molassembler;
+using namespace DistanceGeometry;
 
 
 

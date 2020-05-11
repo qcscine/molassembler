@@ -12,7 +12,7 @@
 #include <tuple>
 
 namespace Scine {
-namespace temple {
+namespace Temple {
 
 /**
  * @brief Type helper for creating strong index types that are type-level
@@ -33,7 +33,7 @@ namespace temple {
  * Implicit base conversion operators aren't great.
  */
 template<typename Tag, typename T>
-class StrongIndex : public crtp::LexicographicComparable<StrongIndex<Tag, T>> {
+class StrongIndex : public Crtp::LexicographicComparable<StrongIndex<Tag, T>> {
 public:
   using value_type = T;
   using Hash = boost::hash<StrongIndex<Tag, T>>;
@@ -76,7 +76,7 @@ std::size_t hash_value(const StrongIndex<Tag, T>& v) {
   return boost::hash<T>{}(v);
 }
 
-} // namespace temple
+} // namespace Temple
 } // namespace Scine
 
 #endif

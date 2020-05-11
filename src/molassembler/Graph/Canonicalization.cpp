@@ -69,7 +69,7 @@ void molassembler_nauty_canonicalize(int nv, size_t nde, size_t* v, int* d, int*
 } // end extern "C"
 
 namespace Scine {
-namespace molassembler {
+namespace Molassembler {
 namespace {
 
 struct NautySparseGraph {
@@ -95,7 +95,7 @@ struct NautySparseGraph {
 
   NautySparseGraph(
     const PrivateGraph& inner,
-    const std::vector<hashes::WideHashType>& hashes
+    const std::vector<Hashes::WideHashType>& hashes
   ) {
     /* Sparse graph data structure:
      * - n is the number of vertices
@@ -167,16 +167,16 @@ struct NautySparseGraph {
      */
 
     // We use the hashes to order our vertices
-    lab = temple::sort(
-      temple::iota<int>(nv),
+    lab = Temple::sort(
+      Temple::iota<int>(nv),
       [&hashes](const int a, const int b) -> bool {
         return hashes.at(a) < hashes.at(b);
       }
     );
 
     // And then generate the partition from checking adjacent hash equality
-    ptn = temple::map(
-      temple::adaptors::sequentialPairs(lab),
+    ptn = Temple::map(
+      Temple::adaptors::sequentialPairs(lab),
       [&hashes](const int a, const int b) -> int {
         return static_cast<int>(hashes.at(a) == hashes.at(b));
       }
@@ -194,7 +194,7 @@ struct NautySparseGraph {
 
 std::vector<int> canonicalAutomorphism(
   const PrivateGraph& inner,
-  const std::vector<hashes::WideHashType>& hashes
+  const std::vector<Hashes::WideHashType>& hashes
 ) {
   NautySparseGraph nautyGraph(inner, hashes);
 
@@ -219,5 +219,5 @@ std::vector<int> canonicalAutomorphism(
   return nautyGraph.lab;
 }
 
-} // namespace molassembler
+} // namespace Molassembler
 } // namespace Scine

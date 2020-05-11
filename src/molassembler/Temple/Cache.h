@@ -20,7 +20,7 @@
 #include <vector>
 
 namespace Scine {
-namespace temple {
+namespace Temple {
 
 //! A minimal wrapper around a map class with cache semantics
 template<typename KeyType, typename ValueType>
@@ -238,7 +238,7 @@ private:
   > generationMap_;
 };
 
-} //  namespace temple
+} //  namespace Temple
 } // namespace Scine
 
 #endif

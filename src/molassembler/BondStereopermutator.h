@@ -16,26 +16,26 @@
 #include <string>
 
 namespace Scine {
-namespace stereopermutation {
+namespace Stereopermutations {
 
 class Composite;
 
-} // namespace stereopermutation
+} // namespace Stereopermutations
 
-namespace molassembler {
-namespace random {
+namespace Molassembler {
+namespace Random {
 class Engine;
-} // namespace random
+} // namespace Random
 
 // Forward-declarations
 class AngstromPositions;
 class PrivateGraph;
 class StereopermutatorList;
 
-namespace distance_geometry {
+namespace DistanceGeometry {
 class SpatialModel;
 struct ChiralConstraint;
-} // namespace distance_geometry
+} // namespace DistanceGeometry
 
 /**
  * @brief Handles specific relative arrangements of two atom stereopermutators
@@ -51,8 +51,8 @@ public:
   //! Type yielded by atom stereopermutator on propagation
   using AtomStereopermutatorPropagatedState = std::tuple<
     RankingInformation,
-    stereopermutators::Abstract,
-    stereopermutators::Feasible,
+    Stereopermutators::Abstract,
+    Stereopermutators::Feasible,
     boost::optional<unsigned>
   >;
 
@@ -101,7 +101,7 @@ public:
     const PrivateGraph& graph,
     const AtomStereopermutator& stereopermutatorA,
     const AtomStereopermutator& stereopermutatorB,
-    const stereopermutation::Composite& composite
+    const Stereopermutations::Composite& composite
   );
 //!@}
 
@@ -167,7 +167,7 @@ public:
    * @parblock @note The state of the passed PRNG is advanced.
    * @endparblock
    */
-  void assignRandom(random::Engine& engine);
+  void assignRandom(Random::Engine& engine);
 
   /** @brief Applies an atom index permutation
    *
@@ -243,7 +243,7 @@ public:
    *
    * @complexity{@math{\Theta(1)}}
    */
-  const stereopermutation::Composite& composite() const;
+  const Stereopermutations::Composite& composite() const;
 
   /*! @brief Angle between sites at stereopermutators in the current assignment
    *
@@ -326,7 +326,7 @@ private:
   std::unique_ptr<Impl> pImpl_;
 };
 
-} // namespace molassembler
+} // namespace Molassembler
 } // namespace Scine
 
 #endif

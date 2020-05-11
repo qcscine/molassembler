@@ -17,7 +17,7 @@
 #include <unordered_map>
 
 namespace Scine {
-namespace stereopermutation {
+namespace Stereopermutations {
 
 inline unsigned gcd(const std::vector<unsigned>& c) {
   assert(!c.empty());
@@ -32,19 +32,19 @@ inline unsigned gcd(const std::vector<unsigned>& c) {
   return result;
 }
 
-inline void checkArguments(const Stereopermutation& s, const shapes::Shape shape) {
-  if(s.characters.size() != shapes::size(shape)) {
+inline void checkArguments(const Stereopermutation& s, const Shapes::Shape shape) {
+  if(s.characters.size() != Shapes::size(shape)) {
     throw std::invalid_argument("Stereopermutation character count does not match shape size");
   }
 }
 
-std::vector<Stereopermutation> generateAllRotations(Stereopermutation s, const shapes::Shape shape) {
+std::vector<Stereopermutation> generateAllRotations(Stereopermutation s, const Shapes::Shape shape) {
   checkArguments(s, shape);
   RotationEnumerator enumerator {std::move(s), shape};
   return enumerator.all();
 }
 
-bool rotationallySuperimposable(Stereopermutation a, const Stereopermutation& b, const shapes::Shape shape) {
+bool rotationallySuperimposable(Stereopermutation a, const Stereopermutation& b, const Shapes::Shape shape) {
   checkArguments(a, shape);
   checkArguments(b, shape);
 
@@ -66,7 +66,7 @@ bool rotationallySuperimposable(Stereopermutation a, const Stereopermutation& b,
 boost::optional<bool> enantiomer(
   const Stereopermutation& a,
   const Stereopermutation& b,
-  const shapes::Shape shape
+  const Shapes::Shape shape
 ) {
   checkArguments(a, shape);
   checkArguments(b, shape);
@@ -74,7 +74,7 @@ boost::optional<bool> enantiomer(
   /* Generate the mirror image of *this and check whether it is rotationally
    * superimposable with other.
    */
-  const auto& mirrorPermutation = shapes::mirror(shape);
+  const auto& mirrorPermutation = Shapes::mirror(shape);
 
   /* If the mirror were to yield an identity permutation, it is represented
    * as an empty constexpr array (now a vector, so:)
@@ -92,27 +92,27 @@ boost::optional<bool> enantiomer(
 
 bool hasTransArrangedLinks(
   const Stereopermutation& s,
-  const shapes::Shape shape
+  const Shapes::Shape shape
 ) {
   checkArguments(s, shape);
 
-  return temple::any_of(
+  return Temple::any_of(
     s.links,
     [shape](const auto& link) {
-      return shapes::angleFunction(shape)(link.first, link.second) == M_PI;
+      return Shapes::angleFunction(shape)(link.first, link.second) == M_PI;
     }
   );
 }
 
 Uniques uniques(
   const Stereopermutation& base,
-  const shapes::Shape shape,
+  const Shapes::Shape shape,
   const bool removeTransSpanningGroups
 ) {
   checkArguments(base, shape);
 
-  const unsigned S = shapes::size(shape);
-  auto permutation = temple::iota<shapes::Vertex>(S);
+  const unsigned S = Shapes::size(shape);
+  auto permutation = Temple::iota<Shapes::Vertex>(S);
   auto stereopermutation = base;
 
   /* In case we want to skip trans pairs, the initial stereopermutation must also not
@@ -120,7 +120,7 @@ Uniques uniques(
    */
   if(removeTransSpanningGroups) {
     while(hasTransArrangedLinks(stereopermutation, shape)) {
-      bool wasLastPermutation = !temple::inplace::next_permutation(permutation);
+      bool wasLastPermutation = !Temple::inplace::next_permutation(permutation);
       if(wasLastPermutation) {
         /* This can happen, e.g. in square-planar AAAB with
          * links: {0, 3}, {1, 3}, {2, 3}, every possible permutation contains
@@ -153,7 +153,7 @@ Uniques uniques(
   }
 
   // Go through all possible permutations of columns
-  while(temple::inplace::next_permutation(permutation)) {
+  while(Temple::inplace::next_permutation(permutation)) {
     stereopermutation = base.applyPermutation(permutation);
     if(removeTransSpanningGroups && hasTransArrangedLinks(stereopermutation, shape)) {
       continue;
@@ -179,8 +179,8 @@ Uniques uniques(
   }
 
   const unsigned C = unordered.list.size();
-  const std::vector<unsigned> order = temple::sort(
-    temple::iota<unsigned>(C),
+  const std::vector<unsigned> order = Temple::sort(
+    Temple::iota<unsigned>(C),
     [&](const unsigned i, const unsigned j) -> bool {
       return unordered.list.at(i) < unordered.list.at(j);
     }
@@ -205,5 +205,5 @@ Uniques uniques(
   return ordered;
 }
 
-} // namespace stereopermutation
+} // namespace Stereopermutations
 } // namespace Scine

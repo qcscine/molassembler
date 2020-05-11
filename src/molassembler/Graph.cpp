@@ -37,7 +37,7 @@
 #include "boost/graph/graphviz.hpp"
 
 namespace Scine {
-namespace molassembler {
+namespace Molassembler {
 
 static_assert(
   std::is_same<AtomIndex, PrivateGraph::Vertex>::value,
@@ -231,5 +231,5 @@ IteratorRange<Graph::IncidentEdgesIterator> Graph::bonds(const AtomIndex a) cons
   };
 }
 
-} // namespace molassembler
+} // namespace Molassembler
 } // namespace Scine

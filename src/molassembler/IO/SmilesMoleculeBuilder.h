@@ -22,11 +22,11 @@ enum class ElementType : unsigned;
 } // namespace Utils
 
 
-namespace molassembler {
+namespace Molassembler {
 
 class Molecule;
 
-namespace io {
+namespace IO {
 
 /**
  * @brief Semantic interpreter of the smiles grammar, constructs molecules
@@ -92,7 +92,7 @@ private:
   );
 
   //! Fetches a map to help with the atom chiral markers
-  static std::vector<shapes::Vertex> shapeMap(const ChiralData& chiralData);
+  static std::vector<Shapes::Vertex> shapeMap(const ChiralData& chiralData);
 //!@}
 
 //!@name Private member functions
@@ -150,8 +150,8 @@ private:
 //!@}
 };
 
-} // namespace io
-} // namespace molassembler
+} // namespace IO
+} // namespace Molassembler
 } // namespace Scine
 
 #endif

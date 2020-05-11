@@ -9,8 +9,8 @@
 #include "molassembler/Detail/CyclicPolygons.h"
 
 namespace Scine {
-namespace molassembler {
-namespace stereopermutators {
+namespace Molassembler {
+namespace Stereopermutators {
 
 namespace {
 
@@ -134,7 +134,7 @@ bool cycleModelContradictsGraph(
 
   assert(elementTypes.size() == cycleEdgeLengths.size());
 
-  // std::cout << temple::stringify(elementTypes) << " -> " << temple::stringify(cycleEdgeLengths) << "\n";
+  // std::cout << Temple::stringify(elementTypes) << " -> " << Temple::stringify(cycleEdgeLengths) << "\n";
   // const BaseAtom& frontBase = bases.front();
   // std::cout << "against distances " << frontBase.distanceToLeft << " and " << frontBase.distanceToRight << "\n";
 
@@ -145,7 +145,7 @@ bool cycleModelContradictsGraph(
    */
   const auto phis = cyclic_polygons::internalAngles(cycleEdgeLengths);
 
-  return temple::any_of(
+  return Temple::any_of(
     bases,
     [&](const BaseAtom& base) -> bool {
       return modelContradictsGraph(elementTypes, cycleEdgeLengths, phis, base);
@@ -175,6 +175,6 @@ bool triangleBondTooClose(
   return altitude <= bondRadius;
 }
 
-} // namespace stereopermutators
-} // namespace molassembler
+} // namespace Stereopermutators
+} // namespace Molassembler
 } // namespace Scine

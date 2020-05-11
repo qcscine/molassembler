@@ -18,7 +18,7 @@
 namespace Scine {
 
 //! @brief Data classes for permutational spatial arrangement modeling
-namespace stereopermutation {
+namespace Stereopermutations {
 
 /*! @brief Represent abstract stereopermutation around atom center
  *
@@ -28,7 +28,7 @@ namespace stereopermutation {
  * a systematic generation of all possible configurations. It is generalized
  * over a number of shapes which are encoded in a separate library.
  */
-class MASM_EXPORT Stereopermutation : public temple::crtp::LexicographicComparable<Stereopermutation> {
+class MASM_EXPORT Stereopermutation : public Temple::Crtp::LexicographicComparable<Stereopermutation> {
 public:
 //!@name Member types
 //!@{
@@ -36,7 +36,7 @@ public:
   using CharacterOccupation = std::vector<char>;
 
   //! Type used to represent a link between shape vertices
-  using Link = std::pair<shapes::Vertex, shapes::Vertex>;
+  using Link = std::pair<Shapes::Vertex, Shapes::Vertex>;
 
   //! Unordered type, but kept ordered by member functions
   using OrderedLinks = std::vector<Link>;
@@ -50,7 +50,7 @@ public:
    */
   static CharacterOccupation permuteCharacters(
     const CharacterOccupation& characters,
-    const shapes::Permutation& permutation
+    const Shapes::Permutation& permutation
   );
 
   /*! @brief Rotate links
@@ -59,7 +59,7 @@ public:
    */
   static OrderedLinks permuteLinks(
     const OrderedLinks& links,
-    const shapes::Permutation& permutation
+    const Shapes::Permutation& permutation
   );
 //!@}
 
@@ -95,7 +95,7 @@ public:
    *
    * @complexity{@math{O(N + L)}}
    */
-  Stereopermutation applyPermutation(const shapes::Permutation& permutation) const;
+  Stereopermutation applyPermutation(const Shapes::Permutation& permutation) const;
 
   //!@brief Gets a map of ligand symbol character to shape vertex positions
   std::map<
@@ -118,7 +118,7 @@ public:
 
 PURITY_WEAK MASM_EXPORT std::size_t hash_value(const Stereopermutation& assignment);
 
-} // namespace stereopermutation
+} // namespace Stereopermutations
 } // namespace Scine
 
 #endif

@@ -13,7 +13,7 @@
 #include <unordered_set>
 
 namespace Scine {
-namespace stereopermutation {
+namespace Stereopermutations {
 
 using UnorderedStereopermutations = std::unordered_set<Stereopermutation, boost::hash<Stereopermutation>>;
 
@@ -27,7 +27,7 @@ using UnorderedStereopermutations = std::unordered_set<Stereopermutation, boost:
  */
 MASM_EXPORT std::vector<Stereopermutation> generateAllRotations(
   Stereopermutation s,
-  shapes::Shape shape
+  Shapes::Shape shape
 );
 
 /*! @brief whether this Stereopermutation is rotationally superimposable with another.
@@ -37,7 +37,7 @@ MASM_EXPORT std::vector<Stereopermutation> generateAllRotations(
 MASM_EXPORT bool rotationallySuperimposable(
   Stereopermutation a,
   const Stereopermutation& b,
-  shapes::Shape shape
+  Shapes::Shape shape
 );
 
 /*!
@@ -55,7 +55,7 @@ MASM_EXPORT bool rotationallySuperimposable(
 MASM_EXPORT boost::optional<bool> enantiomer(
   const Stereopermutation& a,
   const Stereopermutation& b,
-  shapes::Shape shape
+  Shapes::Shape shape
 );
 
 /*! @brief Whether a stereopermutation has trans arranged linked substituents
@@ -64,7 +64,7 @@ MASM_EXPORT boost::optional<bool> enantiomer(
  */
 MASM_EXPORT bool hasTransArrangedLinks(
   const Stereopermutation& s,
-  shapes::Shape shape
+  Shapes::Shape shape
 );
 
 struct MASM_EXPORT Uniques {
@@ -95,11 +95,11 @@ struct MASM_EXPORT Uniques {
  */
 MASM_EXPORT Uniques uniques(
   const Stereopermutation& base,
-  shapes::Shape shape,
+  Shapes::Shape shape,
   bool removeTransSpanningGroups = false
 );
 
-} // namespace stereopermutation
+} // namespace Stereopermutations
 } // namespace Scine
 
 #endif

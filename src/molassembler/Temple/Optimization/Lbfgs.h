@@ -15,7 +15,7 @@
  */
 
 namespace Scine {
-namespace temple {
+namespace Temple {
 namespace detail {
 
 template<typename FloatType> constexpr FloatType cfabs(FloatType x) noexcept {
@@ -236,9 +236,9 @@ public:
    * @brief Class carrying proposed parameter updates in an optimization
    */
   struct StepValues {
-    optimization::EigenUpdateBuffer<VectorType> parameters;
-    optimization::FloatUpdateBuffer<FloatType> values;
-    optimization::EigenUpdateBuffer<VectorType> gradients;
+    Optimization::EigenUpdateBuffer<VectorType> parameters;
+    Optimization::FloatUpdateBuffer<FloatType> values;
+    Optimization::EigenUpdateBuffer<VectorType> gradients;
 
     /**
      * @brief Initialize class state and generate first direction vector
@@ -382,7 +382,7 @@ public:
   ) {
     OptimizationReturnType results = minimize(
       parameters,
-      optimization::negateFunction<VectorType>(
+      Optimization::negateFunction<VectorType>(
         std::forward<UpdateFunction>(function)
       ),
       std::forward<Checker>(check),
@@ -468,7 +468,7 @@ public:
     OptimizationReturnType results = minimize(
       parameters,
       box,
-      optimization::negateFunction<VectorType>(
+      Optimization::negateFunction<VectorType>(
         std::forward<UpdateFunction>(function)
       ),
       std::forward<Checker>(check),
@@ -567,8 +567,8 @@ private:
     }
 
     bool addInformation(
-      const optimization::EigenUpdateBuffer<VectorType>& parameterBuffer,
-      const optimization::EigenUpdateBuffer<VectorType>& gradientBuffer
+      const Optimization::EigenUpdateBuffer<VectorType>& parameterBuffer,
+      const Optimization::EigenUpdateBuffer<VectorType>& gradientBuffer
     ) {
       bool dotProductNotZero;
       if(count < ringBufferSize) {
@@ -827,7 +827,7 @@ private:
   }
 };
 
-} // namespace temple
+} // namespace Temple
 } // namespace Scine
 
 #endif

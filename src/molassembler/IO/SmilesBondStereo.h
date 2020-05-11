@@ -8,12 +8,12 @@
 #include "boost/optional.hpp"
 
 namespace Scine {
-namespace molassembler {
+namespace Molassembler {
 
 class Molecule;
 class BondStereopermutator;
 
-namespace io {
+namespace IO {
 
 /**
  * @brief Helper class to represent the stereo configuration of a double bond
@@ -34,6 +34,6 @@ struct SmilesBondStereo {
   ) const;
 };
 
-} // namespace io
-} // namespace molassembler
+} // namespace IO
+} // namespace Molassembler
 } // namespace Scine

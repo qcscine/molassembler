@@ -16,12 +16,12 @@
 #include <vector>
 
 namespace Scine {
-namespace shapes {
+namespace Shapes {
 namespace detail {
 
 constexpr unsigned binomial(const unsigned n, const unsigned k) {
-  return temple::Math::factorial(n) / (
-    temple::Math::factorial(k) * temple::Math::factorial(n - k)
+  return Temple::Math::factorial(n) / (
+    Temple::Math::factorial(k) * Temple::Math::factorial(n - k)
   );
 }
 
@@ -31,7 +31,7 @@ double tauFourPrime(const std::vector<double>& angles) {
   const double beta = angles.back();
   const double alpha = angles.at(angles.size() - 2);
 
-  constexpr double theta = temple::Math::toRadians(109.5);
+  constexpr double theta = Temple::Math::toRadians(109.5);
 
   return (
     (beta - alpha) / (2 * M_PI - theta)
@@ -44,7 +44,7 @@ double tauFive(const std::vector<double>& angles) {
 
   return (
     angles.back() - angles.at(angles.size() - 2)
-  ) / temple::Math::toRadians(60.0);
+  ) / Temple::Math::toRadians(60.0);
 }
 
 } // namespace detail
@@ -77,7 +77,7 @@ MASM_EXPORT double tau(const std::vector<double>& angles) {
   );
 }
 
-} // namespace shapes
+} // namespace Shapes
 } // namespace Scine
 
 #endif

@@ -17,7 +17,7 @@
 #include "molassembler/Temple/Functional.h"
 
 namespace Scine {
-namespace molassembler {
+namespace Molassembler {
 namespace {
 
 //! Visitor to help split a graph along a bridge edge
@@ -301,11 +301,11 @@ boost::optional<std::vector<AtomIndex>> PrivateGraph::modularIsomorphism(
     return boost::none;
   }
 
-  std::vector<hashes::HashType> thisHashes, otherHashes;
-  hashes::HashType maxHash;
-  std::tie(thisHashes, otherHashes, maxHash) = hashes::narrow(
-    hashes::generate(*this, boost::none, components),
-    hashes::generate(other, boost::none, components)
+  std::vector<Hashes::HashType> thisHashes, otherHashes;
+  Hashes::HashType maxHash;
+  std::tie(thisHashes, otherHashes, maxHash) = Hashes::narrow(
+    Hashes::generate(*this, boost::none, components),
+    Hashes::generate(other, boost::none, components)
   );
 
   std::vector<AtomIndex> indexMap(thisNumAtoms);
@@ -318,8 +318,8 @@ boost::optional<std::vector<AtomIndex>> PrivateGraph::modularIsomorphism(
       thisNumAtoms,
       boost::get(boost::vertex_index, bgl())
     ),
-    hashes::LookupFunctor(thisHashes),
-    hashes::LookupFunctor(otherHashes),
+    Hashes::LookupFunctor(thisHashes),
+    Hashes::LookupFunctor(otherHashes),
     maxHash,
     boost::get(boost::vertex_index, bgl()),
     boost::get(boost::vertex_index, other.bgl())
@@ -336,7 +336,7 @@ bool PrivateGraph::identicalGraph(const PrivateGraph& other) const {
   assert(N() == other.N() && B() == other.B());
 
   // Make sure topology matches
-  return temple::all_of(
+  return Temple::all_of(
     edges(),
     [&](const Edge& edge) -> bool {
       Edge correspondingEdge;
@@ -525,5 +525,5 @@ Cycles PrivateGraph::generateEtaPreservedCycles_() const {
   return Cycles(*this, false);
 }
 
-} // namespace molassembler
+} // namespace Molassembler
 } // namespace Scine

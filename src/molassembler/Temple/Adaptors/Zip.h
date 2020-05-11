@@ -12,7 +12,7 @@
 #include "molassembler/Temple/Binding.h"
 
 namespace Scine {
-namespace temple {
+namespace Temple {
 namespace adaptors {
 namespace detail {
 
@@ -61,8 +61,8 @@ struct Zipper {
 //!@{
   std::enable_if_t<
     (
-      traits::hasSize<ContainerT>::value
-      && traits::hasSize<ContainerU>::value
+      Traits::hasSize<ContainerT>::value
+      && Traits::hasSize<ContainerU>::value
     ),
     std::size_t
   > size() const {
@@ -172,7 +172,7 @@ auto zip(ContainerT&& containerT, ContainerU&& containerU) {
 }
 
 } // namespace adaptors
-} // namespace temple
+} // namespace Temple
 } // namespace Scine
 
 #endif

@@ -13,7 +13,7 @@
 #include <vector>
 
 namespace Scine {
-namespace temple {
+namespace Temple {
 
 inline std::vector<std::string> split(const std::string& s, char delimiter) {
   std::vector<std::string> elements;
@@ -29,7 +29,7 @@ inline std::vector<std::string> split(const std::string& s, char delimiter) {
   return elements;
 }
 
-} // namespace temple
+} // namespace Temple
 } // namespace Scine
 
 #endif

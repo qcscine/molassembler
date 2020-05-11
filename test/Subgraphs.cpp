@@ -15,11 +15,11 @@
 #include "molassembler/Temple/Stringify.h"
 
 using namespace Scine;
-using namespace molassembler;
+using namespace Molassembler;
 
 BOOST_AUTO_TEST_CASE(SubgraphBasic) {
-  const Molecule neopentane = io::read("isomorphisms/neopentane.mol");
-  const Molecule methyl = io::experimental::parseSmilesSingleMolecule("[CH3]");
+  const Molecule neopentane = IO::read("isomorphisms/neopentane.mol");
+  const Molecule methyl = IO::experimental::parseSmilesSingleMolecule("[CH3]");
 
   const auto mappings = subgraphs::maximum(methyl, neopentane);
   BOOST_CHECK_MESSAGE(

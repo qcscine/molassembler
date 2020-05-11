@@ -14,8 +14,8 @@
 #include <iostream>
 
 using namespace Scine;
-using namespace molassembler;
-using namespace shape_inference;
+using namespace Molassembler;
+using namespace ShapeInference;
 
 using TestCaseType = std::tuple<
   std::string, // a Name for the current compound
@@ -26,7 +26,7 @@ using TestCaseType = std::tuple<
 
 // Runs a specific test case type
 void testVsepr(
-  const shapes::Shape& expectedShapeName,
+  const Shapes::Shape& expectedShapeName,
   const std::vector<TestCaseType>& testCases
 ) {
   std::string complexName;
@@ -38,7 +38,7 @@ void testVsepr(
 
     std::tie(complexName, centerAtomType, ligands, charge) = testCase;
 
-    boost::optional<shapes::Shape> shape;
+    boost::optional<Shapes::Shape> shape;
 
     try {
       shape = vsepr(
@@ -61,9 +61,9 @@ void testVsepr(
       BOOST_CHECK_MESSAGE(
         shape.value() == expectedShapeName,
         complexName << " has been determined as "
-          << shapes::name(shape.value())
+          << Shapes::name(shape.value())
           << ", expected: "
-          << shapes::name(expectedShapeName)
+          << Shapes::name(expectedShapeName)
       );
     }
   }
@@ -111,7 +111,7 @@ BOOST_AUTO_TEST_CASE(VseprTests) {
   using Element = Utils::ElementType;
 
   testVsepr( // AX2E0
-    shapes::Shape::Line,
+    Shapes::Shape::Line,
     {
       TestCaseType {
         "CO2",
@@ -144,7 +144,7 @@ BOOST_AUTO_TEST_CASE(VseprTests) {
   );
 
   testVsepr( // AX3E0
-    shapes::Shape::EquilateralTriangle,
+    Shapes::Shape::EquilateralTriangle,
     {
       TestCaseType {
         "BCl3",
@@ -178,7 +178,7 @@ BOOST_AUTO_TEST_CASE(VseprTests) {
   );
 
   testVsepr( // AX2E1 (V-shape / Bent)
-    shapes::Shape::Bent,
+    Shapes::Shape::Bent,
     {
       TestCaseType {
         "SO2",
@@ -225,7 +225,7 @@ BOOST_AUTO_TEST_CASE(VseprTests) {
   );
 
   testVsepr( // AX4E0
-    shapes::Shape::Tetrahedron,
+    Shapes::Shape::Tetrahedron,
     {
       TestCaseType {
         "CH4",
@@ -271,7 +271,7 @@ BOOST_AUTO_TEST_CASE(VseprTests) {
   );
 
   testVsepr( // AX3E1
-    shapes::Shape::VacantTetrahedron,
+    Shapes::Shape::VacantTetrahedron,
     {
       TestCaseType {
         "NH3",
@@ -295,7 +295,7 @@ BOOST_AUTO_TEST_CASE(VseprTests) {
   );
 
   testVsepr( // AX2E2
-    shapes::Shape::Bent,
+    Shapes::Shape::Bent,
     {
       TestCaseType {
         "OH2",
@@ -310,7 +310,7 @@ BOOST_AUTO_TEST_CASE(VseprTests) {
   );
 
   testVsepr(
-    shapes::Shape::TrigonalBipyramid,
+    Shapes::Shape::TrigonalBipyramid,
     {
       TestCaseType {
         "PCl5",
@@ -325,7 +325,7 @@ BOOST_AUTO_TEST_CASE(VseprTests) {
   );
 
   testVsepr(
-    shapes::Shape::Seesaw,
+    Shapes::Shape::Seesaw,
     {
       TestCaseType {
         "SF4",
@@ -340,7 +340,7 @@ BOOST_AUTO_TEST_CASE(VseprTests) {
   );
 
   testVsepr(
-    shapes::Shape::T,
+    Shapes::Shape::T,
     {
       TestCaseType {
         "ClF3",
@@ -355,7 +355,7 @@ BOOST_AUTO_TEST_CASE(VseprTests) {
   );
 
   testVsepr( // AX2E3
-    shapes::Shape::Line,
+    Shapes::Shape::Line,
     {
       TestCaseType {
         "I3-",
@@ -379,7 +379,7 @@ BOOST_AUTO_TEST_CASE(VseprTests) {
   );
 
   testVsepr(
-    shapes::Shape::Octahedron,
+    Shapes::Shape::Octahedron,
     {
       TestCaseType {
         "SF6",
@@ -394,7 +394,7 @@ BOOST_AUTO_TEST_CASE(VseprTests) {
   );
 
   testVsepr(
-    shapes::Shape::SquarePyramid,
+    Shapes::Shape::SquarePyramid,
     {
       TestCaseType {
         "BrF5",
@@ -409,7 +409,7 @@ BOOST_AUTO_TEST_CASE(VseprTests) {
   );
 
   testVsepr(
-    shapes::Shape::Square,
+    Shapes::Shape::Square,
     {
       TestCaseType {
         "XeF4",
@@ -424,7 +424,7 @@ BOOST_AUTO_TEST_CASE(VseprTests) {
   );
 
   testVsepr(
-    shapes::Shape::PentagonalBipyramid,
+    Shapes::Shape::PentagonalBipyramid,
     {
       TestCaseType {
         "IF7",
@@ -439,7 +439,7 @@ BOOST_AUTO_TEST_CASE(VseprTests) {
   );
 
   testVsepr(
-    shapes::Shape::PentagonalPyramid,
+    Shapes::Shape::PentagonalPyramid,
     {
       TestCaseType {
         "XeOF5^-",
@@ -460,7 +460,7 @@ BOOST_AUTO_TEST_CASE(VseprTests) {
   );
 
   testVsepr(
-    shapes::Shape::Pentagon,
+    Shapes::Shape::Pentagon,
     {
       TestCaseType {
         "XeF5-",
@@ -475,7 +475,7 @@ BOOST_AUTO_TEST_CASE(VseprTests) {
   );
 
   testVsepr(
-    shapes::Shape::SquareAntiprism,
+    Shapes::Shape::SquareAntiprism,
     {
       TestCaseType {
         "XeF8^2-",
@@ -499,7 +499,7 @@ BOOST_AUTO_TEST_CASE(VseprTests) {
 
   // dative bonding
   testVsepr(
-    shapes::Shape::Tetrahedron,
+    Shapes::Shape::Tetrahedron,
     {
       TestCaseType {
         "H3N -> BF3, on N",

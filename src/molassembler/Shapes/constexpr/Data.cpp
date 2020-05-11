@@ -20,7 +20,7 @@
   constexpr decltype(ShapeClass::angleLookupTable) ShapeClass::angleLookupTable;
 
 namespace Scine {
-namespace shapes {
+namespace Shapes {
 namespace concepts {
 
 /**
@@ -36,7 +36,7 @@ namespace concepts {
  * - `char* stringName`: Human readable string of the name
  * - `double(const unsigned, const unsigned) angleFunction`: Angle in radians
  *   between symmetry position indices
- * - `std::array<temple::Vector, size> coordinate`: Origin-centered normalized
+ * - `std::array<Temple::Vector, size> coordinate`: Origin-centered normalized
  *   position vectors of the symmetry positions
  * - `std::array< std::array<unsigned, size>, ?> rotations`: Spatial rotations
  *   represented as index permutations between symmetry positions. A minimal
@@ -56,19 +56,19 @@ struct ShapeClass : std::integral_constant<bool,
     && std::is_same<const char*, std::decay_t<decltype(T::stringName)>>::value
     && std::is_same<double, decltype(T::angleFunction(0u, 1u))>::value
     && std::is_same<
-      temple::Vector,
-      temple::getValueType<decltype(T::coordinates)>
+      Temple::Vector,
+      Temple::getValueType<decltype(T::coordinates)>
     >::value
     && T::coordinates.size() == T::size
     && std::is_same<
       std::array<unsigned, T::size>,
-      temple::getValueType<decltype(T::rotations)>
+      Temple::getValueType<decltype(T::rotations)>
     >::value
     && std::is_same<
       std::array<unsigned, 4>,
-      temple::getValueType<decltype(T::tetrahedra)>
+      Temple::getValueType<decltype(T::tetrahedra)>
     >::value
-    && std::is_same<unsigned, temple::getValueType<decltype(T::mirror)>>::value
+    && std::is_same<unsigned, Temple::getValueType<decltype(T::mirror)>>::value
     && (T::mirror.size() == 0 || T::mirror.size() == T::size)
   )
 > {};
@@ -109,7 +109,7 @@ constexpr bool all_of(const T& t) {
 template<typename T, std::size_t ... Inds>
 constexpr bool allRotationsValid(std::index_sequence<Inds ...> /* inds */) {
   constexpr unsigned numRotations = sizeof...(Inds);
-  temple::Array<bool, numRotations> valid {
+  Temple::Array<bool, numRotations> valid {
     isIotaPermutation(T::rotations[Inds])...
   };
   return all_of(valid);
@@ -129,8 +129,8 @@ struct ValidMirror : std::integral_constant<bool,
 
 template<typename T, std::size_t ... Inds>
 constexpr bool allVectorsNormalized(std::index_sequence<Inds ...> /* inds */) {
-  temple::Array<bool, T::size> valid {
-    (temple::Math::abs(T::coordinates[Inds].norm() - 1) < 1e-6)...
+  Temple::Array<bool, T::size> valid {
+    (Temple::Math::abs(T::coordinates[Inds].norm() - 1) < 1e-6)...
   };
   return all_of(valid);
 }
@@ -142,12 +142,12 @@ struct ValidCoordinates : std::integral_constant<bool,
 
 } // namespace concepts
 
-namespace data {
+namespace Data {
 
 /* Static property correctness checking */
 
 static_assert(
-  temple::tuples::allOf<allShapeDataTypes, concepts::ShapeClass>(),
+  Temple::Tuples::allOf<allShapeDataTypes, concepts::ShapeClass>(),
   "Not all shape data types fulfill the ShapeClass concept"
 );
 
@@ -157,17 +157,17 @@ static_assert(
 );
 
 static_assert(
-  temple::tuples::allOf<allShapeDataTypes, concepts::ValidRotations>(),
+  Temple::Tuples::allOf<allShapeDataTypes, concepts::ValidRotations>(),
   "Not all shape data types' rotations are valid"
 );
 
 static_assert(
-  temple::tuples::allOf<allShapeDataTypes, concepts::ValidMirror>(),
+  Temple::Tuples::allOf<allShapeDataTypes, concepts::ValidMirror>(),
   "Not all shape data types' mirrors are valid"
 );
 
 static_assert(
-  temple::tuples::allOf<allShapeDataTypes, concepts::ValidCoordinates>(),
+  Temple::Tuples::allOf<allShapeDataTypes, concepts::ValidCoordinates>(),
   "Not all shape data types' coordinates are valid"
 );
 
@@ -233,6 +233,6 @@ DECLARE_CONSTEXPR_ANGLE_LOOKUP(EdgeContractedIcosahedron)
 DECLARE_CONSTEXPR_ANGLE_LOOKUP(Icosahedron)
 DECLARE_CONSTEXPR_ANGLE_LOOKUP(Cuboctahedron)
 
-} // namespace data
-} // namespace shapes
+} // namespace Data
+} // namespace Shapes
 } // namespace Scine

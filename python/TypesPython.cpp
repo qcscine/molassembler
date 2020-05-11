@@ -10,7 +10,7 @@
 
 void init_types(pybind11::module& m) {
   using namespace std::string_literals;
-  using namespace Scine::molassembler;
+  using namespace Scine::Molassembler;
 
   pybind11::enum_<BondType> bondType(
     m,

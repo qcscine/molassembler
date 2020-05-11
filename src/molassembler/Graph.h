@@ -24,7 +24,7 @@ using ElementTypeCollection = std::vector<ElementType>;
 class BondOrderCollection;
 } // namespace Utils
 
-namespace molassembler {
+namespace Molassembler {
 
 // Forward-declare PrivateGraph
 class PrivateGraph;
@@ -344,7 +344,7 @@ private:
   std::unique_ptr<PrivateGraph> innerPtr_;
 };
 
-} // namespace molassembler
+} // namespace Molassembler
 } // namespace Scine
 
 #endif

@@ -15,15 +15,15 @@
 #include "molassembler/Conformers.h"
 
 namespace Scine {
-namespace molassembler {
+namespace Molassembler {
 
-namespace random {
+namespace Random {
 class Engine;
-} // namespace random
+} // namespace Random
 
 namespace outcome = OUTCOME_V2_NAMESPACE;
 
-namespace distance_geometry {
+namespace DistanceGeometry {
 
 class DistanceBoundsMatrix {
 public:
@@ -88,8 +88,8 @@ public:
         // i < j in all cases -> lower bound is (j, i), upper bound is (i, j)
         if(matrix_(j, i) == 0) {
           matrix_(j, i) = (
-            atom_info::vdwRadius(inner.elementType(i))
-            + atom_info::vdwRadius(inner.elementType(j))
+            AtomInfo::vdwRadius(inner.elementType(i))
+            + AtomInfo::vdwRadius(inner.elementType(j))
           );
         }
 
@@ -159,7 +159,7 @@ public:
    * @complexity{@math{O(N^5)}}
    */
   outcome::result<Eigen::MatrixXd> makeDistanceMatrix(
-    random::Engine& engine,
+    Random::Engine& engine,
     Partiality partiality = Partiality::All
   ) const noexcept;
 
@@ -195,8 +195,8 @@ private:
 
 };
 
-} // namespace distance_geometry
-} // namespace molassembler
+} // namespace DistanceGeometry
+} // namespace Molassembler
 } // namespace Scine
 
 #endif

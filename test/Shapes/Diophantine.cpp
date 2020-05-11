@@ -8,9 +8,9 @@
 
 #include "molassembler/Shapes/Diophantine.h"
 
-using namespace Scine::shapes;
+using namespace Scine::Shapes;
 
-BOOST_AUTO_TEST_CASE(Diophantine) {
+BOOST_AUTO_TEST_CASE(DiophantineExample) {
   std::vector<unsigned> x;
   const std::vector<unsigned> a {4, 3, 2};
   const int b = 12;
@@ -27,12 +27,12 @@ BOOST_AUTO_TEST_CASE(Diophantine) {
     {3, 0, 0}
   };
 
-  BOOST_REQUIRE(diophantine::first_solution(x, a, b));
+  BOOST_REQUIRE(Diophantine::first_solution(x, a, b));
   unsigned i = 0;
   do {
     BOOST_CHECK(x == expectedX.at(i));
     ++i;
-  } while(diophantine::next_solution(x, a, b));
+  } while(Diophantine::next_solution(x, a, b));
   BOOST_REQUIRE_EQUAL(i, expectedX.size());
   BOOST_REQUIRE(x == std::vector<unsigned> (3, 0));
 }

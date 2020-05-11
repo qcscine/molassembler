@@ -30,7 +30,7 @@
 #include <iostream>
 
 using namespace Scine;
-using namespace molassembler;
+using namespace Molassembler;
 
 inline std::ostream& nl(std::ostream& os) {
   os << '\n';
@@ -373,18 +373,18 @@ const std::map<std::string, LinkTestData> linkTestData {
 };
 
 bool testSubstituentLinks(const boost::filesystem::path& filePath) {
-  auto mol = io::read(filePath.string());
+  auto mol = IO::read(filePath.string());
 
   std::cout << mol << nl;
 
   const auto& relevantData = linkTestData.at(filePath.stem().string());
 
-  auto ligands = graph_algorithms::ligandSiteGroups(
+  auto ligands = GraphAlgorithms::ligandSiteGroups(
     mol.graph().inner(),
     relevantData.source
   );
 
-  auto links = graph_algorithms::siteLinks(
+  auto links = GraphAlgorithms::siteLinks(
     mol.graph().inner(),
     relevantData.source,
     ligands,
@@ -424,14 +424,14 @@ bool testSubstituentLinks(const boost::filesystem::path& filePath) {
   if(condensedExpected != condensedCalculated) {
     std::cout << "Links test fails for " << filePath.stem().string() << "." << nl
       << "Expected: "
-      << temple::stringify(condensedExpected) << ", got "
-      << temple::stringify(condensedCalculated)
+      << Temple::stringify(condensedExpected) << ", got "
+      << Temple::stringify(condensedCalculated)
       << ". From:\n";
 
     for(const auto& link : links) {
       std::cout << std::to_string(link.sites.first) << ", "
         << std::to_string(link.sites.second) << ": "
-        << temple::stringify(link.cycleSequence) << "\n";
+        << Temple::stringify(link.cycleSequence) << "\n";
     }
 
     return false;
@@ -572,13 +572,13 @@ bool testHapticBonds(const boost::filesystem::path& filePath) {
     graph.elementType(i) = rawData.first.getElement(i);
   }
 
-  graph_algorithms::updateEtaBonds(graph);
+  GraphAlgorithms::updateEtaBonds(graph);
 
   const auto& relevantData = hapticTestData.at(filePath.stem().string());
 
   // Test Eta edge classification correctness
   bool pass = true;
-  temple::TinyUnorderedSet<PrivateGraph::Edge> expectedEtaBonds;
+  Temple::TinyUnorderedSet<PrivateGraph::Edge> expectedEtaBonds;
   for(const auto& expectedEtaBond : relevantData) {
     AtomIndex i = expectedEtaBond.front(),
                   j = expectedEtaBond.back();
@@ -615,7 +615,7 @@ bool testHapticBonds(const boost::filesystem::path& filePath) {
   }
 
   // Test ligands classification
-  auto ligands = graph_algorithms::ligandSiteGroups(graph, 0);
+  auto ligands = GraphAlgorithms::ligandSiteGroups(graph, 0);
 
   /* Sort the ligands by size and then by individual atom indices so that we can
    * compare lexicograhically
@@ -640,8 +640,8 @@ bool testHapticBonds(const boost::filesystem::path& filePath) {
   if(ligands != expectedLigands) {
     pass = false;
     std::cout << "Ligands at the central atom do not match expectation.\n"
-      << "Expected: " << temple::stringify(expectedLigands) << "\n"
-      << "Got: " << temple::stringify(ligands) << "\n\n";
+      << "Expected: " << Temple::stringify(expectedLigands) << "\n"
+      << "Got: " << Temple::stringify(ligands) << "\n\n";
   }
 
   if(!pass) {

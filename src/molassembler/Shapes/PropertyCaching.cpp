@@ -11,11 +11,11 @@
 #include "molassembler/Temple/Functional.h"
 
 namespace Scine {
-namespace shapes {
+namespace Shapes {
 
-constexpr temple::Array<std::pair<double, double>, nShapes> symmetryAngleBounds = temple::tuples::map<
-  data::allShapeDataTypes,
-  constexpr_properties::AngleBoundsFunctor
+constexpr Temple::Array<std::pair<double, double>, nShapes> symmetryAngleBounds = Temple::Tuples::map<
+  Data::allShapeDataTypes,
+  ConstexprProperties::AngleBoundsFunctor
 >();
 
 double minimumAngle(const Shape shape) {
@@ -38,28 +38,28 @@ double maximumAngle(const Shape shape) {
 template<typename ShapeSource, typename ShapeTarget>
 struct mappingCalculationFunctor {
   static constexpr auto value() {
-    return constexpr_properties::calculateMapping<ShapeSource, ShapeTarget>();
+    return ConstexprProperties::calculateMapping<ShapeSource, ShapeTarget>();
   }
 };
 
 // Calculate the symmetryMapping for all possible combinations of symmetries
-constexpr temple::UpperTriangularMatrix<
-  temple::Optional<constexpr_properties::MappingsReturnType>,
+constexpr Temple::UpperTriangularMatrix<
+  Temple::Optional<ConstexprProperties::MappingsReturnType>,
   nShapes * (nShapes - 1) / 2
-> allMappings = temple::makeUpperTriangularMatrix(
-  temple::tuples::mapAllPairs<
-    data::allShapeDataTypes,
+> allMappings = Temple::makeUpperTriangularMatrix(
+  Temple::Tuples::mapAllPairs<
+    Data::allShapeDataTypes,
     mappingCalculationFunctor
   >()
 );
 #endif
 
-temple::MinimalCache<
+Temple::MinimalCache<
   std::tuple<Shape, Shape, boost::optional<unsigned>>,
-  properties::ShapeTransitionGroup
+  Properties::ShapeTransitionGroup
 > mappingsCache;
 
-const boost::optional<const properties::ShapeTransitionGroup&> getMapping(
+const boost::optional<const Properties::ShapeTransitionGroup&> getMapping(
   const Shape a,
   const Shape b,
   const boost::optional<Vertex>& removedIndexOption
@@ -76,7 +76,7 @@ const boost::optional<const properties::ShapeTransitionGroup&> getMapping(
     return mappingsCache.getOption(key);
   }
 
-  int sizeDiff = static_cast<int>(shapes::size(b)) - static_cast<int>(shapes::size(a));
+  int sizeDiff = static_cast<int>(Shapes::size(b)) - static_cast<int>(Shapes::size(a));
 
   if(sizeDiff == 1 || sizeDiff == 0) {
 #ifdef USE_CONSTEXPR_TRANSITION_MAPPINGS
@@ -101,9 +101,9 @@ const boost::optional<const properties::ShapeTransitionGroup&> getMapping(
     if(constexprOption.hasValue()) {
       const auto& constexprMappings = constexprOption.value();
 
-      properties::ShapeTransitionGroup stlResult;
-      stlResult.indexMappings = temple::map(
-        temple::toSTL(constexprMappings.mappings),
+      Properties::ShapeTransitionGroup stlResult;
+      stlResult.indexMappings = Temple::map(
+        Temple::toSTL(constexprMappings.mappings),
         [&](const auto& indexList) -> std::vector<Vertex> {
           std::vector<Vertex> v;
           for(unsigned i : indexList) {
@@ -124,16 +124,16 @@ const boost::optional<const properties::ShapeTransitionGroup&> getMapping(
       // Calculate dynamically (relevant for targets of size 9 and higher)
       mappingsCache.add(
         key,
-        properties::selectBestTransitionMappings(
-          properties::shapeTransitionMappings(a, b)
+        Properties::selectBestTransitionMappings(
+          Properties::shapeTransitionMappings(a, b)
         )
       );
     }
 #else
     mappingsCache.add(
       key,
-      properties::selectBestTransitionMappings(
-        properties::shapeTransitionMappings(a, b)
+      Properties::selectBestTransitionMappings(
+        Properties::shapeTransitionMappings(a, b)
       )
     );
 #endif
@@ -141,8 +141,8 @@ const boost::optional<const properties::ShapeTransitionGroup&> getMapping(
     // Deletion case (always dynamic)
     mappingsCache.add(
       key,
-      properties::selectBestTransitionMappings(
-        properties::ligandLossTransitionMappings(a, b, removedIndexOption.value())
+      Properties::selectBestTransitionMappings(
+        Properties::ligandLossTransitionMappings(a, b, removedIndexOption.value())
       )
     );
   }
@@ -154,15 +154,15 @@ const boost::optional<const properties::ShapeTransitionGroup&> getMapping(
 template<typename Symmetry>
 struct makeAllHasUnlinkedStereopermutationsFunctor {
   static constexpr auto value() {
-    temple::DynamicArray<bool, constexpr_properties::maxShapeSize> nums;
+    Temple::DynamicArray<bool, ConstexprProperties::maxShapeSize> nums;
 
     /* Value for 0 is equal to value for 1, so calculate one less. When all
      * are equal, there is obviously only one stereopermutation, so there is no
      * need to calculate.
      */
-    for(unsigned i = 0; i < shapes::size - 1; ++i) {
+    for(unsigned i = 0; i < Shapes::size - 1; ++i) {
       nums.push_back(
-        constexpr_properties::hasMultipleUnlinkedStereopermutations<Symmetry>(i + 1)
+        ConstexprProperties::hasMultipleUnlinkedStereopermutations<Symmetry>(i + 1)
       );
     }
 
@@ -170,16 +170,16 @@ struct makeAllHasUnlinkedStereopermutationsFunctor {
   }
 };
 
-constexpr temple::Array<
-  temple::DynamicArray<bool, constexpr_properties::maxShapeSize>,
+constexpr Temple::Array<
+  Temple::DynamicArray<bool, ConstexprProperties::maxShapeSize>,
   nShapes
-> allHasMultipleUnlinkedStereopermutations = temple::tuples::map<
-  data::allShapeDataTypes,
+> allHasMultipleUnlinkedStereopermutations = Temple::Tuples::map<
+  Data::allShapeDataTypes,
   makeAllHasUnlinkedStereopermutationsFunctor
 >();
 #endif
 
-temple::MinimalCache<
+Temple::MinimalCache<
   Shape,
   std::vector<bool>
 > hasMultipleUnlinkedCache;
@@ -188,7 +188,7 @@ bool hasMultipleUnlinkedStereopermutations(
   const Shape shape,
   unsigned nIdenticalLigands
 ) {
-  if(nIdenticalLigands == shapes::size(shape)) {
+  if(nIdenticalLigands == Shapes::size(shape)) {
     return false;
   }
 
@@ -207,7 +207,7 @@ bool hasMultipleUnlinkedStereopermutations(
     static_cast<unsigned>(shape)
   );
 
-  auto stlMapped = temple::toSTL(dynArrRef);
+  auto stlMapped = Temple::toSTL(dynArrRef);
 
   hasMultipleUnlinkedCache.add(
     shape,
@@ -218,9 +218,9 @@ bool hasMultipleUnlinkedStereopermutations(
 #else
   // Generate the cache element using dynamic properties
   std::vector<bool> unlinkedStereopermutations;
-  for(unsigned i = 0; i < shapes::size(shape) - 1; ++i) {
+  for(unsigned i = 0; i < Shapes::size(shape) - 1; ++i) {
     unlinkedStereopermutations.push_back(
-      properties::hasMultipleUnlinkedStereopermutations(
+      Properties::hasMultipleUnlinkedStereopermutations(
         shape,
         i + 1
       )
@@ -236,5 +236,5 @@ bool hasMultipleUnlinkedStereopermutations(
 #endif
 }
 
-} // namespace shapes
+} // namespace Shapes
 } // namespace Scine

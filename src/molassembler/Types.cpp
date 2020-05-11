@@ -12,7 +12,7 @@
 #include <iterator>
 
 namespace Scine {
-namespace molassembler {
+namespace Molassembler {
 
 static_assert(
   static_cast<std::underlying_type<BondType>::type>(BondType::Eta) == nBondTypes - 1,
@@ -55,5 +55,5 @@ std::size_t hash_value(const BondIndex& bond) {
   return seed;
 }
 
-} // namespace molassembler
+} // namespace Molassembler
 } // namespace Scine

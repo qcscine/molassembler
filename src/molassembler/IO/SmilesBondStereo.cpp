@@ -12,8 +12,8 @@
 #include "molassembler/Temple/Optionals.h"
 
 namespace Scine {
-namespace molassembler {
-namespace io {
+namespace Molassembler {
+namespace IO {
 
 unsigned SmilesBondStereo::findAssignment(
   BondStereopermutator stereopermutator,
@@ -38,10 +38,10 @@ unsigned SmilesBondStereo::findAssignment(
   for(unsigned i = 0; i < 2; ++i) {
     stereopermutator.assign(i);
 
-    auto upOfLeftSiteIndex = temple::optionals::map(upOfLeft, getSiteIndexLeft);
-    auto downOfLeftSiteIndex = temple::optionals::map(downOfLeft, getSiteIndexLeft);
-    auto upOfRightSiteIndex = temple::optionals::map(upOfRight, getSiteIndexRight);
-    auto downOfRightSiteIndex = temple::optionals::map(downOfRight, getSiteIndexRight);
+    auto upOfLeftSiteIndex = Temple::optionals::map(upOfLeft, getSiteIndexLeft);
+    auto downOfLeftSiteIndex = Temple::optionals::map(downOfLeft, getSiteIndexLeft);
+    auto upOfRightSiteIndex = Temple::optionals::map(upOfRight, getSiteIndexRight);
+    auto downOfRightSiteIndex = Temple::optionals::map(downOfRight, getSiteIndexRight);
 
     if(upOfLeftSiteIndex) {
       if(upOfRightSiteIndex) {
@@ -74,6 +74,6 @@ unsigned SmilesBondStereo::findAssignment(
   throw std::logic_error("Failed to find matching stereopermutation for BondStereo state.");
 }
 
-} // namespace io
-} // namespace molassembler
+} // namespace IO
+} // namespace Molassembler
 } // namespace Scine

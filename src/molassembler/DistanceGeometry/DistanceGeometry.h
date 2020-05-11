@@ -18,10 +18,10 @@
 #include <array>
 
 namespace Scine {
-namespace molassembler {
+namespace Molassembler {
 
 //! Distance geometry-related classes and functions
-namespace distance_geometry {
+namespace DistanceGeometry {
 
 /**
  * @brief Data struct representing a chiral constraint
@@ -68,8 +68,8 @@ struct DihedralConstraint {
   DihedralConstraint(SiteSequence passSites, double passLower, double passUpper);
 };
 
-} // namespace distance_geometry
-} // namespace molassembler
+} // namespace DistanceGeometry
+} // namespace Molassembler
 } // namespace Scine
 
 #endif

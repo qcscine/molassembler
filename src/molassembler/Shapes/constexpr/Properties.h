@@ -26,7 +26,7 @@
 #include "molassembler/Temple/Cache.h"
 
 namespace Scine {
-namespace shapes {
+namespace Shapes {
 
 /**
  * @brief Compile-time calculation of shape classes' properties
@@ -44,7 +44,7 @@ namespace shapes {
  * the same properties as these available here, but by referring to shapes
  * by their Name, not by the shape class type itself.
  */
-namespace constexpr_properties {
+namespace ConstexprProperties {
 
 constexpr double floatingPointEqualityTolerance = 1e-4;
 
@@ -139,12 +139,12 @@ struct minAngleFunctor {
  * as to be useful. When C++17 rolls around, replace this with std::array!
  */
 template<typename T, size_t size>
-using ArrayType = temple::Array<T, size>;
+using ArrayType = Temple::Array<T, size>;
 
 //! Generate an integer sequence to use with stereopermutations
 template<typename ShapeClass>
 constexpr auto startingIndexSequence() {
-  return temple::iota<ArrayType, unsigned, ShapeClass::size>();
+  return Temple::iota<ArrayType, unsigned, ShapeClass::size>();
 }
 
 //! Helper to perform applyRotation in constexpr fashion
@@ -184,7 +184,7 @@ constexpr unsigned rotationPeriodicityImpl(
   const unsigned count
 ) {
   if(
-    temple::arraysEqual(
+    Temple::arraysEqual(
       runningIndices,
       startingIndexSequence<ShapeClass>()
     )
@@ -266,13 +266,13 @@ struct maxShapeSizeFunctor {
       ShapeClasses::size...
     };
 
-    return temple::max(sizes);
+    return Temple::max(sizes);
   }
 };
 
 //! The largest shape size defined in the library
-constexpr unsigned maxShapeSize = temple::tuples::unpackToFunction<
-  shapes::data::allShapeDataTypes,
+constexpr unsigned maxShapeSize = Temple::Tuples::unpackToFunction<
+  Shapes::Data::allShapeDataTypes,
   maxShapeSizeFunctor
 >();
 
@@ -284,7 +284,7 @@ constexpr unsigned maxShapeSize = temple::tuples::unpackToFunction<
  * @complexity{@math{\Theta(1)}}
  */
 template<typename ShapeClass>
-constexpr temple::Vector getCoordinates(const unsigned indexInSymmetry) {
+constexpr Temple::Vector getCoordinates(const unsigned indexInSymmetry) {
   if(indexInSymmetry != ORIGIN_PLACEHOLDER) {
     return ShapeClass::coordinates.at(indexInSymmetry);
   }
@@ -298,10 +298,10 @@ constexpr temple::Vector getCoordinates(const unsigned indexInSymmetry) {
  *
  */
 constexpr double getTetrahedronVolume(
-  const temple::Vector& i,
-  const temple::Vector& j,
-  const temple::Vector& k,
-  const temple::Vector& l
+  const Temple::Vector& i,
+  const Temple::Vector& j,
+  const Temple::Vector& k,
+  const Temple::Vector& l
 ) {
   return (i - l).dot(
     (j - l).cross(k - l)
@@ -332,7 +332,7 @@ constexpr double calculateAngularDistortion(
 
   for(unsigned i = 0; i < sourceSymmetrySize; ++i) {
     for(unsigned j = i + 1; j < sourceSymmetrySize; ++j) {
-      distortionSum += temple::Math::abs(
+      distortionSum += Temple::Math::abs(
         sourceAngleFunction(i, j)
         - targetAngleFunction(
           indexMapping.at(i),
@@ -383,7 +383,7 @@ template<typename ShapeClassFrom, typename ShapeClassTo>
 constexpr double calculateChiralDistortion(
   const ArrayType<
     unsigned,
-    temple::Math::max(
+    Temple::Math::max(
       ShapeClassFrom::size,
       ShapeClassTo::size
     )
@@ -396,7 +396,7 @@ constexpr double calculateChiralDistortion(
   for(unsigned i = 0; i < ShapeClassFrom::tetrahedra.size(); ++i) {
     const auto& tetrahedron = ShapeClassFrom::tetrahedra.at(i);
 
-    chiralDistortion += temple::Math::abs(
+    chiralDistortion += Temple::Math::abs(
       getTetrahedronVolume(
         getCoordinates<ShapeClassFrom>(tetrahedron.at(0)),
         getCoordinates<ShapeClassFrom>(tetrahedron.at(1)),
@@ -500,7 +500,7 @@ constexpr ArrayType<unsigned, size> symPosMapping(
  */
 template<typename ShapeClass>
 constexpr unsigned maxRotations() {
-  return temple::reduce(rotationPeriodicities<ShapeClass>(), 1u, std::multiplies<>());
+  return Temple::reduce(rotationPeriodicities<ShapeClass>(), 1u, std::multiplies<>());
 }
 
 // Some helper types for use in generateAllRotations
@@ -510,19 +510,19 @@ using IndicesList = ArrayType<unsigned, ShapeClass::size>;
 using IndexListStorageType = unsigned;
 
 template<typename ShapeClass>
-using RotationsSetType = temple::DynamicSet<
+using RotationsSetType = Temple::DynamicSet<
   IndicesList<ShapeClass>,
   maxRotations<ShapeClass>() * 2
 >;
 
 template<typename ShapeClass>
-using ChainStructuresArrayType = temple::DynamicArray<
+using ChainStructuresArrayType = Temple::DynamicArray<
   IndicesList<ShapeClass>,
   maxRotations<ShapeClass>() * 2 // factor is entirely arbitrary
 >;
 
 template<typename ShapeClass>
-using ChainArrayType = temple::DynamicArray<
+using ChainArrayType = Temple::DynamicArray<
   unsigned,
   maxRotations<ShapeClass>() * 2 // factor is entirely arbitrary
 >;
@@ -580,8 +580,8 @@ constexpr auto generateAllRotations(const IndicesList<ShapeClass>& indices) {
 struct MappingsReturnType {
   static constexpr size_t maxMappingsSize = 50;
 
-  using MappingsList = temple::DynamicSet<
-    temple::DynamicArray<unsigned, maxShapeSize>,
+  using MappingsList = Temple::DynamicSet<
+    Temple::DynamicArray<unsigned, maxShapeSize>,
     maxMappingsSize
   >;
 
@@ -647,15 +647,15 @@ constexpr auto symmetryTransitionMappings() {
 
   auto indexMapping = startingIndexSequence<ShapeClassTo>();
 
-  temple::Bitset<temple::Math::factorial(ShapeClassTo::size)> encounteredMappings;
+  Temple::Bitset<Temple::Math::factorial(ShapeClassTo::size)> encounteredMappings;
 
-  temple::floating::ExpandedRelativeEqualityComparator<double> comparator {
+  Temple::Floating::ExpandedRelativeEqualityComparator<double> comparator {
     floatingPointEqualityTolerance
   };
 
   do {
     auto mapped = symPosMapping(indexMapping);
-    auto storageVersion = temple::permutationIndex(mapped);
+    auto storageVersion = Temple::permutationIndex(mapped);
 
     if(!encounteredMappings.test(storageVersion)) {
       double angularDistortion = calculateAngularDistortion(
@@ -711,11 +711,11 @@ constexpr auto symmetryTransitionMappings() {
 
       for(const auto& rotation : allRotations) {
         encounteredMappings.set(
-          temple::permutationIndex(rotation)
+          Temple::permutationIndex(rotation)
         );
       }
     }
-  } while(temple::inPlaceNextPermutation(indexMapping));
+  } while(Temple::inPlaceNextPermutation(indexMapping));
 
   return MappingsReturnType(
     std::move(bestMappings),
@@ -759,15 +759,15 @@ constexpr auto ligandLossMappings(const unsigned deletedSymmetryPosition) {
   /* NOTE: From here the algorithm is identical to symmetryTransitionMappings
    * save that symmetryTo and symmetryFrom are swapped in all occasions
    */
-  temple::Bitset<temple::Math::factorial(ShapeClassFrom::size)> encounteredMappings;
+  Temple::Bitset<Temple::Math::factorial(ShapeClassFrom::size)> encounteredMappings;
 
-  temple::floating::ExpandedRelativeEqualityComparator<double> comparator {
+  Temple::Floating::ExpandedRelativeEqualityComparator<double> comparator {
     floatingPointEqualityTolerance
   };
 
   do {
     auto mapped = symPosMapping(indexMapping);
-    auto storageVersion = temple::permutationIndex(mapped);
+    auto storageVersion = Temple::permutationIndex(mapped);
 
     if(!encounteredMappings.test(storageVersion)) {
       double angularDistortion = calculateAngularDistortion(
@@ -813,11 +813,11 @@ constexpr auto ligandLossMappings(const unsigned deletedSymmetryPosition) {
 
       for(const auto& rotation : allRotations) {
         encounteredMappings.set(
-          temple::permutationIndex(rotation)
+          Temple::permutationIndex(rotation)
         );
       }
     }
-  } while(temple::inPlaceNextPermutation(indexMapping));
+  } while(Temple::inPlaceNextPermutation(indexMapping));
 
   return MappingsReturnType(
     std::move(bestMappings),
@@ -838,9 +838,9 @@ std::enable_if_t<
       || SymmetrySource::size + 1 == SymmetryTarget::size
     )
   ),
-  temple::Optional<MappingsReturnType>
+  Temple::Optional<MappingsReturnType>
 > calculateMapping() {
-  return temple::Optional<MappingsReturnType> {
+  return Temple::Optional<MappingsReturnType> {
     symmetryTransitionMappings<SymmetrySource, SymmetryTarget>()
   };
 }
@@ -856,9 +856,9 @@ std::enable_if_t<
       || SymmetrySource::size + 1 == SymmetryTarget::size
     )
   ),
-  temple::Optional<MappingsReturnType>
+  Temple::Optional<MappingsReturnType>
 > calculateMapping() {
-  return temple::Optional<MappingsReturnType> {};
+  return Temple::Optional<MappingsReturnType> {};
 }
 
 /*!
@@ -882,19 +882,19 @@ constexpr unsigned numUnlinkedStereopermutations(
     indices.at(i) = 0;
   }
 
-  temple::Bitset<temple::Math::factorial(ShapeClass::size)> rotations;
+  Temple::Bitset<Temple::Math::factorial(ShapeClass::size)> rotations;
 
   auto initialRotations = generateAllRotations<ShapeClass>(indices);
 
   for(const auto& rotation : initialRotations) {
-    rotations.set(temple::permutationIndex(rotation));
+    rotations.set(Temple::permutationIndex(rotation));
   }
 
-  while(temple::inPlaceNextPermutation(indices)) {
-    if(!rotations.test(temple::permutationIndex(indices))) {
+  while(Temple::inPlaceNextPermutation(indices)) {
+    if(!rotations.test(Temple::permutationIndex(indices))) {
       auto allRotations = generateAllRotations<ShapeClass>(indices);
       for(const auto& rotation : allRotations) {
-        rotations.set(temple::permutationIndex(rotation));
+        rotations.set(Temple::permutationIndex(rotation));
       }
 
       ++count;
@@ -924,16 +924,16 @@ constexpr bool hasMultipleUnlinkedStereopermutations(const unsigned nIdenticalLi
     indices.at(i) = 0;
   }
 
-  temple::Bitset<temple::Math::factorial(ShapeClass::size)> rotations;
+  Temple::Bitset<Temple::Math::factorial(ShapeClass::size)> rotations;
 
   auto initialRotations = generateAllRotations<ShapeClass>(indices);
 
   for(const auto& rotation : initialRotations) {
-    rotations.set(temple::permutationIndex(rotation));
+    rotations.set(Temple::permutationIndex(rotation));
   }
 
-  while(temple::inPlaceNextPermutation(indices)) {
-    if(!rotations.test(temple::permutationIndex(indices))) {
+  while(Temple::inPlaceNextPermutation(indices)) {
+    if(!rotations.test(Temple::permutationIndex(indices))) {
       return true;
     }
   }
@@ -941,8 +941,8 @@ constexpr bool hasMultipleUnlinkedStereopermutations(const unsigned nIdenticalLi
   return false;
 }
 
-} // namespace constexpr_properties
-} // namespace shapes
+} // namespace ConstexprProperties
+} // namespace Shapes
 } // namespace Scine
 
 #endif

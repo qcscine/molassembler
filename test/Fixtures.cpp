@@ -9,7 +9,7 @@
 #include "boost/test/unit_test.hpp"
 
 namespace Scine {
-namespace molassembler {
+namespace Molassembler {
 
 LowTemperatureFixture::LowTemperatureFixture() {
   BOOST_TEST_MESSAGE("Setting low temperature regime");
@@ -20,5 +20,5 @@ LowTemperatureFixture::~LowTemperatureFixture() {
   swap();
 }
 
-} // namespace molassembler
+} // namespace Molassembler
 } // namespace Scine

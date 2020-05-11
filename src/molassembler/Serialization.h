@@ -15,7 +15,7 @@
 #include "molassembler/Export.h"
 
 namespace Scine {
-namespace molassembler {
+namespace Molassembler {
 
 // Forward-declarations
 class Molecule;
@@ -154,7 +154,7 @@ private:
   std::unique_ptr<Impl> pImpl_;
 };
 
-} // namespace molassembler
+} // namespace Molassembler
 } // namespace Scine
 
 #endif

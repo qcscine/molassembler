@@ -7,7 +7,7 @@
 #include "pybind11/operators.h"
 
 void init_ranking_information(pybind11::module& m) {
-  using namespace Scine::molassembler;
+  using namespace Scine::Molassembler;
 
   pybind11::class_<RankingInformation> rankingInformation(
     m,

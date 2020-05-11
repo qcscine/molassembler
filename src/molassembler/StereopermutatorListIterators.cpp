@@ -24,7 +24,7 @@
  */
 
 namespace Scine {
-namespace molassembler {
+namespace Molassembler {
 
 /* Iterator facade implementation */
 template<typename Permutator>
@@ -203,5 +203,5 @@ template class StereopermutatorList::iterator<const AtomStereopermutator>;
 template class StereopermutatorList::iterator<BondStereopermutator>;
 template class StereopermutatorList::iterator<const BondStereopermutator>;
 
-} // namespace molassembler
+} // namespace Molassembler
 } // namespace Scine

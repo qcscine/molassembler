@@ -16,7 +16,7 @@
 #include <stdexcept>
 
 namespace Scine {
-namespace temple {
+namespace Temple {
 
 /**
  * @brief
@@ -31,8 +31,8 @@ struct Bitmask {
   using Underlying = std::underlying_type_t<EnumType>;
 //!@}
 
-  static constexpr Underlying maximum = temple::Math::floor(
-    temple::Math::log(
+  static constexpr Underlying maximum = Temple::Math::floor(
+    Temple::Math::log(
       static_cast<double>(std::numeric_limits<Underlying>::max()),
       2.0
     )
@@ -130,7 +130,7 @@ constexpr Bitmask<EnumType> make_bitmask(EnumType a) {
   return Bitmask<EnumType> {a};
 }
 
-} // namespace temple
+} // namespace Temple
 } // namespace Scine
 
 #endif

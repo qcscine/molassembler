@@ -13,7 +13,7 @@
 #include "Utils/Typenames.h"
 
 void init_io(pybind11::module& m) {
-  using namespace Scine::molassembler;
+  using namespace Scine::Molassembler;
   using namespace Scine::Utils;
 
   auto io = m.def_submodule("io");
@@ -24,7 +24,7 @@ void init_io(pybind11::module& m) {
 
   experimental.def(
     "from_smiles_multiple",
-    &io::experimental::parseSmiles,
+    &IO::experimental::parseSmiles,
     pybind11::arg("smiles_str"),
     R"delim(
       Parse a smiles string containing possibly multiple molecules
@@ -54,7 +54,7 @@ void init_io(pybind11::module& m) {
 
   experimental.def(
     "from_smiles",
-    &io::experimental::parseSmilesSingleMolecule,
+    &IO::experimental::parseSmilesSingleMolecule,
     pybind11::arg("smiles_str"),
     R"delim(
       Parse a smiles string containing only a single molecule
@@ -91,7 +91,7 @@ void init_io(pybind11::module& m) {
   );
 
   /* Line notations */
-  pybind11::class_<io::LineNotation> lineNotation(
+  pybind11::class_<IO::LineNotation> lineNotation(
     io,
     "LineNotation",
     "Generates :class:`Molecule` instances from line notations of molecules"
@@ -100,35 +100,35 @@ void init_io(pybind11::module& m) {
   lineNotation.def_property_readonly_static(
     "enabled",
     [](pybind11::object /* self */) -> bool {
-      return io::LineNotation::enabled();
+      return IO::LineNotation::enabled();
     },
     "Checks whether the ``obabel`` binary is found in your PATH"
   );
 
   lineNotation.def_static(
     "from_canonical_smiles",
-    &io::LineNotation::fromCanonicalSMILES,
+    &IO::LineNotation::fromCanonicalSMILES,
     pybind11::arg("canonical_smiles"),
     "Construct a single :class:`Molecule` from a canonical SMILES string"
   );
 
   lineNotation.def_static(
     "from_isomeric_smiles",
-    &io::LineNotation::fromIsomericSMILES,
+    &IO::LineNotation::fromIsomericSMILES,
     pybind11::arg("isomeric_smiles"),
     "Construct a single :class:`Molecule` from an isomeric SMILES string"
   );
 
   lineNotation.def_static(
     "from_inchi",
-    &io::LineNotation::fromInChI,
+    &IO::LineNotation::fromInChI,
     pybind11::arg("inchi"),
     "Construct a single :class:`Molecule` from an InChI string"
   );
 
   io.def(
     "read",
-    &io::read,
+    &IO::read,
     pybind11::arg("filename"),
     R"delim(
       Reads a single :class:`Molecule` from a file. Interprets the file format from its
@@ -143,7 +143,7 @@ void init_io(pybind11::module& m) {
 
   io.def(
     "split",
-    &io::split,
+    &IO::split,
     pybind11::arg("filename"),
     R"delim(
       Reads multiple molecules from a file. Interprets the file format from its
@@ -160,7 +160,7 @@ void init_io(pybind11::module& m) {
       const std::string&,
       const Molecule&,
       const PositionCollection&
-    >(&io::write),
+    >(&IO::write),
     pybind11::arg("filename"),
     pybind11::arg("molecule"),
     pybind11::arg("positions"),
@@ -176,7 +176,7 @@ void init_io(pybind11::module& m) {
 
   io.def(
     "write",
-    pybind11::overload_cast<const std::string&, const Molecule&>(&io::write),
+    pybind11::overload_cast<const std::string&, const Molecule&>(&IO::write),
     pybind11::arg("filename"),
     pybind11::arg("molecule"),
     R"delim(

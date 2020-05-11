@@ -12,7 +12,7 @@
 #include <stdexcept>
 
 namespace Scine {
-namespace temple {
+namespace Temple {
 
 template<typename T, typename U>
 class StrongIndexFlatMap {
@@ -96,7 +96,7 @@ private:
   std::vector<U> map_;
 };
 
-} // namespace temple
+} // namespace Temple
 } // namespace Scine
 
 #endif

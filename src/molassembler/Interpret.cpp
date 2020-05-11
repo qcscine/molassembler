@@ -17,8 +17,8 @@
 #include "molassembler/Temple/Functional.h"
 
 namespace Scine {
-namespace molassembler {
-namespace interpret {
+namespace Molassembler {
+namespace Interpret {
 
 namespace {
 
@@ -293,7 +293,7 @@ std::vector<Utils::AtomCollection> applyInterpretationMap(
   }
 
   /* Allocate the collections */
-  std::vector<Utils::AtomCollection> collections = temple::map(
+  std::vector<Utils::AtomCollection> collections = Temple::map(
     componentSizes,
     [](const unsigned size) { return Utils::AtomCollection(size); }
   );
@@ -373,6 +373,6 @@ GraphsResult graphs(
   );
 }
 
-} // namespace interpret
-} // namespace molassembler
+} // namespace Interpret
+} // namespace Molassembler
 } // namespace Scine

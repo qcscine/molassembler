@@ -18,7 +18,7 @@
 #include <array>
 
 namespace Scine {
-namespace temple {
+namespace Temple {
 
 //! Constexpr three-dimensional vector math class.
 struct Vector {
@@ -151,7 +151,7 @@ PURITY_WEAK constexpr double angle(const Vector& a, const Vector& b) {
   );
 }
 
-} // namespace temple
+} // namespace Temple
 } // namespace Scine
 
 #endif

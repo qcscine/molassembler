@@ -7,7 +7,7 @@
 #include "molassembler/Log.h"
 
 namespace Scine {
-namespace molassembler {
+namespace Molassembler {
 namespace Log {
 namespace detail {
 
@@ -42,5 +42,5 @@ Level level = Level::Trace;
 std::unordered_set<Particulars> particulars {};
 
 } // namespace Log
-} // namespace molassembler
+} // namespace Molassembler
 } // namespace Scine

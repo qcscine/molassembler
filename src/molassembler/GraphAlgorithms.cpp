@@ -16,16 +16,16 @@
 
 namespace Scine {
 
-namespace molassembler {
+namespace Molassembler {
 
 std::vector<unsigned> distance(AtomIndex i, const Graph& graph) {
   if(i > graph.N()) {
     throw std::out_of_range("Supplied atom index is invalid!");
   }
 
-  return graph_algorithms::distance(i, graph.inner());
+  return GraphAlgorithms::distance(i, graph.inner());
 }
 
-} // namespace molassembler
+} // namespace Molassembler
 
 } // namespace Scine

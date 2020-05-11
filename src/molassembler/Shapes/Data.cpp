@@ -13,7 +13,7 @@
 #include <unordered_map>
 
 namespace Scine {
-namespace shapes {
+namespace Shapes {
 
 //! Dynamic shape information data struct
 struct ShapeInformation {
@@ -38,9 +38,9 @@ using ShapeDataMapType = std::unordered_map<
   Eigen::aligned_allocator<std::pair<const Shape, ShapeInformation>>
 >;
 
-namespace data {
+namespace Data {
 
-Eigen::Vector3d toEigen(const temple::Vector& cVector) {
+Eigen::Vector3d toEigen(const Temple::Vector& cVector) {
   return {
     cVector.data[0],
     cVector.data[1],
@@ -58,7 +58,7 @@ using AngleFunctionPtr = double(*)(const unsigned, const unsigned);
 template<typename ... ShapeClasses>
 struct angleFunctionFunctor {
   static constexpr std::array<
-    data::AngleFunctionPtr,
+    Data::AngleFunctionPtr,
     sizeof...(ShapeClasses)
   > value() {
     return {{
@@ -117,14 +117,14 @@ TetrahedronList makeTetrahedra(
 }
 
 //! Conversion helper to Eigen type from constexpr vector type
-Eigen::Vector3d toEigen(const temple::Vector& cVector);
+Eigen::Vector3d toEigen(const Temple::Vector& cVector);
 
 /*! Conversion function to make the dynamic coordinates list type from the
  * constexpr data types given in a specific shape class type
  */
 template<size_t shapeSize>
 Coordinates makeCoordinates(
-  const std::array<temple::Vector, shapeSize>& constexprCoordinates
+  const std::array<Temple::Vector, shapeSize>& constexprCoordinates
 ) {
   Coordinates coordinates(3, shapeSize);
 
@@ -158,14 +158,14 @@ constexpr bool isThreeDimensional() {
     return false;
   }
 
-  // temple::Vector a {}; // zero-vector
-  const temple::Vector& c = ShapeClass::coordinates.at(0);
-  const temple::Vector& d = ShapeClass::coordinates.at(1);
-  const temple::Vector cMinusD = c - d;
+  // Temple::Vector a {}; // zero-vector
+  const Temple::Vector& c = ShapeClass::coordinates.at(0);
+  const Temple::Vector& d = ShapeClass::coordinates.at(1);
+  const Temple::Vector cMinusD = c - d;
 
   // All points are within a plane containing the origin and the first two vertices
   for(unsigned i = 2; i < ShapeClass::size; ++i) {
-    const temple::Vector& b = ShapeClass::coordinates.at(i);
+    const Temple::Vector& b = ShapeClass::coordinates.at(i);
     /* The first line of this would read a-d, but a is always zero
      *
      * And since we're taking the absolute value of the whole thing anyway, we
@@ -227,12 +227,12 @@ struct shapeInformationFunctor {
 };
 
 //! An array containing pointers to all shape data types' angle function
-constexpr auto angleFunctions = temple::tuples::unpackToFunction<
+constexpr auto angleFunctions = Temple::Tuples::unpackToFunction<
   allShapeDataTypes,
   angleFunctionFunctor
 >();
 
-} // namespace data
+} // namespace Data
 
 /* Core shape data, this has dynamic types and is hence initialized in the
  * .cpp file from the tuple containing all shape data types and the
@@ -253,9 +253,9 @@ const ShapeDataMapType& shapeData();
  *   deinitialization is random.
  */
 const ShapeDataMapType& shapeData() {
-  static const auto dataMap = temple::tuples::unpackToFunction<
-    data::allShapeDataTypes,
-    data::shapeInformationFunctor
+  static const auto dataMap = Temple::Tuples::unpackToFunction<
+    Data::allShapeDataTypes,
+    Data::shapeInformationFunctor
   >();
 
   return dataMap;
@@ -264,7 +264,7 @@ const ShapeDataMapType& shapeData() {
 AngleFunction angleFunction(const Shape shape) {
   auto shapeIndex = static_cast<unsigned>(shape);
   return [shapeIndex](const Vertex a, const Vertex b) {
-    return data::angleFunctions.at(shapeIndex)(a, b);
+    return Data::angleFunctions.at(shapeIndex)(a, b);
   };
 }
 
@@ -336,5 +336,5 @@ bool threeDimensional(const Shape shape) {
   return shapeData().at(shape).threeDimensional;
 }
 
-} // namespace shapes
+} // namespace Shapes
 } // namespace Scine

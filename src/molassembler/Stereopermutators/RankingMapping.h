@@ -13,7 +13,7 @@
 #include "boost/optional/optional.hpp"
 
 namespace Scine {
-namespace molassembler {
+namespace Molassembler {
 
 struct SiteMapping {
   using Map = std::unordered_map<SiteIndex, SiteIndex, SiteIndex::Hash>;
@@ -24,7 +24,7 @@ struct SiteMapping {
   static SiteMapping from(const RankingInformation& a, const RankingInformation& b);
 };
 
-} // namespace molassembler
+} // namespace Molassembler
 } // namespace Scine
 
 #endif

@@ -13,8 +13,8 @@
 #include "molassembler/DistanceGeometry/DistanceBoundsMatrix.h"
 
 namespace Scine {
-namespace molassembler {
-namespace distance_geometry {
+namespace Molassembler {
+namespace DistanceGeometry {
 
 /**
  * @brief Eigen-based refinement error function
@@ -923,8 +923,8 @@ struct RefinementTraits {
   using SimdConstant = std::tuple_element_t<2, TemplateArgumentsTuple>;
 };
 
-} // namespace distance_geometry
-} // namespace molassembler
+} // namespace DistanceGeometry
+} // namespace Molassembler
 } // namespace Scine
 
 #endif

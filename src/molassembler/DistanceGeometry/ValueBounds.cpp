@@ -10,9 +10,9 @@
 
 namespace Scine {
 
-namespace molassembler {
+namespace Molassembler {
 
-namespace distance_geometry {
+namespace DistanceGeometry {
 
 ValueBounds::ValueBounds() : ValueBounds(
   std::numeric_limits<double>::lowest(),
@@ -30,8 +30,8 @@ bool ValueBounds::operator != (const ValueBounds& other) const {
   return !(*this == other);
 }
 
-} // namespace molassembler
+} // namespace Molassembler
 
-} // namespace distance_geometry
+} // namespace DistanceGeometry
 
 } // namespace Scine

@@ -1,6 +1,6 @@
 #include "molassembler/Types.h"
 
-using namespace Scine::molassembler;
+using namespace Scine::Molassembler;
 
 int main() {
   BondIndex f {4, 3};

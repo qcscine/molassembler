@@ -13,8 +13,8 @@
 #include <cassert>
 
 namespace Scine {
-namespace shapes {
-namespace diophantine {
+namespace Shapes {
+namespace Diophantine {
 
 bool has_solution(
   const std::vector<unsigned>& a,
@@ -129,6 +129,6 @@ bool first_solution(
   return next_solution(x, a, b);
 }
 
-} // namespace diophantine
-} // namespace shapes
+} // namespace Diophantine
+} // namespace Shapes
 } // namespace Scine

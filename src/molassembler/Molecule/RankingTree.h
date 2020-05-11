@@ -46,7 +46,7 @@
 using namespace std::string_literals;
 
 namespace Scine {
-namespace molassembler {
+namespace Molassembler {
 
 /*!
  * @brief Central class for unified IUPAC-like ranking of organic and inorganic
@@ -232,7 +232,7 @@ private:
   //! Returns whether any of the comparison multisets has an entry
   template<typename ComparisonSets>
   bool notEmpty_(const ComparisonSets& comparisonSets) const {
-    return temple::all_of(
+    return Temple::all_of(
       comparisonSets,
       [](const auto& mapPair) -> bool {
         return !mapPair.second.empty();
@@ -361,8 +361,8 @@ private:
     OrderDiscoveryHelper<TreeVertexIndex>& orderingHelper
   ) const {
     for(const auto& undecidedSet : undecidedSets) {
-      temple::forEach(
-        temple::adaptors::allPairs(undecidedSet),
+      Temple::forEach(
+        Temple::adaptors::allPairs(undecidedSet),
         [&](const TreeVertexIndex a, const TreeVertexIndex b) {
           if(multisetCompare_(comparisonSets.at(a), comparisonSets.at(b))) {
             orderingHelper.addLessThanRelationship(a, b);
@@ -1107,7 +1107,7 @@ public:
 //!@}
 };
 
-} // namespace molassembler
+} // namespace Molassembler
 } // namespace Scine
 
 #endif

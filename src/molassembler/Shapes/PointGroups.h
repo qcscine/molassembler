@@ -11,7 +11,7 @@
 #include "molassembler/Export.h"
 
 namespace Scine {
-namespace shapes {
+namespace Shapes {
 
 /**
  * @brief Point groups
@@ -31,7 +31,7 @@ enum class MASM_EXPORT PointGroup : unsigned {
   Cinfv, Dinfh
 };
 
-} // namespace shapes
+} // namespace Shapes
 } // namespace Scine
 
 #endif

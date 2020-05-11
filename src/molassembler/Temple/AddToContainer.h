@@ -20,7 +20,7 @@
 #include "molassembler/Temple/Functor.h"
 
 namespace Scine {
-namespace temple {
+namespace Temple {
 
 /*!
  * @brief Adds an lvalue element to a container by calling the container's
@@ -67,7 +67,7 @@ void addToContainer(
 template<
   class TargetContainer,
   class SourceContainer,
-  class SizeModifierUnary = functor::Identity
+  class SizeModifierUnary = Functor::Identity
 > void reserveIfPossible(
   TargetContainer& target,
   const SourceContainer& source,
@@ -80,9 +80,9 @@ namespace detail {
 template<class Container, typename T>
 std::enable_if_t<
   std::is_same<
-    traits::getValueType<Container>,
+    Traits::getValueType<Container>,
     T
-  >::value && traits::hasPushBack<Container>::value,
+  >::value && Traits::hasPushBack<Container>::value,
   void
 > insertOrPushBack(
   Container& container,
@@ -95,9 +95,9 @@ std::enable_if_t<
 template<class Container, typename T>
 std::enable_if_t<
   std::is_same<
-    traits::getValueType<Container>,
+    Traits::getValueType<Container>,
     T
-  >::value && traits::hasInsert<Container>::value,
+  >::value && Traits::hasInsert<Container>::value,
   void
 > insertOrPushBack(
   Container& container,
@@ -110,9 +110,9 @@ std::enable_if_t<
 template<class Container, typename T>
 std::enable_if_t<
   std::is_same<
-    traits::getValueType<Container>,
+    Traits::getValueType<Container>,
     T
-  >::value && traits::hasEmplaceBack<Container>::value,
+  >::value && Traits::hasEmplaceBack<Container>::value,
   void
 > emplaceOrEmplaceBack(
   Container& container,
@@ -125,9 +125,9 @@ std::enable_if_t<
 template<class Container, typename T>
 std::enable_if_t<
   std::is_same<
-    traits::getValueType<Container>,
+    Traits::getValueType<Container>,
     T
-  >::value && traits::hasEmplace<Container>::value,
+  >::value && Traits::hasEmplace<Container>::value,
   void
 > emplaceOrEmplaceBack(
   Container& container,
@@ -140,8 +140,8 @@ std::enable_if_t<
 template<class TargetContainer, class SourceContainer, class SizeModifierUnary>
 std::enable_if_t<
   (
-    traits::hasSize<SourceContainer>::value
-    && traits::hasReserve<TargetContainer>::value
+    Traits::hasSize<SourceContainer>::value
+    && Traits::hasReserve<TargetContainer>::value
   ),
   void
 > reserve(
@@ -160,8 +160,8 @@ std::enable_if_t<
 template<class TargetContainer, class SourceContainer, class SizeModifierUnary>
 std::enable_if_t<
   !(
-    traits::hasSize<SourceContainer>::value
-    && traits::hasReserve<TargetContainer>::value
+    Traits::hasSize<SourceContainer>::value
+    && Traits::hasReserve<TargetContainer>::value
   ),
   void
 > reserve(
@@ -209,7 +209,7 @@ template<
   );
 }
 
-} // namespace temple
+} // namespace Temple
 } // namespace Scine
 
 #endif

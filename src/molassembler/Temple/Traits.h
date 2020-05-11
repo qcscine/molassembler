@@ -11,10 +11,10 @@
 #include <vector>
 
 namespace Scine {
-namespace temple {
+namespace Temple {
 
 //! @brief Compile-time reflective trait objects
-namespace traits {
+namespace Traits {
 
 // Get the base type a container holds via the begin iterator
 namespace detail {
@@ -52,8 +52,8 @@ struct FunctionPointerReturnType<ReturnType (*)(Args...)> {
   using type = ReturnType;
 };
 
-} // namespace traits
-} // namespace temple
+} // namespace Traits
+} // namespace Temple
 } // namespace Scine
 
 #endif

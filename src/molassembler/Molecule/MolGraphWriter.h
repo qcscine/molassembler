@@ -15,7 +15,7 @@
 
 namespace Scine {
 
-namespace molassembler {
+namespace Molassembler {
 
 class StereopermutatorList;
 class AtomStereopermutator;
@@ -66,7 +66,7 @@ struct MolGraphWriter {
   ) const;
 };
 
-} // namespace molassembler
+} // namespace Molassembler
 
 } // namespace Scine
 

@@ -17,7 +17,7 @@
 #include <cassert>
 
 namespace Scine {
-namespace stereopermutation {
+namespace Stereopermutations {
 
 Stereopermutation::Stereopermutation(
   CharacterOccupation passCharacters,
@@ -30,7 +30,7 @@ Stereopermutation::Stereopermutation(
    */
   const unsigned S = characters.size();
   if(
-    temple::any_of(
+    Temple::any_of(
       links,
       [S](const auto& link) { return link.first >= S || link.second >= S || link.first == link.second;}
     )
@@ -47,22 +47,22 @@ Stereopermutation::Stereopermutation(
 
   // Fix unsorted links
   if(!std::is_sorted(std::begin(links), std::end(links))) {
-    temple::inplace::sort(links);
+    Temple::inplace::sort(links);
   }
 }
 
 typename Stereopermutation::OrderedLinks Stereopermutation::permuteLinks(
   const OrderedLinks& links,
-  const shapes::Permutation& permutation
+  const Shapes::Permutation& permutation
 ) {
-  const auto rotateIndex = [&permutation](const shapes::Vertex from) -> shapes::Vertex {
-    return shapes::Vertex(
-      temple::find(permutation, from) - std::begin(permutation)
+  const auto rotateIndex = [&permutation](const Shapes::Vertex from) -> Shapes::Vertex {
+    return Shapes::Vertex(
+      Temple::find(permutation, from) - std::begin(permutation)
     );
   };
 
-  return temple::sort(
-    temple::map(
+  return Temple::sort(
+    Temple::map(
       links,
       [&](const auto& link) {
         auto mappedLink = std::make_pair(
@@ -108,12 +108,12 @@ std::string Stereopermutation::toString() const {
 
 Stereopermutation::CharacterOccupation Stereopermutation::permuteCharacters(
   const CharacterOccupation& characters,
-  const shapes::Permutation& permutation
+  const Shapes::Permutation& permutation
 ) {
-  return temple::map(permutation, temple::functor::at(characters));
+  return Temple::map(permutation, Temple::Functor::at(characters));
 }
 
-Stereopermutation Stereopermutation::applyPermutation(const shapes::Permutation& permutation) const {
+Stereopermutation Stereopermutation::applyPermutation(const Shapes::Permutation& permutation) const {
   return {
     permuteCharacters(characters, permutation),
     permuteLinks(links, permutation)
@@ -164,5 +164,5 @@ std::size_t hash_value(const Stereopermutation& assignment) {
   return seed;
 }
 
-} // namespace stereopermutation
+} // namespace Stereopermutations
 } // namespace Scine

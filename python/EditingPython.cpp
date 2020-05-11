@@ -9,7 +9,7 @@
 #include "molassembler/Molecule.h"
 
 void init_editing(pybind11::module& m) {
-  using namespace Scine::molassembler;
+  using namespace Scine::Molassembler;
 
   auto editing = m.def_submodule("editing");
   editing.doc() = R"delim(

@@ -43,8 +43,8 @@ std::ostream& nl(std::ostream& os) {
 }
 
 using namespace Scine;
-using namespace molassembler;
-using namespace distance_geometry;
+using namespace Molassembler;
+using namespace DistanceGeometry;
 
 template<class Graph>
 struct BfFunctor {
@@ -110,9 +110,9 @@ struct Gor1Functor {
 };
 
 // Use specialized GOR1 implementation for ImplicitBoundsGraph
-std::vector<double> Gor1IG (const molassembler::distance_geometry::ImplicitBoundsGraph& graph, unsigned sourceVertex) {
+std::vector<double> Gor1IG (const Molassembler::DistanceGeometry::ImplicitBoundsGraph& graph, unsigned sourceVertex) {
   /* Prep */
-  using Graph = molassembler::distance_geometry::ImplicitBoundsGraph;
+  using Graph = Molassembler::DistanceGeometry::ImplicitBoundsGraph;
   using Vertex = typename boost::graph_traits<Graph>::vertex_descriptor;
 
   unsigned N = boost::num_vertices(graph);
@@ -146,11 +146,11 @@ std::vector<double> Gor1IG (const molassembler::distance_geometry::ImplicitBound
 }
 
 struct DBM_FW_Functor {
-  const molassembler::distance_geometry::DistanceBoundsMatrix& boundsRef;
+  const Molassembler::DistanceGeometry::DistanceBoundsMatrix& boundsRef;
 
-  DBM_FW_Functor(const molassembler::distance_geometry::DistanceBoundsMatrix& bounds) : boundsRef(bounds) {}
+  DBM_FW_Functor(const Molassembler::DistanceGeometry::DistanceBoundsMatrix& bounds) : boundsRef(bounds) {}
 
-  molassembler::distance_geometry::DistanceBoundsMatrix operator() () {
+  Molassembler::DistanceGeometry::DistanceBoundsMatrix operator() () {
     auto boundsCopy = boundsRef;
 
     boundsCopy.smooth();
@@ -175,13 +175,13 @@ BOOST_AUTO_TEST_CASE(ShortestPathsGraphConcepts) {
     const boost::filesystem::path& currentFilePath :
     boost::filesystem::recursive_directory_iterator("stereocenter_detection_molecules")
   ) {
-    Molecule molecule = io::read(
+    Molecule molecule = IO::read(
       currentFilePath.string()
     );
 
-    distance_geometry::SpatialModel spatialModel {molecule, distance_geometry::Configuration {}};
+    DistanceGeometry::SpatialModel spatialModel {molecule, DistanceGeometry::Configuration {}};
 
-    using EG = distance_geometry::ExplicitBoundsGraph;
+    using EG = DistanceGeometry::ExplicitBoundsGraph;
     using Vertex = EG::GraphType::vertex_descriptor;
 
     EG eg {
@@ -215,7 +215,7 @@ BOOST_AUTO_TEST_CASE(ShortestPathsGraphConcepts) {
             auto lalbWeight = boost::get(boost::edge_weight, egGraph, lalb.first);
 
             BOOST_CHECK_MESSAGE(
-              temple::all_of(
+              Temple::all_of(
                 std::vector<decltype(lalb)> {
                   boost::edge(left(b), left(a), egGraph),
                   boost::edge(right(b), right(a), egGraph),
@@ -236,7 +236,7 @@ BOOST_AUTO_TEST_CASE(ShortestPathsGraphConcepts) {
             );
 
             BOOST_CHECK_MESSAGE(
-              temple::all_of(
+              Temple::all_of(
                 std::vector<decltype(lalb)> {
                   boost::edge(left(a), right(b), egGraph),
                   boost::edge(left(b), right(a), egGraph),
@@ -272,13 +272,13 @@ bool shortestPathsRepresentInequalities(
     auto Gor_EG_distances = Gor1Functor<ExplicitBoundsGraph::GraphType> {limits.graph()} (2 * outerVertex);
 
     if(
-      !temple::all_of(
-        temple::adaptors::zip(
+      !Temple::all_of(
+        Temple::adaptors::zip(
           BF_EG_distances,
           Gor_EG_distances
         ),
         [](const double a, const double b) -> bool {
-          return temple::floating::isCloseRelative(a, b, 1e-8);
+          return Temple::Floating::isCloseRelative(a, b, 1e-8);
         }
       )
     ) {
@@ -300,8 +300,8 @@ bool shortestPathsRepresentInequalities(
     }
 
     if(
-      !temple::all_of(
-        temple::adaptors::enumerate(BF_EG_distances),
+      !Temple::all_of(
+        Temple::adaptors::enumerate(BF_EG_distances),
         [&boundsMatrix, &outerVertex](const auto& enumPair) -> bool {
           const auto& index = enumPair.index;
           const auto& distance = enumPair.value;
@@ -312,7 +312,7 @@ bool shortestPathsRepresentInequalities(
 
           if(index % 2 == 0) {
             // To left index -> upper bound
-            return temple::floating::isCloseRelative(
+            return Temple::Floating::isCloseRelative(
               boundsMatrix.upperBound(outerVertex, index / 2),
               distance,
               1e-4
@@ -320,7 +320,7 @@ bool shortestPathsRepresentInequalities(
           }
 
           // To right index -> lower bound
-          return temple::floating::isCloseRelative(
+          return Temple::Floating::isCloseRelative(
             boundsMatrix.lowerBound(outerVertex, index / 2),
             -distance,
             1e-4
@@ -331,7 +331,7 @@ bool shortestPathsRepresentInequalities(
       pass = false;
       std::cout << "Bellman-Ford ExplicitBoundsGraph shortest paths do not represent triangle inequality bounds!" << nl;
       std::cout << "Failed on outerVertex = " << outerVertex << nl;
-      std::cout << "Distances:" << nl << temple::condense(BF_EG_distances) << nl << boundsMatrix.access() << nl;
+      std::cout << "Distances:" << nl << Temple::condense(BF_EG_distances) << nl << boundsMatrix.access() << nl;
       break;
     }
   }
@@ -379,15 +379,15 @@ bool shortestGraphsAlgorithmsResultsMatch(
   bool pass = true;
   for(unsigned outerVertex = 0; outerVertex < N; ++outerVertex) {
     // ImplicitBoundsGraph without implicit bounds should be consistent with ExplicitBoundsGraph
-    auto BF_IG_distances = BfFunctor<distance_geometry::ImplicitBoundsGraph> {implicitGraph} (2 * outerVertex);
+    auto BF_IG_distances = BfFunctor<DistanceGeometry::ImplicitBoundsGraph> {implicitGraph} (2 * outerVertex);
 
-    auto Gor_IG_distances = Gor1Functor<distance_geometry::ImplicitBoundsGraph> {implicitGraph} (2 * outerVertex);
+    auto Gor_IG_distances = Gor1Functor<DistanceGeometry::ImplicitBoundsGraph> {implicitGraph} (2 * outerVertex);
 
     if(
-      !temple::all_of(
-        temple::adaptors::zip(BF_IG_distances, Gor_IG_distances),
+      !Temple::all_of(
+        Temple::adaptors::zip(BF_IG_distances, Gor_IG_distances),
         [](const double a, const double b) -> bool {
-          return temple::floating::isCloseRelative(a, b, 1e-8);
+          return Temple::Floating::isCloseRelative(a, b, 1e-8);
         }
       )
     ) {
@@ -399,17 +399,17 @@ bool shortestGraphsAlgorithmsResultsMatch(
     auto spec_Gor_IG_distances = Gor1IG(implicitGraph, 2 * outerVertex);
 
     if(
-      !temple::all_of(
-        temple::adaptors::zip(Gor_IG_distances, spec_Gor_IG_distances),
+      !Temple::all_of(
+        Temple::adaptors::zip(Gor_IG_distances, spec_Gor_IG_distances),
         [](const double a, const double b) -> bool {
-          return temple::floating::isCloseRelative(a, b, 1e-8);
+          return Temple::Floating::isCloseRelative(a, b, 1e-8);
         }
       )
     ) {
       pass = false;
       std::cout << "Not all pairs of specialized and unspecialized Gor1 shortest-paths-distances on the ImplicitBoundsGraph are within 1e-8 relative tolerance!" << nl;
-      std::cout << temple::condense(spec_Gor_IG_distances) << nl << nl
-        << temple::condense(Gor_IG_distances) << nl << nl;
+      std::cout << Temple::condense(spec_Gor_IG_distances) << nl << nl
+        << Temple::condense(Gor_IG_distances) << nl << nl;
       break;
     }
 
@@ -426,8 +426,8 @@ bool shortestGraphsAlgorithmsResultsMatch(
     }
 
     if(
-      !temple::all_of(
-        temple::adaptors::enumerate(BF_IG_distances),
+      !Temple::all_of(
+        Temple::adaptors::enumerate(BF_IG_distances),
         [&boundsMatrix, &outerVertex](const auto& enumPair) -> bool {
           const auto& index = enumPair.index;
           const auto& distance = enumPair.value;
@@ -439,7 +439,7 @@ bool shortestGraphsAlgorithmsResultsMatch(
           if(index % 2 == 0) {
             // To left index -> upper bound
             return (
-              temple::floating::isCloseRelative(
+              Temple::Floating::isCloseRelative(
                 boundsMatrix.upperBound(outerVertex, index / 2),
                 distance,
                 1e-4
@@ -451,7 +451,7 @@ bool shortestGraphsAlgorithmsResultsMatch(
           }
 
           // To right index -> lower bound
-          return temple::floating::isCloseRelative(
+          return Temple::Floating::isCloseRelative(
             boundsMatrix.lowerBound(outerVertex, index / 2),
             -distance,
             1e-4
@@ -469,7 +469,7 @@ bool shortestGraphsAlgorithmsResultsMatch(
         if(j / 2 != outerVertex) {
           if(j % 2 == 0) {
             if(
-              !temple::floating::isCloseRelative(
+              !Temple::Floating::isCloseRelative(
                 boundsMatrix.upperBound(outerVertex, j / 2),
                 BF_IG_distances.at(j),
                 1e-4
@@ -479,7 +479,7 @@ bool shortestGraphsAlgorithmsResultsMatch(
             }
           } else {
             if(
-              !temple::floating::isCloseRelative(
+              !Temple::Floating::isCloseRelative(
                 boundsMatrix.lowerBound(outerVertex, j / 2),
                 -BF_IG_distances.at(j),
                 1e-4
@@ -491,7 +491,7 @@ bool shortestGraphsAlgorithmsResultsMatch(
         }
       }
       std::cout << "}" << nl;
-      std::cout << "Distances:" << nl << temple::condense(BF_IG_distances) << nl << boundsMatrix.access() << nl;
+      std::cout << "Distances:" << nl << Temple::condense(BF_IG_distances) << nl << boundsMatrix.access() << nl;
       break;
     }
   }
@@ -532,17 +532,17 @@ BOOST_AUTO_TEST_CASE(GraphShortestDistancesCorrectness) {
     const boost::filesystem::path& currentFilePath :
     boost::filesystem::recursive_directory_iterator("stereocenter_detection_molecules")
   ) {
-    Molecule sampleMol = io::read(
+    Molecule sampleMol = IO::read(
       currentFilePath.string()
     );
     const unsigned N = sampleMol.graph().N();
 
-    distance_geometry::SpatialModel spatialModel {sampleMol, distance_geometry::Configuration {}};
+    DistanceGeometry::SpatialModel spatialModel {sampleMol, DistanceGeometry::Configuration {}};
 
     const auto boundsList = spatialModel.makePairwiseBounds();
 
-    distance_geometry::ExplicitBoundsGraph explicitGraph {sampleMol.graph().inner(), boundsList};
-    distance_geometry::DistanceBoundsMatrix spatialModelBounds {sampleMol.graph().inner(), boundsList};
+    DistanceGeometry::ExplicitBoundsGraph explicitGraph {sampleMol.graph().inner(), boundsList};
+    DistanceGeometry::DistanceBoundsMatrix spatialModelBounds {sampleMol.graph().inner(), boundsList};
 
     // This conforms to the triangle inequality bounds
     auto boundsMatrix = DBM_FW_Functor {spatialModelBounds} ();
@@ -565,7 +565,7 @@ BOOST_AUTO_TEST_CASE(GraphShortestDistancesCorrectness) {
      * perhaps direct access to the emerging distance matrix is necessary to
      * ensure O(1) bounds access!
      */
-    distance_geometry::ImplicitBoundsGraph implicitGraph {sampleMol.graph().inner(), boundsList};
+    DistanceGeometry::ImplicitBoundsGraph implicitGraph {sampleMol.graph().inner(), boundsList};
 
     BOOST_REQUIRE_MESSAGE(
       graphsIdentical(explicitGraph, implicitGraph),

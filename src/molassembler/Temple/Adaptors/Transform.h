@@ -13,7 +13,7 @@
 #include "molassembler/Temple/Binding.h"
 
 namespace Scine {
-namespace temple {
+namespace Temple {
 namespace adaptors {
 namespace detail {
 
@@ -58,7 +58,7 @@ struct Transformer {
 //!@name Information
 //!@{
   std::enable_if_t<
-    traits::hasSize<Container>::value,
+    Traits::hasSize<Container>::value,
     std::size_t
   > size() const {
     return container.size();
@@ -141,7 +141,7 @@ auto transform(
 }
 
 } // namespace adaptors
-} // namespace temple
+} // namespace Temple
 } // namespace Scine
 
 #endif

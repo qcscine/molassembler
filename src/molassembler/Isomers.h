@@ -11,7 +11,7 @@
 #include "molassembler/Export.h"
 
 namespace Scine {
-namespace molassembler {
+namespace Molassembler {
 
 // Forward-declarations
 class Molecule;
@@ -78,7 +78,7 @@ MASM_EXPORT bool enantiomeric(
  */
 MASM_EXPORT Molecule enantiomer(const Molecule& a);
 
-} // namespace molassembler
+} // namespace Molassembler
 } // namespace Scine
 
 #endif

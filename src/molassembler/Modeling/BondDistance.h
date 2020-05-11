@@ -13,7 +13,7 @@
 
 namespace Scine {
 
-namespace molassembler {
+namespace Molassembler {
 
 namespace Bond {
 
@@ -47,7 +47,7 @@ double calculateBondOrder(
 
 } // namespace Bond
 
-} // namespace molassembler
+} // namespace Molassembler
 
 } // namespace Scine
 

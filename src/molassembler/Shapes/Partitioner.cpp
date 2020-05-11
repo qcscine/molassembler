@@ -11,7 +11,7 @@
 #include <cassert>
 
 namespace Scine {
-namespace shapes {
+namespace Shapes {
 
 Partitioner::Partitioner(const unsigned s, const unsigned e) : S(s), E(e), mapping(S * E) {
   assert(s != 0 && e != 0);
@@ -131,7 +131,7 @@ std::vector<
     groups[mapping[i]].push_back(i);
   }
 
-  assert(temple::all_of(groups, [&](const auto& g) { return g.size() == E; }));
+  assert(Temple::all_of(groups, [&](const auto& g) { return g.size() == E; }));
 
   return groups;
 }
@@ -165,5 +165,5 @@ bool Partitioner::isOrderedMapping(const std::vector<unsigned>& mapping) {
   return true;
 }
 
-} // namespace shapes
+} // namespace Shapes
 } // namespace Scine

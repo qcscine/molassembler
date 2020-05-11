@@ -25,7 +25,7 @@
 #include <iomanip>
 
 using namespace Scine;
-using namespace molassembler;
+using namespace Molassembler;
 
 constexpr std::size_t nExperiments = 1000;
 
@@ -37,8 +37,8 @@ std::ostream& nl(std::ostream& os) {
 struct TimingFunctor {
   virtual double value(
     const Eigen::MatrixXd& squaredBounds,
-    const std::vector<distance_geometry::ChiralConstraint>& chiralConstraints,
-    const std::vector<distance_geometry::DihedralConstraint>& dihedralConstraints,
+    const std::vector<DistanceGeometry::ChiralConstraint>& chiralConstraints,
+    const std::vector<DistanceGeometry::DihedralConstraint>& dihedralConstraints,
     const Eigen::MatrixXd& positions,
     std::chrono::time_point<std::chrono::steady_clock>& start,
     std::chrono::time_point<std::chrono::steady_clock>& end
@@ -75,14 +75,14 @@ std::vector<FunctorResults> timeFunctors(
 
   for(unsigned n = 0; n < N; ++n) {
     // Prepare new data for the functors in every experiment
-    distance_geometry::SpatialModel spatialModel {molecule, distance_geometry::Configuration {}};
+    DistanceGeometry::SpatialModel spatialModel {molecule, DistanceGeometry::Configuration {}};
 
     const auto boundsList = spatialModel.makePairwiseBounds();
 
     const auto chiralConstraints = spatialModel.getChiralConstraints();
     const auto dihedralConstraints = spatialModel.getDihedralConstraints();
 
-    distance_geometry::ExplicitBoundsGraph explicitGraph {
+    DistanceGeometry::ExplicitBoundsGraph explicitGraph {
       molecule.graph().inner(),
       boundsList
     };
@@ -97,13 +97,13 @@ std::vector<FunctorResults> timeFunctors(
       throw std::runtime_error("Failure in distance bounds matrix construction: " + distanceBoundsResult.error().message());
     }
 
-    distance_geometry::DistanceBoundsMatrix distanceBounds {std::move(distanceBoundsResult.value())};
+    DistanceGeometry::DistanceBoundsMatrix distanceBounds {std::move(distanceBoundsResult.value())};
 
     Eigen::MatrixXd squaredBounds = distanceBounds.access().cwiseProduct(
       distanceBounds.access()
     );
 
-    auto metricMatrix = distance_geometry::MetricMatrix(
+    auto metricMatrix = DistanceGeometry::MetricMatrix(
       std::move(distancesMatrixResult.value())
     );
 
@@ -125,15 +125,15 @@ std::vector<FunctorResults> timeFunctors(
     }
   }
 
-  return temple::map(
+  return Temple::map(
     counters,
     [](const Counter& counter) -> FunctorResults {
       FunctorResults result;
 
       result.count = counter.timings.size();
       if(!counter.timings.empty()) {
-        result.timingAverage = temple::average(counter.timings);
-        result.timingStddev = temple::stddev(counter.timings, result.timingAverage);
+        result.timingAverage = Temple::average(counter.timings);
+        result.timingStddev = Temple::stddev(counter.timings, result.timingAverage);
       }
 
       return result;
@@ -149,8 +149,8 @@ template<
 >
 double timeFunctionEvaluation(
   const Eigen::MatrixXd& squaredBounds,
-  const std::vector<distance_geometry::ChiralConstraint>& chiralConstraints,
-  const std::vector<distance_geometry::DihedralConstraint>& dihedralConstraints,
+  const std::vector<DistanceGeometry::ChiralConstraint>& chiralConstraints,
+  const std::vector<DistanceGeometry::DihedralConstraint>& dihedralConstraints,
   const Eigen::MatrixXd& positions,
   std::chrono::time_point<std::chrono::steady_clock>& start,
   std::chrono::time_point<std::chrono::steady_clock>& end
@@ -193,14 +193,14 @@ template<
 struct EigenFunctor final : public TimingFunctor {
   double value(
     const Eigen::MatrixXd& squaredBounds,
-    const std::vector<distance_geometry::ChiralConstraint>& chiralConstraints,
-    const std::vector<distance_geometry::DihedralConstraint>& dihedralConstraints,
+    const std::vector<DistanceGeometry::ChiralConstraint>& chiralConstraints,
+    const std::vector<DistanceGeometry::DihedralConstraint>& dihedralConstraints,
     const Eigen::MatrixXd& positions,
     std::chrono::time_point<std::chrono::steady_clock>& start,
     std::chrono::time_point<std::chrono::steady_clock>& end
   ) final {
     return timeFunctionEvaluation<
-      distance_geometry::EigenRefinementProblem,
+      DistanceGeometry::EigenRefinementProblem,
       dimensionality,
       FloatType,
       SIMD
@@ -215,7 +215,7 @@ struct EigenFunctor final : public TimingFunctor {
   }
 
   std::string name() final {
-    return distance_geometry::EigenRefinementProblem<dimensionality, FloatType, SIMD>::name();
+    return DistanceGeometry::EigenRefinementProblem<dimensionality, FloatType, SIMD>::name();
   }
 };
 
@@ -259,9 +259,9 @@ void benchmark(
   std::ofstream& benchmarkFile,
   const Algorithm algorithmChoice
 ) {
-  using namespace molassembler;
+  using namespace Molassembler;
 
-  Molecule molecule = io::read(
+  Molecule molecule = IO::read(
     filePath.string()
   );
 
@@ -382,7 +382,7 @@ constexpr const char* description =
 
 
 int main(int argc, char* argv[]) {
-  using namespace molassembler;
+  using namespace Molassembler;
 
   // Set up option parsing
   boost::program_options::options_description options_description("Recognized options");

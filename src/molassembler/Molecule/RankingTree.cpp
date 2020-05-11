@@ -31,7 +31,7 @@
 #include <iostream>
 
 namespace Scine {
-namespace molassembler {
+namespace Molassembler {
 
 // Must declare constexpr static member without definition!
 constexpr decltype(RankingTree::rootIndex) RankingTree::rootIndex;
@@ -433,8 +433,8 @@ public:
       std::is_same<std::decay_t<T>, AtomStereopermutator>::value,
       boost::optional<bool>
     > permutatorSpecificComparison(const T& a, const T& b) const {
-      unsigned aShapeIndex = shapes::nameIndex(a.getShape());
-      unsigned bShapeIndex = shapes::nameIndex(b.getShape());
+      unsigned aShapeIndex = Shapes::nameIndex(a.getShape());
+      unsigned bShapeIndex = Shapes::nameIndex(b.getShape());
 
       if(aShapeIndex < bShapeIndex) {
         return true;
@@ -675,11 +675,11 @@ void RankingTree::applySequenceRules_(
   if /* C++17 constexpr */ (buildTypeIsDebug) {
     Log::log(Log::Particulars::RankingTreeDebugInfo)
       << "  Sets post sequence rule 2: {"
-      << temple::condense(
-        temple::map(
+      << Temple::condense(
+        Temple::map(
           branchOrderingHelper_.getSets(),
           [](const auto& indexSet) -> std::string {
-            return "{"s + temple::condense(indexSet) + "}"s;
+            return "{"s + Temple::condense(indexSet) + "}"s;
           }
         )
       ) << "}\n";
@@ -797,11 +797,11 @@ void RankingTree::applySequenceRules_(
      * E.g. The modeling of the carbon atom stereopermutators in ethene is not
      * affected by its eta bonds to a metal atom.
      */
-    std::vector<TreeVertexIndex> etaAdjacents = temple::copy_if(
+    std::vector<TreeVertexIndex> etaAdjacents = Temple::copy_if(
       adjacents_(targetIndex),
       [&](const TreeVertexIndex nodeIndex) -> bool {
         return (
-          atom_info::isMainGroupElement(
+          AtomInfo::isMainGroupElement(
             graph_.elementType(tree_[targetIndex].molIndex)
           ) && graph_.bondType(
             BondIndex {
@@ -815,10 +815,10 @@ void RankingTree::applySequenceRules_(
 
     if(!etaAdjacents.empty()) {
       Log::log(Log::Particulars::RankingTreeDebugInfo)
-        << "Suggest ignoring " << temple::condense(etaAdjacents)
+        << "Suggest ignoring " << Temple::condense(etaAdjacents)
         << " (mol idxs "
-        << temple::condense(
-          temple::map(etaAdjacents, [&](const TreeVertexIndex a) -> AtomIndex {
+        << Temple::condense(
+          Temple::map(etaAdjacents, [&](const TreeVertexIndex a) -> AtomIndex {
             return tree_[a].molIndex;
           })
         )
@@ -840,10 +840,10 @@ void RankingTree::applySequenceRules_(
     /* Group substituents into sites using the graph only, excluding the eta
      * adjacents yet again.
      */
-    centerRanking.sites = graph_algorithms::ligandSiteGroups(
+    centerRanking.sites = GraphAlgorithms::ligandSiteGroups(
       graph_.inner(),
       molSourceIndex,
-      temple::map(etaAdjacents, [&](const TreeVertexIndex i) { return tree_[i].molIndex; })
+      Temple::map(etaAdjacents, [&](const TreeVertexIndex i) { return tree_[i].molIndex; })
     );
 
     // Stop immediately if the stereopermutator is essentially terminal
@@ -860,10 +860,10 @@ void RankingTree::applySequenceRules_(
 
 
     /* Figure out the shape the stereopermutator should have */
-    shapes::Shape localShape;
+    Shapes::Shape localShape;
     if(
       existingStereopermutatorOption
-      && shapes::size(
+      && Shapes::size(
         existingStereopermutatorOption->getShape()
       ) == centerRanking.sites.size()
     ) {
@@ -873,12 +873,12 @@ void RankingTree::applySequenceRules_(
        */
       localShape = existingStereopermutatorOption->getShape();
     } else {
-      localShape = shape_inference::inferShape(
+      localShape = ShapeInference::inferShape(
         graph_,
         molSourceIndex,
         centerRanking
       ).value_or_eval(
-        [&]() { return shape_inference::firstOfSize(centerRanking.sites.size()); }
+        [&]() { return ShapeInference::firstOfSize(centerRanking.sites.size()); }
       );
     }
 
@@ -1098,11 +1098,11 @@ void RankingTree::applySequenceRules_(
     if /* C++17 constexpr */(buildTypeIsDebug) {
       Log::log(Log::Particulars::RankingTreeDebugInfo)
         << "Sets post sequence rule 3: {"
-        << temple::condense(
-          temple::map(
+        << Temple::condense(
+          Temple::map(
             branchOrderingHelper_.getSets(),
             [](const auto& indexSet) -> std::string {
-              return "{"s + temple::condense(indexSet) + "}"s;
+              return "{"s + Temple::condense(indexSet) + "}"s;
             }
           )
         ) << "}\n";
@@ -1298,11 +1298,11 @@ void RankingTree::applySequenceRules_(
   if /* C++17 constexpr */ (buildTypeIsDebug) {
     Log::log(Log::Particulars::RankingTreeDebugInfo)
       << "Sets post sequence rule 4A: {"
-      << temple::condense(
-        temple::map(
+      << Temple::condense(
+        Temple::map(
           branchOrderingHelper_.getSets(),
           [](const auto& indexSet) -> std::string {
-            return "{"s + temple::condense(indexSet) + "}"s;
+            return "{"s + Temple::condense(indexSet) + "}"s;
           }
         )
       ) << "}\n";
@@ -1360,8 +1360,8 @@ void RankingTree::applySequenceRules_(
       }
 
       // Compare variants in a branch based on mixed depth
-      temple::forEach(
-        temple::adaptors::allPairs(variantSet),
+      Temple::forEach(
+        Temple::adaptors::allPairs(variantSet),
         [&](const auto& a, const auto& b) {
           auto aDepth = boost::apply_visitor(depthFetcher, a);
           auto bDepth = boost::apply_visitor(depthFetcher, b);
@@ -1434,14 +1434,14 @@ void RankingTree::applySequenceRules_(
         };
       } else {
         // 2 - The stereodescriptor(s) occurring more often than all others
-        auto groupedByStringRep = temple::groupByMapping(
+        auto groupedByStringRep = Temple::groupByMapping(
           stereopermutatorSets.back(),
           [&](const auto& variantType) -> std::string {
             return boost::apply_visitor(stringRepFetcher, variantType);
           }
         );
 
-        auto maxSize = temple::accumulate(
+        auto maxSize = Temple::accumulate(
           groupedByStringRep,
           0u,
           [](const unsigned currentMaxSize, const auto& stringGroup) -> unsigned {
@@ -1503,8 +1503,8 @@ void RankingTree::applySequenceRules_(
     VariantLikePair variantLikeComparator {*this};
 
     for(const auto& undecidedSet : undecidedBranchSets) {
-      temple::forEach(
-        temple::adaptors::allPairs(undecidedSet),
+      Temple::forEach(
+        Temple::adaptors::allPairs(undecidedSet),
         [&](const auto& branchA, const auto& branchB) {
           // Do nothing if neither have representative stereodescriptors
           if(
@@ -1561,8 +1561,8 @@ void RankingTree::applySequenceRules_(
               unsigned aBranchLikePairs = 0, bBranchLikePairs = 0;
 
               // Count A-branch like pairs
-              temple::forEach(
-                temple::adaptors::allPairs(
+              Temple::forEach(
+                Temple::adaptors::allPairs(
                   *branchAStereopermutatorGroupIter,
                   representativeStereodescriptors.at(branchA)
                 ),
@@ -1580,8 +1580,8 @@ void RankingTree::applySequenceRules_(
               );
 
               // Count B-branch like pairs
-              temple::forEach(
-                temple::adaptors::allPairs(
+              Temple::forEach(
+                Temple::adaptors::allPairs(
                   *branchBStereopermutatorGroupIter,
                   representativeStereodescriptors.at(branchB)
                 ),
@@ -1639,11 +1639,11 @@ void RankingTree::applySequenceRules_(
     if /* C++17 constexpr */ (buildTypeIsDebug) {
       Log::log(Log::Particulars::RankingTreeDebugInfo)
         << "Sets post sequence rule 4B: {"
-        << temple::condense(
-          temple::map(
+        << Temple::condense(
+          Temple::map(
             branchOrderingHelper_.getSets(),
             [](const auto& indexSet) -> std::string {
-              return "{"s + temple::condense(indexSet) + "}"s;
+              return "{"s + Temple::condense(indexSet) + "}"s;
             }
           )
         ) << "}\n";
@@ -1683,11 +1683,11 @@ void RankingTree::applySequenceRules_(
   if /* C++17 constexpr */ (buildTypeIsDebug) {
     Log::log(Log::Particulars::RankingTreeDebugInfo)
       << "Sets post sequence rule 5: {"
-      << temple::condense(
-        temple::map(
+      << Temple::condense(
+        Temple::map(
           branchOrderingHelper_.getSets(),
           [](const auto& indexSet) -> std::string {
-            return "{"s + temple::condense(indexSet) + "}"s;
+            return "{"s + Temple::condense(indexSet) + "}"s;
           }
         )
       ) << "}\n";
@@ -1721,11 +1721,11 @@ std::vector<
     << "  Auxiliary ranking substituents of tree index "
     << sourceIndex
     <<  ": "
-    << temple::condense(
-      temple::map(
+    << Temple::condense(
+      Temple::map(
         orderingHelper.getSets(),
         [](const auto& indexSet) -> std::string {
-          return "{"s + temple::condense(indexSet) + "}"s;
+          return "{"s + Temple::condense(indexSet) + "}"s;
         }
       )
     ) << "\n";
@@ -1750,11 +1750,11 @@ std::vector<
   if /* C++17 constexpr */ (buildTypeIsDebug) {
     Log::log(Log::Particulars::RankingTreeDebugInfo)
       << "  Sets post sequence rule 1: {"
-      << temple::condense(
-        temple::map(
+      << Temple::condense(
+        Temple::map(
           orderingHelper.getSets(),
           [](const auto& indexSet) -> std::string {
-            return "{"s + temple::condense(indexSet) + "}"s;
+            return "{"s + Temple::condense(indexSet) + "}"s;
           }
         )
       ) << "}\n";
@@ -1785,11 +1785,11 @@ std::vector<
   if /* C++17 constexpr */ (buildTypeIsDebug) {
     Log::log(Log::Particulars::RankingTreeDebugInfo)
       << "  Sets post sequence rule 2: {"
-      << temple::condense(
-        temple::map(
+      << Temple::condense(
+        Temple::map(
           orderingHelper.getSets(),
           [](const auto& indexSet) -> std::string {
-            return "{"s + temple::condense(indexSet) + "}"s;
+            return "{"s + Temple::condense(indexSet) + "}"s;
           }
         )
       ) << "}\n";
@@ -1821,11 +1821,11 @@ std::vector<
   if /* C++17 constexpr */ (buildTypeIsDebug) {
     Log::log(Log::Particulars::RankingTreeDebugInfo)
       << "  Sets post sequence rule 3: {"
-      << temple::condense(
-        temple::map(
+      << Temple::condense(
+        Temple::map(
           orderingHelper.getSets(),
           [](const auto& indexSet) -> std::string {
-            return "{"s + temple::condense(indexSet) + "}"s;
+            return "{"s + Temple::condense(indexSet) + "}"s;
           }
         )
       ) << "}\n";
@@ -2053,11 +2053,11 @@ std::vector<
   if /* C++17 constexpr */ (buildTypeIsDebug) {
     Log::log(Log::Particulars::RankingTreeDebugInfo)
       << "  Sets post sequence rule 4A: {"
-      << temple::condense(
-        temple::map(
+      << Temple::condense(
+        Temple::map(
           orderingHelper.getSets(),
           [](const auto& indexSet) -> std::string {
-            return "{"s + temple::condense(indexSet) + "}"s;
+            return "{"s + Temple::condense(indexSet) + "}"s;
           }
         )
       ) << "}\n";
@@ -2100,8 +2100,8 @@ std::vector<
       }
 
       // Compare based on depth
-      temple::forEach(
-        temple::adaptors::allPairs(variantSet),
+      Temple::forEach(
+        Temple::adaptors::allPairs(variantSet),
         [&](const auto& a, const auto& b) {
           auto aDepth = boost::apply_visitor(depthFetcher, a);
           auto bDepth = boost::apply_visitor(depthFetcher, b);
@@ -2178,14 +2178,14 @@ std::vector<
         };
       } else {
         // 2 - The stereodescriptor occurring more often than all others
-        auto groupedByStringRep = temple::groupByMapping(
+        auto groupedByStringRep = Temple::groupByMapping(
           stereopermutatorSets.back(),
           [&](const auto& variantType) -> std::string {
             return boost::apply_visitor(stringRepFetcher, variantType);
           }
         );
 
-        auto maxSize = temple::accumulate(
+        auto maxSize = Temple::accumulate(
           groupedByStringRep,
           0u,
           [](const unsigned currentMaxSize, const auto& stringGroup) -> unsigned {
@@ -2215,8 +2215,8 @@ std::vector<
     VariantLikePair variantLikeComparator {*this};
 
     for(const auto& undecidedSet : undecidedBranchSets) {
-      temple::forEach(
-        temple::adaptors::allPairs(undecidedSet),
+      Temple::forEach(
+        Temple::adaptors::allPairs(undecidedSet),
         [&](const auto& branchA, const auto& branchB) {
           // Do nothing if neither have representative stereodescriptors
           if(
@@ -2273,8 +2273,8 @@ std::vector<
               unsigned aBranchLikePairs = 0, bBranchLikePairs = 0;
 
               // Count A-branch like pairs
-              temple::forEach(
-                temple::adaptors::allPairs(
+              Temple::forEach(
+                Temple::adaptors::allPairs(
                   *branchAStereopermutatorGroupIter,
                   representativeStereodescriptors.at(branchA)
                 ),
@@ -2292,8 +2292,8 @@ std::vector<
               );
 
               // Count B-branch like pairs
-              temple::forEach(
-                temple::adaptors::allPairs(
+              Temple::forEach(
+                Temple::adaptors::allPairs(
                   *branchBStereopermutatorGroupIter,
                   representativeStereodescriptors.at(branchB)
                 ),
@@ -2351,11 +2351,11 @@ std::vector<
   if /* C++17 constexpr */ (buildTypeIsDebug) {
     Log::log(Log::Particulars::RankingTreeDebugInfo)
       << "  Sets post sequence rule 4B: {"
-      << temple::condense(
-        temple::map(
+      << Temple::condense(
+        Temple::map(
           orderingHelper.getSets(),
           [](const auto& indexSet) -> std::string {
-            return "{"s + temple::condense(indexSet) + "}"s;
+            return "{"s + Temple::condense(indexSet) + "}"s;
           }
         )
       ) << "}\n";
@@ -2392,11 +2392,11 @@ std::vector<
   if /* C++17 constexpr */ (buildTypeIsDebug) {
     Log::log(Log::Particulars::RankingTreeDebugInfo)
       << "  Sets post sequence rule 5: {"
-      << temple::condense(
-        temple::map(
+      << Temple::condense(
+        Temple::map(
           orderingHelper.getSets(),
           [](const auto& indexSet) -> std::string {
-            return "{"s + temple::condense(indexSet) + "}"s;
+            return "{"s + Temple::condense(indexSet) + "}"s;
           }
         )
       ) << "}\n";
@@ -2642,7 +2642,7 @@ std::vector<RankingTree::TreeVertexIndex> RankingTree::auxiliaryAdjacentsToRank_
   const TreeVertexIndex sourceIndex,
   const std::vector<TreeVertexIndex>& excludeIndices
 ) const {
-  return temple::copy_if(
+  return Temple::copy_if(
     adjacents_(sourceIndex),
     [&](const TreeVertexIndex nodeIndex) -> bool {
       // In case we explicitly excluded an index, immediately discard
@@ -2674,7 +2674,7 @@ std::vector<RankingTree::TreeVertexIndex> RankingTree::auxiliaryAdjacentsToRank_
 unsigned RankingTree::nonDuplicateDegree_(const RankingTree::TreeVertexIndex& index) const {
   auto adjacents = adjacents_(index);
 
-  auto numDuplicate = temple::accumulate(
+  auto numDuplicate = Temple::accumulate(
     adjacents,
     0u,
     [&](const unsigned count, const auto& treeIndex) -> unsigned {
@@ -2774,7 +2774,7 @@ std::unordered_set<RankingTree::TreeVertexIndex> RankingTree::treeIndicesInBranc
 std::unordered_set<AtomIndex> RankingTree::molIndicesInBranch_(
   const TreeVertexIndex index
 ) const {
-  return temple::map_stl(
+  return Temple::map_stl(
     treeIndicesInBranch_(index),
     [&](const auto& treeIndex) -> AtomIndex {
       return tree_[treeIndex].molIndex;
@@ -3013,11 +3013,11 @@ RankingTree::RankingTree(
       << "Ranking substituents of atom index "
       << tree_[rootIndex].molIndex
       << ": "
-      << temple::condense(
-        temple::map(
+      << Temple::condense(
+        Temple::map(
           branchOrderingHelper_.getSets(),
           [](const auto& indexSet) -> std::string {
-            return "{"s + temple::condense(indexSet) + "}"s;
+            return "{"s + Temple::condense(indexSet) + "}"s;
           }
         )
       ) << "\n";
@@ -3211,11 +3211,11 @@ RankingTree::RankingTree(
   if /* C++17 constexpr */ (buildTypeIsDebug) {
     Log::log(Log::Particulars::RankingTreeDebugInfo)
       << "Sets post sequence rule 1: {"
-      << temple::condense(
-        temple::map(
+      << Temple::condense(
+        Temple::map(
           branchOrderingHelper_.getSets(),
           [](const auto& indexSet) -> std::string {
-            return "{"s + temple::condense(indexSet) + "}"s;
+            return "{"s + Temple::condense(indexSet) + "}"s;
           }
         )
       ) << "}\n";
@@ -3424,10 +3424,10 @@ std::vector<
     std::vector<RankingTree::TreeVertexIndex>
   >& treeRankingSets
 ) const {
-  return temple::map(
+  return Temple::map(
     treeRankingSets,
     [&](const auto& set) -> std::vector<AtomIndex> {
-      return temple::map(
+      return Temple::map(
         set,
         [&](const auto& treeVertex) -> AtomIndex {
           return tree_[treeVertex].molIndex;
@@ -3494,5 +3494,5 @@ std::string RankingTree::adaptMolGraph_(std::string molGraph) {
   return molGraph;
 }
 
-} // namespace molassembler
+} // namespace Molassembler
 } // namespace Scine

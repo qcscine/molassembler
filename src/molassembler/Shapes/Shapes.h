@@ -18,7 +18,7 @@ namespace Scine {
 /**
  * @brief Symmetry definitions and properties
  */
-namespace shapes {
+namespace Shapes {
 
 /*! @brief Enumeration of all contained symmetry names
  *
@@ -26,85 +26,85 @@ namespace shapes {
  */
 enum class MASM_EXPORT Shape : unsigned {
   /* 2 */
-  //! See data::Line
+  //! See Data::Line
   Line,
-  //! See data::Bent
+  //! See Data::Bent
   Bent,
 
   /* 3 */
-  //! See data::EquilateralTriangle
+  //! See Data::EquilateralTriangle
   EquilateralTriangle,
-  //! See data::VacantTetrahedron
+  //! See Data::VacantTetrahedron
   VacantTetrahedron,
-  //! See data::T
+  //! See Data::T
   T,
 
   /* 4 */
-  //! See data::Tetrahedron
+  //! See Data::Tetrahedron
   Tetrahedron,
-  //! See data::Square
+  //! See Data::Square
   Square,
-  //! See data::Seesaw
+  //! See Data::Seesaw
   Seesaw,
-  //! See data::TrigonalPyramid
+  //! See Data::TrigonalPyramid
   TrigonalPyramid,
 
   /* 5 */
-  //! See data::SquarePyramid
+  //! See Data::SquarePyramid
   SquarePyramid,
-  //! See data::TrigonalBipyramid
+  //! See Data::TrigonalBipyramid
   TrigonalBipyramid,
-  //! See data::Pentagon
+  //! See Data::Pentagon
   Pentagon,
 
   /* 6 */
-  //! See data::Octahedron
+  //! See Data::Octahedron
   Octahedron, // 6
-  //! See data::TrigonalPrism
+  //! See Data::TrigonalPrism
   TrigonalPrism,
-  //! See data::PentagonalPyramid
+  //! See Data::PentagonalPyramid
   PentagonalPyramid,
-  //! See data::Hexagon
+  //! See Data::Hexagon
   Hexagon,
 
   /* 7 */
-  //! See data::PentagonalBipyramid
+  //! See Data::PentagonalBipyramid
   PentagonalBipyramid,
-  //! See data::CappedOctahedron
+  //! See Data::CappedOctahedron
   CappedOctahedron,
-  //! See data::CappedTrigonalPrism
+  //! See Data::CappedTrigonalPrism
   CappedTrigonalPrism,
 
   /* 8 */
-  //! See data::SquareAntiprism
+  //! See Data::SquareAntiprism
   SquareAntiprism,
-  //! See data::Cube
+  //! See Data::Cube
   Cube,
-  //! See data::TrigonalDodecahedron
+  //! See Data::TrigonalDodecahedron
   TrigonalDodecahedron,
-  //! See data::HexagonalBipyramid
+  //! See Data::HexagonalBipyramid
   HexagonalBipyramid,
 
   /* 9 */
-  //! See data::TricappedTrigonalPrism
+  //! See Data::TricappedTrigonalPrism
   TricappedTrigonalPrism,
-  //! See data::CappedSquareAntiPrism
+  //! See Data::CappedSquareAntiPrism
   CappedSquareAntiprism,
-  //! See data::HeptagonalBipyramid
+  //! See Data::HeptagonalBipyramid
   HeptagonalBipyramid,
 
   /* 10 */
-  //! See data::BicappedSquareAntiprism
+  //! See Data::BicappedSquareAntiprism
   BicappedSquareAntiprism,
 
   /* 11 */
-  //! See data::EdgeContractedIcosahedron
+  //! See Data::EdgeContractedIcosahedron
   EdgeContractedIcosahedron,
 
   /* 12 */
-  //! See data::Icosahedron
+  //! See Data::Icosahedron
   Icosahedron,
-  //! See data::Cuboctahedron
+  //! See Data::Cuboctahedron
   Cuboctahedron
 };
 
@@ -112,7 +112,7 @@ enum class MASM_EXPORT Shape : unsigned {
 constexpr unsigned nShapes = 30;
 static_assert(nShapes == static_cast<unsigned>(Shape::Cuboctahedron) + 1, "Miscounted?");
 
-} // namespace shapes
+} // namespace Shapes
 
 } // namespace Scine
 

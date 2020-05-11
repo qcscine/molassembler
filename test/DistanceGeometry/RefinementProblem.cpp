@@ -33,8 +33,8 @@
 
 using namespace std::string_literals;
 using namespace Scine;
-using namespace molassembler;
-using namespace distance_geometry;
+using namespace Molassembler;
+using namespace DistanceGeometry;
 
 struct RefinementBaseData {
   DistanceBoundsMatrix distanceBounds;
@@ -58,9 +58,9 @@ struct RefinementBaseData {
   RefinementBaseData() = default;
 
   RefinementBaseData(const std::string& filename) {
-    Molecule molecule = io::read(filename);
+    Molecule molecule = IO::read(filename);
 
-    auto DgInfo = gatherDGInformation(molecule, distance_geometry::Configuration {});
+    auto DgInfo = gatherDGInformation(molecule, DistanceGeometry::Configuration {});
 
     distanceBounds = DistanceBoundsMatrix {
       molecule.graph().inner(),
@@ -82,7 +82,7 @@ struct RefinementBaseData {
   }
 };
 
-namespace traits {
+namespace Traits {
 
 template<typename FloatType>
 struct Floating {};
@@ -100,7 +100,7 @@ struct Floating<float> {
 constexpr double Floating<double>::tolerance;
 constexpr double Floating<float>::tolerance;
 
-} // namespace traits
+} // namespace Traits
 
 Eigen::MatrixXd rotateAndTranslate(
   Eigen::MatrixXd positionMatrix,
@@ -216,7 +216,7 @@ struct RotationalTranslationalInvarianceTest {
 
         if(
           errorTranslationalInvariance
-          && translatedDifference > traits::Floating<FloatType>::tolerance
+          && translatedDifference > Traits::Floating<FloatType>::tolerance
         ) {
           std::cout << "Error is not translationally invariant: translated = "
             << translatedValue << ", reference = " << referenceValue
@@ -229,7 +229,7 @@ struct RotationalTranslationalInvarianceTest {
           if(
             !translatedGradient.isApprox(
               referenceGradient,
-              traits::Floating<FloatType>::tolerance
+              Traits::Floating<FloatType>::tolerance
             )
           ) {
             std::cout << "Translated gradient: " << translatedGradient.transpose() << "\n";
@@ -263,7 +263,7 @@ struct RotationalTranslationalInvarianceTest {
 
         if(
           errorRotationalInvariance
-          && rotatedDifference > traits::Floating<FloatType>::tolerance
+          && rotatedDifference > Traits::Floating<FloatType>::tolerance
 
         ) {
           std::cout << "Error is not rotationally invariant: rotated = "
@@ -284,7 +284,7 @@ struct RotationalTranslationalInvarianceTest {
           if(
             !rotatedGradient.isApprox(
               rotatedReferenceGradient,
-              traits::Floating<FloatType>::tolerance
+              Traits::Floating<FloatType>::tolerance
             )
           ) {
             std::cout << "Rotated   gradient: " << rotatedGradient.transpose() << "\n";
@@ -360,7 +360,7 @@ struct RotationalTranslationalInvarianceTest {
         }
       }
 
-      bool filePasses = temple::all_of(
+      bool filePasses = Temple::all_of(
         components,
         [](const ErrorAndGradientComponent& component) -> bool {
           return (
@@ -427,7 +427,7 @@ BOOST_AUTO_TEST_CASE(RefinementProblemRotationalTranslationalInvariance) {
     // "EigenRefinementProblem<4, float, true>"
   };
 
-  auto passes = temple::tuples::map<EigenRefinementTypeVariations, RotationalTranslationalInvarianceTest>();
+  auto passes = Temple::Tuples::map<EigenRefinementTypeVariations, RotationalTranslationalInvarianceTest>();
 
   for(unsigned i = 0; i < variations; ++i) {
     BOOST_CHECK_MESSAGE(
@@ -460,7 +460,7 @@ struct CompareImplementations {
   >;
 
   static bool value() {
-    return temple::all_of(
+    return Temple::all_of(
       boost::filesystem::recursive_directory_iterator("ez_stereocenters"),
       [](const boost::filesystem::path& currentFilePath) -> bool {
         RefinementBaseData baseData {currentFilePath.string()};
@@ -524,7 +524,7 @@ struct CompareImplementations {
           },
         };
 
-        auto passesComparisonMap = temple::map(
+        auto passesComparisonMap = Temple::map(
           components,
           [&](const auto& comparisonTuple) -> bool {
             FloatingPointT tError = 0;
@@ -546,7 +546,7 @@ struct CompareImplementations {
               - static_cast<double>(uError)
             );
 
-            if(errorAbsDifference > traits::Floating<SmallerFPType>::tolerance) {
+            if(errorAbsDifference > Traits::Floating<SmallerFPType>::tolerance) {
               std::cout << "Error values for component "
                 << std::get<0>(comparisonTuple) << " do not match between "
                 << RefinementT::name() << " and " << RefinementU::name() << " for "
@@ -560,7 +560,7 @@ struct CompareImplementations {
             if(
               !tGradients.template cast<LargerFPType>().isApprox(
                 uGradients.template cast<LargerFPType>(),
-                traits::Floating<SmallerFPType>::tolerance
+                Traits::Floating<SmallerFPType>::tolerance
               )
             ) {
               std::cout << "Gradients for component "
@@ -577,7 +577,7 @@ struct CompareImplementations {
           }
         );
 
-        return temple::all_of(passesComparisonMap);
+        return Temple::all_of(passesComparisonMap);
       }
     );
   }
@@ -589,10 +589,10 @@ BOOST_AUTO_TEST_CASE(RefinementProblemEquivalence) {
     EigenRefinementProblem<4, double, true>
   >;
 
-  auto doublePasses = temple::tuples::mapAllPairs<DoubleRefinementTypeVariations, CompareImplementations>();
+  auto doublePasses = Temple::Tuples::mapAllPairs<DoubleRefinementTypeVariations, CompareImplementations>();
 
   BOOST_CHECK_MESSAGE(
-    temple::all_of(doublePasses),
+    Temple::all_of(doublePasses),
     "Not all refinement template argument of double variations match pair-wise!"
   );
 
@@ -601,10 +601,10 @@ BOOST_AUTO_TEST_CASE(RefinementProblemEquivalence) {
     EigenRefinementProblem<4, float, true>
   >;
 
-  auto floatPasses = temple::tuples::mapAllPairs<FloatRefinementTypeVariations, CompareImplementations>();
+  auto floatPasses = Temple::Tuples::mapAllPairs<FloatRefinementTypeVariations, CompareImplementations>();
 
   BOOST_CHECK_MESSAGE(
-    temple::all_of(floatPasses),
+    Temple::all_of(floatPasses),
     "Not all refinement template argument of float variations match pair-wise!"
   );
 }

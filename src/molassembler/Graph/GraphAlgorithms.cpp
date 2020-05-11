@@ -23,8 +23,8 @@
 #include "molassembler/RankingInformation.h"
 
 namespace Scine {
-namespace molassembler {
-namespace graph_algorithms {
+namespace Molassembler {
+namespace GraphAlgorithms {
 
 std::vector<RankingInformation::Link> siteLinks(
   const PrivateGraph& graph,
@@ -57,7 +57,7 @@ std::vector<RankingInformation::Link> siteLinks(
       const AtomIndex avoidAtom,
       const std::vector<BondIndex>& cycle
     ) -> AtomIndex {
-      auto findEdgeIter = temple::find_if(
+      auto findEdgeIter = Temple::find_if(
         cycle,
         [&](const BondIndex& edge) -> bool {
           return (edge.contains(focalAtom) && !edge.contains(avoidAtom));
@@ -132,7 +132,7 @@ std::vector<RankingInformation::Link> siteLinks(
     }
   }
 
-  temple::inplace::sort(links);
+  Temple::inplace::sort(links);
   return links;
 }
 
@@ -171,7 +171,7 @@ std::vector<RankingInformation::Link> siteLinks(
   sourceAdjacents.reserve(graph.degree(source));
   for(const auto& siteAtomIndices : sites) {
     for(const AtomIndex adjacent : siteAtomIndices) {
-      if(!temple::makeContainsPredicate(excludeAdjacents)(adjacent)) {
+      if(!Temple::makeContainsPredicate(excludeAdjacents)(adjacent)) {
         sourceAdjacents.push_back(adjacent);
       }
     }
@@ -183,8 +183,8 @@ std::vector<RankingInformation::Link> siteLinks(
     unsigned // Index of LinkInformation in links
   > siteIndicesToLinksPositionMap;
 
-  temple::forEach(
-    temple::adaptors::allPairs(sourceAdjacents),
+  Temple::forEach(
+    Temple::adaptors::allPairs(sourceAdjacents),
     [&](const AtomIndex a, const AtomIndex b) {
       for(
         auto cycleOuterEdges :
@@ -197,7 +197,7 @@ std::vector<RankingInformation::Link> siteLinks(
       ) {
         assert(
           [&]() {
-            auto containsPredicate = temple::makeContainsPredicate(cycleOuterEdges);
+            auto containsPredicate = Temple::makeContainsPredicate(cycleOuterEdges);
             return containsPredicate(BondIndex {source, a}) && containsPredicate(BondIndex {source, b});
           }()
         );
@@ -241,7 +241,7 @@ std::vector<RankingInformation::Link> siteLinks(
   );
 
   // Sort the links before passing them out in order to ease comparisons
-  temple::inplace::sort(links);
+  Temple::inplace::sort(links);
   return links;
 }
 
@@ -264,11 +264,11 @@ bool isHapticSite(
     && !( // Exclude the same-type triangle
       siteAtoms.size() == 2
       // The number of non-main-group elements is more than 1
-      && temple::accumulate(
+      && Temple::accumulate(
         siteAtoms,
         0u,
         [&](const unsigned carry, const AtomIndex adjacent) -> unsigned {
-          if(!atom_info::isMainGroupElement(graph.elementType(adjacent))) {
+          if(!AtomInfo::isMainGroupElement(graph.elementType(adjacent))) {
             return carry + 1;
           }
 
@@ -285,7 +285,7 @@ void findSites(
   const std::function<void(const std::vector<AtomIndex>&)>& callback
 ) {
   const unsigned A = graph.degree(placement);
-  temple::TinySet<PrivateGraph::Vertex> centralAdjacents;
+  Temple::TinySet<PrivateGraph::Vertex> centralAdjacents;
   centralAdjacents.reserve(A);
 
   for(const PrivateGraph::Vertex adjacent : graph.adjacents(placement)) {
@@ -294,7 +294,7 @@ void findSites(
 
   std::vector<bool> skipList (A, false);
 
-  temple::TinySet<AtomIndex> site;
+  Temple::TinySet<AtomIndex> site;
 
   std::function<void(const PrivateGraph::Vertex)> recursiveDiscover
   = [&](const PrivateGraph::Vertex seed) {
@@ -335,7 +335,7 @@ std::vector<
   AtomIndex placement,
   const std::vector<AtomIndex>& excludeAdjacents
 ) {
-  if(atom_info::isMainGroupElement(graph.elementType(placement))) {
+  if(AtomInfo::isMainGroupElement(graph.elementType(placement))) {
     std::vector<
       std::vector<AtomIndex>
     > adjacents;
@@ -353,7 +353,7 @@ std::vector<
          * We determine whether the edge is mislabeled: Is the other vertex a
          * non-main-group element?
          */
-        if(atom_info::isMainGroupElement(graph.elementType(centralAdjacent))) {
+        if(AtomInfo::isMainGroupElement(graph.elementType(centralAdjacent))) {
           std::string error = "Two main group elements are connected by an eta bond! ";
           error += std::to_string(centralAdjacent);
           error += " and ";
@@ -435,7 +435,7 @@ std::vector<
   );
 
   for(auto& ligand : groupedLigands) {
-    temple::inplace::sort(ligand);
+    Temple::inplace::sort(ligand);
   }
 
   return groupedLigands;
@@ -445,7 +445,7 @@ void updateEtaBonds(PrivateGraph& graph) {
   const AtomIndex N = graph.N();
   for(AtomIndex placement = 0; placement < N; ++placement) {
     // Skip any main group element types, none of these should be eta bonded
-    if(atom_info::isMainGroupElement(graph.elementType(placement))) {
+    if(AtomInfo::isMainGroupElement(graph.elementType(placement))) {
       continue;
     }
 
@@ -492,6 +492,6 @@ std::vector<unsigned> distance(AtomIndex a, const PrivateGraph& graph) {
   return distances;
 }
 
-} // namespace graph_algorithms
-} // namespace molassembler
+} // namespace GraphAlgorithms
+} // namespace Molassembler
 } // namespace Scine

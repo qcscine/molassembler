@@ -18,7 +18,7 @@ class BondOrderCollection;
 using ElementTypeCollection = std::vector<ElementType>;
 } // namespace Utils
 
-namespace molassembler {
+namespace Molassembler {
 
 // Forward-declarations
 class AngstromPositions;
@@ -36,7 +36,7 @@ MASM_EXPORT Utils::BondOrderCollection uffBondOrders(
   const AngstromPositions& angstromWrapper
 );
 
-} // namespace molassembler
+} // namespace Molassembler
 } // namespace Scine
 
 #endif

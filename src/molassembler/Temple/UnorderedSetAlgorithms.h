@@ -9,7 +9,7 @@
 #define INCLUDE_MOLASSEMBLER_TEMPLE_UNORDERED_SETS_H
 
 namespace Scine {
-namespace temple {
+namespace Temple {
 
 template<class UnorderedSetContainer>
 UnorderedSetContainer unorderedSetSymmetricDifference(
@@ -81,7 +81,7 @@ UnorderedSetContainer unorderedSetUnion(
   return unionSet;
 }
 
-} // namespace temple
+} // namespace Temple
 } // namespace Scine
 
 #endif

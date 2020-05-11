@@ -15,7 +15,7 @@
 #include <algorithm>
 
 namespace Scine {
-namespace temple {
+namespace Temple {
 
 /*!
  * @brief An adapter class for std::vector that acts like an unordered set
@@ -552,7 +552,7 @@ struct TinySet {
 //!@}
 };
 
-} // namespace temple
+} // namespace Temple
 } // namespace Scine
 
 #endif

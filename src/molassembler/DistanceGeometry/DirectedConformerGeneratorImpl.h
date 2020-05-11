@@ -14,7 +14,7 @@
 #include "molassembler/Temple/BoundedNodeTrie.h"
 
 namespace Scine {
-namespace molassembler {
+namespace Molassembler {
 
 class DirectedConformerGenerator::Impl {
 public:
@@ -59,13 +59,13 @@ public:
 
   outcome::result<Utils::PositionCollection> generateRandomConformation(
     const DecisionList& decisionList,
-    const distance_geometry::Configuration& configuration
+    const DistanceGeometry::Configuration& configuration
   );
 
   outcome::result<Utils::PositionCollection> generateConformation(
     const DecisionList& decisionList,
     unsigned seed,
-    const distance_geometry::Configuration& configuration
+    const DistanceGeometry::Configuration& configuration
   );
 
   DecisionList getDecisionList(
@@ -102,10 +102,10 @@ private:
    * dihedral you have explored and which ones might lead to a conformer that
    * is most different from the ones you already have.
    */
-  temple::BoundedNodeTrie<std::uint8_t> decisionLists_;
+  Temple::BoundedNodeTrie<std::uint8_t> decisionLists_;
 };
 
-} // namespace molassembler
+} // namespace Molassembler
 } // namespace Scine
 
 #endif

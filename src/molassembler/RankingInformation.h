@@ -14,10 +14,10 @@
 #include <vector>
 
 namespace Scine {
-namespace molassembler {
+namespace Molassembler {
 
 struct site_index_tag;
-using SiteIndex = temple::StrongIndex<site_index_tag, unsigned>;
+using SiteIndex = Temple::StrongIndex<site_index_tag, unsigned>;
 
 //! Ranking data of substituents around a central vertex
 struct MASM_EXPORT RankingInformation {
@@ -225,7 +225,7 @@ struct RankingInformation::Link {
 //!@}
 };
 
-} // namespace molassembler
+} // namespace Molassembler
 } // namespace Scine
 
 #endif

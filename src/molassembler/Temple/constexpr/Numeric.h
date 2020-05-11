@@ -24,7 +24,7 @@
 #include <cassert>
 
 namespace Scine {
-namespace temple {
+namespace Temple {
 
 /*! @brief Summation with zero-initialization
  *
@@ -35,8 +35,8 @@ namespace temple {
  * @complexity{@math{\Theta(N)}}
  */
 template<class ContainerType>
-constexpr traits::getValueType<ContainerType> sum(const ContainerType& container) {
-  using ValueType = traits::getValueType<ContainerType>;
+constexpr Traits::getValueType<ContainerType> sum(const ContainerType& container) {
+  using ValueType = Traits::getValueType<ContainerType>;
 
   return std::accumulate(
     std::begin(container),
@@ -58,8 +58,8 @@ constexpr traits::getValueType<ContainerType> sum(const ContainerType& container
  */
 template<class ContainerType>
 constexpr std::enable_if_t<
-  std::is_floating_point<traits::getValueType<ContainerType>>::value,
-  traits::getValueType<ContainerType>
+  std::is_floating_point<Traits::getValueType<ContainerType>>::value,
+  Traits::getValueType<ContainerType>
 > average(const ContainerType& container) {
   if(container.begin() == container.end()) {
     throw "Average called on an empty container!";
@@ -71,7 +71,7 @@ constexpr std::enable_if_t<
 //! @overload
 template<class ContainerType>
 constexpr std::enable_if_t<
-  !std::is_floating_point<traits::getValueType<ContainerType>>::value,
+  !std::is_floating_point<Traits::getValueType<ContainerType>>::value,
   double
 > average(const ContainerType& container) {
   if(container.begin() == container.end()) {
@@ -92,14 +92,14 @@ constexpr std::enable_if_t<
  */
 template<class ContainerType>
 constexpr std::enable_if_t<
-  std::is_floating_point<traits::getValueType<ContainerType>>::value,
-  traits::getValueType<ContainerType>
+  std::is_floating_point<Traits::getValueType<ContainerType>>::value,
+  Traits::getValueType<ContainerType>
 > geometricMean(const ContainerType& container) {
   if(container.begin() == container.end()) {
     throw "geometricMean called on an empty container!";
   }
 
-  using ValueType = traits::getValueType<ContainerType>;
+  using ValueType = Traits::getValueType<ContainerType>;
 
   return Math::pow(
     reduce(
@@ -200,7 +200,7 @@ constexpr auto max(const ContainerType& container) {
   return *largestIter;
 }
 
-} // namespace temple
+} // namespace Temple
 } // namespace Scine
 
 #endif

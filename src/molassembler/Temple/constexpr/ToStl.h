@@ -19,7 +19,7 @@
 #include <set>
 
 namespace Scine {
-namespace temple {
+namespace Temple {
 
 //! Converts an Array into a std::array
 template<typename T, size_t size>
@@ -52,7 +52,7 @@ std::set<T> toSTL(const DynamicSet<T, size>& dynamicSet) {
   return returnSet;
 }
 
-} // namespace temple
+} // namespace Temple
 } // namespace Scine
 
 #endif

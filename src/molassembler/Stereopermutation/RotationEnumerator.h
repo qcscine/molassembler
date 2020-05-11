@@ -16,7 +16,7 @@
 #include <unordered_set>
 
 namespace Scine {
-namespace stereopermutation {
+namespace Stereopermutations {
 
 /*! @brief Enumerate rotations of stereopermutations in shapes
  *
@@ -36,7 +36,7 @@ public:
   using RotationSetType = std::vector<Stereopermutation>;
 
   //! Sets the initial state
-  RotationEnumerator(Stereopermutation initial, shapes::Shape s);
+  RotationEnumerator(Stereopermutation initial, Shapes::Shape s);
 
   /*! @brief Generates a new rotation or None if all rotations have been discovered
    *
@@ -63,13 +63,13 @@ private:
     Link(unsigned i, Stereopermutation s);
   };
 
-  shapes::Shape shape;
+  Shapes::Shape shape;
   unsigned linkLimit;
   std::vector<Link> chain;
   RotationSetType rotations;
 };
 
-} // namespace stereopermutation
+} // namespace Stereopermutations
 } // namespace Scine
 
 #endif

@@ -14,7 +14,7 @@
 #include <tuple>
 
 namespace Scine {
-namespace temple {
+namespace Temple {
 namespace adaptors {
 namespace detail {
 
@@ -40,7 +40,7 @@ struct TwoContainersPairsSizeSupplier {
 template<class Container>
 struct SingleContainerPairsGenerator
   : public std::conditional_t<
-    traits::hasSize<Container>::value,
+    Traits::hasSize<Container>::value,
     SingleContainerPairsSizeSupplier<SingleContainerPairsGenerator<Container>>,
     EmptySizeSupplier<SingleContainerPairsGenerator<Container>>
   >
@@ -158,7 +158,7 @@ struct SingleContainerPairsGenerator
 template<class ContainerT, class ContainerU>
 struct TwoContainersAllPairsGenerator
   : public std::conditional_t<
-    traits::hasSize<ContainerT>::value && traits::hasSize<ContainerU>::value,
+    Traits::hasSize<ContainerT>::value && Traits::hasSize<ContainerU>::value,
     TwoContainersPairsSizeSupplier<TwoContainersAllPairsGenerator<ContainerT, ContainerU>>,
     SingleContainerPairsSizeSupplier<TwoContainersAllPairsGenerator<ContainerT, ContainerU>>
   >
@@ -304,7 +304,7 @@ auto allPairs(ContainerT&& t, ContainerU&& u) {
 }
 
 } // namespace adaptors
-} // namespace temple
+} // namespace Temple
 } // namespace Scine
 
 #endif

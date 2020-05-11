@@ -10,7 +10,7 @@
 #include "molassembler/Temple/Stringify.h"
 
 using namespace Scine;
-using namespace molassembler;
+using namespace Molassembler;
 
 using namespace std::string_literals;
 
@@ -44,10 +44,10 @@ BOOST_AUTO_TEST_CASE(SiteRanking) {
 
   BOOST_CHECK_MESSAGE(
     (symmetricHapticPincerRankedSites == RankingInformation::RankedSitesType {{0_s, 2_s}, {1_s}}),
-    "Expected {{0, 2}, 1}, got " << temple::stringifyContainer(
+    "Expected {{0, 2}, 1}, got " << Temple::stringifyContainer(
       symmetricHapticPincerRankedSites,
       [](const auto& siteList) -> std::string {
-        return "{"s + temple::stringifyContainer(siteList,
+        return "{"s + Temple::stringifyContainer(siteList,
           [&](SiteIndex v) -> std::string { return std::to_string(v); }
         ) + "}"s;
       }

@@ -17,7 +17,7 @@
 using namespace std::string_literals;
 
 namespace Scine {
-namespace molassembler {
+namespace Molassembler {
 
 /* Constructor */
 MolGraphWriter::MolGraphWriter(
@@ -38,7 +38,7 @@ std::vector<std::string> MolGraphWriter::edgeTooltips(const AtomIndex /* source 
 
 std::vector<std::string> MolGraphWriter::atomStereopermutatorTooltips(const AtomStereopermutator& permutator) const {
   return {
-    shapes::name(permutator.getShape()),
+    Shapes::name(permutator.getShape()),
     permutator.info()
   };
 }
@@ -106,7 +106,7 @@ void MolGraphWriter::operator() (
 
   if(!tooltipStrings.empty()) {
     os << R"(, tooltip=")"
-      << temple::condense(tooltipStrings, "&#10;"s)
+      << Temple::condense(tooltipStrings, "&#10;"s)
       << R"(")";
   }
 
@@ -147,7 +147,7 @@ void MolGraphWriter::operator() (
 
   if(!tooltips.empty()) {
     os << R"(, edgetooltip=")"
-      << temple::condense(tooltips, "&#10;"s)
+      << Temple::condense(tooltips, "&#10;"s)
       << R"(")";
   }
 
@@ -180,5 +180,5 @@ const std::map<BondType, std::string> MolGraphWriter::bondTypeDisplayString {
   {BondType::Eta, R"(style = "dotted")"}
 };
 
-} // namespace molassembler
+} // namespace Molassembler
 } // namespace Scine

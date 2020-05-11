@@ -32,12 +32,12 @@ std::ostream& nl(std::ostream& out) {
 
 std::string condense(const std::vector<unsigned>& indexVector) {
   using namespace std::string_literals;
-  return "{"s + temple::condense(indexVector) + "}"s;
+  return "{"s + Temple::condense(indexVector) + "}"s;
 }
 
 std::ostream& operator << (
   std::ostream& out,
-  const shapes::properties::DistortionInfo& distortion
+  const Shapes::Properties::DistortionInfo& distortion
 ) {
   out << std::setw(distortionColumns[0]) << distortion.angularDistortion
     << std::setw(distortionColumns[1]) << distortion.chiralDistortion
@@ -60,10 +60,10 @@ void printPermissibleSymmetries() {
     << std::setw(shapeColumns[2]) << "Name"
     << nl;
 
-  for(unsigned i = 0; i < shapes::allShapes.size(); i++) {
+  for(unsigned i = 0; i < Shapes::allShapes.size(); i++) {
     std::cout << std::setw(shapeColumns[0]) << i
-      << std::setw(shapeColumns[1]) << shapes::size(shapes::allShapes.at(i))
-      << std::setw(shapeColumns[2]) << shapes::name(shapes::allShapes.at(i))
+      << std::setw(shapeColumns[1]) << Shapes::size(Shapes::allShapes.at(i))
+      << std::setw(shapeColumns[2]) << Shapes::name(Shapes::allShapes.at(i))
       << nl;
   }
 
@@ -71,7 +71,7 @@ void printPermissibleSymmetries() {
 }
 
 void writeDistortions(
-  const std::vector<shapes::properties::DistortionInfo>& distortions
+  const std::vector<Shapes::Properties::DistortionInfo>& distortions
 ) {
   std::cout << std::fixed << std::setprecision(2);
 
@@ -81,13 +81,13 @@ void writeDistortions(
 }
 
 double calculateAmbiguity(
-  const std::vector<shapes::properties::DistortionInfo>& distortions
+  const std::vector<Shapes::Properties::DistortionInfo>& distortions
 ) {
   /* Some measure between 0 and 1 that indicates how ambiguous choosing the
    * lowest mapping is.
    */
 
-  auto sortByTotalView = temple::sort(
+  auto sortByTotalView = Temple::sort(
     distortions,
     [](const auto& a, const auto& b) -> bool {
       return (
@@ -119,14 +119,14 @@ double calculateAmbiguity(
 
 struct AmbiguityEntry {
   double ambiguity;
-  shapes::Shape source, target;
-  boost::optional<shapes::Vertex> deletedVertex;
+  Shapes::Shape source, target;
+  boost::optional<Shapes::Vertex> deletedVertex;
 
   AmbiguityEntry(
     const double passAmbiguity,
-    const shapes::Shape passSource,
-    const shapes::Shape passTarget,
-    boost::optional<shapes::Vertex> passDeletedIndex = boost::none
+    const Shapes::Shape passSource,
+    const Shapes::Shape passTarget,
+    boost::optional<Shapes::Vertex> passDeletedIndex = boost::none
   ) : ambiguity(passAmbiguity),
       source(passSource),
       target(passTarget),
@@ -169,8 +169,8 @@ int main(int argc, char* argv[]) {
     unsigned targetShapeArg = options_variables_map["t"].as<unsigned>();
 
     if(
-      sourceShapeArg >= shapes::allShapes.size()
-      || targetShapeArg >= shapes::allShapes.size()
+      sourceShapeArg >= Shapes::allShapes.size()
+      || targetShapeArg >= Shapes::allShapes.size()
     ) {
       std::cout << "Specified shape out of bounds. Valid symmetries:" << nl << nl;
       printPermissibleSymmetries();
@@ -183,12 +183,12 @@ int main(int argc, char* argv[]) {
       return 1;
     }
 
-    shapes::Shape sourceShape(shapes::allShapes.at(sourceShapeArg)),
-                   targetShape(shapes::allShapes.at(targetShapeArg));
+    Shapes::Shape sourceShape(Shapes::allShapes.at(sourceShapeArg)),
+                   targetShape(Shapes::allShapes.at(targetShapeArg));
 
     int diff = (
-      static_cast<int>(shapes::size(targetShape))
-      - static_cast<int>(shapes::size(sourceShape))
+      static_cast<int>(Shapes::size(targetShape))
+      - static_cast<int>(Shapes::size(sourceShape))
     );
 
     if(std::abs(diff) > 1) {
@@ -205,8 +205,8 @@ int main(int argc, char* argv[]) {
     };
 
     if(diff == 1 || diff == 0) {
-      const auto distortions = temple::sort(
-        shapes::properties::shapeTransitionMappings(
+      const auto distortions = Temple::sort(
+        Shapes::Properties::shapeTransitionMappings(
           sourceShape,
           targetShape
         ),
@@ -216,9 +216,9 @@ int main(int argc, char* argv[]) {
       printMappingsHeader();
       writeDistortions(distortions);
     } else {
-      for(shapes::Vertex i {0}; i < shapes::size(sourceShape); ++i) {
-        const auto distortions = temple::sort(
-            shapes::properties::ligandLossTransitionMappings(
+      for(Shapes::Vertex i {0}; i < Shapes::size(sourceShape); ++i) {
+        const auto distortions = Temple::sort(
+            Shapes::Properties::ligandLossTransitionMappings(
             sourceShape,
             targetShape,
             i
@@ -236,20 +236,20 @@ int main(int argc, char* argv[]) {
   if(options_variables_map.count("a") > 0) {
     std::vector<AmbiguityEntry> ambiguities;
 
-    for(const auto& sourceShape : shapes::allShapes) {
-      for(const auto& targetShape : shapes::allShapes) {
+    for(const auto& sourceShape : Shapes::allShapes) {
+      for(const auto& targetShape : Shapes::allShapes) {
         if(sourceShape == targetShape) {
           // Skip identity mapping
           continue;
         }
 
         int diff = (
-          static_cast<int>(shapes::size(targetShape))
-          - static_cast<int>(shapes::size(sourceShape))
+          static_cast<int>(Shapes::size(targetShape))
+          - static_cast<int>(Shapes::size(sourceShape))
         );
 
         if(diff == 1 || diff == 0) {
-          auto distortions = shapes::properties::shapeTransitionMappings(
+          auto distortions = Shapes::Properties::shapeTransitionMappings(
             sourceShape,
             targetShape
           );
@@ -264,8 +264,8 @@ int main(int argc, char* argv[]) {
             );
           }
         } else if(diff == -1) {
-          for(shapes::Vertex i {0}; i < shapes::size(sourceShape); ++i) {
-            auto distortions = shapes::properties::ligandLossTransitionMappings(
+          for(Shapes::Vertex i {0}; i < Shapes::size(sourceShape); ++i) {
+            auto distortions = Shapes::Properties::ligandLossTransitionMappings(
               sourceShape,
               targetShape,
               i
@@ -286,7 +286,7 @@ int main(int argc, char* argv[]) {
       }
     }
 
-    temple::inplace::sort(
+    Temple::inplace::sort(
       ambiguities,
       [](const auto& a, const auto& b) -> bool {
         return a.ambiguity < b.ambiguity;
@@ -310,8 +310,8 @@ int main(int argc, char* argv[]) {
 
     for(const auto& entry : ambiguities) {
       std::cout << std::setw(ambiguityColumns[0]) << entry.ambiguity
-        << std::setw(ambiguityColumns[1]) << shapes::name(entry.source)
-        << std::setw(ambiguityColumns[2]) << shapes::name(entry.target)
+        << std::setw(ambiguityColumns[1]) << Shapes::name(entry.source)
+        << std::setw(ambiguityColumns[2]) << Shapes::name(entry.target)
         << std::setw(ambiguityColumns[3]);
 
       if(entry.deletedVertex) {

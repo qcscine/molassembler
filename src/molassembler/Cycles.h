@@ -23,7 +23,7 @@
 struct RDL_data;
 
 namespace Scine {
-namespace molassembler {
+namespace Molassembler {
 
 // Forward-declarations
 class Graph;
@@ -295,7 +295,7 @@ MASM_EXPORT unsigned countPlanarityEnforcingBonds(
   const Graph& graph
 );
 
-} // namespace molassembler
+} // namespace Molassembler
 } // namespace Scine
 
 #endif

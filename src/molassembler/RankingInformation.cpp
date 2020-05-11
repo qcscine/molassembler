@@ -15,7 +15,7 @@
 
 namespace Scine {
 
-namespace molassembler {
+namespace Molassembler {
 
 RankingInformation::Link::Link() = default;
 
@@ -94,13 +94,13 @@ std::vector<unsigned> RankingInformation::siteConstitutingAtomsRankedPositions(
   const std::vector<AtomIndex>& siteAtomList,
   const RankingInformation::RankedSubstituentsType& substituentRanking
 ) {
-  auto positionIndices = temple::map(
+  auto positionIndices = Temple::map(
     siteAtomList,
     [&substituentRanking](AtomIndex constitutingIndex) -> unsigned {
-      return temple::find_if(
+      return Temple::find_if(
         substituentRanking,
         [&constitutingIndex](const auto& equalPrioritySet) -> bool {
-          return temple::find(equalPrioritySet, constitutingIndex) != std::end(equalPrioritySet);
+          return Temple::find(equalPrioritySet, constitutingIndex) != std::end(equalPrioritySet);
         }
       ) - std::begin(substituentRanking);
     }
@@ -121,7 +121,7 @@ RankingInformation::RankedSitesType RankingInformation::rankSites(
 ) {
   const unsigned sitesSize = sites.size();
 
-  temple::Poset<SiteIndex> siteIndexPoset {temple::iota<SiteIndex>(sitesSize)};
+  Temple::Poset<SiteIndex> siteIndexPoset {Temple::iota<SiteIndex>(sitesSize)};
 
   // Order by site size
   siteIndexPoset.orderUnordered(
@@ -171,10 +171,10 @@ void RankingInformation::applyPermutation(const std::vector<AtomIndex>& permutat
 
 SiteIndex RankingInformation::getSiteIndexOf(const AtomIndex i) const {
   // Find the atom index i within the set of ligand definitions
-  auto findIter = temple::find_if(
+  auto findIter = Temple::find_if(
     sites,
     [&](const auto& siteAtomList) -> bool {
-      return temple::any_of(
+      return Temple::any_of(
         siteAtomList,
         [&](const AtomIndex siteConstitutingIndex) -> bool {
           return siteConstitutingIndex == i;
@@ -192,10 +192,10 @@ SiteIndex RankingInformation::getSiteIndexOf(const AtomIndex i) const {
 }
 
 unsigned RankingInformation::getRankedIndexOfSite(const SiteIndex i) const {
-  auto findIter = temple::find_if(
+  auto findIter = Temple::find_if(
     siteRanking,
     [&](const auto& equallyRankedSiteIndices) -> bool {
-      return temple::any_of(
+      return Temple::any_of(
         equallyRankedSiteIndices,
         [&](const unsigned siteIndex) -> bool {
           return siteIndex == i;
@@ -212,7 +212,7 @@ unsigned RankingInformation::getRankedIndexOfSite(const SiteIndex i) const {
 }
 
 bool RankingInformation::hasHapticSites() const {
-  return temple::any_of(
+  return Temple::any_of(
     sites,
     [](const auto& siteAtomList) -> bool {
       return siteAtomList.size() > 1;
@@ -242,8 +242,8 @@ bool RankingInformation::operator == (const RankingInformation& other) const {
 
   // Combined comparison of siteRanking with sites
   if(
-    !temple::all_of(
-      temple::adaptors::zip(
+    !Temple::all_of(
+      Temple::adaptors::zip(
         siteRanking,
         other.siteRanking
       ),
@@ -251,7 +251,7 @@ bool RankingInformation::operator == (const RankingInformation& other) const {
         const auto& thisEqualSiteGroup,
         const auto& otherEqualSiteGroup
       ) -> bool {
-        temple::TinyUnorderedSet<AtomIndex> thisSiteGroupVertices;
+        Temple::TinyUnorderedSet<AtomIndex> thisSiteGroupVertices;
 
         for(const auto siteIndex : thisEqualSiteGroup) {
           for(const auto siteConstitutingIndex : sites.at(siteIndex)) {
@@ -284,6 +284,6 @@ bool RankingInformation::operator != (const RankingInformation& other) const {
   return !(*this == other);
 }
 
-} // namespace molassembler
+} // namespace Molassembler
 
 } // namespace Scine

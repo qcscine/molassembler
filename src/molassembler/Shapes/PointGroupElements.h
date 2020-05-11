@@ -20,10 +20,10 @@
 #include <memory>
 
 namespace Scine {
-namespace shapes {
+namespace Shapes {
 
 //! @brief Namespace for classes and data of point group symmetry elements
-namespace elements {
+namespace Elements {
 
 //! Base class for symmetry elements
 struct MASM_EXPORT SymmetryElement {
@@ -173,8 +173,8 @@ using NpGroupingsMapType = std::unordered_map<
  */
 MASM_EXPORT NpGroupingsMapType npGroupings(const ElementsList& elements);
 
-} // namespace elements
-} // namespace shapes
+} // namespace Elements
+} // namespace Shapes
 } // namespace Scine
 
 #endif

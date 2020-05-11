@@ -54,14 +54,14 @@ double timeNullaryCallable(
     timings.at(N) = elapsed.count() * 1e9;
   }
 
-  return temple::average(timings);
+  return Temple::average(timings);
 }
 
 
 BOOST_AUTO_TEST_CASE(setRemovalDefect) {
   /* Sets and maps cannot use std::remove_if! Not a defect. */
 
-  auto testSet = temple::copy_if(
+  auto testSet = Temple::copy_if(
     std::set<unsigned> {5, 2, 9, 1, 3, 4, 8},
     [](const auto& value) -> bool {
       return value % 2 != 0;
@@ -81,7 +81,7 @@ BOOST_AUTO_TEST_CASE(selectTestCases) {
     {9, 44, 33, 12}
   };
 
-  auto smallestVector = temple::select(
+  auto smallestVector = Temple::select(
     ragged2D,
     std::less<>(),
     [](const auto& group) -> unsigned {
@@ -91,7 +91,7 @@ BOOST_AUTO_TEST_CASE(selectTestCases) {
 
   BOOST_CHECK((*smallestVector == std::vector<unsigned> {30, 4}));
 
-  auto largestVector = temple::select(
+  auto largestVector = Temple::select(
     ragged2D,
     std::greater<>(),
     [](const auto& group) -> unsigned {
@@ -130,7 +130,7 @@ BOOST_AUTO_TEST_CASE(stringifyTests) {
     }
   };
 
-  std::string stringified = temple::stringify(complicatedStructure);
+  std::string stringified = Temple::stringify(complicatedStructure);
 
   enum class SampleEnum {
     SomeValue,
@@ -151,12 +151,12 @@ BOOST_AUTO_TEST_CASE(stringifyTests) {
     SampleEnum::SomeValue
   };
 
-  stringified = temple::stringify(someTuple);
+  stringified = Temple::stringify(someTuple);
 
   BOOST_CHECK(!stringified.empty());
 }
 
-struct TupleLike : temple::crtp::LexicographicComparable<TupleLike> {
+struct TupleLike : Temple::Crtp::LexicographicComparable<TupleLike> {
   unsigned x;
   int f;
 
@@ -178,38 +178,38 @@ BOOST_AUTO_TEST_CASE(crtpTests) {
 
 BOOST_AUTO_TEST_CASE(ReferenceOptional) {
   int x = 0;
-  temple::Optional<int&> f {x};
+  Temple::Optional<int&> f {x};
   if(f) {
     f.value() = 4;
   }
   BOOST_CHECK(x == 4);
 
-  temple::Optional<int&> g;
+  Temple::Optional<int&> g;
   BOOST_CHECK(!g.hasValue());
 }
 
 BOOST_AUTO_TEST_CASE(FunctorSafety) {
   std::vector<unsigned> x {1, 4, 3};
   // Bind x by const reference within the functor
-  auto at = temple::functor::at(x);
+  auto at = Temple::Functor::at(x);
   BOOST_CHECK(at(0) == x.at(0));
   // External modification affects the functor too since access is referential
   x.push_back(5);
   BOOST_CHECK(at(3) == x.at(3));
 
-  auto at2 = temple::functor::at(std::vector<unsigned> {1, 2, 3});
+  auto at2 = Temple::Functor::at(std::vector<unsigned> {1, 2, 3});
   BOOST_CHECK(at2(0) == 1);
 
   constexpr std::tuple<int, double> t {4, 1.0};
-  static_assert(temple::functor::get<0>()(t) == 4, "Get functor doesn't work");
-  static_assert(temple::functor::first(t) == 4, "Pair_first doesn't work");
-  BOOST_CHECK_EQUAL(temple::functor::second(t), 1.0);
+  static_assert(Temple::Functor::get<0>()(t) == 4, "Get functor doesn't work");
+  static_assert(Temple::Functor::first(t) == 4, "Pair_first doesn't work");
+  BOOST_CHECK_EQUAL(Temple::Functor::second(t), 1.0);
 }
 
 BOOST_AUTO_TEST_CASE(JSF) {
   const int fixedSeed = 1042;
 
-  temple::JSF64 engine;
+  Temple::JSF64 engine;
   engine.seed(fixedSeed);
   auto engineStateCopy = engine;
   for(unsigned i = 0; i < 10; ++i) {
@@ -218,10 +218,10 @@ BOOST_AUTO_TEST_CASE(JSF) {
   engine.seed(fixedSeed);
   BOOST_CHECK(engine == engineStateCopy);
 
-  temple::JSF64 directlySeededEngine {fixedSeed};
+  Temple::JSF64 directlySeededEngine {fixedSeed};
   BOOST_CHECK(engine == directlySeededEngine);
 
   std::seed_seq sequence {fixedSeed};
-  directlySeededEngine = temple::JSF64 {sequence};
+  directlySeededEngine = Temple::JSF64 {sequence};
   BOOST_CHECK(engine == directlySeededEngine);
 }

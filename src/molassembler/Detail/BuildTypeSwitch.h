@@ -10,7 +10,7 @@
 
 namespace Scine {
 
-namespace molassembler {
+namespace Molassembler {
 
 #ifdef NDEBUG
 constexpr bool buildTypeIsDebug = false;
@@ -18,7 +18,7 @@ constexpr bool buildTypeIsDebug = false;
 constexpr bool buildTypeIsDebug = true;
 #endif
 
-} // namespace molassembler
+} // namespace Molassembler
 
 } // namespace Scine
 

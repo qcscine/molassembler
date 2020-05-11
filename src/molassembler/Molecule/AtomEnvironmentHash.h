@@ -19,7 +19,7 @@
 #include <vector>
 
 namespace Scine {
-namespace molassembler {
+namespace Molassembler {
 
 // Forward-declarations
 class StereopermutatorList;
@@ -28,7 +28,7 @@ class PrivateGraph;
 /**
  * @brief Classes and methods to compute hashes of atom environments
  */
-namespace hashes {
+namespace Hashes {
 
 using WideHashType = boost::multiprecision::uint128_t;
 using HashType = std::uint64_t;
@@ -74,7 +74,7 @@ WideHashType hash(
   AtomEnvironmentComponents bitmask,
   Utils::ElementType elementType,
   const std::vector<BondInformation>& sortedBonds,
-  const boost::optional<shapes::Shape>& shapeOptional,
+  const boost::optional<Shapes::Shape>& shapeOptional,
   const boost::optional<unsigned>& assignedOptional
 );
 
@@ -176,8 +176,8 @@ struct LookupFunctor {
   }
 };
 
-} // namespace hashes
-} // namespace molassembler
+} // namespace Hashes
+} // namespace Molassembler
 } // namespace Scine
 
 #endif

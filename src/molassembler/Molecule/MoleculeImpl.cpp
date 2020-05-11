@@ -28,7 +28,7 @@
 #include "molassembler/Stereopermutators/FeasiblePermutations.h"
 
 namespace Scine {
-namespace molassembler {
+namespace Molassembler {
 
 Utils::AtomCollection Molecule::Impl::applyCanonicalizationMap(
   const std::vector<AtomIndex>& canonicalizationIndexMap,
@@ -61,8 +61,8 @@ void Molecule::Impl::tryAddAtomStereopermutator_(
     return;
   }
 
-  shapes::Shape shape = inferShape(candidateIndex, localRanking).value_or_eval(
-    [&]() {return shape_inference::firstOfSize(localRanking.sites.size());}
+  Shapes::Shape shape = inferShape(candidateIndex, localRanking).value_or_eval(
+    [&]() {return ShapeInference::firstOfSize(localRanking.sites.size());}
   );
 
 
@@ -195,7 +195,7 @@ void Molecule::Impl::propagateGraphChange_() {
    * assignments and assign the stereopermutator to that.
    */
 
-  graph_algorithms::updateEtaBonds(adjacencies_.inner());
+  GraphAlgorithms::updateEtaBonds(adjacencies_.inner());
 
   // All graph access after this point must be const for thread safety
   const PrivateGraph& inner = adjacencies_.inner();
@@ -229,7 +229,7 @@ void Molecule::Impl::propagateGraphChange_() {
       }
 
       // Suggest a shape if desired
-      boost::optional<shapes::Shape> newShapeOption;
+      boost::optional<Shapes::Shape> newShapeOption;
       if(Options::shapeTransition == ShapeTransition::PrioritizeInferenceFromGraph) {
         newShapeOption = inferShape(vertex, localRanking);
       }
@@ -323,7 +323,7 @@ Molecule::Impl::Impl(Graph graph)
   : adjacencies_(std::move(graph))
 {
   // Initialization
-  graph_algorithms::updateEtaBonds(adjacencies_.inner());
+  GraphAlgorithms::updateEtaBonds(adjacencies_.inner());
   stereopermutators_ = detectStereopermutators_();
   ensureModelInvariants_();
 }
@@ -336,7 +336,7 @@ Molecule::Impl::Impl(
   >& bondStereopermutatorCandidatesOptional
 ) : adjacencies_(std::move(graph))
 {
-  graph_algorithms::updateEtaBonds(adjacencies_.inner());
+  GraphAlgorithms::updateEtaBonds(adjacencies_.inner());
   stereopermutators_ = inferStereopermutatorsFromPositions(
     positions,
     bondStereopermutatorCandidatesOptional
@@ -478,7 +478,7 @@ void Molecule::Impl::assignStereopermutator(
   }
 }
 
-void Molecule::Impl::assignStereopermutatorRandomly(const AtomIndex a, random::Engine& engine) {
+void Molecule::Impl::assignStereopermutatorRandomly(const AtomIndex a, Random::Engine& engine) {
   if(!isValidIndex_(a)) {
     throw std::out_of_range("Molecule::assignStereopermutatorRandomly: Supplied index is invalid!");
   }
@@ -496,7 +496,7 @@ void Molecule::Impl::assignStereopermutatorRandomly(const AtomIndex a, random::E
   canonicalComponentsOption_ = boost::none;
 }
 
-void Molecule::Impl::assignStereopermutatorRandomly(const BondIndex& e, random::Engine& engine) {
+void Molecule::Impl::assignStereopermutatorRandomly(const BondIndex& e, Random::Engine& engine) {
   auto stereopermutatorOption = stereopermutators_.option(e);
 
   if(!stereopermutatorOption) {
@@ -514,7 +514,7 @@ std::vector<AtomIndex> Molecule::Impl::canonicalize(
   const AtomEnvironmentComponents componentBitmask
 ) {
   // Generate hashes according to the passed bitmask
-  auto vertexHashes = hashes::generate(
+  auto vertexHashes = Hashes::generate(
     graph().inner(),
     stereopermutators(),
     componentBitmask
@@ -605,7 +605,7 @@ void Molecule::Impl::removeAtom(const AtomIndex a) {
         continue;
       }
 
-      boost::optional<shapes::Shape> newShapeOption;
+      boost::optional<Shapes::Shape> newShapeOption;
       if(Options::shapeTransition == ShapeTransition::PrioritizeInferenceFromGraph) {
         newShapeOption = inferShape(indexToUpdate, localRanking);
       }
@@ -677,7 +677,7 @@ void Molecule::Impl::removeBond(
         return;
       }
 
-      boost::optional<shapes::Shape> newShapeOption;
+      boost::optional<Shapes::Shape> newShapeOption;
       if(Options::shapeTransition == ShapeTransition::PrioritizeInferenceFromGraph) {
         newShapeOption = inferShape(indexToUpdate, localRanking);
       }
@@ -758,7 +758,7 @@ void Molecule::Impl::setElementType(
 
 void Molecule::Impl::setShapeAtAtom(
   const AtomIndex a,
-  const shapes::Shape shape
+  const Shapes::Shape shape
 ) {
   if(!isValidIndex_(a)) {
     throw std::out_of_range("Molecule::setShapeAtAtom: Supplied atom index is invalid");
@@ -770,7 +770,7 @@ void Molecule::Impl::setShapeAtAtom(
   if(!stereopermutatorOption) {
     RankingInformation localRanking = rankPriority(a);
 
-    if(localRanking.sites.size() != shapes::size(shape)) {
+    if(localRanking.sites.size() != Shapes::size(shape)) {
       throw std::logic_error(
         "Molecule::setShapeAtAtom: The size of the supplied shape is not "
         " the same as the number of determined sites"
@@ -798,8 +798,8 @@ void Molecule::Impl::setShapeAtAtom(
   }
 
   if(
-    shapes::size(stereopermutatorOption->getShape())
-    != shapes::size(shape)
+    Shapes::size(stereopermutatorOption->getShape())
+    != Shapes::size(shape)
   ) {
     throw std::logic_error(
       "Molecule::setShapeAtAtom: The size of the supplied shape is "
@@ -854,7 +854,7 @@ std::string Molecule::Impl::str() const {
   return info.str();
 }
 
-boost::optional<shapes::Shape> Molecule::Impl::inferShape(
+boost::optional<Shapes::Shape> Molecule::Impl::inferShape(
   const AtomIndex index,
   const RankingInformation& ranking
 ) const {
@@ -868,7 +868,7 @@ boost::optional<shapes::Shape> Molecule::Impl::inferShape(
     );
   }
 
-  return shape_inference::inferShape(
+  return ShapeInference::inferShape(
     adjacencies_,
     index,
     ranking
@@ -900,7 +900,7 @@ std::size_t Molecule::Impl::hash() const {
     throw std::logic_error("Trying to hash an uncanonical molecule.");
   }
 
-  auto hashes = hashes::generate(
+  auto hashes = Hashes::generate(
     graph().inner(),
     stereopermutators_,
     canonicalComponentsOption_.value()
@@ -908,7 +908,7 @@ std::size_t Molecule::Impl::hash() const {
 
   // Convolute all of the wide hashes into a size_t hash
   static_assert(
-    std::is_same<hashes::WideHashType, boost::multiprecision::uint128_t>::value,
+    std::is_same<Hashes::WideHashType, boost::multiprecision::uint128_t>::value,
     "WideHash is no longer the boost multiprecision 128 uint"
   );
   constexpr unsigned wideHashBytes = 128 / 8;
@@ -948,7 +948,7 @@ StereopermutatorList Molecule::Impl::inferStereopermutatorsFromPositions(
       continue;
     }
 
-    shapes::Shape dummyShape = shape_inference::firstOfSize(localRanking.sites.size());
+    Shapes::Shape dummyShape = ShapeInference::firstOfSize(localRanking.sites.size());
 
     // Construct it
     auto stereopermutator = AtomStereopermutator {
@@ -1057,7 +1057,7 @@ bool Molecule::Impl::canonicalCompare(
   }
 
   return (
-    hashes::identityCompare(
+    Hashes::identityCompare(
       graph().inner(),
       stereopermutators(),
       other.graph().inner(),
@@ -1085,7 +1085,7 @@ boost::optional<std::vector<AtomIndex>> Molecule::Impl::modularIsomorphism(
   // Shortcut with same graph test if componentBitmask matches canonical components
   if(canonicalComponents() == componentBitmask && other.canonicalComponents() == componentBitmask) {
     if(canonicalCompare(other, componentBitmask)) {
-      return temple::iota<AtomIndex>(thisNumAtoms);
+      return Temple::iota<AtomIndex>(thisNumAtoms);
     }
 
     return boost::none;
@@ -1097,12 +1097,12 @@ boost::optional<std::vector<AtomIndex>> Molecule::Impl::modularIsomorphism(
    *
    * This maps the hashes to an incremented number:
    */
-  std::vector<hashes::HashType> thisHashes, otherHashes;
-  hashes::HashType maxHash;
+  std::vector<Hashes::HashType> thisHashes, otherHashes;
+  Hashes::HashType maxHash;
 
-  std::tie(thisHashes, otherHashes, maxHash) = hashes::narrow(
-    hashes::generate(graph().inner(), stereopermutators(), componentBitmask),
-    hashes::generate(other.graph().inner(), other.stereopermutators(), componentBitmask)
+  std::tie(thisHashes, otherHashes, maxHash) = Hashes::narrow(
+    Hashes::generate(graph().inner(), stereopermutators(), componentBitmask),
+    Hashes::generate(other.graph().inner(), other.stereopermutators(), componentBitmask)
   );
 
   // Where the corresponding index from the other graph is stored
@@ -1119,8 +1119,8 @@ boost::optional<std::vector<AtomIndex>> Molecule::Impl::modularIsomorphism(
       thisNumAtoms,
       boost::get(boost::vertex_index, thisBGL)
     ),
-    hashes::LookupFunctor(thisHashes),
-    hashes::LookupFunctor(otherHashes),
+    Hashes::LookupFunctor(thisHashes),
+    Hashes::LookupFunctor(otherHashes),
     maxHash,
     boost::get(boost::vertex_index, thisBGL),
     boost::get(boost::vertex_index, otherBGL)
@@ -1145,7 +1145,7 @@ RankingInformation Molecule::Impl::rankPriority(
   RankingInformation rankingResult;
 
   // Expects that bond types are set properly, complains otherwise
-  rankingResult.sites = graph_algorithms::ligandSiteGroups(
+  rankingResult.sites = GraphAlgorithms::ligandSiteGroups(
     adjacencies_.inner(),
     a,
     excludeAdjacent
@@ -1176,7 +1176,7 @@ RankingInformation Molecule::Impl::rankPriority(
   );
 
   // Find links between sites
-  rankingResult.links = graph_algorithms::siteLinks(
+  rankingResult.links = GraphAlgorithms::siteLinks(
     adjacencies_.inner(),
     a,
     rankingResult.sites,
@@ -1204,5 +1204,5 @@ bool Molecule::Impl::operator != (const Impl& other) const {
   return !(*this == other);
 }
 
-} // namespace molassembler
+} // namespace Molassembler
 } // namespace Scine

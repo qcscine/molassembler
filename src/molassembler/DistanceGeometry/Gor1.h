@@ -19,12 +19,12 @@
 
 // Forward-declare ImplicitBoundsGraph
 namespace Scine {
-namespace molassembler {
-namespace distance_geometry {
+namespace Molassembler {
+namespace DistanceGeometry {
 class ImplicitBoundsGraph;
 class ExplicitBoundsGraph;
-} // namespace distance_geometry
-} // namespace molassembler
+} // namespace DistanceGeometry
+} // namespace Molassembler
 } // namespace Scine
 
 namespace boost {
@@ -71,7 +71,7 @@ template<
   class ColorMap
 >
 std::enable_if_t<
-  std::is_same<IncidenceGraph, Scine::molassembler::distance_geometry::ImplicitBoundsGraph>::value,
+  std::is_same<IncidenceGraph, Scine::Molassembler::DistanceGeometry::ImplicitBoundsGraph>::value,
   void
 > gor1_ig_scan(
   const VertexDescriptor& vertex,
@@ -159,7 +159,7 @@ template<
   typename VertexDescriptor
 >
 std::enable_if_t<
-  std::is_same<IncidenceGraph, Scine::molassembler::distance_geometry::ImplicitBoundsGraph>::value,
+  std::is_same<IncidenceGraph, Scine::Molassembler::DistanceGeometry::ImplicitBoundsGraph>::value,
   bool
 > gor1_ig_shortest_paths(
   const IncidenceGraph& graph,
@@ -356,7 +356,7 @@ template<
   typename VertexDescriptor
 >
 std::enable_if_t<
-  std::is_same<GraphClass, Scine::molassembler::distance_geometry::ExplicitBoundsGraph>::value,
+  std::is_same<GraphClass, Scine::Molassembler::DistanceGeometry::ExplicitBoundsGraph>::value,
   bool
 > gor1_eg_shortest_paths(
   const GraphClass& graphWrapper,

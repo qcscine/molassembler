@@ -26,8 +26,8 @@
 #include <iostream>
 
 namespace Scine {
-namespace molassembler {
-namespace distance_geometry {
+namespace Molassembler {
+namespace DistanceGeometry {
 namespace detail {
 
 Eigen::MatrixXd gather(const Eigen::VectorXd& vectorizedPositions) {
@@ -84,7 +84,7 @@ Eigen::MatrixXd fitAndSetFixedPositions(
   return fit.getFittedData();
 }
 
-Molecule narrow(Molecule molecule, random::Engine& engine) {
+Molecule narrow(Molecule molecule, Random::Engine& engine) {
   const auto& stereopermutatorList = molecule.stereopermutators();
 
   do {
@@ -104,7 +104,7 @@ Molecule narrow(Molecule molecule, random::Engine& engine) {
     }
 
     if(!unassignedAtomStereopermutators.empty()) {
-      unsigned choice = temple::random::getSingle<unsigned>(
+      unsigned choice = Temple::Random::getSingle<unsigned>(
         0,
         unassignedAtomStereopermutators.size() - 1,
         engine
@@ -130,7 +130,7 @@ Molecule narrow(Molecule molecule, random::Engine& engine) {
     }
 
     if(!unassignedBondStereopermutators.empty()) {
-      unsigned choice = temple::random::getSingle<unsigned>(
+      unsigned choice = Temple::Random::getSingle<unsigned>(
         0,
         unassignedBondStereopermutators.size() - 1,
         engine
@@ -274,7 +274,7 @@ outcome::result<AngstromPositions> refine(
       refinementFunctor
     };
 
-    temple::Lbfgs<FloatType, 32> optimizer;
+    Temple::Lbfgs<FloatType, 32> optimizer;
 
     try {
       auto result = optimizer.minimize(
@@ -307,7 +307,7 @@ outcome::result<AngstromPositions> refine(
   gradientChecker.iterLimit = configuration.refinementStepLimit - firstStageIterations;
 
   try {
-    temple::Lbfgs<FloatType, 32> optimizer;
+    Temple::Lbfgs<FloatType, 32> optimizer;
 
     auto result = optimizer.minimize(
       transformedPositions,
@@ -342,7 +342,7 @@ outcome::result<AngstromPositions> refine(
   refinementFunctor.dihedralTerms = true;
 
   try {
-    temple::Lbfgs<FloatType, 32> optimizer;
+    Temple::Lbfgs<FloatType, 32> optimizer;
 
     auto result = optimizer.minimize(
       transformedPositions,
@@ -385,7 +385,7 @@ outcome::result<AngstromPositions> generateConformer(
   const Configuration& configuration,
   std::shared_ptr<MoleculeDGInformation>& DgDataPtr,
   bool regenerateDGDataEachStep,
-  random::Engine& engine
+  Random::Engine& engine
 ) {
   if(regenerateDGDataEachStep) {
     auto moleculeCopy = detail::narrow(molecule, engine);
@@ -483,19 +483,19 @@ std::vector<
   /* If a seed is supplied, the global prng state is not to be advanced.
    * We create a random engine from the seed here if a seed is supplied.
    */
-  auto engineOption = temple::optionals::map(
+  auto engineOption = Temple::optionals::map(
     seedOption,
-    [](unsigned seed) { return random::Engine(seed); }
+    [](unsigned seed) { return Random::Engine(seed); }
   );
 
   /* Now we need something referencing either our new engine or the global prng
    * engine.
    */
-  std::reference_wrapper<random::Engine> backgroundEngineWrapper = randomnessEngine();
+  std::reference_wrapper<Random::Engine> backgroundEngineWrapper = randomnessEngine();
   if(engineOption) {
     backgroundEngineWrapper = engineOption.value();
   }
-  random::Engine& backgroundEngine = backgroundEngineWrapper.get();
+  Random::Engine& backgroundEngine = backgroundEngineWrapper.get();
 
   /* We have to distribute pseudo-randomness into each thread reproducibly
    * and want to avoid having to guard the global PRNG against access from
@@ -508,8 +508,8 @@ std::vector<
   const unsigned nThreads = 1;
 #endif
 
-  std::vector<random::Engine> randomnessEngines(nThreads);
-  const auto seeds = temple::random::getN<int>(
+  std::vector<Random::Engine> randomnessEngines(nThreads);
+  const auto seeds = Temple::Random::getN<int>(
     0,
     std::numeric_limits<int>::max(),
     numConformers,
@@ -527,11 +527,11 @@ std::vector<
   for(unsigned i = 0; i < numConformers; ++i) {
     // Get thread-specific randomness engine reference
 #ifdef _OPENMP
-    random::Engine& engine = randomnessEngines.at(
+    Random::Engine& engine = randomnessEngines.at(
       omp_get_thread_num()
     );
 #else
-    random::Engine& engine = randomnessEngines.front();
+    Random::Engine& engine = randomnessEngines.front();
 #endif
 
     // Re-seed the thread-local PRNG engine for each conformer
@@ -563,6 +563,6 @@ std::vector<
   return results;
 }
 
-} // namespace distance_geometry
-} // namespace molassembler
+} // namespace DistanceGeometry
+} // namespace Molassembler
 } // namespace Scine

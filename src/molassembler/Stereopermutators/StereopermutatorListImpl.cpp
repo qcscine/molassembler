@@ -10,7 +10,7 @@
 #include "boost/range/adaptor/map.hpp"
 
 namespace Scine {
-namespace molassembler {
+namespace Molassembler {
 
 AtomStereopermutator& StereopermutatorList::Impl::add(
   AtomStereopermutator stereopermutator
@@ -235,12 +235,12 @@ boost::optional<const BondStereopermutator&> StereopermutatorList::Impl::option(
 }
 
 bool StereopermutatorList::Impl::hasZeroAssignmentStereopermutators() const {
-  return temple::any_of(
+  return Temple::any_of(
     atomStereopermutators | boost::adaptors::map_values,
     [](const auto& stereopermutator) -> bool {
       return stereopermutator.numAssignments() == 0u;
     }
-  ) || temple::any_of(
+  ) || Temple::any_of(
     bondStereopermutators | boost::adaptors::map_values,
     [](const auto& stereopermutator) -> bool {
       return stereopermutator.numAssignments() == 0u;
@@ -249,12 +249,12 @@ bool StereopermutatorList::Impl::hasZeroAssignmentStereopermutators() const {
 }
 
 bool StereopermutatorList::Impl::hasUnassignedStereopermutators() const {
-  return temple::any_of(
+  return Temple::any_of(
     atomStereopermutators | boost::adaptors::map_values,
     [](const auto& stereopermutator) -> bool {
       return !stereopermutator.assigned();
     }
-  ) || temple::any_of(
+  ) || Temple::any_of(
     bondStereopermutators | boost::adaptors::map_values,
     [](const auto& stereopermutator) -> bool {
       return !stereopermutator.assigned();
@@ -331,5 +331,5 @@ bool StereopermutatorList::Impl::operator == (const Impl& other) const {
   );
 }
 
-} // namespace molassembler
+} // namespace Molassembler
 } // namespace Scine

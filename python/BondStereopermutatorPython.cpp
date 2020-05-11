@@ -10,7 +10,7 @@
 #include "molassembler/BondStereopermutator.h"
 
 void init_bond_stereopermutator(pybind11::module& m) {
-  using namespace Scine::molassembler;
+  using namespace Scine::Molassembler;
 
   pybind11::class_<BondStereopermutator> bondStereopermutator(
     m,

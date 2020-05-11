@@ -25,8 +25,8 @@
 #include <random>
 
 using namespace Scine;
-using namespace molassembler;
-using namespace distance_geometry;
+using namespace Molassembler;
+using namespace DistanceGeometry;
 
 Eigen::MatrixXd reorder(
   const Eigen::MatrixXd& sourceMatrix,
@@ -137,7 +137,7 @@ std::vector<unsigned> randomReorderingSequence(const unsigned length) {
     0
   );
 
-  temple::random::shuffle(reorderSequence, randomnessEngine());
+  Temple::Random::shuffle(reorderSequence, randomnessEngine());
 
   return reorderSequence;
 }
@@ -161,8 +161,8 @@ BOOST_AUTO_TEST_CASE(MatrixReorderingReversibility) {
 
       std::cout << "Reordering reversibility failed! Original:\n"
         << testMatrix << std::endl
-        << "Reordering sequence: " << temple::stringify(reorderingOrder) << std::endl
-        << "Unreordering sequence: " << temple::stringify(inverseReorderSequence(reorderingOrder))
+        << "Reordering sequence: " << Temple::stringify(reorderingOrder) << std::endl
+        << "Unreordering sequence: " << Temple::stringify(inverseReorderSequence(reorderingOrder))
         << "Computed result: " << result << std::endl;
 
       break;
@@ -177,9 +177,9 @@ BOOST_AUTO_TEST_CASE(MetricMatrixConstructionIsInvariantUnderOrderingSwap) {
     const boost::filesystem::path& currentFilePath :
     boost::filesystem::recursive_directory_iterator("ez_stereocenters")
   ) {
-    auto molecule = io::read(currentFilePath.string());
+    auto molecule = IO::read(currentFilePath.string());
 
-    auto DgData = distance_geometry::gatherDGInformation(molecule, distance_geometry::Configuration {});
+    auto DgData = DistanceGeometry::gatherDGInformation(molecule, DistanceGeometry::Configuration {});
 
     DistanceBoundsMatrix distanceBounds {
       molecule.graph().inner(),

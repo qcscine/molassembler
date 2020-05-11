@@ -11,10 +11,10 @@
 #include <Eigen/Core>
 
 namespace Scine {
-namespace temple {
+namespace Temple {
 
 //! @brief Functionality common to multiple optimizers
-namespace optimization {
+namespace Optimization {
 
 template<typename FloatType>
 struct FloatUpdateBuffer {
@@ -150,8 +150,8 @@ auto numericalHessian(
   return numericalHessian;
 }
 
-} // namespace optimization
-} // namespace temple
+} // namespace Optimization
+} // namespace Temple
 } // namespace Scine
 
 #endif

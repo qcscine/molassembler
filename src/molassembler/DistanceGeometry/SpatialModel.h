@@ -28,8 +28,8 @@
 #include <unordered_map>
 
 namespace Scine {
-namespace molassembler {
-namespace distance_geometry {
+namespace Molassembler {
+namespace DistanceGeometry {
 
 /*! @brief Class performing spatial modeling of molecules
  *
@@ -228,7 +228,7 @@ public:
    */
   static double siteCentralAngle(
     AtomIndex placement,
-    const shapes::Shape& shape,
+    const Shapes::Shape& shape,
     const RankingInformation& ranking,
     const AtomStereopermutator::ShapeMap& shapeVertexMap,
     const std::pair<SiteIndex, SiteIndex>& sites,
@@ -513,7 +513,7 @@ private:
    * even on non-terminal atoms. These have to be re-added in order for us
    * to be able to model everywhere.
    */
-  void instantiateMissingAtomStereopermutators_(random::Engine& engine);
+  void instantiateMissingAtomStereopermutators_(Random::Engine& engine);
 
   //! Add bond distances to the underlying model
   void modelBondDistances_(
@@ -534,8 +534,8 @@ private:
 //!@}
 };
 
-} // namespace distance_geometry
-} // namespace molassembler
+} // namespace DistanceGeometry
+} // namespace Molassembler
 } // namespace Scine
 
 #endif

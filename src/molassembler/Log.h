@@ -13,7 +13,7 @@
 #include <iostream>
 
 namespace Scine {
-namespace molassembler {
+namespace Molassembler {
 namespace Log {
 
 namespace detail {
@@ -94,6 +94,6 @@ std::ostream& log(const Particulars& particular);
 bool isSet(Particulars particular);
 
 } // namespace Log
-} // namespace molassembler
+} // namespace Molassembler
 } // namespace Scine
 #endif

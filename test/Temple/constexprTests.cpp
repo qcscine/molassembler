@@ -31,7 +31,7 @@
 #include <boost/test/results_collector.hpp>
 
 using namespace Scine;
-extern temple::Generator<> generator;
+extern Temple::Generator<> generator;
 
 inline bool lastTestPassed() {
   using namespace boost::unit_test;
@@ -44,11 +44,11 @@ using namespace std::string_literals;
 
 namespace ArrayTests {
 
-constexpr auto testArr = temple::Array<unsigned, 3> {4, 3, 5};
+constexpr auto testArr = Temple::Array<unsigned, 3> {4, 3, 5};
 
 template<typename T, size_t size>
-constexpr temple::Array<T, size> modifyArray(
-  const temple::Array<T, size>& array
+constexpr Temple::Array<T, size> modifyArray(
+  const Temple::Array<T, size>& array
 ) {
   auto arrayCopy = array;
   inPlaceSwap(arrayCopy, 0, 1);
@@ -58,24 +58,24 @@ constexpr temple::Array<T, size> modifyArray(
 constexpr auto modf = modifyArray(testArr);
 
 static_assert(
-  modf == temple::Array<unsigned, 3> {3, 4, 5},
+  modf == Temple::Array<unsigned, 3> {3, 4, 5},
   "Swap doesn't work as expected"
 );
 
 template<size_t size>
-constexpr void testIteration(const temple::Array<unsigned, size>& array) {
+constexpr void testIteration(const Temple::Array<unsigned, size>& array) {
   for(const auto& element : array) {
     std::cout << element << std::endl;
   }
 }
 
-static_assert(temple::Math::factorial(5) == 120, "Factorial is incorrect");
-static_assert(temple::Math::factorial(0) == 1, "Factorial is incorrect");
+static_assert(Temple::Math::factorial(5) == 120, "Factorial is incorrect");
+static_assert(Temple::Math::factorial(0) == 1, "Factorial is incorrect");
 
 static_assert(
   std::is_same<
-    decltype(temple::makeArray(4, 3, 9)),
-    temple::Array<int, 3>
+    decltype(Temple::makeArray(4, 3, 9)),
+    Temple::Array<int, 3>
   >::value,
   "makeArray does not work as expected"
 );
@@ -93,11 +93,11 @@ BOOST_AUTO_TEST_CASE( mathApproxEqual ) {
   );
 
   // sqrt
-  const auto sqrt_failures = temple::copy_if(
-    temple::random::getN<double>(0, 1e6, numTests, generator.engine),
+  const auto sqrt_failures = Temple::copy_if(
+    Temple::Random::getN<double>(0, 1e6, numTests, generator.engine),
     [&](const double randomPositiveNumber) -> bool {
-      return !temple::floating::isCloseRelative(
-        temple::Math::sqrt(randomPositiveNumber),
+      return !Temple::Floating::isCloseRelative(
+        Temple::Math::sqrt(randomPositiveNumber),
         std::sqrt(randomPositiveNumber),
         accuracy
       );
@@ -111,10 +111,10 @@ BOOST_AUTO_TEST_CASE( mathApproxEqual ) {
 
     for(const double value : sqrt_failures) {
       std::cout << "  x = " << std::setw(12) << value
-        << ", sqrt = " << std::setw(12) << temple::Math::sqrt(value)
+        << ", sqrt = " << std::setw(12) << Temple::Math::sqrt(value)
         << ", std::sqrt = " << std::setw(12) << std::sqrt(value)
         << ", |Δ| = " << std::setw(12) << std::fabs(
-          temple::Math::sqrt(value) - std::sqrt(value)
+          Temple::Math::sqrt(value) - std::sqrt(value)
         ) << std::endl;
     }
 
@@ -122,18 +122,18 @@ BOOST_AUTO_TEST_CASE( mathApproxEqual ) {
   }
 
   // asin
-  const auto randomInverseTrigNumbers = temple::random::getN<double>(
+  const auto randomInverseTrigNumbers = Temple::Random::getN<double>(
     std::nexttoward(-1.0, 0.0),
     std::nexttoward(1.0, 0.0),
     numTests,
     generator.engine
   );
 
-  const auto asin_failures = temple::copy_if(
+  const auto asin_failures = Temple::copy_if(
     randomInverseTrigNumbers,
     [&](const double randomInverseTrigNumber) -> bool {
-      return !temple::floating::isCloseRelative(
-        temple::Math::asin(randomInverseTrigNumber),
+      return !Temple::Floating::isCloseRelative(
+        Temple::Math::asin(randomInverseTrigNumber),
         std::asin(randomInverseTrigNumber),
         1e-8
       );
@@ -147,10 +147,10 @@ BOOST_AUTO_TEST_CASE( mathApproxEqual ) {
 
     for(const double value : asin_failures) {
       std::cout << "  x = " << std::setw(12) << value
-        << ", asin = " << std::setw(12) << temple::Math::asin(value)
+        << ", asin = " << std::setw(12) << Temple::Math::asin(value)
         << ", std::asin = " << std::setw(12) << std::asin(value)
         << ", |Δ| = " << std::setw(12) << std::fabs(
-          temple::Math::asin(value) - std::asin(value)
+          Temple::Math::asin(value) - std::asin(value)
         ) << std::endl;
     }
 
@@ -158,10 +158,10 @@ BOOST_AUTO_TEST_CASE( mathApproxEqual ) {
   }
 
   auto testPow = [&](const double number, const int& exponent) -> bool {
-    const double test = temple::Math::pow(number, exponent);
+    const double test = Temple::Math::pow(number, exponent);
     const double reference = std::pow(number, exponent);
 
-    bool passes = temple::floating::isCloseRelative(test, reference, accuracy);
+    bool passes = Temple::Floating::isCloseRelative(test, reference, accuracy);
 
     if(!passes) {
       std::cout << "  x = " << std::setw(12) << number
@@ -177,20 +177,20 @@ BOOST_AUTO_TEST_CASE( mathApproxEqual ) {
   };
 
   BOOST_CHECK(
-    temple::all_of(
-      temple::adaptors::zip(
-        temple::random::getN<double>(-1e5, 1e5, numTests, generator.engine),
-        temple::random::getN<int>(-40, 40, numTests, generator.engine)
+    Temple::all_of(
+      Temple::adaptors::zip(
+        Temple::Random::getN<double>(-1e5, 1e5, numTests, generator.engine),
+        Temple::Random::getN<int>(-40, 40, numTests, generator.engine)
       ),
       testPow
     )
   );
 
   auto testRecPow = [&](const double number, const unsigned exponent) -> bool {
-    const double test = temple::Math::recPow(number, exponent);
+    const double test = Temple::Math::recPow(number, exponent);
     const double reference = std::pow(number, exponent);
 
-    bool passes = temple::floating::isCloseRelative(test, reference, accuracy);
+    bool passes = Temple::Floating::isCloseRelative(test, reference, accuracy);
 
     if(!passes) {
       std::cout << "  x = " << std::setw(12) << number
@@ -206,10 +206,10 @@ BOOST_AUTO_TEST_CASE( mathApproxEqual ) {
   };
 
   BOOST_CHECK(
-    temple::all_of(
-      temple::adaptors::zip(
-        temple::random::getN<double>(-1e5, 1e5, numTests, generator.engine),
-        temple::random::getN<unsigned>(0, 40, numTests, generator.engine)
+    Temple::all_of(
+      Temple::adaptors::zip(
+        Temple::Random::getN<double>(-1e5, 1e5, numTests, generator.engine),
+        Temple::Random::getN<unsigned>(0, 40, numTests, generator.engine)
       ),
       testRecPow
     )
@@ -217,22 +217,22 @@ BOOST_AUTO_TEST_CASE( mathApproxEqual ) {
 
 
   // ln
-  const auto randomZ = temple::random::getN<double>(1e-10, 1e10, numTests, generator.engine);
-  bool all_ln_pass = temple::all_of(
+  const auto randomZ = Temple::Random::getN<double>(1e-10, 1e10, numTests, generator.engine);
+  bool all_ln_pass = Temple::all_of(
     randomZ,
     [&](const auto& z) -> bool {
-      bool pass = temple::floating::isCloseRelative(
-        temple::Math::ln(z),
+      bool pass = Temple::Floating::isCloseRelative(
+        Temple::Math::ln(z),
         std::log(z),
         accuracy
       );
 
       if(!pass) {
         std::cout << "ln deviates for z = " << std::setw(12) << z
-          << ", ln(z) = " << std::setw(12) << temple::Math::ln(z)
+          << ", ln(z) = " << std::setw(12) << Temple::Math::ln(z)
           << ", std::log(z) = " << std::setw(12) << std::log(z)
           << ", |Δ| = " << std::setw(12) << std::fabs(
-            temple::Math::ln(z) - std::log(z)
+            Temple::Math::ln(z) - std::log(z)
           ) << std::endl;
       }
 
@@ -243,29 +243,29 @@ BOOST_AUTO_TEST_CASE( mathApproxEqual ) {
   BOOST_CHECK(all_ln_pass);
 
   BOOST_CHECK(
-    temple::all_of(
-      temple::random::getN<double>(-100, 100, numTests, generator.engine),
+    Temple::all_of(
+      Temple::Random::getN<double>(-100, 100, numTests, generator.engine),
       [](const double x) -> bool {
-        return(temple::Math::floor(x) <= x);
+        return(Temple::Math::floor(x) <= x);
       }
     )
   );
 
   BOOST_CHECK(
-    temple::all_of(
-      temple::random::getN<double>(-100, 100, numTests, generator.engine),
+    Temple::all_of(
+      Temple::Random::getN<double>(-100, 100, numTests, generator.engine),
       [](const double x) -> bool {
-        return(temple::Math::ceil(x) >= x);
+        return(Temple::Math::ceil(x) >= x);
       }
     )
   );
 
   BOOST_CHECK(
-    temple::all_of(
-      temple::random::getN<double>(-M_PI / 2, M_PI / 2, numTests, generator.engine),
+    Temple::all_of(
+      Temple::Random::getN<double>(-M_PI / 2, M_PI / 2, numTests, generator.engine),
       [&](const double x) -> bool {
-        return temple::floating::isCloseRelative(
-          temple::Math::atan(x),
+        return Temple::Floating::isCloseRelative(
+          Temple::Math::atan(x),
           std::atan(x),
           accuracy
         );
@@ -281,13 +281,13 @@ BOOST_AUTO_TEST_CASE(arrayPermutation) {
   bool customHasNext, STLHasNext;
 
   do {
-    customHasNext = temple::inPlaceNextPermutation(base);
+    customHasNext = Temple::inPlaceNextPermutation(base);
     STLHasNext = std::next_permutation(STLComparison.begin(), STLComparison.end());
 
     BOOST_CHECK_MESSAGE(
       base == STLComparison,
-      "In forward permutation, base is {" << temple::condense(base)
-      << "} and and STL is {" << temple::condense(STLComparison)
+      "In forward permutation, base is {" << Temple::condense(base)
+      << "} and and STL is {" << Temple::condense(STLComparison)
       << "}"
     );
   } while(customHasNext && STLHasNext);
@@ -301,13 +301,13 @@ BOOST_AUTO_TEST_CASE(arrayPermutation) {
   STLComparison = {{3, 2, 1, 0}};
 
   do {
-    customHasNext = temple::inPlacePreviousPermutation(base);
+    customHasNext = Temple::inPlacePreviousPermutation(base);
     STLHasNext = std::prev_permutation(STLComparison.begin(), STLComparison.end());
 
     BOOST_CHECK_MESSAGE(
       base == STLComparison,
-      "In backward permutation, base is {" << temple::condense(base)
-      << "} and and STL is {" << temple::condense(STLComparison)
+      "In backward permutation, base is {" << Temple::condense(base)
+      << "} and and STL is {" << Temple::condense(STLComparison)
       << "}"
     );
   } while(customHasNext && STLHasNext);
@@ -323,13 +323,13 @@ BOOST_AUTO_TEST_CASE(arrayPermutation) {
   STLComparison = {{0, 1, 2, 3}};
 
   do {
-    customHasNext = temple::inPlaceNextPermutation(base, 1, 3);
+    customHasNext = Temple::inPlaceNextPermutation(base, 1, 3);
     STLHasNext = std::next_permutation(STLComparison.begin() + 1, STLComparison.end() - 1);
 
     BOOST_CHECK_MESSAGE(
       base == STLComparison,
-      "In limited forward permutation, base is {" << temple::condense(base)
-      << "} and and STL is {" << temple::condense(STLComparison)
+      "In limited forward permutation, base is {" << Temple::condense(base)
+      << "} and and STL is {" << Temple::condense(STLComparison)
       << "}"
     );
   } while(customHasNext && STLHasNext);
@@ -344,13 +344,13 @@ BOOST_AUTO_TEST_CASE(arrayPermutation) {
   STLComparison = {{3, 2, 1, 0}};
 
   do {
-    customHasNext = temple::inPlacePreviousPermutation(base, 1, 3);
+    customHasNext = Temple::inPlacePreviousPermutation(base, 1, 3);
     STLHasNext = std::prev_permutation(STLComparison.begin() + 1, STLComparison.end() - 1);
 
     BOOST_CHECK_MESSAGE(
       base == STLComparison,
-      "In limited backward permutation, base is {" << temple::condense(base)
-      << "} and and STL is {" << temple::condense(STLComparison)
+      "In limited backward permutation, base is {" << Temple::condense(base)
+      << "} and and STL is {" << Temple::condense(STLComparison)
       << "}"
     );
   } while(customHasNext && STLHasNext);
@@ -363,23 +363,23 @@ BOOST_AUTO_TEST_CASE(arrayPermutation) {
 }
 
 constexpr bool compileTimeDynTest() {
-  temple::DynamicArray<unsigned, 10> nonConstArr {4, 3, 6};
+  Temple::DynamicArray<unsigned, 10> nonConstArr {4, 3, 6};
   nonConstArr.push_back(9);
   return nonConstArr.size() == 4;
 }
 
 constexpr bool dynArrSpliceTest() {
-  temple::DynamicArray<unsigned, 10> nonConstArr {4, 3, 6, 5, 1, 9};
+  Temple::DynamicArray<unsigned, 10> nonConstArr {4, 3, 6, 5, 1, 9};
   auto spliced = nonConstArr.splice(2);
 
   return (
-    spliced == temple::DynamicArray<unsigned, 10> {6, 5, 1, 9}
-    && nonConstArr == temple::DynamicArray<unsigned, 10> {4, 3}
+    spliced == Temple::DynamicArray<unsigned, 10> {6, 5, 1, 9}
+    && nonConstArr == Temple::DynamicArray<unsigned, 10> {4, 3}
   );
 }
 
 BOOST_AUTO_TEST_CASE(dynamicArrayTests) {
-  constexpr temple::DynamicArray<unsigned, 10> arr {4, 3, 5};
+  constexpr Temple::DynamicArray<unsigned, 10> arr {4, 3, 5};
 
   static_assert(
     arr.size() == 3,
@@ -403,7 +403,7 @@ BOOST_AUTO_TEST_CASE(dynamicArrayTests) {
     "Subtracting begin/end iterators does not yield dynamic length"
   );
 
-  constexpr temple::Array<unsigned, 10> values {1, 2, 2, 3, 3, 3, 4, 4, 4, 4};
+  constexpr Temple::Array<unsigned, 10> values {1, 2, 2, 3, 3, 3, 4, 4, 4, 4};
 
   constexpr auto grouped = groupByEquality(
     values,
@@ -419,13 +419,13 @@ BOOST_AUTO_TEST_CASE(dynamicArrayTests) {
     "Grouping does not work as expected"
   );
 
-  constexpr temple::DynamicArray<unsigned, 14> fromFixed {values};
+  constexpr Temple::DynamicArray<unsigned, 14> fromFixed {values};
 
   static_assert(fromFixed.size() == 10, "Construction from fixed doesn't work");
 }
 
 template<typename T, size_t size, class Comparator>
-constexpr bool isSorted(const temple::DynamicSet<T, size, Comparator>& set) {
+constexpr bool isSorted(const Temple::DynamicSet<T, size, Comparator>& set) {
   Comparator comparator;
 
   auto left = set.begin();
@@ -444,7 +444,7 @@ constexpr bool isSorted(const temple::DynamicSet<T, size, Comparator>& set) {
 }
 
 BOOST_AUTO_TEST_CASE(dynamicSetTests) {
-  temple::DynamicSet<unsigned, 10> set;
+  Temple::DynamicSet<unsigned, 10> set;
 
   BOOST_CHECK(set.size() == 0);
   BOOST_CHECK(
@@ -470,14 +470,14 @@ BOOST_AUTO_TEST_CASE(dynamicSetTests) {
     BOOST_CHECK_MESSAGE(
       !set.contains(item),
       "Set says it contains " << item << " when it shouldn't (set is {"
-        << temple::condense(set)
+        << Temple::condense(set)
         << "}."
     );
   }
   BOOST_CHECK(isSorted(set));
 
-  temple::DynamicSet<unsigned, 10> setInitList {
-    temple::DynamicArray<unsigned, 10> {
+  Temple::DynamicSet<unsigned, 10> setInitList {
+    Temple::DynamicArray<unsigned, 10> {
       4u, 9u, 13u
     }
   };
@@ -502,7 +502,7 @@ BOOST_AUTO_TEST_CASE(dynamicSetTests) {
     && !setInitList.contains(1)
     && !setInitList.contains(25),
     "setInitList {"
-      << temple::condense(setInitList)
+      << Temple::condense(setInitList)
       << "} does not conform to expectations concerning contains:\n"
       << std::boolalpha
       << "contains 4, expect true:" << setInitList.contains(4)
@@ -513,19 +513,19 @@ BOOST_AUTO_TEST_CASE(dynamicSetTests) {
       << "\ncontains 25, expect false:" << setInitList.contains(25)
   );
   // Set of arrays
-  temple::Array<
-    temple::Array<unsigned, 4>,
+  Temple::Array<
+    Temple::Array<unsigned, 4>,
     5
   > sampleArrays {
-    temple::Array<unsigned, 4> {1u, 2u, 3u, 4u},
-    temple::Array<unsigned, 4> {1u, 2u, 4u, 3u},
-    temple::Array<unsigned, 4> {1u, 4u, 3u, 2u},
-    temple::Array<unsigned, 4> {1u, 4u, 2u, 3u},
-    temple::Array<unsigned, 4> {2u, 1u, 3u, 4u}
+    Temple::Array<unsigned, 4> {1u, 2u, 3u, 4u},
+    Temple::Array<unsigned, 4> {1u, 2u, 4u, 3u},
+    Temple::Array<unsigned, 4> {1u, 4u, 3u, 2u},
+    Temple::Array<unsigned, 4> {1u, 4u, 2u, 3u},
+    Temple::Array<unsigned, 4> {2u, 1u, 3u, 4u}
   };
 
-  temple::DynamicSet<
-    temple::Array<unsigned, 4>,
+  Temple::DynamicSet<
+    Temple::Array<unsigned, 4>,
     10
   > arraysSet;
 
@@ -549,7 +549,7 @@ BOOST_AUTO_TEST_CASE(dynamicSetTests) {
 }
 
 template<typename T, size_t size>
-bool validate(const temple::DynamicSet<T, size>& set) {
+bool validate(const Temple::DynamicSet<T, size>& set) {
   // Is the set ordered?
   auto leftIter = set.begin();
   auto rightIter = leftIter; ++rightIter;
@@ -581,18 +581,18 @@ bool validate(const temple::DynamicSet<T, size>& set) {
 }
 
 BOOST_AUTO_TEST_CASE(arrayOperators) {
-  temple::Array<unsigned, 4> a {4, 2, 3, 1};
-  temple::Array<unsigned, 4> b {4, 3, 2, 1};
+  Temple::Array<unsigned, 4> a {4, 2, 3, 1};
+  Temple::Array<unsigned, 4> b {4, 3, 2, 1};
 
-  BOOST_CHECK(temple::testLogicalOperators(a, b));
-  BOOST_CHECK(temple::testLogicalOperators(a, a));
+  BOOST_CHECK(Temple::testLogicalOperators(a, b));
+  BOOST_CHECK(Temple::testLogicalOperators(a, a));
 
-  temple::dynamic::explainLogicalOperatorFailures(a, b);
+  Temple::dynamic::explainLogicalOperatorFailures(a, b);
 }
 
 BOOST_AUTO_TEST_CASE(dynamicSetFuzzing) {
   for(unsigned N = 0; N < 100; ++N) {
-    temple::DynamicSet<unsigned, 100> subject;
+    Temple::DynamicSet<unsigned, 100> subject;
 
     std::vector<unsigned> numbers;
     numbers.resize(50);
@@ -602,7 +602,7 @@ BOOST_AUTO_TEST_CASE(dynamicSetFuzzing) {
       0
     );
 
-    temple::random::shuffle(numbers, generator.engine);
+    Temple::Random::shuffle(numbers, generator.engine);
 
     for(const auto& number : numbers) {
       subject.insert(number);
@@ -611,8 +611,8 @@ BOOST_AUTO_TEST_CASE(dynamicSetFuzzing) {
       if(!isValid) {
         std::cout << "After inserting " << number
           << ", set is left in invalid state. Set: {"
-          << temple::condense(subject) << "}\ninsert sequence {"
-          << temple::condense(numbers) << "}."
+          << Temple::condense(subject) << "}\ninsert sequence {"
+          << Temple::condense(numbers) << "}."
           << std::endl;
       }
 
@@ -713,35 +713,35 @@ struct pairSumValue {
 };
 
 static_assert(
-  temple::tuples::unpackToFunction<Fruit, sumNumbersValue>() == 57,
+  Temple::Tuples::unpackToFunction<Fruit, sumNumbersValue>() == 57,
   "Unpacking fruit tuple to valueValue does not yield expected result"
 );
 
 static_assert(
-  temple::tuples::unpackToFunction<Fruit, sumNumbersFunctor>() == 57,
+  Temple::Tuples::unpackToFunction<Fruit, sumNumbersFunctor>() == 57,
   "Unpacking fruit tuple to valueFunctor does not yield expected result"
 );
 
 static_assert(
-  temple::arraysEqual(
-    temple::tuples::map<Fruit, getNumberValue>(),
-    temple::Array<unsigned, 3> {{Apple::number, Banana::number, Cherry::number}}
+  Temple::arraysEqual(
+    Temple::Tuples::map<Fruit, getNumberValue>(),
+    Temple::Array<unsigned, 3> {{Apple::number, Banana::number, Cherry::number}}
   ),
   "Mapping with getNumberValue does not yield expected result!"
 );
 
 static_assert(
-  temple::arraysEqual(
-    temple::tuples::map<Fruit, getNumberFunctor>(),
-    temple::Array<unsigned, 3> {{Apple::number, Banana::number, Cherry::number}}
+  Temple::arraysEqual(
+    Temple::Tuples::map<Fruit, getNumberFunctor>(),
+    Temple::Array<unsigned, 3> {{Apple::number, Banana::number, Cherry::number}}
   ),
   "Mapping with getNumberFunctor does not yield expected result!"
 );
 
 static_assert(
-  temple::arraysEqual(
-    temple::tuples::mapAllPairs<Fruit, pairSumValue>(),
-    temple::Array<unsigned, 3> {{
+  Temple::arraysEqual(
+    Temple::Tuples::mapAllPairs<Fruit, pairSumValue>(),
+    Temple::Array<unsigned, 3> {{
       Apple::number + Banana::number,
       Apple::number + Cherry::number,
       Banana::number + Cherry::number
@@ -751,9 +751,9 @@ static_assert(
 );
 
 static_assert(
-  temple::arraysEqual(
-    temple::tuples::mapAllPairs<Fruit, pairSumFunctor>(),
-    temple::Array<unsigned, 3> {{
+  Temple::arraysEqual(
+    Temple::Tuples::mapAllPairs<Fruit, pairSumFunctor>(),
+    Temple::Array<unsigned, 3> {{
       Apple::number + Banana::number,
       Apple::number + Cherry::number,
       Banana::number + Cherry::number
@@ -765,7 +765,7 @@ static_assert(
 using countTestType = std::tuple<unsigned, float, double, unsigned, size_t>;
 
 static_assert(
-  temple::tuples::countType<countTestType, unsigned>() == 2,
+  Temple::Tuples::countType<countTestType, unsigned>() == 2,
   "Counting unsigned in countTestType does not return two!"
 );
 
@@ -775,12 +775,12 @@ namespace FloatingPointComparisonTests {
 
 template<typename T>
 constexpr bool testAbsoluteComparison(const T& a, const T& b, const T& tolerance) {
-  temple::floating::ExpandedAbsoluteEqualityComparator<T> comparator {
+  Temple::Floating::ExpandedAbsoluteEqualityComparator<T> comparator {
     tolerance
   };
 
   return (
-    temple::Math::XOR(
+    Temple::Math::XOR(
       (
         comparator.isLessThan(a, b)
         && comparator.isMoreThan(b, a)
@@ -796,7 +796,7 @@ constexpr bool testAbsoluteComparison(const T& a, const T& b, const T& tolerance
         && !comparator.isMoreThan(a, b)
         && comparator.isEqual(a, b)
       )
-    ) && temple::Math::XOR(
+    ) && Temple::Math::XOR(
       comparator.isEqual(a, b),
       comparator.isUnequal(a, b)
     )
@@ -805,12 +805,12 @@ constexpr bool testAbsoluteComparison(const T& a, const T& b, const T& tolerance
 
 template<typename T>
 constexpr bool testRelativeComparison(const T& a, const T& b, const T& tolerance) {
-  temple::floating::ExpandedRelativeEqualityComparator<T> comparator {
+  Temple::Floating::ExpandedRelativeEqualityComparator<T> comparator {
     tolerance
   };
 
   return (
-    temple::Math::XOR(
+    Temple::Math::XOR(
       (
         comparator.isLessThan(a, b)
         && comparator.isMoreThan(b, a)
@@ -826,7 +826,7 @@ constexpr bool testRelativeComparison(const T& a, const T& b, const T& tolerance
         && !comparator.isMoreThan(a, b)
         && comparator.isEqual(a, b)
       )
-    ) && temple::Math::XOR(
+    ) && Temple::Math::XOR(
       comparator.isEqual(a, b),
       comparator.isUnequal(a, b)
     )
@@ -851,30 +851,30 @@ static_assert(
 
 namespace ConcatenationTests {
 
-constexpr temple::Array<unsigned, 4> f {4, 2, 9, 3};
-constexpr temple::Array<unsigned, 4> g {11, 22, 33, 44};
-constexpr temple::Array<unsigned, 4> h {234, 292, 912, 304};
-constexpr temple::Array<unsigned, 8> fg {
+constexpr Temple::Array<unsigned, 4> f {4, 2, 9, 3};
+constexpr Temple::Array<unsigned, 4> g {11, 22, 33, 44};
+constexpr Temple::Array<unsigned, 4> h {234, 292, 912, 304};
+constexpr Temple::Array<unsigned, 8> fg {
   4, 2, 9, 3,
   11, 22, 33, 44
 };
-constexpr temple::Array<unsigned, 12> fgh {
+constexpr Temple::Array<unsigned, 12> fgh {
   4, 2, 9, 3,
   11, 22, 33, 44,
   234, 292, 912, 304
 };
 
 static_assert(
-  temple::arraysEqual(
-    temple::arrayConcatenate(f, g),
+  Temple::arraysEqual(
+    Temple::arrayConcatenate(f, g),
     fg
   ),
   "Pairwise concatenation does not preserve sequence!"
 );
 
 static_assert(
-  temple::arraysEqual(
-    temple::arrayConcatenate(f, g, h),
+  Temple::arraysEqual(
+    Temple::arrayConcatenate(f, g, h),
     fgh
   ),
   "Variadic concatenation does not work as expected"
@@ -884,8 +884,8 @@ static_assert(
 
 namespace DynamicMapTests {
 
-constexpr temple::DynamicMap<unsigned, int, 20> generateMap() {
-  temple::DynamicMap<unsigned, int, 20> myMap;
+constexpr Temple::DynamicMap<unsigned, int, 20> generateMap() {
+  Temple::DynamicMap<unsigned, int, 20> myMap;
 
   myMap.insert(4, -2);
   myMap.insert(1, 4);
@@ -905,21 +905,21 @@ static_assert(a.at(3u) == 9, "Map does not find element with key 3");
 namespace UpperTriangularMatrixTests {
 
 // Can default-construct
-constexpr auto defaultMatr = temple::UpperTriangularMatrix<bool, 15> {};
+constexpr auto defaultMatr = Temple::UpperTriangularMatrix<bool, 15> {};
 static_assert(decltype(defaultMatr)::N == 6u, "Size isn't right");
 
-constexpr auto matr = temple::makeUpperTriangularMatrix(
+constexpr auto matr = Temple::makeUpperTriangularMatrix(
   std::array<unsigned, 6> {{1, 2, 3, 4, 5, 6}}
 );
 
 static_assert(decltype(matr)::N == 4u, "Size isn't right");
 
-/*constexpr auto failing = temple::makeUpperTriangularMatrix(
+/*constexpr auto failing = Temple::makeUpperTriangularMatrix(
   std::array<unsigned, 5> {{1, 2, 3, 4, 5}}
 );*/
 
-constexpr auto fromArray = temple::makeUpperTriangularMatrix(
-  temple::Array<unsigned, 6> {{1, 2, 3, 4, 5, 6}}
+constexpr auto fromArray = Temple::makeUpperTriangularMatrix(
+  Temple::Array<unsigned, 6> {{1, 2, 3, 4, 5, 6}}
 );
 static_assert(decltype(fromArray)::N == 4u, "Size isn't right");
 
@@ -929,7 +929,7 @@ enum class ScopedEnum : unsigned {A, B, C};
 enum UnscopedEnum : unsigned {D, E};
 
 BOOST_AUTO_TEST_CASE(bitmaskAll) {
-  using namespace temple;
+  using namespace Temple;
 
   constexpr auto a = make_bitmask(ScopedEnum::A) | ScopedEnum::C;
   static_assert(a & ScopedEnum::A, "A must be contained in the bitmask a");
@@ -939,8 +939,8 @@ BOOST_AUTO_TEST_CASE(bitmaskAll) {
   BOOST_CHECK(b[UnscopedEnum::E] && !b[UnscopedEnum::D]);
 }
 
-constexpr temple::Bitset<300> make_a_bitset() {
-  temple::Bitset<300> a;
+constexpr Temple::Bitset<300> make_a_bitset() {
+  Temple::Bitset<300> a;
 
   a.set(0);
   a.set(299);
@@ -951,7 +951,7 @@ constexpr temple::Bitset<300> make_a_bitset() {
 }
 
 BOOST_AUTO_TEST_CASE(bitsetTests) {
-  using namespace temple;
+  using namespace Temple;
 
   constexpr auto a = make_a_bitset();
 
@@ -966,7 +966,7 @@ BOOST_AUTO_TEST_CASE(bitsetTests) {
 }
 
 BOOST_AUTO_TEST_CASE(permutationIndexTests) {
-  using namespace temple;
+  using namespace Temple;
 
   auto a = iota<Array, unsigned, 6>();
 

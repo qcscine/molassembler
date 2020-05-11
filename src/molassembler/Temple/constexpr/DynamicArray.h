@@ -19,7 +19,7 @@
 #include <utility>
 
 namespace Scine {
-namespace temple {
+namespace Temple {
 
 template<typename T, std::size_t nItems>
 class DynamicArray {
@@ -788,7 +788,7 @@ DynamicArray<T, N> merge(
   return merged;
 }
 
-} // namespace temple
+} // namespace Temple
 } // namespace Scine
 
 #endif

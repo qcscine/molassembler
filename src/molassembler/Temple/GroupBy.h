@@ -17,7 +17,7 @@
 #include <map>
 
 namespace Scine {
-namespace temple {
+namespace Temple {
 
 /*!
  * Split a container's values by a mapping function whose return value elements
@@ -27,14 +27,14 @@ namespace temple {
 template<class Container, class UnaryFunction>
 std::vector<
   std::vector<
-    traits::getValueType<Container>
+    Traits::getValueType<Container>
   >
 > groupByMapping(
   const Container& container,
   UnaryFunction&& function
 ) {
-  using T = traits::getValueType<Container>;
-  using R = traits::functionReturnType<UnaryFunction, T>;
+  using T = Traits::getValueType<Container>;
+  using R = Traits::functionReturnType<UnaryFunction, T>;
 
   std::vector<
     std::vector<T>
@@ -69,13 +69,13 @@ std::vector<
 template<class Container, class BinaryFunction>
 std::vector<
   std::vector<
-    traits::getValueType<Container>
+    Traits::getValueType<Container>
   >
 > groupByEquality(
   const Container& container,
   BinaryFunction&& compareEqual
 ) {
-  using T = traits::getValueType<Container>;
+  using T = Traits::getValueType<Container>;
 
   std::vector<
     std::vector<T>
@@ -102,7 +102,7 @@ std::vector<
   return groups;
 }
 
-} // namespace temple
+} // namespace Temple
 } // namespace Scine
 
 #endif

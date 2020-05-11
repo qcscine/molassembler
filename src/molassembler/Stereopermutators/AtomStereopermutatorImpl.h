@@ -17,18 +17,18 @@
 #include "boost/optional.hpp"
 
 namespace Scine {
-namespace shapes {
-namespace properties {
+namespace Shapes {
+namespace Properties {
 struct ShapeTransitionGroup;
-} // namespace properties
-} // namespace shapes
+} // namespace Properties
+} // namespace Shapes
 
-namespace molassembler {
+namespace Molassembler {
 
-class AtomStereopermutator::Impl : public temple::crtp::LexicographicComparable<Impl> {
+class AtomStereopermutator::Impl : public Temple::Crtp::LexicographicComparable<Impl> {
 public:
 /* Typedefs */
-  using StereopermutationType = stereopermutation::Stereopermutation;
+  using StereopermutationType = Stereopermutations::Stereopermutation;
 
 //!@name Static functions
 //!@{
@@ -38,7 +38,7 @@ public:
    * @throws std::logic_error If there are no larger shapes
    * @note Behavior is dependent on ChiralStatePreservation option
    */
-  static shapes::Shape up(shapes::Shape shape);
+  static Shapes::Shape up(Shapes::Shape shape);
 
   /*!
    * @brief Picks a shape retaining as much chiral state as possible on a
@@ -46,13 +46,13 @@ public:
    * @throws std::logic_error If there are no smaller shapes
    * @note Behavior is dependent on ChiralStatePreservation option
    */
-  static shapes::Shape down(shapes::Shape shape, shapes::Vertex removedVertex);
+  static Shapes::Shape down(Shapes::Shape shape, Shapes::Vertex removedVertex);
 
   /*!
    * @brief Selects a shape vertex mapping from a shape transition group
    */
-  static boost::optional<std::vector<shapes::Vertex>> selectTransitionMapping(
-    const shapes::properties::ShapeTransitionGroup& mappingsGroup,
+  static boost::optional<std::vector<Shapes::Vertex>> selectTransitionMapping(
+    const Shapes::Properties::ShapeTransitionGroup& mappingsGroup,
     const ChiralStatePreservation& preservationOption
   );
 
@@ -60,7 +60,7 @@ public:
   static bool thermalized(
     const Graph& graph,
     AtomIndex centerAtom,
-    const shapes::Shape shape,
+    const Shapes::Shape shape,
     const RankingInformation& ranking,
     const TemperatureRegime temperature
   );
@@ -77,7 +77,7 @@ public:
    */
   Impl(
     const Graph& graph,
-    shapes::Shape shape,
+    Shapes::Shape shape,
     AtomIndex centerAtom,
     RankingInformation ranking
   );
@@ -87,7 +87,7 @@ public:
   void assign(boost::optional<unsigned> assignment);
 
   //! Assigns the Stereopermutator randomly using relative stereopermutation weights
-  void assignRandom(random::Engine& engine);
+  void assignRandom(Random::Engine& engine);
 
   /**
    * @brief Applies an atom index permutation
@@ -114,7 +114,7 @@ public:
   boost::optional<PropagatedState> propagate(
     const Graph& graph,
     RankingInformation newRanking,
-    boost::optional<shapes::Shape> shapeOption
+    boost::optional<Shapes::Shape> shapeOption
   );
 
   /*!
@@ -125,7 +125,7 @@ public:
 
   //! If the shape is changed, we must adapt
   void setShape(
-    shapes::Shape shape,
+    Shapes::Shape shape,
     const Graph& graph
   );
 
@@ -189,19 +189,19 @@ public:
    * @brief Returns the underlying AbstractStereopermutation
    * @note This is library-internal and not part of the public API
    */
-  const stereopermutators::Abstract& getAbstract() const;
+  const Stereopermutators::Abstract& getAbstract() const;
 
   /*!
    * @brief Returns the underlying FeasibleStereopermutation
    * @note This is library-internal and not part of the public API
    */
-  const stereopermutators::Feasible& getFeasible() const;
+  const Stereopermutators::Feasible& getFeasible() const;
 
   //! Returns the underlying ranking
   const RankingInformation& getRanking() const;
 
   //! Returns the underlying shape
-  shapes::Shape getShape() const;
+  Shapes::Shape getShape() const;
 
   /*!
    * @brief Yields the mapping from site indices to shape positions
@@ -238,16 +238,16 @@ private:
   AtomIndex centerAtom_;
 
   //! The shape the stereopermutator represents
-  shapes::Shape shape_;
+  Shapes::Shape shape_;
 
   //! Ranking information of substituents
   RankingInformation ranking_;
 
   //! Abstract stereopermutations and intermediate state
-  stereopermutators::Abstract abstract_;
+  Stereopermutators::Abstract abstract_;
 
   //! Models abstract stereopermutations and decides three-dimensional feasibility
-  stereopermutators::Feasible feasible_;
+  Stereopermutators::Feasible feasible_;
 
   //! The current state of assignment (if or not, and if so, which)
   boost::optional<unsigned> assignmentOption_;
@@ -259,7 +259,7 @@ private:
   bool thermalized_;
 };
 
-} // namespace molassembler
+} // namespace Molassembler
 
 } // namespace Scine
 

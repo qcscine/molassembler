@@ -37,7 +37,7 @@
 #include <algorithm>
 
 namespace Scine {
-namespace molassembler {
+namespace Molassembler {
 namespace {
 
 template<typename ... Inds>
@@ -71,7 +71,7 @@ bool piPeriodicFPCompare(const double a, const double b) {
 /*
  * @note If we use tuple_element_t for SFINAE here, this works only for pair and
  * tuple. This way, it works for all types that have a first and second member,
- * of which the relevant types are std::pair and temple::OrderedPair here.
+ * of which the relevant types are std::pair and Temple::OrderedPair here.
  */
 template<typename HomogeneousPair>
 auto& select(
@@ -148,7 +148,7 @@ std::vector<char> BondStereopermutator::Impl::charifyRankedSites_(
   return characters;
 }
 
-const stereopermutation::Composite& BondStereopermutator::Impl::composite() const {
+const Stereopermutations::Composite& BondStereopermutator::Impl::composite() const {
   return composite_;
 }
 
@@ -177,14 +177,14 @@ double BondStereopermutator::Impl::dihedral(
   }
 
   // Derived from possibly swapped references
-  auto shapeVertexMaps = temple::map_stl(
+  auto shapeVertexMaps = Temple::map_stl(
     references,
     [](const PermutatorReference& ref) {
       return ref.get().getShapePositionMap();
     }
   );
 
-  std::pair<shapes::Vertex, shapes::Vertex> vertices;
+  std::pair<Shapes::Vertex, Shapes::Vertex> vertices;
   double dihedralAngle;
 
   for(const auto& dihedralTuple : composite_.dihedrals(*assignment_)) {
@@ -201,7 +201,7 @@ double BondStereopermutator::Impl::dihedral(
   throw std::logic_error("Could not find a dihedral angle for the specified sites");
 }
 
-stereopermutation::Composite BondStereopermutator::Impl::constructComposite_(
+Stereopermutations::Composite BondStereopermutator::Impl::constructComposite_(
   const StereopermutatorList& stereopermutators,
   const BondIndex edge,
   const Alignment alignment
@@ -214,11 +214,11 @@ stereopermutation::Composite BondStereopermutator::Impl::constructComposite_(
   return {
     makeOrientationState_(stereopermutatorA, stereopermutatorB),
     makeOrientationState_(stereopermutatorB, stereopermutatorA),
-    static_cast<stereopermutation::Composite::Alignment>(alignment)
+    static_cast<Stereopermutations::Composite::Alignment>(alignment)
   };
 }
 
-stereopermutation::Composite::OrientationState
+Stereopermutations::Composite::OrientationState
 BondStereopermutator::Impl::makeOrientationState_(
   const AtomStereopermutator& focalStereopermutator,
   const AtomStereopermutator& attachedStereopermutator
@@ -265,7 +265,7 @@ bool BondStereopermutator::Impl::cycleObviouslyInfeasible(
      * dihedral is approximately zero, the cycle must be feasible since the
      * graph is ground truth.
      */
-    return std::fabs(phi) < temple::Math::toRadians(5.0);
+    return std::fabs(phi) < Temple::Math::toRadians(5.0);
   }
 
   if(link.cycleSequence.size() == 4) {
@@ -274,7 +274,7 @@ bool BondStereopermutator::Impl::cycleObviouslyInfeasible(
      * breaking the bond. Make a little more allowance for the quadrangle
      * than the triangle, though.
      */
-    return std::fabs(phi) < temple::Math::toRadians(20.0);
+    return std::fabs(phi) < Temple::Math::toRadians(20.0);
   }
 
   auto modelDistance = [&graph](const AtomIndex a, const AtomIndex b) -> double {
@@ -291,7 +291,7 @@ bool BondStereopermutator::Impl::cycleObviouslyInfeasible(
   const double b = modelDistance(j, k);
   const double c = modelDistance(k, l);
 
-  const double alpha = distance_geometry::SpatialModel::siteCentralAngle(
+  const double alpha = DistanceGeometry::SpatialModel::siteCentralAngle(
     firstStereopermutator,
     {
       firstStereopermutator.getRanking().getSiteIndexOf(i),
@@ -300,7 +300,7 @@ bool BondStereopermutator::Impl::cycleObviouslyInfeasible(
     graph
   );
 
-  const double beta = distance_geometry::SpatialModel::siteCentralAngle(
+  const double beta = DistanceGeometry::SpatialModel::siteCentralAngle(
     secondStereopermutator,
     {
       secondStereopermutator.getRanking().getSiteIndexOf(j),
@@ -359,7 +359,7 @@ bool BondStereopermutator::Impl::cycleObviouslyInfeasible(
       mu_m = (b - A.x()) / DMinusA.x();
     }
 
-    const double lambda_m = temple::stl17::clamp(lambda, 0.0, 1.0);
+    const double lambda_m = Temple::stl17::clamp(lambda, 0.0, 1.0);
 
     P = lambda_m * C;
     Q = A + mu_m * DMinusA;
@@ -393,16 +393,16 @@ bool BondStereopermutator::Impl::cycleObviouslyInfeasible(
   const Eigen::Vector3d projectedC = d_Cf * planeNormal + C;
 
   /* Create input types for cycle feasibility test */
-  std::vector<stereopermutators::BaseAtom> bases {
+  std::vector<Stereopermutators::BaseAtom> bases {
     // Base of B
-    stereopermutators::BaseAtom {
+    Stereopermutators::BaseAtom {
       graph.elementType(j),
       (A - projectedB).norm(),
       (D - projectedB).norm(),
       std::fabs(d_Bf)
     },
     // Base of C
-    stereopermutators::BaseAtom {
+    Stereopermutators::BaseAtom {
       graph.elementType(k),
       (A - projectedC).norm(),
       (D - projectedC).norm(),
@@ -412,7 +412,7 @@ bool BondStereopermutator::Impl::cycleObviouslyInfeasible(
 
   /* Mangle cycle sequence to get {i ... l} */
   auto cycleIndices = link.cycleSequence;
-  temple::inplace::remove_if(
+  Temple::inplace::remove_if(
     cycleIndices,
     [&](const AtomIndex x) -> bool {
       return x == j || x == k;
@@ -438,24 +438,24 @@ bool BondStereopermutator::Impl::cycleObviouslyInfeasible(
   }
   assert(cycleIndices.back() == l);
 
-  const auto elementTypes = temple::map(
+  const auto elementTypes = Temple::map(
     cycleIndices,
     [&](const AtomIndex x) -> Utils::ElementType {
       return graph.elementType(x);
     }
   );
 
-  auto cycleEdgeLengths = temple::map(
-    temple::adaptors::sequentialPairs(cycleIndices),
+  auto cycleEdgeLengths = Temple::map(
+    Temple::adaptors::sequentialPairs(cycleIndices),
     modelDistance
   );
   cycleEdgeLengths.push_back((D-A).norm());
 
-  // std::cout << "Cycle " << temple::stringify(link.cycleSequence)
+  // std::cout << "Cycle " << Temple::stringify(link.cycleSequence)
   //   << "(a, b, c) = (" << a << ", " << b << ", " << c << "), "
-  //   << "(alpha, beta, phi) = (" << temple::Math::toDegrees(alpha) << ", " << temple::Math::toDegrees(beta) << ", " << temple::Math::toDegrees(phi) << ") contradicts graph: " << fail << "\n";
+  //   << "(alpha, beta, phi) = (" << Temple::Math::toDegrees(alpha) << ", " << Temple::Math::toDegrees(beta) << ", " << Temple::Math::toDegrees(phi) << ") contradicts graph: " << fail << "\n";
 
-  return stereopermutators::cycleModelContradictsGraph(
+  return Stereopermutators::cycleModelContradictsGraph(
     elementTypes,
     cycleEdgeLengths,
     bases
@@ -499,8 +499,8 @@ bool BondStereopermutator::Impl::cycleObviouslyInfeasible(
 //   }
 //
 //   // Copy bonds
-//   temple::forEach(
-//     temple::adaptors::cyclicFrame<2>(link.cycleSequence),
+//   Temple::forEach(
+//     Temple::adaptors::cyclicFrame<2>(link.cycleSequence),
 //     [&](const AtomIndex i, const AtomIndex j) {
 //       minimalInner.addEdge(
 //         indexReductionMap.at(i),
@@ -514,9 +514,9 @@ bool BondStereopermutator::Impl::cycleObviouslyInfeasible(
 //
 //   /* Build a spatial model */
 //   // Model all bond distances
-//   distance_geometry::SpatialModel::BoundsMapType<2> bondBounds;
-//   temple::forEach(
-//     temple::adaptors::cyclicFrame<2>(link.cycleSequence),
+//   DistanceGeometry::SpatialModel::BoundsMapType<2> bondBounds;
+//   Temple::forEach(
+//     Temple::adaptors::cyclicFrame<2>(link.cycleSequence),
 //     [&](const AtomIndex i, const AtomIndex j) {
 //       const BondType bondType = graph.bondType(
 //         graph.edge(i, j)
@@ -528,10 +528,10 @@ bool BondStereopermutator::Impl::cycleObviouslyInfeasible(
 //         bondType
 //       );
 //
-//       double absoluteVariance = bondDistance * distance_geometry::SpatialModel::bondRelativeVariance;
+//       double absoluteVariance = bondDistance * DistanceGeometry::SpatialModel::bondRelativeVariance;
 //       bondBounds.emplace(
 //         orderMappedSequence(indexReductionMap, i, j),
-//         distance_geometry::SpatialModel::makeBoundsFromCentralValue(
+//         DistanceGeometry::SpatialModel::makeBoundsFromCentralValue(
 //           bondDistance,
 //           absoluteVariance
 //         )
@@ -540,13 +540,13 @@ bool BondStereopermutator::Impl::cycleObviouslyInfeasible(
 //   );
 //
 //   // Model all angles
-//   distance_geometry::SpatialModel::BoundsMapType<3> angleBounds;
-//   temple::forEach(
-//     temple::adaptors::cyclicFrame<3>(link.cycleSequence),
+//   DistanceGeometry::SpatialModel::BoundsMapType<3> angleBounds;
+//   Temple::forEach(
+//     Temple::adaptors::cyclicFrame<3>(link.cycleSequence),
 //     [&](const AtomIndex i, const AtomIndex j, const AtomIndex k) {
 //       // Is there an AtomStereopermutator here?
-//       distance_geometry::ValueBounds angleValueBounds {
-//         shapes::smallestAngle,
+//       DistanceGeometry::ValueBounds angleValueBounds {
+//         Shapes::smallestAngle,
 //         M_PI
 //       };
 //
@@ -562,14 +562,14 @@ bool BondStereopermutator::Impl::cycleObviouslyInfeasible(
 //           && ranking.sites.at(siteOfK).size() == 1
 //         ) {
 //           if(permutatorOption->assigned()) {
-//             angleValueBounds = distance_geometry::SpatialModel::makeBoundsFromCentralValue(
+//             angleValueBounds = DistanceGeometry::SpatialModel::makeBoundsFromCentralValue(
 //               permutatorOption->angle(siteOfI, siteOfK),
-//               distance_geometry::SpatialModel::angleAbsoluteVariance
+//               DistanceGeometry::SpatialModel::angleAbsoluteVariance
 //             );
 //           } else {
 //             angleValueBounds = {
-//               shapes::minimumAngle(permutatorOption->getShape()),
-//               shapes::maximumAngle(permutatorOption->getShape())
+//               Shapes::minimumAngle(permutatorOption->getShape()),
+//               Shapes::maximumAngle(permutatorOption->getShape())
 //             };
 //           }
 //         }
@@ -583,11 +583,11 @@ bool BondStereopermutator::Impl::cycleObviouslyInfeasible(
 //   );
 //
 //   // Model dihedrals
-//   distance_geometry::SpatialModel::BoundsMapType<4> dihedralBounds;
+//   DistanceGeometry::SpatialModel::BoundsMapType<4> dihedralBounds;
 //   const double dihedralAngle = std::get<2>(dihedral);
-//   auto dihedralValueBounds = distance_geometry::SpatialModel::makeBoundsFromCentralValue(
+//   auto dihedralValueBounds = DistanceGeometry::SpatialModel::makeBoundsFromCentralValue(
 //     dihedralAngle,
-//     distance_geometry::SpatialModel::dihedralAbsoluteVariance
+//     DistanceGeometry::SpatialModel::dihedralAbsoluteVariance
 //   );
 //
 //   const AtomIndex i = std::get<0>(dihedral);
@@ -595,8 +595,8 @@ bool BondStereopermutator::Impl::cycleObviouslyInfeasible(
 //   const AtomIndex k = secondStereopermutator.placement();
 //   const AtomIndex l = std::get<1>(dihedral);
 //
-//   assert(temple::makeContainsPredicate(link.cycleSequence)(i));
-//   assert(temple::makeContainsPredicate(link.cycleSequence)(l));
+//   assert(Temple::makeContainsPredicate(link.cycleSequence)(i));
+//   assert(Temple::makeContainsPredicate(link.cycleSequence)(l));
 //
 //   dihedralBounds.emplace(
 //     orderMappedSequence(indexReductionMap, i, j, k, l),
@@ -604,16 +604,16 @@ bool BondStereopermutator::Impl::cycleObviouslyInfeasible(
 //   );
 //
 //   // Create pairwise bounds from internal coordinates
-//   auto pairwiseBounds = distance_geometry::SpatialModel::makePairwiseBounds(
+//   auto pairwiseBounds = DistanceGeometry::SpatialModel::makePairwiseBounds(
 //     C,
-//     distance_geometry::SpatialModel::BoundsMapType<2> {},
+//     DistanceGeometry::SpatialModel::BoundsMapType<2> {},
 //     bondBounds,
 //     angleBounds,
 //     dihedralBounds
 //   );
 //
 //   // Model in a bounds matrix
-//   distance_geometry::ExplicitBoundsGraph boundsGraph {
+//   DistanceGeometry::ExplicitBoundsGraph boundsGraph {
 //     minimalInner,
 //     pairwiseBounds
 //   };
@@ -622,7 +622,7 @@ bool BondStereopermutator::Impl::cycleObviouslyInfeasible(
 //   auto distanceBoundsResult = boundsGraph.makeDistanceBounds();
 //
 //   /*if(distanceBoundsResult) {
-//     std::cout << "Link " << temple::stringify(link.cycleSequence) << " is viable on " << j << ", " << k << " with dihedral " << dihedralAngle << "\n";
+//     std::cout << "Link " << Temple::stringify(link.cycleSequence) << " is viable on " << j << ", " << k << " with dihedral " << dihedralAngle << "\n";
 //     std::cout << pairwiseBounds << "\n";
 //     std::cout << distanceBoundsResult.value() << "\n";
 //
@@ -640,7 +640,7 @@ bool BondStereopermutator::Impl::cycleObviouslyInfeasible(
 std::vector<unsigned> BondStereopermutator::Impl::notObviouslyInfeasibleStereopermutations(
   const PrivateGraph& graph,
   const StereopermutatorList& stereopermutators,
-  const stereopermutation::Composite& composite
+  const Stereopermutations::Composite& composite
 ) {
   const unsigned compositePermutations = composite.permutations();
 
@@ -658,7 +658,7 @@ std::vector<unsigned> BondStereopermutator::Impl::notObviouslyInfeasibleStereope
    * if substituents of both stereopermutators are fused somehow, i.e. if there
    * are cycles involving the bond between A and B.
    */
-  auto links = graph_algorithms::siteLinks(
+  auto links = GraphAlgorithms::siteLinks(
     graph,
     permutatorReferences.first,
     permutatorReferences.second
@@ -668,7 +668,7 @@ std::vector<unsigned> BondStereopermutator::Impl::notObviouslyInfeasibleStereope
    * all permutations are presumably feasible.
    */
   if(links.empty()) {
-    return temple::iota<unsigned>(compositePermutations);
+    return Temple::iota<unsigned>(compositePermutations);
   }
 
   /* Try to match the shape position of the composite dihedral to the link's
@@ -679,7 +679,7 @@ std::vector<unsigned> BondStereopermutator::Impl::notObviouslyInfeasibleStereope
    * dihedral, e.g. the position trans in a triangle - square combination.)
    */
   auto getDihedralInformation = [&](
-    const std::vector<stereopermutation::Composite::DihedralTuple>& dihedrals,
+    const std::vector<Stereopermutations::Composite::DihedralTuple>& dihedrals,
     const RankingInformation::Link& link
   ) -> boost::optional<std::tuple<AtomIndex, AtomIndex, double>> {
     const auto& firstSiteIndices = permutatorReferences.first.getRanking().sites.at(link.sites.first);
@@ -727,7 +727,7 @@ std::vector<unsigned> BondStereopermutator::Impl::notObviouslyInfeasibleStereope
     ++stereopermutationIndex
   ) {
     if(
-      !temple::any_of(
+      !Temple::any_of(
         links,
         [&](const RankingInformation::Link& link) -> bool {
           auto dihedralInformationOption = getDihedralInformation(
@@ -770,11 +770,11 @@ BondStereopermutator::Impl::Impl(
 ) : composite_ {
       makeOrientationState_(stereopermutatorA, stereopermutatorB),
       makeOrientationState_(stereopermutatorB, stereopermutatorA),
-      static_cast<stereopermutation::Composite::Alignment>(alignment)
+      static_cast<Stereopermutations::Composite::Alignment>(alignment)
     },
     edge_(edge),
     feasiblePermutations_(
-      temple::iota<unsigned>(composite_.permutations())
+      Temple::iota<unsigned>(composite_.permutations())
     ),
     assignment_(boost::none)
 {}
@@ -816,7 +816,7 @@ void BondStereopermutator::Impl::assign(boost::optional<unsigned> assignment) {
   assignment_ = assignment;
 }
 
-void BondStereopermutator::Impl::assignRandom(random::Engine& engine) {
+void BondStereopermutator::Impl::assignRandom(Random::Engine& engine) {
   const unsigned A = numAssignments();
   if(A == 0) {
     throw std::logic_error("Cannot randomly assign a stereopermutator without feasible stereopermutations");
@@ -826,7 +826,7 @@ void BondStereopermutator::Impl::assignRandom(random::Engine& engine) {
     assign(0);
   } else {
     assign(
-      temple::random::getSingle<unsigned>(0, A - 1, engine)
+      Temple::Random::getSingle<unsigned>(0, A - 1, engine)
     );
   }
 }
@@ -875,7 +875,7 @@ void BondStereopermutator::Impl::fit(
 
   auto makeSitePositions = [&angstromWrapper](const AtomStereopermutator& permutator) -> Eigen::Matrix<double, 3, Eigen::Dynamic> {
     const unsigned S = permutator.getRanking().sites.size();
-    assert(S == shapes::size(permutator.getShape()));
+    assert(S == Shapes::size(permutator.getShape()));
     Eigen::Matrix<double, 3, Eigen::Dynamic> sitePositions(3, S);
     for(unsigned i = 0; i < S; ++i) {
       sitePositions.col(i) = cartesian::averagePosition(
@@ -890,8 +890,8 @@ void BondStereopermutator::Impl::fit(
   auto firstSitePositions = makeSitePositions(firstStereopermutator);
   auto secondSitePositions = makeSitePositions(secondStereopermutator);
 
-  shapes::Vertex firstShapeVertex;
-  shapes::Vertex secondShapeVertex;
+  Shapes::Vertex firstShapeVertex;
+  Shapes::Vertex secondShapeVertex;
   double dihedralAngle;
 
   double bestPenalty = std::numeric_limits<double>::max();
@@ -976,7 +976,7 @@ void BondStereopermutator::Impl::fit(
      */
     const unsigned stereopermutation = bestStereopermutation.front();
     assignment_ = (
-      temple::find(feasiblePermutations_, stereopermutation)
+      Temple::find(feasiblePermutations_, stereopermutation)
       - std::begin(feasiblePermutations_)
     );
   } else {
@@ -992,8 +992,8 @@ void BondStereopermutator::Impl::propagateGraphChange(
   const StereopermutatorList& permutators
 ) {
   const RankingInformation& oldRanking = std::get<0>(oldPermutatorState);
-  const stereopermutators::Abstract& oldAbstract = std::get<1>(oldPermutatorState);
-  const stereopermutators::Feasible& oldFeasible = std::get<2>(oldPermutatorState);
+  const Stereopermutators::Abstract& oldAbstract = std::get<1>(oldPermutatorState);
+  const Stereopermutators::Feasible& oldFeasible = std::get<2>(oldPermutatorState);
   const boost::optional<unsigned>& oldAssignment = std::get<3>(oldPermutatorState);
 
   // We assume that the supplied permutators (or their state) were assigned
@@ -1006,7 +1006,7 @@ void BondStereopermutator::Impl::propagateGraphChange(
    */
   assert(oldRanking.sites.size() == newPermutator.getRanking().sites.size());
 
-  using OrientationState = stereopermutation::Composite::OrientationState;
+  using OrientationState = Stereopermutations::Composite::OrientationState;
 
   /* Construct a new Composite with the new information */
   bool changedIsFirstInOldOrientations = (
@@ -1025,7 +1025,7 @@ void BondStereopermutator::Impl::propagateGraphChange(
   );
 
   // Generate a new OrientationState for the modified stereopermutator
-  stereopermutation::Composite::OrientationState possiblyModifiedOrientation {
+  Stereopermutations::Composite::OrientationState possiblyModifiedOrientation {
     newPermutator.getShape(),
     newPermutator.getShapePositionMap().at(
       newPermutator.getRanking().getSiteIndexOf(
@@ -1047,7 +1047,7 @@ void BondStereopermutator::Impl::propagateGraphChange(
   /* Generate a new set of permutations (note this may reorder its
    * arguments into the orientations() member)
    */
-  stereopermutation::Composite newComposite {
+  Stereopermutations::Composite newComposite {
     possiblyModifiedOrientation,
     unchangedOrientation
   };
@@ -1105,7 +1105,7 @@ void BondStereopermutator::Impl::propagateGraphChange(
     == possiblyModifiedOrientation.identifier
   );
 
-  using DihedralTuple = stereopermutation::Composite::DihedralTuple;
+  using DihedralTuple = Stereopermutations::Composite::DihedralTuple;
   // This permutator is assigned since that is ensured a few lines earlier
   const std::vector<DihedralTuple>& oldDihedralList = composite_.dihedrals(
     assignment_.value()
@@ -1121,7 +1121,7 @@ void BondStereopermutator::Impl::propagateGraphChange(
     oldRanking.links
   );
 
-  auto getNewShapeVertex = [&](shapes::Vertex oldVertex) -> shapes::Vertex {
+  auto getNewShapeVertex = [&](Shapes::Vertex oldVertex) -> Shapes::Vertex {
     const SiteIndex oldSiteIndex = oldSymmetryPositionToSiteMap.at(oldVertex);
 
     const std::vector<AtomIndex>& oldSite = oldRanking.sites.at(oldSiteIndex);
@@ -1151,17 +1151,17 @@ void BondStereopermutator::Impl::propagateGraphChange(
   std::vector<DihedralTuple> newCompositeDihedrals;
   newCompositeDihedrals.reserve(oldDihedralList.size());
   for(const DihedralTuple& oldDihedral : oldDihedralList) {
-    const shapes::Vertex changedVertex = select(
+    const Shapes::Vertex changedVertex = select(
       oldDihedral,
       changedIsFirstInOldOrientations
     );
 
-    const shapes::Vertex unchangedVertex = select(
+    const Shapes::Vertex unchangedVertex = select(
       oldDihedral,
       !changedIsFirstInOldOrientations
     );
 
-    const shapes::Vertex newShapeVertex = getNewShapeVertex(changedVertex);
+    const Shapes::Vertex newShapeVertex = getNewShapeVertex(changedVertex);
 
     if(modifiedOrientationIsFirstInNewComposite) {
       newCompositeDihedrals.emplace_back(
@@ -1332,5 +1332,5 @@ BondIndex BondStereopermutator::Impl::placement() const {
   return edge_;
 }
 
-} // namespace molassembler
+} // namespace Molassembler
 } // namespace Scine

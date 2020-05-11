@@ -10,7 +10,7 @@
 #include "molassembler/Options.h"
 
 namespace Scine {
-namespace molassembler {
+namespace Molassembler {
 
 /* Fixture enforcing low temperature approximation (no thermalization of atom
  * stereopermutators)
@@ -25,7 +25,7 @@ struct LowTemperatureFixture {
 };
 
 
-} // namespace molassembler
+} // namespace Molassembler
 } // namespace Scine
 
 #endif

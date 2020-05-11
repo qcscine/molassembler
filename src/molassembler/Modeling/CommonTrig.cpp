@@ -10,7 +10,7 @@
 
 namespace Scine {
 
-namespace molassembler {
+namespace Molassembler {
 
 namespace CommonTrig {
 
@@ -98,8 +98,8 @@ ValueBounds dihedralLengthBounds(
    * through numerical optimization.
    */
 
-  temple::Lbfgs<> optimizer;
-  using VectorType = typename temple::Lbfgs<>::VectorType;
+  Temple::Lbfgs<> optimizer;
+  using VectorType = typename Temple::Lbfgs<>::VectorType;
 
 
   VectorType lower(6);
@@ -109,7 +109,7 @@ ValueBounds dihedralLengthBounds(
   upper << aBounds.upper, bBounds.upper, cBounds.upper, alphaBounds.upper,
         betaBounds.upper, dihedralBounds.upper;
 
-  const temple::Lbfgs<>::Box box { lower, upper };
+  const Temple::Lbfgs<>::Box box { lower, upper };
 
   /* Start minimum searches in two positions for each:
    * minimum: at lower bounds and at the medians
@@ -160,6 +160,6 @@ ValueBounds dihedralLengthBounds(
 
 } // namespace CommonTrig
 
-} // namespace molassembler
+} // namespace Molassembler
 
 } // namespace Scine

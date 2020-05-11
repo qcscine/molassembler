@@ -11,7 +11,7 @@
 #include "molassembler/Export.h"
 
 namespace Scine {
-namespace molassembler {
+namespace Molassembler {
 
 // Forward-declare molcule
 class Molecule;
@@ -41,7 +41,7 @@ class Molecule;
  */
 MASM_EXPORT unsigned numRotatableBonds(const Molecule& mol);
 
-} // namespace molassembler
+} // namespace Molassembler
 } // namespace Scine
 
 #endif

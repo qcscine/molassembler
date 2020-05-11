@@ -17,8 +17,8 @@
 #include "molassembler/Graph.h"
 
 namespace Scine {
-namespace molassembler {
-namespace shape_inference {
+namespace Molassembler {
+namespace ShapeInference {
 
 const std::map<BondType, double> bondWeights {
   {BondType::Single, 1.0},
@@ -30,7 +30,7 @@ const std::map<BondType, double> bondWeights {
   {BondType::Eta, 0.0}
 };
 
-boost::optional<shapes::Shape> vsepr(
+boost::optional<Shapes::Shape> vsepr(
   const Utils::ElementType centerAtomType,
   const std::vector<BindingSite>& sites,
   const int formalCharge
@@ -44,7 +44,7 @@ boost::optional<shapes::Shape> vsepr(
     );
   }
 
-  if(!atom_info::isMainGroupElement(centerAtomType)) {
+  if(!AtomInfo::isMainGroupElement(centerAtomType)) {
     return boost::none;
   }
 
@@ -64,7 +64,7 @@ boost::optional<shapes::Shape> vsepr(
   }
 
   // get uncharged VE count, returns none if not a main group element
-  auto veOption = molassembler::atom_info::mainGroupVE(centerAtomType);
+  auto veOption = Molassembler::AtomInfo::mainGroupVE(centerAtomType);
 
   if(!veOption) {
     return boost::none;
@@ -94,7 +94,7 @@ boost::optional<shapes::Shape> vsepr(
     return boost::none;
   }
 
-  using shapes::Shape;
+  using Shapes::Shape;
 
   switch(X + E) {
     case 2:
@@ -142,17 +142,17 @@ boost::optional<shapes::Shape> vsepr(
   }
 }
 
-shapes::Shape firstOfSize(const unsigned size) {
+Shapes::Shape firstOfSize(const unsigned size) {
   // Pick the first shape of fitting size
   auto findIter = std::find_if(
-    std::begin(shapes::allShapes),
-    std::end(shapes::allShapes),
+    std::begin(Shapes::allShapes),
+    std::end(Shapes::allShapes),
     [&size](const auto shape) -> bool {
-      return shapes::size(shape) == size;
+      return Shapes::size(shape) == size;
     }
   );
 
-  if(findIter == std::end(shapes::allShapes)) {
+  if(findIter == std::end(Shapes::allShapes)) {
     throw std::runtime_error("No shapes of that size!");
   }
 
@@ -188,7 +188,7 @@ std::vector<BindingSite> reduceToSiteInformation(
       BindingSite {
         0,
         0,
-        temple::map(ligand, [&](const AtomIndex i) -> Utils::ElementType {
+        Temple::map(ligand, [&](const AtomIndex i) -> Utils::ElementType {
           return molGraph.elementType(i);
         }),
         molGraph.bondType(
@@ -207,8 +207,8 @@ int formalCharge(
 ) {
   int formalCharge = 0;
 
-  if(atom_info::isMainGroupElement(graph.elementType(index))) {
-    int valenceElectrons = atom_info::elementData.at(
+  if(AtomInfo::isMainGroupElement(graph.elementType(index))) {
+    int valenceElectrons = AtomInfo::elementData.at(
       Utils::ElementInfo::Z(graph.elementType(index))
     ).valenceElectrons();
 
@@ -233,7 +233,7 @@ int formalCharge(
   return formalCharge;
 }
 
-boost::optional<shapes::Shape> inferShape(
+boost::optional<Shapes::Shape> inferShape(
   const Graph& graph,
   const AtomIndex index,
   const RankingInformation& ranking
@@ -246,6 +246,6 @@ boost::optional<shapes::Shape> inferShape(
   );
 }
 
-} // namespace shape_inference
-} // namespace molassembler
+} // namespace ShapeInference
+} // namespace Molassembler
 } // namespace Scine

@@ -28,8 +28,8 @@
 #include <iostream>
 
 namespace Scine {
-namespace molassembler {
-namespace io {
+namespace Molassembler {
+namespace IO {
 
 bool MoleculeBuilder::isValenceFillElement(Utils::ElementType e) {
   const unsigned Z = Utils::ElementInfo::Z(e);
@@ -122,23 +122,23 @@ BondType MoleculeBuilder::mutualBondType(
   return a.value();
 }
 
-shapes::Vertex operator "" _v(unsigned long long v) {
-  return shapes::Vertex(v);
+Shapes::Vertex operator "" _v(unsigned long long v) {
+  return Shapes::Vertex(v);
 }
 
-std::vector<shapes::Vertex> MoleculeBuilder::shapeMap(const ChiralData& chiralData) {
-  if(chiralData.shape == shapes::Shape::Tetrahedron) {
+std::vector<Shapes::Vertex> MoleculeBuilder::shapeMap(const ChiralData& chiralData) {
+  if(chiralData.shape == Shapes::Shape::Tetrahedron) {
     switch(chiralData.chiralIndex) {
       case 1: return {{0_v, 1_v, 2_v, 3_v}}; // @, TH1
       case 2: return {{0_v, 1_v, 3_v, 2_v}}; // @@, TH2
     }
-  } else if(chiralData.shape == shapes::Shape::Square) {
+  } else if(chiralData.shape == Shapes::Shape::Square) {
     switch(chiralData.chiralIndex) {
       case 1: return {{0_v, 1_v, 2_v, 3_v}}; // SP1 = U
       case 2: return {{0_v, 2_v, 3_v, 1_v}}; // SP2 = 4
       case 3: return {{3_v, 2_v, 0_v, 1_v}}; // SP3 = Z
     }
-  } else if(chiralData.shape == shapes::Shape::TrigonalBipyramid) {
+  } else if(chiralData.shape == Shapes::Shape::TrigonalBipyramid) {
     switch(chiralData.chiralIndex) {
       case  1: return {{1_v, 2_v, 3_v, 0_v, 4_v}}; // TB1 = a, e, @
       case  2: return {{1_v, 3_v, 2_v, 0_v, 4_v}}; // TB2 = a, e, @@
@@ -161,7 +161,7 @@ std::vector<shapes::Vertex> MoleculeBuilder::shapeMap(const ChiralData& chiralDa
       case 19: return {{0_v, 4_v, 1_v, 2_v, 3_v}}; // TB19 = c, d, @@
       case 20: return {{0_v, 3_v, 1_v, 2_v, 4_v}}; // TB20 = c, e, @@
     }
-  } else if(chiralData.shape == shapes::Shape::Octahedron) {
+  } else if(chiralData.shape == Shapes::Shape::Octahedron) {
     switch(chiralData.chiralIndex) {
       /* Look along an axis, what remains is a square with a winding. So
        * square shapes are reused with definitions of square shapes and windings
@@ -313,7 +313,7 @@ void MoleculeBuilder::setShapes(
         continue;
       }
       const unsigned numSites = stereoOption->getRanking().sites.size();
-      if(numSites == shapes::size(chiralData.shape)) {
+      if(numSites == Shapes::size(chiralData.shape)) {
         mol.setShapeAtAtom(atomIndex, chiralData.shape);
       } else if(chiralData.chiralIndex <= 2) {
         /* We interpreted an @/@@ primarily as Tetrahedron 1 / 2, but
@@ -321,10 +321,10 @@ void MoleculeBuilder::setShapes(
          * as shortcuts for TB1/TB2 and OH1/OH2.
          */
         if(numSites == 5) {
-          chiralData.shape = shapes::Shape::TrigonalBipyramid;
+          chiralData.shape = Shapes::Shape::TrigonalBipyramid;
           mol.setShapeAtAtom(atomIndex, chiralData.shape);
         } else if(numSites == 6) {
-          chiralData.shape = shapes::Shape::Octahedron;
+          chiralData.shape = Shapes::Shape::Octahedron;
           mol.setShapeAtAtom(atomIndex, chiralData.shape);
         }
       }
@@ -338,13 +338,13 @@ void MoleculeBuilder::setShapes(
         continue;
       }
 
-      auto modelArgs = shape_inference::reduceToSiteInformation(
+      auto modelArgs = ShapeInference::reduceToSiteInformation(
         mol.graph(),
         atomIndex,
         stereoOption->getRanking()
       );
 
-      auto shapeOption = shape_inference::vsepr(
+      auto shapeOption = ShapeInference::vsepr(
         mol.graph().elementType(atomIndex),
         modelArgs,
         *atomData.chargeOptional
@@ -383,7 +383,7 @@ void MoleculeBuilder::setAtomStereo(
     }
     const AtomStereopermutator& permutator = *stereopermutatorOptional;
     if(permutator.numAssignments() < 2) {
-      std::cerr << "Warning: Smiles contains a stereo marker for a non-stereogenic " << shapes::name(chiralData.shape) << " shape center\n";
+      std::cerr << "Warning: Smiles contains a stereo marker for a non-stereogenic " << Shapes::name(chiralData.shape) << " shape center\n";
       continue;
     }
 
@@ -397,10 +397,10 @@ void MoleculeBuilder::setAtomStereo(
      * - We generate a stereopermutation from the siteToShapeVertexMap
      * - And then go looking for it in the list of feasibles
      */
-    const unsigned S = shapes::size(chiralData.shape);
+    const unsigned S = Shapes::size(chiralData.shape);
     const RankingInformation& ranking = permutator.getRanking();
-    std::vector<SiteIndex> sortedSites = temple::sort(
-      temple::iota<SiteIndex>(S),
+    std::vector<SiteIndex> sortedSites = Temple::sort(
+      Temple::iota<SiteIndex>(S),
       [&](const SiteIndex a, const SiteIndex b) -> bool {
         return ranking.sites.at(a) < ranking.sites.at(b);
       }
@@ -438,8 +438,8 @@ void MoleculeBuilder::setAtomStereo(
     // TODO missing weirdness re: ring closing bonds
 
     /* Transfer the sorted sites onto shape vertices */
-    auto vertexMap = shapes::properties::inverseRotation(shapeMap(chiralData));
-    SiteToShapeVertexMap siteToShapeVertexMap; // SiteIndex -> shapes::Vertex
+    auto vertexMap = Shapes::Properties::inverseRotation(shapeMap(chiralData));
+    SiteToShapeVertexMap siteToShapeVertexMap; // SiteIndex -> Shapes::Vertex
     siteToShapeVertexMap.resize(S);
     for(unsigned j = 0; j < S; ++j) {
       siteToShapeVertexMap.at(sortedSites.at(j)) = vertexMap.at(j);
@@ -452,9 +452,9 @@ void MoleculeBuilder::setAtomStereo(
       permutator.getAbstract().canonicalSites
     );
 
-    auto soughtRotations = stereopermutation::generateAllRotations(soughtStereopermutation, chiralData.shape);
+    auto soughtRotations = Stereopermutations::generateAllRotations(soughtStereopermutation, chiralData.shape);
     const auto& assignables = permutator.getFeasible().indices;
-    auto assignmentIter = temple::find_if(
+    auto assignmentIter = Temple::find_if(
       assignables,
       [&](const unsigned stereopermutationIndex) -> bool {
         const auto& stereopermutation = permutator.getAbstract().permutations.list.at(stereopermutationIndex);
@@ -569,7 +569,7 @@ void MoleculeBuilder::setBondStereo(
     }
 
     auto bondTypeOption = [&](const PrivateGraph::Vertex a, const PrivateGraph::Vertex b) {
-      return temple::optionals::map(
+      return Temple::optionals::map(
         mol.graph().bond(
           indexInComponentMap.at(a),
           indexInComponentMap.at(b)
@@ -714,7 +714,7 @@ std::vector<Molecule> MoleculeBuilder::interpret() {
 
   // Mark eta bonds
   for(auto& precursor : precursors) {
-    graph_algorithms::updateEtaBonds(precursor);
+    GraphAlgorithms::updateEtaBonds(precursor);
   }
 
   /* Valence fill organic subset in each precursor */
@@ -770,6 +770,6 @@ std::vector<Molecule> MoleculeBuilder::interpret() {
   return molecules;
 }
 
-} // namespace io
-} // namespace molassembler
+} // namespace IO
+} // namespace Molassembler
 } // namespace Scine

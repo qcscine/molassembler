@@ -22,7 +22,7 @@
 #include <map>
 
 namespace Scine {
-namespace molassembler {
+namespace Molassembler {
 
 // Forward-declarations
 class Graph;
@@ -30,7 +30,7 @@ class Graph;
 /**
  * @brief Methods to determine local shapes of atoms based on graph information
  */
-namespace shape_inference {
+namespace ShapeInference {
 
 /**
  * @brief Type used to represent minimal binding site information
@@ -92,7 +92,7 @@ int formalCharge(
  *
  * @complexity{@math{\Theta(1)}}
  */
-boost::optional<shapes::Shape> vsepr(
+boost::optional<Shapes::Shape> vsepr(
   Utils::ElementType centerAtomType,
   const std::vector<BindingSite>& sites,
   int formalCharge
@@ -103,7 +103,7 @@ boost::optional<shapes::Shape> vsepr(
  * @complexity{@math{\Theta(1)}}
  * @throws std::runtime_error If no shapes of @p size exist
  */
-shapes::Shape firstOfSize(unsigned size);
+Shapes::Shape firstOfSize(unsigned size);
 
 /*! @brief Reduces a ranking to binding site information
  */
@@ -117,14 +117,14 @@ std::vector<BindingSite> reduceToSiteInformation(
  *
  * Currently just a stub forwarding to VSEPR
  */
-boost::optional<shapes::Shape> inferShape(
+boost::optional<Shapes::Shape> inferShape(
   const Graph& graph,
   AtomIndex index,
   const RankingInformation& ranking
 );
 
-} // namespace shape_inference
-} // namespace molassembler
+} // namespace ShapeInference
+} // namespace Molassembler
 } // namespace Scine
 
 #endif

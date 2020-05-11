@@ -26,7 +26,7 @@ class BondOrderCollection;
 using ElementTypeCollection = std::vector<ElementType>;
 } // namespace Utils
 
-namespace molassembler {
+namespace Molassembler {
 
 // Forward-declarations
 class Molecule;
@@ -34,7 +34,7 @@ class Graph;
 class AngstromPositions;
 
 //! @brief Given Cartesian coordinates, construct graphs or molecules
-namespace interpret {
+namespace Interpret {
 
 //! @brief How floating-point bond orders are discretized into bond types
 enum class MASM_EXPORT BondDiscretizationOption {
@@ -247,8 +247,8 @@ MASM_EXPORT GraphsResult graphs(
   BondDiscretizationOption discretization = BondDiscretizationOption::Binary
 );
 
-} // namespace interpret
-} // namespace molassembler
+} // namespace Interpret
+} // namespace Molassembler
 } // namespace Scine
 
 #endif

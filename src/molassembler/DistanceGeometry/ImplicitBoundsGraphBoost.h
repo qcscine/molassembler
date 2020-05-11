@@ -34,9 +34,9 @@ struct vertex_and_edge_list_plus_incidence_graph_tag
     virtual incidence_graph_tag {};
 
 template<>
-struct graph_traits<const Scine::molassembler::distance_geometry::ImplicitBoundsGraph> {
+struct graph_traits<const Scine::Molassembler::DistanceGeometry::ImplicitBoundsGraph> {
   // Shortcut typedef
-  using T = Scine::molassembler::distance_geometry::ImplicitBoundsGraph;
+  using T = Scine::Molassembler::DistanceGeometry::ImplicitBoundsGraph;
 
   using vertex_descriptor = T::VertexDescriptor;
   using edge_descriptor = T::EdgeDescriptor;
@@ -59,9 +59,9 @@ struct graph_traits<const Scine::molassembler::distance_geometry::ImplicitBounds
 };
 
 template<>
-struct graph_traits<Scine::molassembler::distance_geometry::ImplicitBoundsGraph> {
+struct graph_traits<Scine::Molassembler::DistanceGeometry::ImplicitBoundsGraph> {
   // Shortcut typedef
-  using T = Scine::molassembler::distance_geometry::ImplicitBoundsGraph;
+  using T = Scine::Molassembler::DistanceGeometry::ImplicitBoundsGraph;
 
   using vertex_descriptor = T::VertexDescriptor;
   using edge_descriptor = T::EdgeDescriptor;
@@ -86,16 +86,16 @@ struct graph_traits<Scine::molassembler::distance_geometry::ImplicitBoundsGraph>
 /* edge_weight_t property_map */
 
 template<>
-struct property_map<Scine::molassembler::distance_geometry::ImplicitBoundsGraph, edge_weight_t> {
-  using T = Scine::molassembler::distance_geometry::ImplicitBoundsGraph;
+struct property_map<Scine::Molassembler::DistanceGeometry::ImplicitBoundsGraph, edge_weight_t> {
+  using T = Scine::Molassembler::DistanceGeometry::ImplicitBoundsGraph;
 
   using type = T::EdgeWeightMap;
   using const_type = const T::EdgeWeightMap;
 };
 
 template<>
-struct property_traits<Scine::molassembler::distance_geometry::ImplicitBoundsGraph::EdgeWeightMap> {
-  using T = Scine::molassembler::distance_geometry::ImplicitBoundsGraph;
+struct property_traits<Scine::Molassembler::DistanceGeometry::ImplicitBoundsGraph::EdgeWeightMap> {
+  using T = Scine::Molassembler::DistanceGeometry::ImplicitBoundsGraph;
 
   using value_type = double;
   using reference = double;
@@ -104,8 +104,8 @@ struct property_traits<Scine::molassembler::distance_geometry::ImplicitBoundsGra
 };
 
 template<>
-struct property_traits<const Scine::molassembler::distance_geometry::ImplicitBoundsGraph::EdgeWeightMap> {
-  using T = Scine::molassembler::distance_geometry::ImplicitBoundsGraph;
+struct property_traits<const Scine::Molassembler::DistanceGeometry::ImplicitBoundsGraph::EdgeWeightMap> {
+  using T = Scine::Molassembler::DistanceGeometry::ImplicitBoundsGraph;
 
   using value_type = double;
   using reference = double;
@@ -116,16 +116,16 @@ struct property_traits<const Scine::molassembler::distance_geometry::ImplicitBou
 /* vertex_index_t property map */
 
 template<>
-struct property_map<Scine::molassembler::distance_geometry::ImplicitBoundsGraph, vertex_index_t> {
-  using T = Scine::molassembler::distance_geometry::ImplicitBoundsGraph;
+struct property_map<Scine::Molassembler::DistanceGeometry::ImplicitBoundsGraph, vertex_index_t> {
+  using T = Scine::Molassembler::DistanceGeometry::ImplicitBoundsGraph;
 
   using type = T::VertexIndexMap;
   using const_type = const T::VertexIndexMap;
 };
 
 template<>
-struct property_traits<Scine::molassembler::distance_geometry::ImplicitBoundsGraph::VertexIndexMap> {
-  using T = Scine::molassembler::distance_geometry::ImplicitBoundsGraph;
+struct property_traits<Scine::Molassembler::DistanceGeometry::ImplicitBoundsGraph::VertexIndexMap> {
+  using T = Scine::Molassembler::DistanceGeometry::ImplicitBoundsGraph;
 
   using value_type = graph_traits<T>::vertex_descriptor;
   using reference = graph_traits<T>::vertex_descriptor;
@@ -134,8 +134,8 @@ struct property_traits<Scine::molassembler::distance_geometry::ImplicitBoundsGra
 };
 
 template<>
-struct property_traits<const Scine::molassembler::distance_geometry::ImplicitBoundsGraph::VertexIndexMap> {
-  using T = Scine::molassembler::distance_geometry::ImplicitBoundsGraph;
+struct property_traits<const Scine::Molassembler::DistanceGeometry::ImplicitBoundsGraph::VertexIndexMap> {
+  using T = Scine::Molassembler::DistanceGeometry::ImplicitBoundsGraph;
 
   using value_type = graph_traits<T>::vertex_descriptor;
   using reference = graph_traits<T>::vertex_descriptor;

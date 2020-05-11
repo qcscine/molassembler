@@ -21,10 +21,10 @@
 
 namespace Scine {
 
-namespace molassembler {
+namespace Molassembler {
 
 //! Information on particular element types
-namespace atom_info {
+namespace AtomInfo {
 
 /*!
  * @brief Stores information about an element.
@@ -97,9 +97,9 @@ unsigned dElectronCount(Utils::ElementType elementType);
 //! Accessor function to fetch the vdw radius directly from elementData
 double vdwRadius(Utils::ElementType elementType);
 
-} // namespace atom_info
+} // namespace AtomInfo
 
-} // namespace molassembler
+} // namespace Molassembler
 
 } // namespace Scine
 

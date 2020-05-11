@@ -12,7 +12,7 @@
 #include <Eigen/Core>
 
 namespace Scine {
-namespace temple {
+namespace Temple {
 
 /**
  * @brief Determine whether a matrix is positive definite
@@ -155,7 +155,7 @@ bool positiveSemidefinite(const Eigen::MatrixBase<Derived>& matrix) {
   return true;
 }
 
-} // namespace temple
+} // namespace Temple
 } // namespace Scine
 
 #endif

@@ -31,9 +31,9 @@
 
 namespace Scine {
 
-namespace molassembler {
+namespace Molassembler {
 
-namespace distance_geometry {
+namespace DistanceGeometry {
 
 class MetricMatrix {
 public:
@@ -82,9 +82,9 @@ private:
   void constructFromTemporary_(Eigen::MatrixXd&& distances);
 };
 
-} // namespace distance_geometry
+} // namespace DistanceGeometry
 
-} // namespace molassembler
+} // namespace Molassembler
 
 } // namespace Scine
 

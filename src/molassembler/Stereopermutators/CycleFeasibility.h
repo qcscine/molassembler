@@ -10,8 +10,8 @@
 #include "molassembler/Modeling/CommonTrig.h"
 
 namespace Scine {
-namespace molassembler {
-namespace stereopermutators {
+namespace Molassembler {
+namespace Stereopermutators {
 
 //! Data class for cycleModelContradictsGraph() input
 struct BaseAtom {
@@ -61,8 +61,8 @@ bool triangleBondTooClose(
   const double bondRadius
 );
 
-} // namespace stereopermutators
-} // namespace molassembler
+} // namespace Stereopermutators
+} // namespace Molassembler
 } // namespace Scine
 
 #endif

@@ -15,7 +15,7 @@
 #include "molassembler/Temple/constexpr/FloatingPointComparison.h"
 
 namespace Scine {
-namespace temple {
+namespace Temple {
 namespace UpperTriangularMatrixImpl {
 
 /*! @brief Underlying type of the upper triangular matrix.
@@ -70,7 +70,7 @@ PURITY_STRONG constexpr bool isValidMatrixSize(const size_t dataSize) {
   auto root = Math::sqrt(1.0 + 8 * dataSize);
 
   return(
-    floating::isCloseRelative(
+    Floating::isCloseRelative(
       root,
       static_cast<double>(Math::floor(root)),
       1e-6
@@ -178,7 +178,7 @@ template<
   return UpperTriangularMatrix<ValueType, size>(data);
 }
 
-} // namespace temple
+} // namespace Temple
 } // namespace Scine
 
 #endif

@@ -18,10 +18,10 @@
 
 using namespace Scine;
 
-extern temple::Generator<> generator;
+extern Temple::Generator<> generator;
 
 BOOST_AUTO_TEST_CASE(OrderedPairTests) {
-  temple::OrderedPair<unsigned> a {14u, 3u};
+  Temple::OrderedPair<unsigned> a {14u, 3u};
   BOOST_CHECK(a.front() < a.back());
   BOOST_CHECK(a.first < a.second);
   BOOST_CHECK(
@@ -40,8 +40,8 @@ BOOST_AUTO_TEST_CASE(PosetTests) {
 
   std::vector<unsigned> unorderedValues;
   for(unsigned testNum = 0; testNum < nTests; ++testNum) {
-    unorderedValues = temple::random::getN<unsigned>(0, maxValue, nValues, generator.engine);
-    temple::Poset<unsigned> f {unorderedValues};
+    unorderedValues = Temple::Random::getN<unsigned>(0, maxValue, nValues, generator.engine);
+    Temple::Poset<unsigned> f {unorderedValues};
 
     f.orderUnordered(compareFirstDigit);
     f.orderUnordered(std::less<>());
@@ -149,7 +149,7 @@ struct ChooseFunctor {
 
 template<typename ChoiceIndex, typename Generator>
 auto make_ChooseFunctor(
-  const temple::BoundedNodeTrie<ChoiceIndex>& /* trie */,
+  const Temple::BoundedNodeTrie<ChoiceIndex>& /* trie */,
   Generator& prng
 ) {
   return ChooseFunctor<ChoiceIndex, Generator>(prng);
@@ -160,7 +160,7 @@ BOOST_AUTO_TEST_CASE(asdf) {
   {
     std::vector<std::uint8_t> boundaries {4, 2, 3};
 
-    using TrieType = temple::BoundedNodeTrie<std::uint8_t>;
+    using TrieType = Temple::BoundedNodeTrie<std::uint8_t>;
 
     TrieType trie {boundaries};
 
@@ -190,7 +190,7 @@ BOOST_AUTO_TEST_CASE(asdf) {
     }
   }
   {
-    using TrieType = temple::BoundedNodeTrie<std::uint8_t>;
+    using TrieType = Temple::BoundedNodeTrie<std::uint8_t>;
     TrieType::ChoiceList boundaries;
     boundaries.push_back(4);
 
@@ -223,7 +223,7 @@ BOOST_AUTO_TEST_CASE(asdf) {
   }
   {
     // Generate new list every time test
-    using TrieType = temple::BoundedNodeTrie<std::uint8_t>;
+    using TrieType = Temple::BoundedNodeTrie<std::uint8_t>;
     TrieType::ChoiceList boundaries {6, 4, 2};
     TrieType trie {boundaries};
     auto chooseFunctor = make_ChooseFunctor(trie, generator);

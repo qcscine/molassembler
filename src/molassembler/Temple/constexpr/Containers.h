@@ -16,14 +16,14 @@
 #include <limits>
 
 namespace Scine {
-namespace temple {
-namespace traits {
+namespace Temple {
+namespace Traits {
 
 //! Figure out the return type of calling a function
 template<class Function, typename ...Args>
 using functionReturnType = std::result_of_t<Function(Args...)>;
 
-} // namespace traits
+} // namespace Traits
 
 namespace detail {
 
@@ -40,7 +40,7 @@ template<
   std::index_sequence<Inds...> /* inds */
 ) {
   return ArrayType<
-    traits::functionReturnType<UnaryFunction, T>,
+    Traits::functionReturnType<UnaryFunction, T>,
     size
   > {
     function(array.at(Inds))...
@@ -779,7 +779,7 @@ template<
   return true;
 }
 
-} // namespace temple
+} // namespace Temple
 } // namespace Scine
 
 #endif

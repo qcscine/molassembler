@@ -7,7 +7,7 @@
 #include "molassembler/Stereopermutators/BondStereopermutatorImpl.h"
 
 namespace Scine {
-namespace molassembler {
+namespace Molassembler {
 
 constexpr double BondStereopermutator::assignmentAcceptanceParameter;
 
@@ -60,7 +60,7 @@ void BondStereopermutator::assign(boost::optional<unsigned> assignment) {
   pImpl_->assign(std::move(assignment));
 }
 
-void BondStereopermutator::assignRandom(random::Engine& engine) {
+void BondStereopermutator::assignRandom(Random::Engine& engine) {
   pImpl_->assignRandom(engine);
 }
 
@@ -104,7 +104,7 @@ boost::optional<unsigned> BondStereopermutator::assigned() const {
   return pImpl_->assigned();
 }
 
-const stereopermutation::Composite& BondStereopermutator::composite() const {
+const Stereopermutations::Composite& BondStereopermutator::composite() const {
   return pImpl_->composite();
 }
 
@@ -164,5 +164,5 @@ bool BondStereopermutator::operator != (const BondStereopermutator& other) const
   );
 }
 
-} // namespace molassembler
+} // namespace Molassembler
 } // namespace Scine

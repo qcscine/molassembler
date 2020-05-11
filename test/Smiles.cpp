@@ -26,7 +26,7 @@
  */
 
 using namespace Scine;
-using namespace molassembler;
+using namespace Molassembler;
 
 Molecule expectSingle(std::vector<Molecule>&& a) {
   if(a.size() == 1) {
@@ -64,7 +64,7 @@ BOOST_AUTO_TEST_CASE(SmilesHydrogenFilling) {
 
   for(const auto& pair : pairs) {
     Molecule result;
-    BOOST_REQUIRE_NO_THROW(result = expectSingle(io::experimental::parseSmiles(pair.first)));
+    BOOST_REQUIRE_NO_THROW(result = expectSingle(IO::experimental::parseSmiles(pair.first)));
     BOOST_CHECK_MESSAGE(
       result.graph().N() ==  pair.second,
       "Expected " << pair.second << " atoms for '" << pair.first << "', got "
@@ -86,7 +86,7 @@ BOOST_AUTO_TEST_CASE(SmilesClosesRingCycles) {
 
   for(const auto& pair : pairs) {
     Molecule result;
-    BOOST_REQUIRE_NO_THROW(result = expectSingle(io::experimental::parseSmiles(pair.first)));
+    BOOST_REQUIRE_NO_THROW(result = expectSingle(IO::experimental::parseSmiles(pair.first)));
     BOOST_CHECK_EQUAL(result.graph().B(), pair.second);
   }
 }
@@ -122,7 +122,7 @@ BOOST_AUTO_TEST_CASE(AcceptValidSmiles) {
 
   std::vector<Molecule> results;
   for(const auto& str : validSmiles) {
-    BOOST_REQUIRE_NO_THROW(results = io::experimental::parseSmiles(str));
+    BOOST_REQUIRE_NO_THROW(results = IO::experimental::parseSmiles(str));
     BOOST_CHECK(results.size() == 1);
   }
 }
@@ -145,7 +145,7 @@ BOOST_AUTO_TEST_CASE(RejectInvalidSmiles) {
   };
 
   for(const auto& str : invalidSmiles) {
-    BOOST_CHECK_THROW(io::experimental::parseSmiles(str), std::runtime_error);
+    BOOST_CHECK_THROW(IO::experimental::parseSmiles(str), std::runtime_error);
   }
 }
 
@@ -189,8 +189,8 @@ BOOST_FIXTURE_TEST_CASE(IdenticalSmiles, LowTemperatureFixture) {
   //   {"c1c2c3c4cc1.Br2.Cl3.Cl4", "C1=CC(=C(C(=C1)Br)Cl)Cl"}, // Aromatics + dot
   for(const auto& pair : pairs) {
     Molecule a, b;
-    BOOST_REQUIRE_NO_THROW(a = expectSingle(io::experimental::parseSmiles(pair.first)));
-    BOOST_REQUIRE_NO_THROW(b = expectSingle(io::experimental::parseSmiles(pair.second)));
+    BOOST_REQUIRE_NO_THROW(a = expectSingle(IO::experimental::parseSmiles(pair.first)));
+    BOOST_REQUIRE_NO_THROW(b = expectSingle(IO::experimental::parseSmiles(pair.second)));
     BOOST_CHECK_MESSAGE(
       a == b,
       "Smiles pair " << pair.first << ", " << pair.second << " did not compare equal as expected"
@@ -214,8 +214,8 @@ BOOST_AUTO_TEST_CASE(DifferentSmiles) {
 
   for(const auto& pair : pairs) {
     Molecule a, b;
-    BOOST_REQUIRE_NO_THROW(a = expectSingle(io::experimental::parseSmiles(pair.first)));
-    BOOST_REQUIRE_NO_THROW(b = expectSingle(io::experimental::parseSmiles(pair.second)));
+    BOOST_REQUIRE_NO_THROW(a = expectSingle(IO::experimental::parseSmiles(pair.first)));
+    BOOST_REQUIRE_NO_THROW(b = expectSingle(IO::experimental::parseSmiles(pair.second)));
     BOOST_CHECK_MESSAGE(
       a != b,
       "Smiles pair " << pair.first << ", " << pair.second << " did not compare different as expected"
@@ -238,13 +238,13 @@ BOOST_AUTO_TEST_CASE(SmilesWithMultipleMolecules) {
   // parse, count sizes, order and lex. compare
   for(const auto& pair : pairs) {
     std::vector<Molecule> results;
-    BOOST_REQUIRE_NO_THROW(results = io::experimental::parseSmiles(pair.first));
+    BOOST_REQUIRE_NO_THROW(results = IO::experimental::parseSmiles(pair.first));
     BOOST_REQUIRE(results.size() > 1);
 
     BOOST_CHECK_EQUAL(results.size(), pair.second.size());
 
-    auto sizes = temple::sort(
-      temple::map(
+    auto sizes = Temple::sort(
+      Temple::map(
         results,
         [](const Molecule& m) -> unsigned { return m.graph().N(); }
       )
@@ -252,7 +252,7 @@ BOOST_AUTO_TEST_CASE(SmilesWithMultipleMolecules) {
 
     BOOST_CHECK_MESSAGE(
       sizes == pair.second,
-      "Expected sizes: " << temple::stringify(pair.second) << ", got " << temple::stringify(sizes) << " instead for smiles '" << pair.first << "'"
+      "Expected sizes: " << Temple::stringify(pair.second) << ", got " << Temple::stringify(sizes) << " instead for smiles '" << pair.first << "'"
     );
   }
 }

@@ -12,7 +12,7 @@
 #include "molassembler/Types.h"
 
 namespace Scine {
-namespace molassembler {
+namespace Molassembler {
 namespace cartesian {
 
 /* Reimplementation on vector basis alone */
@@ -84,6 +84,6 @@ double rmsPlaneDeviation(
 );
 
 } // namespace cartesian
-} // namespace molassembler
+} // namespace Molassembler
 } // namespace Scine
 #endif

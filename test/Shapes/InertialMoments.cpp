@@ -13,12 +13,12 @@
 #include "molassembler/Shapes/Data.h"
 
 using namespace Scine;
-using namespace shapes;
+using namespace Shapes;
 
 // From ContinuousMeasures.cpp
-extern continuous::PositionCollection addOrigin(const continuous::PositionCollection& vs);
+extern Continuous::PositionCollection addOrigin(const Continuous::PositionCollection& vs);
 
-void randomlyRotate(Eigen::Ref<continuous::PositionCollection> vs) {
+void randomlyRotate(Eigen::Ref<Continuous::PositionCollection> vs) {
   vs = rotationMatrix(CoordinateSystem {}, CoordinateSystem::random()) * vs;
 }
 
@@ -60,13 +60,13 @@ BOOST_AUTO_TEST_CASE(InertialStandardization) {
     // Apply a random coordinate transformation
 
     // Analyze it
-    auto normalizedPositions = continuous::normalize(positions);
+    auto normalizedPositions = Continuous::normalize(positions);
     Top top = standardizeTop(normalizedPositions);
     BOOST_CHECK_MESSAGE(
       top == nameTopPair.second,
       "Top standardization failed. Expected "
       << topName(nameTopPair.second)
-      << " for shape " << shapes::name(nameTopPair.first)
+      << " for shape " << Shapes::name(nameTopPair.first)
       << ", got " << topName(top) << " instead."
     );
   }

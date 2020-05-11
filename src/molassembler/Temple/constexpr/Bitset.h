@@ -14,7 +14,7 @@
 #include "molassembler/Temple/constexpr/Array.h"
 
 namespace Scine {
-namespace temple {
+namespace Temple {
 
 /**
  * @brief Constexpr bitset class
@@ -125,7 +125,7 @@ private:
 
 };
 
-} // namespace temple
+} // namespace Temple
 } // namespace Scine
 
 #endif

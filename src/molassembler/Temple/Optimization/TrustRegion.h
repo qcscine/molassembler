@@ -17,7 +17,7 @@
 #include <iostream>
 
 namespace Scine {
-namespace temple {
+namespace Temple {
 namespace detail {
 
 template<typename Derived>
@@ -141,10 +141,10 @@ private:
    * parameters.
    */
   struct StepValues {
-    optimization::EigenUpdateBuffer<VectorType> parameters;
-    optimization::FloatUpdateBuffer<FloatType> values;
-    optimization::EigenUpdateBuffer<VectorType> gradients;
-    optimization::EigenUpdateBuffer<MatrixType> hessians;
+    Optimization::EigenUpdateBuffer<VectorType> parameters;
+    Optimization::FloatUpdateBuffer<FloatType> values;
+    Optimization::EigenUpdateBuffer<VectorType> gradients;
+    Optimization::EigenUpdateBuffer<MatrixType> hessians;
 
     VectorType direction;
 
@@ -323,7 +323,7 @@ private:
   };
 };
 
-} // namespace temple
+} // namespace Temple
 } // namespace Scine
 
 #endif

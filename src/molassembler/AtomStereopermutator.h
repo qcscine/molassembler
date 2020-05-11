@@ -25,28 +25,28 @@
 #include <memory>
 
 namespace Scine {
-namespace molassembler {
+namespace Molassembler {
 
 /* Forward declarations */
 struct RankingInformation;
 class AngstromPositions;
 class Graph;
 
-namespace stereopermutators {
+namespace Stereopermutators {
 struct Abstract;
 struct Feasible;
-} // namespace stereopermutators
+} // namespace Stereopermutators
 
-namespace random {
+namespace Random {
 class Engine;
-} // namespace random
+} // namespace Random
 
-namespace distance_geometry {
+namespace DistanceGeometry {
 
 class SpatialModel;
 struct ChiralConstraint;
 
-} // namespace distance_geometry
+} // namespace DistanceGeometry
 
 /**
  * @brief Handles the steric permutation of substituents of a non-terminal
@@ -81,12 +81,12 @@ public:
   //! Old state dumped upon propagation
   using PropagatedState = std::tuple<
     RankingInformation,
-    stereopermutators::Abstract,
-    stereopermutators::Feasible,
+    Stereopermutators::Abstract,
+    Stereopermutators::Feasible,
     boost::optional<unsigned>
   >;
 
-  using ShapeMap = temple::StrongIndexFlatMap<SiteIndex, shapes::Vertex>;
+  using ShapeMap = Temple::StrongIndexFlatMap<SiteIndex, Shapes::Vertex>;
 
   /*!
    * @brief Site index sequence defining a chiral constraint. If a site index
@@ -118,7 +118,7 @@ public:
    */
   AtomStereopermutator(
     const Graph& graph,
-    shapes::Shape shape,
+    Shapes::Shape shape,
     AtomIndex centerAtom,
     RankingInformation ranking
   );
@@ -132,7 +132,7 @@ public:
    * @complexity{@math{O(S!)} if uncached, @math{\Theta(1)} otherwise}
    * @throws std::logic_error If there are no larger shapes
    */
-  static shapes::Shape up(shapes::Shape shape);
+  static Shapes::Shape up(Shapes::Shape shape);
 
   /*!
    * @brief Picks a shape retaining as much chiral state as possible on a
@@ -141,7 +141,7 @@ public:
    * @complexity{@math{O(S!)} if uncached, @math{\Theta(1)} otherwise}
    * @throws std::logic_error If there are no smaller shapes
    */
-  static shapes::Shape down(shapes::Shape shape, shapes::Vertex removedVertex);
+  static Shapes::Shape down(Shapes::Shape shape, Shapes::Vertex removedVertex);
 //!@}
 
 //!@name Modifiers
@@ -172,7 +172,7 @@ public:
    * @parblock @note The state of the passed PRNG is advanced.
    * @endparblock
    */
-  void assignRandom(random::Engine& engine);
+  void assignRandom(Random::Engine& engine);
 
   /** @brief Applies an atom index permutation
    *
@@ -214,7 +214,7 @@ public:
   MASM_NO_EXPORT boost::optional<PropagatedState> propagate(
     const Graph& graph,
     RankingInformation newRanking,
-    boost::optional<shapes::Shape> shapeOption
+    boost::optional<Shapes::Shape> shapeOption
   );
 
   /*! @brief Adapts atom indices in the internal state to the removal of an atom
@@ -235,7 +235,7 @@ public:
    * @post The permutator is unassigned (chiral state is discarded)
    */
   void setShape(
-    shapes::Shape shape,
+    Shapes::Shape shape,
     const Graph& graph
   );
 //!@}
@@ -328,14 +328,14 @@ public:
    * @complexity{@math{\Theta(1)}}
    * @note This is library-internal and not part of the public API
    */
-  MASM_NO_EXPORT const stereopermutators::Abstract& getAbstract() const;
+  MASM_NO_EXPORT const Stereopermutators::Abstract& getAbstract() const;
 
   /*!  @brief Returns the underlying feasible stereopermutations object
    *
    * @complexity{@math{\Theta(1)}}
    * @note This is library-internal and not part of the public API
    */
-  MASM_NO_EXPORT const stereopermutators::Feasible& getFeasible() const;
+  MASM_NO_EXPORT const Stereopermutators::Feasible& getFeasible() const;
 
   /*! @brief Returns the underlying ranking
    *
@@ -347,7 +347,7 @@ public:
    *
    * @complexity{@math{\Theta(1)}}
    */
-  shapes::Shape getShape() const;
+  Shapes::Shape getShape() const;
 
   /*! @brief Yields the mapping from site indices to shape positions
    *
@@ -434,7 +434,7 @@ private:
   std::unique_ptr<Impl> pImpl_;
 };
 
-} // namespace molassembler
+} // namespace Molassembler
 } // namespace Scine
 
 #endif

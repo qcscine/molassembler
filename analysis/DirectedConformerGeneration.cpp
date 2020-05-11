@@ -16,7 +16,7 @@
 
 using namespace std::string_literals;
 using namespace Scine;
-using namespace molassembler;
+using namespace Molassembler;
 
 const std::string partialityChoices =
   "  0 - Four-Atom Metrization (default)\n"
@@ -66,7 +66,7 @@ int main(int argc, char* argv[]) {
     return 0;
   }
 
-  distance_geometry::Configuration configuration;
+  DistanceGeometry::Configuration configuration;
   if(options_variables_map.count("partiality") > 0) {
     unsigned index =  options_variables_map["partiality"].as<unsigned>();
 
@@ -76,7 +76,7 @@ int main(int argc, char* argv[]) {
       return 0;
     }
 
-    configuration.partiality = static_cast<distance_geometry::Partiality>(index);
+    configuration.partiality = static_cast<DistanceGeometry::Partiality>(index);
   }
 
   if(options_variables_map.count("steps") > 0) {
@@ -85,7 +85,7 @@ int main(int argc, char* argv[]) {
 
   std::string filename = options_variables_map["file"].as<std::string>();
 
-  Molecule mol = io::read(filename);
+  Molecule mol = IO::read(filename);
 
   std::cout << mol << "\n";
 
@@ -102,7 +102,7 @@ int main(int argc, char* argv[]) {
       auto positionResult = generateRandomConformation(mol);
       if(positionResult) {
         std::cout << "Generated conformation.\n";
-        io::write(
+        IO::write(
           filestem + "-0.mol",
           mol,
           positionResult.value()
@@ -134,8 +134,8 @@ int main(int argc, char* argv[]) {
       auto positionResult = generateRandomConformation(confMol, configuration);
 
       if(positionResult) {
-        std::cout << "Generated conformer #" << (conformerCount + 1) << ", decision list " << temple::stringify(newDecisionList) << "\n";
-        io::write(
+        std::cout << "Generated conformer #" << (conformerCount + 1) << ", decision list " << Temple::stringify(newDecisionList) << "\n";
+        IO::write(
           filestem + "-"s + std::to_string(conformerCount + 1) + ".mol",
           mol,
           positionResult.value()
@@ -143,8 +143,8 @@ int main(int argc, char* argv[]) {
         break;
       }
 
-      std::cout << "Could not generate decision list " << temple::stringify(newDecisionList) << ": " << positionResult.error().message() << "\n";
-      io::write(
+      std::cout << "Could not generate decision list " << Temple::stringify(newDecisionList) << ": " << positionResult.error().message() << "\n";
+      IO::write(
         filestem + "-"s + std::to_string(conformerCount + 1) + ".json",
         confMol
       );

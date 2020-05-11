@@ -16,8 +16,8 @@
 #include "molassembler/Stereopermutation/Stereopermutation.h"
 
 namespace Scine {
-namespace molassembler {
-namespace stereopermutators {
+namespace Molassembler {
+namespace Stereopermutators {
 
 // Forward-declarations
 struct Abstract;
@@ -26,7 +26,7 @@ struct Feasible {
 //!@name Public types
 //!@{
   using ConeAngleType = std::vector<
-    boost::optional<distance_geometry::ValueBounds>
+    boost::optional<DistanceGeometry::ValueBounds>
   >;
 //!@}
 
@@ -44,7 +44,7 @@ struct Feasible {
     AtomIndex placement,
     const ConeAngleType& cones,
     const RankingInformation& ranking,
-    shapes::Shape shape,
+    Shapes::Shape shape,
     const SiteToShapeVertexMap& shapeVertexMap,
     const Graph& graph
   );
@@ -58,12 +58,12 @@ struct Feasible {
    * @todo Move this to SpatialModel
    */
   static bool possiblyFeasible(
-    const stereopermutation::Stereopermutation& assignment,
+    const Stereopermutations::Stereopermutation& assignment,
     AtomIndex placement,
     const RankingInformation::RankedSitesType& canonicalSites,
     const ConeAngleType& coneAngles,
     const RankingInformation& ranking,
-    shapes::Shape shape,
+    Shapes::Shape shape,
     const Graph& graph
   );
 //!@}
@@ -89,7 +89,7 @@ struct Feasible {
    */
   Feasible(
     const Abstract& abstractPermutations,
-    shapes::Shape shape,
+    Shapes::Shape shape,
     AtomIndex placement,
     const RankingInformation& ranking,
     const Graph& graph
@@ -99,7 +99,7 @@ struct Feasible {
 //!@name Data members
 //!@{
   //! Mapping from site index to modeled site plane distance
-  std::vector<distance_geometry::ValueBounds> siteDistances;
+  std::vector<DistanceGeometry::ValueBounds> siteDistances;
 
   //! Mapping from site index to cone angle optional
   ConeAngleType coneAngles;
@@ -109,8 +109,8 @@ struct Feasible {
 //!@}
 };
 
-} // namespace stereopermutators
-} // namespace molassembler
+} // namespace Stereopermutators
+} // namespace Molassembler
 } // namespace Scine
 
 #endif

@@ -13,7 +13,7 @@
 #include <functional>
 
 namespace Scine {
-namespace temple {
+namespace Temple {
 namespace stl17 {
 
 // From cppreference, possible C++17 clamp implementation
@@ -34,7 +34,7 @@ constexpr std::add_const_t<T>& as_const(T& t) noexcept {
 }
 
 } // namespace stl17
-} // namespace temple
+} // namespace Temple
 } // namespace Scine
 
 #endif

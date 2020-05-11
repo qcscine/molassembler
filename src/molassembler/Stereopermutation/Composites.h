@@ -20,7 +20,7 @@
 #include <vector>
 
 namespace Scine {
-namespace stereopermutation {
+namespace Stereopermutations {
 
 /**
  * @brief Represents the composite of two shapes joined by a bond at
@@ -38,7 +38,7 @@ public:
     //! The angle this group is placed at from the fused position
     double angle;
     //! The shape vertices making up this group
-    std::vector<shapes::Vertex> vertices;
+    std::vector<Shapes::Vertex> vertices;
     /*!
      * @brief Whether the ranking characters indicate that this group of
      *   shape vertices is isotropic
@@ -51,11 +51,11 @@ public:
    * Comparison is based upon lexicographic comparison of its struct members in
    * order of declaration.
    */
-  struct OrientationState : public temple::crtp::LexicographicComparable<OrientationState> {
+  struct OrientationState : public Temple::Crtp::LexicographicComparable<OrientationState> {
     //! The shape of either positional shape
-    shapes::Shape shape;
+    Shapes::Shape shape;
     //! The shape vertex of the local shape that the other is fused at
-    shapes::Vertex fusedVertex;
+    Shapes::Vertex fusedVertex;
     //! Abstract ranking-characters of the sites at their shape vertices
     std::vector<char> characters;
     /*!
@@ -69,8 +69,8 @@ public:
 
     //! Member initializing constructor
     OrientationState(
-      shapes::Shape passShape,
-      shapes::Vertex passFusedVertex,
+      Shapes::Shape passShape,
+      Shapes::Vertex passFusedVertex,
       std::vector<char> passCharacters,
       std::size_t passIdentifier
     );
@@ -79,13 +79,13 @@ public:
      *
      * @complexity{@math{\Theta(N)}}
      */
-    void applyCharacterRotation(const std::vector<shapes::Vertex>& rotation);
+    void applyCharacterRotation(const std::vector<Shapes::Vertex>& rotation);
 
     /*! @brief Smallest shape vertex from the same group as the fused position
      *
      * @complexity{@math{\Theta(S^2)}}
      */
-    shapes::Vertex lowestEqualVertexInShape() const;
+    Shapes::Vertex lowestEqualVertexInShape() const;
 
     /*! @brief Calculates the required reduction mapping to the canonical form
      *
@@ -94,7 +94,7 @@ public:
      * unlinked stereopermutations if all substituents are different, but that
      * itself probably scales factorially in the size of the shape.}
      */
-    std::vector<shapes::Vertex> findReductionMapping(shapes::Vertex reducedFusedVertex) const;
+    std::vector<Shapes::Vertex> findReductionMapping(Shapes::Vertex reducedFusedVertex) const;
 
     /* c++17 nodiscard */
     /*!
@@ -111,7 +111,7 @@ public:
      * @complexity{@math{O(S!)} where @math{S} is the size of the shape (see
      * findReductionMapping)}
      */
-    std::vector<shapes::Vertex> transformToCanonical();
+    std::vector<Shapes::Vertex> transformToCanonical();
 
     /*! @brief Reverts the OrientationState to a non-canonical form
      *
@@ -119,7 +119,7 @@ public:
      *
      * @complexity{@math{\Theta(S)}}
      */
-    void revert(const std::vector<shapes::Vertex>& reversionMapping);
+    void revert(const std::vector<Shapes::Vertex>& reversionMapping);
 
     /*!
      * @brief Collects all coplanar indices that are closest to the fused
@@ -137,7 +137,7 @@ public:
   };
 
   //! First shape vertex, second shape vertex, dihedral angle tuple
-  using DihedralTuple = std::tuple<shapes::Vertex, shapes::Vertex, double>;
+  using DihedralTuple = std::tuple<Shapes::Vertex, Shapes::Vertex, double>;
 
   //! List of lists of dihedral angles for distinct rotational configurations
   using PermutationsList = std::vector<
@@ -181,8 +181,8 @@ public:
 //!@name Static members
 //!@{
   //! 1° absolute tolerance floating point comparison helper for angle groups
-  static constexpr temple::floating::ExpandedAbsoluteEqualityComparator<double> fpComparator {
-    temple::Math::toRadians(1.0)
+  static constexpr Temple::Floating::ExpandedAbsoluteEqualityComparator<double> fpComparator {
+    Temple::Math::toRadians(1.0)
   };
 
   /*!
@@ -193,22 +193,22 @@ public:
    * @param changedVertices The shape vertices which must change in the
    *   sought rotation
    */
-  static std::vector<shapes::Vertex> generateRotation(
-    shapes::Shape shape,
-    shapes::Vertex fixedVertex,
-    const std::vector<shapes::Vertex>& changedVertices
+  static std::vector<Shapes::Vertex> generateRotation(
+    Shapes::Shape shape,
+    Shapes::Vertex fixedVertex,
+    const std::vector<Shapes::Vertex>& changedVertices
   );
 
-  static std::vector<shapes::Vertex> rotation(
-    shapes::Shape shape,
-    shapes::Vertex fixedVertex,
-    const std::vector<shapes::Vertex>& perpendicularPlaneVertices
+  static std::vector<Shapes::Vertex> rotation(
+    Shapes::Shape shape,
+    Shapes::Vertex fixedVertex,
+    const std::vector<Shapes::Vertex>& perpendicularPlaneVertices
   );
 
   //! Creates sets of within-group cross angles in the perpendicular plane
   static PerpendicularAngleGroups inGroupAngles(
     const AngleGroup& angleGroup,
-    shapes::Shape shape
+    Shapes::Shape shape
   );
 //!@}
 
@@ -247,7 +247,7 @@ public:
    *
    * @complexity{@math{\Theta(1)}}
    */
-  const temple::OrderedPair<OrientationState>& orientations() const;
+  const Temple::OrderedPair<OrientationState>& orientations() const;
 
   /*! @brief Returns the number of permutations for this Composite
    *
@@ -283,7 +283,7 @@ private:
 //!@name Private state
 //!@{
   //! Stores the relative orientation with which the permutations were generated
-  temple::OrderedPair<OrientationState> orientations_;
+  Temple::OrderedPair<OrientationState> orientations_;
 
   //! List of dihedral sets that comprise all spatial arrangements
   PermutationsList stereopermutations_;
@@ -315,7 +315,7 @@ private:
   );
 };
 
-} // namespace stereopermutation
+} // namespace Stereopermutations
 } // namespace Scine
 
 #endif

@@ -14,8 +14,8 @@
 #include "molassembler/Temple/Stringify.h"
 
 namespace Scine {
-namespace molassembler {
-namespace distance_geometry {
+namespace Molassembler {
+namespace DistanceGeometry {
 
 /**
  * @brief Decides whether the final structure from a refinement is acceptable
@@ -104,13 +104,13 @@ void explainAcceptanceFailure(
     }
 
     void chiralOverThreshold(const ChiralConstraint& chiral, double volume) {
-      log << "Chiral constraint " << temple::stringifyContainer(chiral.sites) << " : ["
+      log << "Chiral constraint " << Temple::stringifyContainer(chiral.sites) << " : ["
         << chiral.lower << ", " << chiral.upper
         << "] deviation over threshold, is : " << volume << "\n";
     }
 
     void dihedralOverThreshold(const DihedralConstraint& dihedral, double term) {
-      log << "Dihedral constraint " << temple::stringifyContainer(dihedral.sites)
+      log << "Dihedral constraint " << Temple::stringifyContainer(dihedral.sites)
         << " : [" << dihedral.lower << ", " << dihedral.upper
         << "], term is : " << term << "\n";
     }
@@ -156,13 +156,13 @@ void explainFinalContributions(
     }
 
     void chiralOverThreshold(const ChiralConstraint& chiral, double volume) {
-      log << "Chiral constraint " << temple::stringify(chiral.sites) << " : ["
+      log << "Chiral constraint " << Temple::stringify(chiral.sites) << " : ["
         << chiral.lower << ", " << chiral.upper
         << "] is unsatisfied: " << volume << "\n";
     }
 
     void dihedralOverThreshold(const DihedralConstraint& dihedral, double term) {
-      log << "Dihedral constraint " << temple::stringify(dihedral.sites)
+      log << "Dihedral constraint " << Temple::stringify(dihedral.sites)
         << " : [" << dihedral.lower << ", " << dihedral.upper
         << "] is unsatisfied, term is: " << term << "\n";
     }
@@ -175,8 +175,8 @@ void explainFinalContributions(
   );
 }
 
-} // namespace distance_geometry
-} // namespace molassembler
+} // namespace DistanceGeometry
+} // namespace Molassembler
 } // namespace Scine
 
 #endif

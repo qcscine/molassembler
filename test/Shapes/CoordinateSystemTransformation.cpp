@@ -9,7 +9,7 @@
 #include "molassembler/Shapes/CoordinateSystemTransformation.h"
 
 using namespace Scine;
-using namespace shapes;
+using namespace Shapes;
 
 BOOST_AUTO_TEST_CASE(CoordinateSystemTransformation) {
   for(unsigned i = 0; i < 20; ++i) {

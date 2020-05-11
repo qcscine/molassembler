@@ -27,7 +27,7 @@
 
 namespace Scine {
 
-namespace molassembler {
+namespace Molassembler {
 
 /**
  * @brief Container aiding in gradual discovery of order
@@ -107,10 +107,10 @@ private:
      * should is ordered too, so we can just map the vertex descriptors for
      * every degree into the stored underlying data
      */
-    return temple::map(
+    return Temple::map(
       degreeToSetMap,
       [&](const auto& mapIterPair) -> std::vector<T> {
-        return temple::map_stl(
+        return Temple::map_stl(
           mapIterPair.second,
           [&](const auto& index) -> T {
             return graph_[index].data;
@@ -392,7 +392,7 @@ public:
   void setUnorderedValues(Container&& container) {
     static_assert(
       std::is_same<
-        temple::traits::getValueType<Container>,
+        Temple::Traits::getValueType<Container>,
         T
       >::value,
       "Container value must match OrderDiscoveryHelper's template argument T"
@@ -423,7 +423,7 @@ public:
     std::vector<T>
   > getUndecidedSets() const {
     // Keep only sets with more than one member
-    return temple::copy_if(
+    return Temple::copy_if(
       getSetsByDegree_(),
       [](const auto& set) -> bool {
         return set.size() > 1;
@@ -503,7 +503,7 @@ public:
   }
 };
 
-} // namespace molassembler
+} // namespace Molassembler
 
 } // namespace Scine
 

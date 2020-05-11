@@ -25,14 +25,14 @@
  */
 
 using namespace Scine;
-using namespace molassembler;
+using namespace Molassembler;
 
 
 struct ExpectationData {
   std::vector<unsigned> cycleSizes;
 
   ExpectationData(std::vector<unsigned>&& passCycleSizes)
-    : cycleSizes(temple::sort(passCycleSizes)) {}
+    : cycleSizes(Temple::sort(passCycleSizes)) {}
 };
 
 std::map<std::string, ExpectationData> decompositionData {
@@ -79,11 +79,11 @@ void readAndDecompose(const boost::filesystem::path& filePath) {
 
   if(findIter != decompositionData.end()) {
     // Read the file
-    auto mol = io::read(filePath.string());
+    auto mol = IO::read(filePath.string());
 
     const Cycles& cycles = mol.graph().cycles();
 
-    auto cycleSizes = temple::map(
+    auto cycleSizes = Temple::map(
       cycles,
       [](const auto& cycleEdges) -> unsigned {
         return cycleEdges.size();
@@ -92,12 +92,12 @@ void readAndDecompose(const boost::filesystem::path& filePath) {
 
     BOOST_CHECK(!cycleSizes.empty());
 
-    temple::inplace::sort(cycleSizes);
+    Temple::inplace::sort(cycleSizes);
 
     BOOST_CHECK_MESSAGE(
       cycleSizes == findIter->second.cycleSizes,
-      "Expected cycle sizes " << temple::condense(findIter->second.cycleSizes)
-        << ", but got " << temple::condense(cycleSizes) << " for "
+      "Expected cycle sizes " << Temple::condense(findIter->second.cycleSizes)
+        << ", but got " << Temple::condense(cycleSizes) << " for "
         << filePath.stem().string()
     );
   }
@@ -129,7 +129,7 @@ BOOST_AUTO_TEST_CASE(cycleIterators) {
 
     Molecule mol;
 
-    BOOST_REQUIRE_NO_THROW(mol = io::read(file));
+    BOOST_REQUIRE_NO_THROW(mol = IO::read(file));
 
     const Cycles& cycles = mol.graph().cycles();
 

@@ -24,7 +24,7 @@
 
 using namespace std::string_literals;
 using namespace Scine;
-using namespace molassembler;
+using namespace Molassembler;
 
 BOOST_AUTO_TEST_CASE(DirectedConformerGeneration) {
   std::vector<
@@ -41,7 +41,7 @@ BOOST_AUTO_TEST_CASE(DirectedConformerGeneration) {
     const unsigned numConsideredBonds,
     const unsigned idealEnsembleSize
   ) {
-    auto mol = io::read(filename);
+    auto mol = IO::read(filename);
     DirectedConformerGenerator generator(mol);
 
     BOOST_CHECK_MESSAGE(
@@ -64,7 +64,7 @@ BOOST_AUTO_TEST_CASE(DirectedConformerGeneration) {
     }
 
     // Make a strict configuration. 2000 steps should be enough, even for testosterone
-    distance_geometry::Configuration configuration {};
+    DistanceGeometry::Configuration configuration {};
     configuration.refinementStepLimit = 2000;
 
     /* Ensure we can make generate all conformers we have hypothesized exist */
@@ -92,15 +92,15 @@ BOOST_AUTO_TEST_CASE(DirectedConformerGeneration) {
       BOOST_CHECK_MESSAGE(
         pass,
         "Could not generate " << filename << " conformer w/ decision list: "
-          << temple::stringify(newDecisionList) << " in " << maxTries << " attempts"
+          << Temple::stringify(newDecisionList) << " in " << maxTries << " attempts"
       );
 
       if(generatedDecisionsOption) {
         BOOST_CHECK_MESSAGE(
           newDecisionList == generatedDecisionsOption.value(),
           "Supposedly generated and reinterpreted decision lists do not match:\n"
-          << temple::condense(newDecisionList) << " (supposedly generated)\n"
-          << temple::condense(generatedDecisionsOption.value())
+          << Temple::condense(newDecisionList) << " (supposedly generated)\n"
+          << Temple::condense(generatedDecisionsOption.value())
           << " (reinterpreted)\n"
         );
       }
@@ -108,6 +108,6 @@ BOOST_AUTO_TEST_CASE(DirectedConformerGeneration) {
   };
 
   for(const auto& tup : testCases) {
-    temple::invoke(executeTest, tup);
+    Temple::invoke(executeTest, tup);
   }
 }

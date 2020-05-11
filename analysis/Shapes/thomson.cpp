@@ -20,7 +20,7 @@
 #include <iostream>
 
 using namespace Scine;
-using namespace shapes;
+using namespace Shapes;
 
 using M = Eigen::Matrix<double, 3, Eigen::Dynamic>;
 
@@ -161,8 +161,8 @@ Eigen::VectorXd transformToAngles(M m) {
   }
 
   assert(
-    temple::all_of(
-      temple::adaptors::allPairs(temple::adaptors::range(N)),
+    Temple::all_of(
+      Temple::adaptors::allPairs(Temple::adaptors::range(N)),
       [&](const unsigned i, const unsigned j) -> bool {
         return !angles.template segment<2>(2 * i).isApprox(
           angles.template segment<2>(2 * j),
@@ -218,7 +218,7 @@ struct AnglePotential {
     Eigen::Ref<Eigen::VectorXd> gradient
   ) {
     value = inverseDistanceSum(angles);
-    gradient = temple::optimization::numericalGradient(&inverseDistanceSum, angles);
+    gradient = Temple::Optimization::numericalGradient(&inverseDistanceSum, angles);
   }
 };
 
@@ -239,7 +239,7 @@ void spherize(Shape shape, const M& p) {
   M positions = p;
   positions.colwise().normalize();
 
-  using Optimizer = temple::Lbfgs<>;
+  using Optimizer = Temple::Lbfgs<>;
   auto parameters = transformToAngles(positions);
 
   std::cout << "positions:\n" << positions.transpose() << "\n";

@@ -27,13 +27,13 @@
 #include <vector>
 
 namespace Scine {
-namespace molassembler {
+namespace Molassembler {
 
 class PrivateGraph;
 
-namespace hashes {
+namespace Hashes {
 using WideHashType = boost::multiprecision::uint128_t;
-} // namespace hashes
+} // namespace Hashes
 
 /** @brief Calculate the canonical labeling of a molecule from a coloring
  *   specified by a set of hashes
@@ -59,10 +59,10 @@ using WideHashType = boost::multiprecision::uint128_t;
  */
 std::vector<int> canonicalAutomorphism(
   const PrivateGraph& inner,
-  const std::vector<hashes::WideHashType>& hashes
+  const std::vector<Hashes::WideHashType>& hashes
 );
 
-} // namespace molassembler
+} // namespace Molassembler
 } // namespace Scine
 
 #endif

@@ -18,15 +18,15 @@
 #include "molassembler/Temple/Functional.h"
 
 namespace Scine {
-namespace molassembler {
-namespace stereopermutators {
+namespace Molassembler {
+namespace Stereopermutators {
 
 bool Feasible::linkPossiblyFeasible(
   const RankingInformation::Link& link,
   const AtomIndex placement,
   const ConeAngleType& cones,
   const RankingInformation& ranking,
-  const shapes::Shape shape,
+  const Shapes::Shape shape,
   const SiteToShapeVertexMap& shapeVertexMap,
   const Graph& graph
 ) {
@@ -38,10 +38,10 @@ bool Feasible::linkPossiblyFeasible(
     return true;
   }
 
-  const distance_geometry::ValueBounds siteIConeAngle = cones.at(link.sites.first).value();
-  const distance_geometry::ValueBounds siteJConeAngle = cones.at(link.sites.second).value();
+  const DistanceGeometry::ValueBounds siteIConeAngle = cones.at(link.sites.first).value();
+  const DistanceGeometry::ValueBounds siteJConeAngle = cones.at(link.sites.second).value();
 
-  const double symmetryAngle = distance_geometry::SpatialModel::siteCentralAngle(
+  const double symmetryAngle = DistanceGeometry::SpatialModel::siteCentralAngle(
     placement,
     shape,
     ranking,
@@ -65,19 +65,19 @@ bool Feasible::linkPossiblyFeasible(
      * instead of testing the angle in such a roundabout manner...
      */
 
-    return !stereopermutators::triangleBondTooClose(
-      distance_geometry::SpatialModel::modelDistance(
+    return !Stereopermutators::triangleBondTooClose(
+      DistanceGeometry::SpatialModel::modelDistance(
         placement,
         link.cycleSequence[1],
         graph.inner()
       ),
-      distance_geometry::SpatialModel::modelDistance(
+      DistanceGeometry::SpatialModel::modelDistance(
         placement,
         link.cycleSequence[2],
         graph.inner()
       ),
       symmetryAngle,
-      atom_info::bondRadius(graph.elementType(placement))
+      AtomInfo::bondRadius(graph.elementType(placement))
     );
   }
 
@@ -101,17 +101,17 @@ bool Feasible::linkPossiblyFeasible(
    * group of shape positions with lower cross-angles is viable for the
    * link, and will distort accordingly.
    */
-  // auto symmetryGroups = shapes::properties::positionGroupCharacters(shape);
+  // auto symmetryGroups = Shapes::Properties::positionGroupCharacters(shape);
 
 
   /* First we need to construct the cyclic polygon of the cycle sequence
    * without the central atom.
    */
   assert(link.cycleSequence.front() == placement);
-  auto cycleEdgeLengths = temple::map(
-    temple::adaptors::cyclicFrame<2>(link.cycleSequence),
+  auto cycleEdgeLengths = Temple::map(
+    Temple::adaptors::cyclicFrame<2>(link.cycleSequence),
     [&](const auto& i, const auto& j) -> double {
-      return distance_geometry::SpatialModel::modelDistance(i, j, graph.inner());
+      return DistanceGeometry::SpatialModel::modelDistance(i, j, graph.inner());
     }
   );
 
@@ -126,13 +126,13 @@ bool Feasible::linkPossiblyFeasible(
   cycleEdgeLengths.back() = c;
   cycleEdgeLengths.erase(std::begin(cycleEdgeLengths));
 
-  std::vector<stereopermutators::BaseAtom> bases (1);
+  std::vector<Stereopermutators::BaseAtom> bases (1);
   auto& base = bases.front();
   base.elementType = graph.elementType(placement);
   base.distanceToLeft = a;
   base.distanceToRight = b;
 
-  auto elementTypes = temple::map(
+  auto elementTypes = Temple::map(
     link.cycleSequence,
     [&](const AtomIndex i) -> Utils::ElementType {
       return graph.elementType(i);
@@ -141,7 +141,7 @@ bool Feasible::linkPossiblyFeasible(
   // Drop the central index's element type from this map
   elementTypes.erase(std::begin(elementTypes));
 
-  return !stereopermutators::cycleModelContradictsGraph(
+  return !Stereopermutators::cycleModelContradictsGraph(
     elementTypes,
     cycleEdgeLengths,
     bases
@@ -149,12 +149,12 @@ bool Feasible::linkPossiblyFeasible(
 }
 
 bool Feasible::possiblyFeasible(
-  const stereopermutation::Stereopermutation& stereopermutation,
+  const Stereopermutations::Stereopermutation& stereopermutation,
   const AtomIndex placement,
   const RankingInformation::RankedSitesType& canonicalSites,
   const ConeAngleType& coneAngles,
   const RankingInformation& ranking,
-  const shapes::Shape shape,
+  const Shapes::Shape shape,
   const Graph& graph
 ) {
   const auto shapeVertexMap = siteToShapeVertexMap(
@@ -181,7 +181,7 @@ bool Feasible::possiblyFeasible(
       }
 
       // siteCentralAngle yields undistorted symmetry angles for haptic sites
-      const double symmetryAngle = distance_geometry::SpatialModel::siteCentralAngle(
+      const double symmetryAngle = DistanceGeometry::SpatialModel::siteCentralAngle(
         placement,
         shape,
         ranking,
@@ -211,7 +211,7 @@ bool Feasible::possiblyFeasible(
    * atom are merged using the joint angle calculable from the
    * stereopermutation and shape.
    */
-  return temple::all_of(
+  return Temple::all_of(
     ranking.links,
     [&](const auto& link) -> bool {
       return linkPossiblyFeasible(
@@ -229,16 +229,16 @@ bool Feasible::possiblyFeasible(
 
 Feasible::Feasible(
   const Abstract& abstractPermutations,
-  const shapes::Shape shape,
+  const Shapes::Shape shape,
   const AtomIndex placement,
   const RankingInformation& ranking,
   const Graph& graph
 ) {
-  using ModelType = distance_geometry::SpatialModel;
+  using ModelType = DistanceGeometry::SpatialModel;
 
-  siteDistances = temple::map(
+  siteDistances = Temple::map(
     ranking.sites,
-    [&](const auto& siteAtomsList) -> distance_geometry::ValueBounds {
+    [&](const auto& siteAtomsList) -> DistanceGeometry::ValueBounds {
       return ModelType::siteDistanceFromCenter(
         siteAtomsList,
         placement,
@@ -265,8 +265,8 @@ Feasible::Feasible(
     // Links are present
     !ranking.links.empty()
     // OR there are haptic sites
-    || temple::sum(
-      temple::adaptors::transform(
+    || Temple::sum(
+      Temple::adaptors::transform(
         ranking.sites,
         [](const auto& siteAtomsList) -> unsigned {
           if(siteAtomsList.size() == 1) {
@@ -296,10 +296,10 @@ Feasible::Feasible(
     }
     indices.shrink_to_fit();
   } else {
-    indices = temple::iota<unsigned>(P);
+    indices = Temple::iota<unsigned>(P);
   }
 }
 
-} // namespace stereopermutators
-} // namespace molassembler
+} // namespace Stereopermutators
+} // namespace Molassembler
 } // namespace Scine

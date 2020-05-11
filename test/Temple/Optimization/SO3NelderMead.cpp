@@ -41,7 +41,7 @@ BOOST_AUTO_TEST_CASE(SO3NelderMead) {
     }
   };
 
-  using OptimizerType = temple::SO3NelderMead<>;
+  using OptimizerType = Temple::SO3NelderMead<>;
 
   { /* Squared distance commutative */
     const auto A = OptimizerType::Manifold::randomRotation();
@@ -80,7 +80,7 @@ BOOST_AUTO_TEST_CASE(SO3NelderMead) {
   const unsigned maxAttempts = 10;
   for(unsigned i = 0; i < maxAttempts; ++i) {
     auto simplexVertices = OptimizerType::randomParameters();
-    result = temple::SO3NelderMead<>::minimize(
+    result = Temple::SO3NelderMead<>::minimize(
       simplexVertices,
       EigenValueDecomposition {},
       NelderMeadChecker {}

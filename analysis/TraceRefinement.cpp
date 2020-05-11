@@ -32,8 +32,8 @@
 #include <iomanip>
 
 namespace Scine {
-namespace molassembler {
-namespace distance_geometry {
+namespace Molassembler {
+namespace DistanceGeometry {
 
 /**
  * @brief Debug class containing a step from refinement
@@ -151,8 +151,8 @@ MoleculeDGInformation gatherDGInformation(
 
         if(lower == 0.0 && upper == 0.0) {
           double vdwLowerBound = (
-            atom_info::vdwRadius(molecule.graph().elementType(i))
-            + atom_info::vdwRadius(molecule.graph().elementType(j))
+            AtomInfo::vdwRadius(molecule.graph().elementType(i))
+            + AtomInfo::vdwRadius(molecule.graph().elementType(j))
           );
 
           lower = vdwLowerBound;
@@ -423,7 +423,7 @@ std::list<RefinementData> debugRefinement(
         refinementFunctor
       };
 
-      temple::Lbfgs<FloatType, 32> optimizer;
+      Temple::Lbfgs<FloatType, 32> optimizer;
 
       try {
         auto result = optimizer.minimize(
@@ -467,7 +467,7 @@ std::list<RefinementData> debugRefinement(
     gradientChecker.iterLimit = configuration.refinementStepLimit - firstStageIterations;
 
     try {
-      temple::Lbfgs<FloatType, 32> optimizer;
+      Temple::Lbfgs<FloatType, 32> optimizer;
 
       auto result = optimizer.minimize(
         transformedPositions,
@@ -525,7 +525,7 @@ std::list<RefinementData> debugRefinement(
     refinementFunctor.dihedralTerms = true;
 
     try {
-      temple::Lbfgs<FloatType, 32> optimizer;
+      Temple::Lbfgs<FloatType, 32> optimizer;
 
       auto result = optimizer.minimize(
         transformedPositions,
@@ -601,13 +601,13 @@ std::list<RefinementData> debugRefinement(
 }
 
 
-} // namespace distance_geometry
-} // namespace molassembler
+} // namespace DistanceGeometry
+} // namespace Molassembler
 } // namespace Scine
 
 using namespace std::string_literals;
 using namespace Scine;
-using namespace molassembler;
+using namespace Molassembler;
 
 void writeProgressFile(
   const Molecule& mol,
@@ -616,16 +616,16 @@ void writeProgressFile(
   const Eigen::VectorXd& positions
 ) {
   const std::string filename = baseFilename + "-" + std::to_string(index) + ".mol";
-  AngstromPositions angstromWrapper = distance_geometry::detail::convertToAngstromPositions(
-    distance_geometry::detail::gather(positions)
+  AngstromPositions angstromWrapper = DistanceGeometry::detail::convertToAngstromPositions(
+    DistanceGeometry::detail::gather(positions)
   );
-  io::write(filename, mol, angstromWrapper);
+  IO::write(filename, mol, angstromWrapper);
 }
 
 void writeProgressFiles(
   const Molecule& mol,
   const std::string& baseFilename,
-  const distance_geometry::RefinementData& refinementData
+  const DistanceGeometry::RefinementData& refinementData
 ) {
   /* Write the progress file */
   std::string progressFilename = baseFilename + "-progress.csv"s;
@@ -667,7 +667,7 @@ void writeProgressFiles(
       );
     }
   } else {
-    for(const auto enumPair : temple::adaptors::enumerate(refinementData.steps)) {
+    for(const auto enumPair : Temple::adaptors::enumerate(refinementData.steps)) {
       writeProgressFile(
         mol,
         baseFilename,
@@ -778,7 +778,7 @@ int main(int argc, char* argv[]) {
     nStructures = argN;
   }
 
-  distance_geometry::Partiality metrizationOption = distance_geometry::Partiality::All;
+  DistanceGeometry::Partiality metrizationOption = DistanceGeometry::Partiality::All;
   if(options_variables_map.count("partiality") > 0) {
     unsigned index =  options_variables_map["partiality"].as<unsigned>();
 
@@ -788,7 +788,7 @@ int main(int argc, char* argv[]) {
       return 0;
     }
 
-    metrizationOption = static_cast<distance_geometry::Partiality>(index);
+    metrizationOption = static_cast<DistanceGeometry::Partiality>(index);
   }
 
   Log::particulars.insert(Log::Particulars::DgStructureAcceptanceFailures);
@@ -809,7 +809,7 @@ int main(int argc, char* argv[]) {
   const std::string input = options_variables_map["input"].as<std::string>();
   if(boost::filesystem::exists(input)) {
     try {
-      mol = io::read(input);
+      mol = IO::read(input);
     } catch(...) {
       std::cout << "Input exists as filename, but could not be read!\n";
       return 1;
@@ -822,7 +822,7 @@ int main(int argc, char* argv[]) {
 
     // Input is possibly a SMILES string
     try {
-      mol = io::experimental::parseSmilesSingleMolecule(input);
+      mol = IO::experimental::parseSmilesSingleMolecule(input);
     } catch(...) {
       std::cout << "Input could not be interpreted as a SMILES string.\n";
       return 1;
@@ -835,11 +835,11 @@ int main(int argc, char* argv[]) {
   graphFile << mol.dumpGraphviz();
   graphFile.close();
 
-  distance_geometry::Configuration DgConfiguration;
+  DistanceGeometry::Configuration DgConfiguration;
   DgConfiguration.partiality = metrizationOption;
   DgConfiguration.refinementStepLimit = nSteps;
 
-  auto debugData = distance_geometry::debugRefinement(
+  auto debugData = DistanceGeometry::debugRefinement(
     mol,
     nStructures,
     DgConfiguration,
@@ -847,7 +847,7 @@ int main(int argc, char* argv[]) {
     printBounds
   );
 
-  for(const auto& enumPair : temple::adaptors::enumerate(debugData)) {
+  for(const auto& enumPair : Temple::adaptors::enumerate(debugData)) {
     const auto& structNum = enumPair.index;
     const auto& refinementData = enumPair.value;
 
@@ -855,24 +855,24 @@ int main(int argc, char* argv[]) {
 
     writeProgressFiles(mol, structBaseName, refinementData);
 
-    io::write(
+    IO::write(
       structBaseName + "-last.mol"s,
       mol,
-      distance_geometry::detail::convertToAngstromPositions(
-        distance_geometry::detail::gather(refinementData.steps.back().positions)
+      DistanceGeometry::detail::convertToAngstromPositions(
+        DistanceGeometry::detail::gather(refinementData.steps.back().positions)
       )
     );
 
     if(showChiralConstraints) {
       std::cout << "Chiral constraints (four atom index sets and bounds on signed volume in conformer) of refinement " << structNum << ":\n";
       for(const auto& constraint : refinementData.constraints) {
-        std::cout << temple::stringify(constraint.sites) << " -> [" << constraint.lower << ", " << constraint.upper << "]\n";
+        std::cout << Temple::stringify(constraint.sites) << " -> [" << constraint.lower << ", " << constraint.upper << "]\n";
       }
     }
   }
 
-  auto failures = temple::sum(
-    temple::map(
+  auto failures = Temple::sum(
+    Temple::map(
       debugData,
       [](const auto& refinementData) -> unsigned {
         return static_cast<unsigned>(refinementData.isFailure);

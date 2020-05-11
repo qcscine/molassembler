@@ -12,17 +12,17 @@
 #include "molassembler/Shapes/Properties.h"
 
 namespace Scine {
-namespace shapes {
+namespace Shapes {
 
 //! Precomputed min and max angle values in radians for all symmetries
-extern const temple::Array<std::pair<double, double>, nShapes> symmetryAngleBounds;
+extern const Temple::Array<std::pair<double, double>, nShapes> symmetryAngleBounds;
 
 /*! @brief Calculate the minimum angle in a symmetry
  *
  * Calculates the minimum angle between symmetry positions in a symmetry class
  *
  * @complexity{@math{\Theta(S^2)}}
- * @see constexpr_properties::calculateSmallestAngle
+ * @see ConstexprProperties::calculateSmallestAngle
  */
 MASM_EXPORT double minimumAngle(Shape symmetryName);
 
@@ -42,9 +42,9 @@ MASM_EXPORT double maximumAngle(Shape symmetryName);
  * @complexity{@math{\Theta(NS^2)} where @math{N} is the number of largest symmetries and @math{S} is the size of the largest symmetry}
  */
 constexpr double smallestAngle [[gnu::unused]]
-= temple::tuples::unpackToFunction<
-  data::allShapeDataTypes,
-  constexpr_properties::minAngleFunctor
+= Temple::Tuples::unpackToFunction<
+  Data::allShapeDataTypes,
+  ConstexprProperties::minAngleFunctor
 >();
 
 #ifdef USE_CONSTEXPR_TRANSITION_MAPPINGS
@@ -56,8 +56,8 @@ constexpr double smallestAngle [[gnu::unused]]
  *
  * @complexity{@math{\Theta(S!)} where @math{S} is the size of the largest symmetry}
  */
-extern const temple::UpperTriangularMatrix<
-  temple::Optional<constexpr_properties::MappingsReturnType>,
+extern const Temple::UpperTriangularMatrix<
+  Temple::Optional<ConstexprProperties::MappingsReturnType>,
   nShapes * (nShapes - 1) / 2
 > allMappings;
 #endif
@@ -67,9 +67,9 @@ extern const temple::UpperTriangularMatrix<
  *
  * Accesses allMappings if it was generated.
  */
-extern temple::MinimalCache<
+extern Temple::MinimalCache<
   std::tuple<Shape, Shape, boost::optional<unsigned>>,
-  properties::ShapeTransitionGroup
+  Properties::ShapeTransitionGroup
 > mappingsCache;
 
 /*! @brief Cached access to mappings. Populates the cache from constexpr if generated.
@@ -85,7 +85,7 @@ extern temple::MinimalCache<
  *
  * @returns The symmetry transition if possible, None otherwise
  */
-const boost::optional<const properties::ShapeTransitionGroup&> getMapping(
+const boost::optional<const Properties::ShapeTransitionGroup&> getMapping(
   Shape a,
   Shape b,
   const boost::optional<Vertex>& removedIndexOption = boost::none
@@ -99,14 +99,14 @@ const boost::optional<const properties::ShapeTransitionGroup&> getMapping(
  *
  * @complexity{@math{\Theta(S!)} where @math{S} is the size of the largest symmetry}
  */
-extern const temple::Array<
-  temple::DynamicArray<bool, constexpr_properties::maxShapeSize>,
+extern const Temple::Array<
+  Temple::DynamicArray<bool, ConstexprProperties::maxShapeSize>,
   nShapes
 > allHasMultipleUnlinkedStereopermutations;
 #endif
 
 //! Run-time cache
-extern temple::MinimalCache<
+extern Temple::MinimalCache<
   Shape,
   std::vector<bool>
 > hasMultipleUnlinkedCache;
@@ -131,7 +131,7 @@ MASM_EXPORT bool hasMultipleUnlinkedStereopermutations(
   unsigned nIdenticalLigands
 );
 
-} // namespace shapes
+} // namespace Shapes
 } // namespace Scine
 
 #endif

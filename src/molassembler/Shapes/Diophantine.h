@@ -9,14 +9,14 @@
 #include "molassembler/Export.h"
 
 namespace Scine {
-namespace shapes {
+namespace Shapes {
 
 /*! @brief Functions to help treat a particular linear diophantine equation
  *
  * Here we want to treat a special case of the linear diophantine equation
  * @math{\sum_i a_i x_i = b} with @math{a_i > 0} and @math{x_i >= 0}.
  */
-namespace diophantine {
+namespace Diophantine {
 
 /*! @brief Checks whether a diophantine has a solution
  *
@@ -104,6 +104,6 @@ MASM_EXPORT bool first_solution(
   const int b
 );
 
-} // namespace diophantine
-} // namespace shapes
+} // namespace Diophantine
+} // namespace Shapes
 } // namespace Scine

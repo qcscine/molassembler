@@ -12,7 +12,7 @@
 #include <set>
 
 namespace Scine {
-namespace temple {
+namespace Temple {
 
 template<
   typename T,
@@ -83,7 +83,7 @@ std::set<T, Comparator<T>, Allocator<T>> set_symmetric_difference(
   return returnSet;
 }
 
-} // namespace temple
+} // namespace Temple
 } // namespace Scine
 
 #endif

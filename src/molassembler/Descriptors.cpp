@@ -13,7 +13,7 @@
 #include "molassembler/BondStereopermutator.h"
 
 namespace Scine {
-namespace molassembler {
+namespace Molassembler {
 
 unsigned numRotatableBonds(const Molecule& mol) {
   Cycles cycleData = mol.graph().cycles();

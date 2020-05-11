@@ -25,11 +25,11 @@
 #include <vector>
 
 namespace Scine {
-namespace shapes {
+namespace Shapes {
 
 //! @brief Index of a shape vertex
 struct vertex_index_tag;
-using Vertex = temple::StrongIndex<vertex_index_tag, unsigned>;
+using Vertex = Temple::StrongIndex<vertex_index_tag, unsigned>;
 
 //! @brief Representation of a shape vertex permutation
 using Permutation = std::vector<Vertex>;
@@ -152,7 +152,7 @@ MASM_EXPORT const TetrahedronList& tetrahedra(const Shape shape);
  */
 PURITY_STRONG MASM_EXPORT bool threeDimensional(const Shape shape);
 
-} // namespace shapes
+} // namespace Shapes
 } // namespace Scine
 
 #endif

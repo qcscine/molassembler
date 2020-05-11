@@ -21,7 +21,7 @@
 
 using namespace std::string_literals;
 using namespace Scine;
-using namespace molassembler;
+using namespace Molassembler;
 
 BOOST_AUTO_TEST_CASE(FixedPositionsWork) {
   auto checkPositions = [](
@@ -48,12 +48,12 @@ BOOST_AUTO_TEST_CASE(FixedPositionsWork) {
     return pass;
   };
 
-  auto octadecane = io::read("various/octadecane.mol");
+  auto octadecane = IO::read("various/octadecane.mol");
 
   // Start simple: make an arbitrary atom the origin.
   const Utils::Position origin(0.0, 0.0, 0.0);
 
-  distance_geometry::Configuration config;
+  DistanceGeometry::Configuration config;
   config.fixedPositions = {{13, origin}};
 
   auto conformerResult = generateRandomConformation(octadecane, config);

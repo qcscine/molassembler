@@ -18,7 +18,7 @@
 
 namespace Scine {
 
-namespace shapes {
+namespace Shapes {
 
 //! A placeholder value for constexpr tetrahedra specification of origin
 constexpr unsigned ORIGIN_PLACEHOLDER = std::numeric_limits<unsigned>::max();
@@ -28,7 +28,7 @@ constexpr unsigned ORIGIN_PLACEHOLDER = std::numeric_limits<unsigned>::max();
  *
  * Each symmetry data class follows a concept seen in the .cpp file
  */
-namespace data {
+namespace Data {
 
 /*!
  * @brief Line shape
@@ -51,7 +51,7 @@ struct Line {
 
     return M_PI;
   }
-  static constexpr std::array<temple::Vector, 2> coordinates {{
+  static constexpr std::array<Temple::Vector, 2> coordinates {{
     { 1 , 0, 0 },
     { -1, 0, 0 }
   }};
@@ -93,9 +93,9 @@ struct Bent {
       return 0;
     }
 
-    return temple::Math::toRadians<double>(107);
+    return Temple::Math::toRadians<double>(107);
   }
-  static constexpr std::array<temple::Vector, 2> coordinates {{
+  static constexpr std::array<Temple::Vector, 2> coordinates {{
     {1., 0., 0.},
     {-0.292372, 0.956305, 0.}
   }};
@@ -139,9 +139,9 @@ struct EquilateralTriangle {
       return 0;
     }
 
-    return temple::Math::toRadians<double>(120);
+    return Temple::Math::toRadians<double>(120);
   }
-  static constexpr std::array<temple::Vector, 3> coordinates {{
+  static constexpr std::array<Temple::Vector, 3> coordinates {{
       {1, 0, 0},
       {-0.5, 0.866025, 0},
       {-0.5, -0.866025, 0}
@@ -187,9 +187,9 @@ struct VacantTetrahedron {
       return 0;
     }
 
-    return temple::Math::toRadians<double>(107.5);
+    return Temple::Math::toRadians<double>(107.5);
   }
-  static constexpr std::array<temple::Vector, 3> coordinates {{
+  static constexpr std::array<Temple::Vector, 3> coordinates {{
     {0, -0.366501, 0.930418},
     {0.805765, -0.366501, -0.465209},
     {-0.805765, -0.366501, -0.465209}
@@ -236,7 +236,7 @@ struct T {
 
     return M_PI;
   }
-  static constexpr std::array<temple::Vector, 3> coordinates {{
+  static constexpr std::array<Temple::Vector, 3> coordinates {{
     {-1, -0, -0},
     {0, 1, 0},
     {1, 0, 0},
@@ -279,9 +279,9 @@ struct Tetrahedron {
       return 0;
     }
 
-    return 2 * temple::Math::atan(M_SQRT2);
+    return 2 * Temple::Math::atan(M_SQRT2);
   }
-  static constexpr std::array<temple::Vector, 4> coordinates {{
+  static constexpr std::array<Temple::Vector, 4> coordinates {{
     {0, 1, 0},
     {0, -0.333807, 0.942641},
     {0.816351, -0.333807, -0.471321},
@@ -338,7 +338,7 @@ struct Square {
     // leftover case is trans
     return M_PI;
   }
-  static constexpr std::array<temple::Vector, 4> coordinates {{
+  static constexpr std::array<Temple::Vector, 4> coordinates {{
     {1, 0, 0},
     {0, 1, 0},
     {-1, -0, -0},
@@ -392,12 +392,12 @@ struct Seesaw {
     }
 
     if(smaller == 1 && larger == 2) {
-      return temple::Math::toRadians<double>(120);
+      return Temple::Math::toRadians<double>(120);
     }
 
     return M_PI / 2;
   }
-  static constexpr std::array<temple::Vector, 4> coordinates {{
+  static constexpr std::array<Temple::Vector, 4> coordinates {{
     {0, 1, 0},
     {1, 0, 0},
     {-0.5, 0, -0.866025},
@@ -462,13 +462,13 @@ struct TrigonalPyramid {
 
     if(std::max(a, b) != 3) {
       // -> smaller < 2, this means either 0,1 0,2 1,2 axial
-      return temple::Math::toRadians<double>(120);
+      return Temple::Math::toRadians<double>(120);
     }
 
     // -> smaller < 3, this means {1,2,3}, 3
     return M_PI / 2;
   }
-  static constexpr std::array<temple::Vector, 4> coordinates {{
+  static constexpr std::array<Temple::Vector, 4> coordinates {{
     {1, 0, 0},
     {-0.5, 0.866025, 0},
     {-0.5, -0.866025, 0},
@@ -524,7 +524,7 @@ struct SquarePyramid {
     // rest are cis
     return M_PI / 2;
   }
-  static constexpr std::array<temple::Vector, 5> coordinates {{
+  static constexpr std::array<Temple::Vector, 5> coordinates {{
     {1, 0, 0},
     {0, 1, 0},
     {-1, -0, -0},
@@ -608,7 +608,7 @@ struct TrigonalBipyramid {
     // only case left: 3,4
     return M_PI;
   }
-  static constexpr std::array<temple::Vector, 5> coordinates {{
+  static constexpr std::array<Temple::Vector, 5> coordinates {{
     {1, 0, 0},
     {-0.5, 0.866025, 0},
     {-0.5, -0.866025, 0},
@@ -659,9 +659,9 @@ struct Pentagon {
     return std::min(
       absDiff,
       std::min(absDiff - 5, 5 - absDiff)
-    ) * temple::Math::toRadians<double>(72);
+    ) * Temple::Math::toRadians<double>(72);
   }
-  static constexpr std::array<temple::Vector, 5> coordinates {{
+  static constexpr std::array<Temple::Vector, 5> coordinates {{
     {1, 0, 0},
     {0.309017, 0.951057, 0},
     {-0.809017, 0.587785, 0},
@@ -723,7 +723,7 @@ struct Octahedron {
 
     return M_PI / 2;
   }
-  static constexpr std::array<temple::Vector, 6> coordinates {{
+  static constexpr std::array<Temple::Vector, 6> coordinates {{
     {1, 0, 0},
     {0, 1, 0},
     {-1, -0, -0},
@@ -791,7 +791,7 @@ struct TrigonalPrism {
   static constexpr PointGroup pointGroup = PointGroup::D3h;
   static constexpr unsigned size = 6;
   static constexpr char stringName[] = "trigonal prism";
-  static constexpr std::array<temple::Vector, 6> coordinates {{
+  static constexpr std::array<Temple::Vector, 6> coordinates {{
     { 0.755929,  0.000000,  0.654654},
     {-0.377964,  0.654654,  0.654654},
     {-0.377964, -0.654654,  0.654654},
@@ -799,7 +799,7 @@ struct TrigonalPrism {
     {-0.377964,  0.654654, -0.654654},
     {-0.377964, -0.654654, -0.654654}
   }};
-  static constexpr auto angleLookupTable = temple::makeUpperTriangularMatrix(
+  static constexpr auto angleLookupTable = Temple::makeUpperTriangularMatrix(
     detail::makeArray<size>(coordinates)
   );
   static constexpr double angleFunction(const unsigned a, const unsigned b) {
@@ -866,9 +866,9 @@ struct PentagonalPyramid {
     return std::min(
       absDiff,
       std::min(absDiff - 5, 5 - absDiff)
-    ) * temple::Math::toRadians<double>(72);
+    ) * Temple::Math::toRadians<double>(72);
   }
-  static constexpr std::array<temple::Vector, 6> coordinates {{
+  static constexpr std::array<Temple::Vector, 6> coordinates {{
     {1, 0, 0},
     {0.309017, 0.951057, 0},
     {-0.809017, 0.587785, 0},
@@ -920,9 +920,9 @@ struct Hexagon {
     return std::min(
       absDiff,
       std::min(absDiff - 6, 6 - absDiff)
-    ) * temple::Math::toRadians<double>(60);
+    ) * Temple::Math::toRadians<double>(60);
   }
-  static constexpr std::array<temple::Vector, 6> coordinates {{
+  static constexpr std::array<Temple::Vector, 6> coordinates {{
     { 1.000000,  0.000000,  0.000000},
     { 0.500000,  0.866025,  0.000000},
     {-0.500000,  0.866025,  0.000000},
@@ -977,7 +977,7 @@ struct PentagonalBipyramid {
       return M_PI; // trans 5,6
     }
 
-    if(temple::Math::XOR(a > 4, b > 4)) {
+    if(Temple::Math::XOR(a > 4, b > 4)) {
       return M_PI / 2; // any angle to axial index
     }
 
@@ -986,9 +986,9 @@ struct PentagonalBipyramid {
     return std::min(
       absDiff,
       std::min(absDiff - 5, 5 - absDiff)
-    ) * temple::Math::toRadians<double>(72);
+    ) * Temple::Math::toRadians<double>(72);
   }
-  static constexpr std::array<temple::Vector, 7> coordinates {{
+  static constexpr std::array<Temple::Vector, 7> coordinates {{
     {1, 0, 0},
     {0.309017, 0.951057, 0},
     {-0.809017, 0.587785, 0},
@@ -1053,7 +1053,7 @@ struct CappedOctahedron {
    * V(CO)7+: A capped octahedral structure completes the 18-electron rule,
    * Chemical Physics Letters, Volume 456, Issues 1–3, 2008.
    */
-  static constexpr std::array<temple::Vector, 7> coordinates {{
+  static constexpr std::array<Temple::Vector, 7> coordinates {{
     { 0.000000,  0.000000,  1.000000},
     { 0.957729,  0.000000,  0.287673},
     {-0.478864,  0.829418,  0.287673},
@@ -1062,7 +1062,7 @@ struct CappedOctahedron {
     {-0.779662,  0.000000, -0.626200},
     { 0.389831, -0.675207, -0.626200}
   }};
-  static constexpr auto angleLookupTable = temple::makeUpperTriangularMatrix(
+  static constexpr auto angleLookupTable = Temple::makeUpperTriangularMatrix(
     detail::makeArray<size>(coordinates)
   );
   static constexpr double angleFunction(const unsigned a, const unsigned b) {
@@ -1106,7 +1106,7 @@ struct CappedTrigonalPrism {
    *
    * Minimized to local minimum in Thomson potential
    */
-  static constexpr std::array<temple::Vector, 7> coordinates {{
+  static constexpr std::array<Temple::Vector, 7> coordinates {{
     { -0.000000, -0.000000,  1.000000},
     {  0.984798, -0.069552,  0.159173},
     { -0.069552,  0.984798,  0.159173},
@@ -1115,7 +1115,7 @@ struct CappedTrigonalPrism {
     {  0.413726,  0.413726, -0.810964},
     { -0.413726, -0.413726, -0.810964}
   }};
-  static constexpr auto angleLookupTable = temple::makeUpperTriangularMatrix(
+  static constexpr auto angleLookupTable = Temple::makeUpperTriangularMatrix(
     detail::makeArray<size>(coordinates)
   );
   static constexpr double angleFunction(const unsigned a, const unsigned b) {
@@ -1177,7 +1177,7 @@ struct SquareAntiprism {
   static constexpr PointGroup pointGroup = PointGroup::D4d;
   static constexpr unsigned size = 8;
   static constexpr char stringName[] = "square antiprism";
-  static constexpr std::array<temple::Vector, 8> coordinates {{
+  static constexpr std::array<Temple::Vector, 8> coordinates {{
     { 0.607781,  0.607781,  0.511081},
     {-0.607781,  0.607781,  0.511081},
     {-0.607781, -0.607781,  0.511081},
@@ -1192,7 +1192,7 @@ struct SquareAntiprism {
  * An upper triangular matrix containing angles between particules i,j in
  * degrees using the square antiprismatic reference coordinates
  */
-  static constexpr auto angleLookupTable = temple::makeUpperTriangularMatrix(
+  static constexpr auto angleLookupTable = Temple::makeUpperTriangularMatrix(
     detail::makeArray<size>(coordinates)
   );
 
@@ -1252,7 +1252,7 @@ struct Cube {
   static constexpr unsigned size = 8;
   static constexpr char stringName[] = "cube";
   //! [V(CO)7]+ in C2v
-  static constexpr std::array<temple::Vector, 8> coordinates {{
+  static constexpr std::array<Temple::Vector, 8> coordinates {{
     {  0.577350,  0.577350,  0.577350},
     {  0.577350, -0.577350,  0.577350},
     {  0.577350, -0.577350, -0.577350},
@@ -1262,7 +1262,7 @@ struct Cube {
     { -0.577350, -0.577350, -0.577350},
     { -0.577350,  0.577350, -0.577350}
   }};
-  static constexpr auto angleLookupTable = temple::makeUpperTriangularMatrix(
+  static constexpr auto angleLookupTable = Temple::makeUpperTriangularMatrix(
     detail::makeArray<size>(coordinates)
   );
   static constexpr double angleFunction(const unsigned a, const unsigned b) {
@@ -1301,7 +1301,7 @@ struct TrigonalDodecahedron {
   static constexpr PointGroup pointGroup = PointGroup::D2d;
   static constexpr unsigned size = 8;
   static constexpr char stringName[] = "trigonal dodecahedron";
-  static constexpr std::array<temple::Vector, 8> coordinates {{
+  static constexpr std::array<Temple::Vector, 8> coordinates {{
     {  0.620913,  0.000000, -0.783880},
     { -0.620913,  0.000000, -0.783880},
     {  0.000000,  0.620913,  0.783880},
@@ -1311,7 +1311,7 @@ struct TrigonalDodecahedron {
     {  0.000000,  0.950273, -0.311417},
     {  0.000000, -0.950273, -0.311417}
   }};
-  static constexpr auto angleLookupTable = temple::makeUpperTriangularMatrix(
+  static constexpr auto angleLookupTable = Temple::makeUpperTriangularMatrix(
     detail::makeArray<size>(coordinates)
   );
   static constexpr double angleFunction(const unsigned a, const unsigned b) {
@@ -1352,7 +1352,7 @@ struct HexagonalBipyramid {
   static constexpr PointGroup pointGroup = PointGroup::D6h;
   static constexpr unsigned size = 8;
   static constexpr char stringName[] = "hexagonal bipyramid";
-  static constexpr std::array<temple::Vector, 8> coordinates {{
+  static constexpr std::array<Temple::Vector, 8> coordinates {{
     { 1.000000,  0.000000,  0.000000},
     { 0.500000,  0.866025,  0.000000},
     {-0.500000,  0.866025,  0.000000},
@@ -1362,7 +1362,7 @@ struct HexagonalBipyramid {
     { 0.000000,  0.000000,  1.000000},
     { 0.000000,  0.000000, -1.000000}
   }};
-  static constexpr auto angleLookupTable = temple::makeUpperTriangularMatrix(
+  static constexpr auto angleLookupTable = Temple::makeUpperTriangularMatrix(
     detail::makeArray<size>(coordinates)
   );
   static constexpr double angleFunction(const unsigned a, const unsigned b) {
@@ -1405,7 +1405,7 @@ struct TricappedTrigonalPrism {
   static constexpr PointGroup pointGroup = PointGroup::D3h;
   static constexpr unsigned size = 9;
   static constexpr char stringName[] = "tricapped trigonal prism";
-  static constexpr std::array<temple::Vector, 9> coordinates {{
+  static constexpr std::array<Temple::Vector, 9> coordinates {{
     { 0.914109572223, -0.182781178690, -0.361931942064},
     { 0.293329304506,  0.734642489361, -0.611766566546},
     {-0.480176899428, -0.046026929940,  0.875963279468},
@@ -1416,7 +1416,7 @@ struct TricappedTrigonalPrism {
     { 0.063327560246, -0.997971078243, -0.006583851785},
     { 0.610701141906, -0.322016246902,  0.723429092590}
   }};
-  static constexpr auto angleLookupTable = temple::makeUpperTriangularMatrix(
+  static constexpr auto angleLookupTable = Temple::makeUpperTriangularMatrix(
     detail::makeArray<size>(coordinates)
   );
   static constexpr double angleFunction(const unsigned a, const unsigned b) {
@@ -1457,7 +1457,7 @@ struct CappedSquareAntiprism {
   static constexpr PointGroup pointGroup = PointGroup::C4v;
   static constexpr unsigned size = 9;
   static constexpr char stringName[] = "capped square antiprism";
-  static constexpr std::array<temple::Vector, 9> coordinates {{
+  static constexpr std::array<Temple::Vector, 9> coordinates {{
     { -0.000000,  0.932111,  0.362172},
     { -0.000000, -0.932111,  0.362172},
     {  0.932111, -0.000000,  0.362172},
@@ -1468,7 +1468,7 @@ struct CappedSquareAntiprism {
     { -0.559626, -0.559626, -0.611258},
     {  0.000000,  0.000000,  1.000000}
   }};
-  static constexpr auto angleLookupTable = temple::makeUpperTriangularMatrix(
+  static constexpr auto angleLookupTable = Temple::makeUpperTriangularMatrix(
     detail::makeArray<size>(coordinates)
   );
   static constexpr double angleFunction(const unsigned a, const unsigned b) {
@@ -1506,7 +1506,7 @@ struct HeptagonalBipyramid {
   static constexpr PointGroup pointGroup = PointGroup::D7h;
   static constexpr unsigned size = 9;
   static constexpr char stringName[] = "heptagonal bipyramid";
-  static constexpr std::array<temple::Vector, 9> coordinates {{
+  static constexpr std::array<Temple::Vector, 9> coordinates {{
     { 1.000000,  0.000000,  0.000000},
     { 0.623490,  0.781831,  0.000000},
     {-0.222521,  0.974928,  0.000000},
@@ -1517,7 +1517,7 @@ struct HeptagonalBipyramid {
     { 0.000000,  0.000000,  1.000000},
     { 0.000000,  0.000000, -1.000000}
   }};
-  static constexpr auto angleLookupTable = temple::makeUpperTriangularMatrix(
+  static constexpr auto angleLookupTable = Temple::makeUpperTriangularMatrix(
     detail::makeArray<size>(coordinates)
   );
   static constexpr double angleFunction(const unsigned a, const unsigned b) {
@@ -1559,7 +1559,7 @@ struct BicappedSquareAntiprism {
   static constexpr PointGroup pointGroup = PointGroup::D4h;
   static constexpr unsigned size = 10;
   static constexpr char stringName[] = "bicapped square antiprism";
-  static constexpr std::array<temple::Vector, 10> coordinates {{
+  static constexpr std::array<Temple::Vector, 10> coordinates {{
     { 0.978696890330,  0.074682616274,  0.191245663177},
     { 0.537258145625,  0.448413180814, -0.714338368164},
     {-0.227939324473, -0.303819959434, -0.925060590777},
@@ -1571,7 +1571,7 @@ struct BicappedSquareAntiprism {
     { 0.290107593166, -0.385278374104,  0.876012647646},
     {-0.978696887344, -0.074682599351, -0.191245685067}
   }};
-  static constexpr auto angleLookupTable = temple::makeUpperTriangularMatrix(
+  static constexpr auto angleLookupTable = Temple::makeUpperTriangularMatrix(
     detail::makeArray<size>(coordinates)
   );
   static constexpr double angleFunction(const unsigned a, const unsigned b) {
@@ -1614,7 +1614,7 @@ struct EdgeContractedIcosahedron {
   static constexpr PointGroup pointGroup = PointGroup::C2v;
   static constexpr unsigned size = 11;
   static constexpr char stringName[] = "edge-contracted icosahedron";
-  static constexpr std::array<temple::Vector, 11> coordinates {{
+  static constexpr std::array<Temple::Vector, 11> coordinates {{
     { 0.153486836562, -0.831354332797,  0.534127105044},
     { 0.092812115769,  0.691598091278, -0.716294626049},
     { 0.686120068086,  0.724987503180,  0.060269166267},
@@ -1627,7 +1627,7 @@ struct EdgeContractedIcosahedron {
     {-0.439821168531, -0.864743799130, -0.242436592901},
     {-0.773718984882, -0.203685975092,  0.599892453681}
   }};
-  static constexpr auto angleLookupTable = temple::makeUpperTriangularMatrix(
+  static constexpr auto angleLookupTable = Temple::makeUpperTriangularMatrix(
     detail::makeArray<size>(coordinates)
   );
   static constexpr double angleFunction(const unsigned a, const unsigned b) {
@@ -1666,7 +1666,7 @@ struct Icosahedron {
   static constexpr PointGroup pointGroup = PointGroup::Ih;
   static constexpr unsigned size = 12;
   static constexpr char stringName[] = "icosahedron";
-  static constexpr std::array<temple::Vector, 12> coordinates {{
+  static constexpr std::array<Temple::Vector, 12> coordinates {{
     { 0.525731,  0.000000,  0.850651},
     { 0.525731,  0.000000, -0.850651},
     {-0.525731,  0.000000,  0.850651},
@@ -1680,7 +1680,7 @@ struct Icosahedron {
     { 0.000000, -0.850651,  0.525731},
     { 0.000000, -0.850651, -0.525731}
   }};
-  static constexpr auto angleLookupTable = temple::makeUpperTriangularMatrix(
+  static constexpr auto angleLookupTable = Temple::makeUpperTriangularMatrix(
     detail::makeArray<size>(coordinates)
   );
   static constexpr double angleFunction(const unsigned a, const unsigned b) {
@@ -1722,7 +1722,7 @@ struct Cuboctahedron {
   static constexpr PointGroup pointGroup = PointGroup::Oh;
   static constexpr unsigned size = 12;
   static constexpr char stringName[] = "cuboctahedron";
-  static constexpr std::array<temple::Vector, 12> coordinates {{
+  static constexpr std::array<Temple::Vector, 12> coordinates {{
     { 0.707107,  0.000000,  0.707107},
     { 0.707107,  0.000000, -0.707107},
     {-0.707107,  0.000000,  0.707107},
@@ -1736,7 +1736,7 @@ struct Cuboctahedron {
     { 0.000000, -0.707107,  0.707107},
     { 0.000000, -0.707107, -0.707107}
   }};
-  static constexpr auto angleLookupTable = temple::makeUpperTriangularMatrix(
+  static constexpr auto angleLookupTable = Temple::makeUpperTriangularMatrix(
     detail::makeArray<size>(coordinates)
   );
   static constexpr double angleFunction(const unsigned a, const unsigned b) {
@@ -1804,9 +1804,9 @@ using allShapeDataTypes = std::tuple<
   Cuboctahedron
 >;
 
-} // namespace data
+} // namespace Data
 
-} // namespace shapes
+} // namespace Shapes
 
 } // namespace Scine
 

@@ -31,11 +31,11 @@
 #include <ctime>
 
 namespace Scine {
-namespace molassembler {
-namespace io {
+namespace Molassembler {
+namespace IO {
 namespace {
 
-std::string pipeSvg(const Scine::molassembler::Molecule& m) {
+std::string pipeSvg(const Scine::Molassembler::Molecule& m) {
   std::stringstream os;
 
   // Construct pipe streams for redirection
@@ -90,10 +90,10 @@ Molecule LineNotation::fromFormat(const std::string& lineNotation, const std::st
   std::stringstream stream(lineNotation);
   Utils::OpenBabelStreamHandler handler;
   auto data = handler.read(stream, format);
-  auto interpretation = interpret::molecules(
+  auto interpretation = Interpret::molecules(
     data.first,
     data.second,
-    interpret::BondDiscretizationOption::RoundToNearest
+    Interpret::BondDiscretizationOption::RoundToNearest
   );
 
   if(interpretation.molecules.size() > 1) {
@@ -152,7 +152,7 @@ std::tuple<Utils::AtomCollection, Utils::BondOrderCollection, std::vector<AtomIn
   std::vector<AtomIndex> permutation;
   permutation.resize(N);
   std::iota(std::begin(permutation), std::end(permutation), 0);
-  temple::random::shuffle(permutation, randomnessEngine());
+  Temple::Random::shuffle(permutation, randomnessEngine());
 
   Utils::AtomCollection permutedAtoms(N);
   for(unsigned i = 0; i < N; ++i) {
@@ -216,12 +216,12 @@ Molecule read(const std::string& filename) {
   // This can throw in lots of cases
   auto readData = Utils::ChemicalFileHandler::read(filename);
 
-  interpret::MoleculesResult interpretation;
+  Interpret::MoleculesResult interpretation;
   if(readData.second.empty()) {
     // Unfortunately, the file type does not include bond order information
-    interpretation = interpret::molecules(readData.first, interpret::BondDiscretizationOption::RoundToNearest);
+    interpretation = Interpret::molecules(readData.first, Interpret::BondDiscretizationOption::RoundToNearest);
   } else {
-    interpretation = interpret::molecules(readData.first, readData.second, interpret::BondDiscretizationOption::RoundToNearest);
+    interpretation = Interpret::molecules(readData.first, readData.second, Interpret::BondDiscretizationOption::RoundToNearest);
   }
 
   if(interpretation.molecules.size() > 1) {
@@ -244,12 +244,12 @@ std::vector<Molecule> split(const std::string& filename) {
   // This can throw in lots of cases
   auto readData = Utils::ChemicalFileHandler::read(filename);
 
-  interpret::MoleculesResult interpretation;
+  Interpret::MoleculesResult interpretation;
   if(readData.second.empty()) {
     // Unfortunately, the file type does not include bond order information
-    interpretation = interpret::molecules(readData.first);
+    interpretation = Interpret::molecules(readData.first);
   } else {
-    interpretation = interpret::molecules(readData.first, readData.second);
+    interpretation = Interpret::molecules(readData.first, readData.second);
   }
 
   return interpretation.molecules;
@@ -325,6 +325,6 @@ void write(const std::string& filename, const Molecule& molecule) {
   );
 }
 
-} // namespace io
-} // namespace molassembler
+} // namespace IO
+} // namespace Molassembler
 } // namespace Scine

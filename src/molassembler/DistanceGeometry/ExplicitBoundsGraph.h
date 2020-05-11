@@ -22,18 +22,18 @@
 #include "molassembler/Conformers.h"
 
 namespace Scine {
-namespace molassembler {
+namespace Molassembler {
 
-namespace random {
+namespace Random {
 class Engine;
-} // namespace random
+} // namespace Random
 
 namespace outcome = OUTCOME_V2_NAMESPACE;
 
 // Forward-declare PrivateGraph
 class PrivateGraph;
 
-namespace distance_geometry {
+namespace DistanceGeometry {
 
 // Forward-declarations
 class DistanceBoundsMatrix;
@@ -176,10 +176,10 @@ public:
    *
    * @complexity{@math{O(V^2 \cdot E)}}
    */
-  outcome::result<Eigen::MatrixXd> makeDistanceMatrix(random::Engine& engine) noexcept;
+  outcome::result<Eigen::MatrixXd> makeDistanceMatrix(Random::Engine& engine) noexcept;
 
   //!@overload
-  outcome::result<Eigen::MatrixXd> makeDistanceMatrix(random::Engine& engine, Partiality partiality) noexcept;
+  outcome::result<Eigen::MatrixXd> makeDistanceMatrix(Random::Engine& engine, Partiality partiality) noexcept;
 //!@}
 
 //!@name Information
@@ -222,8 +222,8 @@ private:
   );
 };
 
-} // namespace distance_geometry
-} // namespace molassembler
+} // namespace DistanceGeometry
+} // namespace Molassembler
 } // namespace Scine
 
 #endif

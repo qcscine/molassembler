@@ -16,8 +16,8 @@
 #include <utility>
 
 namespace Scine {
-namespace temple {
-namespace traits {
+namespace Temple {
+namespace Traits {
 
 /*! Template base class for SFINAE expression validity checking
  *
@@ -145,8 +145,8 @@ static auto testHasReserve(long) -> std::false_type;
 template<class Container>
 struct hasReserve : decltype(detail::testHasReserve<Container>(0)){};
 
-} // namespace traits
-} // namespace temple
+} // namespace Traits
+} // namespace Temple
 } // namespace Scine
 
 #endif

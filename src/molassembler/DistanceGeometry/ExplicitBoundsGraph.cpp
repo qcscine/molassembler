@@ -36,8 +36,8 @@
  */
 
 namespace Scine {
-namespace molassembler {
-namespace distance_geometry {
+namespace Molassembler {
+namespace DistanceGeometry {
 
 ExplicitBoundsGraph::ExplicitBoundsGraph(
   const PrivateGraph& inner,
@@ -59,8 +59,8 @@ ExplicitBoundsGraph::ExplicitBoundsGraph(
          * distance is sum of vdw radii) is explicit in this graph variant.
         */
         double vdwLowerBound = (
-          atom_info::vdwRadius(inner.elementType(a))
-          + atom_info::vdwRadius(inner.elementType(b))
+          AtomInfo::vdwRadius(inner.elementType(a))
+          + AtomInfo::vdwRadius(inner.elementType(b))
         );
 
         boost::add_edge(left(a), right(b), -vdwLowerBound, graph_);
@@ -120,8 +120,8 @@ ExplicitBoundsGraph::ExplicitBoundsGraph(
         boost::add_edge(left(b), right(a), -lower, graph_);
       } else {
         const double vdwLowerBound = (
-          atom_info::vdwRadius(inner_.elementType(a))
-          + atom_info::vdwRadius(inner_.elementType(b))
+          AtomInfo::vdwRadius(inner_.elementType(a))
+          + AtomInfo::vdwRadius(inner_.elementType(b))
         );
 
         // Implicit lower bound on distance between the vertices
@@ -272,14 +272,14 @@ double ExplicitBoundsGraph::maximalImplicitLowerBound(const VertexDescriptor i) 
   Utils::ElementType elementType = inner_.elementType(a);
 
   if(elementType == heaviestAtoms_.front()) {
-    return atom_info::vdwRadius(
+    return AtomInfo::vdwRadius(
       heaviestAtoms_.back()
-    ) + atom_info::vdwRadius(elementType);
+    ) + AtomInfo::vdwRadius(elementType);
   }
 
-  return atom_info::vdwRadius(
+  return AtomInfo::vdwRadius(
     heaviestAtoms_.front()
-  ) + atom_info::vdwRadius(elementType);
+  ) + AtomInfo::vdwRadius(elementType);
 }
 
 const ExplicitBoundsGraph::GraphType& ExplicitBoundsGraph::graph() const {
@@ -358,11 +358,11 @@ outcome::result<Eigen::MatrixXd> ExplicitBoundsGraph::makeDistanceBounds() const
   return bounds;
 }
 
-outcome::result<Eigen::MatrixXd> ExplicitBoundsGraph::makeDistanceMatrix(random::Engine& engine) noexcept {
+outcome::result<Eigen::MatrixXd> ExplicitBoundsGraph::makeDistanceMatrix(Random::Engine& engine) noexcept {
   return makeDistanceMatrix(engine, Partiality::All);
 }
 
-outcome::result<Eigen::MatrixXd> ExplicitBoundsGraph::makeDistanceMatrix(random::Engine& engine, Partiality partiality) noexcept {
+outcome::result<Eigen::MatrixXd> ExplicitBoundsGraph::makeDistanceMatrix(Random::Engine& engine, Partiality partiality) noexcept {
   const unsigned N = inner_.N();
 
   Eigen::MatrixXd distancesMatrix;
@@ -375,7 +375,7 @@ outcome::result<Eigen::MatrixXd> ExplicitBoundsGraph::makeDistanceMatrix(random:
 
   std::iota(std::begin(indices), std::end(indices), 0);
 
-  temple::random::shuffle(indices, engine);
+  Temple::Random::shuffle(indices, engine);
 
   const unsigned M = boost::num_vertices(graph_);
   std::vector<double> distances (M);
@@ -418,7 +418,7 @@ outcome::result<Eigen::MatrixXd> ExplicitBoundsGraph::makeDistanceMatrix(random:
       }
     }
 
-    temple::random::shuffle(otherIndices, engine);
+    Temple::Random::shuffle(otherIndices, engine);
 
     // Again through N - 1 indices: N²
     for(const auto& b : otherIndices) {
@@ -470,7 +470,7 @@ outcome::result<Eigen::MatrixXd> ExplicitBoundsGraph::makeDistanceMatrix(random:
       /* Shortest distance from left a vertex to right b vertex is lower bound (negative)
        * Shortest distance from left a vertex to left b vertex is upper bound
        */
-      double tightenedBound = temple::random::getSingle<double>(
+      double tightenedBound = Temple::Random::getSingle<double>(
         lower,
         upper,
         engine
@@ -536,7 +536,7 @@ outcome::result<Eigen::MatrixXd> ExplicitBoundsGraph::makeDistanceMatrix(random:
       /* Shortest distance from left a vertex to right b vertex is lower bound (negative)
        * Shortest distance from left a vertex to left b vertex is upper bound
        */
-      double tightenedBound = temple::random::getSingle<double>(
+      double tightenedBound = Temple::Random::getSingle<double>(
         std::min(presumedLower, presumedUpper),
         std::max(presumedLower, presumedUpper),
         engine
@@ -555,6 +555,6 @@ outcome::result<Eigen::MatrixXd> ExplicitBoundsGraph::makeDistanceMatrix(random:
   return distancesMatrix;
 }
 
-} // namespace distance_geometry
-} // namespace molassembler
+} // namespace DistanceGeometry
+} // namespace Molassembler
 } // namespace Scine

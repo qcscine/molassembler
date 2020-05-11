@@ -12,7 +12,7 @@
 #include <functional>
 
 namespace Scine {
-namespace temple {
+namespace Temple {
 
 /*! @brief Calculate the index of permutation of elements in a container
  *
@@ -115,7 +115,7 @@ bool nextCombinationPermutation(
 }
 
 } // namespace inplace
-} // namespace temple
+} // namespace Temple
 } // namespace Scine
 
 #endif

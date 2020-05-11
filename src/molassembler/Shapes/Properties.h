@@ -20,10 +20,10 @@
 #include <vector>
 
 namespace Scine {
-namespace shapes {
+namespace Shapes {
 
 //! @brief Runtime-computed properties of shapes
-namespace properties {
+namespace Properties {
 
 constexpr double floatingPointEqualityThreshold [[gnu::unused]] = 1e-4;
 
@@ -207,7 +207,7 @@ struct MASM_EXPORT DistortionInfo {
  * @param from Transition source shape
  * @param to Transition target shape
  *
- * @pre shapes::size(from) + {0, 1} == shapes::size(to)
+ * @pre Shapes::size(from) + {0, 1} == Shapes::size(to)
  */
 MASM_EXPORT std::vector<DistortionInfo> shapeTransitionMappings(
   Shape from,
@@ -225,7 +225,7 @@ MASM_EXPORT std::vector<DistortionInfo> shapeTransitionMappings(
  * @param to Transition target shape
  * @param positionInSourceShape position lost in source shape
  *
- * @pre shapes::size(from) == shapes::size(to) + 1
+ * @pre Shapes::size(from) == Shapes::size(to) + 1
  */
 MASM_EXPORT std::vector<DistortionInfo> ligandLossTransitionMappings(
   Shape from,
@@ -302,8 +302,8 @@ PURITY_WEAK MASM_EXPORT Shape mostSymmetric(std::vector<Shape> selection);
  */
 PURITY_WEAK MASM_EXPORT Shape mostSymmetric(unsigned shapeSize);
 
-} // namespace properties
-} // namespace shapes
+} // namespace Properties
+} // namespace Shapes
 } // namespace Scine
 
 #endif

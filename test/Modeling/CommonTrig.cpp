@@ -22,7 +22,7 @@ bool isApproxAbs(
 
 BOOST_AUTO_TEST_CASE(randomExamples) {
   using namespace Scine;
-  using namespace molassembler;
+  using namespace Molassembler;
   using namespace CommonTrig;
 
   BOOST_CHECK(
@@ -85,12 +85,12 @@ BOOST_AUTO_TEST_CASE(randomExamples) {
 
 BOOST_AUTO_TEST_CASE(dihedralZeroAlwaysSmallerDihedralPi) {
   using namespace Scine;
-  using namespace molassembler;
+  using namespace Molassembler;
   using namespace CommonTrig;
 
   for(unsigned testNum = 0; testNum < 100; ++testNum) {
-    const auto sideLengths = temple::random::getN<double>(1.4, 5.6, 3, randomnessEngine());
-    const auto angles = temple::random::getN<double>(0.0, M_PI, 2, randomnessEngine());
+    const auto sideLengths = Temple::Random::getN<double>(1.4, 5.6, 3, randomnessEngine());
+    const auto angles = Temple::Random::getN<double>(0.0, M_PI, 2, randomnessEngine());
 
     BOOST_CHECK_MESSAGE(
       dihedralLength(
@@ -109,9 +109,9 @@ BOOST_AUTO_TEST_CASE(dihedralZeroAlwaysSmallerDihedralPi) {
         M_PI
       ),
       "Disproved by side lengths {"
-        << temple::condense(sideLengths)
+        << Temple::condense(sideLengths)
         << "} and angles {"
-        << temple::condense(angles)
+        << Temple::condense(angles)
         << "}: 0 -> "
         << dihedralLength(
           sideLengths.at(0),

@@ -13,7 +13,7 @@
 #include "Utils/Geometry/AtomCollection.h"
 
 void init_interpret(pybind11::module& m) {
-  using namespace Scine::molassembler;
+  using namespace Scine::Molassembler;
   using namespace Scine::Utils;
 
   auto interpretSubmodule = m.def_submodule("interpret");
@@ -44,17 +44,17 @@ void init_interpret(pybind11::module& m) {
     bond.
   )delim";
 
-  pybind11::enum_<interpret::BondDiscretizationOption>(
+  pybind11::enum_<Interpret::BondDiscretizationOption>(
     interpretSubmodule,
     "BondDiscretization",
     R"delim(
       Specifies the algorithm used to discretize floating-point bond orders into
       discrete bond types.
     )delim"
-  ).value("Binary", interpret::BondDiscretizationOption::Binary, "All bond orders >= 0.5 are considered single bonds")
-    .value("RoundToNearest", interpret::BondDiscretizationOption::RoundToNearest, "Round bond orders to nearest integer");
+  ).value("Binary", Interpret::BondDiscretizationOption::Binary, "All bond orders >= 0.5 are considered single bonds")
+    .value("RoundToNearest", Interpret::BondDiscretizationOption::RoundToNearest, "Round bond orders to nearest integer");
 
-  pybind11::class_<interpret::MoleculesResult> interpretResult(
+  pybind11::class_<Interpret::MoleculesResult> interpretResult(
     interpretSubmodule,
     "MoleculesResult",
     "Result type of a molceule interpret call."
@@ -62,7 +62,7 @@ void init_interpret(pybind11::module& m) {
 
   interpretResult.def_readwrite(
     "molecules",
-    &interpret::MoleculesResult::molecules,
+    &Interpret::MoleculesResult::molecules,
     R"delim(
       Individual molecules found in the 3D information.
 
@@ -72,7 +72,7 @@ void init_interpret(pybind11::module& m) {
 
   interpretResult.def_readwrite(
     "component_map",
-    &interpret::MoleculesResult::componentMap,
+    &Interpret::MoleculesResult::componentMap,
     R"delim(
       Mapping of atom indices from the original positional information to which
       molecule it is now part.
@@ -86,9 +86,9 @@ void init_interpret(pybind11::module& m) {
     pybind11::overload_cast<
       const AtomCollection&,
       const BondOrderCollection&,
-      interpret::BondDiscretizationOption,
+      Interpret::BondDiscretizationOption,
       const boost::optional<double>&
-    >(&interpret::molecules),
+    >(&Interpret::molecules),
     pybind11::arg("atom_collection"),
     pybind11::arg("bond_orders"),
     pybind11::arg("discretization"),
@@ -134,9 +134,9 @@ void init_interpret(pybind11::module& m) {
     "interpret",
     pybind11::overload_cast<
       const AtomCollection&,
-      interpret::BondDiscretizationOption,
+      Interpret::BondDiscretizationOption,
       const boost::optional<double>&
-    >(&interpret::molecules),
+    >(&Interpret::molecules),
     pybind11::arg("atom_collection"),
     pybind11::arg("discretization"),
     pybind11::arg("stereopermutator_bond_order_threshold") = 1.4,
@@ -163,7 +163,7 @@ void init_interpret(pybind11::module& m) {
 
   interpretSubmodule.def(
     "apply_interpretation_map",
-    &interpret::applyInterpretationMap,
+    &Interpret::applyInterpretationMap,
     pybind11::arg("component_map"),
     pybind11::arg("atom_collection"),
     R"delim(
@@ -176,7 +176,7 @@ void init_interpret(pybind11::module& m) {
     )delim"
   );
 
-  pybind11::class_<interpret::GraphsResult> graphsResult(
+  pybind11::class_<Interpret::GraphsResult> graphsResult(
     interpretSubmodule,
     "GraphsResult",
     "Result type of a graph interpret call."
@@ -184,7 +184,7 @@ void init_interpret(pybind11::module& m) {
 
   graphsResult.def_readwrite(
     "graphs",
-    &interpret::GraphsResult::graphs,
+    &Interpret::GraphsResult::graphs,
     R"delim(
       Individual graphs found in the 3D information.
 
@@ -194,7 +194,7 @@ void init_interpret(pybind11::module& m) {
 
   graphsResult.def_readwrite(
     "component_map",
-    &interpret::GraphsResult::componentMap,
+    &Interpret::GraphsResult::componentMap,
     R"delim(
       Mapping of atom indices from the original positional information to which
       molecule it is now part.
@@ -208,8 +208,8 @@ void init_interpret(pybind11::module& m) {
     pybind11::overload_cast<
       const AtomCollection&,
       const BondOrderCollection&,
-      interpret::BondDiscretizationOption
-    >(&interpret::graphs),
+      Interpret::BondDiscretizationOption
+    >(&Interpret::graphs),
     pybind11::arg("atom_collection"),
     pybind11::arg("bond_orders"),
     pybind11::arg("discretization"),

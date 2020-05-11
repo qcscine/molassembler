@@ -8,7 +8,7 @@
 #include "molassembler/Cycles.h"
 
 void init_cycles(pybind11::module& m) {
-  using namespace Scine::molassembler;
+  using namespace Scine::Molassembler;
   pybind11::class_<Cycles> cycles(
     m,
     "Cycles",

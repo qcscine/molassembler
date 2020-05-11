@@ -26,8 +26,8 @@
 namespace nlohmann {
 
 template<>
-struct adl_serializer<Scine::molassembler::SiteIndex> {
-  using Type = Scine::molassembler::SiteIndex;
+struct adl_serializer<Scine::Molassembler::SiteIndex> {
+  using Type = Scine::Molassembler::SiteIndex;
 
   static void to_json(json& j, const Type& value) {
     j = static_cast<unsigned>(value);
@@ -39,8 +39,8 @@ struct adl_serializer<Scine::molassembler::SiteIndex> {
 };
 
 template<>
-struct adl_serializer<Scine::molassembler::BondStereopermutator::Alignment> {
-  using Type = Scine::molassembler::BondStereopermutator::Alignment;
+struct adl_serializer<Scine::Molassembler::BondStereopermutator::Alignment> {
+  using Type = Scine::Molassembler::BondStereopermutator::Alignment;
   using Underlying = std::underlying_type_t<Type>;
 
   static void to_json(json& j, const Type& value) {
@@ -55,8 +55,8 @@ struct adl_serializer<Scine::molassembler::BondStereopermutator::Alignment> {
 };
 
 template<>
-struct adl_serializer<Scine::molassembler::AtomEnvironmentComponents> {
-  using Type = Scine::molassembler::AtomEnvironmentComponents;
+struct adl_serializer<Scine::Molassembler::AtomEnvironmentComponents> {
+  using Type = Scine::Molassembler::AtomEnvironmentComponents;
   using Underlying = std::underlying_type_t<Type>;
 
   static void to_json(json& j, const Type& value) {
@@ -111,8 +111,8 @@ struct adl_serializer<Scine::Utils::ElementTypeCollection> {
 };
 
 template<>
-struct adl_serializer<Scine::molassembler::RankingInformation::Link> {
-  using Type = Scine::molassembler::RankingInformation::Link;
+struct adl_serializer<Scine::Molassembler::RankingInformation::Link> {
+  using Type = Scine::Molassembler::RankingInformation::Link;
 
   static void to_json(json& j, const Type& link) {
     j["p"] = json::array();
@@ -143,8 +143,8 @@ struct adl_serializer<Scine::molassembler::RankingInformation::Link> {
 };
 
 template<>
-struct adl_serializer<Scine::molassembler::RankingInformation> {
-  using Type = Scine::molassembler::RankingInformation;
+struct adl_serializer<Scine::Molassembler::RankingInformation> {
+  using Type = Scine::Molassembler::RankingInformation;
 
   static void to_json(json& j, const Type& ranking) {
     j["s"] = ranking.substituentRanking;
@@ -160,7 +160,7 @@ struct adl_serializer<Scine::molassembler::RankingInformation> {
     ranking.substituentRanking.reserve(j["s"].size());
 
     for(const auto& listJSON : j["s"]) {
-      std::vector<Scine::molassembler::AtomIndex> subGroup;
+      std::vector<Scine::Molassembler::AtomIndex> subGroup;
       for(const auto& listElementJSON : listJSON) {
         subGroup.push_back(listElementJSON);
       }
@@ -178,7 +178,7 @@ struct adl_serializer<Scine::molassembler::RankingInformation> {
 
     ranking.sites.reserve(j["l"].size());
     for(const auto& listJSON : j["l"]) {
-      std::vector<Scine::molassembler::AtomIndex> siteConstitutingAtoms;
+      std::vector<Scine::Molassembler::AtomIndex> siteConstitutingAtoms;
       for(const auto& listElementJSON : listJSON) {
         siteConstitutingAtoms.push_back(listElementJSON);
       }
@@ -187,7 +187,7 @@ struct adl_serializer<Scine::molassembler::RankingInformation> {
 
     ranking.siteRanking.reserve(j["lr"].size());
     for(const auto& listJSON : j["lr"]) {
-      std::vector<Scine::molassembler::SiteIndex> equalSiteIndices;
+      std::vector<Scine::Molassembler::SiteIndex> equalSiteIndices;
       for(const auto& listElementJSON : listJSON) {
         equalSiteIndices.push_back(listElementJSON);
       }
@@ -197,11 +197,11 @@ struct adl_serializer<Scine::molassembler::RankingInformation> {
 };
 
 template<>
-struct adl_serializer<Scine::molassembler::Graph> {
-  using Type = Scine::molassembler::Graph;
+struct adl_serializer<Scine::Molassembler::Graph> {
+  using Type = Scine::Molassembler::Graph;
 
   static void to_json(json& j, const Type& graph) {
-    const Scine::molassembler::PrivateGraph& inner = graph.inner();
+    const Scine::Molassembler::PrivateGraph& inner = graph.inner();
 
     j["Z"] = json::array();
     auto& elements = j["Z"];
@@ -217,7 +217,7 @@ struct adl_serializer<Scine::molassembler::Graph> {
     auto& edges = j["E"];
 
     for(
-      const Scine::molassembler::PrivateGraph::Edge& edgeDescriptor :
+      const Scine::Molassembler::PrivateGraph::Edge& edgeDescriptor :
       inner.edges()
     ) {
       json e = json::array();
@@ -244,7 +244,7 @@ struct adl_serializer<Scine::molassembler::Graph> {
   static void from_json(const json& j, Type& graph) {
     const unsigned N = j["Z"].size();
 
-    Scine::molassembler::PrivateGraph inner (N);
+    Scine::Molassembler::PrivateGraph inner (N);
 
     for(unsigned i = 0; i < N; ++i) {
       inner.elementType(i) = j["Z"].at(i);
@@ -254,7 +254,7 @@ struct adl_serializer<Scine::molassembler::Graph> {
       inner.addEdge(
         edgeJSON.at(0),
         edgeJSON.at(1),
-        static_cast<Scine::molassembler::BondType>(
+        static_cast<Scine::Molassembler::BondType>(
           edgeJSON.at(2)
         )
       );
@@ -268,7 +268,7 @@ struct adl_serializer<Scine::molassembler::Graph> {
 
 namespace Scine {
 
-namespace molassembler {
+namespace Molassembler {
 
 // Top level keys into molecule json object, for easier reading
 constexpr const char* atomStereopermutatorKey = "a";
@@ -280,7 +280,7 @@ constexpr const char* canonicalKey = "c";
 namespace {
 
 void sortAtomStereopermutatorsByCentralIndex(nlohmann::json& m) {
-  temple::inplace::sort(
+  Temple::inplace::sort(
     m.at(atomStereopermutatorKey),
     [&](const nlohmann::json& lhs, const nlohmann::json& rhs) -> bool {
       assert(lhs.count("c") > 0 && rhs.count("c") > 0);
@@ -305,7 +305,7 @@ void standardizeAtomStereopermutatorRepresentation(nlohmann::json& permutator) {
   assert(sortedSubstituents.is_array());
   for(json& subList : sortedSubstituents) {
     assert(subList.is_array());
-    temple::inplace::sort(subList);
+    Temple::inplace::sort(subList);
   }
 
   // Sort ligands' sub-lists
@@ -314,7 +314,7 @@ void standardizeAtomStereopermutatorRepresentation(nlohmann::json& permutator) {
   assert(ligands.is_array());
   for(json& subList : ligands) {
     assert(subList.is_array());
-    temple::inplace::sort(subList);
+    Temple::inplace::sort(subList);
   }
 
   /* Sort ligands lists lexicographically (and their ranking
@@ -325,11 +325,11 @@ void standardizeAtomStereopermutatorRepresentation(nlohmann::json& permutator) {
   assert(ligandsRanking.is_array());
 
   json unsortedLigands = ligands;
-  temple::inplace::sort(ligands);
+  Temple::inplace::sort(ligands);
 
   auto newLigandIndex = [&](unsigned oldLigandIndex) -> unsigned {
     const auto& ligandIndices = unsortedLigands.at(oldLigandIndex);
-    auto findIter = temple::find(ligands, ligandIndices);
+    auto findIter = Temple::find(ligands, ligandIndices);
     assert(findIter != std::end(ligands));
     return findIter - std::begin(ligands);
   };
@@ -341,7 +341,7 @@ void standardizeAtomStereopermutatorRepresentation(nlohmann::json& permutator) {
     }
 
     // Sort the sub list, too
-    temple::inplace::sort(equallyRankedLigandsList);
+    Temple::inplace::sort(equallyRankedLigandsList);
   }
 
   // Changing ligands also means that links' ligand indices have to be adapted
@@ -363,7 +363,7 @@ void standardizeAtomStereopermutatorRepresentation(nlohmann::json& permutator) {
     }
 
     // Sort links by their index pair
-    temple::inplace::sort(
+    Temple::inplace::sort(
       links,
       [](const json& lhs, const json& rhs) -> bool {
         assert(lhs.is_object() && lhs.count("p") > 0);
@@ -376,7 +376,7 @@ void standardizeAtomStereopermutatorRepresentation(nlohmann::json& permutator) {
 }
 
 void sortBondStereopermutatorsByEdge(nlohmann::json& m) {
-  temple::inplace::sort(
+  Temple::inplace::sort(
     m.at(bondStereopermutatorKey),
     [&](const nlohmann::json& lhs, const nlohmann::json& rhs) -> bool {
       assert(lhs.count("e") > 0 && rhs.count("e") > 0);
@@ -422,7 +422,7 @@ void standardizeJSON(nlohmann::json& m) {
   }
 
   /* Sort the list of edges */
-  temple::inplace::sort(m.at(graphKey).at("E"));
+  Temple::inplace::sort(m.at(graphKey).at("E"));
 }
 
 nlohmann::json serialize(const Molecule& molecule) {
@@ -431,7 +431,7 @@ nlohmann::json serialize(const Molecule& molecule) {
   json m;
 
   // Add a version tag. Always serialize to the newest version information
-  m[versionKey] = {version::major, version::minor, version::patch};
+  m[versionKey] = {Version::major, Version::minor, Version::patch};
 
   m[graphKey] = molecule.graph();
 
@@ -447,7 +447,7 @@ nlohmann::json serialize(const Molecule& molecule) {
       json s;
 
       s["c"] = stereopermutator.placement();
-      s["s"] = shapes::nameIndex(stereopermutator.getShape());
+      s["s"] = Shapes::nameIndex(stereopermutator.getShape());
       s["r"] = stereopermutator.getRanking();
 
       if(stereopermutator.assigned()) {
@@ -492,7 +492,7 @@ Molecule deserialize(const nlohmann::json& m) {
    */
   // Ensure the future hasn't come yet
   static_assert(
-    version::major <= 1,
+    Version::major <= 1,
     "Incrementing the major version past 1 requires that you look at JSON deserialization!"
   );
 
@@ -508,7 +508,7 @@ Molecule deserialize(const nlohmann::json& m) {
   // Atom stereopermutators
   if(m.count(atomStereopermutatorKey) > 0) {
     for(const auto& j : m[atomStereopermutatorKey]) {
-      shapes::Shape shape = shapes::allShapes.at(j["s"]);
+      Shapes::Shape shape = Shapes::allShapes.at(j["s"]);
       AtomIndex placement = j["c"];
 
       auto stereopermutator = AtomStereopermutator {
@@ -689,6 +689,6 @@ JsonSerialization& JsonSerialization::standardize() {
   return *this;
 }
 
-} // namespace molassembler
+} // namespace Molassembler
 
 } // namespace Scine

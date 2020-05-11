@@ -26,7 +26,7 @@ unsigned int ackermann(unsigned int m, unsigned int n) {
 class Foo {
 private:
   /* 2 */
-  mutable temple::Cache<std::string> cache_ {
+  mutable Temple::Cache<std::string> cache_ {
     std::make_pair(
       "bigNumber",
       [this]() {
@@ -60,7 +60,7 @@ BOOST_AUTO_TEST_CASE( cache_all ) {
   using namespace std::string_literals;
 
   /* 1 */
-  temple::Cache<std::string> cache;
+  Temple::Cache<std::string> cache;
 
   /* 3 */
   std::vector<std::string> keys {"number", "string", "vector"};

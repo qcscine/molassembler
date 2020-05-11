@@ -16,9 +16,9 @@
 
 namespace Scine {
 
-namespace molassembler {
+namespace Molassembler {
 
-namespace distance_geometry {
+namespace DistanceGeometry {
 
 constexpr double DistanceBoundsMatrix::defaultLower;
 constexpr double DistanceBoundsMatrix::defaultUpper;
@@ -133,7 +133,7 @@ const Eigen::MatrixXd& DistanceBoundsMatrix::access() const {
   return matrix_;
 }
 
-outcome::result<Eigen::MatrixXd> DistanceBoundsMatrix::makeDistanceMatrix(random::Engine& engine, Partiality partiality) const noexcept {
+outcome::result<Eigen::MatrixXd> DistanceBoundsMatrix::makeDistanceMatrix(Random::Engine& engine, Partiality partiality) const noexcept {
   auto matrixCopy = matrix_;
 
   const unsigned N = matrix_.cols();
@@ -145,7 +145,7 @@ outcome::result<Eigen::MatrixXd> DistanceBoundsMatrix::makeDistanceMatrix(random
     0
   );
 
-  temple::random::shuffle(indices, engine);
+  Temple::Random::shuffle(indices, engine);
 
   std::vector<AtomIndex>::const_iterator separator;
 
@@ -172,7 +172,7 @@ outcome::result<Eigen::MatrixXd> DistanceBoundsMatrix::makeDistanceMatrix(random
         return DgError::GraphImpossible;
       }
 
-      double chosenDistance = temple::random::getSingle<double>(
+      double chosenDistance = Temple::Random::getSingle<double>(
         lowerBound(matrixCopy, i, j),
         upperBound(matrixCopy, i, j),
         engine
@@ -202,7 +202,7 @@ outcome::result<Eigen::MatrixXd> DistanceBoundsMatrix::makeDistanceMatrix(random
        *
        * TODO this is an atrocious access pattern (see impl of lowerBound)
        */
-      double chosenDistance = temple::random::getSingle<double>(
+      double chosenDistance = Temple::Random::getSingle<double>(
         std::min(
           lowerBound(matrixCopy, i, j),
           upperBound(matrixCopy, i, j)
@@ -230,8 +230,8 @@ unsigned DistanceBoundsMatrix::N() const {
   return matrix_.cols();
 }
 
-} // namespace distance_geometry
+} // namespace DistanceGeometry
 
-} // namespace molassembler
+} // namespace Molassembler
 
 } // namespace Scine

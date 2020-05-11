@@ -7,8 +7,8 @@
 #include "molassembler/DistanceGeometry/DistanceGeometry.h"
 
 namespace Scine {
-namespace molassembler {
-namespace distance_geometry {
+namespace Molassembler {
+namespace DistanceGeometry {
 
 ChiralConstraint::ChiralConstraint(
   SiteSequence passSites,

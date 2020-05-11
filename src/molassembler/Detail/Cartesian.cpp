@@ -12,7 +12,7 @@
 #include <array>
 
 namespace Scine {
-namespace molassembler {
+namespace Molassembler {
 namespace cartesian {
 
 bool validPositionIndices(
@@ -20,7 +20,7 @@ bool validPositionIndices(
   const std::vector<AtomIndex>& indices
 ) {
   const unsigned nRows = positions.rows();
-  return temple::all_of(
+  return Temple::all_of(
     indices,
     [&](const AtomIndex i) -> bool {
       return i < nRows;
@@ -154,5 +154,5 @@ double rmsPlaneDeviation(
 }
 
 } // namespace cartesian
-} // namespace molassembler
+} // namespace Molassembler
 } // namespace Scine

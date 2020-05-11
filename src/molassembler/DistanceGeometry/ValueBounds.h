@@ -12,9 +12,9 @@
 
 namespace Scine {
 
-namespace molassembler {
+namespace Molassembler {
 
-namespace distance_geometry {
+namespace DistanceGeometry {
 
 /* Exchanged types */
 /**
@@ -64,9 +64,9 @@ struct ValueBounds {
   bool operator != (const ValueBounds& other) const;
 };
 
-} // namespace distance_geometry
+} // namespace DistanceGeometry
 
-} // namespace molassembler
+} // namespace Molassembler
 
 } // namespace Scine
 

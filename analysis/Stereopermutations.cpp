@@ -23,7 +23,7 @@ std::ostream& nl(std::ostream& os) {
 }
 
 using namespace Scine;
-using namespace stereopermutation;
+using namespace Stereopermutations;
 using namespace std::string_literals;
 
 int main(int argc, char* argv[]) {
@@ -73,8 +73,8 @@ int main(int argc, char* argv[]) {
     std::cout << "Note: The links list is stripped of anything not a comma or number,  split by commas and parsed pairwise." << nl;
 
     std::cout << nl << "Valid shape indices:" << nl << nl;
-    for(unsigned i = 0; i < shapes::allShapes.size(); i++) {
-      std::cout << std::setw(4) << i << " - " << shapes::name(shapes::allShapes.at(i)) << nl;
+    for(unsigned i = 0; i < Shapes::allShapes.size(); i++) {
+      std::cout << std::setw(4) << i << " - " << Shapes::name(Shapes::allShapes.at(i)) << nl;
     }
     std::cout << nl;
     return 0;
@@ -83,25 +83,25 @@ int main(int argc, char* argv[]) {
   if(options_variables_map.count("shape") > 0 && options_variables_map.count("characters") > 0) {
     // Validate shape argument
     unsigned argSymmetry = options_variables_map["shape"].as<unsigned>();
-    if(argSymmetry >= shapes::allShapes.size()) {
+    if(argSymmetry >= Shapes::allShapes.size()) {
       std::cout << "Specified shape out of bounds. Valid shapes are 0-"
-        << (shapes::allShapes.size() - 1) << ":" << nl << nl;
-      for(unsigned i = 0; i < shapes::allShapes.size(); i++) {
-        std::cout << "  " << i << " - " << shapes::name(shapes::allShapes.at(i)) << nl;
+        << (Shapes::allShapes.size() - 1) << ":" << nl << nl;
+      for(unsigned i = 0; i < Shapes::allShapes.size(); i++) {
+        std::cout << "  " << i << " - " << Shapes::name(Shapes::allShapes.at(i)) << nl;
       }
       std::cout << nl;
       return 0;
     }
 
-    shapes::Shape shape = shapes::allShapes[argSymmetry];
+    Shapes::Shape shape = Shapes::allShapes[argSymmetry];
 
     // Validate characters
     std::string chars = options_variables_map["characters"].as<std::string>();
 
-    if(chars.size() != shapes::size(shape)) {
+    if(chars.size() != Shapes::size(shape)) {
       std::cout << "Number of characters does not fit specified shape size: "
         << chars.size() << " characters specified, shape size is "
-        << shapes::size(shape) << nl;
+        << Shapes::size(shape) << nl;
 
       return 0;
     }
@@ -172,11 +172,11 @@ int main(int argc, char* argv[]) {
 
     auto unique = uniques(base, shape, false);
 
-    std::cout << "Shape: " << shapes::name(shape) << nl
+    std::cout << "Shape: " << Shapes::name(shape) << nl
       << "Characters: " << chars << nl;
 
     if(!links.empty()) {
-      std::cout << "Links: " << temple::stringifyContainer(
+      std::cout << "Links: " << Temple::stringifyContainer(
         links,
         [](const Stereopermutation::Link link) -> std::string {
           return "{"s + std::to_string(link.first) + ", "s + std::to_string(link.second) + "}"s;
@@ -196,7 +196,7 @@ int main(int argc, char* argv[]) {
 
       for(const auto& linkPair : unique.list[i].links) {
         std::cout << (
-          180 * shapes::angleFunction(shape)(linkPair.first, linkPair.second) / M_PI
+          180 * Shapes::angleFunction(shape)(linkPair.first, linkPair.second) / M_PI
         ) << " ";
       }
       std::cout << nl;

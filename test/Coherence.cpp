@@ -27,7 +27,7 @@
 
 using namespace std::string_literals;
 using namespace Scine;
-using namespace molassembler;
+using namespace Molassembler;
 
 // NOTE: Shows atom stereopermutator differences only
 void explainDifference(
@@ -52,8 +52,8 @@ void explainDifference(
  */
 BOOST_FIXTURE_TEST_CASE(AtomStereopermutationCGFitCoherence, LowTemperatureFixture) {
   using namespace Scine;
-  distance_geometry::Configuration DgConfiguration;
-  DgConfiguration.partiality = distance_geometry::Partiality::All;
+  DistanceGeometry::Configuration DgConfiguration;
+  DgConfiguration.partiality = DistanceGeometry::Partiality::All;
 
   const std::array<Utils::ElementType, 9> elements {
     Utils::ElementType::F,
@@ -75,8 +75,8 @@ BOOST_FIXTURE_TEST_CASE(AtomStereopermutationCGFitCoherence, LowTemperatureFixtu
 
   constexpr unsigned ensembleSize = 10;
 
-  for(const auto& shape: shapes::allShapes) {
-    if(shapes::size(shape) > shapeSizeLimit) {
+  for(const auto& shape: Shapes::allShapes) {
+    if(Shapes::size(shape) > shapeSizeLimit) {
       continue;
     }
 
@@ -87,7 +87,7 @@ BOOST_FIXTURE_TEST_CASE(AtomStereopermutationCGFitCoherence, LowTemperatureFixtu
       BondType::Single
     );
 
-    for(unsigned i = 0; molecule.graph().N() - 1 < shapes::size(shape); ++i) {
+    for(unsigned i = 0; molecule.graph().N() - 1 < Shapes::size(shape); ++i) {
       molecule.addAtom(
         elements.at(i),
         0,
@@ -99,10 +99,10 @@ BOOST_FIXTURE_TEST_CASE(AtomStereopermutationCGFitCoherence, LowTemperatureFixtu
 
     auto centralStereopermutator = molecule.stereopermutators().option(0);
     assert(centralStereopermutator);
-    auto assignments = temple::iota<unsigned>(centralStereopermutator->numAssignments());
+    auto assignments = Temple::iota<unsigned>(centralStereopermutator->numAssignments());
 
     // Randomize
-    temple::random::shuffle(assignments, randomnessEngine());
+    Temple::Random::shuffle(assignments, randomnessEngine());
 
     /* Limit the number of assignments we're testing per shape to 10.
      * Otherwise, with maximally asymmetric square antiprismatic (5040),
@@ -119,7 +119,7 @@ BOOST_FIXTURE_TEST_CASE(AtomStereopermutationCGFitCoherence, LowTemperatureFixtu
       molecule.assignStereopermutator(0, assignment);
 
       // For each possible arrangement of these ligands, create an ensemble
-      auto ensemble = distance_geometry::run(
+      auto ensemble = DistanceGeometry::run(
         molecule,
         ensembleSize,
         DgConfiguration,
@@ -155,23 +155,23 @@ BOOST_FIXTURE_TEST_CASE(AtomStereopermutationCGFitCoherence, LowTemperatureFixtu
           );
 
           std::string filename = (
-            "shape_" + std::to_string(shapes::nameIndex(shape))
+            "shape_" + std::to_string(Shapes::nameIndex(shape))
             + "_" + std::to_string(assignment)
             + "_mismatch_" + std::to_string(mismatches)
             + ".mol"
           );
-          io::write(filename, molecule, positionResult.value());
+          IO::write(filename, molecule, positionResult.value());
           ++mismatches;
         }
       }
 
       if(matches != ensembleSize && matchingPositions) {
         std::string filename = (
-          "shape_" + std::to_string(shapes::nameIndex(shape))
+          "shape_" + std::to_string(Shapes::nameIndex(shape))
           + "_" + std::to_string(assignment)
           + "match_.mol"
         );
-        io::write(
+        IO::write(
           filename,
           molecule,
           matchingPositions.value()
@@ -188,7 +188,7 @@ BOOST_FIXTURE_TEST_CASE(AtomStereopermutationCGFitCoherence, LowTemperatureFixtu
 
 void testIdenticalReinterpret(const Molecule& mol, const AtomIndex checkPosition) {
   auto fetchAssignment = [&](const Molecule& molecule) {
-    return temple::optionals::flatMap(
+    return Temple::optionals::flatMap(
       molecule.stereopermutators().option(checkPosition),
       [](const auto& f) { return f.assigned(); }
     );
@@ -210,8 +210,8 @@ void testIdenticalReinterpret(const Molecule& mol, const AtomIndex checkPosition
 BOOST_AUTO_TEST_CASE(BidentateAssignmentRecognized) {
   const std::string pincer_smiles = "[Ir]12([H])(Cl)P(C(C)(C)(C))(C(C)(C)(C))CC(=CC=C3)C1=C3CP2(C(C)(C)(C))C(C)(C)C";
   // NOTE: set shape at 0 to trigonal bipyramid
-  auto pincer = io::experimental::parseSmilesSingleMolecule(pincer_smiles);
-  pincer.setShapeAtAtom(0, shapes::Shape::TrigonalBipyramid);
+  auto pincer = IO::experimental::parseSmilesSingleMolecule(pincer_smiles);
+  pincer.setShapeAtAtom(0, Shapes::Shape::TrigonalBipyramid);
 
   // Find an assignment in which the phoshorus atoms are trans-arranged
   boost::optional<unsigned> expectedAssignmentOption;
@@ -247,9 +247,9 @@ BOOST_AUTO_TEST_CASE(BidentateAssignmentRecognized) {
 
 BOOST_AUTO_TEST_CASE(Shipscrews) {
   const std::string shipscrew_smiles = "[Fe@OH1+3]123(OC(=O)C(=O)O1)(OC(=O)C(=O)O2)OC(=O)C(=O)O3";
-  auto shipscrew = io::experimental::parseSmilesSingleMolecule(shipscrew_smiles);
+  auto shipscrew = IO::experimental::parseSmilesSingleMolecule(shipscrew_smiles);
 
-  const auto numAssignments = temple::optionals::flatMap(
+  const auto numAssignments = Temple::optionals::flatMap(
     shipscrew.stereopermutators().option(0),
     [](const auto& p) { return p.numAssignments(); }
   );

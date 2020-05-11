@@ -25,7 +25,7 @@
 #include <iomanip>
 
 using namespace Scine;
-using namespace molassembler;
+using namespace Molassembler;
 
 constexpr size_t nExperiments = 10;
 
@@ -37,8 +37,8 @@ std::ostream& nl(std::ostream& os) {
 template<typename TimingCallable, size_t N>
 std::pair<double, double> timeFunctor(
   const Molecule& molecule,
-  const distance_geometry::SpatialModel::BoundsMatrix& bounds,
-  distance_geometry::Partiality partiality
+  const DistanceGeometry::SpatialModel::BoundsMatrix& bounds,
+  DistanceGeometry::Partiality partiality
 ) {
   using namespace std::chrono;
 
@@ -57,11 +57,11 @@ std::pair<double, double> timeFunctor(
     timings.at(n) = duration_cast<nanoseconds>(end - start).count();
   }
 
-  auto average = temple::average(timings);
+  auto average = Temple::average(timings);
 
   return {
     average,
-    temple::stddev(timings, average)
+    Temple::stddev(timings, average)
   };
 }
 
@@ -69,8 +69,8 @@ template<class Graph>
 struct Gor1Functor {
   Eigen::MatrixXd operator() (
     const Molecule& molecule,
-    distance_geometry::SpatialModel::BoundsMatrix boundsMatrix,
-    distance_geometry::Partiality partiality
+    DistanceGeometry::SpatialModel::BoundsMatrix boundsMatrix,
+    DistanceGeometry::Partiality partiality
   ) {
 
     Graph graph {molecule.graph().inner(), std::move(boundsMatrix)};
@@ -86,10 +86,10 @@ struct Gor1Functor {
 struct DBM_FW_Functor {
   Eigen::MatrixXd operator() (
     const Molecule& molecule,
-    distance_geometry::SpatialModel::BoundsMatrix boundsMatrix,
-    distance_geometry::Partiality partiality
+    DistanceGeometry::SpatialModel::BoundsMatrix boundsMatrix,
+    DistanceGeometry::Partiality partiality
   ) {
-    distance_geometry::DistanceBoundsMatrix bounds {molecule.graph().inner(), std::move(boundsMatrix)};
+    DistanceGeometry::DistanceBoundsMatrix bounds {molecule.graph().inner(), std::move(boundsMatrix)};
 
     bounds.smooth();
 
@@ -141,15 +141,15 @@ void benchmark(
   const boost::filesystem::path& filePath,
   std::ofstream& benchmarkFile,
   Algorithm algorithmChoice,
-  distance_geometry::Partiality partiality
+  DistanceGeometry::Partiality partiality
 ) {
-  using namespace molassembler;
+  using namespace Molassembler;
 
-  Molecule sampleMol = io::read(
+  Molecule sampleMol = IO::read(
     filePath.string()
   );
 
-  distance_geometry::SpatialModel spatialModel {sampleMol, distance_geometry::Configuration {}};
+  DistanceGeometry::SpatialModel spatialModel {sampleMol, DistanceGeometry::Configuration {}};
 
   const auto boundsMatrix = spatialModel.makePairwiseBounds();
 
@@ -196,7 +196,7 @@ void benchmark(
 
   if(algorithmChoice == Algorithm::All || algorithmChoice == Algorithm::ExplicitGor) {
     auto timings = timeFunctor<
-      Gor1Functor<distance_geometry::ExplicitBoundsGraph>,
+      Gor1Functor<DistanceGeometry::ExplicitBoundsGraph>,
       nExperiments
     >(sampleMol, boundsMatrix, partiality);
 
@@ -207,7 +207,7 @@ void benchmark(
 
   if(algorithmChoice == Algorithm::All || algorithmChoice == Algorithm::ImplicitGor) {
     auto timings = timeFunctor<
-      Gor1Functor<distance_geometry::ImplicitBoundsGraph>,
+      Gor1Functor<DistanceGeometry::ImplicitBoundsGraph>,
       nExperiments
     >(sampleMol, boundsMatrix, partiality);
 
@@ -254,7 +254,7 @@ const std::string partialityChoices =
   "  2 - All (default)\n";
 
 int main(int argc, char* argv[]) {
-  using namespace molassembler;
+  using namespace Molassembler;
 
   // Set up option parsing
   boost::program_options::options_description options_description("Recognized options");
@@ -299,7 +299,7 @@ int main(int argc, char* argv[]) {
     choice = static_cast<Algorithm>(combination);
   }
 
-  distance_geometry::Partiality partiality = distance_geometry::Partiality::All;
+  DistanceGeometry::Partiality partiality = DistanceGeometry::Partiality::All;
   if(options_variables_map.count("p") > 0) {
     unsigned index =  options_variables_map["p"].as<unsigned>();
 
@@ -309,7 +309,7 @@ int main(int argc, char* argv[]) {
       return 0;
     }
 
-    partiality = static_cast<distance_geometry::Partiality>(index);
+    partiality = static_cast<DistanceGeometry::Partiality>(index);
   }
 
   // Benchmark everything

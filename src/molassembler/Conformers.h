@@ -14,14 +14,14 @@
 #include <vector>
 
 namespace Scine {
-namespace molassembler {
+namespace Molassembler {
 
 namespace outcome = OUTCOME_V2_NAMESPACE;
 
 // Forward-declarations
 class Molecule;
 
-namespace distance_geometry {
+namespace DistanceGeometry {
 
 /**
  * @brief Limit triangle inequality bounds smoothing to a subset of all atoms
@@ -129,7 +129,7 @@ struct MASM_EXPORT Configuration {
   > fixedPositions;
 };
 
-} // namespace distance_geometry
+} // namespace DistanceGeometry
 
 /*! @brief Generate multiple sets of positional data for a Molecule
  *
@@ -176,7 +176,7 @@ struct MASM_EXPORT Configuration {
  * unsigned conformerIndex = 0;
  * for(auto& conformerResult : ensemble) {
  *   if(conformerResult) {
- *     io::write(
+ *     IO::write(
  *       std::to_string(conformerIndex) + ".mol",
  *       mol,
  *       conformerResult.value()
@@ -194,7 +194,7 @@ MASM_EXPORT std::vector<
 > generateRandomEnsemble(
   const Molecule& molecule,
   unsigned numStructures,
-  const distance_geometry::Configuration& configuration = distance_geometry::Configuration {}
+  const DistanceGeometry::Configuration& configuration = DistanceGeometry::Configuration {}
 );
 
 /*! @brief Generate multiple sets of positional data for a Molecule
@@ -242,7 +242,7 @@ MASM_EXPORT std::vector<
   const Molecule& molecule,
   unsigned numStructures,
   unsigned seed,
-  const distance_geometry::Configuration& configuration = distance_geometry::Configuration {}
+  const DistanceGeometry::Configuration& configuration = DistanceGeometry::Configuration {}
 );
 
 /*! @brief Generate a 3D structure of a Molecule
@@ -267,7 +267,7 @@ MASM_EXPORT std::vector<
  */
 MASM_EXPORT outcome::result<Utils::PositionCollection> generateRandomConformation(
   const Molecule& molecule,
-  const distance_geometry::Configuration& configuration = distance_geometry::Configuration {}
+  const DistanceGeometry::Configuration& configuration = DistanceGeometry::Configuration {}
 );
 
 /*! @brief Generate a 3D structure of a Molecule
@@ -292,10 +292,10 @@ MASM_EXPORT outcome::result<Utils::PositionCollection> generateRandomConformatio
 MASM_EXPORT outcome::result<Utils::PositionCollection> generateConformation(
   const Molecule& molecule,
   unsigned seed,
-  const distance_geometry::Configuration& configuration = distance_geometry::Configuration {}
+  const DistanceGeometry::Configuration& configuration = DistanceGeometry::Configuration {}
 );
 
-} // namespace molassembler
+} // namespace Molassembler
 } // namespace Scine
 
 #endif

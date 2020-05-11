@@ -16,7 +16,7 @@
 #include "boost/variant.hpp"
 
 namespace Scine {
-namespace molassembler {
+namespace Molassembler {
 namespace {
 
 inline std::vector<unsigned> intersect(
@@ -505,12 +505,12 @@ struct Cycles::UrfIdsCycleIterator::UrfHelper {
       return idsIntersection;
     }
 
-    temple::inplace::sort(idsIntersection);
+    Temple::inplace::sort(idsIntersection);
 
     // Continually intersect idsIntersection with the URF IDs of the next bond
     for(unsigned i = 1; i < bonds.size(); ++i) {
       auto newIDs = getURFs(bonds[i], dataPtrs);
-      temple::inplace::sort(newIDs);
+      Temple::inplace::sort(newIDs);
 
       idsIntersection = intersect(idsIntersection, newIDs);
 
@@ -530,7 +530,7 @@ struct Cycles::UrfIdsCycleIterator::UrfHelper {
 
 
     bool operator() (const AtomIndex atom) const {
-      return temple::any_of(
+      return Temple::any_of(
         cycleReference,
         [&atom](const BondIndex& bond) -> bool {
           return bond.contains(atom);
@@ -539,9 +539,9 @@ struct Cycles::UrfIdsCycleIterator::UrfHelper {
     }
 
     bool operator() (const std::vector<BondIndex>& bonds) const {
-      return temple::all_of(
+      return Temple::all_of(
         bonds,
-        temple::makeContainsPredicate(cycleReference)
+        Temple::makeContainsPredicate(cycleReference)
       );
     }
   };
@@ -902,5 +902,5 @@ unsigned countPlanarityEnforcingBonds(
   );
 }
 
-} // namespace molassembler
+} // namespace Molassembler
 } // namespace Scine

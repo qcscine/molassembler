@@ -9,7 +9,7 @@
 #include "molassembler/AtomStereopermutator.h"
 
 void init_atom_stereopermutator(pybind11::module& m) {
-  using namespace Scine::molassembler;
+  using namespace Scine::Molassembler;
   pybind11::class_<AtomStereopermutator> atomStereopermutator(
     m,
     "AtomStereopermutator",

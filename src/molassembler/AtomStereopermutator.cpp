@@ -9,12 +9,12 @@
 #include "molassembler/Graph.h"
 
 namespace Scine {
-namespace molassembler {
+namespace Molassembler {
 
 /* AtomStereopermutator implementations */
 AtomStereopermutator::AtomStereopermutator(
   const Graph& graph,
-  const shapes::Shape shape,
+  const Shapes::Shape shape,
   const AtomIndex centerAtom,
   RankingInformation ranking
 ) : pImpl_(
@@ -39,11 +39,11 @@ AtomStereopermutator& AtomStereopermutator::operator = (const AtomStereopermutat
 
 AtomStereopermutator::~AtomStereopermutator() = default;
 
-shapes::Shape AtomStereopermutator::up(const shapes::Shape shape) {
+Shapes::Shape AtomStereopermutator::up(const Shapes::Shape shape) {
   return Impl::up(shape);
 }
 
-shapes::Shape AtomStereopermutator::down(const shapes::Shape shape, const shapes::Vertex removedVertex) {
+Shapes::Shape AtomStereopermutator::down(const Shapes::Shape shape, const Shapes::Vertex removedVertex) {
   return Impl::down(shape, removedVertex);
 }
 
@@ -51,7 +51,7 @@ void AtomStereopermutator::assign(boost::optional<unsigned> assignment) {
   pImpl_->assign(std::move(assignment));
 }
 
-void AtomStereopermutator::assignRandom(random::Engine& engine) {
+void AtomStereopermutator::assignRandom(Random::Engine& engine) {
   pImpl_->assignRandom(engine);
 }
 
@@ -69,7 +69,7 @@ void AtomStereopermutator::fit(
 boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::propagate(
   const Graph& graph,
   RankingInformation newRanking,
-  boost::optional<shapes::Shape> shapeOption
+  boost::optional<Shapes::Shape> shapeOption
 ) {
   return pImpl_->propagate(
     graph,
@@ -83,7 +83,7 @@ void AtomStereopermutator::propagateVertexRemoval(const AtomIndex removedIndex) 
 }
 
 void AtomStereopermutator::setShape(
-  const shapes::Shape shape,
+  const Shapes::Shape shape,
   const Graph& graph
 ) {
   pImpl_->setShape(shape, graph);
@@ -126,11 +126,11 @@ std::vector<std::vector<SiteIndex>> AtomStereopermutator::siteGroups() const {
   return pImpl_->siteGroups();
 }
 
-const stereopermutators::Abstract& AtomStereopermutator::getAbstract() const {
+const Stereopermutators::Abstract& AtomStereopermutator::getAbstract() const {
   return pImpl_->getAbstract();
 }
 
-const stereopermutators::Feasible& AtomStereopermutator::getFeasible() const {
+const Stereopermutators::Feasible& AtomStereopermutator::getFeasible() const {
   return pImpl_->getFeasible();
 }
 
@@ -138,7 +138,7 @@ const RankingInformation& AtomStereopermutator::getRanking() const {
   return pImpl_->getRanking();
 }
 
-shapes::Shape AtomStereopermutator::getShape() const {
+Shapes::Shape AtomStereopermutator::getShape() const {
   return pImpl_->getShape();
 }
 
@@ -166,5 +166,5 @@ bool AtomStereopermutator::operator < (const AtomStereopermutator& other) const 
   return *pImpl_ < *other.pImpl_;
 }
 
-} // namespace molassembler
+} // namespace Molassembler
 } // namespace Scine

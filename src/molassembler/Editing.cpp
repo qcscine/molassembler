@@ -19,7 +19,7 @@
 #include "molassembler/Temple/Functional.h"
 
 namespace Scine {
-namespace molassembler {
+namespace Molassembler {
 namespace {
 
 /**
@@ -238,7 +238,7 @@ std::pair<Molecule, Molecule> Editing::cleave(const Molecule& a, const BondIndex
         return;
       }
 
-      boost::optional<shapes::Shape> shapeOption;
+      boost::optional<Shapes::Shape> shapeOption;
       if(Options::shapeTransition == ShapeTransition::PrioritizeInferenceFromGraph) {
         shapeOption = molecule.inferShape(notifyIndex, localRanking);
       }
@@ -337,7 +337,7 @@ Molecule Editing::insert(
    * - Wedge's stereopermutator on the new index for the wedge index needs to
    *   be notified that it has a new substituent
    */
-  auto iota = temple::iota<AtomIndex>(logN);
+  auto iota = Temple::iota<AtomIndex>(logN);
   auto fixNewBond = [&](
     AtomIndex logSide,
     AtomIndex otherLogSide,
@@ -362,7 +362,7 @@ Molecule Editing::insert(
     if(auto permutatorOption = logStereopermutators.option(newWedgeIndex)) {
       auto localRanking = log.rankPriority(newWedgeIndex);
 
-      boost::optional<shapes::Shape> shapeOption;
+      boost::optional<Shapes::Shape> shapeOption;
       if(Options::shapeTransition == ShapeTransition::PrioritizeInferenceFromGraph) {
         shapeOption = log.inferShape(newWedgeIndex, localRanking);
       }
@@ -469,7 +469,7 @@ Molecule Editing::superpose(
     if(topPermutatorOption) {
       auto localRanking = top.rankPriority(topAtom);
 
-      boost::optional<shapes::Shape> shapeOption;
+      boost::optional<Shapes::Shape> shapeOption;
       if(Options::shapeTransition == ShapeTransition::PrioritizeInferenceFromGraph) {
         shapeOption = top.inferShape(topAtom, localRanking);
       }
@@ -523,7 +523,7 @@ Molecule Editing::substitute(
       return false;
     }
 
-    double aWeight = temple::accumulate(
+    double aWeight = Temple::accumulate(
       sideA,
       0.0,
       [&molecule](double carry, const AtomIndex i) -> double {
@@ -531,7 +531,7 @@ Molecule Editing::substitute(
       }
     );
 
-    double bWeight = temple::accumulate(
+    double bWeight = Temple::accumulate(
       sideB,
       0.0,
       [&molecule](double carry, const AtomIndex i) -> double {
@@ -565,10 +565,10 @@ Molecule Editing::substitute(
   }
 
   assert(
-    temple::makeContainsPredicate(leftHeavierSide)(leftHeavierBondSide)
+    Temple::makeContainsPredicate(leftHeavierSide)(leftHeavierBondSide)
   );
   assert(
-    temple::makeContainsPredicate(rightHeavierSide)(rightHeavierBondSide)
+    Temple::makeContainsPredicate(rightHeavierSide)(rightHeavierBondSide)
   );
 
   // Copy over graphs
@@ -683,5 +683,5 @@ Molecule Editing::addLigand(
   return a;
 }
 
-} // namespace molassembler
+} // namespace Molassembler
 } // namespace Scine

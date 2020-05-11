@@ -13,7 +13,7 @@
 
 namespace Scine {
 
-namespace molassembler {
+namespace Molassembler {
 
 //! Transform BondIndex to PrivateGraph::Edge
 inline PrivateGraph::Edge toInner(const BondIndex& bondIndex, const PrivateGraph& graph) {
@@ -25,7 +25,7 @@ inline BondIndex toOuter(const PrivateGraph::Edge& edge, const PrivateGraph& gra
   return { graph.source(edge), graph.target(edge) };
 }
 
-} // namespace molassembler
+} // namespace Molassembler
 
 } // namespace Scine
 

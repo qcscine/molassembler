@@ -15,7 +15,7 @@
 #include <cassert>
 
 namespace Scine {
-namespace temple {
+namespace Temple {
 namespace adaptors {
 namespace detail {
 
@@ -36,9 +36,9 @@ struct CyclicFrameAdaptor : public Binding<Container> {
 //!@name Types
 //!@{
   using ContainerBinding = Binding<Container>;
-  using ContainerValueType = traits::getValueType<Container>;
+  using ContainerValueType = Traits::getValueType<Container>;
 
-  using FrameType = typename tuples::RepeatType<ContainerValueType, frameSize>::type;
+  using FrameType = typename Tuples::RepeatType<ContainerValueType, frameSize>::type;
 
   using ContainerIteratorType = decltype(
     std::begin(std::declval<const Container>())
@@ -48,7 +48,7 @@ struct CyclicFrameAdaptor : public Binding<Container> {
 //!@name Information
 //!@{
   std::enable_if_t<
-    traits::hasSize<Container>::value,
+    Traits::hasSize<Container>::value,
     std::size_t
   > size() const {
     if(ContainerBinding::value.size() < frameSize) {
@@ -162,7 +162,7 @@ auto cyclicFrame(Container&& container) {
 }
 
 } // namespace adaptors
-} // namespace temple
+} // namespace Temple
 } // namespace Scine
 
 #endif

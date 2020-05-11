@@ -21,7 +21,7 @@
 #include "boost/optional.hpp"
 
 namespace Scine {
-namespace temple {
+namespace Temple {
 
 /*!
  * Condenses an iterable container into a comma-separated string of string
@@ -33,7 +33,7 @@ namespace temple {
 template<class Container>
 std::enable_if_t<
   !std::is_same<
-    traits::getValueType<Container>,
+    Traits::getValueType<Container>,
     std::string
   >::value,
   std::string
@@ -57,7 +57,7 @@ std::enable_if_t<
 
 template<class Container> std::enable_if_t<
   std::is_same<
-    traits::getValueType<Container>,
+    Traits::getValueType<Container>,
     std::string
   >::value,
   std::string
@@ -300,7 +300,7 @@ std::string stringifyTuple(
   return stringifyContainer(individualStringifys);
 }
 
-} // namespace temple
+} // namespace Temple
 } // namespace Scine
 
 #endif

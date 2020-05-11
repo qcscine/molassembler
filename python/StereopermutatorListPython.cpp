@@ -10,7 +10,7 @@
 #include "molassembler/StereopermutatorList.h"
 
 void init_stereopermutator_list(pybind11::module& m) {
-  using namespace Scine::molassembler;
+  using namespace Scine::Molassembler;
 
   pybind11::class_<StereopermutatorList> stereopermutatorList(
     m,

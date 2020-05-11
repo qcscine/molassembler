@@ -11,7 +11,7 @@
 #include "molassembler/Export.h"
 
 namespace Scine {
-namespace shapes {
+namespace Shapes {
 
 /**
  * @brief Coordinate system axis data class
@@ -56,5 +56,5 @@ struct MASM_EXPORT CoordinateSystem {
  */
 MASM_EXPORT Eigen::Matrix3d rotationMatrix(const CoordinateSystem& a, const CoordinateSystem& b);
 
-} // namespace shapes
+} // namespace Shapes
 } // namespace Scine

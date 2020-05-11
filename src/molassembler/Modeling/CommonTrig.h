@@ -19,11 +19,11 @@
 
 namespace Scine {
 
-namespace molassembler {
+namespace Molassembler {
 
 namespace CommonTrig {
 
-using ValueBounds = distance_geometry::ValueBounds;
+using ValueBounds = DistanceGeometry::ValueBounds;
 
 /*! @brief Calculates the law of cosines
  *
@@ -131,7 +131,7 @@ ValueBounds dihedralLengthBounds(
 
 } // namespace CommonTrig
 
-} // namespace molassembler
+} // namespace Molassembler
 
 } // namespace Scine
 

@@ -65,7 +65,7 @@ BOOST_AUTO_TEST_CASE(TrustRegionNewton) {
   Eigen::VectorXd parameters = Eigen::VectorXd::Random(2);
   Eigen::VectorXd passParameters = parameters;
 
-  auto optimizationResult = temple::TrustRegionOptimizer<>::minimize(
+  auto optimizationResult = Temple::TrustRegionOptimizer<>::minimize(
     parameters,
     Himmelblau {},
     Himmelblau {}

@@ -25,19 +25,19 @@ inline std::ostream& nl(std::ostream& os) {
 
 BOOST_AUTO_TEST_CASE(ExplicitBoundsGraphStructure) {
   using namespace Scine;
-  using namespace molassembler;
+  using namespace Molassembler;
 
   for(
     const boost::filesystem::path& currentFilePath :
     boost::filesystem::recursive_directory_iterator("stereocenter_detection_molecules")
   ) {
-    Molecule molecule = io::read(
+    Molecule molecule = IO::read(
       currentFilePath.string()
     );
 
-    using EG = distance_geometry::ExplicitBoundsGraph;
+    using EG = DistanceGeometry::ExplicitBoundsGraph;
 
-    distance_geometry::SpatialModel spatialModel {molecule, distance_geometry::Configuration {}};
+    DistanceGeometry::SpatialModel spatialModel {molecule, DistanceGeometry::Configuration {}};
 
     EG explicitGraph {
       molecule.graph().inner(),

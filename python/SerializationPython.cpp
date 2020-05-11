@@ -38,25 +38,25 @@ pybind11::bytes pythonBytesFromBinary(const std::vector<std::uint8_t>& binary) {
 }
 
 pybind11::bytes JsonToBytes(
-  const Scine::molassembler::JsonSerialization& serialization,
-  const Scine::molassembler::JsonSerialization::BinaryFormat format
+  const Scine::Molassembler::JsonSerialization& serialization,
+  const Scine::Molassembler::JsonSerialization::BinaryFormat format
 ) {
   return pythonBytesFromBinary(serialization.toBinary(format));
 }
 
-Scine::molassembler::JsonSerialization JsonFromBytes(
+Scine::Molassembler::JsonSerialization JsonFromBytes(
   const pybind11::bytes& bytes,
-  const Scine::molassembler::JsonSerialization::BinaryFormat format
+  const Scine::Molassembler::JsonSerialization::BinaryFormat format
 ) {
-  return Scine::molassembler::JsonSerialization(binaryFromPythonBytes(bytes), format);
+  return Scine::Molassembler::JsonSerialization(binaryFromPythonBytes(bytes), format);
 }
 
-std::string toString(const Scine::molassembler::JsonSerialization& s) {
+std::string toString(const Scine::Molassembler::JsonSerialization& s) {
   return s;
 }
 
 void init_serialization(pybind11::module& m) {
-  using namespace Scine::molassembler;
+  using namespace Scine::Molassembler;
 
   pybind11::class_<JsonSerialization> serialization(
     m,
@@ -145,7 +145,7 @@ void init_serialization(pybind11::module& m) {
 
   serialization.def(
     "to_molecule",
-    &JsonSerialization::operator Scine::molassembler::Molecule,
+    &JsonSerialization::operator Scine::Molassembler::Molecule,
     "Construct a molecule from the serialization"
   );
 

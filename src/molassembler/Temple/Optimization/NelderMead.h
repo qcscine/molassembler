@@ -12,7 +12,7 @@
 #include "molassembler/Temple/Functional.h"
 
 namespace Scine {
-namespace temple {
+namespace Temple {
 
 /**
  * @brief Nelder-Mead optimization
@@ -54,7 +54,7 @@ struct NelderMead {
   static FloatType valueStandardDeviation(const std::vector<IndexValuePair>& sortedPairs) {
     const unsigned V = sortedPairs.size();
     // Calculate standard deviation of values
-    const FloatType average = temple::accumulate(
+    const FloatType average = Temple::accumulate(
       sortedPairs,
       FloatType {0},
       [](const FloatType carry, const IndexValuePair& pair) -> FloatType {
@@ -62,7 +62,7 @@ struct NelderMead {
       }
     ) / V;
     return std::sqrt(
-      temple::accumulate(
+      Temple::accumulate(
         sortedPairs,
         FloatType {0},
         [average](const FloatType carry, const IndexValuePair& pair) -> FloatType {
@@ -101,7 +101,7 @@ struct NelderMead {
       vertex = bestVertex + shrinkCoefficient * (vertex - bestVertex);
       value.value = function(vertex);
     }
-    temple::inplace::sort(pairs);
+    Temple::inplace::sort(pairs);
   }
 
   static void replaceWorst(
@@ -149,9 +149,9 @@ struct NelderMead {
     const unsigned N = vertices.rows();
     assert(vertices.cols() == N + 1);
 
-    std::vector<IndexValuePair> values = temple::sort(
-      temple::map(
-        temple::iota<unsigned>(N + 1),
+    std::vector<IndexValuePair> values = Temple::sort(
+      Temple::map(
+        Temple::iota<unsigned>(N + 1),
         [&](const unsigned i) -> IndexValuePair {
           return {
             i,
@@ -219,7 +219,7 @@ struct NelderMead {
   }
 };
 
-} // namespace temple
+} // namespace Temple
 } // namespace Scine
 
 #endif

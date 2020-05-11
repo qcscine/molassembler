@@ -13,7 +13,7 @@
 #include <stdexcept>
 
 namespace Scine {
-namespace temple {
+namespace Temple {
 namespace loops {
 namespace detail {
 
@@ -70,7 +70,7 @@ void different(F&& f, const unsigned count, const T end) {
 }
 
 } // namespace loops
-} // namespace temple
+} // namespace Temple
 } // namespace Scine
 
 #endif

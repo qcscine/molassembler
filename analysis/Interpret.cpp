@@ -82,7 +82,7 @@ Eigen::MatrixXd readCSV(std::string file, int rows, int cols) {
 
 int main(int argc, char* argv[]) {
   using namespace Scine;
-  using namespace molassembler;
+  using namespace Molassembler;
 
   // Set up option parsing
   boost::program_options::options_description options_description("Recognized options");
@@ -152,16 +152,16 @@ int main(int argc, char* argv[]) {
       defaultThreshold = options_variables_map["threshold"].as<double>();
     }
 
-    auto interpretation = interpret::molecules(atomCollection, bondOrders, interpret::BondDiscretizationOption::RoundToNearest, defaultThreshold);
-    auto positions = interpret::applyInterpretationMap(interpretation.componentMap, atomCollection);
+    auto interpretation = Interpret::molecules(atomCollection, bondOrders, Interpret::BondDiscretizationOption::RoundToNearest, defaultThreshold);
+    auto positions = Interpret::applyInterpretationMap(interpretation.componentMap, atomCollection);
 
     if(interpretation.molecules.size() == 1) {
       std::ofstream graphFile("interpreted.dot");
       graphFile << interpretation.molecules.front().dumpGraphviz();
       graphFile.close();
 
-      io::write("interpreted.json", interpretation.molecules.front());
-      io::write("interpreted.mol", interpretation.molecules.front(), positions.front().getPositions());
+      IO::write("interpreted.json", interpretation.molecules.front());
+      IO::write("interpreted.mol", interpretation.molecules.front(), positions.front().getPositions());
     } else {
       for(unsigned i = 0; i < interpretation.molecules.size(); ++i) {
         const auto& mol = interpretation.molecules[i];
@@ -171,8 +171,8 @@ int main(int argc, char* argv[]) {
         graphFile << mol.dumpGraphviz();
         graphFile.close();
 
-        io::write(filebase + ".json", mol);
-        io::write(filebase + ".mol", mol, positions.at(i).getPositions());
+        IO::write(filebase + ".json", mol);
+        IO::write(filebase + ".mol", mol, positions.at(i).getPositions());
       }
     }
 

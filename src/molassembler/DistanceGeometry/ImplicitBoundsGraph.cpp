@@ -27,8 +27,8 @@
 
 
 namespace Scine {
-namespace molassembler {
-namespace distance_geometry {
+namespace Molassembler {
+namespace DistanceGeometry {
 
 /* Class Implementation */
 
@@ -226,11 +226,11 @@ outcome::result<Eigen::MatrixXd> ImplicitBoundsGraph::makeDistanceBounds() const
   return bounds;
 }
 
-outcome::result<Eigen::MatrixXd> ImplicitBoundsGraph::makeDistanceMatrix(random::Engine& engine) noexcept {
+outcome::result<Eigen::MatrixXd> ImplicitBoundsGraph::makeDistanceMatrix(Random::Engine& engine) noexcept {
   return makeDistanceMatrix(engine, Partiality::All);
 }
 
-outcome::result<Eigen::MatrixXd> ImplicitBoundsGraph::makeDistanceMatrix(random::Engine& engine, Partiality partiality) noexcept {
+outcome::result<Eigen::MatrixXd> ImplicitBoundsGraph::makeDistanceMatrix(Random::Engine& engine, Partiality partiality) noexcept {
   const unsigned N = innerGraphPtr_->N();
 
   std::vector<AtomIndex> indices(N);
@@ -240,7 +240,7 @@ outcome::result<Eigen::MatrixXd> ImplicitBoundsGraph::makeDistanceMatrix(random:
     0
   );
 
-  temple::random::shuffle(indices, engine);
+  Temple::Random::shuffle(indices, engine);
 
   const unsigned M = num_vertices();
   std::vector<double> distances (M);
@@ -282,7 +282,7 @@ outcome::result<Eigen::MatrixXd> ImplicitBoundsGraph::makeDistanceMatrix(random:
       }
     }
 
-    temple::random::shuffle(otherIndices, engine);
+    Temple::Random::shuffle(otherIndices, engine);
 
     for(const AtomIndex b : otherIndices) {
       auto predecessor_map = boost::make_iterator_property_map(
@@ -315,7 +315,7 @@ outcome::result<Eigen::MatrixXd> ImplicitBoundsGraph::makeDistanceMatrix(random:
       double presumedLower = -distances.at(right(b));
       double presumedUpper = distances.at(left(b));
 
-      double fixedDistance = temple::random::getSingle<double>(
+      double fixedDistance = Temple::Random::getSingle<double>(
         std::min(presumedLower, presumedUpper),
         std::max(presumedLower, presumedUpper),
         engine
@@ -335,7 +335,7 @@ outcome::result<Eigen::MatrixXd> ImplicitBoundsGraph::makeDistanceMatrix(random:
       }
 
       // Pick fixed distance
-      double fixedDistance = temple::random::getSingle<double>(
+      double fixedDistance = Temple::Random::getSingle<double>(
         -distances.at(right(b)),
         distances.at(left(b)),
         engine
@@ -404,7 +404,7 @@ outcome::result<Eigen::MatrixXd> ImplicitBoundsGraph::makeDistanceMatrix(random:
       double presumedUpper = distances.at(left(b));
 
       // Pick fixed distance
-      double fixedDistance = temple::random::getSingle<double>(
+      double fixedDistance = Temple::Random::getSingle<double>(
         std::min(presumedLower, presumedUpper),
         std::max(presumedLower, presumedUpper),
         engine
@@ -470,14 +470,14 @@ double ImplicitBoundsGraph::maximalImplicitLowerBound(const VertexDescriptor i) 
   auto elementType = innerGraphPtr_->elementType(a);
 
   if(elementType == heaviestAtoms_.front()) {
-    return atom_info::vdwRadius(
+    return AtomInfo::vdwRadius(
       heaviestAtoms_.back()
-    ) + atom_info::vdwRadius(elementType);
+    ) + AtomInfo::vdwRadius(elementType);
   }
 
-  return atom_info::vdwRadius(
+  return AtomInfo::vdwRadius(
     heaviestAtoms_.front()
-  ) + atom_info::vdwRadius(elementType);
+  ) + AtomInfo::vdwRadius(elementType);
 }
 
 /* Nested classes */
@@ -498,9 +498,9 @@ double ImplicitBoundsGraph::EdgeWeightMap::operator [] (const EdgeDescriptor& e)
     }
 
     return -(
-      atom_info::vdwRadius(
+      AtomInfo::vdwRadius(
         basePtr_->innerGraphPtr_->elementType(a)
-      ) + atom_info::vdwRadius(
+      ) + AtomInfo::vdwRadius(
         basePtr_->innerGraphPtr_->elementType(b)
       )
     );
@@ -645,9 +645,9 @@ double ImplicitBoundsGraph::edge_iterator::weight() const {
     }
 
     return -(
-      atom_info::vdwRadius(
+      AtomInfo::vdwRadius(
         basePtr_->innerGraphPtr_->elementType(a)
-      ) + atom_info::vdwRadius(
+      ) + AtomInfo::vdwRadius(
         basePtr_->innerGraphPtr_->elementType(b_)
       )
     );
@@ -825,6 +825,6 @@ ImplicitBoundsGraph::in_group_edge_iterator::in_group_edge_iterator(
   }
 }
 
-} // namespace distance_geometry
-} // namespace molassembler
+} // namespace DistanceGeometry
+} // namespace Molassembler
 } // namespace Scine

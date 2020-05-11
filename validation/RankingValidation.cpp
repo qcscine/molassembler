@@ -19,7 +19,7 @@
 #include "molassembler/StereopermutatorList.h"
 
 using namespace Scine;
-using namespace molassembler;
+using namespace Molassembler;
 
 const std::unordered_map<unsigned, std::string> cipIdentifiers {
   {100, "2Z 3Z 4E 5E"},
@@ -381,7 +381,7 @@ enum class TestFlags : unsigned {
   MissingExpected
 };
 
-std::pair<bool, temple::Bitmask<TestFlags>> descriptorSetsMatch(
+std::pair<bool, Temple::Bitmask<TestFlags>> descriptorSetsMatch(
   const std::set<Stereodescriptor>& expectedDescriptors,
   const std::set<Stereodescriptor>& foundDescriptors,
   const std::string& fileStem
@@ -399,7 +399,7 @@ std::pair<bool, temple::Bitmask<TestFlags>> descriptorSetsMatch(
     std::inserter(discrepancies, discrepancies.end())
   );
 
-  auto summary = temple::Bitmask<TestFlags> {};
+  auto summary = Temple::Bitmask<TestFlags> {};
 
   if(!discrepancies.empty()) {
     pass = false;
@@ -477,7 +477,7 @@ BOOST_AUTO_TEST_CASE(CipValidationSuiteTests) {
   boost::filesystem::path filesPath("cip_validation");
   boost::filesystem::recursive_directory_iterator end;
 
-  std::vector<temple::Bitmask<TestFlags>> summaries;
+  std::vector<Temple::Bitmask<TestFlags>> summaries;
   summaries.reserve(310);
 
   for(boost::filesystem::recursive_directory_iterator i(filesPath); i != end; i++) {
@@ -492,7 +492,7 @@ BOOST_AUTO_TEST_CASE(CipValidationSuiteTests) {
 
     // Some IO will fail due to unsanitized disconnected ions
     try {
-      molecule = io::read(currentFilePath.string());
+      molecule = IO::read(currentFilePath.string());
     } catch(const std::exception& e) {
       BOOST_ERROR(
         "Exception in IO for " << currentFilePath.string()
@@ -501,7 +501,7 @@ BOOST_AUTO_TEST_CASE(CipValidationSuiteTests) {
 
       // Skip this molecule
       summaries.push_back(
-        temple::make_bitmask(TestFlags::Skipped)
+        Temple::make_bitmask(TestFlags::Skipped)
       );
       continue;
     }
@@ -524,7 +524,7 @@ BOOST_AUTO_TEST_CASE(CipValidationSuiteTests) {
     if(findIter != std::end(cipIdentifiers)) {
       for(
         const auto& stereodescriptorString :
-        temple::split(findIter->second, ' ')
+        Temple::split(findIter->second, ' ')
       ) {
         auto mapInfoIter = descriptorToPermutationMap.find(stereodescriptorString.back());
         if(mapInfoIter == std::end(descriptorToPermutationMap)) {
@@ -552,7 +552,7 @@ BOOST_AUTO_TEST_CASE(CipValidationSuiteTests) {
 
     if(skipMolecule) {
       summaries.push_back(
-        temple::make_bitmask(TestFlags::Skipped)
+        Temple::make_bitmask(TestFlags::Skipped)
       );
       continue;
     }
@@ -572,7 +572,7 @@ BOOST_AUTO_TEST_CASE(CipValidationSuiteTests) {
     std::begin(summaries),
     std::end(summaries),
     0u,
-    [](const unsigned carry, const temple::Bitmask<TestFlags>& flags) -> unsigned {
+    [](const unsigned carry, const Temple::Bitmask<TestFlags>& flags) -> unsigned {
       if(flags.isSet(TestFlags::Skipped)) {
         return carry + 1;
       }
@@ -585,7 +585,7 @@ BOOST_AUTO_TEST_CASE(CipValidationSuiteTests) {
     std::begin(summaries),
     std::end(summaries),
     0u,
-    [](const unsigned carry, const temple::Bitmask<TestFlags>& flags) -> unsigned {
+    [](const unsigned carry, const Temple::Bitmask<TestFlags>& flags) -> unsigned {
       if(flags.isSet(TestFlags::MissingExpected)) {
         return carry + 1;
       }
@@ -598,7 +598,7 @@ BOOST_AUTO_TEST_CASE(CipValidationSuiteTests) {
     std::begin(summaries),
     std::end(summaries),
     0u,
-    [](const unsigned carry, const temple::Bitmask<TestFlags>& flags) -> unsigned {
+    [](const unsigned carry, const Temple::Bitmask<TestFlags>& flags) -> unsigned {
       if(flags.isSet(TestFlags::Unexpected)) {
         return carry + 1;
       }

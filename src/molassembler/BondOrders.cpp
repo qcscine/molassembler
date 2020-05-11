@@ -14,7 +14,7 @@
 
 namespace Scine {
 
-namespace molassembler {
+namespace Molassembler {
 
 Utils::BondOrderCollection uffBondOrders(
   const Utils::ElementTypeCollection& elements,
@@ -49,6 +49,6 @@ Utils::BondOrderCollection uffBondOrders(
   return bondOrders;
 }
 
-} // namespace molassembler
+} // namespace Molassembler
 
 } // namespace Scine

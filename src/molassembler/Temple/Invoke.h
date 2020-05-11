@@ -19,7 +19,7 @@
 namespace Scine {
 
 //! @brief Template shorthands, optimizers and constexpr data types
-namespace temple {
+namespace Temple {
 namespace detail {
 
 template<typename TupleType, typename Function, size_t ... Inds>
@@ -220,7 +220,7 @@ auto make_tuple_callable(Functor&& functor) {
   return detail::Invoker<Functor>(std::forward<Functor>(functor));
 }
 
-} // namespace temple
+} // namespace Temple
 } // namespace Scine
 
 #endif

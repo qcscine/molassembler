@@ -15,11 +15,11 @@
 #include "molassembler/Log.h"
 
 namespace Scine {
-namespace molassembler {
+namespace Molassembler {
 
 namespace outcome = OUTCOME_V2_NAMESPACE;
 
-namespace distance_geometry {
+namespace DistanceGeometry {
 namespace detail {
 
 /*! @brief Collects four-dimensional linear positions into three-dimensional matrix
@@ -63,7 +63,7 @@ Eigen::MatrixXd fitAndSetFixedPositions(
  * @complexity{At least linear in the number of unassigned stereopermutators
  * multiplied by the number of atoms.}
  */
-Molecule narrow(Molecule molecule, random::Engine& engine);
+Molecule narrow(Molecule molecule, Random::Engine& engine);
 
 } // namespace detail
 
@@ -99,7 +99,7 @@ outcome::result<AngstromPositions> generateConformer(
   const Configuration& configuration,
   std::shared_ptr<MoleculeDGInformation>& DgDataPtr,
   bool regenerateDGDataEachStep,
-  random::Engine& engine
+  Random::Engine& engine
 );
 
 /** @brief Main and parallel implementation of Distance Geometry. Generates an
@@ -119,8 +119,8 @@ std::vector<
   const boost::optional<unsigned> seedOption
 );
 
-} // namespace distance_geometry
-} // namespace molassembler
+} // namespace DistanceGeometry
+} // namespace Molassembler
 } // namespace Scine
 
 #endif

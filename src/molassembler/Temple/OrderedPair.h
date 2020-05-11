@@ -18,7 +18,7 @@
 #include <iterator>
 
 namespace Scine {
-namespace temple {
+namespace Temple {
 
 /*!
  * @brief A class that imitates std::pair<T, U>, but whose template arguments
@@ -32,7 +32,7 @@ namespace temple {
  *   various operations.
  */
 template<typename T>
-struct OrderedPair : crtp::LexicographicComparable<OrderedPair<T>> {
+struct OrderedPair : Crtp::LexicographicComparable<OrderedPair<T>> {
 //!@name Types
 //!@{
   //! Type of stored elements
@@ -128,7 +128,7 @@ struct OrderedPair : crtp::LexicographicComparable<OrderedPair<T>> {
   }
 };
 
-} // namespace temple
+} // namespace Temple
 } // namespace Scine
 
 #endif

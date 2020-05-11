@@ -13,7 +13,7 @@
 #include "boost/variant.hpp"
 
 namespace Scine {
-namespace molassembler {
+namespace Molassembler {
 
 constexpr std::uint8_t DirectedConformerGenerator::unknownDecision;
 
@@ -76,7 +76,7 @@ unsigned DirectedConformerGenerator::idealEnsembleSize() const {
 outcome::result<Utils::PositionCollection>
 DirectedConformerGenerator::generateRandomConformation(
   const DecisionList& decisionList,
-  const distance_geometry::Configuration& configuration
+  const DistanceGeometry::Configuration& configuration
 ) {
   return pImpl_->generateRandomConformation(decisionList, configuration);
 }
@@ -85,7 +85,7 @@ outcome::result<Utils::PositionCollection>
 DirectedConformerGenerator::generateConformation(
   const DecisionList& decisionList,
   const unsigned seed,
-  const distance_geometry::Configuration& configuration
+  const DistanceGeometry::Configuration& configuration
 ) {
   return pImpl_->generateConformation(decisionList, seed, configuration);
 }
@@ -108,5 +108,5 @@ DirectedConformerGenerator::DecisionList DirectedConformerGenerator::getDecision
   return pImpl_->getDecisionList(positions, mode);
 }
 
-} // namespace molassembler
+} // namespace Molassembler
 } // namespace Scine

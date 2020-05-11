@@ -13,10 +13,10 @@
 #include "molassembler/Temple/Binding.h"
 
 namespace Scine {
-namespace temple {
+namespace Temple {
 
 //! @brief Functors for transformations
-namespace functor {
+namespace Functor {
 
 /**
  * @brief Metafunction required for default arguments
@@ -123,8 +123,8 @@ constexpr Get<0> first;
 //! @brief Calls std::get<1> on any argument it is invoked with
 constexpr Get<1> second;
 
-} // namespace functor
-} // namespace temple
+} // namespace Functor
+} // namespace Temple
 } // namespace Scine
 
 #endif

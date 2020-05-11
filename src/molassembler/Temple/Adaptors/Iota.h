@@ -11,7 +11,7 @@
 #include "molassembler/Temple/Traits.h"
 
 namespace Scine {
-namespace temple {
+namespace Temple {
 namespace adaptors {
 namespace detail {
 
@@ -141,7 +141,7 @@ auto range(T upper) {
 }
 
 } // namespace adaptors
-} // namespace temple
+} // namespace Temple
 } // namespace Scine
 
 #endif

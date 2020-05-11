@@ -9,7 +9,7 @@
 #include "molassembler/Temple/Functional.h"
 
 namespace Scine {
-namespace molassembler {
+namespace Molassembler {
 namespace {
 
 unsigned symmetricDifferenceSetSize(
@@ -44,7 +44,7 @@ boost::optional<SiteIndex> determineChangedSite(
 
   if(A < B) {
     for(SiteIndex i {0}; i < B; ++i) {
-      if(temple::find(mappedBs, i) == std::end(mappedBs)) {
+      if(Temple::find(mappedBs, i) == std::end(mappedBs)) {
         return i;
       }
     }
@@ -74,7 +74,7 @@ boost::optional<SiteIndex> determineChangedSite(
 
   if(A < B) {
     for(SiteIndex i {0}; i < B; ++i) {
-      if(temple::find(mappedBs, i) == std::end(mappedBs)) {
+      if(Temple::find(mappedBs, i) == std::end(mappedBs)) {
         return i;
       }
     }
@@ -107,7 +107,7 @@ SiteMapping SiteMapping::from(
   // Map all sites that are identical
   for(unsigned i = 0; i < A; ++i) {
     const auto& atomSet = a.sites[i];
-    auto findIter = temple::find(b.sites, atomSet);
+    auto findIter = Temple::find(b.sites, atomSet);
     if(findIter != std::end(b.sites)) {
       const auto matchedB = SiteIndex(findIter - std::begin(b.sites));
       mapping.map.emplace(i, matchedB);
@@ -134,7 +134,7 @@ SiteMapping SiteMapping::from(
 
   std::vector<SiteIndex> unmappedBs;
   for(SiteIndex i {0}; i < B; ++i) {
-    if(temple::find(mappedBs, i) == std::end(mappedBs)) {
+    if(Temple::find(mappedBs, i) == std::end(mappedBs)) {
       unmappedBs.push_back(i);
     }
   }
@@ -151,7 +151,7 @@ SiteMapping SiteMapping::from(
     return distanceSum;
   };
 
-  auto permutation = temple::iota<unsigned>(UB);
+  auto permutation = Temple::iota<unsigned>(UB);
   auto bestPermutation = permutation;
   unsigned bestDistance = calculateDistance(permutation);
 
@@ -176,5 +176,5 @@ SiteMapping SiteMapping::from(
   return mapping;
 }
 
-} // namespace molassembler
+} // namespace Molassembler
 } // namespace Scine

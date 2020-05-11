@@ -20,8 +20,8 @@
 #include "Utils/Geometry/ElementInfo.h"
 
 namespace Scine {
-namespace molassembler {
-namespace hashes {
+namespace Molassembler {
+namespace Hashes {
 
 BondInformation::BondInformation(
   BondType passBondType,
@@ -33,8 +33,8 @@ BondInformation::BondInformation(
 {}
 
 static_assert(
-  BondInformation::bondTypeBits == temple::Math::ceil(
-    temple::Math::log(nBondTypes + 1.0, 2.0)
+  BondInformation::bondTypeBits == Temple::Math::ceil(
+    Temple::Math::log(nBondTypes + 1.0, 2.0)
   ),
   "Number of bond types requires a change in bond type bits!"
 );
@@ -103,15 +103,15 @@ WideHashType hash(
   const AtomEnvironmentComponents bitmask,
   const Utils::ElementType elementType,
   const std::vector<BondInformation>& sortedBonds,
-  const boost::optional<shapes::Shape>& shapeOptional,
+  const boost::optional<Shapes::Shape>& shapeOptional,
   const boost::optional<unsigned>& assignedOptional
 ) {
   /* The bit representation of element types is 16 bits wide storing both atomic
    * number and atomic mass number in order to account for isotopes
    */
   constexpr unsigned elementTypeBits = 16;
-  constexpr unsigned shapeNameBits = temple::Math::ceil(
-    temple::Math::log(shapes::nShapes + 1.0, 2.0)
+  constexpr unsigned shapeNameBits = Temple::Math::ceil(
+    Temple::Math::log(Shapes::nShapes + 1.0, 2.0)
   );
 
   static_assert(
@@ -120,7 +120,7 @@ WideHashType hash(
       // Element type (fixed as this cannot possibly increase)
       elementTypeBits
       // Bond information: exactly as many as the largest possible shape
-      + shapes::constexpr_properties::maxShapeSize * (
+      + Shapes::ConstexprProperties::maxShapeSize * (
         BondInformation::hashWidth
       )
       // The bits needed to store the shape name (plus none)
@@ -156,7 +156,7 @@ WideHashType hash(
    *
    * This occupies 6 * 12 = 72 bits.
    */
-  constexpr unsigned bondsHashSectionWidth = BondInformation::hashWidth * shapes::constexpr_properties::maxShapeSize;
+  constexpr unsigned bondsHashSectionWidth = BondInformation::hashWidth * Shapes::ConstexprProperties::maxShapeSize;
 
   if(bitmask & AtomEnvironmentComponents::BondOrders) {
     unsigned bondNumber = 0;
@@ -199,7 +199,7 @@ std::vector<BondInformation> gatherBonds(
   const AtomIndex i
 ) {
   std::vector<BondInformation> bonds;
-  bonds.reserve(shapes::constexpr_properties::maxShapeSize);
+  bonds.reserve(Shapes::ConstexprProperties::maxShapeSize);
 
   if(componentsBitmask & AtomEnvironmentComponents::Stereopermutations) {
     for(const PrivateGraph::Edge& edge : inner.edges(i)) {
@@ -258,7 +258,7 @@ WideHashType atomEnvironment(
   AtomIndex i
 ) {
   std::vector<BondInformation> bonds;
-  boost::optional<shapes::Shape> shapeOption;
+  boost::optional<Shapes::Shape> shapeOption;
   boost::optional<unsigned> assignmentOption;
 
   if(bitmask & AtomEnvironmentComponents::BondOrders) {
@@ -311,8 +311,8 @@ bool identityCompare(
 ) {
   assert(aGraph.N() == bGraph.N());
 
-  return temple::all_of(
-    temple::adaptors::range(aGraph.N()),
+  return Temple::all_of(
+    Temple::adaptors::range(aGraph.N()),
     [&](const AtomIndex i) -> WideHashType {
       return atomEnvironment(
         aGraph,
@@ -354,13 +354,13 @@ std::tuple<
 
   // counter now contains the maximum new hash for this set of hashes
   return {
-    temple::map(
+    Temple::map(
       a,
       [&reductionMapping](const WideHashType& hash) -> HashType {
         return reductionMapping.at(hash);
       }
     ),
-    temple::map(
+    Temple::map(
       b,
       [&reductionMapping](const WideHashType& hash) -> HashType {
         return reductionMapping.at(hash);
@@ -378,6 +378,6 @@ BOOST_CONCEPT_ASSERT((
   boost::AdaptableUnaryFunctionConcept<LookupFunctor, WideHashType, AtomIndex>
 ));
 
-} // namespace hashes
-} // namespace molassembler
+} // namespace Hashes
+} // namespace Molassembler
 } // namespace Scine

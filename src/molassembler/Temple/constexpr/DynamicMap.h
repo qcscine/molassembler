@@ -15,7 +15,7 @@
 #include "molassembler/Temple/constexpr/Pair.h"
 
 namespace Scine {
-namespace temple {
+namespace Temple {
 
 /*! @brief A constexpr associative container with reasonably fast key-based lookup.
  *
@@ -201,7 +201,7 @@ public:
 //!@}
 };
 
-} // namespace temple
+} // namespace Temple
 } // namespace Scine
 
 #endif

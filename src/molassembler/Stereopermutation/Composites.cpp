@@ -18,7 +18,7 @@
 #include "molassembler/Temple/Stringify.h"
 
 namespace Scine {
-namespace stereopermutation {
+namespace Stereopermutations {
 namespace detail {
 
 template<typename T>
@@ -36,7 +36,7 @@ std::pair<T, T> makeOrderedPair(T a, T b) {
 }
 
 void rotateCoordinates(
-  Eigen::Ref<shapes::Coordinates> positions,
+  Eigen::Ref<Shapes::Coordinates> positions,
   const Eigen::Vector3d& unitSource,
   const Eigen::Vector3d& unitTarget
 ) {
@@ -76,7 +76,7 @@ void rotateCoordinates(
 }
 
 void translateCoordinates(
-  Eigen::Ref<shapes::Coordinates> positions,
+  Eigen::Ref<Shapes::Coordinates> positions,
   const Eigen::Vector3d& translation
 ) {
   for(unsigned i = 0; i < positions.cols(); ++i) {
@@ -116,11 +116,11 @@ double dihedral(
 
 } // namespace detail
 
-constexpr temple::floating::ExpandedAbsoluteEqualityComparator<double> Composite::fpComparator;
+constexpr Temple::Floating::ExpandedAbsoluteEqualityComparator<double> Composite::fpComparator;
 
 Composite::OrientationState::OrientationState(
-  shapes::Shape passShape,
-  shapes::Vertex passFusedVertex,
+  Shapes::Shape passShape,
+  Shapes::Vertex passFusedVertex,
   std::vector<char> passCharacters,
   std::size_t passIdentifier
 ) : shape(passShape),
@@ -128,12 +128,12 @@ Composite::OrientationState::OrientationState(
     characters(std::move(passCharacters)),
     identifier(passIdentifier)
 {
-  assert(fusedVertex < shapes::size(shape));
-  assert(characters.size() == shapes::size(shape));
+  assert(fusedVertex < Shapes::size(shape));
+  assert(characters.size() == Shapes::size(shape));
 }
 
 void Composite::OrientationState::applyCharacterRotation(
-  const std::vector<shapes::Vertex>& rotation
+  const std::vector<Shapes::Vertex>& rotation
 ) {
   std::vector<char> newCharacters;
   newCharacters.reserve(rotation.size());
@@ -147,14 +147,14 @@ void Composite::OrientationState::applyCharacterRotation(
   characters = std::move(newCharacters);
 }
 
-std::vector<shapes::Vertex> Composite::OrientationState::transformToCanonical() {
+std::vector<Shapes::Vertex> Composite::OrientationState::transformToCanonical() {
   /* For canonical comparisons, we must treat all fused positions within the
    * same position group equally. Although the final generated dihedrals must be
    * different (since indexing is still based on the current shape positions
    * within each partial shape, the sequence must be the same across any
    * position group.
    */
-  shapes::Vertex reducedFusedVertex = lowestEqualVertexInShape();
+  Shapes::Vertex reducedFusedVertex = lowestEqualVertexInShape();
 
   // Find the mapping
   auto toCanonicalMapping = findReductionMapping(reducedFusedVertex);
@@ -164,10 +164,10 @@ std::vector<shapes::Vertex> Composite::OrientationState::transformToCanonical() 
   applyCharacterRotation(toCanonicalMapping);
 
   // Return the inverse mapping to allow reversion to the original state
-  return shapes::properties::inverseRotation(toCanonicalMapping);
+  return Shapes::Properties::inverseRotation(toCanonicalMapping);
 }
 
-void Composite::OrientationState::revert(const std::vector<shapes::Vertex>& reversionMapping) {
+void Composite::OrientationState::revert(const std::vector<Shapes::Vertex>& reversionMapping) {
   // Recover the non-canonical state using the reversion mapping
   applyCharacterRotation(reversionMapping);
 
@@ -182,8 +182,8 @@ void Composite::OrientationState::revert(const std::vector<shapes::Vertex>& reve
   fusedVertex = findIter - std::begin(reversionMapping);
 }
 
-std::vector<shapes::Vertex> Composite::OrientationState::findReductionMapping(
-  const shapes::Vertex reducedFusedVertex
+std::vector<Shapes::Vertex> Composite::OrientationState::findReductionMapping(
+  const Shapes::Vertex reducedFusedVertex
 ) const {
   /* NOTE: The implementation below is VERY similar to
    * Stereopermutation::generateAllRotation_'s generation work.
@@ -199,7 +199,7 @@ std::vector<shapes::Vertex> Composite::OrientationState::findReductionMapping(
    * the solution to this search case.
    */
   if(fusedVertex == reducedFusedVertex) {
-    return temple::iota<shapes::Vertex>(shapes::size(shape));
+    return Temple::iota<Shapes::Vertex>(Shapes::size(shape));
   }
 
   /* Find a mapping that rotates fusedVertex to reducedFusedVertex. In many
@@ -207,24 +207,24 @@ std::vector<shapes::Vertex> Composite::OrientationState::findReductionMapping(
    * by choosing that rotation whose resulting permutation has the lowest index
    * of permutation.
    */
-  const auto identitySequence = temple::iota<shapes::Vertex>(shapes::size(shape));
+  const auto identitySequence = Temple::iota<Shapes::Vertex>(Shapes::size(shape));
 
   // Track the best rotation
   unsigned lowestIndexOfPermutation = std::numeric_limits<unsigned>::max();
-  std::vector<shapes::Vertex> bestRotation;
+  std::vector<Shapes::Vertex> bestRotation;
 
-  const unsigned linkLimit = shapes::rotations(shape).size();
+  const unsigned linkLimit = Shapes::rotations(shape).size();
   std::vector<unsigned> chain = {0};
   chain.reserve(32);
   std::vector<
-    std::vector<shapes::Vertex>
+    std::vector<Shapes::Vertex>
   > chainRotations = {identitySequence};
 
   /* Zero-initialize a bitset that can store if an index of permutation has
    * been discovered or not.
    */
   boost::dynamic_bitset<> discoveredIndicesOfPermutation {
-    temple::Math::factorial(shapes::size(shape))
+    Temple::Math::factorial(Shapes::size(shape))
   };
 
   /* The identity sequence has been discovered (initial element of
@@ -235,13 +235,13 @@ std::vector<shapes::Vertex> Composite::OrientationState::findReductionMapping(
 
   while(chain.front() < linkLimit) {
     // Generate a new rotation
-    auto generatedRotation = shapes::properties::applyRotation(
+    auto generatedRotation = Shapes::Properties::applyRotation(
       chainRotations.back(),
       shape,
       chain.back()
     );
 
-    unsigned indexOfPermutation = temple::permutationIndex(generatedRotation);
+    unsigned indexOfPermutation = Temple::permutationIndex(generatedRotation);
     // Is it new?
     if(discoveredIndicesOfPermutation.test(indexOfPermutation)) {
       // Already discovered! Are we at the maximum instruction?
@@ -288,8 +288,8 @@ std::vector<shapes::Vertex> Composite::OrientationState::findReductionMapping(
   return bestRotation;
 }
 
-shapes::Vertex Composite::OrientationState::lowestEqualVertexInShape() const {
-  const auto positionGroupCharacters = shapes::properties::positionGroupCharacters(shape);
+Shapes::Vertex Composite::OrientationState::lowestEqualVertexInShape() const {
+  const auto positionGroupCharacters = Shapes::Properties::positionGroupCharacters(shape);
 
   /* Return the position of the first character that matches that of the fused
    * position
@@ -304,22 +304,22 @@ shapes::Vertex Composite::OrientationState::lowestEqualVertexInShape() const {
 
   assert(findIter != std::end(positionGroupCharacters));
 
-  return shapes::Vertex(findIter - std::begin(positionGroupCharacters));
+  return Shapes::Vertex(findIter - std::begin(positionGroupCharacters));
 }
 
 Composite::AngleGroup Composite::OrientationState::smallestAngleGroup() const {
   // Initialize the search state
   AngleGroup angleGroup;
-  angleGroup.vertices.reserve(shapes::size(shape));
+  angleGroup.vertices.reserve(Shapes::size(shape));
   angleGroup.angle = M_PI;
 
   // Go through all shape vertices excluding the fused shape position
-  for(shapes::Vertex i {0}; i < shapes::size(shape); ++i) {
+  for(Shapes::Vertex i {0}; i < Shapes::size(shape); ++i) {
     if(i == fusedVertex) {
       continue;
     }
 
-    double angleToFusedPosition = shapes::angleFunction(shape)(fusedVertex, i);
+    double angleToFusedPosition = Shapes::angleFunction(shape)(fusedVertex, i);
 
     // This naturally excludes M_PI angles from the smallest angle group
     if(fpComparator.isLessThan(angleToFusedPosition, angleGroup.angle)) {
@@ -337,12 +337,12 @@ Composite::AngleGroup Composite::OrientationState::smallestAngleGroup() const {
     // A single relevant shape vertex is not isotropic
     angleGroup.isotropic = false;
   } else {
-    const auto relevantCharacters = temple::map(
+    const auto relevantCharacters = Temple::map(
       angleGroup.vertices,
-      temple::functor::at(characters)
+      Temple::Functor::at(characters)
     );
 
-    angleGroup.isotropic = temple::all_of(
+    angleGroup.isotropic = Temple::all_of(
       relevantCharacters,
       [&](const char character) -> bool {
         return character == relevantCharacters.front();
@@ -378,23 +378,23 @@ double Composite::perpendicularSubstituentAngle(
   );
 }
 
-std::vector<shapes::Vertex> Composite::generateRotation(
-  const shapes::Shape shape,
-  const shapes::Vertex fixedVertex,
-  const std::vector<shapes::Vertex>& changedVertices
+std::vector<Shapes::Vertex> Composite::generateRotation(
+  const Shapes::Shape shape,
+  const Shapes::Vertex fixedVertex,
+  const std::vector<Shapes::Vertex>& changedVertices
 ) {
-  const auto periodicities = temple::map(
-    temple::iota<unsigned>(shapes::rotations(shape).size()),
+  const auto periodicities = Temple::map(
+    Temple::iota<unsigned>(Shapes::rotations(shape).size()),
     [&shape](const unsigned rotationFunctionIndex) -> unsigned {
-      return shapes::properties::rotationPeriodicity(
+      return Shapes::Properties::rotationPeriodicity(
         shape,
-        shapes::rotations(shape).at(rotationFunctionIndex)
+        Shapes::rotations(shape).at(rotationFunctionIndex)
       );
     }
   );
 
-  auto rotationAltersPositions = [&](const std::vector<shapes::Vertex>& rotation) -> bool {
-    return temple::all_of(
+  auto rotationAltersPositions = [&](const std::vector<Shapes::Vertex>& rotation) -> bool {
+    return Temple::all_of(
       changedVertices,
       [&rotation](const unsigned shapeVertex) -> bool {
         return rotation.at(shapeVertex) != shapeVertex;
@@ -406,7 +406,7 @@ std::vector<shapes::Vertex> Composite::generateRotation(
   std::vector<unsigned> rotationUses (periodicities.size(), 0);
   ++rotationUses.back();
 
-  std::vector<shapes::Vertex> rotation;
+  std::vector<Shapes::Vertex> rotation;
   bool rotationFound = false;
 
   do {
@@ -419,14 +419,14 @@ std::vector<shapes::Vertex> Composite::generateRotation(
       }
     }
 
-    temple::inplace::sort(rotationIndexApplicationSequence);
+    Temple::inplace::sort(rotationIndexApplicationSequence);
 
     do {
       // Create the rotation using the index application sequence front-to-back
-      rotation = temple::iota<shapes::Vertex>(shapes::size(shape));
+      rotation = Temple::iota<Shapes::Vertex>(Shapes::size(shape));
 
       for(const auto r : rotationIndexApplicationSequence) {
-        rotation = shapes::properties::applyRotation(
+        rotation = Shapes::Properties::applyRotation(
           rotation,
           shape,
           r
@@ -442,12 +442,12 @@ std::vector<shapes::Vertex> Composite::generateRotation(
       }
     } while(
       !rotationFound
-      && temple::inplace::next_permutation(rotationIndexApplicationSequence)
+      && Temple::inplace::next_permutation(rotationIndexApplicationSequence)
     );
 
   } while(
     !rotationFound
-    && temple::inplace::nextCombinationPermutation(rotationUses, periodicities)
+    && Temple::inplace::nextCombinationPermutation(rotationUses, periodicities)
   );
 
   if(rotationFound) {
@@ -457,10 +457,10 @@ std::vector<shapes::Vertex> Composite::generateRotation(
   return {};
 }
 
-std::vector<shapes::Vertex> Composite::rotation(
-  const shapes::Shape shape,
-  const shapes::Vertex fixedVertex,
-  const std::vector<shapes::Vertex>& perpendicularPlanePositions
+std::vector<Shapes::Vertex> Composite::rotation(
+  const Shapes::Shape shape,
+  const Shapes::Vertex fixedVertex,
+  const std::vector<Shapes::Vertex>& perpendicularPlanePositions
 ) {
   // Three possibilities:
 
@@ -478,7 +478,7 @@ std::vector<shapes::Vertex> Composite::rotation(
 
     // There may be multiple elements, but no rotation. Return identity
     if(candidateRotation.empty()) {
-      return {shapes::Vertex(1)};
+      return {Shapes::Vertex(1)};
     }
 
     /* Require that the periodicity of the discovered rotation is equal to the
@@ -486,7 +486,7 @@ std::vector<shapes::Vertex> Composite::rotation(
      * generateRotation, but it's best to be sure.
      */
     assert(
-      shapes::properties::rotationPeriodicity(shape, candidateRotation)
+      Shapes::Properties::rotationPeriodicity(shape, candidateRotation)
       == perpendicularPlanePositions.size()
     );
 
@@ -498,7 +498,7 @@ std::vector<shapes::Vertex> Composite::rotation(
      * rotation within that shape is the identity rotation, because this
      * single index can be rotated any which way to satisfy the other side.
      */
-    return {shapes::Vertex(1)};
+    return {Shapes::Vertex(1)};
   }
 
   /* Remaining case: There are no elements in perpendicularPlanePositions. Then
@@ -509,7 +509,7 @@ std::vector<shapes::Vertex> Composite::rotation(
 
 Composite::PerpendicularAngleGroups Composite::inGroupAngles(
   const AngleGroup& angleGroup,
-  const shapes::Shape shape
+  const Shapes::Shape shape
 ) {
   PerpendicularAngleGroups groups;
 
@@ -517,19 +517,19 @@ Composite::PerpendicularAngleGroups Composite::inGroupAngles(
     std::pair<unsigned, unsigned>
   >;
 
-  temple::forEach(
-    temple::adaptors::allPairs(angleGroup.vertices),
-    [&](const shapes::Vertex a, const shapes::Vertex b) -> void {
+  Temple::forEach(
+    Temple::adaptors::allPairs(angleGroup.vertices),
+    [&](const Shapes::Vertex a, const Shapes::Vertex b) -> void {
       const double perpendicularAngle = perpendicularSubstituentAngle(
         angleGroup.angle,
-        shapes::angleFunction(shape)(a, b)
+        Shapes::angleFunction(shape)(a, b)
       );
 
       const auto findIter = std::find_if(
         std::begin(groups),
         std::end(groups),
         [&](const auto& record) -> bool {
-          return temple::any_of(
+          return Temple::any_of(
             record.first,
             [&](const double angle) -> bool {
               return fpComparator.isEqual(perpendicularAngle, angle);
@@ -588,7 +588,7 @@ Composite::Composite(
       /* Order both AngleGroups' vertices by descending ranking and
        * index to get canonical initial combinations
        */
-      temple::inplace::sort(
+      Temple::inplace::sort(
         angleGroup.vertices,
         [&](const unsigned a, const unsigned b) -> bool {
           return (
@@ -629,7 +629,7 @@ Composite::Composite(
    * NOTE: The central atom of both shapes is always placed at the origin
    * in the coordinate definitions.
    */
-  auto firstCoordinates = shapes::coordinates(orientations_.first.shape);
+  auto firstCoordinates = Shapes::coordinates(orientations_.first.shape);
   // Rotate left fused position onto <1, 0, 0>
   detail::rotateCoordinates(
     firstCoordinates,
@@ -637,7 +637,7 @@ Composite::Composite(
     Eigen::Vector3d::UnitX()
   );
 
-  auto secondCoordinates = shapes::coordinates(orientations_.second.shape);
+  auto secondCoordinates = Shapes::coordinates(orientations_.second.shape);
   // Rotate right fused position onto <-1, 0, 0>
   detail::rotateCoordinates(
     secondCoordinates,
@@ -651,7 +651,7 @@ Composite::Composite(
     Eigen::Vector3d::UnitX()
   );
 
-  auto getDihedral = [&](const shapes::Vertex f, const shapes::Vertex s) -> double {
+  auto getDihedral = [&](const Shapes::Vertex f, const Shapes::Vertex s) -> double {
     return detail::dihedral(
       firstCoordinates.col(f),
       Eigen::Vector3d::Zero(),
@@ -668,12 +668,12 @@ Composite::Composite(
    */
 
   // Generate all arrangements regardless of whether the Composite is isotropic
-  temple::forEach(
-    temple::adaptors::allPairs(
+  Temple::forEach(
+    Temple::adaptors::allPairs(
       angleGroups.first.vertices,
       angleGroups.second.vertices
     ),
-    [&](const shapes::Vertex f, const shapes::Vertex s) -> void {
+    [&](const Shapes::Vertex f, const Shapes::Vertex s) -> void {
       const double alignAngle = getDihedral(f, s);
 
       // Twist the right coordinates around x so that f is cis with r
@@ -695,9 +695,9 @@ Composite::Composite(
          * negative.
          */
 
-        const auto dihedrals = temple::map(
+        const auto dihedrals = Temple::map(
           angleGroups.second.vertices,
-          [&](const shapes::Vertex secondShapeVertex) -> double {
+          [&](const Shapes::Vertex secondShapeVertex) -> double {
             double dihedral = getDihedral(f, secondShapeVertex);
             if(dihedral >= -1e-10) {
               dihedral -= 2 * M_PI;
@@ -725,12 +725,12 @@ Composite::Composite(
         }
       }
 
-      auto dihedralList = temple::map(
-        temple::adaptors::allPairs(
+      auto dihedralList = Temple::map(
+        Temple::adaptors::allPairs(
           angleGroups.first.vertices,
           angleGroups.second.vertices
         ),
-        [&](const shapes::Vertex a, const shapes::Vertex b) -> DihedralTuple {
+        [&](const Shapes::Vertex a, const Shapes::Vertex b) -> DihedralTuple {
           return {a, b, getDihedral(a, b)};
         }
       );
@@ -742,7 +742,7 @@ Composite::Composite(
       );
 
       if(
-        !temple::any_of(
+        !Temple::any_of(
           stereopermutations_,
           [&dihedralList](const auto& rhsDihedralList) -> bool {
             return fpComparator.isEqual(
@@ -860,12 +860,12 @@ unsigned Composite::order() const {
   };
 
   return std::max(
-    countDistinct(temple::functor::first),
-    countDistinct(temple::functor::second)
+    countDistinct(Temple::Functor::first),
+    countDistinct(Temple::Functor::second)
   );
 }
 
-const temple::OrderedPair<Composite::OrientationState>& Composite::orientations() const {
+const Temple::OrderedPair<Composite::OrientationState>& Composite::orientations() const {
   return orientations_;
 }
 
@@ -889,5 +889,5 @@ bool Composite::operator != (const Composite& other) const {
   return !(*this == other);
 }
 
-} // namespace stereopermutation
+} // namespace Stereopermutations
 } // namespace Scine

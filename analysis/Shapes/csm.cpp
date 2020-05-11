@@ -26,7 +26,7 @@
 #include <iomanip>
 
 using namespace Scine;
-using namespace shapes;
+using namespace Shapes;
 
 template<typename PRNG>
 Eigen::Vector3d randomVectorOnSphere(const double radius, PRNG& prng) {
@@ -88,10 +88,10 @@ constexpr unsigned nExperiments = 1000;
 template<typename PRNG, typename F>
 std::vector<double> averageRandomCsm(const unsigned N, PRNG& prng, F&& f) {
   assert(N >= 2);
-  return temple::map(
-    temple::adaptors::range(nExperiments),
+  return Temple::map(
+    Temple::adaptors::range(nExperiments),
     [&](unsigned /* i */) -> double {
-      auto normalized = continuous::normalize(generateCoordinates(N, prng));
+      auto normalized = Continuous::normalize(generateCoordinates(N, prng));
       Top top = standardizeTop(normalized);
       if(top == Top::Asymmetric) {
         reorientAsymmetricTop(normalized);
@@ -148,21 +148,21 @@ struct RScriptWriter {
   }
 
   void writeHeader() {
-    file << "symmetryNames <- c(\"" << temple::condense(
-      temple::map(shapes::allShapes, [](auto name) { return shapes::name(name); }),
+    file << "symmetryNames <- c(\"" << Temple::condense(
+      Temple::map(Shapes::allShapes, [](auto name) { return Shapes::name(name); }),
       "\",\""
     ) << "\")\n";
-    file << "symmetrySizes <- c(" << temple::condense(
-      temple::map(shapes::allShapes, [](auto name) { return shapes::size(name); })
+    file << "symmetrySizes <- c(" << Temple::condense(
+      Temple::map(Shapes::allShapes, [](auto name) { return Shapes::size(name); })
     ) << ")\n";
-    file << "results <- array(numeric(), c(" << shapes::allShapes.size() << ", " << nExperiments << "))\n";
+    file << "results <- array(numeric(), c(" << Shapes::allShapes.size() << ", " << nExperiments << "))\n";
   }
 
   void writeSeed(int seed) {
     file << "seed <- " << seed << "\n";
   }
 
-  void addResults(const shapes::Shape name, const std::vector<double>& results) {
+  void addResults(const Shapes::Shape name, const std::vector<double>& results) {
     const unsigned symmetryIndex = nameIndex(name) + 1;
     file << "results[" << symmetryIndex << ",] <- c(" << results << ")\n";
   }
@@ -179,12 +179,12 @@ struct RScriptWriter {
 
 #pragma omp parallel for
     for(unsigned N = 2; N <= 8; ++N) {
-      temple::JSF64 localPrng {seeds.at(N - 2)};
+      Temple::JSF64 localPrng {seeds.at(N - 2)};
       const auto values = averageRandomCsm(N, localPrng, std::forward<F>(f));
 
 #pragma omp critical
       {
-        std::cout << "CSM(" << nameBase << ", " << N << ") = " << temple::average(values) << " +- " << temple::stddev(values) << "\n";
+        std::cout << "CSM(" << nameBase << ", " << N << ") = " << Temple::average(values) << " +- " << Temple::stddev(values) << "\n";
         file << nameBase << "Array[" << (N - 1) << ",] <- c(" << values << ")\n";
       }
     }
@@ -232,7 +232,7 @@ int main(int argc, char* argv[]) {
   RScriptWriter writer {
     showElements ? "elements.R" : "point_groups_data.R"
   };
-  temple::JSF64 prng;
+  Temple::JSF64 prng;
   if(options_variables_map.count("seed")) {
     const int seed = options_variables_map["seed"].as<int>();
     prng.seed(seed);
@@ -254,8 +254,8 @@ int main(int argc, char* argv[]) {
     /* Inversion */
     writer.addElementArray(
       "inversion",
-      [](const continuous::PositionCollection& positions) -> double {
-        return continuous::element(positions, elements::Inversion {});
+      [](const Continuous::PositionCollection& positions) -> double {
+        return Continuous::element(positions, Elements::Inversion {});
       },
       prng
     );
@@ -263,8 +263,8 @@ int main(int argc, char* argv[]) {
     /* Cinf */
     writer.addElementArray(
       "Cinf",
-      [](const continuous::PositionCollection& positions) -> double {
-        return continuous::Cinf(positions);
+      [](const Continuous::PositionCollection& positions) -> double {
+        return Continuous::Cinf(positions);
       },
       prng
     );
@@ -272,8 +272,8 @@ int main(int argc, char* argv[]) {
     /* Sigma */
     writer.addElementArray(
       "sigma",
-      [](const continuous::PositionCollection& positions) -> double {
-        return continuous::element(positions, elements::Reflection {Eigen::Vector3d::UnitZ()}).first;
+      [](const Continuous::PositionCollection& positions) -> double {
+        return Continuous::element(positions, Elements::Reflection {Eigen::Vector3d::UnitZ()}).first;
       },
       prng
     );
@@ -282,9 +282,9 @@ int main(int argc, char* argv[]) {
     for(unsigned order = 2; order <= 8; ++order) {
       writer.addElementArray(
         "C" + std::to_string(order),
-        [order](const continuous::PositionCollection& positions) -> double {
-          return continuous::element(positions,
-            elements::Rotation::Cn(Eigen::Vector3d::UnitZ(), order)
+        [order](const Continuous::PositionCollection& positions) -> double {
+          return Continuous::element(positions,
+            Elements::Rotation::Cn(Eigen::Vector3d::UnitZ(), order)
           ).first;
         },
         prng
@@ -295,9 +295,9 @@ int main(int argc, char* argv[]) {
     for(unsigned order = 4; order <= 8; order += 2) {
       writer.addElementArray(
         "S" + std::to_string(order),
-        [order](const continuous::PositionCollection& positions) -> double {
-          return continuous::element(positions,
-            elements::Rotation::Sn(Eigen::Vector3d::UnitZ(), order)
+        [order](const Continuous::PositionCollection& positions) -> double {
+          return Continuous::element(positions,
+            Elements::Rotation::Sn(Eigen::Vector3d::UnitZ(), order)
           ).first;
         },
         prng
@@ -313,19 +313,19 @@ int main(int argc, char* argv[]) {
         /* Generate 100 random coordinates within a uniform sphere for each
          * symmetry and evaluate the CSM
          */
-        const auto values = temple::map(
-          temple::adaptors::range(nExperiments),
+        const auto values = Temple::map(
+          Temple::adaptors::range(nExperiments),
           [&](unsigned /* i */) -> double {
-            auto normalized = continuous::normalize(generateCoordinates(N, prng));
+            auto normalized = Continuous::normalize(generateCoordinates(N, prng));
             Top top = standardizeTop(normalized);
             if(top == Top::Asymmetric) {
               reorientAsymmetricTop(normalized);
             }
-            return continuous::pointGroup(normalized, group);
+            return Continuous::pointGroup(normalized, group);
           }
         );
-        const double csmAverage = temple::average(values);
-        const double csmStddev = temple::stddev(values);
+        const double csmAverage = Temple::average(values);
+        const double csmStddev = Temple::stddev(values);
 
         writer.addResults(shape, values);
         std::cout << name(shape) << " - " << N << ": " << csmAverage << " +- " << csmStddev << "\n";

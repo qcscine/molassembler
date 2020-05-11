@@ -12,7 +12,7 @@
 #include "Types.h"
 
 namespace Scine {
-namespace molassembler {
+namespace Molassembler {
 
 // Forward-declarations
 class Graph;
@@ -31,7 +31,7 @@ class Graph;
  */
 MASM_EXPORT std::vector<unsigned> distance(AtomIndex i, const Graph& graph);
 
-} // namespace molassembler
+} // namespace Molassembler
 } // namespace Scine
 
 #endif

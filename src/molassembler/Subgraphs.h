@@ -17,7 +17,7 @@
  */
 
 namespace Scine {
-namespace molassembler {
+namespace Molassembler {
 
 // Forward-declare Molecule
 class Molecule;
@@ -101,7 +101,7 @@ MASM_EXPORT std::vector<IndexMap> maximum(
 );
 
 } // namespace subgraphs
-} // namespace molassembler
+} // namespace Molassembler
 } // namespace Scine
 
 #endif

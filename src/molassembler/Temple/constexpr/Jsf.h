@@ -13,7 +13,7 @@
 #include <array>
 
 namespace Scine {
-namespace temple {
+namespace Temple {
 
 /* Heavily modified from:
  *
@@ -311,7 +311,7 @@ struct Generator {
   }
 };
 
-} // namespace temple
+} // namespace Temple
 } // namespace Scine
 
 #endif

@@ -20,7 +20,7 @@
 
 using namespace Scine;
 
-extern temple::Generator<> generator;
+extern Temple::Generator<> generator;
 
 inline bool lastTestPassed() {
   using namespace boost::unit_test;
@@ -32,8 +32,8 @@ inline bool lastTestPassed() {
 
 namespace BTreeStaticTests {
 
-constexpr temple::BTree<unsigned, 3, 20> generateTree() {
-  temple::BTree<unsigned, 3, 20> tree;
+constexpr Temple::BTree<unsigned, 3, 20> generateTree() {
+  Temple::BTree<unsigned, 3, 20> tree;
 
   tree.insert(9);
   tree.insert(3);
@@ -67,17 +67,17 @@ static_assert(
    * -> h = log_2t [N * (2t - 1) + 1] - 1
    *
    */
-  temple::BTreeProperties::minHeight(5, 3) == 0
-  && temple::BTreeProperties::minHeight(35, 3) == 1
-  && temple::BTreeProperties::minHeight(215, 3) == 2,
+  Temple::BTreeProperties::minHeight(5, 3) == 0
+  && Temple::BTreeProperties::minHeight(35, 3) == 1
+  && Temple::BTreeProperties::minHeight(215, 3) == 2,
   "minHeight function is wrong"
 );
 
 static_assert(
-  temple::BTreeProperties::maxNodesInTree(0, 3) == 1
-  && temple::BTreeProperties::maxNodesInTree(1, 3) == 7
-  && temple::BTreeProperties::maxNodesInTree(2, 3) == 43
-  && temple::BTreeProperties::maxNodesInTree(3, 3) == 259,
+  Temple::BTreeProperties::maxNodesInTree(0, 3) == 1
+  && Temple::BTreeProperties::maxNodesInTree(1, 3) == 7
+  && Temple::BTreeProperties::maxNodesInTree(2, 3) == 43
+  && Temple::BTreeProperties::maxNodesInTree(3, 3) == 259,
   "maxNodesInTree is wrong"
 );
 
@@ -88,7 +88,7 @@ inline unsigned popRandom(std::set<unsigned>& values) {
 
   std::advance(
     it,
-    temple::random::getSingle<unsigned>(0, values.size() - 1, generator.engine)
+    Temple::Random::getSingle<unsigned>(0, values.size() - 1, generator.engine)
   );
 
   auto value = *it;
@@ -114,7 +114,7 @@ BOOST_AUTO_TEST_CASE(constexprBTreeTests) {
   std::set<unsigned> notInTree {values.begin(), values.end()};
   std::set<unsigned> inTree;
 
-  temple::BTree<unsigned, 3, nKeys> tree;
+  Temple::BTree<unsigned, 3, nKeys> tree;
 
   std::string lastTreeGraph;
 
@@ -129,7 +129,7 @@ BOOST_AUTO_TEST_CASE(constexprBTreeTests) {
     BOOST_REQUIRE_MESSAGE(
       lastTestPassed(),
       "Element insertion failed. Operation sequence: "
-        << temple::condense(decisions)
+        << Temple::condense(decisions)
         << ". Prior to last operation: \n"
         << treeGraph << "\n\n After last operation: \n"
         << tree.dumpGraphviz()
@@ -147,7 +147,7 @@ BOOST_AUTO_TEST_CASE(constexprBTreeTests) {
     BOOST_REQUIRE_MESSAGE(
       lastTestPassed(),
       "Tree element removal failed. Operation sequence: "
-        << temple::condense(decisions)
+        << Temple::condense(decisions)
         << ". Prior to last operation: \n"
         << treeGraph << "\n\n After last operation: \n"
         << tree.dumpGraphviz()
@@ -162,14 +162,14 @@ BOOST_AUTO_TEST_CASE(constexprBTreeTests) {
     BOOST_REQUIRE_MESSAGE(
       lastTestPassed(),
       "Tree validation failed. Operation sequence: "
-        << temple::condense(decisions)
+        << Temple::condense(decisions)
         << ". Prior to last operation: \n"
         << treeGraph << "\n\n After last operation: \n"
         << tree.dumpGraphviz()
     );
 
     // Check that elements that weren't inserted aren't falsely contained
-    auto notInsertedButContained = temple::copy_if(
+    auto notInsertedButContained = Temple::copy_if(
       notInTree,
       [&](const auto& notInTreeValue) -> bool {
         return tree.contains(notInTreeValue);
@@ -181,15 +181,15 @@ BOOST_AUTO_TEST_CASE(constexprBTreeTests) {
       notInsertedButContained.empty(),
       "Not all elements recorded as not in the tree are recognized as such!\n"
         << "Found in the tree, but should not be present: "
-        << temple::condense(notInsertedButContained)
+        << Temple::condense(notInsertedButContained)
         << "\nSequence of operations: "
-        << temple::condense(decisions)
+        << Temple::condense(decisions)
         << ". Prior to last operation: \n"
         << treeGraph << "\n\n After last operation: \n"
         << tree.dumpGraphviz()
     );
 
-    auto insertedNotContained = temple::copy_if(
+    auto insertedNotContained = Temple::copy_if(
       inTree,
       [&](const auto& inTreeValue) -> bool {
         return !tree.contains(inTreeValue);
@@ -200,9 +200,9 @@ BOOST_AUTO_TEST_CASE(constexprBTreeTests) {
       insertedNotContained.empty(),
       "Not all elements recorded as contained in the tree are recognized as such!\n"
         << "Not found in the tree: "
-        << temple::condense(insertedNotContained)
+        << Temple::condense(insertedNotContained)
         << "\nSequence of operations: "
-        << temple::condense(decisions)
+        << Temple::condense(decisions)
         << ". Prior to last operation: \n"
         << treeGraph << "\n\n After last operation: \n"
         << tree.dumpGraphviz()
@@ -217,7 +217,7 @@ BOOST_AUTO_TEST_CASE(constexprBTreeTests) {
       lastTreeGraph = tree.dumpGraphviz();
 
       // Decide whether to insert or remove a random item
-      auto decisionFloat = temple::random::getSingle<double>(0.0, 1.0, generator.engine);
+      auto decisionFloat = Temple::Random::getSingle<double>(0.0, 1.0, generator.engine);
       if(decisionFloat >= static_cast<double>(inTree.size()) / nKeys) {
         addElement(lastTreeGraph);
       } else {
@@ -228,8 +228,8 @@ BOOST_AUTO_TEST_CASE(constexprBTreeTests) {
     }
 
     BOOST_REQUIRE_MESSAGE(
-      temple::all_of(
-        temple::adaptors::zip(tree, inTree),
+      Temple::all_of(
+        Temple::adaptors::zip(tree, inTree),
         [&](const unsigned treeValue, const unsigned testValue) -> bool {
           if(treeValue != testValue) {
             std::cout << "Expected " << testValue << ", got " << treeValue << std::endl;
@@ -267,7 +267,7 @@ BOOST_AUTO_TEST_CASE(constexprBTreeTests) {
 
 template<size_t minOrder, size_t nElements>
 constexpr bool BTreeAllocatedSizeSufficient() {
-  temple::BTree<unsigned, minOrder, nElements> tree;
+  Temple::BTree<unsigned, minOrder, nElements> tree;
 
   for(unsigned i = 0; i < nElements; ++i) {
     tree.insert(i);
@@ -278,7 +278,7 @@ constexpr bool BTreeAllocatedSizeSufficient() {
 
 template<size_t minOrder, size_t ... nElements>
 constexpr bool testAllBTrees(std::index_sequence<nElements...> /* elements */) {
-  temple::Array<bool, sizeof...(nElements)> results {{
+  Temple::Array<bool, sizeof...(nElements)> results {{
     BTreeAllocatedSizeSufficient<minOrder, 5 + nElements>()...
   }};
 
@@ -293,7 +293,7 @@ constexpr bool testAllBTrees(std::index_sequence<nElements...> /* elements */) {
 
 template<size_t ... minOrders>
 constexpr bool testAllBTrees(std::index_sequence<minOrders...> /* elements */) {
-  temple::Array<bool, sizeof...(minOrders)> results {{
+  Temple::Array<bool, sizeof...(minOrders)> results {{
     testAllBTrees<2 + minOrders>(std::make_index_sequence<45>{})... // Test sizes 5->50
   }};
 

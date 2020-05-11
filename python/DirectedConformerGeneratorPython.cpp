@@ -13,7 +13,7 @@
 #include "Utils/Geometry/AtomCollection.h"
 
 void init_directed_conformer_generator(pybind11::module& m) {
-  using namespace Scine::molassembler;
+  using namespace Scine::Molassembler;
 
   pybind11::class_<DirectedConformerGenerator> dirConfGen(
     m,
@@ -166,7 +166,7 @@ void init_directed_conformer_generator(pybind11::module& m) {
     [](
       DirectedConformerGenerator& generator,
       const DirectedConformerGenerator::DecisionList& decisionList,
-      const distance_geometry::Configuration& configuration
+      const DistanceGeometry::Configuration& configuration
     ) -> VariantType {
       auto result = generator.generateRandomConformation(
         decisionList,
@@ -180,7 +180,7 @@ void init_directed_conformer_generator(pybind11::module& m) {
       return result.error().message();
     },
     pybind11::arg("decision_list"),
-    pybind11::arg("configuration") = distance_geometry::Configuration {},
+    pybind11::arg("configuration") = DistanceGeometry::Configuration {},
     R"delim(
       Try to generate a conformer for a particular decision list.
 
@@ -199,7 +199,7 @@ void init_directed_conformer_generator(pybind11::module& m) {
       DirectedConformerGenerator& generator,
       const DirectedConformerGenerator::DecisionList& decisionList,
       const unsigned seed,
-      const distance_geometry::Configuration& configuration
+      const DistanceGeometry::Configuration& configuration
     ) -> VariantType {
       auto result = generator.generateConformation(
         decisionList,
@@ -215,7 +215,7 @@ void init_directed_conformer_generator(pybind11::module& m) {
     },
     pybind11::arg("decision_list"),
     pybind11::arg("seed"),
-    pybind11::arg("configuration") = distance_geometry::Configuration {},
+    pybind11::arg("configuration") = DistanceGeometry::Configuration {},
     R"delim(
       Try to generate a conformer for a particular decision list.
 

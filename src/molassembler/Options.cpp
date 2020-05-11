@@ -9,11 +9,11 @@
 #include "molassembler/Shapes/Data.h"
 
 namespace Scine {
-namespace molassembler {
+namespace Molassembler {
 
-random::Engine& randomnessEngine() {
+Random::Engine& randomnessEngine() {
   // Pursuant to Construct-on-first-use idiom
-  static random::Engine engine;
+  static Random::Engine engine;
   return engine;
 }
 
@@ -21,5 +21,5 @@ TemperatureRegime Options::temperatureRegime = TemperatureRegime::High;
 ChiralStatePreservation Options::chiralStatePreservation = ChiralStatePreservation::EffortlessAndUnique;
 ShapeTransition Options::shapeTransition = ShapeTransition::MaximizeChiralStatePreservation;
 
-} // namespace molassembler
+} // namespace Molassembler
 } // namespace Scine

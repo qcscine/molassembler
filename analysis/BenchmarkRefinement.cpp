@@ -27,7 +27,7 @@
 #include <iomanip>
 
 using namespace Scine;
-using namespace molassembler;
+using namespace Molassembler;
 
 constexpr std::size_t nExperiments = 100;
 constexpr std::size_t refinementStepLimit = 10000;
@@ -40,8 +40,8 @@ std::ostream& nl(std::ostream& os) {
 struct TimingFunctor {
   virtual boost::optional<unsigned> value(
     const Eigen::MatrixXd& squaredBounds,
-    const std::vector<distance_geometry::ChiralConstraint>& chiralConstraints,
-    const std::vector<distance_geometry::DihedralConstraint>& dihedralConstraints,
+    const std::vector<DistanceGeometry::ChiralConstraint>& chiralConstraints,
+    const std::vector<DistanceGeometry::DihedralConstraint>& dihedralConstraints,
     const Eigen::MatrixXd& positions
   ) = 0;
 
@@ -78,14 +78,14 @@ std::vector<FunctorResults> timeFunctors(
 
   for(unsigned n = 0; n < N; ++n) {
     // Prepare new data for the functors in every experiment
-    distance_geometry::SpatialModel spatialModel {molecule, distance_geometry::Configuration {}};
+    DistanceGeometry::SpatialModel spatialModel {molecule, DistanceGeometry::Configuration {}};
 
     const auto boundsList = spatialModel.makePairwiseBounds();
 
     const auto chiralConstraints = spatialModel.getChiralConstraints();
     const auto dihedralConstraints = spatialModel.getDihedralConstraints();
 
-    distance_geometry::ExplicitBoundsGraph explicitGraph {
+    DistanceGeometry::ExplicitBoundsGraph explicitGraph {
       molecule.graph().inner(),
       boundsList
     };
@@ -100,13 +100,13 @@ std::vector<FunctorResults> timeFunctors(
       throw std::runtime_error("Failure in distance bounds matrix construction: " + distanceBoundsResult.error().message());
     }
 
-    distance_geometry::DistanceBoundsMatrix distanceBounds {std::move(distanceBoundsResult.value())};
+    DistanceGeometry::DistanceBoundsMatrix distanceBounds {std::move(distanceBoundsResult.value())};
 
     Eigen::MatrixXd squaredBounds = distanceBounds.access().cwiseProduct(
       distanceBounds.access()
     );
 
-    auto metricMatrix = distance_geometry::MetricMatrix(
+    auto metricMatrix = DistanceGeometry::MetricMatrix(
       std::move(distancesMatrixResult.value())
     );
 
@@ -130,17 +130,17 @@ std::vector<FunctorResults> timeFunctors(
     }
   }
 
-  return temple::map(
+  return Temple::map(
     counters,
     [](const Counter& counter) -> FunctorResults {
       FunctorResults result;
 
       result.count = counter.timings.size();
       if(!counter.timings.empty()) {
-        result.timingAverage = temple::average(counter.timings);
-        result.timingStddev = temple::stddev(counter.timings, result.timingAverage);
-        result.iterationsAverage = temple::average(counter.iterations);
-        result.iterationsStddev = temple::stddev(counter.iterations, result.iterationsAverage);
+        result.timingAverage = Temple::average(counter.timings);
+        result.timingStddev = Temple::stddev(counter.timings, result.timingAverage);
+        result.iterationsAverage = Temple::average(counter.iterations);
+        result.iterationsStddev = Temple::stddev(counter.iterations, result.iterationsAverage);
       }
 
       return result;
@@ -187,14 +187,14 @@ struct OptimizerParameters {
 template<unsigned dimensionality, typename FloatType, bool SIMD>
 boost::optional<unsigned> eigenRefine(
   const Eigen::MatrixXd& squaredBounds,
-  const std::vector<distance_geometry::ChiralConstraint>& chiralConstraints,
-  const std::vector<distance_geometry::DihedralConstraint>& dihedralConstraints,
+  const std::vector<DistanceGeometry::ChiralConstraint>& chiralConstraints,
+  const std::vector<DistanceGeometry::DihedralConstraint>& dihedralConstraints,
   const Eigen::MatrixXd& positions,
   OptimizerParameters optimizerParameters = {}
 ) {
   unsigned iterationCount = 0;
 
-  using FullRefinementType = distance_geometry::EigenRefinementProblem<dimensionality, FloatType, SIMD>;
+  using FullRefinementType = DistanceGeometry::EigenRefinementProblem<dimensionality, FloatType, SIMD>;
 
   const unsigned N = positions.size() / dimensionality;
   /* Transfer positions into vector form */
@@ -220,7 +220,7 @@ boost::optional<unsigned> eigenRefine(
     initiallyCorrectChiralConstraints = 1 - initiallyCorrectChiralConstraints;
   }
 
-  temple::Lbfgs<FloatType, 32> optimizer;
+  Temple::Lbfgs<FloatType, 32> optimizer;
   optimizer.c1 = optimizerParameters.c1;
   optimizer.c2 = optimizerParameters.c2;
   optimizer.stepLength = optimizerParameters.stepLength;
@@ -287,8 +287,8 @@ template<unsigned dimensionality, typename FloatType, bool SIMD>
 struct EigenFunctor final : public TimingFunctor {
   boost::optional<unsigned> value(
     const Eigen::MatrixXd& squaredBounds,
-    const std::vector<distance_geometry::ChiralConstraint>& chiralConstraints,
-    const std::vector<distance_geometry::DihedralConstraint>& dihedralConstraints,
+    const std::vector<DistanceGeometry::ChiralConstraint>& chiralConstraints,
+    const std::vector<DistanceGeometry::DihedralConstraint>& dihedralConstraints,
     const Eigen::MatrixXd& positions
   ) final {
     return eigenRefine<dimensionality, FloatType, SIMD>(
@@ -358,9 +358,9 @@ void benchmark(
   std::ofstream& benchmarkFile,
   const Algorithm algorithmChoice
 ) {
-  using namespace molassembler;
+  using namespace Molassembler;
 
-  Molecule molecule = io::read(
+  Molecule molecule = IO::read(
     filePath.string()
   );
 
@@ -487,7 +487,7 @@ constexpr const char* description =
 
 
 int main(int argc, char* argv[]) {
-  using namespace molassembler;
+  using namespace Molassembler;
 
   // Set up option parsing
   boost::program_options::options_description options_description("Recognized options");

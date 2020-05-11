@@ -18,14 +18,14 @@
 #include <vector>
 
 namespace Scine {
-namespace molassembler {
+namespace Molassembler {
 
 // Forward-declarations
 class Cycles;
 class AtomStereopermutator;
 
 //! Core graph-level algorithms (not requiring stereopermutator information)
-namespace graph_algorithms {
+namespace GraphAlgorithms {
 
 /*! @brief Find links between two adjacent stereopermutators, returns unordered links
  *
@@ -126,8 +126,8 @@ void updateEtaBonds(PrivateGraph& graph);
  */
 std::vector<unsigned> distance(AtomIndex a, const PrivateGraph& graph);
 
-} // namespace graph_algorithms
-} // namespace molassembler
+} // namespace GraphAlgorithms
+} // namespace Molassembler
 } // namespace Scine
 
 #endif

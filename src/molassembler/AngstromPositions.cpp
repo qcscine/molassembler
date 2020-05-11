@@ -9,7 +9,7 @@
 #include "Utils/Constants.h"
 
 namespace Scine {
-namespace molassembler {
+namespace Molassembler {
 
 AngstromPositions::AngstromPositions(const unsigned N)
   : positions(Utils::PositionCollection::Zero(N, 3)) {}
@@ -29,5 +29,5 @@ Utils::PositionCollection AngstromPositions::getBohr() const {
   return positions * Utils::Constants::bohr_per_angstrom;
 }
 
-} // namespace molassembler
+} // namespace Molassembler
 } // namespace Scine

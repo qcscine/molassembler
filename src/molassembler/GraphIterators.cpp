@@ -39,7 +39,7 @@
  */
 
 namespace Scine {
-namespace molassembler {
+namespace Molassembler {
 
 /* Implementation for iterator facade */
 template<typename T, bool isVertexInitialized>
@@ -274,5 +274,5 @@ template Graph::InnerBasedIterator<BondIndex, true>::InnerBasedIterator(
   const PrivateGraph&, bool
 );
 
-} // namespace molassembler
+} // namespace Molassembler
 } // namespace Scine

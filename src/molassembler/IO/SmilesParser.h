@@ -12,11 +12,11 @@
 #include <vector>
 
 namespace Scine {
-namespace molassembler {
+namespace Molassembler {
 
 class Molecule;
 
-namespace io {
+namespace IO {
 namespace experimental {
 
 /**
@@ -75,8 +75,8 @@ MASM_EXPORT std::vector<Molecule> parseSmiles(const std::string& smiles);
 MASM_EXPORT Molecule parseSmilesSingleMolecule(const std::string& smiles);
 
 } // namespace experimental
-} // namespace io
-} // namespace molassembler
+} // namespace IO
+} // namespace Molassembler
 } // namespace Scine
 
 #endif

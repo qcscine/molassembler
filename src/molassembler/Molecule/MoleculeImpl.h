@@ -16,7 +16,7 @@
 #include "Utils/Geometry/AtomCollection.h"
 
 namespace Scine {
-namespace molassembler {
+namespace Molassembler {
 
 struct Molecule::Impl {
   static Utils::AtomCollection applyCanonicalizationMap(
@@ -160,7 +160,7 @@ struct Molecule::Impl {
    * assignment change can trigger a ranking change, which can in turn lead
    * to the introduction of new stereopermutators or the removal of old ones.
    */
-  void assignStereopermutatorRandomly(AtomIndex a, random::Engine& engine);
+  void assignStereopermutatorRandomly(AtomIndex a, Random::Engine& engine);
 
   /*! Assigns a bond stereopermutator to a random assignment
    *
@@ -173,7 +173,7 @@ struct Molecule::Impl {
    * assignment change can trigger a ranking change, which can in turn lead
    * to the introduction of new stereopermutators or the removal of old ones.
    */
-  void assignStereopermutatorRandomly(const BondIndex& e, random::Engine& engine);
+  void assignStereopermutatorRandomly(const BondIndex& e, Random::Engine& engine);
 
   /**
    * @brief Canonicalizes the graph, invalidating all atom and bond indices.
@@ -258,7 +258,7 @@ struct Molecule::Impl {
    */
   void setShapeAtAtom(
     AtomIndex a,
-    shapes::Shape shape
+    Shapes::Shape shape
   );
 //!@}
 
@@ -272,7 +272,7 @@ struct Molecule::Impl {
    * Returns the expected shape name at a non-terminal atom.
    * \throws if the supplied atomic index is invalid
    */
-  boost::optional<shapes::Shape> inferShape(
+  boost::optional<Shapes::Shape> inferShape(
     AtomIndex index,
     const RankingInformation& ranking
   ) const;
@@ -327,7 +327,7 @@ struct Molecule::Impl {
 //!@}
 };
 
-} // namespace molassembler
+} // namespace Molassembler
 } // namespace Scine
 
 #endif

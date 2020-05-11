@@ -13,10 +13,10 @@ using namespace Scine;
 
 BOOST_AUTO_TEST_CASE(StrongIndices) {
   struct foo_tag;
-  using Foo = temple::StrongIndex<foo_tag, unsigned>;
+  using Foo = Temple::StrongIndex<foo_tag, unsigned>;
 
   struct bar_tag;
-  using Bar = temple::StrongIndex<bar_tag, unsigned>;
+  using Bar = Temple::StrongIndex<bar_tag, unsigned>;
 
   Foo f(4);
   ++f;

@@ -25,7 +25,7 @@ PURITY_STRONG double divByThree (unsigned a) {
 
 BOOST_AUTO_TEST_CASE( sumTest ) {
   std::vector<unsigned> instance {0, 1, 2, 3};
-  auto f = temple::sum(instance);
+  auto f = Temple::sum(instance);
 
   BOOST_CHECK(f == 6);
 
@@ -33,15 +33,15 @@ BOOST_AUTO_TEST_CASE( sumTest ) {
     boost::accumulate(instance, 0) == 6
   );
 
-  auto mapped = temple::map(instance, divByThree);
+  auto mapped = Temple::map(instance, divByThree);
   BOOST_CHECK(mapped == std::vector<double>({0, 1.0/3.0, 2.0/3.0, 1}));
 
   std::vector<double> bmapped;
   boost::transform(instance, std::back_inserter(bmapped), divByThree);
   BOOST_CHECK(mapped == bmapped);
 
-  auto pairwiseSum = temple::map(
-    temple::adaptors::sequentialPairs(instance),
+  auto pairwiseSum = Temple::map(
+    Temple::adaptors::sequentialPairs(instance),
     std::plus<>()
   );
 
@@ -55,9 +55,9 @@ BOOST_AUTO_TEST_CASE( sumTest ) {
     std::plus<>()
   );
 
-  auto pairwiseSmaller = temple::accumulate(
-    temple::map(
-      temple::adaptors::sequentialPairs(instance),
+  auto pairwiseSmaller = Temple::accumulate(
+    Temple::map(
+      Temple::adaptors::sequentialPairs(instance),
       std::less<>()
     ),
     true,
@@ -70,7 +70,7 @@ BOOST_AUTO_TEST_CASE( sumTest ) {
       boost::adaptors::slice(instance, 1, instance.size() - 1)
     ),
     [&](const auto& twoTuple) -> bool {
-      return temple::invoke(std::less<>(), twoTuple);
+      return Temple::invoke(std::less<>(), twoTuple);
     }
   );
 
@@ -86,7 +86,7 @@ BOOST_AUTO_TEST_CASE( sumTest ) {
     {4, 5}
   };
 
-  auto mapToSizes = temple::map(
+  auto mapToSizes = Temple::map(
     vectorOfVectors,
     [](const std::vector<unsigned>& vectorUnsigned) -> unsigned {
       return vectorUnsigned.size();
@@ -106,9 +106,9 @@ BOOST_AUTO_TEST_CASE( sumTest ) {
   std::vector<unsigned> unsignedVector {1, 2, 3};
 
   BOOST_CHECK(
-    temple::sum(
-      temple::map(
-        temple::adaptors::allPairs(unsignedVector),
+    Temple::sum(
+      Temple::map(
+        Temple::adaptors::allPairs(unsignedVector),
         [](const unsigned a, const unsigned b) -> unsigned {
           return a + b;
         }
@@ -117,7 +117,7 @@ BOOST_AUTO_TEST_CASE( sumTest ) {
   );
 
   BOOST_CHECK(
-    !temple::all_of(
+    !Temple::all_of(
       unsignedVector,
       [](auto i) -> bool {
         return i < 2;
@@ -128,9 +128,9 @@ BOOST_AUTO_TEST_CASE( sumTest ) {
   std::vector<double> doubleVector {1.2, 1.5, 1.9};
 
   BOOST_CHECK(
-    temple::sum(
-      temple::map(
-        temple::adaptors::allPairs(doubleVector),
+    Temple::sum(
+      Temple::map(
+        Temple::adaptors::allPairs(doubleVector),
         [](const double a, const double b) -> double {
           return a + b;
         }
@@ -142,14 +142,14 @@ BOOST_AUTO_TEST_CASE( sumTest ) {
 BOOST_AUTO_TEST_CASE( reduceTests) {
   std::vector<unsigned> values {1, 2, 3, 4, 5};
   BOOST_CHECK(
-    temple::accumulate(
+    Temple::accumulate(
       values,
       0u,
       std::plus<>()
     ) == 15u
   );
   BOOST_CHECK(
-    temple::accumulate(
+    Temple::accumulate(
       values,
       1u,
       std::multiplies<>()
@@ -158,15 +158,15 @@ BOOST_AUTO_TEST_CASE( reduceTests) {
 }
 BOOST_AUTO_TEST_CASE(MinMaxTests) {
   const std::vector<unsigned> values {1, 4, 6, 8};
-  BOOST_CHECK(temple::max(values) == 8u);
-  BOOST_CHECK(temple::min(values) == 1u);
+  BOOST_CHECK(Temple::max(values) == 8u);
+  BOOST_CHECK(Temple::min(values) == 1u);
 }
 
 
 BOOST_AUTO_TEST_CASE(mapToSameContainerTests) {
   std::set<int> f {5, -1, 9};
 
-  auto fMapped = temple::map_stl(
+  auto fMapped = Temple::map_stl(
     f,
     [](const int& x) -> double {
       return x + 1.3;
@@ -179,7 +179,7 @@ BOOST_AUTO_TEST_CASE(mapToSameContainerTests) {
   );
 
   std::vector<float> values {0, 3.4, 9};
-  auto xMapped = temple::map(
+  auto xMapped = Temple::map(
     values,
     [](const float& x) -> unsigned long {
       return static_cast<unsigned long>(x);

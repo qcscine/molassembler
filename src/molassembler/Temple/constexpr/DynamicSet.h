@@ -16,7 +16,7 @@
 #include "molassembler/Temple/constexpr/BTree.h"
 
 namespace Scine {
-namespace temple {
+namespace Temple {
 
 /**
  * @brief Tree-based set
@@ -124,7 +124,7 @@ template<
   return DynamicSet<T, nItems, LessThanPredicate, EqualityPredicate>(array);
 }
 
-} // namespace temple
+} // namespace Temple
 } // namespace Scine
 
 #endif

@@ -20,7 +20,7 @@ namespace Utils {
 class AtomCollection;
 } // namespace Utils
 
-namespace molassembler {
+namespace Molassembler {
 
 namespace outcome = OUTCOME_V2_NAMESPACE;
 
@@ -37,7 +37,7 @@ class Molecule;
  * many member functions behave differently in those circumstances.
  *
  * @code{cpp}
- * auto mol = io::read(...);
+ * auto mol = IO::read(...);
  * std::vector<Utils::PositionCollection> conformers;
  * DirectedConformerGenerator generator {mol};
  * if(generator.bondList().empty()) {
@@ -312,7 +312,7 @@ public:
    * This is very similar to the free generateRandomConformation function in
    * terms of what @p configuration will accept.
    *
-   * @see Scine::molassembler::generateRandomConformation()
+   * @see Scine::Molassembler::generateRandomConformation()
    *
    * @note Advances the state of the global PRNG.
    *
@@ -321,7 +321,7 @@ public:
    */
   outcome::result<Utils::PositionCollection> generateRandomConformation(
     const DecisionList& decisionList,
-    const distance_geometry::Configuration& configuration = distance_geometry::Configuration {}
+    const DistanceGeometry::Configuration& configuration = DistanceGeometry::Configuration {}
   );
 
   /*! @brief Try to generate a conformer for a particular decision list
@@ -329,7 +329,7 @@ public:
    * This is very similar to the free generateConformation function in terms
    * of what @p configuration will accept.
    *
-   * @see Scine::molassembler::generateConformation()
+   * @see Scine::Molassembler::generateConformation()
    *
    * @throws std::invalid_argument If the passed decisionList does not match
    *   the length of the result of bondList().
@@ -337,7 +337,7 @@ public:
   outcome::result<Utils::PositionCollection> generateConformation(
     const DecisionList& decisionList,
     const unsigned seed,
-    const distance_geometry::Configuration& configuration = distance_geometry::Configuration {}
+    const DistanceGeometry::Configuration& configuration = DistanceGeometry::Configuration {}
   );
 
   /*! @brief Yields a molecule reference for a particular decision list
@@ -398,7 +398,7 @@ private:
   std::unique_ptr<Impl> pImpl_;
 };
 
-} // namespace molassembler
+} // namespace Molassembler
 } // namespace Scine
 
 #endif
