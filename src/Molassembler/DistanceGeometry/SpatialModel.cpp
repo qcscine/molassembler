@@ -173,7 +173,7 @@ SpatialModel::SpatialModel(
   Temple::forEach(
     Temple::Adaptors::allPairs(configuration.fixedPositions),
     [&](const auto& indexPositionPairA, const auto& indexPositionPairB) {
-      double spatialDistance = cartesian::distance(
+      double spatialDistance = Cartesian::distance(
         indexPositionPairA.second,
         indexPositionPairB.second
       ) * Utils::Constants::angstrom_per_bohr ;
@@ -355,7 +355,7 @@ void SpatialModel::addAtomStereopermutatorInformation(
     if(centerFixed && siteFixed.at(siteI)) {
       // All center to site constituting atom distances are fixed *exactly*
       for(const AtomIndex i : ranking.sites.at(siteI)) {
-        const double bondDistance = cartesian::distance(
+        const double bondDistance = Cartesian::distance(
           fixedAngstromPositions.at(i),
           fixedAngstromPositions.at(centerAtom)
         );
@@ -370,7 +370,7 @@ void SpatialModel::addAtomStereopermutatorInformation(
       Temple::forEach(
         Temple::Adaptors::allPairs(ranking.sites.at(siteI)),
         [&](const AtomIndex i, const AtomIndex j) {
-          const double angle = cartesian::angle(
+          const double angle = Cartesian::angle(
             fixedAngstromPositions.at(i),
             fixedAngstromPositions.at(centerAtom),
             fixedAngstromPositions.at(j)
@@ -453,7 +453,7 @@ void SpatialModel::addAtomStereopermutatorInformation(
             ranking.sites.at(j)
           ),
           [&](const AtomIndex x, const AtomIndex y) -> void {
-            const double angle = cartesian::angle(
+            const double angle = Cartesian::angle(
               fixedAngstromPositions.at(x),
               fixedAngstromPositions.at(centerAtom),
               fixedAngstromPositions.at(y)
@@ -609,7 +609,7 @@ void SpatialModel::addBondStereopermutatorInformation(
       const auto& lSite = secondStereopermutator.getRanking().sites.at(lAtSecond);
 
       // Calculate the shape dihedral from the fixed positions
-      const double fixedDihedralAngle = cartesian::dihedral(
+      const double fixedDihedralAngle = Cartesian::dihedral(
         averagePosition(iSite, fixedAngstromPositions),
         fixedAngstromPositions.at(firstStereopermutator.placement()),
         fixedAngstromPositions.at(secondStereopermutator.placement()),
@@ -1811,7 +1811,7 @@ void SpatialModel::modelBondDistances_(
 
     if(fixedAngstromPositions.count(i) > 0 && fixedAngstromPositions.count(j) > 0) {
       // If both atoms are fixed, their mutual bond distance is known exactly
-      double bondDistance = cartesian::distance(
+      double bondDistance = Cartesian::distance(
         fixedAngstromPositions.at(i),
         fixedAngstromPositions.at(j)
       );

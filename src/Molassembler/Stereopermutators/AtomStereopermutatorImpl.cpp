@@ -716,7 +716,7 @@ void AtomStereopermutator::Impl::fit(
   // For all atoms making up a site, decide on the spatial average position
   Eigen::Matrix<double, 3, Eigen::Dynamic> sitePositions(3, S + 1);
   for(unsigned i = 0; i < S; ++i) {
-    sitePositions.col(i) = cartesian::averagePosition(angstromWrapper.positions, ranking_.sites.at(i));
+    sitePositions.col(i) = Cartesian::averagePosition(angstromWrapper.positions, ranking_.sites.at(i));
   }
   // Add the putative center
   sitePositions.col(S) = angstromWrapper.positions.row(centerAtom_);

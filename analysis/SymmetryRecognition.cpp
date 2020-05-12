@@ -80,7 +80,7 @@ struct AngularDeviation {
                 ),
                 [&](const unsigned siteI, const unsigned siteJ) -> double {
                   return f(
-                    Molassembler::cartesian::angle(
+                    Molassembler::Cartesian::angle(
                       positions.col(1 + siteI),
                       positions.col(0),
                       positions.col(1 + siteJ)
@@ -151,7 +151,7 @@ struct AngularDeviationGeometryIndexHybrid final : public Recognizer {
           Temple::map(
             Temple::Adaptors::allPairs(Temple::Adaptors::range(S)),
             [&](const unsigned i, const unsigned j) -> double {
-              return Molassembler::cartesian::angle(
+              return Molassembler::Cartesian::angle(
                 positions.col(1 + i),
                 positions.col(0),
                 positions.col(1 + j)
@@ -217,7 +217,7 @@ struct AngularDeviationGeometryIndexHybrid final : public Recognizer {
                 ),
                 [&](const unsigned siteI, const unsigned siteJ) -> double {
                   const double deviation = (
-                    Molassembler::cartesian::angle(
+                    Molassembler::Cartesian::angle(
                       positions.col(1 + siteI),
                       positions.col(0),
                       positions.col(1 + siteJ)

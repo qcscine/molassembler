@@ -878,7 +878,7 @@ void BondStereopermutator::Impl::fit(
     assert(S == Shapes::size(permutator.getShape()));
     Eigen::Matrix<double, 3, Eigen::Dynamic> sitePositions(3, S);
     for(unsigned i = 0; i < S; ++i) {
-      sitePositions.col(i) = cartesian::averagePosition(
+      sitePositions.col(i) = Cartesian::averagePosition(
         angstromWrapper.positions,
         permutator.getRanking().sites.at(i)
       );
@@ -919,7 +919,7 @@ void BondStereopermutator::Impl::fit(
        * zero.
        */
 
-      const double measuredDihedral = cartesian::dihedral(
+      const double measuredDihedral = Cartesian::dihedral(
         firstSitePositions.col(firstSite),
         angstromWrapper.positions.row(firstStereopermutator.placement()),
         angstromWrapper.positions.row(secondStereopermutator.placement()),

@@ -13,7 +13,7 @@
 
 namespace Scine {
 namespace Molassembler {
-namespace cartesian {
+namespace Cartesian {
 
 /* Reimplementation on vector basis alone */
 /*! @brief Averages multiple positions
@@ -83,7 +83,7 @@ double rmsPlaneDeviation(
   const std::vector<AtomIndex>& indices
 );
 
-} // namespace cartesian
+} // namespace Cartesian
 } // namespace Molassembler
 } // namespace Scine
 #endif

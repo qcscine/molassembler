@@ -1014,7 +1014,7 @@ StereopermutatorList Molecule::Impl::inferStereopermutatorsFromPositions(
   for(const auto& cycleBonds : graph().cycles()) {
     if(cycleBonds.size() > 3) {
       const auto& cycleIndices = makeRingIndexSequence(cycleBonds);
-      const double rmsPlaneDeviation = cartesian::rmsPlaneDeviation(
+      const double rmsPlaneDeviation = Cartesian::rmsPlaneDeviation(
         angstromWrapper.positions,
         cycleIndices
       );

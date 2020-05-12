@@ -13,7 +13,7 @@
 
 namespace Scine {
 namespace Molassembler {
-namespace cartesian {
+namespace Cartesian {
 
 bool validPositionIndices(
   const Utils::PositionCollection& positions,
@@ -153,6 +153,6 @@ double rmsPlaneDeviation(
   return std::sqrt(sumOfSquares / I);
 }
 
-} // namespace cartesian
+} // namespace Cartesian
 } // namespace Molassembler
 } // namespace Scine

@@ -42,7 +42,7 @@ BOOST_AUTO_TEST_CASE(DihedralTests, *boost::unit_test::label("Molassembler")) {
       Eigen::Vector3d::UnitY()
     ) * lastPosition;
 
-    const double forwardDihedral = cartesian::dihedral(
+    const double forwardDihedral = Cartesian::dihedral(
       positions.row(0),
       positions.row(1),
       positions.row(2),
@@ -54,7 +54,7 @@ BOOST_AUTO_TEST_CASE(DihedralTests, *boost::unit_test::label("Molassembler")) {
       "Twist angle: " << randomAngle << ", reported angle: " << forwardDihedral
     );
 
-    const double reverseDihedral = cartesian::dihedral(
+    const double reverseDihedral = Cartesian::dihedral(
       positions.row(3),
       positions.row(2),
       positions.row(1),
