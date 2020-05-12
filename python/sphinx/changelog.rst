@@ -15,6 +15,8 @@ Added
 - Experimental library-internal SMILES parser in ``io.experimental``
 - Molecule instances integrate nicely with notebooks using ``_repr_svg_``
 - ``__repr__`` members for ``Molecule``, ``Graph`` and ``StereopermutatorList``
+- Improved ``__init__.py`` to allow wild imports
+- ``setup.py`` correctly installs as platlib
 
 Changed
 ~~~~~~~

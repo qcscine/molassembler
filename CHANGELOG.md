@@ -4,8 +4,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [1.0.0] - 2020-01-23
+## [1.0.0] - 2020-05-12
 ### Added
+- Add Conan support
 - Explicit definition of which headers make up the public API in the
   tutorial-like documentation
 - Molecule canonicalization: After canonicalization, isomorphism checks reduce
@@ -26,12 +27,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - Doctested examples
 
 ### Changed
-- `temple` no longer forms part of the public interface
-- Renamed `AtomStereocenter` and `BondStereocenter` to `AtomStereopermutator`
-  and `BondStereopermutator` respectively. `StereocenterList` is accordingly
-  renamed to `StereopermutatorList`. The classes in question often handle cases
-  where there is merely a single stereopermutation and hence **are not** a
-  stereocenter. It seemed misleading to keep the name. 
 - The PRNG Engine is seeded directly instead of a wrapper object that helps
   with generating random numbers. The PRNG engine is part of molassembler's
   public interface instead of the sublibrary temple. The engine is constructed
@@ -39,6 +34,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Molassembler's validation and analysis binaries are no longer built by
   default (see CMake options)
 - Add BSD-3 license marker to all files and a checker script
+- Adopt Scine code conventions regarding namespace formatting
+- Enclose temple, shapes, and stereopermutation sub-libraries in molassembler
+  namespace
 
 ## [Unreleased]
 ### Added
