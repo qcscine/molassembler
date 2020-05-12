@@ -23,7 +23,7 @@ inline std::ostream& nl(std::ostream& os) {
   return os;
 }
 
-BOOST_AUTO_TEST_CASE(ExplicitBoundsGraphStructure) {
+BOOST_AUTO_TEST_CASE(ExplicitBoundsGraphStructure, *boost::unit_test::label("DG")) {
   using namespace Scine::Molassembler;
 
   for(

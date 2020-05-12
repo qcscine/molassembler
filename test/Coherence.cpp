@@ -207,7 +207,7 @@ void testIdenticalReinterpret(const Molecule& mol, const AtomIndex checkPosition
   }
 }
 
-BOOST_AUTO_TEST_CASE(BidentateAssignmentRecognized) {
+BOOST_AUTO_TEST_CASE(BidentateAssignmentRecognized, *boost::unit_test::label("Molassembler")) {
   const std::string pincer_smiles = "[Ir]12([H])(Cl)P(C(C)(C)(C))(C(C)(C)(C))CC(=CC=C3)C1=C3CP2(C(C)(C)(C))C(C)(C)C";
   // NOTE: set shape at 0 to trigonal bipyramid
   auto pincer = IO::experimental::parseSmilesSingleMolecule(pincer_smiles);
@@ -245,7 +245,7 @@ BOOST_AUTO_TEST_CASE(BidentateAssignmentRecognized) {
   testIdenticalReinterpret(pincer, 0);
 }
 
-BOOST_AUTO_TEST_CASE(Shipscrews) {
+BOOST_AUTO_TEST_CASE(Shipscrews, *boost::unit_test::label("Molassembler")) {
   const std::string shipscrew_smiles = "[Fe@OH1+3]123(OC(=O)C(=O)O1)(OC(=O)C(=O)O2)OC(=O)C(=O)O3";
   auto shipscrew = IO::experimental::parseSmilesSingleMolecule(shipscrew_smiles);
 

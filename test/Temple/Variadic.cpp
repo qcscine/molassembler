@@ -13,7 +13,7 @@
 
 using namespace Scine::Molassembler;
 
-BOOST_AUTO_TEST_CASE(concatenateTests) {
+BOOST_AUTO_TEST_CASE(ConcatenateTests, *boost::unit_test::label("Temple")) {
   std::set<unsigned> f {5, 9, 3}; // Note these get reordered
   std::vector<unsigned> h {9, 7, 4};
 

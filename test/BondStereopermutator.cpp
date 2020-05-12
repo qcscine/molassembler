@@ -167,7 +167,7 @@ void checkExpectations(const boost::filesystem::path& filePath) {
   }
 }
 
-BOOST_AUTO_TEST_CASE(stereopermutatorExpectationTests) {
+BOOST_AUTO_TEST_CASE(stereopermutatorExpectationTests, *boost::unit_test::label("Molassembler")) {
   for(
     const boost::filesystem::path& currentFilePath :
     boost::filesystem::recursive_directory_iterator("ez_stereocenters")
@@ -178,7 +178,7 @@ BOOST_AUTO_TEST_CASE(stereopermutatorExpectationTests) {
   }
 }
 
-BOOST_AUTO_TEST_CASE(BondStatePropagationTests) {
+BOOST_AUTO_TEST_CASE(BondStatePropagationTests, *boost::unit_test::label("Molassembler")) {
   using namespace Molassembler;
 
   auto mol = IO::read("ez_stereocenters/but-2E-ene.mol");
@@ -223,7 +223,7 @@ BOOST_AUTO_TEST_CASE(BondStatePropagationTests) {
   BOOST_CHECK(postPermutator.assigned().value() != priorAssignment);
 }
 
-BOOST_AUTO_TEST_CASE(StereocentersInSmallCycles) {
+BOOST_AUTO_TEST_CASE(StereocentersInSmallCycles, *boost::unit_test::label("Molassembler")) {
   // Flat map from cycle size to number of assignments
   const std::vector<unsigned> expectedAssignmentsMap {
   //0, 1, 2, 3, 4, 5, 6, 7, 8

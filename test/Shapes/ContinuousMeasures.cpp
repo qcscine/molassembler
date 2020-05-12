@@ -72,7 +72,7 @@ const std::string& pointGroupString(PointGroup group) {
   );
 }
 
-BOOST_AUTO_TEST_CASE(PointGroupMeasures) {
+BOOST_AUTO_TEST_CASE(PointGroupMeasures, *boost::unit_test::label("Shapes")) {
   unsigned shapesTestedCount = 0;
   unsigned shapesPassCount = 0;
 
@@ -153,7 +153,7 @@ std::ostream& operator << (std::ostream& os, const PointGroup group) {
   return os;
 }
 
-BOOST_AUTO_TEST_CASE(PointGroupElementGroupings) {
+BOOST_AUTO_TEST_CASE(PointGroupElementGroupings, *boost::unit_test::label("Shapes")) {
   const PointGroup limit = PointGroup::Ih;
   for(unsigned g = 0; g <= underlying(limit); ++g) {
     const PointGroup pointGroup = static_cast<PointGroup>(g);
@@ -202,7 +202,7 @@ BOOST_AUTO_TEST_CASE(PointGroupElementGroupings) {
   }
 }
 
-// BOOST_AUTO_TEST_CASE(PaperCSMExamples) {
+// BOOST_AUTO_TEST_CASE(PaperCSMExamples, *boost::unit_test::label("Shapes")) {
 //   /* From Continuous Symmetry Measures. 2. Symmetry Groups and the Tetrahedron,
 //    * Zabrodsky, Peleg, Avnir. J. Am. Chem. Soc. 1993, 115, 8278-8289
 //    *
@@ -244,7 +244,7 @@ BOOST_AUTO_TEST_CASE(PointGroupElementGroupings) {
 //   BOOST_CHECK_CLOSE(expectedC3vCSM, calculatedC3v, 1);
 // }
 
-BOOST_AUTO_TEST_CASE(SquareC4D4PointGroups) {
+BOOST_AUTO_TEST_CASE(SquareC4D4PointGroups, *boost::unit_test::label("Shapes")) {
   const double pointGroupCSM = Continuous::pointGroup(
     Continuous::normalize(coordinates(Shape::Square)),
     PointGroup::C4
@@ -265,7 +265,7 @@ BOOST_AUTO_TEST_CASE(SquareC4D4PointGroups) {
   );
 }
 
-BOOST_AUTO_TEST_CASE(FixedCnAxis) {
+BOOST_AUTO_TEST_CASE(FixedCnAxis, *boost::unit_test::label("Shapes")) {
   const std::vector<std::pair<Shape, unsigned>> highestOrderAxis {
     {Shape::Bent, 2},
     {Shape::EquilateralTriangle, 3},
@@ -322,7 +322,7 @@ BOOST_AUTO_TEST_CASE(FixedCnAxis) {
   }
 }
 
-BOOST_AUTO_TEST_CASE(AlleneS4) {
+BOOST_AUTO_TEST_CASE(AlleneS4, *boost::unit_test::label("Shapes")) {
   Continuous::PositionCollection allenePositions(3, 7);
   allenePositions << 0.0, 0.0, 0.0, 0.0, 0.0, 0.928334, -0.928334,
                      0.0, 0.0, 0.0, 0.928334, -0.928334, 0.0, 0.0,
@@ -363,7 +363,7 @@ BOOST_AUTO_TEST_CASE(AlleneS4) {
   BOOST_CHECK_LT(optimizedS4Result.first, 0.1);
 }
 
-BOOST_AUTO_TEST_CASE(ReflectionPlaneOptimization) {
+BOOST_AUTO_TEST_CASE(ReflectionPlaneOptimization, *boost::unit_test::label("Shapes")) {
   // Generate 8 points in the xy plane
   Continuous::PositionCollection planarPositions(3, 8);
   for(unsigned i = 0; i < 8; ++i) {
@@ -396,7 +396,7 @@ BOOST_AUTO_TEST_CASE(ReflectionPlaneOptimization) {
   BOOST_CHECK_LT(optimizedSigma.first, 0.1);
 }
 
-BOOST_AUTO_TEST_CASE(AsymmetricTopStandardization) {
+BOOST_AUTO_TEST_CASE(AsymmetricTopStandardization, *boost::unit_test::label("Shapes")) {
   std::vector<Shape> asymmetricTopsWithC2 {
     Shape::Bent,
     Shape::T,
@@ -428,7 +428,7 @@ BOOST_AUTO_TEST_CASE(AsymmetricTopStandardization) {
   }
 }
 
-BOOST_AUTO_TEST_CASE(ShapeMeasuresYieldForwardPermutation) {
+BOOST_AUTO_TEST_CASE(ShapeMeasuresYieldForwardPermutation, *boost::unit_test::label("Shapes")) {
   const Shape testShape = Shape::Tetrahedron;
 
   auto shapeCoordinates = Continuous::normalize(
@@ -504,7 +504,7 @@ BOOST_AUTO_TEST_CASE(ShapeMeasuresYieldForwardPermutation) {
   );
 }
 
-BOOST_AUTO_TEST_CASE(ShapeMeasuresAlternateAlgorithm) {
+BOOST_AUTO_TEST_CASE(ShapeMeasuresAlternateAlgorithm, *boost::unit_test::label("Shapes")) {
 #ifdef NDEBUG
   constexpr unsigned testingShapeSizeLimit = 7;
 #else
@@ -547,7 +547,7 @@ BOOST_AUTO_TEST_CASE(ShapeMeasuresAlternateAlgorithm) {
   }
 }
 
-BOOST_AUTO_TEST_CASE(ShapeMeasuresHeuristics) {
+BOOST_AUTO_TEST_CASE(ShapeMeasuresHeuristics, *boost::unit_test::label("Shapes")) {
 #ifdef NDEBUG
   constexpr unsigned testingShapeSizeLimit = 7;
 #else
@@ -603,7 +603,7 @@ BOOST_AUTO_TEST_CASE(ShapeMeasuresHeuristics) {
   }
 }
 
-BOOST_AUTO_TEST_CASE(MinimumDistortionConstants) {
+BOOST_AUTO_TEST_CASE(MinimumDistortionConstants, *boost::unit_test::label("Shapes")) {
   /* NOTES
    * - These constants are from https://pubs.acs.org/doi/10.1021/ja036479n
    *

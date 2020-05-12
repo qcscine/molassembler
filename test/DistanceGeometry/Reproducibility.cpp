@@ -16,7 +16,7 @@
 
 using namespace Scine::Molassembler;
 
-BOOST_AUTO_TEST_CASE(ReproducibleConformers) {
+BOOST_AUTO_TEST_CASE(ReproducibleConformers, *boost::unit_test::label("DG")) {
   const unsigned seed = 6564;
   auto& prng = randomnessEngine();
 
@@ -48,7 +48,7 @@ BOOST_AUTO_TEST_CASE(ReproducibleConformers) {
   );
 }
 
-BOOST_AUTO_TEST_CASE(ReproducibleEnsembles) {
+BOOST_AUTO_TEST_CASE(ReproducibleEnsembles, *boost::unit_test::label("DG")) {
   const unsigned seed = 6564;
   const unsigned ensembleSize = 10;
   auto& prng = randomnessEngine();

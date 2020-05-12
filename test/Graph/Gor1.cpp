@@ -92,7 +92,7 @@ Graph SPACYC_P2N(
   return graph;
 }
 
-BOOST_AUTO_TEST_CASE(gor1Tests) {
+BOOST_AUTO_TEST_CASE(RandomizedGor1Test, *boost::unit_test::label("Molassembler")) {
   unsigned V = 8192;
   unsigned E = 131072;
   double l = -10000;

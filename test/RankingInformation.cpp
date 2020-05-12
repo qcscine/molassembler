@@ -16,7 +16,7 @@ using namespace std::string_literals;
 
 inline SiteIndex operator "" _s (unsigned long long v) { return SiteIndex(v); }
 
-BOOST_AUTO_TEST_CASE(SiteRanking) {
+BOOST_AUTO_TEST_CASE(SiteRanking, *boost::unit_test::label("Molassembler")) {
   const auto symmetricHapticPincerRanking = RankingInformation::RankedSubstituentsType {
     {1, 6},
     {2, 5},

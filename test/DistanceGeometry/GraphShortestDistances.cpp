@@ -168,7 +168,7 @@ UnsignedType right(UnsignedType a) {
   return 2 * a + 1;
 }
 
-BOOST_AUTO_TEST_CASE(ShortestPathsGraphConcepts) {
+BOOST_AUTO_TEST_CASE(ShortestPathsGraphConcepts, *boost::unit_test::label("DG")) {
 
   for(
     const boost::filesystem::path& currentFilePath :
@@ -498,7 +498,7 @@ bool shortestGraphsAlgorithmsResultsMatch(
   return pass;
 }
 
-BOOST_AUTO_TEST_CASE(GraphShortestDistancesCorrectness) {
+BOOST_AUTO_TEST_CASE(GraphShortestDistancesCorrectness, *boost::unit_test::label("DG")) {
   /* Want to do combination tests with the iodo-alkane.
    *
    * Can calculate shortest paths with either:

@@ -56,7 +56,7 @@ public:
   }
 };
 
-BOOST_AUTO_TEST_CASE( cache_all ) {
+BOOST_AUTO_TEST_CASE(SimpleCacheTest, *boost::unit_test::label("Temple")) {
   using namespace std::string_literals;
 
   /* 1 */

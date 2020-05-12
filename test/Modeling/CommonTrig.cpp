@@ -20,70 +20,38 @@ bool isApproxAbs(
 }
 
 
-BOOST_AUTO_TEST_CASE(randomExamples) {
+BOOST_AUTO_TEST_CASE(CommonTrigExampleTests, *boost::unit_test::label("Molassembler")) {
   using namespace Scine;
   using namespace Molassembler;
   using namespace CommonTrig;
 
   BOOST_CHECK(
     isApproxAbs(
-      lawOfCosines(
-        1.0,
-        1.0,
-        M_PI / 2
-      ),
+      lawOfCosines(1.0, 1.0, M_PI / 2),
       std::sqrt(2)
     )
   );
 
   BOOST_CHECK_MESSAGE(
     isApproxAbs(
-      dihedralLength(
-        1,
-        1,
-        1,
-        M_PI / 2,
-        M_PI / 2,
-        0
-      ),
+      dihedralLength(1, 1, 1, M_PI / 2, M_PI / 2, 0),
       1.0
     ),
     "It's not 1, it's "
-      << dihedralLength(
-        1,
-        1,
-        1,
-        M_PI / 2,
-        M_PI / 2,
-        0
-      )
+      << dihedralLength(1, 1, 1, M_PI / 2, M_PI / 2, 0)
   );
 
   BOOST_CHECK_MESSAGE(
     isApproxAbs(
-      dihedralLength(
-        1,
-        1,
-        1,
-        M_PI / 2,
-        M_PI / 2,
-        M_PI
-      ),
+      dihedralLength(1, 1, 1, M_PI / 2, M_PI / 2, M_PI),
       std::sqrt(5)
     ),
     "It's not " << std::sqrt(5) <<", it's "
-      << dihedralLength(
-        1,
-        1,
-        1,
-        M_PI / 2,
-        M_PI / 2,
-        M_PI
-      )
+      << dihedralLength(1, 1, 1, M_PI / 2, M_PI / 2, M_PI)
   );
 }
 
-BOOST_AUTO_TEST_CASE(dihedralZeroAlwaysSmallerDihedralPi) {
+BOOST_AUTO_TEST_CASE(DihedralZeroAlwaysSmallerDihedralPi, *boost::unit_test::label("Molassembler")) {
   using namespace Scine;
   using namespace Molassembler;
   using namespace CommonTrig;

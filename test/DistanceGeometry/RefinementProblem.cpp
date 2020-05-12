@@ -409,7 +409,7 @@ struct RotationalTranslationalInvarianceTest {
   }
 };
 
-BOOST_AUTO_TEST_CASE(RefinementProblemRotationalTranslationalInvariance) {
+BOOST_AUTO_TEST_CASE(RefinementProblemRotationalTranslationalInvariance, *boost::unit_test::label("DG")) {
   using EigenRefinementTypeVariations = std::tuple<
     EigenRefinementProblem<4, double, false>,
     //EigenRefinementProblem<4, float, false>,
@@ -582,7 +582,7 @@ struct CompareImplementations {
   }
 };
 
-BOOST_AUTO_TEST_CASE(RefinementProblemEquivalence) {
+BOOST_AUTO_TEST_CASE(RefinementProblemEquivalence, *boost::unit_test::label("DG")) {
   using DoubleRefinementTypeVariations = std::tuple<
     EigenRefinementProblem<4, double, false>,
     EigenRefinementProblem<4, double, true>

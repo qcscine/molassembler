@@ -98,7 +98,7 @@ inline unsigned popRandom(std::set<unsigned>& values) {
   return value;
 }
 
-BOOST_AUTO_TEST_CASE(constexprBTreeTests) {
+BOOST_AUTO_TEST_CASE(ConstexprBTreeTests, *boost::unit_test::label("Temple")) {
   constexpr unsigned nKeys = 100;
 
   using namespace std::string_literals;

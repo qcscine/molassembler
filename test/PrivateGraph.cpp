@@ -17,7 +17,7 @@
 using namespace Scine;
 using namespace Molassembler;
 
-BOOST_AUTO_TEST_CASE(SplitGraph) {
+BOOST_AUTO_TEST_CASE(SplitGraph, *boost::unit_test::label("Molassembler")) {
   PrivateGraph methane(4);
   methane.elementType(0) = Utils::ElementType::C;
   methane.elementType(1) = Utils::ElementType::H;
@@ -46,7 +46,7 @@ BOOST_AUTO_TEST_CASE(SplitGraph) {
   );
 }
 
-BOOST_AUTO_TEST_CASE(BridgeEdges) {
+BOOST_AUTO_TEST_CASE(BridgeEdges, *boost::unit_test::label("Molassembler")) {
   PrivateGraph ethane(8);
   ethane.elementType(0) = Utils::ElementType::C;
   ethane.elementType(1) = Utils::ElementType::C;

@@ -58,7 +58,7 @@ double timeNullaryCallable(
 }
 
 
-BOOST_AUTO_TEST_CASE(setRemovalDefect) {
+BOOST_AUTO_TEST_CASE(SetRemovalDefect, *boost::unit_test::label("Temple")) {
   /* Sets and maps cannot use std::remove_if! Not a defect. */
 
   auto testSet = Temple::copy_if(
@@ -71,7 +71,7 @@ BOOST_AUTO_TEST_CASE(setRemovalDefect) {
   BOOST_CHECK((testSet == std::set<unsigned> {1, 3, 5, 9}));
 }
 
-BOOST_AUTO_TEST_CASE(selectTestCases) {
+BOOST_AUTO_TEST_CASE(selectTestCases, *boost::unit_test::label("Temple")) {
   auto ragged2D = std::vector<
     std::vector<unsigned>
   > {
@@ -102,7 +102,7 @@ BOOST_AUTO_TEST_CASE(selectTestCases) {
   BOOST_CHECK((*largestVector == std::vector<unsigned> {9, 44, 33, 12}));
 }
 
-BOOST_AUTO_TEST_CASE(stringifyTests) {
+BOOST_AUTO_TEST_CASE(stringifyTests, *boost::unit_test::label("Temple")) {
   std::vector<
     std::map<
       unsigned,
@@ -167,7 +167,7 @@ struct TupleLike : Temple::Crtp::LexicographicComparable<TupleLike> {
   }
 };
 
-BOOST_AUTO_TEST_CASE(crtpTests) {
+BOOST_AUTO_TEST_CASE(crtpTests, *boost::unit_test::label("Temple")) {
   TupleLike a {4u, -3}, b {9u, 4}, c {9u, 4};
   BOOST_CHECK(b == c);
   BOOST_CHECK(a < b);
@@ -176,7 +176,7 @@ BOOST_AUTO_TEST_CASE(crtpTests) {
   BOOST_CHECK(b >= c);
 }
 
-BOOST_AUTO_TEST_CASE(ReferenceOptional) {
+BOOST_AUTO_TEST_CASE(ReferenceOptional, *boost::unit_test::label("Temple")) {
   int x = 0;
   Temple::Optional<int&> f {x};
   if(f) {
@@ -188,7 +188,7 @@ BOOST_AUTO_TEST_CASE(ReferenceOptional) {
   BOOST_CHECK(!g.hasValue());
 }
 
-BOOST_AUTO_TEST_CASE(FunctorSafety) {
+BOOST_AUTO_TEST_CASE(FunctorSafety, *boost::unit_test::label("Temple")) {
   std::vector<unsigned> x {1, 4, 3};
   // Bind x by const reference within the functor
   auto at = Temple::Functor::at(x);
@@ -206,7 +206,7 @@ BOOST_AUTO_TEST_CASE(FunctorSafety) {
   BOOST_CHECK_EQUAL(Temple::Functor::second(t), 1.0);
 }
 
-BOOST_AUTO_TEST_CASE(JSF) {
+BOOST_AUTO_TEST_CASE(JsfRandomness, *boost::unit_test::label("Temple")) {
   const int fixedSeed = 1042;
 
   Temple::JSF64 engine;

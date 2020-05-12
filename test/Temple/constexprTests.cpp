@@ -82,7 +82,7 @@ static_assert(
 
 } // namespace ArrayTests
 
-BOOST_AUTO_TEST_CASE( mathApproxEqual ) {
+BOOST_AUTO_TEST_CASE(MathFnCorrectness, *boost::unit_test::label("Temple")) {
   const unsigned numTests = 100;
 
   constexpr double accuracy = 1e-12;
@@ -274,7 +274,7 @@ BOOST_AUTO_TEST_CASE( mathApproxEqual ) {
   );
 }
 
-BOOST_AUTO_TEST_CASE(arrayPermutation) {
+BOOST_AUTO_TEST_CASE(ArrayPermutation, *boost::unit_test::label("Temple")) {
   std::array<unsigned, 4> base {{0, 1, 2, 3}};
   std::array<unsigned, 4> STLComparison {{0, 1, 2, 3}};
 
@@ -378,7 +378,7 @@ constexpr bool dynArrSpliceTest() {
   );
 }
 
-BOOST_AUTO_TEST_CASE(dynamicArrayTests) {
+BOOST_AUTO_TEST_CASE(DynamicArrayTests, *boost::unit_test::label("Temple")) {
   constexpr Temple::DynamicArray<unsigned, 10> arr {4, 3, 5};
 
   static_assert(
@@ -443,7 +443,7 @@ constexpr bool isSorted(const Temple::DynamicSet<T, size, Comparator>& set) {
   return true;
 }
 
-BOOST_AUTO_TEST_CASE(dynamicSetTests) {
+BOOST_AUTO_TEST_CASE(DynamicSetTests, *boost::unit_test::label("Temple")) {
   Temple::DynamicSet<unsigned, 10> set;
 
   BOOST_CHECK(set.size() == 0);
@@ -580,7 +580,7 @@ bool validate(const Temple::DynamicSet<T, size>& set) {
   );
 }
 
-BOOST_AUTO_TEST_CASE(arrayOperators) {
+BOOST_AUTO_TEST_CASE(ArrayOperators, *boost::unit_test::label("Temple")) {
   Temple::Array<unsigned, 4> a {4, 2, 3, 1};
   Temple::Array<unsigned, 4> b {4, 3, 2, 1};
 
@@ -590,7 +590,7 @@ BOOST_AUTO_TEST_CASE(arrayOperators) {
   Temple::dynamic::explainLogicalOperatorFailures(a, b);
 }
 
-BOOST_AUTO_TEST_CASE(dynamicSetFuzzing) {
+BOOST_AUTO_TEST_CASE(DynamicSetFuzzing, *boost::unit_test::label("Temple")) {
   for(unsigned N = 0; N < 100; ++N) {
     Temple::DynamicSet<unsigned, 100> subject;
 
@@ -928,7 +928,7 @@ static_assert(decltype(fromArray)::N == 4u, "Size isn't right");
 enum class ScopedEnum : unsigned {A, B, C};
 enum UnscopedEnum : unsigned {D, E};
 
-BOOST_AUTO_TEST_CASE(bitmaskAll) {
+BOOST_AUTO_TEST_CASE(BitmaskAll, *boost::unit_test::label("Temple")) {
   using namespace Temple;
 
   constexpr auto a = make_bitmask(ScopedEnum::A) | ScopedEnum::C;
@@ -950,7 +950,7 @@ constexpr Temple::Bitset<300> make_a_bitset() {
   return a;
 }
 
-BOOST_AUTO_TEST_CASE(bitsetTests) {
+BOOST_AUTO_TEST_CASE(BitsetTests, *boost::unit_test::label("Temple")) {
   using namespace Temple;
 
   constexpr auto a = make_a_bitset();
@@ -965,7 +965,7 @@ BOOST_AUTO_TEST_CASE(bitsetTests) {
   BOOST_CHECK(!b.test(63));
 }
 
-BOOST_AUTO_TEST_CASE(permutationIndexTests) {
+BOOST_AUTO_TEST_CASE(PermutationIndexTests, *boost::unit_test::label("Temple")) {
   using namespace Temple;
 
   auto a = iota<Array, unsigned, 6>();

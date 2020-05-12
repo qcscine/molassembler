@@ -14,7 +14,7 @@
 
 #include <cmath>
 
-BOOST_AUTO_TEST_CASE(dihedralTests) {
+BOOST_AUTO_TEST_CASE(DihedralTests, *boost::unit_test::label("Molassembler")) {
   using namespace Scine;
   using namespace Molassembler;
 

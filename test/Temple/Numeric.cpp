@@ -12,7 +12,7 @@
 
 using namespace Scine::Molassembler;
 
-BOOST_AUTO_TEST_CASE(numericAverageStdDev) {
+BOOST_AUTO_TEST_CASE(NumericAverageStdDev, *boost::unit_test::label("Temple")) {
   const std::vector<double> values {29, 30, 31, 32, 33};
 
   BOOST_CHECK(Temple::average(values) == 31);

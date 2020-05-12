@@ -8,7 +8,7 @@
 
 #include "Molassembler/Shapes/CoordinateSystemTransformation.h"
 
-BOOST_AUTO_TEST_CASE(CoordinateSystemTransformation) {
+BOOST_AUTO_TEST_CASE(CoordinateSystemTransformation, *boost::unit_test::label("Shapes")) {
   using namespace Scine::Molassembler::Shapes;
   for(unsigned i = 0; i < 20; ++i) {
     // Create two random coordinate systems

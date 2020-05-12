@@ -107,7 +107,7 @@ std::vector<BindingSite> merge(
   return ret;
 }
 
-BOOST_AUTO_TEST_CASE(VseprTests) {
+BOOST_AUTO_TEST_CASE(VseprTests, *boost::unit_test::label("Molassembler")) {
   using Element = Utils::ElementType;
 
   testVsepr( // AX2E0

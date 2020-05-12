@@ -44,7 +44,7 @@ Shapes::Vertex operator "" _v(unsigned long long v) {
 }
 
 // create instances of all symmetries with monodentate ligands
-BOOST_AUTO_TEST_CASE(StereopermutationInstantiation) {
+BOOST_AUTO_TEST_CASE(StereopermutationInstantiation, *boost::unit_test::label("Stereopermutations")) {
   for(const auto& shape: Shapes::allShapes) {
     const unsigned S = Shapes::size(shape);
     if(S > 8) {
@@ -55,7 +55,7 @@ BOOST_AUTO_TEST_CASE(StereopermutationInstantiation) {
   }
 }
 
-BOOST_AUTO_TEST_CASE(StereopermutationRotation) {
+BOOST_AUTO_TEST_CASE(StereopermutationRotation, *boost::unit_test::label("Stereopermutations")) {
   // Octahedron ship-screw like cis-cis-cis
   const Stereopermutation asymm {
     {'A', 'B', 'C', 'D', 'E', 'F'},
@@ -78,7 +78,7 @@ BOOST_AUTO_TEST_CASE(StereopermutationRotation) {
   );
 }
 
-BOOST_AUTO_TEST_CASE(RotationCorrectness) {
+BOOST_AUTO_TEST_CASE(RotationCorrectness, *boost::unit_test::label("Stereopermutations")) {
   Stereopermutation testCase {
     {'A', 'A', 'C', 'D', 'B', 'B'},
     {{0_v, 5_v}, {1_v, 4_v}}
@@ -105,7 +105,7 @@ BOOST_AUTO_TEST_CASE(RotationCorrectness) {
   }
 }
 
-BOOST_AUTO_TEST_CASE(OctahedralSymmetryCorrectness) {
+BOOST_AUTO_TEST_CASE(OctahedralSymmetryCorrectness, *boost::unit_test::label("Stereopermutations")) {
   Stereopermutation octahedralInstance(
     {'A', 'B', 'C', 'D', 'E', 'F'}
   );
@@ -116,7 +116,7 @@ BOOST_AUTO_TEST_CASE(OctahedralSymmetryCorrectness) {
   );
 }
 
-BOOST_AUTO_TEST_CASE(BugfixTests) {
+BOOST_AUTO_TEST_CASE(BugfixTests, *boost::unit_test::label("Stereopermutations")) {
   Stereopermutation a {
     {'A', 'A', 'A', 'B', 'B', 'B'},
     {{2_v, 3_v}, {1_v, 4_v}, {0_v, 5_v}}
@@ -202,7 +202,7 @@ void runTestsWithCounts(
 }
 
 /* Tetrahedron tests */
-BOOST_AUTO_TEST_CASE(MonodentateTetrahedral) {
+BOOST_AUTO_TEST_CASE(MonodentateTetrahedral, *boost::unit_test::label("Stereopermutations")) {
   runTestsWithCounts(
     Shapes::Shape::Tetrahedron,
     {
@@ -236,7 +236,7 @@ BOOST_AUTO_TEST_CASE(MonodentateTetrahedral) {
 }
 
 /* Square Planar tests */
-BOOST_AUTO_TEST_CASE(MonodentateSquarePlanar) {
+BOOST_AUTO_TEST_CASE(MonodentateSquarePlanar, *boost::unit_test::label("Stereopermutations")) {
   runTestsWithCounts(
     Shapes::Shape::Square,
     {
@@ -276,7 +276,7 @@ BOOST_AUTO_TEST_CASE(MonodentateSquarePlanar) {
  * computer program [...]."
  * The reference however is useful: WE Bennett, Inorg. Chem. 1969
  */
-BOOST_AUTO_TEST_CASE(MonodentateOctahedron) {
+BOOST_AUTO_TEST_CASE(MonodentateOctahedron, *boost::unit_test::label("Stereopermutations")) {
   runTestsWithCounts(
     Shapes::Shape::Octahedron,
     {
@@ -339,7 +339,7 @@ BOOST_AUTO_TEST_CASE(MonodentateOctahedron) {
   );
 }
 
-BOOST_AUTO_TEST_CASE(MultidentateOctahedron) {
+BOOST_AUTO_TEST_CASE(MultidentateOctahedron, *boost::unit_test::label("Stereopermutations")) {
   runTestsWithCounts(
     Shapes::Shape::Octahedron,
     {
@@ -396,7 +396,7 @@ BOOST_AUTO_TEST_CASE(MultidentateOctahedron) {
   );
 }
 
-BOOST_AUTO_TEST_CASE(OctahedralCaseWithoutTransRemoval) {
+BOOST_AUTO_TEST_CASE(OctahedralCaseWithoutTransRemoval, *boost::unit_test::label("Stereopermutations")) {
   const auto shape = Shapes::Shape::Octahedron;
   const auto characters = Characters(6, 'A');
   const auto pairs = PairSet({{0, 1}, {2, 3}, {4, 5}});
@@ -418,7 +418,7 @@ bool testOrientationState(Composite::OrientationState a) {
 }
 
 // Ensure that transformation and reversion work the way they should
-BOOST_AUTO_TEST_CASE(OrientationStateTests) {
+BOOST_AUTO_TEST_CASE(OrientationStateTests, *boost::unit_test::label("Stereopermutations")) {
   for(const auto& shape : Shapes::allShapes) {
     const unsigned S = Shapes::size(shape);
     if(S > 8) {
@@ -448,7 +448,7 @@ BOOST_AUTO_TEST_CASE(OrientationStateTests) {
   }
 }
 
-BOOST_AUTO_TEST_CASE(CompositeExamples) {
+BOOST_AUTO_TEST_CASE(CompositeExamples, *boost::unit_test::label("Stereopermutations")) {
   constexpr unsigned leftIdentifier = 0;
   constexpr unsigned rightIdentifier = 1;
 
@@ -573,7 +573,7 @@ BOOST_AUTO_TEST_CASE(CompositeExamples) {
   );
 }
 
-BOOST_AUTO_TEST_CASE(CompositeAlignment) {
+BOOST_AUTO_TEST_CASE(CompositeAlignment, *boost::unit_test::label("Stereopermutations")) {
   constexpr unsigned leftIdentifier = 0;
   constexpr unsigned rightIdentifier = 1;
 
@@ -640,7 +640,7 @@ BOOST_AUTO_TEST_CASE(CompositeAlignment) {
   );
 }
 
-BOOST_AUTO_TEST_CASE(numUnlinkedStereopermutationsTest) {
+BOOST_AUTO_TEST_CASE(numUnlinkedStereopermutationsTest, *boost::unit_test::label("Stereopermutations")) {
   // Crosscheck number of unlinked stereopermutations with shapes
   for(const Shapes::Shape shape : Shapes::allShapes) {
     const unsigned S = Shapes::size(shape);

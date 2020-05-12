@@ -102,7 +102,7 @@ void readAndDecompose(const boost::filesystem::path& filePath) {
   }
 }
 
-BOOST_AUTO_TEST_CASE(ringDecomposition) {
+BOOST_AUTO_TEST_CASE(ringDecomposition, *boost::unit_test::label("Molassembler")) {
   for(
     const boost::filesystem::path& currentFilePath :
     boost::filesystem::recursive_directory_iterator("strained_organic_molecules")
@@ -113,7 +113,7 @@ BOOST_AUTO_TEST_CASE(ringDecomposition) {
   }
 }
 
-BOOST_AUTO_TEST_CASE(cycleIterators) {
+BOOST_AUTO_TEST_CASE(cycleIterators, *boost::unit_test::label("Molassembler")) {
   std::vector<
     std::tuple<std::string, AtomIndex, unsigned>
   > tests {

@@ -10,7 +10,7 @@
 
 using namespace Scine::Molassembler::Shapes;
 
-BOOST_AUTO_TEST_CASE(DiophantineExample) {
+BOOST_AUTO_TEST_CASE(DiophantineExample, *boost::unit_test::label("Shapes")) {
   std::vector<unsigned> x;
   const std::vector<unsigned> a {4, 3, 2};
   const int b = 12;

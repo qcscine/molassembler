@@ -25,7 +25,7 @@
 using namespace std::string_literals;
 using namespace Scine::Molassembler;
 
-BOOST_AUTO_TEST_CASE(DirectedConformerGeneration) {
+BOOST_AUTO_TEST_CASE(DirectedConformerGeneration, *boost::unit_test::label("DG")) {
   std::vector<
     std::tuple<std::string, unsigned, unsigned>
   > testCases {

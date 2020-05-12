@@ -17,7 +17,7 @@
 using namespace Scine;
 using namespace Molassembler;
 
-BOOST_AUTO_TEST_CASE(SubgraphBasic) {
+BOOST_AUTO_TEST_CASE(SubgraphBasic, *boost::unit_test::label("Molassembler")) {
   const Molecule neopentane = IO::read("isomorphisms/neopentane.mol");
   const Molecule methyl = IO::experimental::parseSmilesSingleMolecule("[CH3]");
 

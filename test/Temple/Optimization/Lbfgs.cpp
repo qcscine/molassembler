@@ -24,7 +24,7 @@ struct GradientBasedChecker {
   }
 };
 
-BOOST_AUTO_TEST_CASE(LBFGSSimpleMinimization) {
+BOOST_AUTO_TEST_CASE(LBFGSSimpleMinimization, *boost::unit_test::label("Temple")) {
   /* Booth function
    * Ellipsoid f(x, y) = (x + 2y - 7)² + (2x + y - 5)²
    * Minimum at x = 1, y = 3
@@ -59,7 +59,7 @@ BOOST_AUTO_TEST_CASE(LBFGSSimpleMinimization) {
   BOOST_CHECK(std::fabs(positions[1] - 3.0) < 1e-3);
 }
 
-BOOST_AUTO_TEST_CASE(LBFGSSimpleMaximization) {
+BOOST_AUTO_TEST_CASE(LBFGSSimpleMaximization, *boost::unit_test::label("Temple")) {
   /* Very simple parabola -((x-4)² + (y-2)²) + 4
    * Maximum at 4, 2
    */
@@ -97,7 +97,7 @@ BOOST_AUTO_TEST_CASE(LBFGSSimpleMaximization) {
   }
 }
 
-BOOST_AUTO_TEST_CASE(LBFGSBraninMinimization) {
+BOOST_AUTO_TEST_CASE(LBFGSBraninMinimization, *boost::unit_test::label("Temple")) {
   /* f(x, y) = (-1.275 * x² / pi² + 4 x / pi + y - 6)² + (10 - 5 / (4 pi)) * cos(x) + 10
    * Minima at (2n pi, 2n pi)
    */
@@ -146,7 +146,7 @@ BOOST_AUTO_TEST_CASE(LBFGSBraninMinimization) {
   );
 }
 
-BOOST_AUTO_TEST_CASE(LBFGSBoxedMinimization) {
+BOOST_AUTO_TEST_CASE(LBFGSBoxedMinimization, *boost::unit_test::label("Temple")) {
   /* f(x, y) = - cos x - 0.5 cos y
    * Minima at (2n pi, 2n pi)
    * In box min [0.1, 0], max [pi, pi] minimum should be [0.1, 0]

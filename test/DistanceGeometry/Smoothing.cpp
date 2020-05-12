@@ -14,7 +14,7 @@ using namespace DistanceGeometry;
 
 
 
-BOOST_AUTO_TEST_CASE(TriangleSmoothingFloydExplicit) {
+BOOST_AUTO_TEST_CASE(TriangleSmoothingFloydExplicit, *boost::unit_test::label("DG")) {
   Eigen::Matrix4d input;
   input <<   0.0,   1.0, 100.0,   1.0,
              1.0,   0.0,   1.0, 100.0,
@@ -36,7 +36,7 @@ BOOST_AUTO_TEST_CASE(TriangleSmoothingFloydExplicit) {
   );
 }
 
-BOOST_AUTO_TEST_CASE(TetrangleSmoothingExplicit) {
+BOOST_AUTO_TEST_CASE(TetrangleSmoothingExplicit, *boost::unit_test::label("DG")) {
   Eigen::Matrix4d input;
   input <<   0.0,   1.0, 100.0,   1.0,
              1.0,   0.0,   1.0, 100.0,
@@ -60,7 +60,7 @@ BOOST_AUTO_TEST_CASE(TetrangleSmoothingExplicit) {
   );
 }
 
-BOOST_AUTO_TEST_CASE(TriangleSmoothingDetectsViolations) {
+BOOST_AUTO_TEST_CASE(TriangleSmoothingDetectsViolations, *boost::unit_test::label("DG")) {
   Eigen::Matrix3d impossibleBounds;
   impossibleBounds << 0.0, 1.0, 4.0,
                       1.0, 0.0, 2.0,
@@ -69,7 +69,7 @@ BOOST_AUTO_TEST_CASE(TriangleSmoothingDetectsViolations) {
   BOOST_CHECK_THROW(DistanceBoundsMatrix::smooth(impossibleBounds), std::runtime_error);
 }
 
-BOOST_AUTO_TEST_CASE(TetrangleSmoothingDetectsViolations) {
+BOOST_AUTO_TEST_CASE(TetrangleSmoothingDetectsViolations, *boost::unit_test::label("DG")) {
   Eigen::Matrix3d impossibleBounds;
   impossibleBounds << 0.0, 1.0, 4.0,
                       1.0, 0.0, 2.0,

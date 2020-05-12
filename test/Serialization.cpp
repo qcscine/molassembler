@@ -25,7 +25,7 @@
 using namespace Scine;
 using namespace Molassembler;
 
-BOOST_AUTO_TEST_CASE(Base64Reversibility) {
+BOOST_AUTO_TEST_CASE(Base64Reversibility, *boost::unit_test::label("Molassembler")) {
   // Fuzz the encode/decode pair
 
   const unsigned N = 100;
@@ -52,7 +52,7 @@ BOOST_AUTO_TEST_CASE(Base64Reversibility) {
   }
 }
 
-BOOST_AUTO_TEST_CASE(MoleculeSerializationReversibility) {
+BOOST_AUTO_TEST_CASE(MoleculeSerializationReversibility, *boost::unit_test::label("Molassembler")) {
   for(
     const boost::filesystem::path& currentFilePath :
     boost::filesystem::recursive_directory_iterator("ranking_tree_molecules")
@@ -73,7 +73,7 @@ BOOST_AUTO_TEST_CASE(MoleculeSerializationReversibility) {
 }
 
 // After canonicalization, serializations of identical molecules must be identical
-BOOST_AUTO_TEST_CASE(MoleculeCanonicalSerialization) {
+BOOST_AUTO_TEST_CASE(MoleculeCanonicalSerialization, *boost::unit_test::label("Molassembler")) {
   boost::filesystem::path directoryBase("isomorphisms");
 
   for(

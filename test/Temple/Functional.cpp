@@ -23,7 +23,7 @@ PURITY_STRONG double divByThree (unsigned a) {
   return static_cast<double>(a) / 3.0;
 }
 
-BOOST_AUTO_TEST_CASE( sumTest ) {
+BOOST_AUTO_TEST_CASE(SumTest, *boost::unit_test::label("Temple")) {
   std::vector<unsigned> instance {0, 1, 2, 3};
   auto f = Temple::sum(instance);
 
@@ -139,7 +139,7 @@ BOOST_AUTO_TEST_CASE( sumTest ) {
   );
 }
 
-BOOST_AUTO_TEST_CASE( reduceTests) {
+BOOST_AUTO_TEST_CASE(ReduceTests, *boost::unit_test::label("Temple")) {
   std::vector<unsigned> values {1, 2, 3, 4, 5};
   BOOST_CHECK(
     Temple::accumulate(
@@ -156,14 +156,14 @@ BOOST_AUTO_TEST_CASE( reduceTests) {
     ) == 120u
   );
 }
-BOOST_AUTO_TEST_CASE(MinMaxTests) {
+BOOST_AUTO_TEST_CASE(MinMaxTests, *boost::unit_test::label("Temple")) {
   const std::vector<unsigned> values {1, 4, 6, 8};
   BOOST_CHECK(Temple::max(values) == 8u);
   BOOST_CHECK(Temple::min(values) == 1u);
 }
 
 
-BOOST_AUTO_TEST_CASE(mapToSameContainerTests) {
+BOOST_AUTO_TEST_CASE(MapToSameContainerTests, *boost::unit_test::label("Temple")) {
   std::set<int> f {5, -1, 9};
 
   auto fMapped = Temple::map_stl(

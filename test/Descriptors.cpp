@@ -33,7 +33,7 @@ std::map<
   {"Toluol", 1}
 };
 
-BOOST_AUTO_TEST_CASE(RotatableBondsDescriptorsExamples) {
+BOOST_AUTO_TEST_CASE(RotatableBondsDescriptorsExamples, *boost::unit_test::label("Molassembler")) {
   for(
     const boost::filesystem::path& currentFilePath :
     boost::filesystem::recursive_directory_iterator("descriptor_test_set")

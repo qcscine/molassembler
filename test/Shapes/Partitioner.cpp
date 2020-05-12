@@ -11,7 +11,7 @@
 using namespace Scine::Molassembler;
 using namespace Shapes;
 
-BOOST_AUTO_TEST_CASE(Partitions) {
+BOOST_AUTO_TEST_CASE(Partitions, *boost::unit_test::label("Shapes")) {
   for(unsigned i = 1; i < 4; ++i) {
     for(unsigned j = 1; j < 4; ++j) {
       Partitioner partitioner {i, j};

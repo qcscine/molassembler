@@ -35,7 +35,7 @@ Molecule expectSingle(std::vector<Molecule>&& a) {
   throw std::runtime_error("Expected single molecule result");
 }
 
-BOOST_AUTO_TEST_CASE(SmilesHydrogenFilling) {
+BOOST_AUTO_TEST_CASE(SmilesHydrogenFilling, *boost::unit_test::label("Molassembler")) {
   // Pairs of smiles strings and atom counts
   std::vector<std::pair<std::string, unsigned>> pairs {
     {"C", 5},
@@ -72,7 +72,7 @@ BOOST_AUTO_TEST_CASE(SmilesHydrogenFilling) {
   }
 }
 
-BOOST_AUTO_TEST_CASE(SmilesClosesRingCycles) {
+BOOST_AUTO_TEST_CASE(SmilesClosesRingCycles, *boost::unit_test::label("Molassembler")) {
   // Pairs of Smiles strings and expected numbers of edges
   std::vector<std::pair<std::string, unsigned>> pairs {
     {"C1=CC=CC=C1", 12}, // benzene
@@ -90,7 +90,7 @@ BOOST_AUTO_TEST_CASE(SmilesClosesRingCycles) {
   }
 }
 
-BOOST_AUTO_TEST_CASE(AcceptValidSmiles) {
+BOOST_AUTO_TEST_CASE(AcceptValidSmiles, *boost::unit_test::label("Molassembler")) {
   const std::vector<std::string> validSmiles {
     "[HH0]",
     "[H][H]",
@@ -126,7 +126,7 @@ BOOST_AUTO_TEST_CASE(AcceptValidSmiles) {
   }
 }
 
-BOOST_AUTO_TEST_CASE(RejectInvalidSmiles) {
+BOOST_AUTO_TEST_CASE(RejectInvalidSmiles, *boost::unit_test::label("Molassembler")) {
   const std::vector<std::string> invalidSmiles {
     "[HH]", // hydrogens atoms cannot have hydrogen counts
     "[HH1]",
@@ -201,7 +201,7 @@ BOOST_FIXTURE_TEST_CASE(IdenticalSmiles, LowTemperatureFixture) {
   }
 }
 
-BOOST_AUTO_TEST_CASE(DifferentSmiles) {
+BOOST_AUTO_TEST_CASE(DifferentSmiles, *boost::unit_test::label("Molassembler")) {
   // Pairs of smiles that give different molecules
   const std::vector<std::pair<std::string, std::string>> pairs {
     {"F/C=C/F", R"y(C(/F)=C/F)y"}, // trans, cis
@@ -222,7 +222,7 @@ BOOST_AUTO_TEST_CASE(DifferentSmiles) {
   }
 }
 
-BOOST_AUTO_TEST_CASE(SmilesWithMultipleMolecules) {
+BOOST_AUTO_TEST_CASE(SmilesWithMultipleMolecules, *boost::unit_test::label("Molassembler")) {
   const std::vector<std::pair<std::string, std::vector<unsigned>>> pairs {
     {"[Na+].[Cl-]", {{1, 1}}},
     {"[NH4+].[NH4+].[O-]S(=O)(=O)[S-]", {{5, 5, 5}}},

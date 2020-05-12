@@ -141,7 +141,7 @@ std::vector<unsigned> randomReorderingSequence(const unsigned length) {
   return reorderSequence;
 }
 
-BOOST_AUTO_TEST_CASE(MatrixReorderingReversibility) {
+BOOST_AUTO_TEST_CASE(MatrixReorderingReversibility, *boost::unit_test::label("DG")) {
   bool allPassed = true;
   const unsigned N = 10;
 
@@ -171,7 +171,7 @@ BOOST_AUTO_TEST_CASE(MatrixReorderingReversibility) {
   BOOST_CHECK(allPassed);
 }
 
-BOOST_AUTO_TEST_CASE(MetricMatrixConstructionIsInvariantUnderOrderingSwap) {
+BOOST_AUTO_TEST_CASE(MetricMatrixConstructionIsInvariantUnderOrderingSwap, *boost::unit_test::label("DG")) {
   for(
     const boost::filesystem::path& currentFilePath :
     boost::filesystem::recursive_directory_iterator("ez_stereocenters")
@@ -233,7 +233,7 @@ BOOST_AUTO_TEST_CASE(MetricMatrixConstructionIsInvariantUnderOrderingSwap) {
   }
 }
 
-BOOST_AUTO_TEST_CASE(ExplicitExampleFromLecture) {
+BOOST_AUTO_TEST_CASE(ExplicitExampleFromLecture, *boost::unit_test::label("DG")) {
   Eigen::MatrixXd exactDistanceMatrix (4, 4);
   // No need to enter lower triangle
   exactDistanceMatrix << 0, 1, sqrt(2),       1,

@@ -42,7 +42,7 @@ std::string showDiscoveryState(
   );
 }
 
-BOOST_AUTO_TEST_CASE(sampleTest) {
+BOOST_AUTO_TEST_CASE(OrderDiscoveryExample, *boost::unit_test::label("Molassembler")) {
   auto helper = OrderDiscoveryHelper<unsigned>(std::set<unsigned> {1, 2, 3, 6});
 
   BOOST_CHECK(helper.getSets().size() == 1 && helper.getUndecidedSets().size() == 1);
@@ -106,7 +106,7 @@ BOOST_AUTO_TEST_CASE(sampleTest) {
   );
 }
 
-BOOST_AUTO_TEST_CASE(stateTransferTests) {
+BOOST_AUTO_TEST_CASE(OrderDiscoverTransfer, *boost::unit_test::label("Molassembler")) {
   OrderDiscoveryHelper<unsigned> knowledge {
     std::set<unsigned> {4u, 9u, 13u, 20u}
   };

@@ -24,7 +24,7 @@ inline std::ostream& nl(std::ostream& os) {
   return os;
 }
 
-BOOST_AUTO_TEST_CASE(ImplicitBoundsGraphConcepts) {
+BOOST_AUTO_TEST_CASE(ImplicitBoundsGraphConcepts, *boost::unit_test::label("DG")) {
   using namespace Scine::Molassembler;
 
   using GraphType = DistanceGeometry::ImplicitBoundsGraph;
@@ -50,7 +50,7 @@ BOOST_AUTO_TEST_CASE(ImplicitBoundsGraphConcepts) {
   BOOST_CONCEPT_ASSERT(( boost::IncidenceGraphConcept<GraphType> ));
 }
 
-BOOST_AUTO_TEST_CASE(ImplicitBoundsGraphStructure) {
+BOOST_AUTO_TEST_CASE(ImplicitBoundsGraphStructure, *boost::unit_test::label("DG")) {
   using namespace Scine::Molassembler;
 
   for(

@@ -23,7 +23,7 @@ using namespace std::string_literals;
 using namespace Scine;
 using namespace Molassembler;
 
-BOOST_AUTO_TEST_CASE(FixedPositionsWork) {
+BOOST_AUTO_TEST_CASE(FixedPositionsWork, *boost::unit_test::label("DG")) {
   auto checkPositions = [](
     const Utils::PositionCollection& positions,
     const std::vector<std::pair<AtomIndex, Utils::Position>>& fixedPositions

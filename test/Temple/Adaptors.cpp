@@ -20,7 +20,7 @@ std::size_t iteratorDistance(const Container& container) {
   return std::distance(std::begin(container), std::end(container));
 }
 
-BOOST_AUTO_TEST_CASE(pairAdaptorTests) {
+BOOST_AUTO_TEST_CASE(PairAdaptorTests, *boost::unit_test::label("Temple")) {
   const std::vector<unsigned> i {5, 3, 9, 11};
   const std::vector<unsigned> j {3, 4};
 
@@ -62,7 +62,7 @@ BOOST_AUTO_TEST_CASE(pairAdaptorTests) {
   );
 }
 
-BOOST_AUTO_TEST_CASE(iotaAdaptorTests) {
+BOOST_AUTO_TEST_CASE(IotaAdaptorTests, *boost::unit_test::label("Temple")) {
   auto a = Temple::Adaptors::range(5U);
 
   BOOST_CHECK(a.size() == 5);
@@ -76,7 +76,7 @@ BOOST_AUTO_TEST_CASE(iotaAdaptorTests) {
   BOOST_CHECK(Temple::sum(b) == 15U);
 }
 
-BOOST_AUTO_TEST_CASE(zipAdaptorTests) {
+BOOST_AUTO_TEST_CASE(ZipAdaptorTests, *boost::unit_test::label("Temple")) {
   const std::vector<unsigned> i {5, 3, 9, 11}, j {3, 4};
 
   auto zipRange = Temple::Adaptors::zip(i, j);
@@ -90,7 +90,7 @@ BOOST_AUTO_TEST_CASE(zipAdaptorTests) {
   );
 }
 
-BOOST_AUTO_TEST_CASE(transformAdaptorTests) {
+BOOST_AUTO_TEST_CASE(TransformAdaptorTests, *boost::unit_test::label("Temple")) {
   const std::vector<unsigned> i {5, 3, 9, 11};
 
   auto transformRange = Temple::Adaptors::transform(
@@ -105,7 +105,7 @@ BOOST_AUTO_TEST_CASE(transformAdaptorTests) {
   );
 }
 
-BOOST_AUTO_TEST_CASE( enumerateTests) {
+BOOST_AUTO_TEST_CASE( EnumerateTests, *boost::unit_test::label("Temple")) {
   std::vector<unsigned> testVec {5, 2, 3, 4};
 
   bool pass = true;
@@ -131,7 +131,7 @@ BOOST_AUTO_TEST_CASE( enumerateTests) {
 }
 
 
-BOOST_AUTO_TEST_CASE(compoundAdaptorOwnership) {
+BOOST_AUTO_TEST_CASE(CompoundAdaptorOwnership, *boost::unit_test::label("Temple")) {
   auto pairsOfRange = Temple::Adaptors::allPairs(
     Temple::Adaptors::range(4U)
   );
@@ -198,7 +198,7 @@ BOOST_AUTO_TEST_CASE(compoundAdaptorOwnership) {
 
 }
 
-BOOST_AUTO_TEST_CASE(adaptorShortRanges) {
+BOOST_AUTO_TEST_CASE(AdaptorShortRanges, *boost::unit_test::label("Temple")) {
   auto checkRangeLength = [](
     const auto& rangeObject,
     const unsigned expectedSize,
@@ -286,7 +286,7 @@ void checkRangeLengthTempl(
   );
 }
 
-BOOST_AUTO_TEST_CASE(frameAdaptorTest) {
+BOOST_AUTO_TEST_CASE(FrameAdaptorTest, *boost::unit_test::label("Temple")) {
   checkRangeLengthTempl(
     Temple::Adaptors::cyclicFrame<1>(std::vector<unsigned> {}),
     0,
@@ -335,7 +335,7 @@ BOOST_AUTO_TEST_CASE(frameAdaptorTest) {
   );
 }
 
-BOOST_AUTO_TEST_CASE(filterAdaptorTests) {
+BOOST_AUTO_TEST_CASE(FilterAdaptorTests, *boost::unit_test::label("Temple")) {
   const auto filterDistance = iteratorDistance(
     Temple::Adaptors::filter(
       std::vector<unsigned> {1, 2, 3},

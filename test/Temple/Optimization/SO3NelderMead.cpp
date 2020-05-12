@@ -12,7 +12,7 @@
 
 using namespace Scine::Molassembler;
 
-BOOST_AUTO_TEST_CASE(SO3NelderMead) {
+BOOST_AUTO_TEST_CASE(SO3NelderMead, *boost::unit_test::label("Temple")) {
   struct EigenValueDecomposition {
     static inline double square(double x) noexcept {
       return x * x;

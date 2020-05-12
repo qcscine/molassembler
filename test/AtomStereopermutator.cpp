@@ -34,7 +34,7 @@ inline SiteIndex operator "" _s(unsigned long long s) {
   return SiteIndex(s);
 }
 
-BOOST_AUTO_TEST_CASE(ShipscrewShapeVertexMap) {
+BOOST_AUTO_TEST_CASE(ShipscrewShapeVertexMap, *boost::unit_test::label("Molassembler")) {
   // M[(A-A)_3] lambda/delta isomer "shipscrews"
   const Stereopermutations::Stereopermutation shipscrew {
     std::vector<char>(6, 'A'),
@@ -77,7 +77,7 @@ BOOST_AUTO_TEST_CASE(ShipscrewShapeVertexMap) {
   );
 }
 
-BOOST_AUTO_TEST_CASE(AtomStereopermutatorUpDown) {
+BOOST_AUTO_TEST_CASE(AtomStereopermutatorUpDown, *boost::unit_test::label("Molassembler")) {
   using namespace Shapes;
 
   // Copy out preservation mode and set for test

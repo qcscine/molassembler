@@ -79,7 +79,7 @@ void writeAngleAnalysisFiles(
   metaFile.close();
 }
 
-BOOST_AUTO_TEST_CASE(centralAngleRootFinding) {
+BOOST_AUTO_TEST_CASE(CentralAngleRootFinding, *boost::unit_test::label("Molassembler")) {
   unsigned failureIndex = 0;
 
   const double upperLimit = 5.6; // Fr-Fr single

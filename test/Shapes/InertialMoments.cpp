@@ -40,7 +40,7 @@ const std::string& topName(Top top) {
   );
 }
 
-BOOST_AUTO_TEST_CASE(InertialStandardization) {
+BOOST_AUTO_TEST_CASE(InertialStandardization, *boost::unit_test::label("Shapes")) {
   const std::vector<
     std::pair<Shape, Top>
   > tops {

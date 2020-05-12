@@ -11,7 +11,7 @@
 
 using namespace Scine::Molassembler;
 
-BOOST_AUTO_TEST_CASE(StrongIndices) {
+BOOST_AUTO_TEST_CASE(StrongIndices, *boost::unit_test::label("Temple")) {
   struct foo_tag;
   using Foo = Temple::StrongIndex<foo_tag, unsigned>;
 

@@ -61,7 +61,7 @@ struct Himmelblau {
   }
 };
 
-BOOST_AUTO_TEST_CASE(TrustRegionNewton) {
+BOOST_AUTO_TEST_CASE(TrustRegionNewton, *boost::unit_test::label("Temple")) {
   Eigen::VectorXd parameters = Eigen::VectorXd::Random(2);
   Eigen::VectorXd passParameters = parameters;
 

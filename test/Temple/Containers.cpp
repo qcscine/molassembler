@@ -20,7 +20,7 @@ using namespace Scine::Molassembler;
 
 extern Temple::Generator<> generator;
 
-BOOST_AUTO_TEST_CASE(OrderedPairTests) {
+BOOST_AUTO_TEST_CASE(OrderedPairTests, *boost::unit_test::label("Temple")) {
   Temple::OrderedPair<unsigned> a {14u, 3u};
   BOOST_CHECK(a.front() < a.back());
   BOOST_CHECK(a.first < a.second);
@@ -29,7 +29,7 @@ BOOST_AUTO_TEST_CASE(OrderedPairTests) {
   );
 }
 
-BOOST_AUTO_TEST_CASE(PosetTests) {
+BOOST_AUTO_TEST_CASE(PosetTests, *boost::unit_test::label("Temple")) {
   constexpr unsigned nTests = 10;
   constexpr unsigned nValues = 20;
   constexpr unsigned maxValue = 40;
@@ -156,7 +156,7 @@ auto make_ChooseFunctor(
 }
 
 
-BOOST_AUTO_TEST_CASE(asdf) {
+BOOST_AUTO_TEST_CASE(TrieTests, *boost::unit_test::label("Temple")) {
   {
     std::vector<std::uint8_t> boundaries {4, 2, 3};
 

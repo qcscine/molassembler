@@ -94,7 +94,7 @@ boost::optional<BondIndex> findEdge(const Molecule& mol, UnaryPredicate&& predic
 
 } // namespace
 
-BOOST_AUTO_TEST_CASE(EditingCleave) {
+BOOST_AUTO_TEST_CASE(EditingCleave, *boost::unit_test::label("Molassembler")) {
   auto makeNMe = []() -> std::pair<Molecule, BondIndex> {
     Molecule methyl = IO::experimental::parseSmilesSingleMolecule("[CH3]");
     std::vector<AtomIndex> methylPlugAtoms(1, 0);
@@ -156,7 +156,7 @@ BOOST_AUTO_TEST_CASE(EditingCleave) {
   );
 }
 
-BOOST_AUTO_TEST_CASE(EditingInsert) {
+BOOST_AUTO_TEST_CASE(EditingInsert, *boost::unit_test::label("Molassembler")) {
   // Set up the test and make sure the canonical indices still match expectations
   Molecule biphenyl = IO::read("cbor/biphenyl.cbor");
   biphenyl.canonicalize();
@@ -208,7 +208,7 @@ BOOST_AUTO_TEST_CASE(EditingInsert) {
   );
 }
 
-BOOST_AUTO_TEST_CASE(EditingSuperpose) {
+BOOST_AUTO_TEST_CASE(EditingSuperpose, *boost::unit_test::label("Molassembler")) {
   Molecule pyridine = IO::read("cbor/pyridine.cbor");
   pyridine.canonicalize();
 
@@ -231,7 +231,7 @@ BOOST_AUTO_TEST_CASE(EditingSuperpose) {
   BOOST_CHECK(superposition.graph().N() == pyridine.graph().N() + methane.graph().N() - 1);
 }
 
-BOOST_AUTO_TEST_CASE(EditingSubstitute) {
+BOOST_AUTO_TEST_CASE(EditingSubstitute, *boost::unit_test::label("Molassembler")) {
   Molecule chlorobenzene = IO::read("cbor/chlorobenzene.cbor");
   chlorobenzene.canonicalize();
 
@@ -284,7 +284,7 @@ BOOST_AUTO_TEST_CASE(EditingSubstitute) {
   );
 }
 
-BOOST_AUTO_TEST_CASE(EditingConnect) {
+BOOST_AUTO_TEST_CASE(EditingConnect, *boost::unit_test::label("Molassembler")) {
   Molecule pyridine = IO::read("cbor/pyridine.cbor");
   pyridine.canonicalize();
   auto pyridineNitrogenOption = findSingle(pyridine, Utils::ElementType::N);
@@ -301,7 +301,7 @@ BOOST_AUTO_TEST_CASE(EditingConnect) {
   BOOST_CHECK(connected.graph().N() == 2 * pyridine.graph().N());
 }
 
-BOOST_AUTO_TEST_CASE(EditingBugfixMesityleneSubstitution) {
+BOOST_AUTO_TEST_CASE(EditingBugfixMesityleneSubstitution, *boost::unit_test::label("Molassembler")) {
   Molecule mesitylene = IO::read("cbor/mesitylene.cbor");
   mesitylene.canonicalize();
 
@@ -351,7 +351,7 @@ BOOST_AUTO_TEST_CASE(EditingBugfixMesityleneSubstitution) {
   BOOST_CHECK(substituted.graph().N() == mesitylene.graph().N() + nhc.graph().N() - 2);
 }
 
-BOOST_AUTO_TEST_CASE(EditingBugfixHapticLigands) {
+BOOST_AUTO_TEST_CASE(EditingBugfixHapticLigands, *boost::unit_test::label("Molassembler")) {
   Molecule complex {Utils::ElementType::Ru, Utils::ElementType::H};
 
   { // Variant one: Extend a hydrogen atom to hydrogen molecule, then complexate
@@ -369,7 +369,7 @@ BOOST_AUTO_TEST_CASE(EditingBugfixHapticLigands) {
   }
 }
 
-BOOST_AUTO_TEST_CASE(EditingAddMultidentateLigand) {
+BOOST_AUTO_TEST_CASE(EditingAddMultidentateLigand, *boost::unit_test::label("Molassembler")) {
   Molecule ligand = IO::read("cbor/multidentate_ligand.cbor");
   ligand.canonicalize();
 
@@ -391,7 +391,7 @@ BOOST_AUTO_TEST_CASE(EditingAddMultidentateLigand) {
   );
 }
 
-BOOST_AUTO_TEST_CASE(EditingAddHapticLigand) {
+BOOST_AUTO_TEST_CASE(EditingAddHapticLigand, *boost::unit_test::label("Molassembler")) {
   auto ligand = IO::read("cbor/haptic_ligand.cbor");
 
   std::vector<AtomIndex> ligandCycle;

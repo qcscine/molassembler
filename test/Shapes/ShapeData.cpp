@@ -41,7 +41,7 @@ struct LockstepTest {
   }
 };
 
-BOOST_AUTO_TEST_CASE(SymmetryTypeAndPositionInEnumLockstep) {
+BOOST_AUTO_TEST_CASE(SymmetryTypeAndPositionInEnumLockstep, *boost::unit_test::label("Shapes")) {
   BOOST_CHECK_MESSAGE(
     Temple::all_of(
       Temple::Tuples::map<
@@ -53,7 +53,7 @@ BOOST_AUTO_TEST_CASE(SymmetryTypeAndPositionInEnumLockstep) {
   );
 }
 
-BOOST_AUTO_TEST_CASE(AngleFunctionInputSymmetry) {
+BOOST_AUTO_TEST_CASE(AngleFunctionInputSymmetry, *boost::unit_test::label("Shapes")) {
   // every angle function must be symmetrical on input of valid unsigned indices
   for(const Shape shape: allShapes) {
     bool passesAll = true;
@@ -76,7 +76,7 @@ BOOST_AUTO_TEST_CASE(AngleFunctionInputSymmetry) {
 
 }
 
-BOOST_AUTO_TEST_CASE(AngleFunctionZeroForIdenticalInput) {
+BOOST_AUTO_TEST_CASE(AngleFunctionZeroForIdenticalInput, *boost::unit_test::label("Shapes")) {
   // every angle function must return 0 for identical indices
   for(const Shape shape: allShapes) {
     bool passesAll = true;
@@ -95,7 +95,7 @@ BOOST_AUTO_TEST_CASE(AngleFunctionZeroForIdenticalInput) {
   }
 }
 
-BOOST_AUTO_TEST_CASE(AnglesWithinRadiansBounds) {
+BOOST_AUTO_TEST_CASE(AnglesWithinRadiansBounds, *boost::unit_test::label("Shapes")) {
   for(const Shape shape : allShapes) {
     bool passesAll = true;
 
@@ -122,7 +122,7 @@ BOOST_AUTO_TEST_CASE(AnglesWithinRadiansBounds) {
   }
 }
 
-BOOST_AUTO_TEST_CASE(AnglesMatchCoordinates) {
+BOOST_AUTO_TEST_CASE(AnglesMatchCoordinates, *boost::unit_test::label("Shapes")) {
 
   /* The results of the angle functions ought to match the geometries specified
    * by the coordinates
@@ -166,7 +166,7 @@ BOOST_AUTO_TEST_CASE(AnglesMatchCoordinates) {
   }
 }
 
-BOOST_AUTO_TEST_CASE(AllTetrahedraPositive) {
+BOOST_AUTO_TEST_CASE(AllTetrahedraPositive, *boost::unit_test::label("Shapes")) {
   /* Checks if sequence that tetrahedra are defined in leads to a positive
    * volume when calculated via
    *
@@ -221,7 +221,7 @@ BOOST_AUTO_TEST_CASE(AllTetrahedraPositive) {
   }
 }
 
-BOOST_AUTO_TEST_CASE(TetrahedraDefinitionIndicesUnique) {
+BOOST_AUTO_TEST_CASE(TetrahedraDefinitionIndicesUnique, *boost::unit_test::label("Shapes")) {
   for(const auto& shape : allShapes) {
     for(const auto& tetrahedron : tetrahedra(shape)) {
       bool containsAnEmptyOption = false;
@@ -246,7 +246,7 @@ BOOST_AUTO_TEST_CASE(TetrahedraDefinitionIndicesUnique) {
   }
 }
 
-BOOST_AUTO_TEST_CASE(SmallestAngleValueCorrect) {
+BOOST_AUTO_TEST_CASE(SmallestAngleValueCorrect, *boost::unit_test::label("Shapes")) {
   auto shapeSmallestAngle = [](const Shape shape) -> double {
     return Temple::accumulate(
       Temple::Adaptors::allPairs(
@@ -588,7 +588,7 @@ std::string getGraphvizNodeName(const Shapes::Shape shape) {
   return stringName;
 }
 
-BOOST_AUTO_TEST_CASE(constexpr_propertiesTests) {
+BOOST_AUTO_TEST_CASE(ConstexprRotationsMatch, *boost::unit_test::label("Shapes")) {
   // Full test of rotation algorithm equivalency for all symmetries
   BOOST_CHECK_MESSAGE(
     Temple::all_of(
@@ -655,7 +655,7 @@ struct NumUnlinkedTestFunctor {
   }
 };
 
-BOOST_AUTO_TEST_CASE(numUnlinkedAlgorithms) {
+BOOST_AUTO_TEST_CASE(NumUnlinkedStereopermsMatch, *boost::unit_test::label("Shapes")) {
   using TestTypes = std::tuple<
     Data::Line,
     Data::Bent,
@@ -697,7 +697,7 @@ static_assert(
 );
 
 #ifdef USE_CONSTEXPR_TRANSITION_MAPPINGS
-BOOST_AUTO_TEST_CASE(mappingsAreAvailable) {
+BOOST_AUTO_TEST_CASE(ConstexprMappingsExist, *boost::unit_test::label("Shapes")) {
   /* In every case where allMappings has a value, getMapping must also return
    * a some optional
    */
@@ -726,7 +726,7 @@ BOOST_AUTO_TEST_CASE(mappingsAreAvailable) {
 }
 #endif
 
-BOOST_AUTO_TEST_CASE(angleBoundsTests) {
+BOOST_AUTO_TEST_CASE(AngleBoundsCorrect, *boost::unit_test::label("Shapes")) {
   BOOST_CHECK(Shapes::minimumAngle(Shapes::Shape::T) == M_PI / 2);
   BOOST_CHECK(Shapes::maximumAngle(Shapes::Shape::T) == M_PI);
 
@@ -750,7 +750,7 @@ std::ostream& operator << (std::ostream& os, const std::vector<char>& chars) {
   return os;
 }
 
-BOOST_AUTO_TEST_CASE(PositionGroups) {
+BOOST_AUTO_TEST_CASE(PositionGroups, *boost::unit_test::label("Shapes")) {
   BOOST_CHECK(Properties::positionGroupCharacters(Shape::Line) == std::vector<char> (2, 'A'));
   BOOST_CHECK(Properties::positionGroupCharacters(Shape::Tetrahedron) == std::vector<char> (4, 'A'));
   BOOST_CHECK(Properties::positionGroupCharacters(Shape::TrigonalBipyramid) == (std::vector<char> {'A','A','A','B','B'}));
@@ -760,7 +760,7 @@ BOOST_AUTO_TEST_CASE(PositionGroups) {
   BOOST_CHECK(Properties::positionGroupCharacters(Shape::Icosahedron) == std::vector<char> (12, 'A'));
 }
 
-BOOST_AUTO_TEST_CASE(DimensionalityProperty) {
+BOOST_AUTO_TEST_CASE(DimensionalityProperty, *boost::unit_test::label("Shapes")) {
   BOOST_CHECK(threeDimensional(Shape::Tetrahedron));
   BOOST_CHECK(!threeDimensional(Shape::Line));
   BOOST_CHECK(!threeDimensional(Shape::Bent));

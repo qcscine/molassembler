@@ -24,7 +24,7 @@ struct NelderMeadHimmelblau {
   }
 };
 
-BOOST_AUTO_TEST_CASE(NelderMead) {
+BOOST_AUTO_TEST_CASE(NelderMead, *boost::unit_test::label("Temple")) {
   Eigen::Matrix<double, 2, 3> simplexVertices;
   simplexVertices << -3.0,  0.0,  0.0,
                      -1.5,  0.0, -3.0;
