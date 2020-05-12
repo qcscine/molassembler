@@ -61,6 +61,45 @@ inline auto orderedSequence(Inds ... inds) {
 }
 
 namespace DistanceGeometry {
+namespace {
+
+/* Creates a predicate to determine whether the atoms occupying a shape vertex
+ * have any fixed coordinates
+ */
+auto makeVertexFixedPredicate(
+  const AtomStereopermutator& permutator,
+  const std::unordered_map<AtomIndex, Utils::Position>& fixed
+) {
+  return [&permutator, &fixed](const Shapes::Vertex v) -> bool {
+    const SiteIndex siteAtVertex = permutator.getShapePositionMap().indexOf(v);
+    return Temple::any_of(
+      permutator.getRanking().sites.at(siteAtVertex),
+      [&fixed](const AtomIndex a) -> bool {
+        return fixed.count(a) > 0;
+      }
+    );
+  };
+}
+
+// Calculate the average position of a set of atoms in the fixed positions map
+Eigen::Vector3d averagePosition(
+  const std::vector<AtomIndex>& siteAtoms,
+  const std::unordered_map<AtomIndex, Utils::Position>& fixed
+) {
+  assert(!siteAtoms.empty());
+
+  if(siteAtoms.size() == 1) {
+    return fixed.at(siteAtoms.front());
+  }
+
+  Eigen::Vector3d mean = Eigen::Vector3d::Zero();
+  for(const AtomIndex i : siteAtoms) {
+    mean += fixed.at(i);
+  }
+  return mean / siteAtoms.size();
+}
+
+} // namespace
 
 // General availability of static constexpr members
 constexpr double SpatialModel::bondRelativeVariance;
@@ -271,7 +310,7 @@ void SpatialModel::addAtomStereopermutatorInformation(
    *       and loosening
    */
 
-  /* Concerning fixed positions, if the center isn't fixed, then we do not
+  /* Concerning fixed positions: if the center isn't fixed, then we do not
    * have to do anything differently at all.
    */
   std::vector<bool> siteFixed;
@@ -498,10 +537,10 @@ void SpatialModel::addBondStereopermutatorInformation(
   const double looseningMultiplier,
   const std::unordered_map<AtomIndex, Utils::Position>& fixedAngstromPositions
 ) {
-  // Check preconditions and get access to commonly needed things
+  // Check preconditions
   assert(permutator.indexOfPermutation());
-  const unsigned permutation = permutator.indexOfPermutation().value();
 
+  // Match stereopermutators to order in Composite
   const Stereopermutations::Composite& composite = permutator.composite();
 
   const AtomStereopermutator& firstStereopermutator = (
@@ -516,11 +555,84 @@ void SpatialModel::addBondStereopermutatorInformation(
     : stereopermutatorA
   );
 
+  const unsigned permutation = permutator.indexOfPermutation().value();
+
   /* Only dihedrals */
   Shapes::Vertex firstShapePosition;
   Shapes::Vertex secondShapePosition;
   double dihedralAngle;
 
+  // Is any part of the dihedral fixed?
+  const bool firstStereopermutatorFixed = fixedAngstromPositions.count(firstStereopermutator.placement()) > 0;
+  const bool secondStereopermutatorFixed = fixedAngstromPositions.count(secondStereopermutator.placement()) > 0;
+  const bool anyDihedralMembersFixed = (
+    firstStereopermutatorFixed
+    || secondStereopermutatorFixed
+    || Temple::any_of(
+      composite.orientations().first.smallestAngleGroup().vertices,
+      makeVertexFixedPredicate(firstStereopermutator, fixedAngstromPositions)
+    )
+    || Temple::any_of(
+      composite.orientations().second.smallestAngleGroup().vertices,
+      makeVertexFixedPredicate(secondStereopermutator, fixedAngstromPositions)
+    )
+  );
+
+  if(anyDihedralMembersFixed) {
+    /* Only model those dihedrals that are fully fixed and nothing else
+     *
+     * If the two atom stereopermutators aren't fixed, there's definitely no
+     * fully fixed dihedral
+     */
+    if(!firstStereopermutatorFixed && !secondStereopermutatorFixed) {
+      return;
+    }
+
+    for(const auto& dihedralTuple : composite.dihedrals(permutation)) {
+      std::tie(firstShapePosition, secondShapePosition, dihedralAngle) = dihedralTuple;
+      /* To figure out if this dihedral is fixed, we only need to check the
+       * vertices at each end, since we've established that the atom
+       * stereopermutators are both fixed above
+       */
+      const bool dihedralFixed = (
+        makeVertexFixedPredicate(firstStereopermutator, fixedAngstromPositions)(firstShapePosition)
+        && makeVertexFixedPredicate(secondStereopermutator, fixedAngstromPositions)(secondShapePosition)
+      );
+      if(!dihedralFixed) {
+        continue;
+      }
+
+      const SiteIndex iAtFirst = firstStereopermutator.getShapePositionMap().indexOf(firstShapePosition);
+      const SiteIndex lAtSecond = secondStereopermutator.getShapePositionMap().indexOf(secondShapePosition);
+
+      const auto& iSite = firstStereopermutator.getRanking().sites.at(iAtFirst);
+      const auto& lSite = secondStereopermutator.getRanking().sites.at(lAtSecond);
+
+      // Calculate the shape dihedral from the fixed positions
+      const double fixedDihedralAngle = cartesian::dihedral(
+        averagePosition(iSite, fixedAngstromPositions),
+        fixedAngstromPositions.at(firstStereopermutator.placement()),
+        fixedAngstromPositions.at(secondStereopermutator.placement()),
+        averagePosition(lSite, fixedAngstromPositions)
+      );
+
+      // Add it without variance
+      dihedralConstraints_.emplace_back(
+        DihedralConstraint::SiteSequence {
+          iSite,
+          {firstStereopermutator.placement()},
+          {secondStereopermutator.placement()},
+          lSite
+        },
+        fixedDihedralAngle,
+        fixedDihedralAngle
+      );
+    }
+
+    return;
+  }
+
+  // Default case: No part of the dihedral is fixed
   for(const auto& dihedralTuple : composite.dihedrals(permutation)) {
     std::tie(firstShapePosition, secondShapePosition, dihedralAngle) = dihedralTuple;
 
@@ -561,10 +673,10 @@ void SpatialModel::addBondStereopermutatorInformation(
     /* Modify the dihedral angle by the upper cone angles of the i and l
      * sites and the usual variances.
      *
-     * NOTE: Don't worry about the periodicity issue here, the error function
-     * terms in refinement have to take care of that.
+     * NOTE: Don't worry about periodicity here, the error function terms in
+     * refinement takes care of that.
      */
-    ValueBounds dihedralBounds = makeBoundsFromCentralValue(
+    const ValueBounds dihedralBounds = makeBoundsFromCentralValue(
       dihedralAngle,
       dihedralVariance
     );

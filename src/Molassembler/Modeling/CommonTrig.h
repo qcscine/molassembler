@@ -18,9 +18,7 @@
 #include <cmath>
 
 namespace Scine {
-
 namespace Molassembler {
-
 namespace CommonTrig {
 
 using ValueBounds = DistanceGeometry::ValueBounds;
@@ -130,9 +128,7 @@ ValueBounds dihedralLengthBounds(
 );
 
 } // namespace CommonTrig
-
 } // namespace Molassembler
-
 } // namespace Scine
 
 #endif
