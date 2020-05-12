@@ -75,7 +75,7 @@ BOOST_AUTO_TEST_CASE(BridgeEdges, *boost::unit_test::label("Molassembler")) {
   BOOST_CHECK(!ethane.canRemove(0) && !ethane.canRemove(1));
 
   // And again from SMILES
-  auto e = IO::experimental::parseSmilesSingleMolecule("CC");
+  auto e = IO::Experimental::parseSmilesSingleMolecule("CC");
   BOOST_CHECK(e.graph().adjacent(0, 1));
   BOOST_CHECK(!e.graph().canRemove(BondIndex {0, 1}));
 }

@@ -347,7 +347,7 @@ struct openSMILES : qi::grammar<Iterator> {
   qi::rule<Iterator> start;
 };
 
-namespace experimental {
+namespace Experimental {
 
 std::vector<Molecule> parseSmiles(const std::string& smiles) {
   auto iter = std::begin(smiles);
@@ -376,7 +376,7 @@ Molecule parseSmilesSingleMolecule(const std::string& smiles) {
   return results.front();
 }
 
-} // namespace experimental
+} // namespace Experimental
 } // namespace IO
 } // namespace Molassembler
 } // namespace Scine

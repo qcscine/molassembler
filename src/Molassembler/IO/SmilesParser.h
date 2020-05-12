@@ -17,7 +17,7 @@ namespace Molassembler {
 class Molecule;
 
 namespace IO {
-namespace experimental {
+namespace Experimental {
 
 /**
  * @brief Parse a smiles string
@@ -74,7 +74,7 @@ MASM_EXPORT std::vector<Molecule> parseSmiles(const std::string& smiles);
  */
 MASM_EXPORT Molecule parseSmilesSingleMolecule(const std::string& smiles);
 
-} // namespace experimental
+} // namespace Experimental
 } // namespace IO
 } // namespace Molassembler
 } // namespace Scine

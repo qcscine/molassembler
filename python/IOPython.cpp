@@ -24,7 +24,7 @@ void init_io(pybind11::module& m) {
 
   experimental.def(
     "from_smiles_multiple",
-    &IO::experimental::parseSmiles,
+    &IO::Experimental::parseSmiles,
     pybind11::arg("smiles_str"),
     R"delim(
       Parse a smiles string containing possibly multiple molecules
@@ -54,7 +54,7 @@ void init_io(pybind11::module& m) {
 
   experimental.def(
     "from_smiles",
-    &IO::experimental::parseSmilesSingleMolecule,
+    &IO::Experimental::parseSmilesSingleMolecule,
     pybind11::arg("smiles_str"),
     R"delim(
       Parse a smiles string containing only a single molecule

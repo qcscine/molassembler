@@ -822,7 +822,7 @@ int main(int argc, char* argv[]) {
 
     // Input is possibly a SMILES string
     try {
-      mol = IO::experimental::parseSmilesSingleMolecule(input);
+      mol = IO::Experimental::parseSmilesSingleMolecule(input);
     } catch(...) {
       std::cout << "Input could not be interpreted as a SMILES string.\n";
       return 1;

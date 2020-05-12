@@ -240,7 +240,7 @@ BondStereopermutator::Impl::makeOrientationState_(
 
 bool BondStereopermutator::Impl::cycleObviouslyInfeasible(
   const PrivateGraph& graph,
-  const StereopermutatorList& stereopermutators,
+  const StereopermutatorList& /* stereopermutators */,
   const AtomStereopermutator& firstStereopermutator,
   const AtomStereopermutator& secondStereopermutator,
   std::tuple<AtomIndex, AtomIndex, double> dihedral,

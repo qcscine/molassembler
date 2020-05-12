@@ -156,12 +156,10 @@ Now that we are familiar with the concepts of the molecular model, let us dive
 into some examples.
 
 @parblock @note 
-Molassembler ships with an experimental SMILES parser that, pending some
-bugfixes and some more implementation details, should achieve full openSMILES
-standard-compliance and be stabilized in a future release.
-
-It's still marked experimental, but it can already do a lot, which is why
-you'll see it in some of these examples.
+Molassembler ships with a SMILES parser that, pending some bugfixes and some
+more implementation details, should achieve full openSMILES standard-compliance
+and be stabilized in a future release. It's marked experimental, but it can
+already do a lot, which is why you'll see it in some of these examples.
 @endparblock
 
 @subsection manual-recipes-alanine Alanine enantiomers
@@ -172,7 +170,7 @@ SMILES string, creating its enantiomer, generating a conformation for each
 molecule, and writing those to separate files.
 
 @code{.cpp}
-Molecule alanine = io::experimental::parseSmilesSingleMolecule("C[C@@H](C(=O)O)N");
+Molecule alanine = IO::Experimental::parseSmilesSingleMolecule("C[C@@H](C(=O)O)N");
 
 std::vector<AtomIndex> interestingAtoms;
 for(const auto& permutator : alanine.stereopermutators().atom_stereopermutators()) {
@@ -194,7 +192,7 @@ alanineEnantiomer.assignStereopermutator(interestingAtoms.front(), otherPermutat
 auto writeConformer = [](const Molecule& mol, const std::string& filename) {
   auto result = generateRandomConformation(mol);
   assert(result);
-  io::write(filename, mol, result.value());
+  IO::write(filename, mol, result.value());
 };
 writeConformer(alanine, "alanine.mol");
 writeConformer(alanineEnantiomer, "alanine_enatiomer.mol");
@@ -216,7 +214,7 @@ consider the octahedral iron oxalate complex:
 
 @code{.cpp}
 std::string smiles = "[Fe@OH1+3]123(OC(=O)C(=O)O1)(OC(=O)C(=O)O2)OC(=O)C(=O)O3";
-Molecule shipscrew = io::experimental::parseSmilesSingleMolecule(smiles);
+Molecule shipscrew = IO::Experimental::parseSmilesSingleMolecule(smiles);
 
 auto permutator = shipscrew.stereopermutators().option(0);
 assert(permutator);
@@ -228,7 +226,7 @@ for(unsigned assignment = 0; assignment < permutator->numAssignments(); ++assign
   auto result = generateRandomConformation(shipscrew);
   assert(result);
   std::string filename = "shipscrew-" + std::to_string(assignment) + ".mol";
-  io::write(filename, shipscrew, result.value());
+  IO::write(filename, shipscrew, result.value());
 }
 @endcode
 

@@ -63,7 +63,7 @@ BOOST_AUTO_TEST_CASE(SmilesHydrogenFilling, *boost::unit_test::label("Molassembl
 
   for(const auto& pair : pairs) {
     Molecule result;
-    BOOST_REQUIRE_NO_THROW(result = expectSingle(IO::experimental::parseSmiles(pair.first)));
+    BOOST_REQUIRE_NO_THROW(result = expectSingle(IO::Experimental::parseSmiles(pair.first)));
     BOOST_CHECK_MESSAGE(
       result.graph().N() ==  pair.second,
       "Expected " << pair.second << " atoms for '" << pair.first << "', got "
@@ -85,7 +85,7 @@ BOOST_AUTO_TEST_CASE(SmilesClosesRingCycles, *boost::unit_test::label("Molassemb
 
   for(const auto& pair : pairs) {
     Molecule result;
-    BOOST_REQUIRE_NO_THROW(result = expectSingle(IO::experimental::parseSmiles(pair.first)));
+    BOOST_REQUIRE_NO_THROW(result = expectSingle(IO::Experimental::parseSmiles(pair.first)));
     BOOST_CHECK_EQUAL(result.graph().B(), pair.second);
   }
 }
@@ -121,7 +121,7 @@ BOOST_AUTO_TEST_CASE(AcceptValidSmiles, *boost::unit_test::label("Molassembler")
 
   std::vector<Molecule> results;
   for(const auto& str : validSmiles) {
-    BOOST_REQUIRE_NO_THROW(results = IO::experimental::parseSmiles(str));
+    BOOST_REQUIRE_NO_THROW(results = IO::Experimental::parseSmiles(str));
     BOOST_CHECK(results.size() == 1);
   }
 }
@@ -144,7 +144,7 @@ BOOST_AUTO_TEST_CASE(RejectInvalidSmiles, *boost::unit_test::label("Molassembler
   };
 
   for(const auto& str : invalidSmiles) {
-    BOOST_CHECK_THROW(IO::experimental::parseSmiles(str), std::runtime_error);
+    BOOST_CHECK_THROW(IO::Experimental::parseSmiles(str), std::runtime_error);
   }
 }
 
@@ -188,8 +188,8 @@ BOOST_FIXTURE_TEST_CASE(IdenticalSmiles, LowTemperatureFixture) {
   //   {"c1c2c3c4cc1.Br2.Cl3.Cl4", "C1=CC(=C(C(=C1)Br)Cl)Cl"}, // Aromatics + dot
   for(const auto& pair : pairs) {
     Molecule a, b;
-    BOOST_REQUIRE_NO_THROW(a = expectSingle(IO::experimental::parseSmiles(pair.first)));
-    BOOST_REQUIRE_NO_THROW(b = expectSingle(IO::experimental::parseSmiles(pair.second)));
+    BOOST_REQUIRE_NO_THROW(a = expectSingle(IO::Experimental::parseSmiles(pair.first)));
+    BOOST_REQUIRE_NO_THROW(b = expectSingle(IO::Experimental::parseSmiles(pair.second)));
     BOOST_CHECK_MESSAGE(
       a == b,
       "Smiles pair " << pair.first << ", " << pair.second << " did not compare equal as expected"
@@ -213,8 +213,8 @@ BOOST_AUTO_TEST_CASE(DifferentSmiles, *boost::unit_test::label("Molassembler")) 
 
   for(const auto& pair : pairs) {
     Molecule a, b;
-    BOOST_REQUIRE_NO_THROW(a = expectSingle(IO::experimental::parseSmiles(pair.first)));
-    BOOST_REQUIRE_NO_THROW(b = expectSingle(IO::experimental::parseSmiles(pair.second)));
+    BOOST_REQUIRE_NO_THROW(a = expectSingle(IO::Experimental::parseSmiles(pair.first)));
+    BOOST_REQUIRE_NO_THROW(b = expectSingle(IO::Experimental::parseSmiles(pair.second)));
     BOOST_CHECK_MESSAGE(
       a != b,
       "Smiles pair " << pair.first << ", " << pair.second << " did not compare different as expected"
@@ -237,7 +237,7 @@ BOOST_AUTO_TEST_CASE(SmilesWithMultipleMolecules, *boost::unit_test::label("Mola
   // parse, count sizes, order and lex. compare
   for(const auto& pair : pairs) {
     std::vector<Molecule> results;
-    BOOST_REQUIRE_NO_THROW(results = IO::experimental::parseSmiles(pair.first));
+    BOOST_REQUIRE_NO_THROW(results = IO::Experimental::parseSmiles(pair.first));
     BOOST_REQUIRE(results.size() > 1);
 
     BOOST_CHECK_EQUAL(results.size(), pair.second.size());

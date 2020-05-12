@@ -96,7 +96,7 @@ boost::optional<BondIndex> findEdge(const Molecule& mol, UnaryPredicate&& predic
 
 BOOST_AUTO_TEST_CASE(EditingCleave, *boost::unit_test::label("Molassembler")) {
   auto makeNMe = []() -> std::pair<Molecule, BondIndex> {
-    Molecule methyl = IO::experimental::parseSmilesSingleMolecule("[CH3]");
+    Molecule methyl = IO::Experimental::parseSmilesSingleMolecule("[CH3]");
     std::vector<AtomIndex> methylPlugAtoms(1, 0);
 
     const AtomIndex CIndex = methylPlugAtoms.front();
