@@ -13,7 +13,6 @@
 
 #include "Molassembler/Temple/Traits.h"
 
-#include <vector>
 #include <map>
 
 namespace Scine {

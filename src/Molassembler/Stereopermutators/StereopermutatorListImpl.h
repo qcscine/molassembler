@@ -9,10 +9,7 @@
 #define INCLUDE_MOLASSEMBLER_STEREOPERMUTATOR_LIST_IMPL_H
 
 #include "Molassembler/StereopermutatorList.h"
-#include "Molassembler/AtomStereopermutator.h"
 #include "Molassembler/BondStereopermutator.h"
-
-#include "boost/functional/hash.hpp"
 
 #include <unordered_map>
 

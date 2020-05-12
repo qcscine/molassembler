@@ -14,9 +14,6 @@
 #include "Molassembler/Graph/PrivateGraph.h"
 #include "Molassembler/RankingInformation.h"
 
-#include <tuple>
-#include <vector>
-
 namespace Scine {
 namespace Molassembler {
 

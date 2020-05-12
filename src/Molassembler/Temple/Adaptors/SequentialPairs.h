@@ -11,8 +11,6 @@
 #include "Molassembler/Temple/ContainerTraits.h"
 #include "Molassembler/Temple/Binding.h"
 
-#include <vector>
-
 namespace Scine {
 namespace Molassembler {
 namespace Temple {

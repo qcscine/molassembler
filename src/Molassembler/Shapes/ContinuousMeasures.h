@@ -10,7 +10,6 @@
 
 #include "Molassembler/Shapes/PointGroupElements.h"
 #include "Molassembler/Shapes/Data.h"
-#include "Molassembler/Export.h"
 
 namespace Scine {
 namespace Molassembler {

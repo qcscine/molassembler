@@ -11,7 +11,6 @@
 #include "Molassembler/Temple/ContainerTraits.h"
 #include "Molassembler/Temple/Binding.h"
 #include "Molassembler/Temple/constexpr/TupleType.h"
-#include <array>
 #include <cassert>
 
 namespace Scine {

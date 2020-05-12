@@ -9,9 +9,6 @@
 #define INCLUDE_MOLASSEMBLER_STEREOPERMUTATIONS_ROTATION_ENUMERATOR_H
 
 #include "Molassembler/Stereopermutation/Stereopermutation.h"
-#include "Molassembler/Shapes/Shapes.h"
-#include "boost/functional/hash.hpp"
-#include "boost/optional/optional_fwd.hpp"
 
 #include <unordered_set>
 

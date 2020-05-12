@@ -10,7 +10,6 @@
 
 #include "Molassembler/DistanceGeometry/ValueBounds.h"
 #include "Molassembler/Options.h"
-#include "Molassembler/RankingInformation.h"
 #include "Molassembler/Stereopermutators/ShapeVertexMaps.h"
 
 #include "Molassembler/Stereopermutation/Stereopermutation.h"

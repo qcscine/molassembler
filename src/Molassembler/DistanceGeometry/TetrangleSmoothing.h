@@ -25,6 +25,8 @@ namespace DistanceGeometry {
  *
  * @complexity{@math{\Theta(N^4)}}
  *
+ * @warning This doesn't work and I don't know why.
+ *
  * @return Tetrangle smoothed bounds matrix
  */
 unsigned tetrangleSmooth(Eigen::Ref<Eigen::MatrixXd> bounds);

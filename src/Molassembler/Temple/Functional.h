@@ -13,11 +13,9 @@
 #ifndef INCLUDE_MOLASSEMBLER_TEMPLE_FUNCTIONAL_H
 #define INCLUDE_MOLASSEMBLER_TEMPLE_FUNCTIONAL_H
 
-#include "Molassembler/Temple/Functor.h"
 #include "Molassembler/Temple/Invoke.h"
 #include "Molassembler/Temple/AddToContainer.h"
 
-#include <algorithm>
 #include <numeric>
 
 namespace Scine {

@@ -10,7 +10,7 @@
  * distortions between pairs of shapes, etc.
  *
  * @todo I don't think the constexpr ligand loss mappings are instantiated or
- * tested ANYWHERE
+ * tested
  */
 
 #ifndef INCLUDE_SHAPE_CONSTEXPR_PROPERTIES_H

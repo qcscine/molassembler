@@ -26,7 +26,6 @@
 #include "Molassembler/Temple/Functional.h"
 #include "Molassembler/Temple/constexpr/Numeric.h"
 
-#include <cmath>
 #include <array>
 
 namespace Scine {

@@ -24,7 +24,6 @@
 #include "Molassembler/StereopermutatorList.h"
 #include "Molassembler/AtomStereopermutator.h"
 
-#include "boost/functional/hash.hpp"
 #include <unordered_map>
 
 namespace Scine {

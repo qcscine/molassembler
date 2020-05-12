@@ -10,14 +10,9 @@
 #ifndef INCLUDE_SHAPE_PROPERTIES_H
 #define INCLUDE_SHAPE_PROPERTIES_H
 
-#include "Eigen/Core"
-#include "boost/optional/optional_fwd.hpp"
-
 #include "Molassembler/Shapes/Data.h"
-#include "Molassembler/Shapes/Shapes.h"
 
 #include <set>
-#include <vector>
 
 namespace Scine {
 namespace Molassembler {

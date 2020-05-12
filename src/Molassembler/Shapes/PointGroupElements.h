@@ -13,7 +13,6 @@
 #include <Eigen/Core>
 #include "boost/optional/optional_fwd.hpp"
 #include "Molassembler/Temple/Preprocessor.h"
-#include "Molassembler/Export.h"
 
 #include <vector>
 #include <unordered_map>

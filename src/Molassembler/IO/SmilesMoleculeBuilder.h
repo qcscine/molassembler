@@ -12,7 +12,6 @@
 #include "Molassembler/IO/SmilesParseData.h"
 #include "Molassembler/Graph/PrivateGraph.h"
 #include "boost/variant.hpp"
-#include <vector>
 #include <stack>
 
 namespace Scine {

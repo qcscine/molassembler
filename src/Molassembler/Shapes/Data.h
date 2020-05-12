@@ -16,7 +16,6 @@
 #include "boost/optional/optional_fwd.hpp"
 #include "Eigen/Core"
 
-#include "Molassembler/Export.h"
 #include "Molassembler/Shapes/Shapes.h"
 #include "Molassembler/Shapes/PointGroups.h"
 #include "Molassembler/Temple/StrongIndex.h"

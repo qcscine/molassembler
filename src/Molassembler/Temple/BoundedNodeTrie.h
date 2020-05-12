@@ -9,7 +9,6 @@
 #define INCLUDE_MOLASSEMBLER_TEMPLE_BOUNDED_NODE_TRIE_H
 
 #include <memory>
-#include <vector>
 #include <cassert>
 
 #include "Molassembler/Temple/Functional.h"
