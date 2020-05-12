@@ -1,0 +1,65 @@
+/*!
+
+@page known-issues Known Issues
+
+@section ranking-deficiencies Ranking algorithm deficiencies
+For example, no regularization of Mancude rings and rings systems is performed
+in sequence rule 1. This can lead to false differences between substituents
+when they are actually identical. The ranking algorithm as currently implemented
+is slow and partially interprets the sequence rules differently to other
+libraries in the field. Work is under way to improve this aspect of the library.
+
+@section rotational-isomery Rotational isomery
+The current data model of bond-centric stereocenters can treat a large number of
+cases correctly, but is insufficient. For instance, allene systems' rotational
+isomery cannot be captured with the current model.
+
+@section helicity Helicity
+No stereodescriptors or ranking algorithms for helicity are implemented.
+
+@section conjugation Conjugated systems
+No detection algorithms are in place to find conjugated systems. Conjugated
+systems would require special care in the following places:
+
+- In ranking, the enumeration of Kekule structures is part of a sequence rule
+  priority determination algorithm.
+- In bond order discretization, if nearest integer discretization is chosen,
+  aromatic bond orders (around 1.5) may be randomly rounded up or down, with no
+  care taken to generate a Kekule structure of a contained conjugated system
+- In molecule comparison, mesomer Kekule structures may not be recognized as
+  equivalent molecules
+
+@section design Library design
+
+A conjecture: No big library is ever designed by a scientist with limited
+programming experience without making structural choices they regret at some
+later point. This library has a few of those choices, and this scientist has
+some regrets. None of these are set in stone, but would require a large effort
+to correct at this stage.
+
+- Separation of Molecule into a graph and a stereopermutator list: Although
+  justifiable by the separation of concerns to a degree, it might be preferable
+  not to have separately addressable sub-objects to a molecule. It creates the
+  admittedly awkward split between gathering information on what operation you
+  may want to carry out by manipulating the sub-objects of the molecule, and
+  then having to carry out that information on the molecule. The
+  stereopermutation manipulation interface has become cluttered to some degree
+  with context arguments since some operations there can require graph
+  information (this emerged as a consequence of using element types in cyclic
+  polygon modeling to determine stereopermutation link feasibility).
+- Domain of responsibility mixing: Some objects in the library suffer from
+  having multiple domains of responsibility. Stereopermutator instances should
+  be externally manipulated, not carry methods with many context arguments to
+  carry out tasks in the molecule responsibility domain.
+- Temple library: This emerged mostly as a personal learning experience into
+  template programming and template metaprogramming. Large parts could be
+  replaced by better and more mature libraries.
+- Complexity: Parts of the implementation suffer from excess complexity, in
+  particular the current ranking implementation. It works well (for what it can
+  do), but it is not written in an easily understandable fashion. It is so
+  complex that the effects of any alteration are not easily surmised, which is
+  the surefire sign that it needs to be improved. Bounds have been set on
+  complexity metrics to ensure that no further excessively complex methods
+  emerge and the ranking rewrite that is under way will improve on it.
+
+*/
