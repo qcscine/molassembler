@@ -258,24 +258,22 @@ bool isHapticSite(
    *     M — B
    *      \ /   where M, A and B are all non-main-group elements
    *       A
+   *
+   * The number of non-main-group elements is at most one
    */
   return (
     siteAtoms.size() > 1
-    && !( // Exclude the same-type triangle
-      siteAtoms.size() == 2
-      // The number of non-main-group elements is more than 1
-      && Temple::accumulate(
-        siteAtoms,
-        0u,
-        [&](const unsigned carry, const AtomIndex adjacent) -> unsigned {
-          if(!AtomInfo::isMainGroupElement(graph.elementType(adjacent))) {
-            return carry + 1;
-          }
-
-          return carry;
+    && Temple::accumulate(
+      siteAtoms,
+      0u,
+      [&](const unsigned carry, const AtomIndex adjacent) -> unsigned {
+        if(!AtomInfo::isMainGroupElement(graph.elementType(adjacent))) {
+          return carry + 1;
         }
-      ) > 1
-    )
+
+        return carry;
+      }
+    ) <= 1
   );
 }
 
