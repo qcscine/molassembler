@@ -129,6 +129,10 @@ if(SCINE_BUILD_DOCS)
       OPTIONAL
     )
 
+    if(scine-utils-os_BINARY_DIR)
+      set(SCINE_UTILS_PYTHON_BINARY_PATH ${scine-utils-os_BINARY_DIR}/src/Utils)
+    endif()
+
     find_python_module(doctest)
     if(PY_DOCTEST)
       find_python_module(scine_utilities)
