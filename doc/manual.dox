@@ -230,7 +230,7 @@ for(unsigned assignment = 0; assignment < permutator->numAssignments(); ++assign
 }
 @endcode
 
-@section manual-algorithms Important algorithms
+@section manual-algorithms Algorithms
 
 
 @subsection manual-algorithms-discretization Bond discretization
@@ -253,13 +253,13 @@ molecules E/Z stereocenters) are still interpreted from coordinate information
 despite the main bond type discretized to a single bond. This part of a
 @masm{Molecule}'s interpretation is discussed elsewhere.
 
-@subsection manual-algorithms-shape-det Shape determination
+@subsection manual-algorithms-shape-det Shape inference
 
 If no coordinates are present when constructing a @masm{Molecule}, the idealized
 shape on any non-terminal atom must be determined from its local
 substituents within the set of appropriately sized shapes. For main-group
 atoms, this is accomplished by application of a very basic valence shell
-electron pair repulsion (VSEPR) algorithm. No shape determination algorithms
+electron pair repulsion (VSEPR) algorithm. No shape inference algorithms
 are currently implemented for non-main-group atoms, and the first shape of
 appropriate size is chosen instead.
 
@@ -325,7 +325,24 @@ Nr. | Sequence rule
 5   | An atom or group with \diffplus{higher index of permutation has priority} \diffminus{descriptors {R, M, Z} has priority over its enantiomorph {S, P, E}} 
 
 @subsection manual-algorithms-symbolic-perm Symbolic permutation
-@subsection manual-algorithms-shape-fit Shape fitting
+
+Stereopermutation enumeration is accomplished similar to a method reported in
+the literature \cite bennett1969computation. In particular, see the namespace
+\masm{Stereopermutations}. Atom stereopermutations are enumerated by
+\masm{Stereopermutations::uniques}. Bond stereopermutation enumeration is
+merely the rotational alignment of off-axis substituents (see
+\masm{Stereopermutations::Composite, Composite}).
+
+@subsection manual-algorithms-shape-fit Shape classification
+
+Point clouds are classified into polyhedral shapes by minimal continuous shape
+measure @cite Pinsky1998. The algorithms for this are in the
+\masm{Shapes::Continuous} namespace. An implementation of the suggested
+algorithm is given in
+@masm{Shapes::Continuous::shapeFaithfulPaperImplementation,
+shapeFaithfulPaperImplementation}. There are several variations on this
+algorithm in this namespace, including variants with \masm{Shapes::Continuous::shapeHeuristics, heuristics} and \masm{Shapes::Continuous::shapeHeuristicsCentroidLast, fixed centroid mappings}.
+
 @subsection manual-algorithms-cycle-detection Cycle detection
 
 Cycle detection and enumeration is handled by the excellent library
