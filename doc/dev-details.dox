@@ -1,8 +1,11 @@
 /*!
 
-@page grad Distance Geometry gradient
+@page dev-details Development details
 
-@section errf-def Error function
+@tableofcontents
+
+@section grad Distance Geometry gradient
+@subsection errf-def Error function
 
 For a given set of \f$N\f$ particles with positions \f$\vec{r}_i\f$, the distance
 geometry error function is given as:
@@ -98,7 +101,7 @@ Another definition of the dihedral angle with merely the inverse cosine is:
 whose derivatives w.r.t.\ the constituting position vectors are considerably
 easier to evaluate.
 
-@section errf-grad Gradient of the error function
+@subsection errf-grad Gradient of the error function
 
 \f$E\f$ is scalar-valued, so the columnar gradient of the error function is
 composed of partial derivatives to the individual position vectors \f$\vec{r}_i\f$:
@@ -143,7 +146,7 @@ We split the problem into the main terms:
   }_{\circled{4}}.
 \f}
 
-@subsection errf-grad-dist Distance error terms
+@subsubsection errf-grad-dist Distance error terms
 
 We begin with \f$\circled{0}\f$. We use the chain rule:
 
@@ -297,7 +300,7 @@ Where we have used \f$g(i, j) = -g(j, i)\f$. All in all:
     \right)
 \f}
 
-@subsection errf-grad-chiral Chiral error terms
+@subsubsection errf-grad-chiral Chiral error terms
 
 Next, we consider \f$\circled{2}\f$. Applying the chain rule gives:
 
@@ -464,7 +467,7 @@ Both terms concerning the chiral error can be summarized as follows:
 
 which ought to save some time in an implementation.
 
-@subsection errf-grad-dihedral Dihedral error terms
+@subsubsection errf-grad-dihedral Dihedral error terms
 
 Finally, we consider \f$\circled{4}\f$. The chain rule yields:
 
@@ -545,5 +548,80 @@ And altogether:
     0 & \textrm{else}
   \end{array} \right\}
 \f}
+
+@section stereoperm-feas-atom Atom stereopermutation feasibility
+
+@image html feasibility.svg "Geometric construction for the feasibility of an arbitrary bidentate cycle at an atom stereopermutator"
+
+The distances between atoms of the cycle are modeled via element type and
+mutual bond orders. The idealized angle between the adjacents of
+\f$\textbf{M}\f$ is known in a given stereopermutation. The resulting distance
+between atoms \f$\textbf{A}\f$ and \f$\textbf{B}\f$ is the closing edge of the
+cyclic polygon. After modeling the cyclic polygon, the upper bound on the
+distances \f$d_i\f$ between members of the cycle and the central atom can be
+calculated.
+
+@section stereoperm-feas-bond Bond stereopermutation feasibility
+
+The plane that the cyclic polygon expands into is modeled as follows: We define
+the dihedral point sequence \f$\vec{A}, \vec{B}, \vec{C}, \vec{D}\f$ with angles
+\f$\alpha = \angle ABC, \beta = \angle BCD\f$ and dihedral \f$\varphi = \angle ABCD\f$
+with \f$\left|AB\right| = a, \left|BC\right| = b, \left|CD\right| = c\f$ and
+\f$\alpha,\beta \in \left[0, \pi\right], \varphi \in \left[-\pi, \pi\right]\f$.
+
+We choose the following positions for the points without loss of generality:
+\f{align}{
+  &\vec{A} = \mathbf{R}_{z}(\alpha) a \vec{e}_x\\
+  &\vec{B} = \vec{0}\\
+  &\vec{C} = b \vec{e}_x\\
+  &\vec{D} = \mathbf{R}_{x}(\varphi)\left[\vec{C} + \mathbf{R}_z(\pi -
+  \beta)c\vec{e}_x\right],
+\f}
+where \f$\vec{e}_x\f$ is the unit vector along the \f$x\f$-axis and \f$\mathbf{R}_i\f$ is the
+rotation matrix along the axis \f$i\f$. The dihedral distance is the length of the
+line segment \f$\overline{AD}\f$. In order to find the shortest distance between the
+line segments \f$\overline{AD}\f$ and \f$\overline{BC}\f$, we define:
+\f{align}{
+  \overline{BC}: \vec{r}(\lambda) 
+  &= \vec{B} + \lambda\left(\vec{C}-\vec{B}\right)
+  = \lambda\vec{C},
+  \lambda \in \left[0, 1\right]\\
+  \overline{AD}: \vec{s}(\mu) 
+  &= \vec{A} + \mu\left(\vec{D}-\vec{A}\right),
+  \mu \in \left[0, 1\right]
+\f}
+The shortest distance between the line segments must be orthogonal to both line
+segments' direction vectors:
+\f{align}{
+  \left[\lambda\vec{C} - \left(\vec{A} + \mu(\vec{D}-\vec{A})\right)\right]
+  &\cdot\vec{C} = 0\\
+  \left[\lambda\vec{C} - \left(\vec{A} +
+  \mu(\vec{D}-\vec{A})\right)\right]
+  &\cdot\left(\vec{D}-\vec{A}\right) = 0
+\f}
+Solving this system of equations yields:
+\f{align}{
+  \mu_0 &= - \frac{A_y S_y + A_z S_z}{S_y^2 + S_z^2}\\
+  \lambda_0 &= \frac{A_x + \mu_0 S_x}{b}
+\f}
+with \f$\vec{S} = \vec{D} - \vec{A}\f$.
+These solutions do not satisfy their conditions yet, and must be adjusted
+slightly:
+\f{align}{
+  \lambda_m &= \min\left(\max(\lambda_0, 0), 1\right)\\
+  \mu_m &= 
+  \begin{cases}
+    -\frac{\displaystyle A_x}{\displaystyle S_x} & \lambda_0 \leq 0\\
+    \frac{\displaystyle b - A_x}{\displaystyle S_x} & \lambda_0 \geq 1\\
+    \lambda_0 & \textrm{else}
+  \end{cases}.
+\f}
+
+The plane in which the cyclic polygon expands can then be defined through the three
+points \f$\vec{A}, \vec{D}\f$, and \f$\vec{r}(\lambda_m)\f$.
+For \f$\varphi = \pm \pi\f$, these points become collinear and the plane definition
+is not uniquely defined. Under these circumstances, the plane can instead be
+defined using the point \f$\vec{A}\f$ and the two vectors
+\f$\left(\vec{D}-\vec{A}\right)\f$ and \f$\vec{e}_z\f$.
 
 */

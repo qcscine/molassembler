@@ -602,10 +602,7 @@ conflict with the spatial model, which has upper limits on granted slack for
 particularly strained graphs.
 
 
-@page public-interface API
-
-v1.0.0
-------
+@section manual-public-interface API
 
 All headers in the top-level library directory of molassembler and files
 included from there form the public interface. None of the files in deeper
