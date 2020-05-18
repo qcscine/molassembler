@@ -24,7 +24,7 @@ namespace Optionals {
  * @tparam UnaryFunction: Function of signature T -> U
  * @tparam OptionalType: Optional type being used
  *
- * @returns OptionalType<U>
+ * @returns OptionalType\<U\>
  */
 template<
   template<typename> class OptionalType,
@@ -41,12 +41,12 @@ auto map(const OptionalType<T>& optional, UnaryFunction&& function) {
   return OptionalType<U> {};
 }
 
-/*! @brief Monadic bind with function of signature T -> Optional<U>
+/*! @brief Monadic bind with function of signature T -> Optional\<U\>
  *
- * @tparam UnaryFunction: Function of signature T -> Optional<U>
+ * @tparam UnaryFunction: Function of signature T -> Optional\<U\>
  * @tparam OptionalType: Passed optional type
  *
- * @returns OptionalType<U>
+ * @returns OptionalType\<U\>
  */
 template<
   template<typename> class OptionalType,

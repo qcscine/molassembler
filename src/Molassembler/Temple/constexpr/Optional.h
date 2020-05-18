@@ -77,7 +77,7 @@ public:
    *
    * @tparam UnaryFunction: Function of signature T -> U
    *
-   * @returns Optional<U>
+   * @returns Optional\<U\>
    */
   template<class UnaryFunction>
   constexpr auto map(UnaryFunction&& function) const {
@@ -93,11 +93,11 @@ public:
     return Optional<U> {};
   }
 
-  /*! @brief Monadic bind with function of signature T -> Optional<U>
+  /*! @brief Monadic bind with function of signature T -> Optional\<U\>
    *
-   * @tparam UnaryFunction: Function of signature T -> Optional<U>
+   * @tparam UnaryFunction: Function of signature T -> Optional\<U\>
    *
-   * @returns Optional<U>
+   * @returns Optional\<U\>
    */
   template<class UnaryFunction>
   constexpr auto flatMap(UnaryFunction&& function) const {
@@ -187,11 +187,8 @@ public:
 //!@}
 
 private:
-//!@name State
-//!@{
   T value_ = T {};
   bool hasValue_ = false;
-//!@}
 };
 
 template<typename T>
@@ -232,7 +229,7 @@ public:
    *
    * @tparam UnaryFunction: Function of signature T -> U
    *
-   * @returns Optional<U>
+   * @returns Optional\<U\>
    */
   template<class UnaryFunction>
   constexpr auto map(UnaryFunction&& function) const {
@@ -248,11 +245,11 @@ public:
     return Optional<U> {};
   }
 
-  /*! @brief Monadic bind with function of signature T -> Optional<U>
+  /*! @brief Monadic bind with function of signature T -> Optional\<U\>
    *
-   * @tparam UnaryFunction: Function of signature T -> Optional<U>
+   * @tparam UnaryFunction: Function of signature T -> Optional\<U\>
    *
-   * @returns Optional<U>
+   * @returns Optional\<U\>
    */
   template<class UnaryFunction>
   constexpr auto flatMap(UnaryFunction&& function) const {
@@ -334,12 +331,9 @@ public:
 //!@}
 
 private:
-//!@name State
-//!@{
   T dummy_ = T{};
   T& ref_;
   bool hasValue_ = false;
-//!@}
 };
 
 } // namespace Temple

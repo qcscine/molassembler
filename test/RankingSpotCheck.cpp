@@ -2,6 +2,13 @@
  * @copyright This code is licensed under the 3-clause BSD license.
  *   Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
  *   See LICENSE.txt for details.
+ *
+ * @parblock @note Inaccuracies in IUPAC Blue book 2013
+ * - p. 1193 Example 2 in molecule, right double bond is nonstg. and thus not, as
+ *   shown, a Z (correct in simplified digraph below)
+ * - p. 1202 simplified digraph index 2/3 mixup (correct in molecule and
+ *   like/unlike comparison)
+ * @endparblock
  */
 
 #define BOOST_FILESYSTEM_NO_DEPRECATED

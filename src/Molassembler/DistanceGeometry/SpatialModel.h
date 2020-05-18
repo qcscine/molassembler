@@ -526,7 +526,47 @@ private:
     double looseningFactor
   );
 
-  //! Adds spirocenter modelling to the data set
+  /*! @brief Adds spirocenter modelling to the data set
+   *
+   * The cross-angle in a spiro-atom is expliticly modeled if the disjoint cycles are
+   * both small, i.e. of size \f$\le 5\f$. Only then is the additional variance when
+   * calculating cross-angle bounds particularly harmful for the overall 3D
+   * structure. We define:
+   *
+   * \f{align}{
+   *   \vec{a} &= R_z\left(\frac{\alpha}{2}\right)\begin{pmatrix}
+   *     1\\
+   *     0\\
+   *     0
+   *   \end{pmatrix} = \begin{pmatrix}
+   *     \cos \frac{\alpha}{2}\\
+   *     \sin \frac{\alpha}{2}\\
+   *     0
+   *   \end{pmatrix}\\
+   *   \vec{b} &= R_y\left(\frac{\beta}{2}\right)\begin{pmatrix}
+   *     -1\\
+   *     0\\
+   *     0
+   *   \end{pmatrix} = \begin{pmatrix}
+   *     - \cos \frac{\beta}{2}\\
+   *     0\\
+   *     \sin \frac{\beta}{2}
+   *   \end{pmatrix}
+   * \f}
+   *
+   * Where \f$R_y\f$ and \f$R_z\f$ are the standard three-dimensional rotation
+   * matrices, \f$\alpha\f$ is the cycle internal angle for the first cycle at
+   * the spiro-atom, and \f$\beta\f$ is the cycle internal angle for the second
+   * cycle at the spiro-atom. The angle between these vectors \f$\phi\f$ is then:
+   *
+   * \f{align}{
+   *   \vec{a}\vec{b} &= |\vec{a}||\vec{b}|\cos\phi\\
+   *   \phi &= \arccos \left\{
+   *     \left(\cos \frac{\alpha}{2} \right)
+   *     \left(- \cos \frac{\beta}{2} \right)
+   *   \right\}
+   * \f}
+   */
   void modelSpirocenters_(
     const FixedPositionsMapType& fixedAngstromPositions
   );

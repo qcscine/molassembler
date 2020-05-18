@@ -184,6 +184,7 @@ public:
 //!@}
 
 //!@name Operators
+//!@{
   constexpr bool operator == (const DynamicMap& other) const {
     return items_ == other.items_;
   }

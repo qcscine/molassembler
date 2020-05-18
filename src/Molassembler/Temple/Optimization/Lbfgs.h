@@ -676,6 +676,7 @@ private:
    * @param observer Observer called with parameter updates
    * @param step Suggested step in parameters, values and gradients
    * @param direction Suggested step direction
+   * @param boxes Boxes (if present)
    *
    * @return Number of function evaluations made in adjusting the step
    */

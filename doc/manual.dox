@@ -51,7 +51,7 @@ atom is consequentially not a stereocenter.
 @subsection manual-introduction-shapes Shapes
 
 Molassembler classifies the substituents around every non-terminal atom into a
-polyhedral \link Scine::Shapes::Shape shape \endlink if a
+polyhedral \masm{Shapes::Shape, shape} if a
 \masm{Molecule} is constructed with Cartesian coordinates.
 
 @image html molecule_shapes.png "Octahedron, tetrahedron and equilateral triangle shapes shown in a sample molecule."

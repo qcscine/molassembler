@@ -124,7 +124,7 @@ public:
   );
 //!@}
 
-//!@name Static functions
+//!@name Shape picking
 //!@{
   /*! @brief Picks a shape retaining as much chiral state as possible on a
    *   shape size increase
@@ -145,6 +145,7 @@ public:
 //!@}
 
 //!@name Modifiers
+//!@{
   /*! @brief Changes the assignment of the stereopermutator
    *
    * @param assignment The new assignment of the stereopermutator. May be
@@ -240,7 +241,7 @@ public:
   );
 //!@}
 
-//!@name Information
+//!@name Observers
 //!@{
   /*! @brief Fetches angle between binding sites in the idealized shape
    *

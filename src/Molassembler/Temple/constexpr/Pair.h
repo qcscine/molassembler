@@ -47,6 +47,7 @@ struct Pair {
 //!@}
 
 //!@name Special member functions
+//!@{
   //! Copy constructor
   constexpr Pair(const Pair& other)
     : first(other.first), second(other.second) {}

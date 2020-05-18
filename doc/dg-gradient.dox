@@ -1,0 +1,549 @@
+/*!
+
+@page grad Distance Geometry gradient
+
+@section errf-def Error function
+
+For a given set of \f$N\f$ particles with positions \f$\vec{r}_i\f$, the distance
+geometry error function is given as:
+
+\f{align}{\begin{aligned}
+  \textrm{errf}\left(\left\{\vec{r}_i \right\}\right) &= \underbrace{\sum_{i < j}^{N} \left[
+      \distanceErrorFirstTerm{2} + \distanceErrorSecondTerm{2}
+    \right]
+  }_{\textrm{Distance errors}}\\
+  &+ \underbrace{\sum_{\left(S_\alpha, S_\beta, S_\gamma, S_\delta, U_{V}, L_{V}\right) \in{} C} \left[
+      \chiralErrorFirstTerm{2} + \chiralErrorSecondTerm{2}
+    \right]
+  }_{\textrm{Chiral errors}}\\
+  &+ \underbrace{\sum_{\left(S_\alpha, S_\beta, S_\gamma, S_\delta, U_\phi, L_\phi\right) \in{} D} \dihedralTerm{2}
+  }_{\textrm{Dihedral errors}}.
+\end{aligned}\f}
+
+Within the distance errors, the symbols \f$U_{ij}\f$ and \f$L_{ij}\f$ are the upper and
+lower distance bounds for the atoms \f$i\f$ and \f$j\f$.
+
+Within the chiral errors, \f$C\f$ is a set of chiral constraint tuples consisting of
+the sets \f$S_\alpha, S_\beta, S_\gamma\f$ and \f$S_\delta\f$. These contain mutually
+disjoint particle indices and contain at least one element. In further notation,
+\f$\vec{s}\f$ denotes the average spatial position of all elements of a set, e.g.\
+for \f$S_\alpha\f$:
+
+\f{equation}{
+  \vec{s}_\alpha = \frac{1}{|S_\alpha|}\sum_{i=1}^{|S_\alpha|}
+  \vec{r}_{S_{\alpha, i}},
+\f}
+
+where \f$|S_\alpha|\f$ denotes the number of elements in the set and \f$S_{\alpha,
+i}\f$ is the \f$i\f$-th element in the set.
+
+The constraint tuple further consists of the scalars \f$U_{V}\f$ and
+\f$L_{V}\f$, which are upper and lower bounds on
+the volume spanned by the average positions of the sets \f$S_\alpha\f$, \f$S_\beta\f$,
+\f$S_\gamma\f$ and \f$S_\delta\f$. This volume is
+calculated in the symbol \f$V_{\alpha\beta\gamma\delta}\f$, which is the signed
+tetrahedron volume spanned by \f$\vec{s}_\alpha, \vec{s}_\beta, \vec{s}_\gamma\f$
+and \f$\vec{s}_\delta\f$:
+
+\f{equation}{
+  V_{\alpha\beta\gamma\delta}\left( \left\{\vec{r}_i \right\} \right) =
+    \volumeCalculationSets{\alpha}{\beta}{\gamma}{\delta}.
+\f}
+
+It is important to note that tetrahedron volumes such as
+\f$U_{V}\f$ are signed values. On odd permutations of indices, these quantities
+change sign.
+
+Within the dihedral errors, \f$D\f$ is a set of dihedral constraint tuples.
+Each tuple consists of particle index sets \f$S_\alpha, S_\beta, S_\gamma\f$ and
+\f$S_\delta\f$. Exactly as for chiral errors, these sets do not intersect and each
+contain at least a single element. Furthermore, \f$U_{\phi}\f$ and \f$L_{\phi}\f$ are
+upper and lower bounds on the dihedral angle \f$\phi\f$ defined by the particle
+index sets:
+
+\f{align}{\begin{aligned}
+  \phi_{\alpha\beta\gamma\delta}\left(\left\{\vec{r}_i \right\}\right){} = \textrm{atan2} \Big( &
+    \left[
+      \left(\vec{r}_{\beta}-\vec{r}_{\beta}\right) \times \left(\vec{r}_{\gamma}-\vec{r}_{\gamma}\right)
+    \right] \times \left[
+      \left(\vec{r}_{\gamma}-\vec{r}_{\gamma}\right) \times \left(\vec{r}_{\delta}-\vec{r}_{\delta}\right)
+    \right] \cdot 
+    \frac{\left(\vec{r}_{\gamma}-\vec{r}_{\gamma}\right)}{\lvert\left(\vec{r}_{\gamma}-\vec{r}_{\gamma}\right)\rvert}\\
+    & \left[
+      \left(\vec{r}_{\beta}-\vec{r}_{\beta}\right) \times \left(\vec{r}_{\gamma}-\vec{r}_{\gamma}\right)
+    \right] \cdot \left[
+      \left(\vec{r}_{\gamma}-\vec{r}_{\gamma}\right) \times \left(\vec{r}_{\delta}-\vec{r}_{\delta}\right)
+    \right]
+  \Big)
+\end{aligned}\f}
+
+Here we have used a three-vector dihedral angle definition and inserted
+the index set average-position differences that constitute the dihedral angle.
+Another definition of the dihedral angle with merely the inverse cosine is:
+
+\f{align}{\begin{aligned}
+  \phi_{\alpha\beta\gamma\delta}\left(\left\{\vec{r}_i \right\}\right){} = \arccos
+    \frac{\left[
+      \left(\vec{r}_{\alpha}-\vec{r}_{\alpha}\right) \times \left(\vec{r}_{\beta}-\vec{r}_{\beta}\right)
+    \right]\left[
+      \left(\vec{r}_{\beta}-\vec{r}_{\beta}\right) \times \left(\vec{r}_{\delta}-\vec{r}_{\delta}\right)
+    \right]}{\lvert
+      \left(\vec{r}_{\alpha}-\vec{r}_{\alpha}\right) \times \left(\vec{r}_{\beta}-\vec{r}_{\beta}\right)
+    \rvert\lvert
+      \left(\vec{r}_{\beta}-\vec{r}_{\beta}\right) \times \left(\vec{r}_{\delta}-\vec{r}_{\delta}\right)
+    \rvert
+    },
+\end{aligned}\f}
+
+whose derivatives w.r.t.\ the constituting position vectors are considerably
+easier to evaluate.
+
+@section errf-grad Gradient of the error function
+
+\f$E\f$ is scalar-valued, so the columnar gradient of the error function is
+composed of partial derivatives to the individual position vectors \f$\vec{r}_i\f$:
+
+\f{align*}{
+  \nabla E &= \left(
+    \frac{\partial E}{\partial \vec{r}_1},
+    \frac{\partial E}{\partial \vec{r}_2},
+    \ldots,
+    \frac{\partial E}{\partial \vec{r}_N}
+  \right)
+\f}
+
+Each individual component \f$\left( \partial E / \partial \vec{r}_\xi \right)\f$
+is a vector whose components are the scalar derivatives:
+
+\f{align*}{
+  \frac{\partial E}{\partial \vec{r}_\xi} &= \begin{pmatrix}
+    \partial E / \partial r_{\xi , x} \\
+    \partial E / \partial r_{\xi , y} \\
+    \partial E / \partial r_{\xi , z} 
+  \end{pmatrix}
+\f}
+
+We split the problem into the main terms:
+
+\f{align*}{
+  \frac{\partial}{\partial\vec{r}_{\xi}} \textrm{errf}\left(\left\{\vec{r}_i \right\}\right) 
+  &= \underbrace{\frac{\partial}{\partial\vec{r}_{\xi}} \left(
+      \sum_{i < j}^{N} \distanceErrorFirstTerm{2}
+    \right)
+  }_{\circled{0}}
+  + \underbrace{\frac{\partial}{\partial\vec{r}_{\xi}} \left(
+      \sum_{i < j}^{N} \distanceErrorSecondTerm{2}
+    \right)
+  }_{\circled{1}}\\
+  &+ \underbrace{\frac{\partial}{\partial\vec{r}_{\xi}} \sum_{\left(S_\alpha, S_\beta, S_\gamma, S_\delta, U_{V}, L_{V}\right) \in{} C} \chiralErrorFirstTerm{2}
+  }_{\circled{2}}\\
+  &+ \underbrace{\frac{\partial}{\partial\vec{r}_{\xi}} \sum_{\left(S_\alpha, S_\beta, S_\gamma, S_\delta, U_{V}, L_{V}\right) \in{} C} \chiralErrorSecondTerm{2}
+  }_{\circled{3}}\\
+  &+ \underbrace{\frac{\partial}{\partial\vec{r}_{\xi}} \sum_{\left(S_\alpha, S_\beta, S_\gamma, S_\delta, U_\phi, L_\phi\right) \in{} D} \dihedralTerm{2}
+  }_{\circled{4}}.
+\f}
+
+@subsection errf-grad-dist Distance error terms
+
+We begin with \f$\circled{0}\f$. We use the chain rule:
+
+\f{equation}{
+  \frac{\partial}{\partial\vec{r}_{\xi}} \sum_{i < j}^{N} \distanceErrorFirstTerm{2}
+  = 2 \sum_{i < j}^{N} \distanceErrorFirstTerm{} \frac{\partial}{\partial\vec{r}_{\xi}}
+  \distanceErrorFirstTerm{}.
+\f}
+
+If \f$\xi = i\f$, then:
+
+\f{equation}{
+  \frac{\partial}{\partial\vec{r}_{\xi}} \frac{\left(\vec{r}_{j}-\vec{r}_{j}\right)^{2}}{U_{ij}^{2}}-1
+  = - \frac{2}{U_{ij}^{2}} \left(\vec{r}_{j}-\vec{r}_{j}\right),
+\f}
+
+and likewise, but positive, for \f$\xi = j\f$. Consequently:
+
+\f{equation}{
+  \frac{\partial}{\partial\vec{r}_{\xi}} \left( \distanceErrorFirstTerm{} \right)
+  = \frac{2}{U_{ij}^{2}} \left(\vec{r}_{j}-\vec{r}_{j}\right) \left\{ \begin{array}{r | r}
+    -1 & \xi = i\\
+    1 & \xi = j\\
+    0 & \textrm{else}
+  \end{array} \right\}
+  = \frac{2}{U_{ij}^{2}} \left(\vec{r}_{j}-\vec{r}_{j}\right) \left(\delta_{\xi j}-\delta_{\xi i} 
+  \right),
+\f}
+
+where we have discarded the possibility of \f$\frac{\left(\vec{r}_{j}-\vec{r}_{j}\right)^{2}}{U_{ij}^{2}}-1 < 0\f$
+since this case is adequately covered by the first maximum function. \f$\delta\f$ is
+the Kronecker delta. So, in total:
+
+\f{equation}{\label{eq_breakdown_deltas}
+  \circled{0}
+  = \sum_{i < j}^{N} \left(
+    \delta_{\xi j} - \delta_{\xi i} 
+  \right) \underbrace{\frac{4}{U_{ij}^{2}} 
+    \left(\vec{r}_{j}-\vec{r}_{j}\right) \distanceErrorFirstTerm{}
+  }_{f(i, j)}
+\f}
+
+We can transform the summation further with Kronecker deltas:
+\f{align}{
+  \sum_{i < j}^{N} \left( \delta_{\xi j} - \delta_{\xi i} \right) f(i, j)
+  &= \sum_{i = 1}^{\xi - 1} f(i, \xi) 
+    - \sum_{j = \xi + 1}^{N} f(\xi, j)\\
+  &= \sum_{i = 1}^{\xi - 1} f(i, \xi) 
+    + \sum_{i = \xi + 1}^{N} f(i, \xi)\\
+  &= \sum_{i = 1}^{N} \left(1 - \delta_{i\xi} \right) f(i, \xi),
+\f}
+
+where we have used that \f$f(i, j) = -f(j, i)\f$.
+
+All in all:
+
+\f{equation}{
+  \circled{0}
+  = \sum_{i = 1}^{N} \left(1 - \delta_{i\xi}\right) \frac{4}{U_{i\xi}^{2}}
+    \left(\vec{r}_{\xi}-\vec{r}_{\xi}\right)\max\left(0,
+      \frac{\left(\vec{r}_{\xi}-\vec{r}_{\xi}\right)^{2}}{U_{i\xi}^{2}}-1
+    \right)
+\f}
+
+Let us continue with \f$\circled{1}\f$. The chain rule gives:
+\f{equation}{
+  \frac{\partial}{\partial\vec{r}_{\xi}} \sum_{i < j}^{N} \distanceErrorSecondTerm{2}
+  = 2 \sum_{i < j}^{N} \distanceErrorSecondTerm{} \frac{\partial}{\partial\vec{r}_{\xi}}
+    \distanceErrorSecondTerm{}
+\f}
+
+For \f$\xi = i\f$,
+\f{equation}{
+  \frac{\partial}{\partial\vec{r}_{\xi}} \left( \frac{2 L_{ij}^{2}}{L_{ij}^{2} + \left(\vec{r}_{j}-\vec{r}_{j}\right)^{2}}-1 \right)
+  = \frac{4 L_{ij}^{2} \left(\vec{r}_{j}-\vec{r}_{j}\right)}
+    {\left(L_{ij}^{2} + \left(\vec{r}_{j}-\vec{r}_{j}\right)^2\right)^2},
+\f}
+
+and likewise, but negative, for \f$\xi = j\f$. Therefore,
+
+\f{align*}{
+  \frac{\partial}{\partial\vec{r}_{\xi}} \left( \distanceErrorSecondTerm{} \right)
+  &=\frac{
+    4 L_{ij}^{2} \left(\vec{r}_{j}-\vec{r}_{j}\right)
+  }{
+    \left(
+      L_{ij}^{2} + \left(\vec{r}_{j}-\vec{r}_{j}\right)^2
+    \right)^2
+  } \left\{ \begin{array}{ r | r}
+    1 & \xi = i\\
+    - 1 & \xi = j\\
+    0 & \textrm{else}
+  \end{array} \right\}\\
+  &= \frac{
+    4 L_{ij}^{2} \left(\vec{r}_{j}-\vec{r}_{j}\right)
+  }{
+    \left(
+      L_{ij}^{2} + \left(\vec{r}_{j}-\vec{r}_{j}\right)^2
+    \right)^2
+  } \left(
+    \delta_{\xi i} - \delta_{\xi j} 
+  \right),
+\f}
+
+where we have excluded the possibility of \f$\frac{2 L_{ij}^{2}}{L_{ij}^{2} + \left(\vec{r}_{j}-\vec{r}_{j}\right)^{2}}-1 < 0\f$
+since this case is covered by the first maximum function. Altogether:
+
+\f{equation}{\label{eq_breakdown_deltas_second}
+  \circled{1}
+  = \sum_{i < j}^{N} \left(
+    \delta_{\xi i} - \delta_{\xi j} 
+  \right) \underbrace{
+    \frac{
+      8 L_{ij}^{2} \left(\vec{r}_{j}-\vec{r}_{j}\right)
+    }{
+      \left(
+        L_{ij}^{2} + \left(\vec{r}_{j}-\vec{r}_{j}\right)^2
+      \right)^2
+    } \distanceErrorSecondTerm{}
+  }_{g(i, j)}.
+\f}
+
+Transforming the summation:
+\f{align}{
+  \sum_{i < j}^{N} \left( \delta_{\xi i} - \delta_{\xi j} \right) g(i, j)
+  &= - \sum_{i = 1}^{\xi - 1} g(i, \xi) 
+    + \sum_{j = \xi + 1}^{N} g(\xi, j)\\
+  &= \sum_{i = 1}^{\xi - 1} g(\xi, i) 
+    + \sum_{i = \xi + 1}^{N} g(\xi, i)\\
+  &= \sum_{i = 1}^{N} \left(1 - \delta_{i\xi} \right) g(\xi, i),
+\f}
+
+Where we have used \f$g(i, j) = -g(j, i)\f$. All in all:
+
+\f{equation}{
+  \circled{1}
+  = \sum_{i = 1}^{N} \left(1 - \delta_{i\xi}\right) 
+    \frac{
+      8 L_{\xi i}^{2} \left(\vec{r}_{i}-\vec{r}_{i}\right)
+    }{
+      \left(
+        L_{\xi i}^{2} + \left(\vec{r}_{i}-\vec{r}_{i}\right)^2
+      \right)^2
+    } \textrm{max} \left(
+      0,
+      \frac{
+        2 L_{\xi i}^{2}
+      }{
+        L_{\xi i}^{2} + \left(\vec{r}_{i}-\vec{r}_{i}\right)^{2}
+      } - 1
+    \right)
+\f}
+
+@subsection errf-grad-chiral Chiral error terms
+
+Next, we consider \f$\circled{2}\f$. Applying the chain rule gives:
+
+\f{align*}{
+  &\quad\frac{\partial}{\partial\vec{r}_{\xi}} \sum_{\left(S_\alpha, S_\beta, S_\gamma, S_\delta, U_{V}, L_{V}\right) \in{} C} \chiralErrorFirstTerm{2}\\
+  &= 2 \sum_{\left(S_\alpha, S_\beta, S_\gamma, S_\delta, U_{V}, L_{V}\right) \in{} C} \chiralErrorFirstTerm{} \frac{\partial}{\partial\vec{r}_{\xi}} \chiralErrorFirstTerm{}
+\f}
+
+The partial derivatives of \f$V_{\alpha\beta\gamma\delta}\left(\left\{\vec{r}_i \right\}\right)\f$ with
+respect to \f$\vec{r}_\xi\f$ are split into five cases. The index \f$\xi\f$ can be an
+element of one of the four sets \f$S_\alpha, S_\beta, S_\gamma, S_\delta\f$ (and
+only one, since they are mutually disjoint) or not. The derivative for the last
+case is zero. In the remaining cases, one average vector \f$\vec{s}\f$ is a function
+of \f$\vec{r}_\xi\f$ but the rest are not. The partial derivative of any average
+vector \f$\vec{s}\f$ is:
+
+\f{equation}{
+  \frac{\partial}{\partial\vec{r}_{\xi}} \vec{s}_\alpha 
+  = \frac{\partial}{\partial\vec{r}_{\xi}} \frac{1}{|S_\alpha|}\sum_{i=1}^{|S_\alpha|}
+  \vec{r}_{S_{\alpha, i}}
+  = \left\{ 
+    \begin{array}{r | r}
+      \frac{1}{|S_\alpha|} \mathbf{I}_3 &  \xi \in S_\alpha\\
+      0 & \textrm{else}
+    \end{array}
+  \right\}
+\f}
+
+where \f$\mathbf{I}_3\f$ denotes the three dimensional identity matrix. The individual set
+membership cases are thus as follows:
+
+\f{align}{
+  S_\alpha &\quad \frac{\partial}{\partial\vec{r}_{\xi}} \left\{ 
+    \left(\vec{r}_{\alpha}-\vec{r}_{\alpha}\right)^{T}
+    \cdot \left[
+      \left(\vec{r}_{\beta}-\vec{r}_{\beta}\right)
+      \times \left(\vec{r}_{\gamma}-\vec{r}_{\gamma}\right)
+    \right]
+  \right\} \\
+  &= \frac{\partial}{\partial\vec{r}_{\xi}} \left\{ 
+    \vec{s}_\alpha^{\,T}
+    \cdot \left[
+      \left(\vec{r}_{\beta}-\vec{r}_{\beta}\right)
+      \times \left(\vec{r}_{\gamma}-\vec{r}_{\gamma}\right)
+    \right]
+  \right\} - \vec{0} \\
+  &= \frac{1}{|S_\alpha|} \left[
+    \left(\vec{r}_{\beta}-\vec{r}_{\beta}\right) \times \left(\vec{r}_{\gamma}-\vec{r}_{\gamma}\right) 
+  \right]
+\f}
+
+In shorthand notation, in which all \f$\vec{s}\f$ symbols are replaced by their subscripts:
+
+\f{align}{
+  S_\beta &\quad \frac{\partial}{\partial\vec{r}_{\xi}} 
+    \left(\vec{\alpha}-\vec{\delta}\right)^{T}
+    \cdot \left[
+      \left(\vec{\beta}-\vec{\delta}\right)
+      \times \left(\vec{\gamma}-\vec{\delta}\right)
+    \right] \\
+  &= \frac{\partial}{\partial\vec{r}_{\xi}}
+    \left(\vec{\alpha}-\vec{\delta}\right)^{T}
+    \cdot \left[
+      \vec{\beta} \times \vec{\gamma} - \vec{\beta} \times \vec{\delta} - \vec{\delta} \times \vec{\gamma} + \underbrace{
+        \vec{\delta} \times \vec{\delta}
+      }_{=0}
+    \right] \\
+  &= \frac{\partial}{\partial\vec{r}_{\xi}} \left\{
+    \vec{\beta}^{\,T} \cdot \left[
+      \vec{\gamma} \times \left(\vec{\alpha}-\vec{\delta}\right)
+    \right] 
+    - \vec{\beta}^{\,T} \cdot \left[
+      \vec{\delta} \times \left(\vec{\alpha}-\vec{\delta}\right)
+    \right] 
+  \right\} - \vec{0} \\
+&= \frac{1}{|S_\beta|} \left(\vec{\gamma}-\vec{\delta}\right) \times \left(\vec{\alpha}-\vec{\delta}\right) 
+  = - \frac{1}{|S_\beta|}\left(\vec{\alpha}-\vec{\delta}\right) \times \left(\vec{\gamma}-\vec{\delta}\right)
+\f}
+
+\f{align}{
+  S_\gamma &\quad \frac{\partial}{\partial\vec{r}_{\xi}} 
+    \left(\vec{\alpha}-\vec{\delta}\right)^{T}
+    \cdot \left[
+      \vec{\beta} \times \vec{\gamma} - \vec{\beta} \times \vec{\delta} - \vec{\delta} \times \vec{\gamma} 
+    \right] \\
+  &= \frac{\partial}{\partial\vec{r}_{\xi}} \left\{
+    \vec{\gamma}^{\,T} \cdot \left[
+      \left(\vec{\alpha}-\vec{\delta}\right) \times \vec{\beta}
+    \right] 
+    - \vec{\gamma}^{\,T} \cdot \left[
+      \left(\vec{\alpha}-\vec{\delta}\right) \times \vec{\delta}\,
+    \right] 
+  \right\} - \vec{0} \\
+  &= \left(\vec{\alpha}-\vec{\delta}\right) \times \left(\vec{\beta}-\vec{\delta}\right) 
+\f}
+
+\f{align}{
+  S_\delta &\quad \frac{\partial}{\partial\vec{r}_{\xi}}
+    \left(\vec{\alpha}-\vec{\delta}\right)^{T}
+    \cdot \left[
+      \vec{\beta} \times \vec{\gamma} - \vec{\beta} \times \vec{\delta} - \vec{\delta} \times \vec{\gamma} 
+    \right] \\
+  &= \frac{\partial}{\partial\vec{r}_{\xi}} \vec{\alpha}^{\,T} \cdot \left[
+      \vec{\beta} \times \vec{\gamma} - \vec{\beta} \times \vec{\delta} - \vec{\delta} \times \vec{\gamma} 
+    \right] - \frac{\partial}{\partial\vec{r}_{\xi}} \vec{\delta}^{\,\,T} \cdot \left[
+      \vec{\beta} \times \vec{\gamma} - \vec{\beta} \times \vec{\delta} - \vec{\delta} \times \vec{\gamma}
+    \right]\\
+  &= \underbrace{
+      \frac{\partial}{\partial\vec{r}_{\xi}} \vec{\alpha}^{\,T} \cdot \left(\vec{\beta}\times\vec{\gamma}\right)
+    }_{=0} 
+    - \frac{\partial}{\partial\vec{r}_{\xi}} \vec{\alpha}^{\,T} \cdot \left( 
+      \vec{\beta} \times \vec{\delta}\,
+    \right)
+    - \frac{\partial}{\partial\vec{r}_{\xi}} \vec{\alpha}^{\,T} \cdot \left(\vec{\delta}\times\vec{\gamma}\right)
+    - \frac{\partial}{\partial\vec{r}_{\xi}} \vec{\delta}^{\,\,T} \cdot \left(\vec{\beta}\times\vec{\gamma}\right)
+    + \frac{\partial}{\partial\vec{r}_{\xi}} \underbrace{
+      \vec{\delta}^{\,\,T} \cdot \left(\vec{\delta}\times\vec{\gamma}\right) 
+    }_{=0}
+    + \frac{\partial}{\partial\vec{r}_{\xi}} \underbrace{
+      \vec{\delta}^{\,\,T} \cdot \left(\vec{\beta}\times\vec{\delta}\right)
+    }_{=0} \\
+  &= - \frac{\partial}{\partial\vec{r}_{\xi}} \vec{\delta}^{\,\,T} \cdot \left(\vec{\gamma}\times\vec{\alpha}\right)
+    - \frac{\partial}{\partial\vec{r}_{\xi}} \vec{\delta}^{\,\,T} \cdot \left(\vec{\alpha}\times\vec{\beta}\right)
+    - \frac{\partial}{\partial\vec{r}_{\xi}} \vec{\delta}^{\,\,T} \cdot \left(\vec{\beta}\times\vec{\gamma}\right) \\
+  &= - \frac{1}{|S_\delta|} \vec{\gamma} \times \vec{\alpha} -
+  \frac{1}{|S_\delta|} \vec{\alpha} \times \vec{\beta} - \frac{1}{|S_\delta|} \vec{\beta} \times \vec{\gamma} \\
+  &= - \frac{1}{|S_\delta|} \left(\vec{\alpha}-\vec{\gamma}\right) \times \left(\vec{\beta}-\vec{\gamma}\right) 
+\f}
+
+So, overall:
+
+\f{equation}{
+  \circled{2} = \sum_{\left(S_\alpha, S_\beta, S_\gamma, S_\delta, U_{V}, L_{V}\right) \in{} C} 2\ \chiralErrorFirstTerm{}  \left\{ \begin{array}{r | r}
+    \frac{1}{|S_\alpha|} \left(\vec{r}_{\beta}-\vec{r}_{\beta}\right) \times \left(\vec{r}_{\gamma}-\vec{r}_{\gamma}\right) & \xi \in S_\alpha\\
+    - \frac{1}{|S_\beta|} \left(\vec{r}_{\alpha}-\vec{r}_{\alpha}\right) \times \left(\vec{r}_{\gamma}-\vec{r}_{\gamma}\right) & \xi \in S_\beta\\
+    \frac{1}{|S_\gamma|} \left(\vec{r}_{\alpha}-\vec{r}_{\alpha}\right) \times \left(\vec{r}_{\beta}-\vec{r}_{\beta}\right) & \xi \in S_\gamma\\
+    - \frac{1}{|S_\delta|} \left(\vec{r}_{\alpha}-\vec{r}_{\alpha}\right) \times \left(\vec{r}_{\beta}-\vec{r}_{\beta}\right) & \xi \in S_\delta\\
+    0 & \textrm{else}
+  \end{array} \right\}.
+\f}
+
+For \f$\circled{3}\f$, the derivation is analog save for the sign of the great amount
+of cases, which we extrude from the sum:
+
+\f{equation}{
+  \circled{3} = - \sum_{\left(S_\alpha, S_\beta, S_\gamma, S_\delta, U_{V}, L_{V}\right) \in{} C} 2\ \chiralErrorSecondTerm{} \left\{ \begin{array}{r | r}
+    \frac{1}{|S_\alpha|} \left(\vec{r}_{\beta}-\vec{r}_{\beta}\right) \times \left(\vec{r}_{\gamma}-\vec{r}_{\gamma}\right) & \xi \in S_\alpha\\
+    - \frac{1}{|S_\beta|} \left(\vec{r}_{\alpha}-\vec{r}_{\alpha}\right) \times \left(\vec{r}_{\gamma}-\vec{r}_{\gamma}\right) & \xi \in S_\beta\\
+    \frac{1}{|S_\gamma|} \left(\vec{r}_{\alpha}-\vec{r}_{\alpha}\right) \times \left(\vec{r}_{\beta}-\vec{r}_{\beta}\right) & \xi \in S_\gamma\\
+    - \frac{1}{|S_\delta|} \left(\vec{r}_{\alpha}-\vec{r}_{\alpha}\right) \times \left(\vec{r}_{\beta}-\vec{r}_{\beta}\right) & \xi \in S_\delta\\
+    0 & \textrm{else}
+  \end{array} \right\}.
+\f}
+
+Both terms concerning the chiral error can be summarized as follows:
+
+\f{align*}{
+  \circled{2} + \circled{3} &=\sum_{\left(S_\alpha, S_\beta, S_\gamma, S_\delta, U_{V}, L_{V}\right) \in{} C} 2\ \chiralErrorFirstTerm{} \Big\{ \ldots \Big\}\\
+  &- \sum_{\left(S_\alpha, S_\beta, S_\gamma, S_\delta, U_{V}, L_{V}\right) \in{} C} 2\ \chiralErrorSecondTerm{} \Big\{ \ldots \Big\}\\
+  &= \sum_{\left(S_\alpha, S_\beta, S_\gamma, S_\delta, U_{V}, L_{V}\right) \in{} C} 2\ \Big\{ \ldots \Big\} \Big[ 
+    \chiralErrorFirstTerm{} - \chiralErrorSecondTerm{} 
+  \Big],
+\f}
+
+which ought to save some time in an implementation.
+
+@subsection errf-grad-dihedral Dihedral error terms
+
+Finally, we consider \f$\circled{4}\f$. The chain rule yields:
+
+\f{equation}{
+  \frac{\partial}{\partial\vec{r}_{\xi}} \sum_{(\ldots) \in D} \textrm{max}^2 \left(0, h(\phi)\right)
+  = 2\ \sum_{(\ldots) \in D} \max\left(0, h(\phi)\right) 
+    \frac{\partial}{\partial\vec{r}_{\xi}} \max\left(0, h(\phi)\right),
+\f}
+
+where we have abbreviated the dihedral expression in the maximum function
+with \f$h(\phi)\f$. We can drop the wrapping maximum function in the derivative
+since the first maximum function adequately covers the case
+\f$h(\phi) < 0\f$. Employing the chain rule yet again, we note 
+\f$\frac{\partial}{\partial\vec{r}_{\xi}} h(\phi) = \frac{\partial h}{\partial \phi}
+\frac{\partial \phi}{\partial \vec{r}_{\xi}}\f$. The first part is:
+
+\f{equation}{
+  \frac{\partial h}{\partial \phi} = \frac{\partial}{\partial \phi}
+    \Bigg\lvert
+      \underbrace{\phi_{\alpha\beta\gamma\delta}\left(\left\{\vec{r}_i \right\}\right){} + \left\{
+        \begin{array}{r | r}
+        2\pi & \phi < \frac{U_\phi + L_\phi - 2\pi}{2}\\
+        0 & \\
+        -2\pi & \phi > \frac{U_\phi + L_\phi + 2\pi}{2}\\
+        \end{array}
+      \right\}-\frac{U_\phi+ L_\phi}{2}
+      }_{w(\phi)}
+    \Bigg\rvert - \frac{U_\phi - L_\phi}{2}
+  = \textrm{sgn}\left(w(\phi)\right).
+\f}
+
+The individual derivatives \f$\frac{\partial\phi}{\partial\vec{s}_{\alpha}}, 
+\frac{\partial\phi}{\partial\vec{s}_{\beta}}, 
+\frac{\partial\phi}{\partial\vec{s}_{\gamma}}, 
+\frac{\partial\phi}{\partial\vec{s}_{\delta}}\f$ are given as:
+
+\f{equation}{
+  \vec{f} = \left(\vec{r}_{\alpha}-\vec{r}_{\alpha}\right),
+  \quad\vec{g} = \left(\vec{r}_{\beta}-\vec{r}_{\beta}\right),
+  \quad\vec{h} = \left(\vec{r}_{\delta}-\vec{r}_{\delta}\right),
+  \quad\vec{a} = \vec{f} \times \vec{g},
+  \quad\vec{b} = \vec{h} \times \vec{g}
+\f}
+
+\f{align}{\begin{aligned}
+  \frac{\partial\phi}{\partial\vec{s}_{\alpha}} &= 
+    -\frac{\lvert\vec{g}\rvert}{\vec{a}\,^2}\vec{a}\\
+  \frac{\partial\phi}{\partial\vec{s}_{\beta}}  &= 
+    \frac{\lvert\vec{g}\rvert}{\vec{a}\,^2}\vec{a}
+    + \frac{\vec{f}\vec{g}}{\vec{a}\,^2\lvert\vec{g}\rvert}\vec{a}
+    - \frac{\vec{g}\vec{h}}{\vec{b}\,^2\lvert\vec{g}\rvert}\vec{b}\\
+  \frac{\partial\phi}{\partial\vec{s}_{\gamma}} &= 
+    - \frac{\lvert\vec{g}\rvert}{\vec{b}\,^2}\vec{b}
+    + \frac{\vec{g}\vec{h}}{\vec{b}\,^2\lvert\vec{g}\rvert}\vec{b}
+    - \frac{\vec{f}\vec{g}}{\vec{a}\,^2\lvert\vec{g}\rvert}\vec{a}\\
+  \frac{\partial\phi}{\partial\vec{s}_{\delta}} &= 
+    \frac{\lvert\vec{g}\rvert}{\vec{b}\,^2}\vec{b}\\
+\end{aligned}\f}
+
+The individual membership cases are thus:
+\f{align}{
+  S_i&\quad\frac{\partial\phi}{\partial\vec{r}_{\xi}} 
+    = \frac{\partial\phi}{\partial\vec{s}_{i}}
+      \frac{\partial\vec{s_{i}}}{\partial\vec{r}_{\xi}}
+    = \frac{1}{\lvert S_i\rvert}
+      \frac{\partial\phi}{\partial\vec{s}_{i}}
+\f}
+
+And altogether:
+
+\f{equation}{
+  \circled{4} = 2 \sum_{(\ldots) \in D} \max(0, h(\phi))\ \textrm{sgn}
+  (w(\phi)) \left\{ \begin{array}{r | r}
+    \frac{1}{|S_\alpha|} \frac{\partial\phi}{\partial\vec{s_{\alpha}}} & \xi \in S_\alpha\\
+    \frac{1}{|S_\beta|} \frac{\partial\phi}{\partial\vec{s_{\beta}}} & \xi \in S_\beta\\
+    \frac{1}{|S_\gamma|} \frac{\partial\phi}{\partial\vec{s_{\gamma}}} & \xi \in S_\gamma\\
+    \frac{1}{|S_\delta|} \frac{\partial\phi}{\partial\vec{s_{\delta}}} & \xi \in S_\delta\\
+    0 & \textrm{else}
+  \end{array} \right\}
+\f}
+
+*/
