@@ -23,7 +23,7 @@ namespace Molassembler {
 // Forward-declarations
 class AngstromPositions;
 
-/*! @brief Calculates a bond order collection via UFF-like bond distance modelling
+/*! @brief Calculates a floating-point bond order collection via UFF-like bond distance modelling
  *
  * @complexity{@math{\Theta(N^2)}}
  * @throws std::logic_error If interpreted fractional bond orders are greater
@@ -33,7 +33,18 @@ class AngstromPositions;
  */
 MASM_EXPORT Utils::BondOrderCollection uffBondOrders(
   const Utils::ElementTypeCollection& elements,
-  const AngstromPositions& angstromWrapper
+  const AngstromPositions& angstromPositions
+);
+
+/*! @brief Calculates a binary (single or none) bond order collection via covalent radii
+ *
+ * @complexity{@math{\Theta(N^2)}}
+ * @note This is just a convenience forwarder for
+ * Utils::BondDetector::detectBonds for different types
+ */
+MASM_EXPORT Utils::BondOrderCollection covalentRadiiBondOrders(
+  const Utils::ElementTypeCollection& elements,
+  const AngstromPositions& angstromPositions
 );
 
 } // namespace Molassembler

@@ -36,7 +36,7 @@ class MolassemblerConan(ScineConan):
         "python/*",
         "CMakeLists.txt",
     ]
-    requires = "scine_utilities/[~=2.1.0]@ci/develop"
+    requires = "scine_utilities/[~=3.0.0]@ci/develop"
 
     def _configure_cmake(self):
         return super()._configure_cmake_base("molassembler", None)

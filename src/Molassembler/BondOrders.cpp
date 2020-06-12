@@ -8,17 +8,18 @@
 
 #include "Utils/Typenames.h"
 #include "Utils/Bonds/BondOrderCollection.h"
+#include "Utils/Geometry/AtomCollection.h"
+#include "Utils/Bonds/BondDetector.h"
 
 #include "Molassembler/AngstromPositions.h"
 #include "Molassembler/Modeling/BondDistance.h"
 
 namespace Scine {
-
 namespace Molassembler {
 
 Utils::BondOrderCollection uffBondOrders(
   const Utils::ElementTypeCollection& elements,
-  const AngstromPositions& angstromWrapper
+  const AngstromPositions& angstromPositions
 ) {
   const unsigned N = elements.size();
 
@@ -30,8 +31,8 @@ Utils::BondOrderCollection uffBondOrders(
         elements.at(i),
         elements.at(j),
         (
-          angstromWrapper.positions.row(j)
-          - angstromWrapper.positions.row(i)
+          angstromPositions.positions.row(j)
+          - angstromPositions.positions.row(i)
         ).norm()
       );
 
@@ -49,6 +50,13 @@ Utils::BondOrderCollection uffBondOrders(
   return bondOrders;
 }
 
-} // namespace Molassembler
+Utils::BondOrderCollection covalentRadiiBondOrders(
+  const Utils::ElementTypeCollection& elements,
+  const AngstromPositions& angstromPositions
+) {
+  Utils::AtomCollection ac(elements, angstromPositions.getBohr());
+  return Utils::BondDetector::detectBonds(ac);
+}
 
+} // namespace Molassembler
 } // namespace Scine

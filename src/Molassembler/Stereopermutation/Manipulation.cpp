@@ -20,6 +20,8 @@ namespace Scine {
 namespace Molassembler {
 namespace Stereopermutations {
 
+namespace {
+
 inline unsigned gcd(const std::vector<unsigned>& c) {
   assert(!c.empty());
   auto iter = std::begin(c);
@@ -32,6 +34,8 @@ inline unsigned gcd(const std::vector<unsigned>& c) {
 
   return result;
 }
+
+} // namespace
 
 inline void checkArguments(const Stereopermutation& s, const Shapes::Shape shape) {
   if(s.characters.size() != Shapes::size(shape)) {
@@ -179,6 +183,7 @@ Uniques uniques(
     }
   }
 
+  // Discover an ordering permutation
   const unsigned C = unordered.list.size();
   const std::vector<unsigned> order = Temple::sort(
     Temple::iota<unsigned>(C),
@@ -187,7 +192,7 @@ Uniques uniques(
     }
   );
 
-  // Order the uniques
+  // Order the uniques using the discovered ordering permutation
   Uniques ordered;
   ordered.list.reserve(C);
   ordered.weights.resize(C);

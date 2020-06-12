@@ -112,6 +112,11 @@ MASM_EXPORT double Cinf(const PositionCollection& normalizedPositions);
  * @param normalizedPositions
  * @param pointGroup
  *
+ * @note This function isn't super stable. The Nelder-Mead over SO(3) works
+ * okay, but the initial simplex is a problem and can lead the algorithm into
+ * a local minimum. Not very performant either, it would be better with
+ * quaternions instead of rotation matrices.
+ *
  * @return The continuous symmetry measure
  */
 MASM_EXPORT double pointGroup(

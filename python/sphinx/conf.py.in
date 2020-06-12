@@ -20,7 +20,7 @@ sys.path.insert(0, os.path.abspath('..'))
 # -- Project information -----------------------------------------------------
 
 project = u'molassembler'
-copyright = u'2019, Jan-Grimo Sobez'
+copyright = u'2020, Jan-Grimo Sobez'
 author = u'Jan-Grimo Sobez'
 
 # The short X.Y version
