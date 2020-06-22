@@ -35,6 +35,7 @@
 
 using namespace std::string_literals;
 using namespace Scine;
+using namespace Molassembler;
 
 using Positions = Eigen::Matrix<double, 3, Eigen::Dynamic>;
 using PRNG = Temple::JSF64;

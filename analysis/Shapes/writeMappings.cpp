@@ -24,6 +24,7 @@ const std::array<unsigned, 3> shapeColumns {{5, 5, 25}};
 const std::array<unsigned, 4> ambiguityColumns {{10, 25, 25, 4}};
 
 using namespace Scine;
+using namespace Molassembler;
 
 std::ostream& nl(std::ostream& out) {
   out << '\n';

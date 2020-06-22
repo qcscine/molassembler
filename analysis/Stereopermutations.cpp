@@ -23,6 +23,7 @@ std::ostream& nl(std::ostream& os) {
 }
 
 using namespace Scine;
+using namespace Molassembler;
 using namespace Stereopermutations;
 using namespace std::string_literals;
 

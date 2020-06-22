@@ -41,6 +41,7 @@
  */
 
 using namespace Scine;
+using namespace Molassembler;
 using namespace Shapes;
 using namespace Continuous;
 

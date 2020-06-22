@@ -17,8 +17,6 @@
 #include "Molassembler/Temple/OrderedPair.h"
 #include "Molassembler/Temple/constexpr/FloatingPointComparison.h"
 
-#include <vector>
-
 namespace Scine {
 namespace Molassembler {
 namespace Stereopermutations {

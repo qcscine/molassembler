@@ -22,6 +22,7 @@
 #include <Eigen/Geometry>
 
 using namespace Scine;
+using namespace Molassembler;
 
 class RgbGradient {
 public:
@@ -104,7 +105,7 @@ void writeSymmetryTransitionDotFile(
   const bool showEdgesWithHighMultiplicity = true,
   const bool explainTransitions = false
 ) {
-  using namespace Shapes::properties;
+  using namespace Shapes::Properties;
 
   std::ofstream dotFile(filename.c_str());
 
@@ -267,7 +268,7 @@ void writeLigandLossDotFile(
   const bool showEdgesWithHighMultiplicity = true,
   const bool explainTransitions = false
 ) {
-  using namespace Shapes::properties;
+  using namespace Shapes::Properties;
 
   std::ofstream dotFile(filename.c_str());
 

@@ -472,6 +472,11 @@ BOOST_AUTO_TEST_CASE(CompositeExamples, *boost::unit_test::label("Stereopermutat
     "Expected 3 permutations, got " << a.permutations()
   );
 
+  BOOST_CHECK_MESSAGE(
+    !a.isIsotropic(),
+    "Expected non-isotropicity for asym seesaw/tetrahedron"
+  );
+
   Composite b {
     Composite::OrientationState {
       Shapes::Shape::Octahedron,
@@ -490,6 +495,11 @@ BOOST_AUTO_TEST_CASE(CompositeExamples, *boost::unit_test::label("Stereopermutat
   BOOST_CHECK_MESSAGE(
     b.permutations() == 4u,
     "Expected 4 permutations, got " << b.permutations()
+  );
+
+  BOOST_CHECK_MESSAGE(
+    !b.isIsotropic(),
+    "Expected non-isotropicity for asym oct-oct"
   );
 
   Composite c {
@@ -512,6 +522,11 @@ BOOST_AUTO_TEST_CASE(CompositeExamples, *boost::unit_test::label("Stereopermutat
     "Expected 2 permutations, got " << c.permutations()
   );
 
+  BOOST_CHECK_MESSAGE(
+    !c.isIsotropic(),
+    "Expected non-isotropicity for asym bent / equilat. triangle"
+  );
+
   Composite d {
     Composite::OrientationState {
       Shapes::Shape::EquilateralTriangle,
@@ -530,6 +545,11 @@ BOOST_AUTO_TEST_CASE(CompositeExamples, *boost::unit_test::label("Stereopermutat
   BOOST_CHECK_MESSAGE(
     d.permutations() == 2,
     "Expected 2 permutations, got " << d.permutations()
+  );
+
+  BOOST_CHECK_MESSAGE(
+    !d.isIsotropic(),
+    "Expected non-isotropicity for equilat. triangle/equilat. triangle"
   );
 
   Composite e {
@@ -552,6 +572,11 @@ BOOST_AUTO_TEST_CASE(CompositeExamples, *boost::unit_test::label("Stereopermutat
     "Expected 2 permutations, got " << e.permutations()
   );
 
+  BOOST_CHECK_MESSAGE(
+    !e.isIsotropic(),
+    "Expected non-isotropicity for bent/bent"
+  );
+
   Composite f {
     Composite::OrientationState {
       Shapes::Shape::Line,
@@ -570,6 +595,66 @@ BOOST_AUTO_TEST_CASE(CompositeExamples, *boost::unit_test::label("Stereopermutat
   BOOST_CHECK_MESSAGE(
     f.permutations() == 0,
     "Expected 0 permutations, got " << f.permutations()
+  );
+
+  Composite g {
+    Composite::OrientationState {
+      Shapes::Shape::Octahedron,
+      0_v,
+      {'A', 'B', 'A', 'B', 'C', 'C'},
+      leftIdentifier
+    },
+    Composite::OrientationState {
+      Shapes::Shape::Octahedron,
+      0_v,
+      {'A', 'A', 'A', 'A', 'A', 'A'},
+      rightIdentifier
+    }
+  };
+
+  BOOST_CHECK_MESSAGE(
+    g.isIsotropic(),
+    "Expected isotropicity for matched ranking pairs along bond in oct side"
+  );
+
+  Composite h {
+    Composite::OrientationState {
+      Shapes::Shape::Tetrahedron,
+      0_v,
+      {'A', 'A', 'A', 'A'},
+      leftIdentifier
+    },
+    Composite::OrientationState {
+      Shapes::Shape::Tetrahedron,
+      0_v,
+      {'A', 'B', 'C', 'D'},
+      rightIdentifier
+    }
+  };
+
+  BOOST_CHECK_MESSAGE(
+    h.isIsotropic(),
+    "Expected isotropicity for sym. tetr. / asym. tetr. pair"
+  );
+
+  Composite i {
+    Composite::OrientationState {
+      Shapes::Shape::Tetrahedron,
+      0_v,
+      {'A', 'B', 'C', 'D'},
+      leftIdentifier
+    },
+    Composite::OrientationState {
+      Shapes::Shape::VacantTetrahedron,
+      0_v,
+      {'A', 'A', 'A'},
+      rightIdentifier
+    }
+  };
+
+  BOOST_CHECK_MESSAGE(
+    !i.isIsotropic(),
+    "Expected non-isotropicity for asym. tetr./sym. vac. tetr pair"
   );
 }
 

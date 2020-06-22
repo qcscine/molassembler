@@ -26,6 +26,7 @@
 #include <iomanip>
 
 using namespace Scine;
+using namespace Molassembler;
 using namespace Shapes;
 
 template<typename PRNG>

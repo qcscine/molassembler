@@ -12,8 +12,9 @@
 #include "Molassembler/Shapes/Properties.h"
 #include "Molassembler/Shapes/Data.h"
 #include "Molassembler/Temple/Adaptors/AllPairs.h"
-#include "Molassembler/Temple/Functor.h"
 #include "Molassembler/Temple/Functional.h"
+#include "Molassembler/Temple/Functor.h"
+#include "Molassembler/Temple/GroupBy.h"
 #include "Molassembler/Temple/Permutations.h"
 #include "Molassembler/Temple/Stringify.h"
 
@@ -320,7 +321,7 @@ Composite::AngleGroup Composite::OrientationState::smallestAngleGroup() const {
       continue;
     }
 
-    double angleToFusedPosition = Shapes::angleFunction(shape)(fusedVertex, i);
+    const double angleToFusedPosition = Shapes::angleFunction(shape)(fusedVertex, i);
 
     // This naturally excludes M_PI angles from the smallest angle group
     if(fpComparator.isLessThan(angleToFusedPosition, angleGroup.angle)) {
@@ -331,25 +332,34 @@ Composite::AngleGroup Composite::OrientationState::smallestAngleGroup() const {
     }
   }
 
-  /* In order to identify if a side is isotropic, check whether the rankings of
-   * ligands at this angle group are all the same.
+  /* Isotropicity of rotation of the angle group can be determined as follows:
+   * Group all vertices by their abstract ranking character. If, for any group
+   * of vertices, the sum vector of the idealized coordinates of the shape
+   * vertices does not lie along the bond line, the rotation is non-isotropic.
    */
-  if(angleGroup.vertices.size() == 1) {
-    // A single relevant shape vertex is not isotropic
-    angleGroup.isotropic = false;
-  } else {
-    const auto relevantCharacters = Temple::map(
-      angleGroup.vertices,
-      Temple::Functor::at(characters)
-    );
 
-    angleGroup.isotropic = Temple::all_of(
-      relevantCharacters,
-      [&](const char character) -> bool {
-        return character == relevantCharacters.front();
+  // Collect the vertices by ranking
+  const auto rankingGroups = Temple::groupByMapping(
+    angleGroup.vertices,
+    Temple::Functor::at(characters)
+  );
+
+  const Eigen::ParametrizedLine<double, 3> bondLine {
+    Eigen::Vector3d::Zero(),
+    Shapes::coordinates(shape).col(fusedVertex)
+  };
+
+  angleGroup.isotropic = Temple::all_of(
+    rankingGroups,
+    [&](const std::vector<Shapes::Vertex>& vertexGroup) -> bool {
+      Eigen::Vector3d vertexSum = Eigen::Vector3d::Zero();
+      for(Shapes::Vertex v : vertexGroup) {
+        vertexSum += Shapes::coordinates(shape).col(v);
       }
-    );
-  }
+
+      return bondLine.squaredDistance(vertexSum) < 0.01;
+    }
+  );
 
   assert(
     std::is_sorted(
