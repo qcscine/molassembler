@@ -41,6 +41,7 @@ release = u'@molassembler_VERSION_MAJOR@.@molassembler_VERSION_MINOR@.@molassemb
 extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.autosummary',
+    'sphinx.ext.intersphinx',
     'sphinx.ext.napoleon',
     'sphinx_rtd_theme'
 ]
@@ -162,3 +163,5 @@ texinfo_documents = [
 
 
 # -- Extension configuration -------------------------------------------------
+
+intersphinx_mapping = {@INTERSPHINX_MAPPING@}

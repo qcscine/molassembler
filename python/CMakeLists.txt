@@ -100,6 +100,14 @@ endif()
 if(SCINE_BUILD_DOCS)
   find_python_module(sphinx)
   if(PY_SPHINX)
+    if(scine-utils-os_BINARY_DIR)
+      set(SCINE_UTILS_PYTHON_BINARY_PATH ${scine-utils-os_BINARY_DIR}/src/Utils)
+      file(RELATIVE_PATH INTERSPHINX_PATH ${CMAKE_CURRENT_BINARY_DIR}/sphinx ${SCINE_UTILS_PYTHON_BINARY_PATH}/doc)
+      set(INTERSPHINX_MAPPING "\"utils\": (\"${INTERSPHINX_PATH}\", None)")
+    else()
+      set(INTERSPHINX_MAPPING "")
+    endif()
+
     file(
       COPY ${CMAKE_CURRENT_SOURCE_DIR}/sphinx
       DESTINATION ${CMAKE_CURRENT_BINARY_DIR}
@@ -121,16 +129,16 @@ if(SCINE_BUILD_DOCS)
       COMMENT "Generate python bindings documentation with sphinx"
     )
 
+    if(scine-utils-os_BINARY_DIR)
+      add_dependencies(PythonDocumentation UtilsPythonDoc)
+    endif()
+
     install(
       DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/doc/
       DESTINATION share/doc/molassembler/python
       MESSAGE_NEVER
       OPTIONAL
     )
-
-    if(scine-utils-os_BINARY_DIR)
-      set(SCINE_UTILS_PYTHON_BINARY_PATH ${scine-utils-os_BINARY_DIR}/src/Utils)
-    endif()
 
     find_python_module(doctest)
     if(PY_DOCTEST)
