@@ -219,6 +219,88 @@ std::pair<AtomIndex, double> bestRemovalFromHapticSite(
 
 } // namespace
 
+std::vector<std::vector<unsigned>> ComponentMap::invert() const {
+  const unsigned nComponents = *std::max_element(
+    std::begin(map),
+    std::end(map)
+  ) + 1;
+
+  std::vector<
+    std::vector<unsigned>
+  > inverseMaps (nComponents);
+
+  const unsigned N = map.size();
+  for(unsigned i = 0; i < N; ++i) {
+    inverseMaps.at(map.at(i)).push_back(i);
+  }
+
+  return inverseMaps;
+}
+
+std::vector<Utils::AtomCollection> ComponentMap::apply(
+  const Utils::AtomCollection& atomCollection
+) const {
+  const unsigned nComponents = *std::max_element(
+    std::begin(map),
+    std::end(map)
+  ) + 1;
+  std::vector<unsigned> componentSizes(nComponents, 0);
+  for(unsigned i : map) {
+    componentSizes.at(i) += 1;
+  }
+
+  /* Allocate the collections */
+  std::vector<Utils::AtomCollection> collections = Temple::map(
+    componentSizes,
+    [](const unsigned size) { return Utils::AtomCollection(size); }
+  );
+  std::vector<unsigned> collectionSizeCount(nComponents, 0);
+
+  for(unsigned i = 0; i < map.size(); ++i) {
+    unsigned moleculeIndex = map.at(i);
+    Utils::AtomCollection& collection = collections.at(moleculeIndex);
+    unsigned& collectionSize = collectionSizeCount.at(moleculeIndex);
+    collection.setElement(
+      collectionSize,
+      atomCollection.getElement(i)
+    );
+    collection.setPosition(
+      collectionSize,
+      atomCollection.getPosition(i)
+    );
+    ++collectionSize;
+  }
+
+  return collections;
+}
+
+ComponentMap::ComponentIndexPair ComponentMap::apply(const unsigned left) const {
+  ComponentIndexPair pair;
+  pair.component = map.at(left);
+  pair.atomIndex = std::count(
+    std::begin(map),
+    std::begin(map) + left,
+    pair.component
+  );
+  return pair;
+}
+
+unsigned ComponentMap::invert(const ComponentIndexPair& pair) const {
+  unsigned count = 0;
+  const unsigned N = map.size();
+  for(unsigned i = 0; i < N; ++i) {
+    if(map[i] == pair.component) {
+      ++count;
+    }
+
+    if(count == pair.atomIndex + 1) {
+      return count;
+    }
+  }
+
+  throw std::out_of_range("No match found in component map!");
+}
+
 struct MoleculeParts {
   PrivateGraph graph;
   std::vector<Utils::Position> angstromPositions;
@@ -229,7 +311,7 @@ struct MoleculeParts {
 
 struct Parts {
   std::vector<MoleculeParts> precursors;
-  std::vector<unsigned> componentMap;
+  ComponentMap componentMap;
   unsigned nZeroLengthPositions = 0;
 };
 
@@ -299,7 +381,7 @@ Parts construeParts(
   PrivateGraph atomCollectionGraph = discretize(bondOrders, discretization);
 
   Parts parts;
-  const unsigned numComponents = atomCollectionGraph.connectedComponents(parts.componentMap);
+  const unsigned numComponents = atomCollectionGraph.connectedComponents(parts.componentMap.map);
   parts.precursors.resize(numComponents);
 
   if(stereopermutatorThreshold) {
@@ -322,7 +404,7 @@ Parts construeParts(
 
   for(unsigned i = 0; i < N; ++i) {
     auto& precursor = parts.precursors.at(
-      parts.componentMap.at(i)
+      parts.componentMap.apply(i).component
     );
 
     // Add a new vertex with element information
@@ -348,7 +430,7 @@ Parts construeParts(
 
     // Both source and target are part of the same component (since they are bonded)
     auto& precursor = parts.precursors.at(
-      parts.componentMap.at(source)
+      parts.componentMap.apply(source).component
     );
 
     // Copy over the edge
@@ -463,64 +545,6 @@ MoleculesResult molecules(
     discretization,
     stereopermutatorThreshold
   );
-}
-
-std::vector<Utils::AtomCollection> applyInterpretationMap(
-  const ComponentMap& componentMap,
-  const Utils::AtomCollection& atomCollection
-) {
-  const unsigned nComponents = *std::max_element(
-    std::begin(componentMap),
-    std::end(componentMap)
-  ) + 1;
-  std::vector<unsigned> componentSizes(nComponents, 0);
-  for(unsigned i : componentMap) {
-    componentSizes.at(i) += 1;
-  }
-
-  /* Allocate the collections */
-  std::vector<Utils::AtomCollection> collections = Temple::map(
-    componentSizes,
-    [](const unsigned size) { return Utils::AtomCollection(size); }
-  );
-  std::vector<unsigned> collectionSizeCount(nComponents, 0);
-
-  for(unsigned i = 0; i < componentMap.size(); ++i) {
-    unsigned moleculeIndex = componentMap.at(i);
-    Utils::AtomCollection& collection = collections.at(moleculeIndex);
-    unsigned& collectionSize = collectionSizeCount.at(moleculeIndex);
-    collection.setElement(
-      collectionSize,
-      atomCollection.getElement(i)
-    );
-    collection.setPosition(
-      collectionSize,
-      atomCollection.getPosition(i)
-    );
-    ++collectionSize;
-  }
-
-  return collections;
-}
-
-std::vector<
-  std::vector<unsigned>
-> invertComponentMap(const ComponentMap& componentMap) {
-  const unsigned nComponents = *std::max_element(
-    std::begin(componentMap),
-    std::end(componentMap)
-  ) + 1;
-
-  std::vector<
-    std::vector<unsigned>
-  > inverseMaps (nComponents);
-
-  const unsigned N = componentMap.size();
-  for(unsigned i = 0; i < N; ++i) {
-    inverseMaps.at(componentMap.at(i)).push_back(i);
-  }
-
-  return inverseMaps;
 }
 
 GraphsResult graphs(

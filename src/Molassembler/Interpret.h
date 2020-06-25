@@ -45,7 +45,54 @@ enum class MASM_EXPORT BondDiscretizationOption {
 };
 
 //! Type used to represent a map from an atom collection index to an interpreted object
-using ComponentMap = std::vector<unsigned>;
+struct ComponentMap {
+  struct ComponentIndexPair {
+    //! Index of component
+    unsigned component;
+    //! Atom index
+    unsigned atomIndex;
+  };
+
+  //! Transform index from original atom collection to component and atom index
+  ComponentIndexPair apply(unsigned index) const;
+  //! Transform component and atom index to index from original atom collection
+  unsigned invert(const ComponentIndexPair& pair) const;
+
+
+  /*!
+   * @brief Yields mapping from indices in components to original input indices
+   * @return List of flat maps from indices within components to the original
+   *   input index
+   */
+  std::vector<
+    std::vector<unsigned>
+  > invert() const;
+
+  /**
+   * @brief Splits an AtomCollection just like the interpret split the positions
+   *   into parts
+   *
+   * @param atomCollection AtomCollection to split
+   *
+   * @return As many atom collections as molecules from interpretation
+   */
+  std::vector<Utils::AtomCollection> apply(const Utils::AtomCollection& atomCollection) const;
+
+  //! Size of the map
+  inline unsigned size() const { return map.size(); }
+
+//!@name Iterators
+//!@{
+  using Iterator = std::vector<unsigned>::iterator;
+  using ConstIterator = std::vector<unsigned>::const_iterator;
+  inline Iterator begin() { return std::begin(map); }
+  inline Iterator end() { return std::end(map); }
+  inline ConstIterator begin() const { return std::begin(map); }
+  inline ConstIterator end() const { return std::end(map); }
+//!@}
+
+  std::vector<unsigned> map;
+};
 
 //! Result type of an interpret call.
 struct MASM_EXPORT MoleculesResult {
@@ -165,32 +212,6 @@ MASM_EXPORT MoleculesResult molecules(
   BondDiscretizationOption discretization = BondDiscretizationOption::Binary,
   const boost::optional<double>& stereopermutatorThreshold = 1.4
 );
-
-/**
- * @brief Splits an AtomCollection just like the interpret split the positions
- *   into parts
- *
- * @param componentMap Component map received from an interpretation
- * @param atomCollection AtomCollection to split
- *
- * @return As many atom collections as molecules from interpretation
- */
-MASM_EXPORT std::vector<Utils::AtomCollection> applyInterpretationMap(
-  const ComponentMap& componentMap,
-  const Utils::AtomCollection& atomCollection
-);
-
-/*!
- * @brief Yields mapping from indices in components to original input indices
- *
- * @param componentMap Component mapping from an interpret call
- *
- * @return List of flat maps from indices within components to the original
- *   input index
- */
-MASM_EXPORT std::vector<
-  std::vector<unsigned>
-> invertComponentMap(const ComponentMap& componentMap);
 
 //! Result type of a graph interpret call
 struct MASM_EXPORT GraphsResult {

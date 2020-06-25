@@ -153,7 +153,7 @@ int main(int argc, char* argv[]) {
     }
 
     auto interpretation = Interpret::molecules(atomCollection, bondOrders, Interpret::BondDiscretizationOption::RoundToNearest, defaultThreshold);
-    auto positions = Interpret::applyInterpretationMap(interpretation.componentMap, atomCollection);
+    auto positions = interpretation.componentMap.apply(atomCollection);
 
     if(interpretation.molecules.size() == 1) {
       std::ofstream graphFile("interpreted.dot");

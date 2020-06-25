@@ -76,8 +76,6 @@ void init_interpret(pybind11::module& m) {
     R"delim(
       Mapping of atom indices from the original positional information to which
       molecule it is now part.
-
-      :rtype: ``List[int]``
     )delim"
   );
 
@@ -161,19 +159,160 @@ void init_interpret(pybind11::module& m) {
     )delim"
   );
 
-  interpretSubmodule.def(
-    "apply_interpretation_map",
-    &Interpret::applyInterpretationMap,
-    pybind11::arg("component_map"),
+  pybind11::class_<Interpret::ComponentMap> componentMap(
+    interpretSubmodule,
+    "ComponentMap",
+    "Represents a map from an atom collection to the component molecules"
+  );
+
+  // Brace initialization constructor
+  componentMap.def(pybind11::init<std::vector<unsigned>>());
+
+  pybind11::class_<Interpret::ComponentMap::ComponentIndexPair> componentIndexPair(
+    componentMap,
+    "ComponentIndexPair"
+  );
+  // Trivial constructors
+  componentIndexPair.def(pybind11::init<unsigned, unsigned>());
+  componentIndexPair.def(pybind11::init<>());
+  componentIndexPair.def_readwrite("component", &Interpret::ComponentMap::ComponentIndexPair::component);
+  componentIndexPair.def_readwrite("atom_index", &Interpret::ComponentMap::ComponentIndexPair::atomIndex);
+  componentIndexPair.def("__repr__",
+    [](const Interpret::ComponentMap::ComponentIndexPair& pair) -> std::string {
+      return "(component=" + std::to_string(pair.component) +", atom_index=" + std::to_string(pair.atomIndex) + ")";
+    }
+  );
+
+  componentIndexPair.def(
+    "__getitem__",
+    [](const Interpret::ComponentMap::ComponentIndexPair& pair, const unsigned i) -> unsigned {
+      if(i == 0) {
+        return pair.component;
+      }
+
+      if(i == 1) {
+        return pair.atomIndex;
+      }
+
+      throw std::out_of_range("Only two elements in this tuple!");
+    }
+  );
+
+  componentMap.def(
+    "apply",
+    pybind11::overload_cast<unsigned>(&Interpret::ComponentMap::apply, pybind11::const_),
+    pybind11::arg("index"),
+    R"delim(
+      Returns an object like a named tuple of the component and new index after
+      transformation by the map
+
+      >>> m = ComponentMap([0, 1, 1, 0, 1])
+      >>> m.apply(0)
+      (component=0, index=0)
+    )delim"
+  );
+
+  componentMap.def(
+    "invert",
+    pybind11::overload_cast<const Interpret::ComponentMap::ComponentIndexPair&>(&Interpret::ComponentMap::invert, pybind11::const_),
+    pybind11::arg("pair"),
+    R"delim(
+      Invert a ComponentIndexPair to the original index
+
+      >>> m = ComponentMap([0, 1, 1, 0, 1])
+      >>> pair = m.apply(0)
+      >>> m.invert(pair)
+      0
+      >>> assert all([m.invert(m.apply(a)) == a for a in range(len(m))])
+    )delim"
+  );
+
+  componentMap.def(
+    "invert",
+    [](const Interpret::ComponentMap& map, const unsigned component, const unsigned atomIndex) -> unsigned {
+      return map.invert(
+        Interpret::ComponentMap::ComponentIndexPair {
+          component,
+          atomIndex
+        }
+      );
+    },
+    pybind11::arg("component"),
+    pybind11::arg("atom_index"),
+    "Two-arg component and atom index inversion convenience function"
+  );
+
+  componentMap.def(
+    "invert",
+    [](const Interpret::ComponentMap& map, const std::pair<unsigned, unsigned>& tup) -> unsigned {
+      return map.invert(
+        Interpret::ComponentMap::ComponentIndexPair {
+          std::get<0>(tup),
+          std::get<1>(tup)
+        }
+      );
+    },
+    pybind11::arg("component_index_tuple"),
+    "component and atom index tuple inversion convenience function"
+  );
+
+  componentMap.def(
+    "apply",
+    pybind11::overload_cast<const AtomCollection&>(&Interpret::ComponentMap::apply, pybind11::const_),
     pybind11::arg("atom_collection"),
     R"delim(
       Splits an atom collection just like an interpret split the positions
       into multiple molecules
 
-      :param component_map: The component map of an interpret call on the same atom collection
       :param atom_collection: The atom collection to split
       :rtype: List of atom collections
     )delim"
+  );
+
+  componentMap.def(
+    "invert",
+    pybind11::overload_cast<>(&Interpret::ComponentMap::invert, pybind11::const_),
+    R"delim(
+      Inverts the component mapping.
+
+      Allows direct determination of the original index of a component's atom
+      within the coordinate set used in interpretation.
+
+      :returns: A nested list that contains the original indices for each
+        component.
+
+      >>> m = ComponentMap([0, 1, 1, 0, 1]) # 0->0, 1->1, 2->1, etc.
+      >>> m.invert()
+      [[0, 3], [1, 2, 4]]
+    )delim"
+  );
+
+  componentMap.def(
+    "__getitem__",
+    [](const Interpret::ComponentMap& map, unsigned i) -> unsigned {
+      return map.map.at(i);
+    }
+  );
+
+  componentMap.def(
+    "__repr__",
+    [](const Interpret::ComponentMap& map) -> std::string {
+      std::string repr = "[";
+      for(unsigned elem : map.map) {
+        repr += std::to_string(elem) + ", ";
+      }
+
+      repr.pop_back();
+      repr.pop_back();
+
+      repr += "]";
+      return repr;
+    }
+  );
+
+  componentMap.def(
+    "__len__",
+    [](const Interpret::ComponentMap& map) { return map.size(); }
   );
 
   pybind11::class_<Interpret::GraphsResult> graphsResult(
@@ -198,8 +337,6 @@ void init_interpret(pybind11::module& m) {
     R"delim(
       Mapping of atom indices from the original positional information to which
       molecule it is now part.
-
-      :rtype: ``List[int]``
     )delim"
   );
 
@@ -229,39 +366,7 @@ void init_interpret(pybind11::module& m) {
     )delim"
   );
 
-  interpretSubmodule.def(
-    "invert_component_map",
-    &Interpret::invertComponentMap,
-    pybind11::arg("component_map"),
-    R"delim(
-      Inverts a component mapping.
-
-      Allows direct determination of the original index of a component's atom
-      within the coordinate set used in interpretation.
-
-      :param component_map: A component map as yielded in :class:`GraphsResult`
-        or :class:`MoleculesResult`.
-      :returns: A nested list that contains the original indices for each
-        component.
-
-      >>> component_map = [0, 1, 1, 0, 1] # 0->0, 1->1, 2->1, etc.
-      >>> inv = invert_component_map(component_map)
-      >>> inv
-      [[0, 3], [1, 2, 4]]
-      >>> def lookup(component, index):
-      ...     return inv[component][index]
-      >>> lookup(component=1, index=2)
-      4
-      >>> lookup(component=0, index=1)
-      3
-    )delim"
-  );
-
-  pybind11::class_<Interpret::FalsePositive> falsePositive(
-    interpretSubmodule,
-    "FalsePositive",
-    "Tuple-imitating data struct for false positives in bond discretization"
-  );
+  pybind11::class_<Interpret::FalsePositive> falsePositive(m, "FalsePositive");
   falsePositive.def_readwrite("i", &Interpret::FalsePositive::i);
   falsePositive.def_readwrite("j", &Interpret::FalsePositive::j);
   falsePositive.def_readwrite("probability", &Interpret::FalsePositive::probability, "Probability that a bond is a false positive by some arbitrary measure. Normalized between 0 and 1");
