@@ -228,4 +228,32 @@ void init_interpret(pybind11::module& m) {
         bond order collections do not match
     )delim"
   );
+
+  interpretSubmodule.def(
+    "invert_component_map",
+    &Interpret::invertComponentMap,
+    pybind11::arg("component_map"),
+    R"delim(
+      Inverts a component mapping.
+
+      Allows direct determination of the original index of a component's atom
+      within the coordinate set used in interpretation.
+
+      :param component_map: A component map as yielded in :class:`GraphsResult`
+        or :class:`MoleculesResult`.
+      :returns: A nested list that contains the original indices for each
+        component.
+
+      >>> component_map = [0, 1, 1, 0, 1] # 0->0, 1->1, 2->1, etc.
+      >>> inv = invert_component_map(component_map)
+      >>> inv
+      [[0, 3], [1, 2, 4]]
+      >>> def lookup(component, index):
+      ...     return inv[component][index]
+      >>> lookup(component=1, index=2)
+      4
+      >>> lookup(component=0, index=1)
+      3
+    )delim"
+  );
 }
