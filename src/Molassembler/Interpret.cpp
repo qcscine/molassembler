@@ -294,7 +294,7 @@ unsigned ComponentMap::invert(const ComponentIndexPair& pair) const {
     }
 
     if(count == pair.atomIndex + 1) {
-      return count;
+      return i;
     }
   }
 
