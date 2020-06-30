@@ -7,7 +7,6 @@ file(GLOB_RECURSE MOLASSEMBLER_PYTHON_CPPS ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp)
 # Python module
 pybind11_add_module(molassembler_python ${MOLASSEMBLER_PYTHON_CPPS})
 set_target_properties(molassembler_python PROPERTIES
-  SUFFIX ".so"
   LIBRARY_OUTPUT_NAME "scine_molassembler"
   LIBRARY_OUTPUT_DIRECTORY "scine_molassembler"
 )
