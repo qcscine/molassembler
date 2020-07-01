@@ -10,10 +10,12 @@
 #include "Utils/Bonds/BondOrderCollection.h"
 
 #include "Molassembler/BondOrders.h"
-#include "Molassembler/Molecule.h"
 #include "Molassembler/Graph.h"
+#include "Molassembler/Graph/GraphAlgorithms.h"
 #include "Molassembler/Graph/PrivateGraph.h"
-
+#include "Molassembler/Molecule.h"
+#include "Molassembler/Shapes/ContinuousMeasures.h"
+#include "Molassembler/Temple/Adaptors/AllPairs.h"
 #include "Molassembler/Temple/Functional.h"
 
 namespace Scine {
@@ -372,6 +374,102 @@ GraphsResult graphs(
     discretization
   );
 }
+
+std::vector<FalsePositive> falsePositives(
+  const Utils::AtomCollection& atomCollection,
+  const Utils::BondOrderCollection& bondOrders
+) {
+  std::vector<FalsePositive> falsePositives;
+
+  Parts parts = construeParts(
+    atomCollection.getElements(),
+    AngstromPositions {atomCollection.getPositions(), LengthUnit::Bohr},
+    bondOrders,
+    BondDiscretizationOption::Binary,
+    boost::none
+  );
+
+  const auto invertedComponentMap = invertComponentMap(parts.componentMap);
+
+  for(unsigned component = 0; component < parts.precursors.size(); ++component) {
+    MoleculeParts& part = parts.precursors[component];
+    GraphAlgorithms::updateEtaBonds(part.graph);
+
+    std::vector<std::pair<PrivateGraph::Vertex, double>> sketchyClassifications;
+
+    for(const PrivateGraph::Vertex v : part.graph.vertices()) {
+      auto sites = GraphAlgorithms::sites(part.graph, v);
+
+      // Skip terminal atoms
+      if(sites.size() <= 1) {
+        continue;
+      }
+
+      // Create matrix of site positions
+      const unsigned S = sites.size();
+      Eigen::Matrix<double, 3, Eigen::Dynamic> sitePositions(3, S + 1);
+      for(unsigned i = 0; i < S; ++i) {
+        Eigen::Vector3d averagePosition = Eigen::Vector3d::Zero();
+        for(unsigned j : sites[i]) {
+          averagePosition += part.angstromPositions.at(j);
+        }
+        sitePositions.col(i) = averagePosition / sites[i].size();
+      }
+      sitePositions.col(S) = part.angstromPositions.at(v);
+      sitePositions = Shapes::Continuous::normalize(sitePositions);
+
+      // Classify all suitable shapes
+      std::vector<Shapes::Shape> viableShapes;
+      for(const Shapes::Shape shape : Shapes::allShapes) {
+        if(Shapes::size(shape) == S) {
+          viableShapes.push_back(shape);
+        }
+      }
+
+      const auto classifications = Temple::map(viableShapes,
+        [&](const Shapes::Shape shape) -> boost::optional<double> {
+          const double measure = Shapes::Continuous::shapeCentroidLast(sitePositions, shape).measure;
+          return Shapes::Continuous::probabilityRandomCloud(measure, shape);
+        }
+      );
+
+      if(Temple::all_of(classifications)) {
+        const double minimumProbability = std::min_element(
+          std::begin(classifications),
+          std::end(classifications),
+          [](const auto& a, const auto& b) -> bool {
+            return a.value() < b.value();
+          }
+        )->value();
+
+        if(minimumProbability >= 0.5) {
+          sketchyClassifications.emplace_back(v, minimumProbability);
+        }
+      }
+    }
+
+    // NOTE: Cannot remove bonds with overlapping constituent atoms!
+    for(const auto& sketchyPair : Temple::Adaptors::allPairs(sketchyClassifications)) {
+      const unsigned i = sketchyPair.first.first;
+      const unsigned j = sketchyPair.second.first;
+      const double i_random = sketchyPair.first.second;
+      const double j_random = sketchyPair.second.second;
+
+      if(part.graph.edgeOption(i, j)) {
+        falsePositives.push_back(
+          FalsePositive {
+            invertedComponentMap.at(component).at(i),
+            invertedComponentMap.at(component).at(j),
+            i_random * j_random
+          }
+        );
+      }
+    }
+  }
+
+  return falsePositives;
+}
+
 
 } // namespace Interpret
 } // namespace Molassembler

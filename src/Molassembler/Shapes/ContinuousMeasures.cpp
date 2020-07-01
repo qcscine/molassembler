@@ -15,15 +15,86 @@
 #include "Molassembler/Temple/Functional.h"
 #include "Molassembler/Temple/Loops.h"
 #include "Molassembler/Temple/Optimization/SO3NelderMead.h"
+#include "Molassembler/Temple/constexpr/Jsf.h"
 #include "Molassembler/Temple/constexpr/Numeric.h"
 
+#include "boost/optional.hpp"
 #include "boost/math/tools/minima.hpp"
+#include "boost/math/distributions/beta.hpp"
 #include <Eigen/Eigenvalues>
+
+#include <random>
 
 namespace Scine {
 namespace Molassembler {
 namespace Shapes {
 namespace Continuous {
+namespace {
+
+template<typename PRNG>
+Eigen::Vector3d randomVectorOnSphere(const double radius, PRNG& prng) {
+  std::normal_distribution<double> normal {};
+  Eigen::Vector3d v = Eigen::Vector3d::Zero();
+
+  while(v.norm() < 0.01) {
+    v << normal(prng),
+         normal(prng),
+         normal(prng);
+  }
+
+  return radius * v / v.norm();
+}
+
+template<typename PRNG>
+Eigen::Vector3d randomVectorInSphere(const double radius, PRNG& prng) {
+  std::uniform_real_distribution<double> uniform {};
+  std::normal_distribution<double> normal {};
+  const double u = std::cbrt(uniform(prng));
+  Eigen::Vector3d v = Eigen::Vector3d::Zero();
+
+  while(v.norm() < 0.01) {
+    v << normal(prng),
+         normal(prng),
+         normal(prng);
+  }
+
+  return radius * u * v / v.norm();
+}
+
+template<typename PRNG>
+Eigen::Vector3d normallyDistributedVectorInSphere(const double radius, PRNG& prng) {
+  std::normal_distribution<double> radiusDistribution {1.0, 0.2};
+  std::normal_distribution<double> normal {};
+  Eigen::Vector3d v = Eigen::Vector3d::Zero();
+
+  while(v.norm() < 0.01) {
+    v << normal(prng),
+         normal(prng),
+         normal(prng);
+  }
+
+  return radius * (1 + radiusDistribution(prng)) * v / v.norm();
+}
+
+template<typename PRNG>
+Eigen::Matrix<double, 3, Eigen::Dynamic> generateCoordinates(unsigned P, PRNG& prng) {
+  Eigen::Matrix<double, 3, Eigen::Dynamic> positions(3, P + 1);
+  for(unsigned i = 0; i < P; ++i) {
+    positions.col(i) = normallyDistributedVectorInSphere(1.0, prng);
+  }
+  positions.col(P) = Eigen::Vector3d::Zero();
+  return positions;
+}
+
+template<typename PRNG>
+double sample(const Shapes::Shape shape, PRNG& prng) {
+  auto positions = generateCoordinates(Shapes::size(shape), prng);
+  positions = Shapes::Continuous::normalize(positions);
+  return Shapes::Continuous::shapeCentroidLast(positions, shape).measure;
+}
+
+} // namespace
+
 
 using Matrix = Eigen::Matrix<double, 3, Eigen::Dynamic>;
 
@@ -1595,6 +1666,81 @@ double minimalDistortionPathDeviation(
     b,
     minimumDistortionAngle(a, b)
   );
+}
+
+std::array<double, 4> randomCloudDistributionParameters(
+  const Shape shape,
+  const unsigned N,
+  const unsigned seed
+) {
+  Temple::JSF64 prng;
+  prng.seed(seed);
+
+  // Generate samples
+  std::vector<double> samples(N);
+
+  for(unsigned i = 0; i < N; ++i) {
+    samples[i] = sample(shape, prng);
+  }
+
+  // Fit a distribution
+  const double scale = Temple::max(samples);
+  const double samplesMean = Temple::average(samples);
+  const double samplesStddev = Temple::stddev(samples, samplesMean);
+
+  // Scale to [0, 1] for beta distribution work
+  const double betaMean = samplesMean / scale;
+  const double betaStddev = samplesStddev / scale;
+  const double betaVariance = betaStddev * betaStddev;
+
+  using Beta = boost::math::beta_distribution<>;
+  const double a = Beta::find_alpha(betaMean, betaVariance);
+  const double b = Beta::find_beta(betaMean, betaVariance);
+
+  return {{a, b, 0.0, scale}};
+}
+
+boost::optional<double> probabilityRandomCloud(const double measure, const Shape shape) {
+  // Generated with N = 200
+  static const std::unordered_map<Shapes::Shape, std::array<double, 4>> randomDistributionParameters {
+    {Shapes::Shape::Line, {{0.766124, 1.91041, 0, 125.844}}},
+    {Shapes::Shape::Bent, {{0.29139, 1.89203, 0, 80.4878}}},
+    {Shapes::Shape::EquilateralTriangle, {{1.29541, 3.38419, 0, 96.0021}}},
+    {Shapes::Shape::VacantTetrahedron, {{1.24833, 3.86221, 0, 87.781}}},
+    {Shapes::Shape::T, {{1.04193, 3.82784, 0, 78.2735}}},
+    {Shapes::Shape::Tetrahedron, {{3.72178, 6.7318, 0, 92.1706}}},
+    {Shapes::Shape::Square, {{2.86648, 4.12431, 0, 65.1664}}},
+    {Shapes::Shape::Seesaw, {{2.46897, 6.3599, 0, 73.4791}}},
+    {Shapes::Shape::TrigonalPyramid, {{2.2215, 3.2188, 0, 60.5622}}},
+    {Shapes::Shape::SquarePyramid, {{4.328, 5.55626, 0, 55.414}}},
+    {Shapes::Shape::TrigonalBipyramid, {{3.68118, 4.21196, 0, 55.8912}}},
+    {Shapes::Shape::Pentagon, {{3.89701, 4.22035, 0, 58.1819}}},
+    {Shapes::Shape::Octahedron, {{5.70985, 6.08247, 0, 63.8315}}},
+    {Shapes::Shape::TrigonalPrism, {{4.39501, 4.36312, 0, 50.0585}}},
+    {Shapes::Shape::PentagonalPyramid, {{5.073, 4.38382, 0, 44.3454}}},
+    {Shapes::Shape::Hexagon, {{5.97833, 8.70608, 0, 70.426}}},
+    {Shapes::Shape::PentagonalBipyramid, {{5.62079, 4.51257, 0, 47.6727}}},
+    {Shapes::Shape::CappedOctahedron, {{5.3341, 6.54619, 0, 55.0139}}},
+    {Shapes::Shape::CappedTrigonalPrism, {{3.62137, 3.57516, 0, 48.2583}}},
+    {Shapes::Shape::SquareAntiprism, {{6.49925, 5.6291, 0, 45.6774}}},
+    {Shapes::Shape::Cube, {{7.38926, 6.12884, 0, 48.6829}}},
+    {Shapes::Shape::TrigonalDodecahedron, {{6.44829, 5.57766, 0, 45.2966}}},
+    {Shapes::Shape::HexagonalBipyramid, {{6.4292, 4.48488, 0, 42.8605}}},
+  };
+
+  const auto findIter = randomDistributionParameters.find(shape);
+  if(findIter == std::end(randomDistributionParameters)) {
+    return boost::none;
+  }
+
+  const double a = findIter->second.at(0);
+  const double b = findIter->second.at(1);
+  const double scale = findIter->second.at(3);
+  if(measure > scale) {
+    return 1.0;
+  }
+
+  return boost::math::cdf(boost::math::beta_distribution<>(a, b), measure / scale);
 }
 
 } // namespace Continuous

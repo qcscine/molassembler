@@ -256,4 +256,43 @@ void init_interpret(pybind11::module& m) {
       3
     )delim"
   );
+
+  pybind11::class_<Interpret::FalsePositive> falsePositive(m, "FalsePositive");
+  falsePositive.def_readwrite("i", &Interpret::FalsePositive::i);
+  falsePositive.def_readwrite("j", &Interpret::FalsePositive::j);
+  falsePositive.def_readwrite("probability", &Interpret::FalsePositive::probability);
+  falsePositive.def("__getitem__", [](const Interpret::FalsePositive& fp, const unsigned i) -> boost::variant<unsigned, double> {
+    if(i == 0) {
+      return fp.i;
+    }
+
+    if(i == 1) {
+      return fp.j;
+    }
+
+    if(i == 2) {
+      return fp.probability;
+    }
+
+    throw std::out_of_range("Only three elements in this tuple-like object");
+  });
+
+  falsePositive.def("__repr__", [](const Interpret::FalsePositive& fp) -> std::string {
+    return "(" + std::to_string(fp.i) + ", "+ std::to_string(fp.j) + ", " + std::to_string(fp.probability) + ")";
+  });
+
+  interpretSubmodule.def(
+    "false_positives",
+    &Interpret::falsePositives,
+    pybind11::arg("atom_collection"),
+    pybind11::arg("bond_collection"),
+    R"delim(
+      Suggests possible false positive bonds from an interpretation
+
+      Returns a list of bonds at pairs of atoms that both have highly uncertain
+      shape classifications.
+
+      Returns a list of FalsePositive objects
+    )delim"
+  );
 }

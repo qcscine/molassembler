@@ -115,6 +115,8 @@ public:
    *
    * @complexity{@math{L\cdot S!} where @math{L} is the number of links and
    * @math{S} is the size of @p shape}
+   *
+   * @post The stereopermutator is unassigned
    */
   AtomStereopermutator(
     const Graph& graph,

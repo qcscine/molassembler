@@ -379,7 +379,7 @@ bool testSubstituentLinks(const boost::filesystem::path& filePath) {
 
   const auto& relevantData = linkTestData.at(filePath.stem().string());
 
-  auto ligands = GraphAlgorithms::ligandSiteGroups(
+  auto ligands = GraphAlgorithms::sites(
     mol.graph().inner(),
     relevantData.source
   );
@@ -615,7 +615,7 @@ bool testHapticBonds(const boost::filesystem::path& filePath) {
   }
 
   // Test ligands classification
-  auto ligands = GraphAlgorithms::ligandSiteGroups(graph, 0);
+  auto ligands = GraphAlgorithms::sites(graph, 0);
 
   /* Sort the ligands by size and then by individual atom indices so that we can
    * compare lexicograhically

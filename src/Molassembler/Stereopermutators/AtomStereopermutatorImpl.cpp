@@ -130,17 +130,15 @@ std::pair<Shapes::Shape, std::vector<Shapes::Vertex>> classifyShape(const Eigen:
   }
   const unsigned shapesCount = viableShapes.size();
   std::vector<Shapes::Continuous::ShapeResult> shapeMeasureResults (shapesCount);
+  std::vector<boost::optional<double>> randomCloudProbabilities (shapesCount);
 
 #pragma omp parallel for
   for(unsigned i = 0; i < shapesCount; ++i) {
     const Shapes::Shape candidateShape = viableShapes[i];
     shapeMeasureResults[i] = Shapes::Continuous::shapeCentroidLast(normalized, candidateShape);
-
-    // Bias shape classification against some shapes
-    if(candidateShape == Shapes::Shape::TrigonalPyramid) {
-      shapeMeasureResults[i].measure *= 4;
-    } else if(candidateShape == Shapes::Shape::Seesaw) {
-      shapeMeasureResults[i].measure *= 2;
+    // Shape classification for size 2 is better based on continuous shape measures themselves
+    if(Shapes::size(candidateShape) > 2) {
+      randomCloudProbabilities[i] = Shapes::Continuous::probabilityRandomCloud(shapeMeasureResults[i].measure, candidateShape);
     }
   }
 
@@ -155,6 +153,25 @@ std::pair<Shapes::Shape, std::vector<Shapes::Vertex>> classifyShape(const Eigen:
     )
   );
 
+  // Prefer probabilities for comparison
+  if(Temple::all_of(randomCloudProbabilities)) {
+    const auto minElementIter = std::min_element(
+      std::begin(randomCloudProbabilities),
+      std::end(randomCloudProbabilities),
+      [](const boost::optional<double>& a, const boost::optional<double>& b) -> double {
+        // We know all optionals are Somes from the previous all_of call
+        return a.value() < b.value();
+      }
+    );
+    const unsigned minimalShapeIndex = minElementIter - std::begin(randomCloudProbabilities);
+    const Shapes::Shape minimalShape = viableShapes.at(minimalShapeIndex);
+    return std::make_pair(
+      minimalShape,
+      std::move(shapeMeasureResults.at(minimalShapeIndex).mapping)
+    );
+  }
+
+  // Fall back to minimal shape measure
   const auto minElementIter = std::min_element(
     std::begin(shapeMeasureResults),
     std::end(shapeMeasureResults),
@@ -162,7 +179,6 @@ std::pair<Shapes::Shape, std::vector<Shapes::Vertex>> classifyShape(const Eigen:
       return a.measure < b.measure;
     }
   );
-
   const unsigned minimalShapeIndex = minElementIter - std::begin(shapeMeasureResults);
   const Shapes::Shape minimalShape = viableShapes.at(minimalShapeIndex);
   return std::make_pair(
@@ -314,6 +330,62 @@ void AtomStereopermutator::Impl::assign(boost::optional<unsigned> assignment) {
     );
   } else { // Wipe the map
     shapePositionMap_.clear();
+  }
+}
+
+void AtomStereopermutator::Impl::assign(std::vector<Shapes::Vertex> vertexMapping) {
+  if(vertexMapping.size() != Shapes::size(shape_) + 1) {
+    throw std::invalid_argument("Vertex mapping for assignment has wrong length");
+  }
+
+  /* Drop the centroid, making the remaining sequence viable as an index mapping
+   * within the set of shape rotations, i.e. for use in stereopermutation
+   * functionality
+   */
+  vertexMapping.pop_back();
+
+  /* Ok, so: We have a mapping from site positions to shape vertices from the
+   * shape classification algorithm. Site positions are ordered identically to
+   * the sites, so we essentially have a mapping from sites to shape vertices.
+   *
+   * Now we need to find the (feasible) stereopermutation that matches it.
+   *
+   * Can we transform the site -> shape vertex mapping into a
+   * stereopermutation, generate all its rotations and then set-membership
+   * check each feasible permutation?
+   */
+  auto soughtStereopermutation = stereopermutationFromSiteToShapeVertexMap(
+    SiteToShapeVertexMap {std::move(vertexMapping)},
+    ranking_.links,
+    abstract_.canonicalSites
+  );
+
+  auto soughtRotations = Stereopermutations::generateAllRotations(soughtStereopermutation, shape_);
+
+  /* Although the stereopermutations in abstract_ are sorted by their index of
+   * permutation and we could potentially binary search all of our sought
+   * rotations within that set, this linear search will never be time-critical
+   * as long as we use continuous shape measure-based shape classification.
+   */
+  boost::optional<unsigned> foundStereopermutation;
+  const unsigned A = feasible_.indices.size();
+  for(unsigned a = 0; a < A; ++a) {
+    const auto& feasiblePermutation = abstract_.permutations.list.at(
+      feasible_.indices.at(a)
+    );
+    auto findIter = std::find(
+      std::begin(soughtRotations),
+      std::end(soughtRotations),
+      feasiblePermutation
+    );
+    if(findIter != std::end(soughtRotations)) {
+      foundStereopermutation = a;
+      break;
+    }
+  }
+
+  if(foundStereopermutation) {
+    assign(*foundStereopermutation);
   }
 }
 
@@ -725,70 +797,13 @@ void AtomStereopermutator::Impl::fit(
   Shapes::Shape fittedShape;
   std::vector<Shapes::Vertex> matchingMapping;
   std::tie(fittedShape, matchingMapping) = classifyShape(sitePositions);
-  /* Drop the centroid, making the remaining sequence viable as an index mapping
-   * within the set of shape rotations, i.e. for use in stereopermutation
-   * functionality
-   */
-  matchingMapping.pop_back();
-
   setShape(fittedShape, graph);
+  assign(matchingMapping);
 
-  /* Ok, so: We have a mapping from site positions to shape vertices from the
-   * shape classification algorithm. Site positions are ordered identically to
-   * the sites, so we essentially have a mapping from sites to shape vertices.
-   *
-   * Now we need to find the (feasible) stereopermutation that matches it.
-   *
-   * Can we transform the site -> shape vertex mapping into a
-   * stereopermutation, generate all its rotations and then set-membership
-   * check each feasible permutation?
-   */
-  auto soughtStereopermutation = stereopermutationFromSiteToShapeVertexMap(
-    SiteToShapeVertexMap {std::move(matchingMapping)},
-    ranking_.links,
-    abstract_.canonicalSites
-  );
-
-  auto soughtRotations = Stereopermutations::generateAllRotations(soughtStereopermutation, fittedShape);
-
-  /* Although the stereopermutations in abstract_ are sorted by their index of
-   * permutation and we could potentially binary search all of our sought
-   * rotations within that set, this linear search will never be time-critical
-   * as long as we use continuous shape measure-based shape classification.
-   */
-  boost::optional<unsigned> foundStereopermutation;
-  const unsigned A = feasible_.indices.size();
-  for(unsigned a = 0; a < A; ++a) {
-    const auto& feasiblePermutation = abstract_.permutations.list.at(
-      feasible_.indices.at(a)
-    );
-    auto findIter = std::find(
-      std::begin(soughtRotations),
-      std::end(soughtRotations),
-      feasiblePermutation
-    );
-    if(findIter != std::end(soughtRotations)) {
-      foundStereopermutation = a;
-      break;
-    }
-  }
-
-  /* In case NO assignments could be found, return to the prior state.
-   *
-   * This guards against situations in which predicates in
-   * uniques could lead no assignments to be returned, such as
-   * in e.g. square-planar AAAB with {0, 3}, {1, 3}, {2, 3} with removal of
-   * trans-spanning groups. In that situation, all possible assignments are
-   * trans-spanning and uniques is an empty vector.
-   *
-   * At the moment, this predicate is disabled, so no such issues should arise.
-   * Just being safe.
-   */
-  if(foundStereopermutation == boost::none) {
+  // Return to prior state if no feasible stereopermutations found
+  if(assignmentOption_ == boost::none) {
     setShape(priorShape, graph);
     assign(priorStereopermutation);
-  } else {
-    assign(*foundStereopermutation);
   }
 }
 

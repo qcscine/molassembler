@@ -94,7 +94,7 @@ void findSites(
  */
 std::vector<
   std::vector<AtomIndex>
-> ligandSiteGroups(
+> sites(
   const PrivateGraph& graph,
   AtomIndex placement,
   const std::vector<AtomIndex>& excludeAdjacents = {}

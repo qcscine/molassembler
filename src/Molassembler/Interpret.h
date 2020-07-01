@@ -247,6 +247,24 @@ MASM_EXPORT GraphsResult graphs(
   BondDiscretizationOption discretization = BondDiscretizationOption::Binary
 );
 
+//! @brief Fn result datatype
+struct FalsePositive {
+  unsigned i;
+  unsigned j;
+  double probability;
+};
+
+/*! @brief Suggests false positives from a binary interpretation of bond orders
+ *
+ * Collects instances where shape classification is uncertain. If two connected
+ * atoms are both uncertain (>= 50% probability that the point cloud could be
+ * part of a random sample), lists the bond as a possible false postive.
+ */
+std::vector<FalsePositive> falsePositives(
+  const Utils::AtomCollection& atomCollection,
+  const Utils::BondOrderCollection& bondOrders
+);
+
 } // namespace Interpret
 } // namespace Molassembler
 } // namespace Scine

@@ -840,7 +840,7 @@ void RankingTree::applySequenceRules_(
     /* Group substituents into sites using the graph only, excluding the eta
      * adjacents yet again.
      */
-    centerRanking.sites = GraphAlgorithms::ligandSiteGroups(
+    centerRanking.sites = GraphAlgorithms::sites(
       graph_.inner(),
       molSourceIndex,
       Temple::map(etaAdjacents, [&](const TreeVertexIndex i) { return tree_[i].molIndex; })

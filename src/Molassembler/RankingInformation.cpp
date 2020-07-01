@@ -14,7 +14,6 @@
 #include "Molassembler/Cycles.h"
 
 namespace Scine {
-
 namespace Molassembler {
 
 RankingInformation::Link::Link() = default;
@@ -285,5 +284,4 @@ bool RankingInformation::operator != (const RankingInformation& other) const {
 }
 
 } // namespace Molassembler
-
 } // namespace Scine

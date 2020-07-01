@@ -1145,7 +1145,7 @@ RankingInformation Molecule::Impl::rankPriority(
   RankingInformation rankingResult;
 
   // Expects that bond types are set properly, complains otherwise
-  rankingResult.sites = GraphAlgorithms::ligandSiteGroups(
+  rankingResult.sites = GraphAlgorithms::sites(
     adjacencies_.inner(),
     a,
     excludeAdjacent

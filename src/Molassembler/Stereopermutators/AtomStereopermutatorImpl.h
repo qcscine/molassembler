@@ -86,6 +86,12 @@ public:
   //! Changes the assignment of the stereopermutator
   void assign(boost::optional<unsigned> assignment);
 
+  /*! @brief Assign with a vertex mapping
+   *
+   * @pre Requires that this mapping was generated with centroid last!
+   */
+  void assign(std::vector<Shapes::Vertex> vertexMapping);
+
   //! Assigns the Stereopermutator randomly using relative stereopermutation weights
   void assignRandom(Random::Engine& engine);
 

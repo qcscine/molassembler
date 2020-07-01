@@ -9,6 +9,7 @@
 #include "Molassembler/Cycles.h"
 #include "Molassembler/Graph.h"
 #include "Molassembler/GraphAlgorithms.h"
+#include "Molassembler/Graph/GraphAlgorithms.h"
 
 #include "Utils/Bonds/BondOrderCollection.h"
 #include "Utils/Geometry/FormulaGenerator.h"
@@ -400,6 +401,20 @@ void init_graph(pybind11::module& m) {
 
       >>> m = io.experimental.from_smiles("CC(CC)C")
       >>> distances = distance(1, m.graph)
+    )delim"
+  );
+
+  m.def(
+    "sites",
+    [](const Graph& graph, const AtomIndex v) {
+      return GraphAlgorithms::sites(graph.inner(), v);
+    },
+    pybind11::arg("graph"),
+    pybind11::arg("atom"),
+    R"delim(
+      Returns adjacents of an atom of the graph grouped into sites
+
+      Sites consisting of multiple atoms are haptic.
     )delim"
   );
 }
