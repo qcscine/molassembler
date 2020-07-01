@@ -597,8 +597,6 @@ std::vector<FalsePositive> uncertainBonds(
     boost::none
   );
 
-  const auto invertedComponentMap = invertComponentMap(parts.componentMap);
-
   for(unsigned component = 0; component < parts.precursors.size(); ++component) {
     MoleculeParts& part = parts.precursors[component];
     GraphAlgorithms::updateEtaBonds(part.graph);
@@ -625,8 +623,8 @@ std::vector<FalsePositive> uncertainBonds(
       if(part.graph.edgeOption(i, j)) {
         falsePositives.push_back(
           FalsePositive {
-            invertedComponentMap.at(component).at(i),
-            invertedComponentMap.at(component).at(j),
+            parts.componentMap.invert(ComponentMap::ComponentIndexPair {component, i}),
+            parts.componentMap.invert(ComponentMap::ComponentIndexPair {component, j}),
             i_random * j_random
           }
         );
