@@ -282,17 +282,21 @@ void init_interpret(pybind11::module& m) {
   });
 
   interpretSubmodule.def(
-    "false_positives",
-    &Interpret::falsePositives,
+    "uncertain_bonds",
+    &Interpret::uncertainBonds,
     pybind11::arg("atom_collection"),
     pybind11::arg("bond_collection"),
     R"delim(
-      Suggests possible false positive bonds from an interpretation
-
-      Returns a list of bonds at pairs of atoms that both have highly uncertain
-      shape classifications.
+      Lists bonds with uncertain shape classifications at both ends
 
       Returns a list of FalsePositive objects
     )delim"
+  );
+
+  interpretSubmodule.def(
+    "bad_haptic_ligand_bonds",
+    &Interpret::badHapticLigandBonds,
+    pybind11::arg("atom_collection"),
+    pybind11::arg("bond_collection")
   );
 }

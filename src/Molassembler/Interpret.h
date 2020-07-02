@@ -259,8 +259,31 @@ struct FalsePositive {
  * Collects instances where shape classification is uncertain. If two connected
  * atoms are both uncertain (>= 50% probability that the point cloud could be
  * part of a random sample), lists the bond as a possible false postive.
+ *
+ * @warning Do not alter both bonds if there is a bond pair that have
+ * overlapping indices. If suggested bonds overlap, remove only that bond with
+ * the higher probabiltiy.
  */
-std::vector<FalsePositive> falsePositives(
+std::vector<FalsePositive> uncertainBonds(
+  const Utils::AtomCollection& atomCollection,
+  const Utils::BondOrderCollection& bondOrders
+);
+
+/*! @brief Suggests false positive haptic ligand bonds from a binary interpretation of bond orders
+ *
+ * Generates a plane of best fit for each haptic ligand in the interpreted
+ * graphs. If the angle of the normal of this plane to the axis defined by the
+ * central atom and the site centroid is more than 30 degrees, tries to name a
+ * single bond whose removal improves the interpretation.
+ *
+ * @note Suggested bonds can disconnect haptic sites. When making changes to
+ * a bond order matrix based on suggestions from this function, apply them one
+ * at a time based on the highest probability received. Additionally, if
+ * multiple bonds must be removed to make a haptic ligand geometrically
+ * reasonable, you will need to iteratively call this function and alter
+ * suggested bond orders.
+ */
+std::vector<FalsePositive> badHapticLigandBonds(
   const Utils::AtomCollection& atomCollection,
   const Utils::BondOrderCollection& bondOrders
 );

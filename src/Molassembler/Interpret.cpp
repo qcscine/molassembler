@@ -10,6 +10,7 @@
 #include "Utils/Bonds/BondOrderCollection.h"
 
 #include "Molassembler/BondOrders.h"
+#include "Molassembler/Detail/Cartesian.h"
 #include "Molassembler/Graph.h"
 #include "Molassembler/Graph/GraphAlgorithms.h"
 #include "Molassembler/Graph/PrivateGraph.h"
@@ -18,10 +19,11 @@
 #include "Molassembler/Temple/Adaptors/AllPairs.h"
 #include "Molassembler/Temple/Functional.h"
 
+#include <Eigen/Geometry>
+
 namespace Scine {
 namespace Molassembler {
 namespace Interpret {
-
 namespace {
 
 Utils::PositionCollection paste(const std::vector<Utils::Position>& positions) {
@@ -33,6 +35,55 @@ Utils::PositionCollection paste(const std::vector<Utils::Position>& positions) {
   return matrix;
 }
 
+double vectorAngle(const Eigen::Vector3d& a, const Eigen::Vector3d& b) {
+  return std::acos(
+    a.dot(b) / (
+      a.norm() * b.norm()
+    )
+  );
+}
+
+double hapticPlaneAngle(
+  const std::vector<Utils::Position> positions,
+  const AtomIndex v,
+  const std::vector<AtomIndex>& site
+) {
+  const unsigned siteSize = site.size();
+
+  assert(siteSize >= 1 && "Passed hapticPlaneAngle a non-haptic site!");
+
+  Eigen::Vector3d siteCentroid = Eigen::Vector3d::Zero();
+  for(AtomIndex siteAtom : site) {
+    siteCentroid += positions.at(siteAtom);
+  }
+  siteCentroid /= siteSize;
+
+  if(siteSize == 2) {
+    const double frontAngle = Cartesian::angle(
+      positions.at(v),
+      siteCentroid,
+      positions.at(site.front())
+    );
+    const double backAngle = Cartesian::angle(
+      positions.at(v),
+      siteCentroid,
+      positions.at(site.back())
+    );
+    return M_PI / 2.0 - std::min(frontAngle, backAngle);
+  }
+
+  const Eigen::Vector3d centroidAxis = siteCentroid - positions.at(v).transpose();
+
+  Utils::PositionCollection hapticAtoms(siteSize, 3);
+  for(unsigned i = 0; i < siteSize; ++i) {
+    hapticAtoms.row(i) = positions.at(site.at(i));
+  }
+  const auto plane = Cartesian::planeOfBestFit(hapticAtoms);
+  const double firstAngle = vectorAngle(plane.normal(), centroidAxis);
+  const double secondAngle = vectorAngle(plane.normal(), -centroidAxis);
+  return std::min(firstAngle, secondAngle);
+}
+
 } // namespace
 
 struct MoleculeParts {
@@ -42,6 +93,59 @@ struct MoleculeParts {
     std::vector<BondIndex>
   > bondStereopermutatorCandidatesOptional;
 };
+
+boost::optional<double> minimumClassificationProbability(
+  const PrivateGraph& graph,
+  const std::vector<Utils::Position> positions,
+  const AtomIndex v
+) {
+  auto sites = GraphAlgorithms::sites(graph, v);
+  if(sites.size() <= 1) {
+    return boost::none;
+  }
+
+  const unsigned S = sites.size();
+  Eigen::Matrix<double, 3, Eigen::Dynamic> sitePositions(3, S + 1);
+  for(unsigned i = 0; i < S; ++i) {
+    Eigen::Vector3d averagePosition = Eigen::Vector3d::Zero();
+    for(unsigned j : sites[i]) {
+      averagePosition += positions.at(j);
+    }
+    sitePositions.col(i) = averagePosition / sites[i].size();
+  }
+  sitePositions.col(S) = positions.at(v);
+
+  auto normalizedPositions = Shapes::Continuous::normalize(sitePositions);
+
+  // Classify all suitable shapes
+  std::vector<Shapes::Shape> viableShapes;
+  for(const Shapes::Shape shape : Shapes::allShapes) {
+    if(Shapes::size(shape) == S) {
+      viableShapes.push_back(shape);
+    }
+  }
+
+  const auto classifications = Temple::map(viableShapes,
+    [&](const Shapes::Shape shape) -> boost::optional<double> {
+      const double measure = Shapes::Continuous::shapeCentroidLast(normalizedPositions, shape).measure;
+      return Shapes::Continuous::probabilityRandomCloud(measure, shape);
+    }
+  );
+
+  if(Temple::all_of(classifications)) {
+    const double minimumProbability = std::min_element(
+      std::begin(classifications),
+      std::end(classifications),
+      [](const auto& a, const auto& b) -> bool {
+        return a.value() < b.value();
+      }
+    )->value();
+
+    return minimumProbability;
+  }
+
+  return boost::none;
+}
 
 struct Parts {
   std::vector<MoleculeParts> precursors;
@@ -375,7 +479,7 @@ GraphsResult graphs(
   );
 }
 
-std::vector<FalsePositive> falsePositives(
+std::vector<FalsePositive> uncertainBonds(
   const Utils::AtomCollection& atomCollection,
   const Utils::BondOrderCollection& bondOrders
 ) {
@@ -398,53 +502,12 @@ std::vector<FalsePositive> falsePositives(
     std::vector<std::pair<PrivateGraph::Vertex, double>> sketchyClassifications;
 
     for(const PrivateGraph::Vertex v : part.graph.vertices()) {
-      auto sites = GraphAlgorithms::sites(part.graph, v);
-
-      // Skip terminal atoms
-      if(sites.size() <= 1) {
-        continue;
-      }
-
-      // Create matrix of site positions
-      const unsigned S = sites.size();
-      Eigen::Matrix<double, 3, Eigen::Dynamic> sitePositions(3, S + 1);
-      for(unsigned i = 0; i < S; ++i) {
-        Eigen::Vector3d averagePosition = Eigen::Vector3d::Zero();
-        for(unsigned j : sites[i]) {
-          averagePosition += part.angstromPositions.at(j);
-        }
-        sitePositions.col(i) = averagePosition / sites[i].size();
-      }
-      sitePositions.col(S) = part.angstromPositions.at(v);
-      sitePositions = Shapes::Continuous::normalize(sitePositions);
-
-      // Classify all suitable shapes
-      std::vector<Shapes::Shape> viableShapes;
-      for(const Shapes::Shape shape : Shapes::allShapes) {
-        if(Shapes::size(shape) == S) {
-          viableShapes.push_back(shape);
-        }
-      }
-
-      const auto classifications = Temple::map(viableShapes,
-        [&](const Shapes::Shape shape) -> boost::optional<double> {
-          const double measure = Shapes::Continuous::shapeCentroidLast(sitePositions, shape).measure;
-          return Shapes::Continuous::probabilityRandomCloud(measure, shape);
-        }
-      );
-
-      if(Temple::all_of(classifications)) {
-        const double minimumProbability = std::min_element(
-          std::begin(classifications),
-          std::end(classifications),
-          [](const auto& a, const auto& b) -> bool {
-            return a.value() < b.value();
-          }
-        )->value();
-
-        if(minimumProbability >= 0.5) {
-          sketchyClassifications.emplace_back(v, minimumProbability);
-        }
+      /* Detect high uncertainty shape classifications. Adjacent pairs with high
+       * uncertainties are candidates for false positives.
+       */
+      auto classificationUncertainty = minimumClassificationProbability(part.graph, part.angstromPositions, v);
+      if(classificationUncertainty && *classificationUncertainty >= 0.5) {
+        sketchyClassifications.emplace_back(v, *classificationUncertainty);
       }
     }
 
@@ -470,6 +533,163 @@ std::vector<FalsePositive> falsePositives(
   return falsePositives;
 }
 
+std::vector<FalsePositive> badHapticLigandBonds(
+  const Utils::AtomCollection& atomCollection,
+  const Utils::BondOrderCollection& bondOrders
+) {
+  std::vector<FalsePositive> falsePositives;
+
+  // Avoid duplicate bonds in list with reverse i-j
+  auto addFalsePositive = [&](unsigned i, unsigned j, double p) {
+    if(i > j) {
+      std::swap(i, j);
+    }
+    auto findIter = std::find_if(
+      std::begin(falsePositives),
+      std::end(falsePositives),
+      [=](const FalsePositive& fp) -> bool {
+        return fp.i == i && fp.j == j;
+      }
+    );
+    if(findIter == std::end(falsePositives)) {
+      falsePositives.push_back(FalsePositive {i, j, p});
+    }
+  };
+
+  Parts parts = construeParts(
+    atomCollection.getElements(),
+    AngstromPositions {atomCollection.getPositions(), LengthUnit::Bohr},
+    bondOrders,
+    BondDiscretizationOption::Binary,
+    boost::none
+  );
+
+  const auto invertedComponentMap = invertComponentMap(parts.componentMap);
+
+  for(unsigned component = 0; component < parts.precursors.size(); ++component) {
+    MoleculeParts& part = parts.precursors[component];
+    GraphAlgorithms::updateEtaBonds(part.graph);
+
+    for(const PrivateGraph::Vertex v : part.graph.vertices()) {
+      /* Detect haptic shape planes with large angles to the axis defined by the
+       * site position and the central atom
+       */
+      const auto sites = GraphAlgorithms::sites(part.graph, v);
+      const unsigned S = sites.size();
+      for(unsigned siteIndex = 0; siteIndex < S; ++siteIndex) {
+        const auto& site = sites.at(siteIndex);
+        const unsigned siteSize = site.size();
+        if(siteSize == 1) {
+          continue;
+        }
+
+        const double angle = hapticPlaneAngle(part.angstromPositions, v, site);
+        if(angle < M_PI / 6) {
+          continue;
+        }
+
+        if(siteSize == 2) {
+          // Suggest the vertex further from the center
+          const double frontDistance = (
+            part.angstromPositions.at(v)
+            - part.angstromPositions.at(site.front())
+          ).norm();
+          const double backDistance = (
+            part.angstromPositions.at(v)
+            - part.angstromPositions.at(site.back())
+          ).norm();
+          const AtomIndex toRemove = frontDistance < backDistance ? site.back() : site.front();
+          addFalsePositive(
+            invertedComponentMap.at(component).at(v),
+            invertedComponentMap.at(component).at(toRemove),
+            angle * 2 / M_PI
+          );
+        } else {
+          using AtomAnglePair = std::pair<AtomIndex, double>;
+          const auto suggestedRemoval = Temple::accumulate(
+            site,
+            AtomAnglePair {1000, 0.0},
+            [&](const AtomAnglePair& carry, const AtomIndex siteVertexToRemove) -> AtomAnglePair {
+              auto graphCopy = part.graph;
+              graphCopy.removeEdge(graphCopy.edge(v, siteVertexToRemove));
+              GraphAlgorithms::updateEtaBonds(graphCopy);
+              auto newSites = GraphAlgorithms::sites(graphCopy, v);
+
+              /* Possible effects of bond removal
+               * - Separating a haptic ligand into two single-atom ligands,
+               *   changing shapes
+               *   - recognizable by size change
+               *   - accept if new certainty is low or significantly
+               *     lower than old (factor 0.5)
+               * - Improves the haptic plane angle by removing a bad bond
+               *   - recognized by matching sites and comparing angles
+               *   - accept if angle halves
+               * - How to compare cases?
+               */
+              if(newSites.size() > S) {
+                auto priorCertainty = minimumClassificationProbability(part.graph, part.angstromPositions, v);
+                auto posteriorCertainty = minimumClassificationProbability(graphCopy, part.angstromPositions, v);
+
+                if(priorCertainty && posteriorCertainty) {
+                  if(
+                    posteriorCertainty.value() <= 0.01
+                    || posteriorCertainty.value() <= 0.5 * priorCertainty.value()
+                  ) {
+                    return AtomAnglePair {siteVertexToRemove, 1 - *posteriorCertainty};
+                  }
+                }
+              } else {
+                auto siteFindIter = Temple::find_if(
+                  newSites,
+                  [&](const auto& newSite) -> bool {
+                    if(newSite.size() != siteSize - 1) {
+                      return false;
+                    }
+
+                    // Match all vertices except the one to remove
+                    for(const AtomIndex oldSiteAtomIndex : site) {
+                      if(oldSiteAtomIndex == siteVertexToRemove) {
+                        continue;
+                      }
+
+                      if(Temple::find(newSite, oldSiteAtomIndex) == std::end(newSite)) {
+                        return false;
+                      }
+                    }
+
+                    return true;
+                  }
+                );
+
+                if(siteFindIter != std::end(newSites)) {
+                  const double newHapticAngle = hapticPlaneAngle(
+                    part.angstromPositions,
+                    v,
+                    *siteFindIter
+                  );
+                  const double newHapticAngleNormalized = 1 - newHapticAngle * 2 / M_PI;
+                  if(newHapticAngleNormalized > carry.second) {
+                    return AtomAnglePair {siteVertexToRemove, newHapticAngleNormalized};
+                  }
+                }
+              }
+
+              return carry;
+            }
+          );
+          if(suggestedRemoval.first != 1000) {
+            addFalsePositive(
+              invertedComponentMap.at(component).at(v),
+              invertedComponentMap.at(component).at(suggestedRemoval.first),
+              suggestedRemoval.second
+            );
+          }
+        }
+      }
+    }
+  }
+  return falsePositives;
+}
 
 } // namespace Interpret
 } // namespace Molassembler

@@ -6,7 +6,6 @@
 
 #include "Molassembler/Detail/Cartesian.h"
 
-#include <Eigen/Geometry>
 #include "Molassembler/Temple/Functional.h"
 
 #include <array>
@@ -112,15 +111,7 @@ double adjustedSignedVolume(
   );
 }
 
-double rmsPlaneDeviation(
-  const Utils::PositionCollection& positions,
-  const std::vector<AtomIndex>& indices
-) {
-  const unsigned I = indices.size();
-  if(I < 4) {
-    throw std::runtime_error("Nonsensical to calculate RMS plane deviation for less than four points");
-  }
-
+Eigen::Hyperplane<double, 3> planeOfBestFit(const Utils::PositionCollection& positions) {
   /* To find the plane of best fit:
    * - subtract the centroid
    * - calculate the singular value decomposition
@@ -131,24 +122,38 @@ double rmsPlaneDeviation(
    * dynamic column count for this, which PositionCollection does not fulfill)
    */
   using ThreeByNPositions = Eigen::Matrix<double, 3, Eigen::Dynamic>;
-  ThreeByNPositions relevantPositions (3, I);
-  for(unsigned i = 0; i < I; ++i) {
-    relevantPositions.col(i) = positions.row(indices[i]).transpose();
-  }
+  ThreeByNPositions transpose = positions.transpose();
 
   // Calculate the centroid and remove it to get an inertial frame
-  const Eigen::Vector3d centroid = relevantPositions.rowwise().sum() / relevantPositions.cols();
-  relevantPositions = relevantPositions.colwise() - centroid;
+  const Eigen::Vector3d centroid = transpose.rowwise().sum() / transpose.cols();
+  transpose = transpose.colwise() - centroid;
 
   // SVD values are ordered decreasing -> rightmost column of thin U matrix
-  Eigen::JacobiSVD<ThreeByNPositions> decomposition {relevantPositions, Eigen::ComputeThinU | Eigen::ComputeThinV};
-  const Eigen::Vector3d planeNormal = decomposition.matrixU().rightCols(1);
-  const Eigen::Hyperplane<double, 3> plane {planeNormal, Eigen::Vector3d::Zero()};
+  Eigen::JacobiSVD<ThreeByNPositions> decomposition {transpose, Eigen::ComputeThinU | Eigen::ComputeThinV};
+  return {decomposition.matrixU().rightCols(1), centroid};
+}
+
+double rmsPlaneDeviation(
+  const Utils::PositionCollection& positions,
+  const std::vector<AtomIndex>& indices
+) {
+  const unsigned I = indices.size();
+  if(I < 4) {
+    throw std::runtime_error("Nonsensical to calculate RMS plane deviation for less than four points");
+  }
+
+  // Select the relevant positions only
+  Utils::PositionCollection relevantPositions (I, 3);
+  for(unsigned i = 0; i < I; ++i) {
+    relevantPositions.row(i) = positions.row(indices[i]);
+  }
+
+  const Eigen::Hyperplane<double, 3> plane = planeOfBestFit(relevantPositions);
 
   // Calculate the RMS
   double sumOfSquares = 0.0;
   for(unsigned i = 0; i < I; ++i) {
-    sumOfSquares += std::pow(plane.signedDistance(relevantPositions.col(i)), 2);
+    sumOfSquares += std::pow(plane.signedDistance(positions.row(indices[i])), 2);
   }
   return std::sqrt(sumOfSquares / I);
 }

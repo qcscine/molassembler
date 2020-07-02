@@ -11,6 +11,8 @@
 #include "Utils/Typenames.h"
 #include "Molassembler/Types.h"
 
+#include <Eigen/Geometry>
+
 namespace Scine {
 namespace Molassembler {
 namespace Cartesian {
@@ -68,6 +70,11 @@ double adjustedSignedVolume(
   const Eigen::Vector3d& j,
   const Eigen::Vector3d& k,
   const Eigen::Vector3d& l
+);
+
+//! @brief Finds the plane of best fit
+Eigen::Hyperplane<double, 3> planeOfBestFit(
+  const Utils::PositionCollection& positions
 );
 
 /*! @brief Fits a plane to indices and calculates its rms deviation
