@@ -706,6 +706,31 @@ std::vector<FalsePositive> badHapticLigandBonds(
   return falsePositives;
 }
 
+Utils::BondOrderCollection removeFalsePositives(
+  const Utils::AtomCollection& atoms,
+  Utils::BondOrderCollection bonds
+) {
+  // First do bad haptic bond orders
+  auto haptics = badHapticLigandBonds(atoms, bonds);
+  while(!haptics.empty()) {
+    Temple::InPlace::sort(haptics);
+    FalsePositive& mostLikely = haptics.back();
+    bonds.setOrder(mostLikely.i, mostLikely.j, 0.0);
+    haptics = badHapticLigandBonds(atoms, bonds);
+  }
+
+  // Then do uncertain bonds
+  auto uncertains = uncertainBonds(atoms, bonds);
+  while(!uncertains.empty()) {
+    Temple::InPlace::sort(uncertains);
+    FalsePositive& mostLikely = uncertains.back();
+    bonds.setOrder(mostLikely.i, mostLikely.j, 0.0);
+    uncertains = uncertainBonds(atoms, bonds);
+  }
+
+  return bonds;
+}
+
 } // namespace Interpret
 } // namespace Molassembler
 } // namespace Scine

@@ -328,4 +328,12 @@ void init_interpret(pybind11::module& m) {
          function and alter suggested bond orders.
     )delim"
   );
+
+  interpretSubmodule.def(
+    "remove_false_positives",
+    &Interpret::removeFalsePositives,
+    pybind11::arg("atoms"),
+    pybind11::arg("bonds"),
+    "Iteratively removes bonds reported by false positive detection functions"
+  );
 }

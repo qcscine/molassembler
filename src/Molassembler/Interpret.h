@@ -252,6 +252,10 @@ struct FalsePositive {
   unsigned i;
   unsigned j;
   double probability;
+
+  inline bool operator < (const FalsePositive& other) const {
+    return probability < other.probability;
+  }
 };
 
 /*! @brief Suggests false positives from a binary interpretation of bond orders
@@ -286,6 +290,16 @@ std::vector<FalsePositive> uncertainBonds(
 std::vector<FalsePositive> badHapticLigandBonds(
   const Utils::AtomCollection& atomCollection,
   const Utils::BondOrderCollection& bondOrders
+);
+
+/*! @brief Iteratively applies false positive detection schemes
+ *
+ * @warning Pretty darn conservative implementation, removes only a single bond
+ * from each false positive detection function call each iteration.
+ */
+Utils::BondOrderCollection removeFalsePositives(
+  const Utils::AtomCollection& atoms,
+  const Utils::BondOrderCollection bonds
 );
 
 } // namespace Interpret
