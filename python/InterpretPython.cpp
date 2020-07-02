@@ -18,8 +18,8 @@ void init_interpret(pybind11::module& m) {
 
   auto interpretSubmodule = m.def_submodule("interpret");
   interpretSubmodule.doc() = R"delim(
-    Submodule with freestanding functions yielding :class:`Molecule` or
-    :class:`Graph` instances from Cartesian coordinate data (and optionally
+    Submodule with freestanding functions yielding :class:`~scine_molassembler.Molecule` or
+    :class:`~scine_molassembler.Graph` instances from Cartesian coordinate data (and optionally
     bond order data).
 
     **Bond discretization**
@@ -66,7 +66,7 @@ void init_interpret(pybind11::module& m) {
     R"delim(
       Individual molecules found in the 3D information.
 
-      :rtype: ``List`` of :class:`Molecule`
+      :rtype: ``List`` of :class:`~scine_molassembler.Molecule`
     )delim"
   );
 
@@ -188,7 +188,7 @@ void init_interpret(pybind11::module& m) {
     R"delim(
       Individual graphs found in the 3D information.
 
-      :rtype: ``List`` of :class:`Graph`
+      :rtype: ``List`` of :class:`~scine_molassembler.Graph`
     )delim"
   );
 
@@ -257,10 +257,14 @@ void init_interpret(pybind11::module& m) {
     )delim"
   );
 
-  pybind11::class_<Interpret::FalsePositive> falsePositive(m, "FalsePositive");
+  pybind11::class_<Interpret::FalsePositive> falsePositive(
+    interpretSubmodule,
+    "FalsePositive",
+    "Tuple-imitating data struct for false positives in bond discretization"
+  );
   falsePositive.def_readwrite("i", &Interpret::FalsePositive::i);
   falsePositive.def_readwrite("j", &Interpret::FalsePositive::j);
-  falsePositive.def_readwrite("probability", &Interpret::FalsePositive::probability);
+  falsePositive.def_readwrite("probability", &Interpret::FalsePositive::probability, "Probability that a bond is a false positive by some arbitrary measure. Normalized between 0 and 1");
   falsePositive.def("__getitem__", [](const Interpret::FalsePositive& fp, const unsigned i) -> boost::variant<unsigned, double> {
     if(i == 0) {
       return fp.i;
@@ -289,7 +293,13 @@ void init_interpret(pybind11::module& m) {
     R"delim(
       Lists bonds with uncertain shape classifications at both ends
 
-      Returns a list of FalsePositive objects
+      :returns: a list of :class:`FalsePositive` objects
+
+      .. warning::
+
+         Do not alter both bonds if there is a bond pair that have overlapping
+         indices. If suggested bonds overlap, remove only that bond with the
+         higher probability
     )delim"
   );
 
@@ -297,6 +307,25 @@ void init_interpret(pybind11::module& m) {
     "bad_haptic_ligand_bonds",
     &Interpret::badHapticLigandBonds,
     pybind11::arg("atom_collection"),
-    pybind11::arg("bond_collection")
+    pybind11::arg("bond_collection"),
+    R"delim(
+      Suggest false positive haptic ligand bonds
+
+      Generates a plane of best fit for each haptic ligand in the interpreted
+      graphs. If the angle of the normal of this plane to the axis defined by the
+      central atom and the site centroid is more than 30 degrees, tries to name a
+      single bond whose removal improves the interpretation.
+
+      :returns: a list of :class:`FalsePositive` objects
+
+      .. note::
+
+         Suggested bonds can disconnect haptic sites. When making changes to a
+         bond order matrix based on suggestions from this function, apply them
+         one at a time based on the highest probability received. Additionally,
+         if multiple bonds must be removed to make a haptic ligand
+         geometrically reasonable, you will need to iteratively call this
+         function and alter suggested bond orders.
+    )delim"
   );
 }

@@ -84,19 +84,9 @@ double hapticPlaneAngle(
   return std::min(firstAngle, secondAngle);
 }
 
-} // namespace
-
-struct MoleculeParts {
-  PrivateGraph graph;
-  std::vector<Utils::Position> angstromPositions;
-  boost::optional<
-    std::vector<BondIndex>
-  > bondStereopermutatorCandidatesOptional;
-};
-
 boost::optional<double> minimumClassificationProbability(
   const PrivateGraph& graph,
-  const std::vector<Utils::Position> positions,
+  const std::vector<Utils::Position>& positions,
   const AtomIndex v
 ) {
   auto sites = GraphAlgorithms::sites(graph, v);
@@ -146,6 +136,96 @@ boost::optional<double> minimumClassificationProbability(
 
   return boost::none;
 }
+
+std::pair<AtomIndex, double> bestRemovalFromHapticSite(
+  const PrivateGraph& graph,
+  const std::vector<Utils::Position>& positions,
+  const AtomIndex v,
+  const std::vector<std::vector<AtomIndex>> sites,
+  const unsigned hapticSiteIndex
+) {
+  using AtomProbabilityPair = std::pair<AtomIndex, double>;
+  const unsigned S = sites.size();
+  const std::vector<AtomIndex>& hapticSite = sites.at(hapticSiteIndex);
+  const unsigned hapticSiteSize = hapticSite.size();
+  return Temple::accumulate(
+    hapticSite,
+    AtomProbabilityPair {1000, 0.0},
+    [&](const auto& carry, const AtomIndex siteVertexToRemove) -> AtomProbabilityPair {
+      auto graphCopy = graph;
+      graphCopy.removeEdge(graphCopy.edge(v, siteVertexToRemove));
+      GraphAlgorithms::updateEtaBonds(graphCopy);
+      auto newSites = GraphAlgorithms::sites(graphCopy, v);
+
+      /* Possible effects of bond removal
+       * - Separating a haptic ligand into two single-atom ligands,
+       *   changing shapes
+       *   - recognizable by size change
+       *   - accept if new certainty is low or significantly
+       *     lower than old (factor 0.5)
+       * - Improves the haptic plane angle by removing a bad bond
+       *   - recognized by matching sites and comparing angles
+       *   - accept if angle halves
+       * - How to compare cases?
+       */
+      if(newSites.size() > S) {
+        auto priorCertainty = minimumClassificationProbability(graph, positions, v);
+        auto posteriorCertainty = minimumClassificationProbability(graphCopy, positions, v);
+
+        if(priorCertainty && posteriorCertainty) {
+          if(
+            posteriorCertainty.value() <= 0.01
+            || posteriorCertainty.value() <= 0.5 * priorCertainty.value()
+          ) {
+            return AtomProbabilityPair {siteVertexToRemove, 1 - *posteriorCertainty};
+          }
+        }
+      } else {
+        auto siteFindIter = Temple::find_if(
+          newSites,
+          [&](const auto& newSite) -> bool {
+            if(newSite.size() != hapticSiteSize - 1) {
+              return false;
+            }
+
+            // Match all vertices except the one to remove
+            for(const AtomIndex oldSiteAtomIndex : hapticSite) {
+              if(oldSiteAtomIndex == siteVertexToRemove) {
+                continue;
+              }
+
+              if(Temple::find(newSite, oldSiteAtomIndex) == std::end(newSite)) {
+                return false;
+              }
+            }
+
+            return true;
+          }
+        );
+
+        if(siteFindIter != std::end(newSites)) {
+          const double newHapticAngle = hapticPlaneAngle(positions, v, *siteFindIter);
+          const double newHapticAngleNormalized = 1 - newHapticAngle * 2 / M_PI;
+          if(newHapticAngleNormalized > carry.second) {
+            return AtomProbabilityPair {siteVertexToRemove, newHapticAngleNormalized};
+          }
+        }
+      }
+
+      return carry;
+    }
+  );
+}
+
+} // namespace
+
+struct MoleculeParts {
+  PrivateGraph graph;
+  std::vector<Utils::Position> angstromPositions;
+  boost::optional<
+    std::vector<BondIndex>
+  > bondStereopermutatorCandidatesOptional;
+};
 
 struct Parts {
   std::vector<MoleculeParts> precursors;
@@ -605,77 +685,12 @@ std::vector<FalsePositive> badHapticLigandBonds(
             angle * 2 / M_PI
           );
         } else {
-          using AtomAnglePair = std::pair<AtomIndex, double>;
-          const auto suggestedRemoval = Temple::accumulate(
-            site,
-            AtomAnglePair {1000, 0.0},
-            [&](const AtomAnglePair& carry, const AtomIndex siteVertexToRemove) -> AtomAnglePair {
-              auto graphCopy = part.graph;
-              graphCopy.removeEdge(graphCopy.edge(v, siteVertexToRemove));
-              GraphAlgorithms::updateEtaBonds(graphCopy);
-              auto newSites = GraphAlgorithms::sites(graphCopy, v);
-
-              /* Possible effects of bond removal
-               * - Separating a haptic ligand into two single-atom ligands,
-               *   changing shapes
-               *   - recognizable by size change
-               *   - accept if new certainty is low or significantly
-               *     lower than old (factor 0.5)
-               * - Improves the haptic plane angle by removing a bad bond
-               *   - recognized by matching sites and comparing angles
-               *   - accept if angle halves
-               * - How to compare cases?
-               */
-              if(newSites.size() > S) {
-                auto priorCertainty = minimumClassificationProbability(part.graph, part.angstromPositions, v);
-                auto posteriorCertainty = minimumClassificationProbability(graphCopy, part.angstromPositions, v);
-
-                if(priorCertainty && posteriorCertainty) {
-                  if(
-                    posteriorCertainty.value() <= 0.01
-                    || posteriorCertainty.value() <= 0.5 * priorCertainty.value()
-                  ) {
-                    return AtomAnglePair {siteVertexToRemove, 1 - *posteriorCertainty};
-                  }
-                }
-              } else {
-                auto siteFindIter = Temple::find_if(
-                  newSites,
-                  [&](const auto& newSite) -> bool {
-                    if(newSite.size() != siteSize - 1) {
-                      return false;
-                    }
-
-                    // Match all vertices except the one to remove
-                    for(const AtomIndex oldSiteAtomIndex : site) {
-                      if(oldSiteAtomIndex == siteVertexToRemove) {
-                        continue;
-                      }
-
-                      if(Temple::find(newSite, oldSiteAtomIndex) == std::end(newSite)) {
-                        return false;
-                      }
-                    }
-
-                    return true;
-                  }
-                );
-
-                if(siteFindIter != std::end(newSites)) {
-                  const double newHapticAngle = hapticPlaneAngle(
-                    part.angstromPositions,
-                    v,
-                    *siteFindIter
-                  );
-                  const double newHapticAngleNormalized = 1 - newHapticAngle * 2 / M_PI;
-                  if(newHapticAngleNormalized > carry.second) {
-                    return AtomAnglePair {siteVertexToRemove, newHapticAngleNormalized};
-                  }
-                }
-              }
-
-              return carry;
-            }
+          const auto suggestedRemoval = bestRemovalFromHapticSite(
+            part.graph,
+            part.angstromPositions,
+            v,
+            sites,
+            siteIndex
           );
           if(suggestedRemoval.first != 1000) {
             addFalsePositive(
