@@ -50,7 +50,7 @@ struct ComponentMap {
     //! Index of component
     unsigned component;
     //! Atom index
-    unsigned atomIndex;
+    unsigned long atomIndex;
   };
 
   //! Transform index from original atom collection to component and atom index

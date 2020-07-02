@@ -666,8 +666,6 @@ std::vector<FalsePositive> badHapticLigandBonds(
     boost::none
   );
 
-  const auto invertedComponentMap = invertComponentMap(parts.componentMap);
-
   for(unsigned component = 0; component < parts.precursors.size(); ++component) {
     MoleculeParts& part = parts.precursors[component];
     GraphAlgorithms::updateEtaBonds(part.graph);
@@ -702,8 +700,12 @@ std::vector<FalsePositive> badHapticLigandBonds(
           ).norm();
           const AtomIndex toRemove = frontDistance < backDistance ? site.back() : site.front();
           addFalsePositive(
-            invertedComponentMap.at(component).at(v),
-            invertedComponentMap.at(component).at(toRemove),
+            parts.componentMap.invert(
+              ComponentMap::ComponentIndexPair {component, v}
+            ),
+            parts.componentMap.invert(
+              ComponentMap::ComponentIndexPair {component, toRemove}
+            ),
             angle * 2 / M_PI
           );
         } else {
@@ -716,8 +718,12 @@ std::vector<FalsePositive> badHapticLigandBonds(
           );
           if(suggestedRemoval.first != 1000) {
             addFalsePositive(
-              invertedComponentMap.at(component).at(v),
-              invertedComponentMap.at(component).at(suggestedRemoval.first),
+              parts.componentMap.invert(
+                ComponentMap::ComponentIndexPair {component, v}
+              ),
+              parts.componentMap.invert(
+                ComponentMap::ComponentIndexPair {component, suggestedRemoval.first}
+              ),
               suggestedRemoval.second
             );
           }
