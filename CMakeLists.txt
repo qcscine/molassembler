@@ -79,6 +79,7 @@ add_subdirectory(extern)
 add_subdirectory(src)
 
 if(SCINE_BUILD_DOCS)
+  include(DoxygenDocumentation)
   include(DoxygenSettings)
   set_doxygen_vars()
   scine_component_documentation(UtilsOSDocumentation)
