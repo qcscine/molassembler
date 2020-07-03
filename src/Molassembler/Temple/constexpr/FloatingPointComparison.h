@@ -156,32 +156,32 @@ public:
     );
   }
 
-  PURITY_STRONG constexpr bool isLessThan(const T a, const T b) const noexcept {
+  constexpr bool isLessThan(const T a, const T b) const noexcept {
     return a < (b - absoluteTolerance_);
   }
 
-  PURITY_STRONG constexpr bool isMoreThan(const T a, const T b) const noexcept {
+  constexpr bool isMoreThan(const T a, const T b) const noexcept {
     return a > (b + absoluteTolerance_);
   }
 
-  PURITY_STRONG constexpr bool isLessOrEqual(const T a, const T b) const noexcept {
+  constexpr bool isLessOrEqual(const T a, const T b) const noexcept {
     return a < (b + absoluteTolerance_);
   }
 
-  PURITY_STRONG constexpr bool isMoreOrEqual(const T a, const T b) const noexcept {
+  constexpr bool isMoreOrEqual(const T a, const T b) const noexcept {
     return a > (b - absoluteTolerance_);
   }
 
-  PURITY_STRONG constexpr bool isEqual(const T a, const T b) const noexcept {
+  constexpr bool isEqual(const T a, const T b) const noexcept {
     return Math::abs(a - b) <= absoluteTolerance_;
   }
 
-  PURITY_STRONG constexpr bool isUnequal(const T a, const T b) const noexcept {
+  constexpr bool isUnequal(const T a, const T b) const noexcept {
     return !isEqual(a, b);
   }
 
   //! Function call operator compares equality
-  PURITY_STRONG constexpr bool operator () (const T a, const T b) const noexcept {
+  constexpr bool operator () (const T a, const T b) const noexcept {
     return isEqual(a, b);
   }
 };
@@ -198,7 +198,7 @@ public:
     assert(relativeTolerance > 0);
   }
 
-  PURITY_STRONG constexpr bool isLessThan(const T a, const T b) const {
+  constexpr bool isLessThan(const T a, const T b) const {
     return (
       (a < b) && !Detail::isCloseRelativeOrAbsolute(
         a,
@@ -209,7 +209,7 @@ public:
     );
   }
 
-  PURITY_STRONG constexpr bool isMoreThan(const T a, const T b) const {
+  constexpr bool isMoreThan(const T a, const T b) const {
     return (
       (a > b) && !Detail::isCloseRelativeOrAbsolute(
         a,
@@ -220,7 +220,7 @@ public:
     );
   }
 
-  PURITY_STRONG constexpr bool isLessOrEqual(const T a, const T b) const {
+  constexpr bool isLessOrEqual(const T a, const T b) const {
     return (
       (a < b) || Detail::isCloseRelativeOrAbsolute(
         a,
@@ -231,7 +231,7 @@ public:
     );
   }
 
-  PURITY_STRONG constexpr bool isMoreOrEqual(const T a, const T b) const {
+  constexpr bool isMoreOrEqual(const T a, const T b) const {
     return (
       (a > b) || Detail::isCloseRelativeOrAbsolute(
         a,
@@ -242,7 +242,7 @@ public:
     );
   }
 
-  PURITY_STRONG constexpr bool isEqual(const T a, const T b) const {
+  constexpr bool isEqual(const T a, const T b) const {
     return Detail::isCloseRelativeOrAbsolute(
       a,
       b,
@@ -251,7 +251,7 @@ public:
     );
   }
 
-  PURITY_STRONG constexpr bool isUnequal(const T a, const T b) const {
+  constexpr bool isUnequal(const T a, const T b) const {
     return !Detail::isCloseRelativeOrAbsolute(
       a,
       b,
@@ -261,7 +261,7 @@ public:
   }
 
   //! Function call operator compares equality
-  PURITY_STRONG constexpr bool operator () (const T a, const T b) const noexcept {
+  constexpr bool operator () (const T a, const T b) const noexcept {
     return isEqual(a, b);
   }
 };

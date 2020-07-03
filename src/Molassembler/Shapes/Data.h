@@ -102,7 +102,7 @@ MASM_EXPORT std::string spaceFreeName(Shape shape);
  *
  * @complexity{@math{\Theta(1)}}
  */
-PURITY_STRONG MASM_EXPORT unsigned size(const Shape shape);
+MASM_EXPORT unsigned size(const Shape shape);
 
 /*! @brief Fetches a shape's list of rotations
  *
@@ -132,13 +132,13 @@ MASM_EXPORT Coordinates coordinates(const Shape shape);
  *
  * @complexity{@math{\Theta(1)}}
  */
-PURITY_STRONG MASM_EXPORT PointGroup pointGroup(const Shape shape);
+MASM_EXPORT PointGroup pointGroup(const Shape shape);
 
 /*! @brief Returns the index of a shape within allShapes
  *
  * @complexity{@math{\Theta(S)}}
  */
-PURITY_STRONG MASM_EXPORT unsigned nameIndex(Shape shape);
+MASM_EXPORT unsigned nameIndex(Shape shape);
 
 /*! @brief Fetches the list of tetrahedra defined in a shape
  *
@@ -150,7 +150,7 @@ MASM_EXPORT const TetrahedronList& tetrahedra(const Shape shape);
  *
  * @complexity{@math{\Theta(1)}}
  */
-PURITY_STRONG MASM_EXPORT bool threeDimensional(const Shape shape);
+MASM_EXPORT bool threeDimensional(const Shape shape);
 
 } // namespace Shapes
 } // namespace Molassembler
