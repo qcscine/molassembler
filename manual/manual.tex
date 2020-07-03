@@ -272,11 +272,11 @@ with \texttt{pip}:
 python3 -m pip install conan
 \end{Verbatim}
 
-\textsc{Molassembler} packages are distributed on a research group-internal
-remote. You can add this remote with:
+\textsc{Molassembler} packages are distributed from our research group's remote.
+You can add this remote with:
 
 \begin{Verbatim}
-conan remote add scine scine.ethz.ch/artifactory/api/conan/scine
+conan remote add scine https://scine-artifactory.ethz.ch/artifactory/api/conan/public
 \end{Verbatim}
 
 Before we install \textsc{Molassembler}, consider the options the package 
@@ -302,8 +302,7 @@ conan install scine_molassembler/1.0.0@scine/stable
 Changes to default options can be supplied right after \texttt{conan install}
 with \texttt{-o scine\_molassembler:<option>=<value>}.
 
-For instance, if you want to build the python bindings, your install command
-will be:
+For instance, if you want python bindings, your install command will be:
 
 \begin{Verbatim}
 conan install -o scine_molassembler:python=True scine_molassembler/1.0.0@scine/stable
@@ -337,16 +336,6 @@ libboost-all-dev
 libeigen3-dev
 \end{Verbatim}
 
-\textsc{Molassembler} depends on further libraries that are distributed along or
-downloaded at configure time.
-
-\begin{itemize}
-  \item RingDecomposerLib~\cite{Flachsenberg2017, Kolodzik2012} 
-  \item nauty~\cite{McKay2014}
-  \item JSON For Modern C++~\cite{Lohmann2013} 
-  \item SCINE Utilities~\cite{Brunken2019}
-\end{itemize}
-  
 Either directly clone the repository with \texttt{git} or extract a downloaded
 archive. Navigate to the source directory and execute the following:
 
@@ -380,6 +369,16 @@ make install
 
 In case you need support with the setup of \textsc{Molassembler}, please contact
 us by writing to \href{mailto:scine@phys.chem.ethz.ch}{scine@phys.chem.ethz.ch}.
+
+Note that \textsc{Molassembler} depends on further libraries that are
+distributed along or downloaded at configure time:
+
+\begin{itemize}
+  \item RingDecomposerLib~\cite{Flachsenberg2017, Kolodzik2012} 
+  \item nauty~\cite{McKay2014}
+  \item JSON For Modern C++~\cite{Lohmann2013} 
+  \item SCINE Utilities~\cite{Brunken2019}
+\end{itemize}
 
 
 \chapter{Using the C++ library}
@@ -463,8 +462,8 @@ publication of results obtained with \textsc{Molassembler}.
 % J.-G.~Sobez, M.~Reiher. qcscine/molassembler: Release 1.0.0 (Version 1.0.0), Zenodo, 2020. DOI
 
 J.-G.~Sobez, M.~Reiher. Molassembler: Molecular graph construction, modification
-and conformer generation for inorganic and organic molecules, J. Chem. Inf.
-Model., \textit{submitted}.
+and conformer generation for inorganic and organic molecules, \textit{J. Chem. Inf.
+Model.}, \href{https://doi.org/10.1021/acs.jcim.0c00503}{DOI}.
 
 
 
