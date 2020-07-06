@@ -45,7 +45,7 @@ enum class MASM_EXPORT BondDiscretizationOption {
 };
 
 //! Type used to represent a map from an atom collection index to an interpreted object
-struct ComponentMap {
+struct MASM_EXPORT ComponentMap {
   struct ComponentIndexPair {
     //! Index of component
     unsigned component;
