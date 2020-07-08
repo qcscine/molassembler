@@ -5,14 +5,14 @@ set(PYBIND11_PYTHON_VERSION ${PYTHONVERSION})
 file(GLOB_RECURSE MOLASSEMBLER_PYTHON_CPPS ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp)
 
 # Python module
-pybind11_add_module(molassembler_python ${MOLASSEMBLER_PYTHON_CPPS})
-set_target_properties(molassembler_python PROPERTIES
+pybind11_add_module(scine_molassembler ${MOLASSEMBLER_PYTHON_CPPS})
+set_target_properties(scine_molassembler PROPERTIES
   LIBRARY_OUTPUT_NAME "scine_molassembler"
   LIBRARY_OUTPUT_DIRECTORY "scine_molassembler"
 )
-target_include_directories(molassembler_python SYSTEM PRIVATE ${pybind11_INCLUDE_DIR} ${PYBIND11_INCLUDE_DIR})
-target_compile_options(molassembler_python PRIVATE ${MOLASSEMBLER_CXX_FLAGS})
-target_link_libraries(molassembler_python PRIVATE ${MOLASSEMBLER_STATIC_TARGET} Eigen3::Eigen)
+target_include_directories(scine_molassembler SYSTEM PRIVATE ${pybind11_INCLUDE_DIR} ${PYBIND11_INCLUDE_DIR})
+target_compile_options(scine_molassembler PRIVATE ${MOLASSEMBLER_CXX_FLAGS})
+target_link_libraries(scine_molassembler PRIVATE ${MOLASSEMBLER_STATIC_TARGET} Eigen3::Eigen)
 
 include(FindPythonModule)
 find_python_module(pytest)
@@ -49,12 +49,12 @@ if(PY_PIP)
   if("${_utils_libtype}" STREQUAL "SHARED_LIBRARY")
     # Overwrite the python module's RPATH to ensure it looks in its directory
     if(APPLE)
-      set_target_properties(molassembler_python PROPERTIES
+      set_target_properties(scine_molassembler PROPERTIES
         BUILD_WITH_INSTALL_RPATH ON
         INSTALL_RPATH "@loader_path;@loader_path/../lib"
       )
     elseif(UNIX)
-      set_target_properties(molassembler_python PROPERTIES
+      set_target_properties(scine_molassembler PROPERTIES
         BUILD_WITH_INSTALL_RPATH ON
         INSTALL_RPATH "\$ORIGIN;\$ORIGIN/../lib"
       )
@@ -62,7 +62,7 @@ if(PY_PIP)
 
     # Copy Utils and Core (this works regardless of whether they are imported
     # or build in-tree)
-    add_custom_command(TARGET molassembler_python POST_BUILD
+    add_custom_command(TARGET scine_molassembler POST_BUILD
       COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:Scine::UtilsOS> $<TARGET_FILE:Scine::Core> ${CMAKE_CURRENT_BINARY_DIR}/scine_molassembler
       COMMENT "Copying dependent shared libraries into python package directory"
     )
@@ -97,71 +97,13 @@ else()
   cmessage(WARNING "The Python bindings will not be installed since the python module pip is unavailable.")
 endif()
 
-if(SCINE_BUILD_DOCS)
-  find_python_module(sphinx)
-  if(PY_SPHINX)
-    if(scine-utils-os_BINARY_DIR)
-      set(SCINE_UTILS_PYTHON_BINARY_PATH ${scine-utils-os_BINARY_DIR}/src/Utils)
-      file(RELATIVE_PATH INTERSPHINX_PATH ${CMAKE_CURRENT_BINARY_DIR}/sphinx ${SCINE_UTILS_PYTHON_BINARY_PATH}/doc)
-      set(INTERSPHINX_MAPPING "\"utils\": (\"${INTERSPHINX_PATH}\", None)")
-    else()
-      set(INTERSPHINX_MAPPING "")
-    endif()
-
-    file(
-      COPY ${CMAKE_CURRENT_SOURCE_DIR}/sphinx
-      DESTINATION ${CMAKE_CURRENT_BINARY_DIR}
-    )
-
-    configure_file(
-      ${CMAKE_CURRENT_SOURCE_DIR}/sphinx/conf.py.in
-      ${CMAKE_CURRENT_BINARY_DIR}/sphinx/conf.py
-      @ONLY
-    )
-
-    file(GLOB_RECURSE MOLASSEMBLER_PYTHON_DOC_FILES ${CMAKE_CURRENT_SOURCE_DIR}/sphinx/*.rst)
-
-    add_custom_target(PythonDocumentation
-      ALL
-      COMMAND ${PYTHON_EXECUTABLE} -m sphinx -b html -a -E "sphinx" "doc"
-      DEPENDS molassembler_python
-      SOURCES ${MOLASSEMBLER_PYTHON_DOC_FILES} ${CMAKE_CURRENT_SOURCE_DIR}/sphinx/conf.py
-      COMMENT "Generate python bindings documentation with sphinx"
-    )
-
-    if(scine-utils-os_BINARY_DIR)
-      add_dependencies(PythonDocumentation UtilsPythonDoc)
-    endif()
-
-    install(
-      DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/doc/
-      DESTINATION share/doc/molassembler/python
-      MESSAGE_NEVER
-      OPTIONAL
-    )
-
-    find_python_module(doctest)
-    if(PY_DOCTEST)
-      find_python_module(scine_utilities)
-      if(PY_SCINE_UTILITIES OR SCINE_UTILS_PYTHON_BINARY_PATH)
-        add_test(
-          NAME PythonBindingsDoctest
-          COMMAND ${PYTHON_EXECUTABLE} -c "import sys, doctest, scine_molassembler; (f, _) = doctest.testmod(scine_molassembler); sys.exit(f > 0)"
-          WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-        )
-
-        if(SCINE_UTILS_PYTHON_BINARY_PATH)
-          set_tests_properties(PythonBindingsDoctest PROPERTIES
-            ENVIRONMENT PYTHONPATH=${SCINE_UTILS_PYTHON_BINARY_PATH}:$ENV{PYTHONPATH}
-          )
-        endif()
-      else()
-        cmessage(WARNING "Python documentation testing is disabled as the scine_utilities module cannot be found and is not being built in-tree")
-      endif()
-    else()
-      cmessage(WARNING "Python documentation testing is disabled as doctest cannot be found")
-    endif()
-  else()
-    cmessage(WARNING "The Python binding documentation will not be built as sphinx cannot be found")
-  endif()
-endif()
+include(SphinxDocumentation)
+scine_sphinx_documentation(
+  TARGET scine_molassembler
+  CONFIGURATION ${CMAKE_CURRENT_SOURCE_DIR}/sphinx/conf.py.in
+  SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/sphinx
+  OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/doc
+  LINK UtilsPythonDoc
+  DOCTEST
+  DOCTEST_REQUIRES scine_utilities
+)

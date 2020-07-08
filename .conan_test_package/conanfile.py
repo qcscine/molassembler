@@ -15,7 +15,7 @@ class TestPackageConan(ConanFile):
 
     def build_requirements(self):
         if not tools.which("cmake") or CMake.get_version() < "3.13.4":
-            self.build_requires("cmake_installer/[~=3.13.4]@conan/stable")
+            self.build_requires("cmake/[>3.13.4]@scine/stable")
 
     def _configure(self):
         if self._cmake:
