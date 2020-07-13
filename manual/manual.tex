@@ -336,8 +336,19 @@ libboost-all-dev
 libeigen3-dev
 \end{Verbatim}
 
-Either directly clone the repository with \texttt{git} or extract a downloaded
-archive. Navigate to the source directory and execute the following:
+First, we must get a complete set of source files. You can get a complete set of
+files with:
+\begin{Verbatim}
+git clone -{}-recursive https://github.com/qcscine/molassembler.git
+\end{Verbatim} 
+or by extracting a downloaded
+release archive and executing 
+\begin{Verbatim}
+git clone https://github.com/qcscine/development-utils.git
+\end{Verbatim} within the
+\texttt{molassembler} folder.
+
+Next, we'll get to configuring the source build:
 
 \begin{Verbatim}
 mkdir build install
@@ -384,9 +395,9 @@ distributed along or downloaded at configure time:
 \chapter{Using the C++ library}
 
 \textsc{Molassembler} provides a
-\href{https://scine.ethz.ch/download/molassembler/doc-cpp}{\texttt{Doxygen}
+\href{https://scine.ethz.ch/static/download/documentation/molassembler/v1.0.0/cpp}{\texttt{Doxygen}
 technical
-documentation}\footnote{\texttt{scine.ethz.ch/download/molassembler/doc-cpp}}
+documentation}\footnote{\texttt{scine.ethz.ch/download/molassembler}}
 which documents the available functions in detail and also provides an overview
 of the available functionality. Here, we will only go into detail in how to link
 \textsc{Molassembler} into a new project with \texttt{CMake}.
@@ -432,8 +443,9 @@ where \texttt{<version>} is the Python version you are using (\textit{e.g.},
 3.6) and \texttt{<install directory>} is where you installed
 \textsc{Molassembler}. Now you can simply import the module and use it just
 like any other Python module. All functionality available in the Python module
-is \href{https://scine.ethz.ch/download/molassembler/doc-py}{documented with
-examples}\footnote{\texttt{scine.ethz.ch/download/molassembler/doc-py}}. You can
+is
+\href{https://scine.ethz.ch/static/download/documentation/molassembler/v1.0.0/py}{documented with
+examples}\footnote{\texttt{scine.ethz.ch/download/molassembler}}. You can
 interactively explore the available functionality in an interactive Python shell
 using the \texttt{help} and \texttt{dir} Python functions:
 

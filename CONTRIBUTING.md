@@ -2,7 +2,7 @@
 
 ## Code style
 
-Molassembler follows SCINE code style convention.
+Molassembler follows SCINE code style conventions.
 
 ### signed vs unsigned
 Molassembler prefers unsigned integers for container element indices (follow
@@ -22,5 +22,5 @@ are used in subtractions, `static_cast` them beforehand!
 Try to follow the C++ Core Guidelines.
 
 ### Formatting
-Unenforced since I currently have my own idiosyncratic formatting style that I
-think clang-format doesn't support. I try to keep the code 80-char wide at most.
+Unenforced, follows my own idiosyncratic formatting style that I think
+clang-format doesn't support. I try to keep the code 80-char wide.

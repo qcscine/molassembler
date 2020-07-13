@@ -73,5 +73,5 @@ Core features
 
    issues
    changelog
-   C++ API <https://scine.ethz.ch/download/molassembler/doc-cpp/index.html>
+   C++ API <https://scine.ethz.ch/static/download/documentation/molassembler/v1.0.0/cpp/index.html>
    genindex
