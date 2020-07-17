@@ -133,7 +133,20 @@ Eigen::Hyperplane<double, 3> planeOfBestFit(const Utils::PositionCollection& pos
   return {decomposition.matrixU().rightCols(1), centroid};
 }
 
-double rmsPlaneDeviation(
+double planeRmsd(
+  const Eigen::Hyperplane<double, 3>& plane,
+  const Utils::PositionCollection& positions,
+  const std::vector<AtomIndex>& indices
+) {
+  const unsigned I = indices.size();
+  double sumOfSquares = 0.0;
+  for(unsigned i = 0; i < I; ++i) {
+    sumOfSquares += std::pow(plane.signedDistance(positions.row(indices[i])), 2);
+  }
+  return std::sqrt(sumOfSquares / I);
+}
+
+double planeOfBestFitRmsd(
   const Utils::PositionCollection& positions,
   const std::vector<AtomIndex>& indices
 ) {
@@ -149,13 +162,7 @@ double rmsPlaneDeviation(
   }
 
   const Eigen::Hyperplane<double, 3> plane = planeOfBestFit(relevantPositions);
-
-  // Calculate the RMS
-  double sumOfSquares = 0.0;
-  for(unsigned i = 0; i < I; ++i) {
-    sumOfSquares += std::pow(plane.signedDistance(positions.row(indices[i])), 2);
-  }
-  return std::sqrt(sumOfSquares / I);
+  return planeRmsd(plane, positions, indices);
 }
 
 } // namespace Cartesian

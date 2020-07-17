@@ -77,6 +77,12 @@ Eigen::Hyperplane<double, 3> planeOfBestFit(
   const Utils::PositionCollection& positions
 );
 
+double planeRmsd(
+  const Eigen::Hyperplane<double, 3>& plane,
+  const Utils::PositionCollection& positions,
+  const std::vector<AtomIndex>& indices
+);
+
 /*! @brief Fits a plane to indices and calculates its rms deviation
  *
  * @param positions Full set of positions
@@ -85,7 +91,7 @@ Eigen::Hyperplane<double, 3> planeOfBestFit(
  * @complexity{Performs a singular value decomposition. At least linear in the
  * number of indices.}
  */
-double rmsPlaneDeviation(
+double planeOfBestFitRmsd(
   const Utils::PositionCollection& positions,
   const std::vector<AtomIndex>& indices
 );

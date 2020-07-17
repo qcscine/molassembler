@@ -18,6 +18,7 @@
 #include "Molassembler/Shapes/ContinuousMeasures.h"
 #include "Molassembler/Temple/Adaptors/AllPairs.h"
 #include "Molassembler/Temple/Functional.h"
+#include "Molassembler/Temple/Optionals.h"
 
 #include <Eigen/Geometry>
 
@@ -43,14 +44,19 @@ double vectorAngle(const Eigen::Vector3d& a, const Eigen::Vector3d& b) {
   );
 }
 
-double hapticPlaneAngle(
+struct HapticPlaneGeometry {
+  double angle;
+  double rmsd;
+};
+
+HapticPlaneGeometry hapticPlaneGeometry(
   const std::vector<Utils::Position> positions,
   const AtomIndex v,
   const std::vector<AtomIndex>& site
 ) {
   const unsigned siteSize = site.size();
 
-  assert(siteSize >= 1 && "Passed hapticPlaneAngle a non-haptic site!");
+  assert(siteSize >= 1 && "Passed hapticPlaneGeometry a non-haptic site!");
 
   Eigen::Vector3d siteCentroid = Eigen::Vector3d::Zero();
   for(AtomIndex siteAtom : site) {
@@ -69,7 +75,11 @@ double hapticPlaneAngle(
       siteCentroid,
       positions.at(site.back())
     );
-    return M_PI / 2.0 - std::min(frontAngle, backAngle);
+
+    return HapticPlaneGeometry {
+      M_PI / 2.0 - std::min(frontAngle, backAngle),
+      0.0
+    };
   }
 
   const Eigen::Vector3d centroidAxis = siteCentroid - positions.at(v).transpose();
@@ -81,7 +91,10 @@ double hapticPlaneAngle(
   const auto plane = Cartesian::planeOfBestFit(hapticAtoms);
   const double firstAngle = vectorAngle(plane.normal(), centroidAxis);
   const double secondAngle = vectorAngle(plane.normal(), -centroidAxis);
-  return std::min(firstAngle, secondAngle);
+  return HapticPlaneGeometry {
+    std::min(firstAngle, secondAngle),
+    Cartesian::planeRmsd(plane, hapticAtoms, Temple::iota<AtomIndex>(siteSize))
+  };
 }
 
 boost::optional<double> minimumClassificationProbability(
@@ -137,25 +150,29 @@ boost::optional<double> minimumClassificationProbability(
   return boost::none;
 }
 
-std::pair<AtomIndex, double> bestRemovalFromHapticSite(
+struct BestRemovals {
+  std::vector<AtomIndex> removals;
+  double certainty;
+};
+
+boost::optional<BestRemovals> bestRemovalFromHapticSite(
   const PrivateGraph& graph,
   const std::vector<Utils::Position>& positions,
   const AtomIndex v,
-  const std::vector<std::vector<AtomIndex>> sites,
+  const std::vector<std::vector<AtomIndex>>& sites,
   const unsigned hapticSiteIndex
 ) {
-  using AtomProbabilityPair = std::pair<AtomIndex, double>;
   const unsigned S = sites.size();
   const std::vector<AtomIndex>& hapticSite = sites.at(hapticSiteIndex);
   const unsigned hapticSiteSize = hapticSite.size();
   return Temple::accumulate(
     hapticSite,
-    AtomProbabilityPair {1000, 0.0},
-    [&](const auto& carry, const AtomIndex siteVertexToRemove) -> AtomProbabilityPair {
+    boost::optional<BestRemovals>(boost::none),
+    [&](const auto& carry, const AtomIndex siteVertexToRemove) -> boost::optional<BestRemovals> {
       auto graphCopy = graph;
       graphCopy.removeEdge(graphCopy.edge(v, siteVertexToRemove));
       GraphAlgorithms::updateEtaBonds(graphCopy);
-      auto newSites = GraphAlgorithms::sites(graphCopy, v);
+      const auto newSites = GraphAlgorithms::sites(graphCopy, v);
 
       /* Possible effects of bond removal
        * - Separating a haptic ligand into two single-atom ligands,
@@ -166,22 +183,23 @@ std::pair<AtomIndex, double> bestRemovalFromHapticSite(
        * - Improves the haptic plane angle by removing a bad bond
        *   - recognized by matching sites and comparing angles
        *   - accept if angle halves
-       * - How to compare cases?
+       *
+       * How to compare cases?
        */
       if(newSites.size() > S) {
-        auto priorCertainty = minimumClassificationProbability(graph, positions, v);
-        auto posteriorCertainty = minimumClassificationProbability(graphCopy, positions, v);
+        const auto priorCertainty = minimumClassificationProbability(graph, positions, v);
+        const auto posteriorCertainty = minimumClassificationProbability(graphCopy, positions, v);
 
         if(priorCertainty && posteriorCertainty) {
           if(
             posteriorCertainty.value() <= 0.01
             || posteriorCertainty.value() <= 0.5 * priorCertainty.value()
           ) {
-            return AtomProbabilityPair {siteVertexToRemove, 1 - *posteriorCertainty};
+            return BestRemovals {{siteVertexToRemove}, 1 - *posteriorCertainty};
           }
         }
       } else {
-        auto siteFindIter = Temple::find_if(
+        const auto siteFindIter = Temple::find_if(
           newSites,
           [&](const auto& newSite) -> bool {
             if(newSite.size() != hapticSiteSize - 1) {
@@ -204,10 +222,13 @@ std::pair<AtomIndex, double> bestRemovalFromHapticSite(
         );
 
         if(siteFindIter != std::end(newSites)) {
-          const double newHapticAngle = hapticPlaneAngle(positions, v, *siteFindIter);
-          const double newHapticAngleNormalized = 1 - newHapticAngle * 2 / M_PI;
-          if(newHapticAngleNormalized > carry.second) {
-            return AtomProbabilityPair {siteVertexToRemove, newHapticAngleNormalized};
+          const double newHapticAngle = hapticPlaneGeometry(positions, v, *siteFindIter).angle;
+          const double newHapticAngleCertainty = 1 - newHapticAngle * 2 / M_PI;
+          const double carryCertainty = Temple::Optionals::map(carry,
+            [](const auto& removal) { return removal.certainty; }
+          ).value_or(0.0);
+          if(newHapticAngleCertainty > carryCertainty) {
+            return BestRemovals {{siteVertexToRemove}, newHapticAngleCertainty};
           }
         }
       }
@@ -672,7 +693,8 @@ std::vector<FalsePositive> badHapticLigandBonds(
 
     for(const PrivateGraph::Vertex v : part.graph.vertices()) {
       /* Detect haptic shape planes with large angles to the axis defined by the
-       * site position and the central atom
+       * site position and the central atom or with high rms deviations on
+       * their plane fit
        */
       const auto sites = GraphAlgorithms::sites(part.graph, v);
       const unsigned S = sites.size();
@@ -683,8 +705,10 @@ std::vector<FalsePositive> badHapticLigandBonds(
           continue;
         }
 
-        const double angle = hapticPlaneAngle(part.angstromPositions, v, site);
-        if(angle < M_PI / 6) {
+        const auto geometry = hapticPlaneGeometry(part.angstromPositions, v, site);
+
+        // Less than 30° and a good plane fit indicate the haptic site is fine
+        if(geometry.angle < M_PI / 6 && geometry.rmsd < 0.2) {
           continue;
         }
 
@@ -706,26 +730,28 @@ std::vector<FalsePositive> badHapticLigandBonds(
             parts.componentMap.invert(
               ComponentMap::ComponentIndexPair {component, toRemove}
             ),
-            angle * 2 / M_PI
+            geometry.angle * 2 / M_PI
           );
         } else {
-          const auto suggestedRemoval = bestRemovalFromHapticSite(
+          const auto suggestedRemovalOption = bestRemovalFromHapticSite(
             part.graph,
             part.angstromPositions,
             v,
             sites,
             siteIndex
           );
-          if(suggestedRemoval.first != 1000) {
-            addFalsePositive(
-              parts.componentMap.invert(
-                ComponentMap::ComponentIndexPair {component, v}
-              ),
-              parts.componentMap.invert(
-                ComponentMap::ComponentIndexPair {component, suggestedRemoval.first}
-              ),
-              suggestedRemoval.second
-            );
+          if(suggestedRemovalOption) {
+            for(const AtomIndex w : suggestedRemovalOption->removals) {
+              addFalsePositive(
+                parts.componentMap.invert(
+                  ComponentMap::ComponentIndexPair {component, v}
+                ),
+                parts.componentMap.invert(
+                  ComponentMap::ComponentIndexPair {component, w}
+                ),
+                suggestedRemovalOption->certainty
+              );
+            }
           }
         }
       }

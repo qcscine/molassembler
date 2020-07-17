@@ -18,19 +18,24 @@ namespace Temple {
 namespace Loops {
 namespace Detail {
 
-template<typename T, typename F>
-void different(F&& f, const unsigned depth, const T start, const T end, std::vector<T>& indices) {
+template<typename T, typename F, typename Predicate>
+void descend(
+  F&& f,
+  Predicate&& p,
+  const unsigned depth,
+  const T start,
+  const T end,
+  std::vector<T>& indices
+) {
   if(depth == 0) {
     f(indices);
     return;
-  } else {
-    const unsigned I = indices.size() - depth;
-    for(indices[I] = start; indices[I] < end; ++indices[I]) {
-      if(std::find(std::begin(indices), std::begin(indices) + I, indices[I]) != std::begin(indices) + I) {
-        continue;
-      }
+  }
 
-      different(f, depth - 1, start, end, indices);
+  const unsigned I = indices.size() - depth;
+  for(indices[I] = start; indices[I] < end; ++indices[I]) {
+    if(p(std::begin(indices), std::begin(indices) + I, indices[I])) {
+      descend(f, p, depth - 1, start, end, indices);
     }
   }
 }
@@ -45,6 +50,10 @@ void different(F&& f, const unsigned depth, const T start, const T end, std::vec
  */
 template<typename T, typename F>
 void different(F&& f, const unsigned count, const T start, const T end) {
+  auto descentPredicate = [](auto first, auto last, const T i) -> bool {
+    return std::find(first, last, i) == last;
+  };
+
   if(count == 0) {
     throw std::logic_error("Zero loop indices makes no sense");
   }
@@ -55,7 +64,7 @@ void different(F&& f, const unsigned count, const T start, const T end) {
 
   std::vector<T> indices(count, start);
   for(; indices[0] < end; ++indices[0]) {
-    Detail::different(f, count - 1, start, end, indices);
+    Detail::descend(f, descentPredicate, count - 1, start, end, indices);
   }
 }
 
