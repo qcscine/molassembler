@@ -43,10 +43,10 @@ using PRNG = Temple::JSF64;
 struct Recognizer {
   virtual ~Recognizer() = default;
 
-  /*! @brief Figure out which symmetry is present
+  /*! @brief Figure out which shape is present
    *
-   * @param positions Positions of all particles of the symmetry. The first
-   * column is the central particle of the symmetry.
+   * @param positions Positions of all particles of the shape. The first
+   * column is the central particle of the shape.
    */
   virtual Shapes::Shape identify(const Positions& positions) const = 0;
   virtual std::string name() const = 0;
@@ -68,7 +68,7 @@ struct AngularDeviation {
         const auto angleFunction = Shapes::angleFunction(name);
 
         /* Minimize angular deviations over all rotations of maximally
-         * asymmetric symmetry case
+         * asymmetric shape case
          */
         const double penalty = Temple::accumulate(
           Shapes::Properties::generateAllRotations(name, Temple::iota<Shapes::Vertex>(S)),
@@ -164,27 +164,27 @@ struct AngularDeviationGeometryIndexHybrid final : public Recognizer {
 
       if(S == 4) {
         /* Thresholds
-         * - τ₄' = 0 -> Symmetry is square planar
-         * - τ₄' = 0.24 -> Symmetry is seesaw
-         * - τ₄' = 1 -> Symmetry is tetrahedral
+         * - τ₄' = 0 -> shape is square planar
+         * - τ₄' = 0.24 -> shape is seesaw
+         * - τ₄' = 1 -> shape is tetrahedral
          */
         if(tau < 0.12) {
-          // Symmetry is square planar
+          // shape is square planar
           excludedSymmetries.push_back(Shapes::Shape::Seesaw);
           excludedSymmetries.push_back(Shapes::Shape::Tetrahedron);
         } else if(0.12 <= tau && tau < 0.62) {
           excludedSymmetries.push_back(Shapes::Shape::Square);
-          // Symmetry is seesaw
+          // shape is seesaw
           excludedSymmetries.push_back(Shapes::Shape::Tetrahedron);
         } else if(0.62 <= tau) {
           excludedSymmetries.push_back(Shapes::Shape::Square);
           excludedSymmetries.push_back(Shapes::Shape::Seesaw);
-          // Symmetry is tetrahedral
+          // shape is tetrahedral
         }
       } else if(S == 5) {
         /* Thresholds:
-         * - τ₅ = 0 -> Symmetry is square pyramidal
-         * - τ₅ = 1 -> Symmetry is trigonal bipyramidal
+         * - τ₅ = 0 -> shape is square pyramidal
+         * - τ₅ = 1 -> shape is trigonal bipyramidal
          */
 
         if(tau < 0.5) {
@@ -205,7 +205,7 @@ struct AngularDeviationGeometryIndexHybrid final : public Recognizer {
         const auto angleFunction = Shapes::angleFunction(name);
 
         /* Minimize angular deviations over all rotations of maximally
-         * asymmetric symmetry case
+         * asymmetric shape case
          */
         const double penalty = Temple::accumulate(
           Shapes::Properties::generateAllRotations(name, Temple::iota<Shapes::Vertex>(S)),
@@ -598,6 +598,74 @@ struct CShMPathDevBiased final : public Recognizer {
   }
 };
 
+struct ShapeDistribution final : public Recognizer {
+  Shapes::Shape identify(const Positions& positions) const final {
+    const unsigned S = positions.cols() - 1;
+
+    Positions normalized = Shapes::Continuous::normalize(positions);
+    std::vector<Shapes::Shape> viableShapes;
+    for(const Shapes::Shape shape : Shapes::allShapes) {
+      if(Shapes::size(shape) == S) {
+        viableShapes.push_back(shape);
+      }
+    }
+    const unsigned shapesCount = viableShapes.size();
+    std::vector<Shapes::Continuous::ShapeResult> shapeMeasureResults (shapesCount);
+    std::vector<boost::optional<double>> randomCloudProbabilities (shapesCount);
+
+    for(unsigned i = 0; i < shapesCount; ++i) {
+      const Shapes::Shape candidateShape = viableShapes[i];
+      shapeMeasureResults[i] = Shapes::Continuous::shapeCentroidLast(normalized, candidateShape);
+      // Shape classification for size 2 is better based on continuous shape measures themselves
+      if(Shapes::size(candidateShape) > 2) {
+        randomCloudProbabilities[i] = Shapes::Continuous::probabilityRandomCloud(shapeMeasureResults[i].measure, candidateShape);
+      }
+    }
+
+    // Ensure centroids are mapped against one another
+    assert(
+      Temple::all_of(
+        shapeMeasureResults,
+        [](const auto& shapeResult) -> bool {
+          assert(!shapeResult.mapping.empty());
+          return shapeResult.mapping.back() == shapeResult.mapping.size() - 1;
+        }
+      )
+    );
+
+    // Prefer probabilities for comparison
+    if(Temple::all_of(randomCloudProbabilities)) {
+      const auto minElementIter = std::min_element(
+        std::begin(randomCloudProbabilities),
+        std::end(randomCloudProbabilities),
+        [](const boost::optional<double>& a, const boost::optional<double>& b) -> double {
+          // We know all optionals are Somes from the previous all_of call
+          return a.value() < b.value();
+        }
+      );
+      const unsigned minimalShapeIndex = minElementIter - std::begin(randomCloudProbabilities);
+      const Shapes::Shape minimalShape = viableShapes.at(minimalShapeIndex);
+      return minimalShape;
+    }
+
+    // Fall back to minimal shape measure
+    const auto minElementIter = std::min_element(
+      std::begin(shapeMeasureResults),
+      std::end(shapeMeasureResults),
+      [](const auto& a, const auto& b) -> bool {
+        return a.measure < b.measure;
+      }
+    );
+    const unsigned minimalShapeIndex = minElementIter - std::begin(shapeMeasureResults);
+    const Shapes::Shape minimalShape = viableShapes.at(minimalShapeIndex);
+    return minimalShape;
+  }
+
+  std::string name() const final {
+    return "CShM distr";
+  }
+};
+
 struct Random final : public Recognizer {
   std::reference_wrapper<PRNG> prngRef;
 
@@ -642,13 +710,63 @@ void distort(Eigen::Ref<Positions> positions, const double distortionNorm, PRNG&
   }
 }
 
-using RecognizersTuple = boost::mpl::list<PureAngularDeviationSquare, AngularDeviationGeometryIndexHybrid, PureCSM, CShM, BiasedCShM, CShMPathDev>;
+using RecognizersTuple = boost::mpl::list<AngularDeviationGeometryIndexHybrid, CShM, BiasedCShM, ShapeDistribution>;
 constexpr std::size_t nRecognizers = boost::mpl::size<RecognizersTuple>::value;
 using RecognizersList = std::vector<std::unique_ptr<Recognizer>>;
 
 constexpr unsigned nDistortionValues = 11;
 constexpr unsigned nRepeats = 100;
 constexpr double maxDistortion = 1.0;
+
+struct PythonScriptWriter {
+  std::ofstream file;
+
+  PythonScriptWriter() : file("recognition_data.py") {}
+
+  void writeHeader(const RecognizersList& recognizers) {
+    file << "n_distortion_values = " << nDistortionValues << "\n";
+    file << "max_distortion = " << maxDistortion << "\n";
+    file << "repeats = " << nRepeats << "\n";
+    file << "shapes = [\"" << Temple::condense(
+      Temple::map(Shapes::allShapes, [](auto name) { return Shapes::name(name); }),
+      "\",\""
+    ) << "\"]\n";
+    file << "symmetrySizes = [" << Temple::condense(
+      Temple::map(Shapes::allShapes, [](auto name) { return Shapes::size(name); })
+    ) << "]\n";
+    file << "recognizers = [\"" << Temple::condense(Temple::map(recognizers, [](const auto& f) {return f->name();}), "\",\"") << "\"]\n";
+    file << "results = {}\n";
+  }
+
+  void writeSeed(int seed) {
+    file << "seed = " << seed << "\n";
+  }
+
+  void addResults(const Shapes::Shape name, const std::vector<std::vector<std::vector<Shapes::Shape>>>& results) {
+    const unsigned shapeIndex = Shapes::nameIndex(name);
+    for(unsigned recognizerIndex = 0; recognizerIndex < nRecognizers; ++recognizerIndex) {
+      const std::string array = (
+        Temple::condense(
+          Temple::map(
+            results.at(recognizerIndex),
+            [](const auto& distortionResult) {
+              return Temple::condense(
+                Temple::map(
+                  distortionResult,
+                  [](Shapes::Shape n) -> unsigned {
+                    return static_cast<std::underlying_type<Shapes::Shape>::type>(n);
+                  }
+                )
+              );
+            }
+          )
+        )
+      );
+
+      file << "results[(" << recognizerIndex << ", " << shapeIndex << ")] = " << array << "\n";
+    }
+  }
+};
 
 struct RScriptWriter {
   std::ofstream file;
@@ -676,7 +794,7 @@ struct RScriptWriter {
   }
 
   void addResults(const Shapes::Shape name, const std::vector<std::vector<std::vector<Shapes::Shape>>>& results) {
-    const unsigned symmetryIndex = Shapes::nameIndex(name);
+    const unsigned shapeIndex = Shapes::nameIndex(name);
     for(unsigned recognizerIndex = 0; recognizerIndex < nRecognizers; ++recognizerIndex) {
       const std::string array = (
         "array(c("
@@ -702,7 +820,7 @@ struct RScriptWriter {
         + "))"
       );
 
-      file << "results[,," << (recognizerIndex + 1) << ", " << (symmetryIndex + 1) << "] <- " << array << "\n";
+      file << "results[,," << (recognizerIndex + 1) << ", " << (shapeIndex + 1) << "] <- " << array << "\n";
     }
   }
 };
@@ -733,7 +851,7 @@ int main(int argc, char* argv[]) {
   boost::program_options::notify(options_variables_map);
 
   /* Manage parse results */
-  RScriptWriter scriptFile {};
+  PythonScriptWriter scriptFile {};
 
   std::vector<std::unique_ptr<Recognizer>> recognizerPtrs;
   boost::mpl::for_each<RecognizersTuple, boost::mpl::make_identity<boost::mpl::_1>>(
@@ -814,6 +932,6 @@ int main(int argc, char* argv[]) {
 
     scriptFile.addResults(name, recognizerCounts);
 
-    std::cout << "Symmetry: " << Shapes::name(name) << "\n";
+    std::cout << "Shape: " << Shapes::name(name) << "\n";
   }
 }
