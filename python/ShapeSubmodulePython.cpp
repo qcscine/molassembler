@@ -15,7 +15,21 @@ void init_shape_submodule(pybind11::module& m) {
   auto shapeSubmodule = m.def_submodule("shapes");
   shapeSubmodule.doc() = R"(Shape submodule)";
 
-  pybind11::enum_<Shapes::Shape> shapeEnum(shapeSubmodule, "Shape", "Shape enum");
+  pybind11::enum_<Shapes::Shape> shapeEnum(
+    shapeSubmodule,
+    "Shape",
+    R"delim(
+      Enumeration of recognizable polyhedral shapes
+
+      >>> all_shapes = Shape.__members__.values() # Full list of shapes
+      >>> Shape.SquareAntiprism in all_shapes
+      True
+      >>> Shape.__members__["TrigonalPrism"] # String lookup
+      Shape.TrigonalPrism
+      >>> str(Shape.TrigonalPrism) # displayable string
+      "trigonal prism"
+    )delim"
+  );
 
   shapeEnum.value("Line", Shapes::Shape::Line)
     .value("Bent", Shapes::Shape::Bent)
@@ -54,17 +68,44 @@ void init_shape_submodule(pybind11::module& m) {
     "name_from_str",
     &Shapes::nameFromString,
     pybind11::arg("name_str"),
-    "Fetch a shape name from its string representation"
+    R"delim(
+      Fetch a shape name from its string representation
+
+      >>> s = Shape.CappedSquareAntiprism
+      >>> str(s)
+      "capped square antiprism"
+      >>> name_from_str(str(s))
+      Shape.CappedSquareAntiprism
+    )delim"
   );
 
   shapeSubmodule.def(
     "size",
     &Shapes::size,
     pybind11::arg("shape"),
-    "Number of substituent positions in a shape"
+    R"delim(
+      Number of vertices of a shape. Does not include a centroid.
+
+      >>> size(Shape.Line)
+      2
+      >>> size(Shape.Octahedron)
+      6
+      >>> size(Shape.Cuboctahedron)
+      12
+    )delim"
+  );
+
+  shapeSubmodule.def(
+    "coordinates",
+    &Shapes::coordinates,
+    pybind11::arg("shape"),
+    "Idealized spherical coordinates of the shape"
   );
 
   auto continuousSubmodule = shapeSubmodule.def_submodule("continuous");
+  continuousSubmodule.doc() = R"delim(
+    Calculation of continuous shape or symmetry measures
+  )delim";
 
   continuousSubmodule.def(
     "normalize",

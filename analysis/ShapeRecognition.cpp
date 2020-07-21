@@ -601,8 +601,9 @@ struct CShMPathDevBiased final : public Recognizer {
 struct ShapeDistribution final : public Recognizer {
   Shapes::Shape identify(const Positions& positions) const final {
     const unsigned S = positions.cols() - 1;
-
-    Positions normalized = Shapes::Continuous::normalize(positions);
+    const Positions normalized = Shapes::Continuous::normalize(
+      positions.rowwise().reverse()
+    );
     std::vector<Shapes::Shape> viableShapes;
     for(const Shapes::Shape shape : Shapes::allShapes) {
       if(Shapes::size(shape) == S) {
@@ -615,10 +616,16 @@ struct ShapeDistribution final : public Recognizer {
 
     for(unsigned i = 0; i < shapesCount; ++i) {
       const Shapes::Shape candidateShape = viableShapes[i];
-      shapeMeasureResults[i] = Shapes::Continuous::shapeCentroidLast(normalized, candidateShape);
+      shapeMeasureResults[i] = Shapes::Continuous::shapeCentroidLast(
+        normalized,
+        candidateShape
+      );
       // Shape classification for size 2 is better based on continuous shape measures themselves
       if(Shapes::size(candidateShape) > 2) {
-        randomCloudProbabilities[i] = Shapes::Continuous::probabilityRandomCloud(shapeMeasureResults[i].measure, candidateShape);
+        randomCloudProbabilities[i] = Shapes::Continuous::probabilityRandomCloud(
+          shapeMeasureResults[i].measure,
+          candidateShape
+        );
       }
     }
 
@@ -637,11 +644,7 @@ struct ShapeDistribution final : public Recognizer {
     if(Temple::all_of(randomCloudProbabilities)) {
       const auto minElementIter = std::min_element(
         std::begin(randomCloudProbabilities),
-        std::end(randomCloudProbabilities),
-        [](const boost::optional<double>& a, const boost::optional<double>& b) -> double {
-          // We know all optionals are Somes from the previous all_of call
-          return a.value() < b.value();
-        }
+        std::end(randomCloudProbabilities)
       );
       const unsigned minimalShapeIndex = minElementIter - std::begin(randomCloudProbabilities);
       const Shapes::Shape minimalShape = viableShapes.at(minimalShapeIndex);
@@ -745,7 +748,7 @@ struct PythonScriptWriter {
   void addResults(const Shapes::Shape name, const std::vector<std::vector<std::vector<Shapes::Shape>>>& results) {
     const unsigned shapeIndex = Shapes::nameIndex(name);
     for(unsigned recognizerIndex = 0; recognizerIndex < nRecognizers; ++recognizerIndex) {
-      const std::string array = (
+      const std::string array = "[" +(
         Temple::condense(
           Temple::map(
             results.at(recognizerIndex),
@@ -761,7 +764,7 @@ struct PythonScriptWriter {
             }
           )
         )
-      );
+      ) + "]";
 
       file << "results[(" << recognizerIndex << ", " << shapeIndex << ")] = " << array << "\n";
     }
@@ -886,7 +889,7 @@ int main(int argc, char* argv[]) {
       break;
     }
 
-    unsigned symmetriesOfSameSize = Temple::accumulate(
+    const unsigned shapesOfSameSize = Temple::accumulate(
       Shapes::allShapes,
       0u,
       [&S](const unsigned carry, Shapes::Shape n) -> unsigned {
@@ -898,7 +901,7 @@ int main(int argc, char* argv[]) {
       }
     );
 
-    if(symmetriesOfSameSize == 1) {
+    if(shapesOfSameSize == 1) {
       continue;
     }
 
