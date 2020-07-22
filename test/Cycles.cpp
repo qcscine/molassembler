@@ -91,7 +91,7 @@ void readAndDecompose(const boost::filesystem::path& filePath) {
 
     BOOST_CHECK(!cycleSizes.empty());
 
-    Temple::InPlace::sort(cycleSizes);
+    Temple::sort(cycleSizes);
 
     BOOST_CHECK_MESSAGE(
       cycleSizes == findIter->second.cycleSizes,

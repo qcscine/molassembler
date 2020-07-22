@@ -167,7 +167,7 @@ struct NautySparseGraph {
      */
 
     // We use the hashes to order our vertices
-    lab = Temple::sort(
+    lab = Temple::sorted(
       Temple::iota<int>(nv),
       [&hashes](const int a, const int b) -> bool {
         return hashes.at(a) < hashes.at(b);

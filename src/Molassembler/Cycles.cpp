@@ -505,12 +505,12 @@ struct Cycles::UrfIdsCycleIterator::UrfHelper {
       return idsIntersection;
     }
 
-    Temple::InPlace::sort(idsIntersection);
+    Temple::sort(idsIntersection);
 
     // Continually intersect idsIntersection with the URF IDs of the next bond
     for(unsigned i = 1; i < bonds.size(); ++i) {
       auto newIDs = getURFs(bonds[i], dataPtrs);
-      Temple::InPlace::sort(newIDs);
+      Temple::sort(newIDs);
 
       idsIntersection = intersect(idsIntersection, newIDs);
 

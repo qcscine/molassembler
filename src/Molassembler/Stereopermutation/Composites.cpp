@@ -430,7 +430,7 @@ std::vector<Shapes::Vertex> Composite::generateRotation(
       }
     }
 
-    Temple::InPlace::sort(rotationIndexApplicationSequence);
+    Temple::sort(rotationIndexApplicationSequence);
 
     do {
       // Create the rotation using the index application sequence front-to-back
@@ -453,12 +453,12 @@ std::vector<Shapes::Vertex> Composite::generateRotation(
       }
     } while(
       !rotationFound
-      && Temple::InPlace::next_permutation(rotationIndexApplicationSequence)
+      && Temple::next_permutation(rotationIndexApplicationSequence)
     );
 
   } while(
     !rotationFound
-    && Temple::InPlace::nextCombinationPermutation(rotationUses, periodicities)
+    && Temple::nextCombinationPermutation(rotationUses, periodicities)
   );
 
   if(rotationFound) {
@@ -599,7 +599,7 @@ Composite::Composite(
       /* Order both AngleGroups' vertices by descending ranking and
        * index to get canonical initial combinations
        */
-      Temple::InPlace::sort(
+      Temple::sort(
         angleGroup.vertices,
         [&](const unsigned a, const unsigned b) -> bool {
           return (

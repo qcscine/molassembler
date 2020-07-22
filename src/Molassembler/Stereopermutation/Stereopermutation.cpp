@@ -48,7 +48,7 @@ Stereopermutation::Stereopermutation(
 
   // Fix unsorted links
   if(!std::is_sorted(std::begin(links), std::end(links))) {
-    Temple::InPlace::sort(links);
+    Temple::sort(links);
   }
 }
 
@@ -62,7 +62,7 @@ typename Stereopermutation::OrderedLinks Stereopermutation::permuteLinks(
     );
   };
 
-  return Temple::sort(
+  return Temple::sorted(
     Temple::map(
       links,
       [&](const auto& link) {

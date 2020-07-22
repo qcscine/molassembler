@@ -399,7 +399,7 @@ void MoleculeBuilder::setAtomStereo(
      */
     const unsigned S = Shapes::size(chiralData.shape);
     const RankingInformation& ranking = permutator.getRanking();
-    std::vector<SiteIndex> sortedSites = Temple::sort(
+    std::vector<SiteIndex> sortedSites = Temple::sorted(
       Temple::iota<SiteIndex>(S),
       [&](const SiteIndex a, const SiteIndex b) -> bool {
         return ranking.sites.at(a) < ranking.sites.at(b);

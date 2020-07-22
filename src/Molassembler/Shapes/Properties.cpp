@@ -97,7 +97,7 @@ unsigned rotationPeriodicity(
 }
 
 bool isRotation(const Permutation& rotation) {
-  return Temple::sort(rotation) == Temple::iota<Vertex>(rotation.size());
+  return Temple::sorted(rotation) == Temple::iota<Vertex>(rotation.size());
 }
 
 std::vector<std::vector<Vertex>> positionGroups(const Shapes::Shape shape) {
@@ -172,8 +172,8 @@ std::vector<std::vector<Vertex>> positionGroups(const Shapes::Shape shape) {
       }
 
       // Figure out which vertices from b's loop aren't yet in a
-      auto bLoopVertices = Temple::sort(loopVertices(b, i));
-      Temple::InPlace::sort(aLoopVertices);
+      auto bLoopVertices = Temple::sorted(loopVertices(b, i));
+      Temple::sort(aLoopVertices);
       std::vector<Vertex> bVerticesNotInA;
       std::set_difference(
         std::begin(bLoopVertices),
@@ -722,7 +722,7 @@ ShapeTransitionGroup selectBestTransitionMappings(
     )
   ).chiralDistortion;
 
-  Temple::InPlace::remove_if(
+  Temple::remove_if(
     viableDistortions,
     [&](const unsigned a) -> bool {
       return distortions.at(a).chiralDistortion > lowestChiralDistortion + floatingPointEqualityThreshold;
@@ -790,7 +790,7 @@ bool hasMultipleUnlinkedStereopermutations(
     std::make_move_iterator(std::end(initialRotations))
   };
 
-  while(Temple::InPlace::next_permutation(indices)) {
+  while(Temple::next_permutation(indices)) {
     if(rotations.count(indices) == 0) {
       return true;
     }

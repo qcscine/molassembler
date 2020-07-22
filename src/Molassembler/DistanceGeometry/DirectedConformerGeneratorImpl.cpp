@@ -264,7 +264,7 @@ DirectedConformerGenerator::Impl::Impl(
   }
 
   // Sort the relevant bonds and shrink
-  Temple::InPlace::sort(relevantBonds_);
+  Temple::sort(relevantBonds_);
   relevantBonds_.shrink_to_fit();
 
   /* In case there are no bonds to consider, then we're done. No other work

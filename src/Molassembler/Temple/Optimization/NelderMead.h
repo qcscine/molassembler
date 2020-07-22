@@ -102,7 +102,7 @@ struct NelderMead {
       vertex = bestVertex + shrinkCoefficient * (vertex - bestVertex);
       value.value = function(vertex);
     }
-    Temple::InPlace::sort(pairs);
+    Temple::sort(pairs);
   }
 
   static void replaceWorst(

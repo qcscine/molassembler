@@ -76,7 +76,7 @@ Abstract::selfReferentialTransform(
     throw std::logic_error("Site index not found in ranked sites");
   };
 
-  return Temple::sort(
+  return Temple::sorted(
     Temple::map(
       rankingLinks,
       [&](const auto& link) -> Stereopermutations::Stereopermutation::Link {

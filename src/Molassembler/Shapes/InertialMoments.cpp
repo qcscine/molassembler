@@ -216,7 +216,7 @@ unsigned reorientAsymmetricTop(Eigen::Ref<InertialPositionsType> normalizedPosit
     }
   };
 
-  auto orderedAxisBest = Temple::sort(
+  auto orderedAxisBest = Temple::sorted(
     Temple::map(
       Temple::iota<unsigned>(3),
       [&](const unsigned axisIndex) -> AxisBest {

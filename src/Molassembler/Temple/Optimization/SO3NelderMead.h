@@ -215,7 +215,7 @@ struct SO3NelderMead {
       value.value = function(vertex);
       // NOTE: No need to worry about ball radius in shrink operation
     }
-    Temple::InPlace::sort(values);
+    Temple::sort(values);
   }
 
   static void replaceWorst(
@@ -280,7 +280,7 @@ struct SO3NelderMead {
     }
 
     // Sort the vertex values
-    std::vector<IndexValuePair> values = Temple::sort(
+    std::vector<IndexValuePair> values = Temple::sorted(
       Temple::map(
         Temple::iota<unsigned>(4),
         [&](const unsigned i) -> IndexValuePair {

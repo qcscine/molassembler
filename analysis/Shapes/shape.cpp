@@ -228,7 +228,7 @@ struct AllPermutations {
       if(permutationEnergy < minimal.first) {
         minimal = {permutationEnergy, permutation};
       }
-    } while(Temple::InPlace::next_permutation(permutation));
+    } while(Temple::next_permutation(permutation));
 
     return minimal;
   }
@@ -1055,7 +1055,7 @@ struct AlignFive final : ShapeAlgorithm {
       } else if(inCorrectBranch && isCorrectBranch(subPermutation)) {
         std::cerr << "Excluding correct branch due to cost " << cost << " > " << minimalCost << "\n";
       }
-    } while(Temple::InPlace::next_permutation(subPermutation));
+    } while(Temple::next_permutation(subPermutation));
 
     // Fuse permutation and subpermutation
     for(unsigned i = 0; i < V; ++i) {
@@ -1206,7 +1206,7 @@ void writeEnergyStatistics() {
     rFile << "shape" << shapeNumber << " <- c(";
     auto permutation = Temple::iota<Vertex>(N);
     rFile << energy(permutation);
-    while(Temple::InPlace::next_permutation(permutation)) {
+    while(Temple::next_permutation(permutation)) {
       rFile << ", " << energy(permutation);
     }
     rFile << ")\n";

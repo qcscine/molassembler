@@ -61,16 +61,10 @@ struct Zipper {
 //!@name Information
 //!@{
   std::enable_if_t<
-    (
-      Traits::hasSize<ContainerT>::value
-      && Traits::hasSize<ContainerU>::value
-    ),
+    Traits::hasSize<ContainerT>::value && Traits::hasSize<ContainerU>::value,
     std::size_t
   > size() const {
-    return std::min(
-      containerT.size(),
-      containerU.size()
-    );
+    return std::min(containerT.size(), containerU.size());
   }
 //!@}
 

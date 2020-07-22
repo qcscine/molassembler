@@ -412,7 +412,7 @@ bool BondStereopermutator::Impl::cycleObviouslyInfeasible(
 
   /* Mangle cycle sequence to get {i ... l} */
   auto cycleIndices = link.cycleSequence;
-  Temple::InPlace::remove_if(
+  Temple::remove_if(
     cycleIndices,
     [&](const AtomIndex x) -> bool {
       return x == j || x == k;

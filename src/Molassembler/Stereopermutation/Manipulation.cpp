@@ -125,7 +125,7 @@ Uniques uniques(
    */
   if(removeTransSpanningGroups) {
     while(hasTransArrangedLinks(stereopermutation, shape)) {
-      bool wasLastPermutation = !Temple::InPlace::next_permutation(permutation);
+      bool wasLastPermutation = !Temple::next_permutation(permutation);
       if(wasLastPermutation) {
         /* This can happen, e.g. in square-planar AAAB with
          * links: {0, 3}, {1, 3}, {2, 3}, every possible permutation contains
@@ -158,7 +158,7 @@ Uniques uniques(
   }
 
   // Go through all possible permutations of columns
-  while(Temple::InPlace::next_permutation(permutation)) {
+  while(Temple::next_permutation(permutation)) {
     stereopermutation = base.applyPermutation(permutation);
     if(removeTransSpanningGroups && hasTransArrangedLinks(stereopermutation, shape)) {
       continue;
@@ -185,7 +185,7 @@ Uniques uniques(
 
   // Discover an ordering permutation
   const unsigned C = unordered.list.size();
-  const std::vector<unsigned> order = Temple::sort(
+  const std::vector<unsigned> order = Temple::sorted(
     Temple::iota<unsigned>(C),
     [&](const unsigned i, const unsigned j) -> bool {
       return unordered.list.at(i) < unordered.list.at(j);

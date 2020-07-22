@@ -1012,20 +1012,22 @@ StereopermutatorList Molecule::Impl::inferStereopermutatorsFromPositions(
 
   // Look through all cycles of the molecule and try to find flat cycles
   for(const auto& cycleBonds : graph().cycles()) {
-    if(cycleBonds.size() > 3) {
-      const auto& cycleIndices = makeRingIndexSequence(cycleBonds);
-      const double rmsPlaneDeviation = Cartesian::planeOfBestFitRmsd(
-        angstromWrapper.positions,
-        cycleIndices
-      );
+    if(cycleBonds.size() == 3) {
+      continue;
+    }
 
-      // Threshold for planarity
-      constexpr double flatRmsPlaneDeviation = 0.05;
-      if(rmsPlaneDeviation <= flatRmsPlaneDeviation) {
-        for(const BondIndex& bond : cycleBonds) {
-          if(!stereopermutators.option(bond)) {
-            tryInstantiateBondStereopermutator(bond);
-          }
+    const auto& cycleIndices = makeRingIndexSequence(cycleBonds);
+    const double rmsPlaneDeviation = Cartesian::planeOfBestFitRmsd(
+      angstromWrapper.positions,
+      cycleIndices
+    );
+
+    // Threshold for planarity
+    constexpr double flatRmsPlaneDeviation = 0.05;
+    if(rmsPlaneDeviation <= flatRmsPlaneDeviation) {
+      for(const BondIndex& bond : cycleBonds) {
+        if(!stereopermutators.option(bond)) {
+          tryInstantiateBondStereopermutator(bond);
         }
       }
     }

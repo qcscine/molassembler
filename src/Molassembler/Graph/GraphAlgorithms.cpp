@@ -132,7 +132,7 @@ std::vector<RankingInformation::Link> siteLinks(
     }
   }
 
-  Temple::InPlace::sort(links);
+  Temple::sort(links);
   return links;
 }
 
@@ -241,7 +241,7 @@ std::vector<RankingInformation::Link> siteLinks(
   );
 
   // Sort the links before passing them out in order to ease comparisons
-  Temple::InPlace::sort(links);
+  Temple::sort(links);
   return links;
 }
 
@@ -435,7 +435,7 @@ std::vector<
   );
 
   for(auto& ligand : groupedLigands) {
-    Temple::InPlace::sort(ligand);
+    Temple::sort(ligand);
   }
 
   return groupedLigands;

@@ -46,8 +46,6 @@ std::size_t permutationIndex(const Container& container) {
   return index;
 }
 
-namespace InPlace {
-
 //! Calls std::next_permutation
 template<class Container>
 bool next_permutation(Container& container) {
@@ -115,7 +113,6 @@ bool nextCombinationPermutation(
   return true;
 }
 
-} // namespace InPlace
 } // namespace Temple
 } // namespace Molassembler
 } // namespace Scine

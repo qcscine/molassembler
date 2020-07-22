@@ -158,6 +158,11 @@ auto map(
   return returnContainer;
 }
 
+template<class Pairlike, typename Unary>
+auto mapHomogeneousPairlike(Pairlike p, Unary&& f) {
+  return std::make_pair(f(p.first), f(p.second));
+}
+
 //! Apply a callable for all values of a container
 template<class Container, class Callable>
 void forEach(
@@ -265,8 +270,6 @@ bool any_of(const Container& container, UnaryPredicate&& predicate = UnaryPredic
   return false;
 }
 
-namespace InPlace {
-
 //! Calls std::sort on a container
 template<class Container>
 void sort(Container& container) {
@@ -286,15 +289,7 @@ void sort(Container& container, Comparator&& comparator) {
   );
 }
 
-//! In-place transform of a container with a unary function
-template<class Container, class UnaryFunction>
-void transform(Container& container, UnaryFunction&& function) {
-  for(auto& value : container) {
-    value = function(value);
-  }
-}
-
-//! Calls std::reverse
+//! In-place reversal
 template<class Container>
 void reverse(Container& container) {
   std::reverse(
@@ -303,7 +298,7 @@ void reverse(Container& container) {
   );
 }
 
-//! Applies erase-remove idiom to container
+//! Applies erase-remove idiom in-place to container
 template<class Container, typename T>
 void remove(
   Container& container,
@@ -319,7 +314,7 @@ void remove(
   );
 }
 
-//! Applies erase-remove idiom to container with a predicate function
+//! Applies erase-remove idiom in-place to container with a predicate function
 template<class Container, class UnaryFunction>
 void remove_if(
   Container& container,
@@ -334,8 +329,6 @@ void remove_if(
     std::end(container)
   );
 }
-
-} // namespace InPlace
 
 // C++17 nodiscard
 template<class Container, class Predicate>
@@ -353,22 +346,15 @@ Container copy_if(const Container& container, Predicate&& predicate) {
 
 // C++17 nodiscard
 template<class Container>
-Container sort(Container container) {
-  InPlace::sort(container);
+Container sorted(Container container) {
+  sort(container);
   return container;
 }
 
 // C++17 nodiscard
 template<class Container, typename Comparator>
-Container sort(Container container, Comparator&& comparator) {
-  InPlace::sort(container, std::forward<Comparator>(comparator));
-  return container;
-}
-
-// C++17 nodiscard
-template<class Container, class UnaryFunction>
-Container transform(Container container, UnaryFunction&& function) {
-  InPlace::transform(container, std::forward<UnaryFunction>(function));
+Container sorted(Container container, Comparator&& comparator) {
+  sort(container, std::forward<Comparator>(comparator));
   return container;
 }
 
@@ -390,33 +376,6 @@ auto find_if(const Container& container, UnaryPredicate&& predicate) {
     std::end(container),
     std::forward<UnaryPredicate>(predicate)
   );
-}
-
-//! @brief Copying std::reverse shorthand
-template<class Container>
-Container reverse(Container container) {
-  InPlace::reverse(container);
-  return container;
-}
-
-//! @brief Copying erase-remove applier
-template<class Container, typename T>
-Container remove(
-  Container container,
-  const T& value
-) {
-  InPlace::remove(container, value);
-  return container;
-}
-
-//! @brief Copying remove_if applier
-template<class Container, class UnaryFunction>
-Container remove_if(
-  Container container,
-  UnaryFunction&& predicate
-) {
-  InPlace::remove_if(container, std::forward<UnaryFunction>(predicate));
-  return container;
 }
 
 //! @brief vector iota shorthand
