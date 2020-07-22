@@ -242,7 +242,7 @@ BOOST_AUTO_TEST_CASE(SmilesWithMultipleMolecules, *boost::unit_test::label("Mola
 
     BOOST_CHECK_EQUAL(results.size(), pair.second.size());
 
-    auto sizes = Temple::sort(
+    auto sizes = Temple::sorted(
       Temple::map(
         results,
         [](const Molecule& m) -> unsigned { return m.graph().N(); }

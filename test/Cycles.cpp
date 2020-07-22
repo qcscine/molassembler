@@ -31,7 +31,7 @@ struct ExpectationData {
   std::vector<unsigned> cycleSizes;
 
   ExpectationData(std::vector<unsigned>&& passCycleSizes)
-    : cycleSizes(Temple::sort(passCycleSizes)) {}
+    : cycleSizes(Temple::sorted(passCycleSizes)) {}
 };
 
 std::map<std::string, ExpectationData> decompositionData {

@@ -88,7 +88,7 @@ double calculateAmbiguity(
    * lowest mapping is.
    */
 
-  auto sortByTotalView = Temple::sort(
+  auto sortByTotalView = Temple::sorted(
     distortions,
     [](const auto& a, const auto& b) -> bool {
       return (
@@ -206,7 +206,7 @@ int main(int argc, char* argv[]) {
     };
 
     if(diff == 1 || diff == 0) {
-      const auto distortions = Temple::sort(
+      const auto distortions = Temple::sorted(
         Shapes::Properties::shapeTransitionMappings(
           sourceShape,
           targetShape
@@ -218,7 +218,7 @@ int main(int argc, char* argv[]) {
       writeDistortions(distortions);
     } else {
       for(Shapes::Vertex i {0}; i < Shapes::size(sourceShape); ++i) {
-        const auto distortions = Temple::sort(
+        const auto distortions = Temple::sorted(
             Shapes::Properties::ligandLossTransitionMappings(
             sourceShape,
             targetShape,

@@ -148,7 +148,7 @@ struct AngularDeviationGeometryIndexHybrid final : public Recognizer {
     std::vector<Shapes::Shape> excludedSymmetries;
     if(S == 4 || S == 5) {
       const double tau = Shapes::tau(
-        Temple::sort(
+        Temple::sorted(
           Temple::map(
             Temple::Adaptors::allPairs(Temple::Adaptors::range(S)),
             [&](const unsigned i, const unsigned j) -> double {

@@ -150,7 +150,7 @@ struct NelderMead {
     const unsigned N = vertices.rows();
     assert(vertices.cols() == N + 1);
 
-    std::vector<IndexValuePair> values = Temple::sort(
+    std::vector<IndexValuePair> values = Temple::sorted(
       Temple::map(
         Temple::iota<unsigned>(N + 1),
         [&](const unsigned i) -> IndexValuePair {
