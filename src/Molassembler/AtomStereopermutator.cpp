@@ -59,11 +59,11 @@ void AtomStereopermutator::applyPermutation(const std::vector<AtomIndex>& permut
   pImpl_->applyPermutation(permutation);
 }
 
-void AtomStereopermutator::fit(
+boost::optional<AtomStereopermutator::ShapeMap> AtomStereopermutator::fit(
   const Graph& graph,
   const AngstromPositions& angstromWrapper
 ) {
-  pImpl_->fit(graph, angstromWrapper);
+  return pImpl_->fit(graph, angstromWrapper);
 }
 
 boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::propagate(

@@ -238,7 +238,7 @@ public:
    *   of both sides
    *
    * E.g. In a combination of EquilateralTriangle and Tetrahedron, the order is
-   * four.
+   * three.
    */
   unsigned order() const;
 

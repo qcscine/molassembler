@@ -193,14 +193,12 @@ public:
    *
    * @param graph The molecule's graph which this permutator helps model
    * @param angstromWrapper The wrapped positions
+   * @returns A mapping of site indices to shape vertices if a
+   *   stereopermutation could be found, None otherwise
    *
    * @complexity{@math{\Theta(S!)}}
-   *
-   * @note If Options::tauCriterion is set to @p Enable, this function may
-   *   exclude some shapes from the fitting procedure based on geometric
-   *   criteria.
    */
-  void fit(
+  boost::optional<ShapeMap> fit(
     const Graph& graph,
     const AngstromPositions& angstromWrapper
   );

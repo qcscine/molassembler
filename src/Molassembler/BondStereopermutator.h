@@ -175,6 +175,11 @@ public:
    */
   void applyPermutation(const std::vector<AtomIndex>& permutation);
 
+  struct FittingReferences {
+    const AtomStereopermutator& stereopermutator;
+    const AtomStereopermutator::ShapeMap& shapeMap;
+  };
+
   /*! @brief Determines the assignment the permutator is in from positional
    *   information
    *
@@ -187,15 +192,14 @@ public:
    *
    * @param angstromWrapper The positional information to extract the assignment
    *   from
-   * @param stereopermutatorA One constituting atom stereopermutator
-   * @param stereopermutatorB The other constituting atom stereopermutator
+   * @param fittingReferences Pair of FittingReferences to constituting atom
+   *   stereopermutators (order is irrelevant)
    * @param mode Mode altering the assignment of stereopermutations depending
    *   on geometric closeness to the idealized minimum
    */
   void fit(
     const AngstromPositions& angstromWrapper,
-    const AtomStereopermutator& stereopermutatorA,
-    const AtomStereopermutator& stereopermutatorB,
+    std::pair<FittingReferences, FittingReferences> fittingReferences,
     FittingMode mode = FittingMode::Thresholded
   );
 

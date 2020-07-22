@@ -12,14 +12,13 @@
 
 #include "Molassembler/Stereopermutation/Composites.h"
 #include "Molassembler/Temple/Functional.h"
+#include "Molassembler/Temple/Optionals.h"
 
 #include "Utils/Geometry/AtomCollection.h"
-
 #include "boost/variant.hpp"
 
 namespace Scine {
 namespace Molassembler {
-
 namespace Detail {
 
 //! C++'s modulo yields sign of the dividend, but we want nonnegative-always
@@ -395,16 +394,44 @@ DirectedConformerGenerator::Impl::getDecisionList(
     throw std::logic_error("Underlying molecule permutator preconditions unmet!");
   }
 
+  /* Refit all atom stereopermutators and ensure stereopermutations are
+   * identical, storing fitted shape maps for bond stereopermutator fitting later
+   */
+  std::unordered_map<AtomIndex, AtomStereopermutator::ShapeMap> shapeMaps;
+  for(
+    const AtomStereopermutator& stereopermutator :
+    molecule_.stereopermutators().atomStereopermutators()
+  ) {
+    AtomStereopermutator refitted = stereopermutator;
+    auto shapeMap = refitted.fit(molecule_.graph(), angstromPositions);
+    if(refitted.getShape() != stereopermutator.getShape()) {
+      throw std::logic_error("Different shape found!");
+    }
+    if(refitted.assigned() != stereopermutator.assigned()) {
+      throw std::logic_error("Detected change in assignment!");
+    }
+    shapeMaps.emplace(stereopermutator.placement(), std::move(shapeMap.value()));
+  }
+
   return Temple::map(
     relevantBonds_,
     [&](const BondIndex& bondIndex) -> std::uint8_t {
-      auto firstAtom = molecule_.pImpl_->stereopermutators_.option(bondIndex.first);
-      auto secondAtom = molecule_.pImpl_->stereopermutators_.option(bondIndex.second);
+      const auto fittingReferences = Temple::mapHomogeneousPairlike(
+        bondIndex,
+        [&](const AtomIndex v) -> BondStereopermutator::FittingReferences {
+          return {
+            molecule_.stereopermutators().option(v).value(),
+            shapeMaps.at(v)
+          };
+        }
+      );
       auto stereoOption = molecule_.pImpl_->stereopermutators_.option(bondIndex);
-
-      assert(firstAtom && secondAtom && stereoOption);
-      stereoOption->fit(angstromPositions, *firstAtom, *secondAtom, mode);
-
+      if(!stereoOption) {
+        throw std::logic_error(
+          "No BondStereopermutator for selected bond in molecule!"
+        );
+      }
+      stereoOption->fit(angstromPositions, fittingReferences, mode);
       return stereoOption->assigned().value_or(unknownDecision);
     }
   );

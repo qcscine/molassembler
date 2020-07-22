@@ -107,7 +107,7 @@ public:
    * positions using angle and chiral distortions from the respective idealized
    * shapes.
    */
-  void fit(
+  boost::optional<ShapeMap> fit(
     const Graph& graph,
     const AngstromPositions& angstromWrapper
   );

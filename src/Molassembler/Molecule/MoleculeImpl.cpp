@@ -940,6 +940,7 @@ StereopermutatorList Molecule::Impl::inferStereopermutatorsFromPositions(
   const AtomIndex size = graph().N();
   StereopermutatorList stereopermutators;
 
+  std::unordered_map<AtomIndex, AtomStereopermutator::ShapeMap> shapeMaps;
   for(AtomIndex vertex = 0; vertex < size; vertex++) {
     RankingInformation localRanking = rankPriority(vertex, {}, angstromWrapper);
 
@@ -951,32 +952,49 @@ StereopermutatorList Molecule::Impl::inferStereopermutatorsFromPositions(
     Shapes::Shape dummyShape = ShapeInference::firstOfSize(localRanking.sites.size());
 
     // Construct it
-    auto stereopermutator = AtomStereopermutator {
+    AtomStereopermutator stereopermutator {
       adjacencies_,
       dummyShape,
       vertex,
       std::move(localRanking)
     };
 
-    stereopermutator.fit(adjacencies_, angstromWrapper);
+    auto shapeMap = stereopermutator.fit(adjacencies_, angstromWrapper);
+    if(shapeMap) {
+      shapeMaps.emplace(vertex, std::move(shapeMap.value()));
+    }
     stereopermutators.add(std::move(stereopermutator));
   }
 
   auto tryInstantiateBondStereopermutator = [&](const BondIndex& bondIndex) -> void {
     // TODO this is suspiciously close to tryAddBondStereopermutator_
-
-    auto sourceAtomStereopermutatorOption = stereopermutators.option(bondIndex.first);
-    auto targetAtomStereopermutatorOption = stereopermutators.option(bondIndex.second);
+    const auto stereopermutatorOptions = Temple::mapHomogeneousPairlike(
+      bondIndex,
+      [&](const AtomIndex v) { return stereopermutators.option(v); }
+    );
 
     // There need to be assigned stereopermutators on both vertices
-    if(
-      !sourceAtomStereopermutatorOption
-      || !targetAtomStereopermutatorOption
-      || sourceAtomStereopermutatorOption->assigned() == boost::none
-      || targetAtomStereopermutatorOption->assigned() == boost::none
-    ) {
+    const auto existAndAssigned = Temple::mapHomogeneousPairlike(
+      stereopermutatorOptions,
+      [](const auto& opt) -> bool {
+        return opt && opt->assigned() != boost::none;
+      }
+    );
+
+    if(!existAndAssigned.first || !existAndAssigned.second) {
       return;
     }
+
+    // Generate references for call to BondStereopermutator::fit
+    const auto fittingReferences = Temple::mapHomogeneousPairlike(
+      stereopermutatorOptions,
+      [&](const auto& opt) -> BondStereopermutator::FittingReferences {
+        return {
+          opt.value(),
+          shapeMaps.at(opt->placement())
+        };
+      }
+    );
 
     // Construct a Stereopermutator here
     BondStereopermutator newStereopermutator {
@@ -985,12 +1003,7 @@ StereopermutatorList Molecule::Impl::inferStereopermutatorsFromPositions(
       bondIndex
     };
 
-    newStereopermutator.fit(
-      angstromWrapper,
-      *sourceAtomStereopermutatorOption,
-      *targetAtomStereopermutatorOption
-    );
-
+    newStereopermutator.fit(angstromWrapper, fittingReferences);
     if(newStereopermutator.assigned() != boost::none) {
       stereopermutators.add(std::move(newStereopermutator));
     }

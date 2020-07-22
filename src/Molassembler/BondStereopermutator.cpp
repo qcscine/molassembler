@@ -70,16 +70,10 @@ void BondStereopermutator::applyPermutation(const std::vector<AtomIndex>& permut
 
 void BondStereopermutator::fit(
   const AngstromPositions& angstromWrapper,
-  const AtomStereopermutator& stereopermutatorA,
-  const AtomStereopermutator& stereopermutatorB,
+  std::pair<FittingReferences, FittingReferences> fittingReferences,
   const FittingMode mode
 ) {
-  pImpl_->fit(
-    angstromWrapper,
-    stereopermutatorA,
-    stereopermutatorB,
-    mode
-  );
+  pImpl_->fit(angstromWrapper, std::move(fittingReferences), mode);
 }
 
 void BondStereopermutator::propagateGraphChange(

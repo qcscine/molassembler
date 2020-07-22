@@ -108,25 +108,48 @@ const auto& select(
   return std::get<1>(tuple);
 }
 
-} // namespace
+std::pair<BondStereopermutator::FittingReferences, BondStereopermutator::FittingReferences> align(
+  std::pair<BondStereopermutator::FittingReferences, BondStereopermutator::FittingReferences> references,
+  const Stereopermutations::Composite& composite
+) {
+  const auto orientationIdentifiers = composite.orientations().map(
+    [](const auto& x) { return x.identifier; }
+  );
 
-struct SymmetryMapHelper {
-  static unsigned getSymmetryPositionOf(unsigned siteIndex, const std::vector<unsigned>& map) {
-    return map.at(siteIndex);
+  const auto placements = Temple::mapHomogeneousPairlike(
+    references,
+    [](const auto& r) -> AtomIndex { return r.stereopermutator.placement(); }
+  );
+  assert(placements.first != placements.second);
+
+  if(orientationIdentifiers == placements) {
+    return references;
   }
 
-  static unsigned getSiteIndexAt(unsigned symmetryPosition, const std::vector<unsigned>& map) {
-    auto findIter = std::find(
-      std::begin(map),
-      std::end(map),
-      symmetryPosition
+  const auto reversedPlacements = std::make_pair(placements.second, placements.first);
+  if(orientationIdentifiers == reversedPlacements) {
+    return std::make_pair(
+      references.second,
+      references.first
     );
-
-    assert(findIter != std::end(map));
-
-    return findIter - std::begin(map);
   }
-};
+
+  throw std::runtime_error("Fitting references and composite orientation identifiers are mismatched!");
+}
+
+template<typename T, typename U, typename F>
+auto zipMapPair(
+  const T& t,
+  const U& u,
+  F&& f
+) {
+  return std::make_pair(
+    f(t.first, u.first),
+    f(t.second, u.second)
+  );
+}
+
+} // namespace
 
 std::vector<char> BondStereopermutator::Impl::charifyRankedSites_(
   const RankingInformation::RankedSitesType& sitesRanking,
@@ -212,8 +235,8 @@ Stereopermutations::Composite BondStereopermutator::Impl::constructComposite_(
   const auto& stereopermutatorB = stereopermutators.option(edge.second).value();
 
   return {
-    makeOrientationState_(stereopermutatorA, stereopermutatorB),
-    makeOrientationState_(stereopermutatorB, stereopermutatorA),
+    makeOrientationState_(stereopermutatorA, stereopermutatorA.getShapePositionMap(), stereopermutatorB),
+    makeOrientationState_(stereopermutatorB, stereopermutatorB.getShapePositionMap(), stereopermutatorA),
     static_cast<Stereopermutations::Composite::Alignment>(alignment)
   };
 }
@@ -221,18 +244,19 @@ Stereopermutations::Composite BondStereopermutator::Impl::constructComposite_(
 Stereopermutations::Composite::OrientationState
 BondStereopermutator::Impl::makeOrientationState_(
   const AtomStereopermutator& focalStereopermutator,
+  const AtomStereopermutator::ShapeMap& focalShapeMap,
   const AtomStereopermutator& attachedStereopermutator
 ) {
   return {
     focalStereopermutator.getShape(),
-    focalStereopermutator.getShapePositionMap().at(
+    focalShapeMap.at(
       focalStereopermutator.getRanking().getSiteIndexOf(
         attachedStereopermutator.placement()
       )
     ),
     charifyRankedSites_(
       focalStereopermutator.getRanking().siteRanking,
-      focalStereopermutator.getShapePositionMap()
+      focalShapeMap
     ),
     focalStereopermutator.placement()
   };
@@ -768,8 +792,8 @@ BondStereopermutator::Impl::Impl(
   const BondIndex edge,
   Alignment alignment
 ) : composite_ {
-      makeOrientationState_(stereopermutatorA, stereopermutatorB),
-      makeOrientationState_(stereopermutatorB, stereopermutatorA),
+      makeOrientationState_(stereopermutatorA, stereopermutatorA.getShapePositionMap(), stereopermutatorB),
+      makeOrientationState_(stereopermutatorB, stereopermutatorB.getShapePositionMap(), stereopermutatorA),
       static_cast<Stereopermutations::Composite::Alignment>(alignment)
     },
     edge_(edge),
@@ -848,30 +872,29 @@ void BondStereopermutator::Impl::applyPermutation(const std::vector<AtomIndex>& 
 
 void BondStereopermutator::Impl::fit(
   const AngstromPositions& angstromWrapper,
-  const AtomStereopermutator& stereopermutatorA,
-  const AtomStereopermutator& stereopermutatorB,
+  std::pair<FittingReferences, FittingReferences> fittingReferences,
   const FittingMode mode
 ) {
-  assert(stereopermutatorA.placement() != stereopermutatorB.placement());
-
   // Early exit
   if(composite_.permutations() == 0) {
     assignment_ = boost::none;
     return;
   }
 
-  // Can the following selections be done with a single branch?
-  const AtomStereopermutator& firstStereopermutator = (
-    stereopermutatorA.placement() == composite_.orientations().first.identifier
-    ? stereopermutatorA
-    : stereopermutatorB
-  );
-
-  const AtomStereopermutator& secondStereopermutator = (
-    stereopermutatorB.placement() == composite_.orientations().second.identifier
-    ? stereopermutatorB
-    : stereopermutatorA
-  );
+  const auto alignedReferences = align(fittingReferences, composite_);
+  Stereopermutations::Composite matchedComposite {
+    makeOrientationState_(
+      alignedReferences.first.stereopermutator,
+      alignedReferences.first.shapeMap,
+      alignedReferences.second.stereopermutator
+    ),
+    makeOrientationState_(
+      alignedReferences.second.stereopermutator,
+      alignedReferences.second.shapeMap,
+      alignedReferences.first.stereopermutator
+    ),
+    composite_.alignment()
+  };
 
   auto makeSitePositions = [&angstromWrapper](const AtomStereopermutator& permutator) -> Eigen::Matrix<double, 3, Eigen::Dynamic> {
     const unsigned S = permutator.getRanking().sites.size();
@@ -887,24 +910,29 @@ void BondStereopermutator::Impl::fit(
   };
 
   // For all atoms making up a site, decide on the spatial average position
-  auto firstSitePositions = makeSitePositions(firstStereopermutator);
-  auto secondSitePositions = makeSitePositions(secondStereopermutator);
+  const auto sitePositions = Temple::mapHomogeneousPairlike(
+    alignedReferences,
+    [&](const auto& ref) { return makeSitePositions(ref.stereopermutator); }
+  );
 
-  Shapes::Vertex firstShapeVertex;
-  Shapes::Vertex secondShapeVertex;
+  std::pair<Shapes::Vertex, Shapes::Vertex> shapeVertices;
   double dihedralAngle;
 
-  double bestPenalty = std::numeric_limits<double>::max();
-  std::vector<unsigned> bestStereopermutation;
+  double bestMisalignment = std::numeric_limits<double>::max();
+  std::vector<unsigned> bestStereopermutations;
 
-  for(unsigned feasiblePermutationIndex : feasiblePermutations_) {
-    double penalty = 0.0;
-    for(const auto& dihedralTuple : composite_.dihedrals(feasiblePermutationIndex)) {
-      std::tie(firstShapeVertex, secondShapeVertex, dihedralAngle) = dihedralTuple;
+  for(const unsigned feasiblePermutationIndex : feasiblePermutations_) {
+    double misalignment = 0.0;
+    for(const auto& dihedralTuple : matchedComposite.dihedrals(feasiblePermutationIndex)) {
+      std::tie(shapeVertices.first, shapeVertices.second, dihedralAngle) = dihedralTuple;
 
-      // Get site index of leftSymmetryPosition in left
-      const SiteIndex firstSite = firstStereopermutator.getShapePositionMap().indexOf(firstShapeVertex);
-      const SiteIndex secondSite = secondStereopermutator.getShapePositionMap().indexOf(secondShapeVertex);
+      const auto siteIndices = zipMapPair(
+        alignedReferences,
+        shapeVertices,
+        [](const FittingReferences& ref, const Shapes::Vertex v) -> SiteIndex {
+          return ref.shapeMap.indexOf(v);
+        }
+      );
 
       /* Dihedral angle differences aren't as easy as |b - a|, since
        * dihedrals are defined over (-pi, pi], so in the worst case
@@ -920,10 +948,10 @@ void BondStereopermutator::Impl::fit(
        */
 
       const double measuredDihedral = Cartesian::dihedral(
-        firstSitePositions.col(firstSite),
-        angstromWrapper.positions.row(firstStereopermutator.placement()),
-        angstromWrapper.positions.row(secondStereopermutator.placement()),
-        secondSitePositions.col(secondSite)
+        sitePositions.first.col(siteIndices.first),
+        angstromWrapper.positions.row(alignedReferences.first.stereopermutator.placement()),
+        angstromWrapper.positions.row(alignedReferences.second.stereopermutator.placement()),
+        sitePositions.second.col(siteIndices.second)
       );
 
       double dihedralDifference = measuredDihedral - dihedralAngle;
@@ -938,43 +966,51 @@ void BondStereopermutator::Impl::fit(
         dihedralDifference += 2 * M_PI;
       }
 
-      penalty += std::fabs(dihedralDifference);
+      // auto todeg = [](const double x) { return 180 * x / M_PI; };
+      // std::cout << "- shape vertices [" << shapeVertices.first << ", " << shapeVertices.second << "], sites [" << siteIndices.first <<", " << siteIndices.second << "], sequence: "
+      //   << alignedReferences.first.stereopermutator.getRanking().sites.at(siteIndices.first).front() << ", "
+      //   << alignedReferences.first.stereopermutator.placement() << ", "
+      //   << alignedReferences.second.stereopermutator.placement() << ", "
+      //   << alignedReferences.second.stereopermutator.getRanking().sites.at(siteIndices.second).front()
+      //   << "], measured = " << todeg(measuredDihedral) << "°, expected = " << todeg(dihedralAngle) << "°, absdiff = " << std::fabs(dihedralDifference) << "rad\n";
+
+      misalignment += std::fabs(dihedralDifference);
     }
 
-    /* Check if this penalty is within acceptance threshold if fitting mode
-     * encompasses this
+    /* Check if this misalignment is within acceptance threshold if fitting mode
+     * is thresholded
      *
      * The logic here is that the acceptable deviation per dihedral should
      * depend on the order of the Composite (i.e. if there are three
      * substituents at one side, the deviation per dihedral should be smaller
      * than if there were only two).
      */
+    const double misalignmentPerDihedral = misalignment / composite_.dihedrals(feasiblePermutationIndex).size();
+    const double acceptableMisalignment = assignmentAcceptanceParameter * 2 * M_PI / composite_.order();
+    // std::cout << "- average misalignment = " << misalignmentPerDihedral << ", acceptable = " << acceptableMisalignment << "\n";
     if(
       mode == FittingMode::Thresholded
-      && (
-        penalty / composite_.dihedrals(feasiblePermutationIndex).size()
-        > assignmentAcceptanceParameter * 2 * M_PI / composite_.order()
-      )
+      && misalignmentPerDihedral > acceptableMisalignment
     ) {
       continue;
     }
 
-    if(penalty < bestPenalty) {
-      bestPenalty = penalty;
-      bestStereopermutation = {feasiblePermutationIndex};
-    } else if(penalty == bestPenalty) {
-      bestStereopermutation.push_back(feasiblePermutationIndex);
+    if(misalignment < bestMisalignment) {
+      bestMisalignment = misalignment;
+      bestStereopermutations = {feasiblePermutationIndex};
+    } else if(misalignment == bestMisalignment) {
+      bestStereopermutations.push_back(feasiblePermutationIndex);
     }
   }
 
   /* The best stereopermutation must be singular, no other may match it in
    * fit value, otherwise assignment is ambiguous
    */
-  if(bestStereopermutation.size() == 1) {
+  if(bestStereopermutations.size() == 1) {
     /* Retrieve the index of the best stereopermutation from among the feasible
      * permutations
      */
-    const unsigned stereopermutation = bestStereopermutation.front();
+    const unsigned stereopermutation = bestStereopermutations.front();
     assignment_ = (
       Temple::find(feasiblePermutations_, stereopermutation)
       - std::begin(feasiblePermutations_)
@@ -1053,8 +1089,7 @@ void BondStereopermutator::Impl::propagateGraphChange(
   };
 
   // feasibility has to be rechecked
-  std::vector<unsigned> newFeasiblePermutations;
-  newFeasiblePermutations = notObviouslyInfeasibleStereopermutations(
+  std::vector<unsigned> newFeasiblePermutations = notObviouslyInfeasibleStereopermutations(
     graph,
     permutators,
     newComposite

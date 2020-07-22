@@ -64,6 +64,8 @@ struct BondStereopermutator::Impl : public Temple::Crtp::LexicographicComparable
 
   /*!
    * @brief Constructor for use of BondStereopermutator in isolation
+   *
+   * This constructor does not check whether stereopermutations are feasible
    */
   Impl(
     const AtomStereopermutator& stereopermutatorA,
@@ -92,8 +94,7 @@ struct BondStereopermutator::Impl : public Temple::Crtp::LexicographicComparable
 
   void fit(
     const AngstromPositions& angstromWrapper,
-    const AtomStereopermutator& stereopermutatorA,
-    const AtomStereopermutator& stereopermutatorB,
+    std::pair<FittingReferences, FittingReferences> fittingReferences,
     FittingMode mode
   );
 
@@ -164,6 +165,7 @@ private:
 
   static Stereopermutations::Composite::OrientationState makeOrientationState_(
     const AtomStereopermutator& focalStereopermutator,
+    const AtomStereopermutator::ShapeMap& focalShapeMap,
     const AtomStereopermutator& attachedStereopermutator
   );
 };

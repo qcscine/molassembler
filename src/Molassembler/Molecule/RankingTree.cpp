@@ -774,6 +774,7 @@ void RankingTree::applySequenceRules_(
   bool foundBondStereopermutators = false;
   bool foundAtomStereopermutators = false;
 
+  std::unordered_map<AtomIndex, AtomStereopermutator::ShapeMap> shapeMaps;
   auto instantiateAtomStereopermutator = [&](const TreeVertexIndex targetIndex) -> void {
     // Do not instantiate an atomStereopermutator on the root vertex
     if(targetIndex == rootIndex) {
@@ -896,10 +897,10 @@ void RankingTree::applySequenceRules_(
        * therefore not wise to default-assign newStereopermutator if positions
        * are available.
        */
-      newStereopermutator.fit(
-        graph_,
-        positionsOption.value()
-      );
+      auto shapeMapOption = newStereopermutator.fit(graph_, positionsOption.value());
+      if(shapeMapOption) {
+        shapeMaps.emplace(molSourceIndex, std::move(shapeMapOption.value()));
+      }
     } else if(newStereopermutator.numAssignments() == 1) {
       // Default assign the stereopermutator for particularly simple cases
       newStereopermutator.assign(0);
@@ -1027,9 +1028,12 @@ void RankingTree::applySequenceRules_(
         && tree_[targetIndex].stereopermutatorOption
         && isGraphBondStereopermutatorCandidate(molEdge)
       ) {
-        auto newStereopermutator = BondStereopermutator {
-          tree_[sourceIndex].stereopermutatorOption.value(),
-          tree_[targetIndex].stereopermutatorOption.value(),
+        const AtomStereopermutator& sourcePermutator = tree_[sourceIndex].stereopermutatorOption.value();
+        const AtomStereopermutator& targetPermutator = tree_[targetIndex].stereopermutatorOption.value();
+
+        BondStereopermutator newStereopermutator {
+          sourcePermutator,
+          targetPermutator,
           molEdge
         };
 
@@ -1039,12 +1043,18 @@ void RankingTree::applySequenceRules_(
 
           // Find an assignment
           if(positionsOption) {
-            // Fit from positions
-            newStereopermutator.fit(
-              positionsOption.value(),
-              tree_[sourceIndex].stereopermutatorOption.value(),
-              tree_[targetIndex].stereopermutatorOption.value()
+            const auto fittingReferences = Temple::mapHomogeneousPairlike(
+              std::make_pair(sourcePermutator, targetPermutator),
+              [&](const auto& perm) -> BondStereopermutator::FittingReferences {
+                return {
+                  perm,
+                  shapeMaps.at(perm.placement())
+                };
+              }
             );
+
+            // Fit from positions
+            newStereopermutator.fit(positionsOption.value(), fittingReferences);
           } else if(
             existingStereopermutatorOption
             && existingStereopermutatorOption->hasSameCompositeOrientation(newStereopermutator)

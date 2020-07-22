@@ -722,8 +722,6 @@ Composite::Composite(
           std::end(dihedrals)
         ) - std::begin(dihedrals);
 
-        // std::cout << "Next shape vertex in rotor is " << angleGroups.second.vertices.at(maximumIndex) << " with dihedral of " << dihedrals.at(maximumIndex) << "\n";
-
         offsetAngle = dihedrals.at(maximumIndex) / 2;
       }
 

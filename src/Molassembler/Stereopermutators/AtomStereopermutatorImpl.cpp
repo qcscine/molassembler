@@ -16,6 +16,7 @@
 #include "Molassembler/Temple/Adaptors/AllPairs.h"
 #include "Molassembler/Temple/Adaptors/Iota.h"
 #include "Molassembler/Temple/Adaptors/Transform.h"
+#include "Molassembler/Temple/Adaptors/Zip.h"
 #include "Molassembler/Temple/Functional.h"
 #include "Molassembler/Temple/Functor.h"
 #include "Molassembler/Temple/Optionals.h"
@@ -774,7 +775,8 @@ const AtomStereopermutator::ShapeMap& AtomStereopermutator::Impl::getShapePositi
   return shapePositionMap_;
 }
 
-void AtomStereopermutator::Impl::fit(
+boost::optional<AtomStereopermutator::ShapeMap>
+AtomStereopermutator::Impl::fit(
   const Graph& graph,
   const AngstromPositions& angstromWrapper
 ) {
@@ -804,7 +806,11 @@ void AtomStereopermutator::Impl::fit(
   if(assignmentOption_ == boost::none) {
     setShape(priorShape, graph);
     assign(priorStereopermutation);
+    return boost::none;
   }
+
+  matchingMapping.pop_back();
+  return ShapeMap(matchingMapping);
 }
 
 /* Information */
