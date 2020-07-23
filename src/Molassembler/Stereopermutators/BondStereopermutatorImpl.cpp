@@ -797,9 +797,7 @@ BondStereopermutator::Impl::Impl(
       static_cast<Stereopermutations::Composite::Alignment>(alignment)
     },
     edge_(edge),
-    feasiblePermutations_(
-      Temple::iota<unsigned>(composite_.permutations())
-    ),
+    feasiblePermutations_(Temple::iota<unsigned>(composite_.permutations())),
     assignment_(boost::none)
 {}
 
@@ -808,9 +806,7 @@ BondStereopermutator::Impl::Impl(
   const StereopermutatorList& stereopermutators,
   const BondIndex edge,
   Alignment alignment
-) : composite_(
-      constructComposite_(stereopermutators, edge, alignment)
-    ),
+) : composite_(constructComposite_(stereopermutators, edge, alignment)),
     edge_(edge),
     feasiblePermutations_(
       notObviouslyInfeasibleStereopermutations(
@@ -965,15 +961,6 @@ void BondStereopermutator::Impl::fit(
       if(dihedralDifference <= -M_PI) {
         dihedralDifference += 2 * M_PI;
       }
-
-      // auto todeg = [](const double x) { return 180 * x / M_PI; };
-      // std::cout << "- shape vertices [" << shapeVertices.first << ", " << shapeVertices.second << "], sites [" << siteIndices.first <<", " << siteIndices.second << "], sequence: "
-      //   << alignedReferences.first.stereopermutator.getRanking().sites.at(siteIndices.first).front() << ", "
-      //   << alignedReferences.first.stereopermutator.placement() << ", "
-      //   << alignedReferences.second.stereopermutator.placement() << ", "
-      //   << alignedReferences.second.stereopermutator.getRanking().sites.at(siteIndices.second).front()
-      //   << "], measured = " << todeg(measuredDihedral) << "°, expected = " << todeg(dihedralAngle) << "°, absdiff = " << std::fabs(dihedralDifference) << "rad\n";
-
       misalignment += std::fabs(dihedralDifference);
     }
 
@@ -987,7 +974,6 @@ void BondStereopermutator::Impl::fit(
      */
     const double misalignmentPerDihedral = misalignment / composite_.dihedrals(feasiblePermutationIndex).size();
     const double acceptableMisalignment = assignmentAcceptanceParameter * 2 * M_PI / composite_.order();
-    // std::cout << "- average misalignment = " << misalignmentPerDihedral << ", acceptable = " << acceptableMisalignment << "\n";
     if(
       mode == FittingMode::Thresholded
       && misalignmentPerDihedral > acceptableMisalignment

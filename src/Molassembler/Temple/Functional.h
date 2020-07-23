@@ -406,6 +406,27 @@ auto makeContainsPredicate(const Container& container) {
   };
 }
 
+namespace Functor {
+
+template<typename Transformation>
+struct Map {
+  Map(Transformation&& f) : t(f) {}
+
+  template<typename Container>
+  auto operator() (const Container& c) {
+    return Temple::map(c, t);
+  }
+
+  Transformation t;
+};
+
+template<typename Transformation>
+auto map(Transformation&& t) {
+  return Map<Transformation>(std::forward<Transformation>(t));
+}
+
+} // namespace Functor
+
 } // namespace Temple
 } // namespace Molassembler
 } // namespace Scine

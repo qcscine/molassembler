@@ -78,7 +78,7 @@ public:
      *
      * @complexity{@math{\Theta(N)}}
      */
-    void applyCharacterRotation(const std::vector<Shapes::Vertex>& rotation);
+    std::vector<char> applyCharacterRotation(const std::vector<Shapes::Vertex>& rotation) const;
 
     /*! @brief Smallest shape vertex from the same group as the fused position
      *

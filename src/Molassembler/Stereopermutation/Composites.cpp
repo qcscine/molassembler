@@ -16,7 +16,6 @@
 #include "Molassembler/Temple/Functor.h"
 #include "Molassembler/Temple/GroupBy.h"
 #include "Molassembler/Temple/Permutations.h"
-#include "Molassembler/Temple/Stringify.h"
 
 namespace Scine {
 namespace Molassembler {
@@ -116,6 +115,24 @@ double dihedral(
   );
 }
 
+bool dihedralClose(
+  const double a,
+  const double b,
+  const double epsilon
+) {
+  double diff = b - a;
+
+  if(diff > M_PI) {
+    diff -= 2 * M_PI;
+  }
+
+  if(diff <= -M_PI) {
+    diff += 2 * M_PI;
+  }
+
+  return std::fabs(diff) < epsilon;
+}
+
 } // namespace Detail
 
 constexpr Temple::Floating::ExpandedAbsoluteEqualityComparator<double> Composite::fpComparator;
@@ -134,9 +151,9 @@ Composite::OrientationState::OrientationState(
   assert(characters.size() == Shapes::size(shape));
 }
 
-void Composite::OrientationState::applyCharacterRotation(
+std::vector<char> Composite::OrientationState::applyCharacterRotation(
   const std::vector<Shapes::Vertex>& rotation
-) {
+) const {
   std::vector<char> newCharacters;
   newCharacters.reserve(rotation.size());
 
@@ -146,7 +163,7 @@ void Composite::OrientationState::applyCharacterRotation(
     );
   }
 
-  characters = std::move(newCharacters);
+  return newCharacters;
 }
 
 std::vector<Shapes::Vertex> Composite::OrientationState::transformToCanonical() {
@@ -163,7 +180,7 @@ std::vector<Shapes::Vertex> Composite::OrientationState::transformToCanonical() 
 
   // Apply it to the data members of the instance
   fusedVertex = reducedFusedVertex;
-  applyCharacterRotation(toCanonicalMapping);
+  characters = applyCharacterRotation(toCanonicalMapping);
 
   // Return the inverse mapping to allow reversion to the original state
   return Shapes::Properties::inverseRotation(toCanonicalMapping);
@@ -171,7 +188,7 @@ std::vector<Shapes::Vertex> Composite::OrientationState::transformToCanonical() 
 
 void Composite::OrientationState::revert(const std::vector<Shapes::Vertex>& reversionMapping) {
   // Recover the non-canonical state using the reversion mapping
-  applyCharacterRotation(reversionMapping);
+  characters = applyCharacterRotation(reversionMapping);
 
   auto findIter = std::find(
     std::begin(reversionMapping),
@@ -243,7 +260,7 @@ std::vector<Shapes::Vertex> Composite::OrientationState::findReductionMapping(
       chain.back()
     );
 
-    unsigned indexOfPermutation = Temple::permutationIndex(generatedRotation);
+    const unsigned indexOfPermutation = Temple::permutationIndex(generatedRotation);
     // Is it new?
     if(discoveredIndicesOfPermutation.test(indexOfPermutation)) {
       // Already discovered! Are we at the maximum instruction?
@@ -267,12 +284,15 @@ std::vector<Shapes::Vertex> Composite::OrientationState::findReductionMapping(
       }
     } else {
       // The rotation is new, determine if it should replace the tracked best
+      const unsigned characterIOP = Temple::permutationIndex(
+        applyCharacterRotation(generatedRotation)
+      );
       if(
         generatedRotation.at(reducedFusedVertex) == fusedVertex
-        && indexOfPermutation < lowestIndexOfPermutation
+        && characterIOP < lowestIndexOfPermutation
       ) {
         bestRotation = generatedRotation;
-        lowestIndexOfPermutation = indexOfPermutation;
+        lowestIndexOfPermutation = characterIOP;
       }
 
       // Add the new rotation to the set of discovered ones
@@ -745,26 +765,16 @@ Composite::Composite(
       );
 
       // Ensure postcondition that list of dihedrals is sorted
-      std::sort(
-        std::begin(dihedralList),
-        std::end(dihedralList)
-      );
+      Temple::sort(dihedralList);
 
       if(
         !Temple::any_of(
           stereopermutations_,
           [&dihedralList](const auto& rhsDihedralList) -> bool {
-            return fpComparator.isEqual(
+            return Detail::dihedralClose(
               std::get<2>(dihedralList.front()),
-              std::get<2>(rhsDihedralList.front())
-            ) || (
-              fpComparator.isEqual(
-                std::fabs(std::get<2>(dihedralList.front())),
-                M_PI
-              ) && fpComparator.isEqual(
-                std::fabs(std::get<2>(rhsDihedralList.front())),
-                M_PI
-              )
+              std::get<2>(rhsDihedralList.front()),
+              Temple::Math::toRadians(15.0)
             );
           }
         )
