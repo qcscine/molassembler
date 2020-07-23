@@ -1043,8 +1043,11 @@ void RankingTree::applySequenceRules_(
 
           // Find an assignment
           if(positionsOption) {
+            const std::pair<const AtomStereopermutator&, const AtomStereopermutator&> permutators {
+              sourcePermutator, targetPermutator
+            };
             const auto fittingReferences = Temple::mapHomogeneousPairlike(
-              std::make_pair(sourcePermutator, targetPermutator),
+              permutators,
               [&](const auto& perm) -> BondStereopermutator::FittingReferences {
                 return {
                   perm,
