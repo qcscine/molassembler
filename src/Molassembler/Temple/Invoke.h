@@ -121,7 +121,7 @@ static auto isTupleCallableTest(long) -> std::false_type;
  * @brief Returns std::integral_constant<bool> for if Function is callable
  *   by unpacking a single tuple argument supplied in the argument list.
  *
- * @note The integer-long substitution failure trick is explained in Tricks.md
+ * @note The integer-long substitution failure trick is explained in Tricks.rst
  */
 template<typename Function, typename TupleType, typename... Args>
 struct isTupleCallable : decltype(isTupleCallableTest<Function, TupleType, Args...>(0)) {};

@@ -22,7 +22,7 @@ namespace Traits {
 
 /*! Template base class for SFINAE expression validity checking
  *
- * @note The integer-long substitution trick is explained in Tricks.md
+ * @note The integer-long substitution trick is explained in Tricks.rst
  */
 template<class>
 struct sfinae_true : std::true_type{};
