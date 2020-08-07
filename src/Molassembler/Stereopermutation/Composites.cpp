@@ -11,6 +11,7 @@
 
 #include "Molassembler/Shapes/Properties.h"
 #include "Molassembler/Shapes/Data.h"
+#include "Molassembler/Detail/Cartesian.h"
 #include "Molassembler/Temple/Adaptors/AllPairs.h"
 #include "Molassembler/Temple/Functional.h"
 #include "Molassembler/Temple/Functor.h"
@@ -20,7 +21,7 @@
 namespace Scine {
 namespace Molassembler {
 namespace Stereopermutations {
-namespace Detail {
+namespace {
 
 template<typename T>
 std::pair<T, T> makeOrderedPair(T a, T b) {
@@ -85,37 +86,7 @@ void translateCoordinates(
   }
 }
 
-/*! Calculates the dihedral between four positions
- *
- * \note Resulting dihedrals are distributed on (-M_PI, M_PI].
- */
-double dihedral(
-  const Eigen::Vector3d& i,
-  const Eigen::Vector3d& j,
-  const Eigen::Vector3d& k,
-  const Eigen::Vector3d& l
-) {
-  const Eigen::Vector3d a = j - i;
-  const Eigen::Vector3d b = k - j;
-  const Eigen::Vector3d c = l - k;
-
-  return std::atan2(
-    (
-      a.cross(b)
-    ).cross(
-      b.cross(c)
-    ).dot(
-      b.normalized()
-    ),
-    (
-      a.cross(b)
-    ).dot(
-      b.cross(c)
-    )
-  );
-}
-
-bool dihedralClose(
+bool dihedralIsClose(
   const double a,
   const double b,
   const double epsilon
@@ -133,7 +104,7 @@ bool dihedralClose(
   return std::fabs(diff) < epsilon;
 }
 
-} // namespace Detail
+} // namespace
 
 constexpr Temple::Floating::ExpandedAbsoluteEqualityComparator<double> Composite::fpComparator;
 
@@ -573,12 +544,12 @@ Composite::PerpendicularAngleGroups Composite::inGroupAngles(
         // No equal angles exist, add one yourself
         groups.emplace_back(
           std::vector<double> {perpendicularAngle},
-          RecordVector {Detail::makeOrderedPair(a, b)}
+          RecordVector {makeOrderedPair(a, b)}
         );
       } else {
         findIter->first.push_back(perpendicularAngle);
         findIter->second.emplace_back(
-          Detail::makeOrderedPair(a, b)
+          makeOrderedPair(a, b)
         );
       }
     }
@@ -662,7 +633,7 @@ Composite::Composite(
    */
   auto firstCoordinates = Shapes::coordinates(orientations_.first.shape);
   // Rotate left fused position onto <1, 0, 0>
-  Detail::rotateCoordinates(
+  rotateCoordinates(
     firstCoordinates,
     firstCoordinates.col(orientations_.first.fusedVertex).normalized(),
     Eigen::Vector3d::UnitX()
@@ -670,20 +641,20 @@ Composite::Composite(
 
   auto secondCoordinates = Shapes::coordinates(orientations_.second.shape);
   // Rotate right fused position onto <-1, 0, 0>
-  Detail::rotateCoordinates(
+  rotateCoordinates(
     secondCoordinates,
     secondCoordinates.col(orientations_.second.fusedVertex).normalized(),
     -Eigen::Vector3d::UnitX()
   );
 
   // Translate positions by <1, 0, 0>
-  Detail::translateCoordinates(
+  translateCoordinates(
     secondCoordinates,
     Eigen::Vector3d::UnitX()
   );
 
   auto getDihedral = [&](const Shapes::Vertex f, const Shapes::Vertex s) -> double {
-    return Detail::dihedral(
+    return Cartesian::dihedral(
       firstCoordinates.col(f),
       Eigen::Vector3d::Zero(),
       Eigen::Vector3d::UnitX(),
@@ -770,7 +741,7 @@ Composite::Composite(
         !Temple::any_of(
           stereopermutations_,
           [&dihedralList](const auto& rhsDihedralList) -> bool {
-            return Detail::dihedralClose(
+            return dihedralIsClose(
               std::get<2>(dihedralList.front()),
               std::get<2>(rhsDihedralList.front()),
               Temple::Math::toRadians(15.0)
