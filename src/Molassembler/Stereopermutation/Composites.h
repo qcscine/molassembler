@@ -131,7 +131,13 @@ public:
 
     //! Full tuple-like lexicographical comparison of members in order of declaration
     inline auto tie() const {
-      return std::tie(shape, fusedVertex, characters);
+      // Comparisons should be performed in canonical space
+      const Shapes::Vertex reducedVertex = lowestEqualVertexInShape();
+      return std::make_tuple(
+        shape,
+        reducedVertex,
+        applyCharacterRotation(findReductionMapping(reducedVertex))
+      );
     }
   };
 
