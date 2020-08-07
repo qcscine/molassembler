@@ -58,8 +58,8 @@ struct OrderedPair : Crtp::LexicographicComparable<OrderedPair<T>> {
   constexpr OrderedPair() = default;
 
   //! Reordering pair initializer
-  constexpr OrderedPair(T a, T b) : first {std::move(a)}, second {std::move(b)} {
-    if(b < a) {
+  constexpr OrderedPair(T a, T b) : first(std::move(a)), second(std::move(b)) {
+    if(second < first) {
       std::swap(first, second);
     }
   }
