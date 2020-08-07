@@ -78,15 +78,15 @@ struct ChiralConstraint;
  */
 class MASM_EXPORT AtomStereopermutator {
 public:
+  using ShapeMap = Temple::StrongIndexFlatMap<SiteIndex, Shapes::Vertex>;
+
   //! Old state dumped upon propagation
   using PropagatedState = std::tuple<
     RankingInformation,
     Stereopermutators::Abstract,
     Stereopermutators::Feasible,
-    boost::optional<unsigned>
+    ShapeMap
   >;
-
-  using ShapeMap = Temple::StrongIndexFlatMap<SiteIndex, Shapes::Vertex>;
 
   /*!
    * @brief Site index sequence defining a chiral constraint. If a site index

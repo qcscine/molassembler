@@ -77,7 +77,7 @@ void BondStereopermutator::fit(
 }
 
 void BondStereopermutator::propagateGraphChange(
-  const AtomStereopermutatorPropagatedState& oldPermutator,
+  const AtomStereopermutator::PropagatedState& oldPermutator,
   const AtomStereopermutator& newPermutator,
   const PrivateGraph& inner,
   const StereopermutatorList& permutators

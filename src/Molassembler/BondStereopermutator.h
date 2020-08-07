@@ -47,14 +47,6 @@ class MASM_EXPORT BondStereopermutator {
 public:
 //!@name Public types
 //!@{
-  //! Type yielded by atom stereopermutator on propagation
-  using AtomStereopermutatorPropagatedState = std::tuple<
-    RankingInformation,
-    Stereopermutators::Abstract,
-    Stereopermutators::Feasible,
-    boost::optional<unsigned>
-  >;
-
   /**
    * @brief How dihedrals are aligned in the generation of stereopermutations
    */
@@ -219,7 +211,7 @@ public:
    * shape}
    */
   void propagateGraphChange(
-    const AtomStereopermutatorPropagatedState& oldPermutator,
+    const AtomStereopermutator::PropagatedState& oldPermutator,
     const AtomStereopermutator& newPermutator,
     const PrivateGraph& inner,
     const StereopermutatorList& permutators

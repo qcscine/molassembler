@@ -1008,21 +1008,19 @@ void BondStereopermutator::Impl::fit(
 }
 
 void BondStereopermutator::Impl::propagateGraphChange(
-  const AtomStereopermutatorPropagatedState& oldPermutatorState,
+  const AtomStereopermutator::PropagatedState& oldPermutatorState,
   const AtomStereopermutator& newPermutator,
   const PrivateGraph& graph,
   const StereopermutatorList& permutators
 ) {
   const RankingInformation& oldRanking = std::get<0>(oldPermutatorState);
-  const Stereopermutators::Abstract& oldAbstract = std::get<1>(oldPermutatorState);
-  const Stereopermutators::Feasible& oldFeasible = std::get<2>(oldPermutatorState);
-  const boost::optional<unsigned>& oldAssignment = std::get<3>(oldPermutatorState);
+  const AtomStereopermutator::ShapeMap& oldShapeMap = std::get<3>(oldPermutatorState);
 
   // We assume that the supplied permutators (or their state) were assigned
-  assert(oldAssignment);
+  assert(!oldShapeMap.empty());
   assert(newPermutator.assigned());
 
-  /* We assume the old and new symmetry are of the same size (i.e. this is
+  /* We assume the old and new shapes are of the same size (i.e. this is
    * a ranking change propagation, not a substituent addition / removal
    * propagation)
    */
@@ -1103,21 +1101,21 @@ void BondStereopermutator::Impl::propagateGraphChange(
   }
 
   /* Find the old permutation in the set of new permutations
-   * - Since composite only offers dihedral information in terms of symmetry
-   *   positions, we have to translate these back into site indices
-   * - Transform symmetry positions through the sequence
+   * - Since composite only offers dihedral information in terms of shape
+   *   vertices, we have to translate these back into site indices
+   * - Transform shape vertices through the sequence
    *
-   *   old symmetry position
+   *   old shape vertex
    *   -> site index (using old permutation state)
    *   -> atom index (using old ranking)
    *   -> site index (using new ranking)
-   *   -> new symmetry position (using new permutation state)
+   *   -> new shape vertex (using new permutation state)
    *
    *   and then compare dihedral values between the composites. This scheme
    *   has works even if the fused position has changed.
    * - Since newComposite may have reordered the OrientationStates, we have
-   *   to be careful which part of the DihedralTuple's we extract symmetry
-   *   positions from.
+   *   to be careful which part of the DihedralTuple's we extract shape
+   *   vertices from.
    * - Inversions of the dihedral defining sequence do not invert the sign of
    *   the dihedral
    */
@@ -1132,19 +1130,8 @@ void BondStereopermutator::Impl::propagateGraphChange(
     assignment_.value()
   );
 
-  auto oldSymmetryPositionToSiteMap = shapeVertexToSiteIndexMap(
-    oldAbstract.permutations.list.at(
-      oldFeasible.indices.at(
-        oldAssignment.value()
-      )
-    ),
-    oldAbstract.canonicalSites,
-    oldRanking.links
-  );
-
   auto getNewShapeVertex = [&](Shapes::Vertex oldVertex) -> Shapes::Vertex {
-    const SiteIndex oldSiteIndex = oldSymmetryPositionToSiteMap.at(oldVertex);
-
+    const SiteIndex oldSiteIndex = oldShapeMap.indexOf(oldVertex);
     const std::vector<AtomIndex>& oldSite = oldRanking.sites.at(oldSiteIndex);
 
     // We assume here that atom indices making up sites are sorted
@@ -1217,22 +1204,29 @@ void BondStereopermutator::Impl::propagateGraphChange(
    *
    * However, the match may not be floating-point exact, and can have pi
    * periodicities!
+   *
+   * Watch out here: The exact ordering of shape vertices in the dihedral list
+   * is not reproduced because we don't reorder angle vertices according to
+   * their associated ranking character as in Composite. So we need set
+   * membership tests instead of lexicographic equality.
    */
   auto matchIter = std::find_if(
     std::begin(newComposite),
     std::end(newComposite),
     [&](const std::vector<DihedralTuple>& dihedrals) -> bool {
-      return std::lexicographical_compare(
-        std::begin(newCompositeDihedrals),
-        std::end(newCompositeDihedrals),
-        std::begin(dihedrals),
-        std::end(dihedrals),
-        [](const DihedralTuple& a, const DihedralTuple& b) -> bool {
-          return (
-            std::get<0>(a) == std::get<0>(b)
-            && std::get<1>(a) == std::get<1>(b)
-            && piPeriodicFPCompare(std::get<2>(a), std::get<2>(b))
-          );
+      return Temple::all_of(
+        newCompositeDihedrals,
+        [&](const DihedralTuple& newDihedral) -> bool {
+          return Temple::find_if(
+            dihedrals,
+            [&](const DihedralTuple& existingDihedral) -> bool {
+              return (
+                std::get<0>(newDihedral) == std::get<0>(existingDihedral)
+                && std::get<1>(newDihedral) == std::get<1>(existingDihedral)
+                && piPeriodicFPCompare(std::get<2>(newDihedral), std::get<2>(existingDihedral))
+              );
+            }
+          ) != std::end(dihedrals);
         }
       );
     }

@@ -774,7 +774,6 @@ void RankingTree::applySequenceRules_(
   bool foundBondStereopermutators = false;
   bool foundAtomStereopermutators = false;
 
-  std::unordered_map<AtomIndex, AtomStereopermutator::ShapeMap> shapeMaps;
   auto instantiateAtomStereopermutator = [&](const TreeVertexIndex targetIndex) -> void {
     // Do not instantiate an atomStereopermutator on the root vertex
     if(targetIndex == rootIndex) {
@@ -897,10 +896,7 @@ void RankingTree::applySequenceRules_(
        * therefore not wise to default-assign newStereopermutator if positions
        * are available.
        */
-      auto shapeMapOption = newStereopermutator.fit(graph_, positionsOption.value());
-      if(shapeMapOption) {
-        shapeMaps.emplace(molSourceIndex, std::move(shapeMapOption.value()));
-      }
+      newStereopermutator.fit(graph_, positionsOption.value());
     } else if(newStereopermutator.numAssignments() == 1) {
       // Default assign the stereopermutator for particularly simple cases
       newStereopermutator.assign(0);
@@ -1051,7 +1047,7 @@ void RankingTree::applySequenceRules_(
               [&](const auto& perm) -> BondStereopermutator::FittingReferences {
                 return {
                   perm,
-                  shapeMaps.at(perm.placement())
+                  perm.getShapePositionMap()
                 };
               }
             );

@@ -99,7 +99,7 @@ struct BondStereopermutator::Impl : public Temple::Crtp::LexicographicComparable
   );
 
   void propagateGraphChange(
-    const AtomStereopermutatorPropagatedState& oldPermutatorState,
+    const AtomStereopermutator::PropagatedState& oldPermutatorState,
     const AtomStereopermutator& newPermutator,
     const PrivateGraph& graph,
     const StereopermutatorList& permutators

@@ -754,18 +754,17 @@ Composite::Composite(
         }
       }
 
-      auto dihedralList = Temple::map(
-        Temple::Adaptors::allPairs(
-          angleGroups.first.vertices,
-          angleGroups.second.vertices
-        ),
-        [&](const Shapes::Vertex a, const Shapes::Vertex b) -> DihedralTuple {
-          return {a, b, getDihedral(a, b)};
-        }
+      auto dihedralList = Temple::sorted(
+        Temple::map(
+          Temple::Adaptors::allPairs(
+            angleGroups.first.vertices,
+            angleGroups.second.vertices
+          ),
+          [&](const Shapes::Vertex a, const Shapes::Vertex b) -> DihedralTuple {
+            return {a, b, getDihedral(a, b)};
+          }
+        )
       );
-
-      // Ensure postcondition that list of dihedrals is sorted
-      Temple::sort(dihedralList);
 
       if(
         !Temple::any_of(

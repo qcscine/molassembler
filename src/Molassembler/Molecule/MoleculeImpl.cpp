@@ -940,7 +940,6 @@ StereopermutatorList Molecule::Impl::inferStereopermutatorsFromPositions(
   const AtomIndex size = graph().N();
   StereopermutatorList stereopermutators;
 
-  std::unordered_map<AtomIndex, AtomStereopermutator::ShapeMap> shapeMaps;
   for(AtomIndex vertex = 0; vertex < size; vertex++) {
     RankingInformation localRanking = rankPriority(vertex, {}, angstromWrapper);
 
@@ -959,10 +958,7 @@ StereopermutatorList Molecule::Impl::inferStereopermutatorsFromPositions(
       std::move(localRanking)
     };
 
-    auto shapeMap = stereopermutator.fit(adjacencies_, angstromWrapper);
-    if(shapeMap) {
-      shapeMaps.emplace(vertex, std::move(shapeMap.value()));
-    }
+    stereopermutator.fit(adjacencies_, angstromWrapper);
     stereopermutators.add(std::move(stereopermutator));
   }
 
@@ -991,7 +987,7 @@ StereopermutatorList Molecule::Impl::inferStereopermutatorsFromPositions(
       [&](const auto& opt) -> BondStereopermutator::FittingReferences {
         return {
           opt.value(),
-          shapeMaps.at(opt->placement())
+          opt->getShapePositionMap()
         };
       }
     );

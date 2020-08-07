@@ -356,7 +356,7 @@ void AtomStereopermutator::Impl::assign(std::vector<Shapes::Vertex> vertexMappin
    * check each feasible permutation?
    */
   auto soughtStereopermutation = stereopermutationFromSiteToShapeVertexMap(
-    SiteToShapeVertexMap {std::move(vertexMapping)},
+    SiteToShapeVertexMap {vertexMapping},
     ranking_.links,
     abstract_.canonicalSites
   );
@@ -386,7 +386,8 @@ void AtomStereopermutator::Impl::assign(std::vector<Shapes::Vertex> vertexMappin
   }
 
   if(foundStereopermutation) {
-    assign(*foundStereopermutation);
+    assignmentOption_ = *foundStereopermutation;
+    shapePositionMap_ = ShapeMap {vertexMapping};
   }
 }
 
@@ -678,7 +679,7 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
     std::move(ranking_),
     std::move(abstract_),
     std::move(feasible_),
-    std::move(assignmentOption_)
+    std::move(shapePositionMap_)
   );
 
   // Overwrite the class state
