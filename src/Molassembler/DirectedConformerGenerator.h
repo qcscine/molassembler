@@ -314,7 +314,7 @@ public:
    *
    * @see Scine::Molassembler::generateRandomConformation()
    *
-   * @note Advances the state of the global PRNG.
+   * @note Advances the state of the global PRNG. Not reentrant.
    *
    * @throws std::invalid_argument If the passed decisionList does not match
    *   the length of the result of bondList().

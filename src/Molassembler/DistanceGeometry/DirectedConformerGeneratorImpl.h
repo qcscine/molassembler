@@ -72,6 +72,7 @@ public:
     const Utils::AtomCollection& atomCollection,
     BondStereopermutator::FittingMode mode
   );
+
   DecisionList getDecisionList(
     const Utils::PositionCollection& positions,
     BondStereopermutator::FittingMode mode

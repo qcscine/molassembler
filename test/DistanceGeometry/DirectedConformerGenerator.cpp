@@ -29,6 +29,91 @@ using namespace std::string_literals;
 using namespace Scine;
 using namespace Molassembler;
 
+namespace {
+
+void executeTest(
+  const std::string& filename,
+  const unsigned numConsideredBonds,
+  const unsigned idealEnsembleSize
+) {
+  auto mol = IO::read(filename);
+  DirectedConformerGenerator generator(mol);
+
+  BOOST_CHECK_MESSAGE(
+    generator.bondList().size() == numConsideredBonds,
+    "Bond list yielded by generator does not have expected size. Expected "
+    << numConsideredBonds << " for " << filename << ", got "
+    << generator.bondList().size() << " instead."
+  );
+
+  BOOST_CHECK_MESSAGE(
+    generator.idealEnsembleSize() == idealEnsembleSize,
+    "Generator ideal ensemble size does not yield expected number of "
+    "conformers. Expected " << idealEnsembleSize << " for " << filename
+      << ", got " << generator.idealEnsembleSize() << " instead."
+  );
+
+  // If there are
+  if(idealEnsembleSize == 0) {
+    return;
+  }
+
+  // Make a stricter configuration. 2000 steps should be enough, even for testosterone
+  DistanceGeometry::Configuration configuration {};
+  configuration.refinementStepLimit = 2000;
+
+  /* Ensure we can make generate all conformers we have hypothesized exist */
+  const unsigned maxTries = 5;
+  while(generator.decisionListSetSize() != generator.idealEnsembleSize()) {
+    auto newDecisionList = generator.generateNewDecisionList();
+
+    bool couldGenerateConformer = false;
+    boost::optional<DirectedConformerGenerator::DecisionList> generatedDecisionsOption;
+    for(unsigned attempt = 0; attempt < maxTries; ++attempt) {
+      auto positionResult = generator.generateRandomConformation(newDecisionList, configuration);
+      if(positionResult) {
+        auto recoveredDecisionList = generator.getDecisionList(
+          positionResult.value(),
+          BondStereopermutator::FittingMode::Nearest
+        );
+        if(recoveredDecisionList == newDecisionList) {
+          generatedDecisionsOption = std::move(recoveredDecisionList);
+          couldGenerateConformer = true;
+          break;
+        } else {
+          std::cout << "Decision list mismatch: "
+            << Temple::condense(recoveredDecisionList) << " != "
+            << Temple::condense(newDecisionList) << "\n";
+        }
+      } else {
+        std::cout << "Conformer generation failure: "
+          << positionResult.error().message() << "\n";
+      }
+    }
+
+    BOOST_CHECK_MESSAGE(
+      couldGenerateConformer,
+      "Could not generate " << filename << " conformer w/ decision list: "
+        << Temple::stringify(newDecisionList) << " in " << maxTries << " attempts"
+    );
+
+    if(generatedDecisionsOption) {
+      const bool matchingDecisionList = newDecisionList == generatedDecisionsOption.value();
+      BOOST_CHECK_MESSAGE(
+        matchingDecisionList,
+        "Supposedly generated and reinterpreted decision lists do not match for "
+        << filename
+        << ":\n"
+        << Temple::condense(newDecisionList) << " (supposedly generated)\n"
+        << Temple::condense(generatedDecisionsOption.value())
+        << " (reinterpreted)\n"
+      );
+    }
+  }
+}
+
+} // namespace
+
 BOOST_AUTO_TEST_CASE(DirectedConformerGeneration, *boost::unit_test::label("DG")) {
   std::vector<
     std::tuple<std::string, unsigned, unsigned>
@@ -37,77 +122,6 @@ BOOST_AUTO_TEST_CASE(DirectedConformerGeneration, *boost::unit_test::label("DG")
     {"directed_conformer_generation/pentane.mol", 2, 9},
     {"directed_conformer_generation/caffeine.mol", 0, 0},
     {"isomorphisms/testosterone.mol", 1, 3},
-  };
-
-  auto executeTest = [](
-    const std::string& filename,
-    const unsigned numConsideredBonds,
-    const unsigned idealEnsembleSize
-  ) {
-    auto mol = IO::read(filename);
-    DirectedConformerGenerator generator(mol);
-
-    BOOST_CHECK_MESSAGE(
-      generator.bondList().size() == numConsideredBonds,
-      "Bond list yielded by generator does not have expected size. Expected "
-      << numConsideredBonds << " for " << filename << ", got "
-      << generator.bondList().size() << " instead."
-    );
-
-    BOOST_CHECK_MESSAGE(
-      generator.idealEnsembleSize() == idealEnsembleSize,
-      "Generator ideal ensemble size does not yield expected number of "
-      "conformers. Expected " << idealEnsembleSize << " for " << filename
-        << ", got " << generator.idealEnsembleSize() << " instead."
-    );
-
-    // If there are
-    if(idealEnsembleSize == 0) {
-      return;
-    }
-
-    // Make a strict configuration. 2000 steps should be enough, even for testosterone
-    DistanceGeometry::Configuration configuration {};
-    configuration.refinementStepLimit = 2000;
-
-    /* Ensure we can make generate all conformers we have hypothesized exist */
-    const unsigned maxTries = 5;
-    while(generator.decisionListSetSize() != generator.idealEnsembleSize()) {
-      auto newDecisionList = generator.generateNewDecisionList();
-
-      bool couldGenerateConformer = false;
-      boost::optional<DirectedConformerGenerator::DecisionList> generatedDecisionsOption;
-      for(unsigned attempt = 0; attempt < maxTries; ++attempt) {
-        auto positionResult = generator.generateRandomConformation(newDecisionList, configuration);
-
-        if(positionResult) {
-          generatedDecisionsOption = generator.getDecisionList(
-            positionResult.value(),
-            BondStereopermutator::FittingMode::Nearest
-          );
-          couldGenerateConformer = true;
-          break;
-        }
-
-        std::cout << "Conformer generation failure: " << positionResult.error().message() << "\n";
-      }
-
-      BOOST_CHECK_MESSAGE(
-        couldGenerateConformer,
-        "Could not generate " << filename << " conformer w/ decision list: "
-          << Temple::stringify(newDecisionList) << " in " << maxTries << " attempts"
-      );
-
-      if(generatedDecisionsOption) {
-        BOOST_CHECK_MESSAGE(
-          newDecisionList == generatedDecisionsOption.value(),
-          "Supposedly generated and reinterpreted decision lists do not match:\n"
-          << Temple::condense(newDecisionList) << " (supposedly generated)\n"
-          << Temple::condense(generatedDecisionsOption.value())
-          << " (reinterpreted)\n"
-        );
-      }
-    }
   };
 
   for(const auto& tup : testCases) {
