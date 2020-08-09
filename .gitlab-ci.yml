@@ -6,7 +6,6 @@ variables:
   CONAN_CREATE_OPTIONS: >-
     -o scine_molassembler:python=True
     -o scine_molassembler:tests=True
-    -o scine_molassembler:docs=True
   CONAN_PYPI_OPTIONS: >-
     -o scine_molassembler:python=True
     -o scine_utilities:shared=False
