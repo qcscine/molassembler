@@ -104,14 +104,8 @@ Molecule narrow(Molecule molecule, Random::Engine& engine) {
     }
 
     if(!unassignedAtomStereopermutators.empty()) {
-      unsigned choice = Temple::Random::getSingle<unsigned>(
-        0,
-        unassignedAtomStereopermutators.size() - 1,
-        engine
-      );
-
       molecule.assignStereopermutatorRandomly(
-        unassignedAtomStereopermutators.at(choice),
+        Temple::Random::pick(unassignedAtomStereopermutators, engine),
         engine
       );
 
@@ -130,14 +124,8 @@ Molecule narrow(Molecule molecule, Random::Engine& engine) {
     }
 
     if(!unassignedBondStereopermutators.empty()) {
-      unsigned choice = Temple::Random::getSingle<unsigned>(
-        0,
-        unassignedBondStereopermutators.size() - 1,
-        engine
-      );
-
       molecule.assignStereopermutatorRandomly(
-        unassignedBondStereopermutators.at(choice),
+        Temple::Random::pick(unassignedBondStereopermutators, engine),
         engine
       );
     }

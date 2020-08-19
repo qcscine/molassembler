@@ -222,13 +222,7 @@ boost::optional<std::vector<Shapes::Vertex>> AtomStereopermutator::Impl::selectT
   }
 
   if(preservationOption == ChiralStatePreservation::RandomFromMultipleBest) {
-    return mappingsGroup.indexMappings.at(
-      Temple::Random::getSingle<unsigned>(
-        0,
-        mappingsGroup.indexMappings.size() - 1,
-        randomnessEngine()
-      )
-    );
+    return Temple::Random::pick(mappingsGroup.indexMappings, randomnessEngine());
   }
 
   return boost::none;

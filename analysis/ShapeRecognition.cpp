@@ -682,9 +682,7 @@ struct Random final : public Recognizer {
         viableSymmetries.push_back(name);
       }
     }
-    return viableSymmetries.at(
-      Temple::Random::getSingle<unsigned>(0, viableSymmetries.size() - 1, prngRef.get())
-    );
+    return Temple::Random::pick(viableSymmetries, prngRef.get());
   }
 
   std::string name() const final {

@@ -96,21 +96,11 @@ struct BoundedNodeTrieChooseFunctor {
       }
 
       assert(!bestChoices.empty());
-
-      return bestChoices.at(
-        std::uniform_int_distribution<ChoiceIndex>(
-          0,
-          bestChoices.size() - 1
-        )(randomnessEngine())
-      );
+      return Temple::Random::pick(bestChoices, engine);
     }
 
-    /* All children exist, so no point in calculating merits: we choose from
-     * the viable ones
-     */
-    return viableChildren.at(
-      std::uniform_int_distribution<ChoiceIndex>(0, viableChildren.size() - 1)(randomnessEngine())
-    );
+    // All children exist, so no point in calculating merits
+    return Temple::Random::pick(viableChildren, engine);
   }
 };
 

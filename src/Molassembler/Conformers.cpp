@@ -8,7 +8,6 @@
 #include "Molassembler/DistanceGeometry/ConformerGeneration.h"
 
 namespace Scine {
-
 namespace Molassembler {
 
 std::vector<
@@ -102,5 +101,4 @@ outcome::result<Utils::PositionCollection> generateConformation(
 }
 
 } // namespace Molassembler
-
 } // namespace Scine

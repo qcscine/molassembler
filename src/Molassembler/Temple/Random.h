@@ -125,6 +125,22 @@ unsigned pickDiscrete(
   return distribution(engine);
 }
 
+template<class Container, typename Engine>
+auto pick(const Container& container, Engine& engine) -> decltype(auto) {
+  using T = std::decay_t<decltype(container.size())>;
+  const T size = container.size();
+  if(size == 0) {
+    throw std::invalid_argument("Passed container to pick is empty");
+  }
+  return container.at(
+    getSingle<T>(
+      T {0},
+      size - 1,
+      engine
+    )
+  );
+}
+
 /*! @brief Use underlying PRNG to shuffle a Container in-place
  *
  * @complexity{@math{\Theta(N)}}
