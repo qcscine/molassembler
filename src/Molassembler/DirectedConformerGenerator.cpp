@@ -49,15 +49,15 @@ DirectedConformerGenerator& DirectedConformerGenerator::operator = (DirectedConf
 
 DirectedConformerGenerator::~DirectedConformerGenerator() = default;
 
-DirectedConformerGenerator::DecisionList DirectedConformerGenerator::generateNewDecisionList() {
-  return pImpl_->generateNewDecisionList();
+DirectedConformerGenerator::DecisionList DirectedConformerGenerator::generateNewDecisionList(Random::Engine& engine) {
+  return pImpl_->generateNewDecisionList(engine);
 }
 
 bool DirectedConformerGenerator::insert(const DecisionList& decisionList) {
   return pImpl_->insert(decisionList);
 }
 
-bool DirectedConformerGenerator::contains(const DecisionList& decisionList) {
+bool DirectedConformerGenerator::contains(const DecisionList& decisionList) const {
   return pImpl_->contains(decisionList);
 }
 
@@ -76,36 +76,54 @@ unsigned DirectedConformerGenerator::idealEnsembleSize() const {
 outcome::result<Utils::PositionCollection>
 DirectedConformerGenerator::generateRandomConformation(
   const DecisionList& decisionList,
-  const DistanceGeometry::Configuration& configuration
-) {
-  return pImpl_->generateRandomConformation(decisionList, configuration);
+  const DistanceGeometry::Configuration& configuration,
+  const BondStereopermutator::FittingMode fitting
+) const {
+  return pImpl_->generateRandomConformation(decisionList, configuration, fitting);
 }
 
 outcome::result<Utils::PositionCollection>
 DirectedConformerGenerator::generateConformation(
   const DecisionList& decisionList,
   const unsigned seed,
-  const DistanceGeometry::Configuration& configuration
-) {
-  return pImpl_->generateConformation(decisionList, seed, configuration);
+  const DistanceGeometry::Configuration& configuration,
+  const BondStereopermutator::FittingMode fitting
+) const {
+  return pImpl_->generateConformation(decisionList, seed, configuration, fitting);
 }
 
-const Molecule& DirectedConformerGenerator::conformationMolecule(const DecisionList& decisionList) {
+Molecule DirectedConformerGenerator::conformationMolecule(const DecisionList& decisionList) const {
   return pImpl_->conformationMolecule(decisionList);
 }
 
 DirectedConformerGenerator::DecisionList DirectedConformerGenerator::getDecisionList(
   const Utils::AtomCollection& atomCollection,
   const BondStereopermutator::FittingMode mode
-) {
+) const {
   return pImpl_->getDecisionList(atomCollection, mode);
 }
 
 DirectedConformerGenerator::DecisionList DirectedConformerGenerator::getDecisionList(
   const Utils::PositionCollection& positions,
   const BondStereopermutator::FittingMode mode
-) {
+) const {
   return pImpl_->getDecisionList(positions, mode);
+}
+
+void DirectedConformerGenerator::enumerate(
+  std::function<void(const DecisionList&, Utils::PositionCollection)> callback,
+  unsigned seed,
+  const EnumerationSettings& settings
+) {
+  return pImpl_->enumerate(callback, seed, settings);
+}
+
+void DirectedConformerGenerator::enumerateRandom(
+  std::function<void(const DecisionList&, Utils::PositionCollection)> callback,
+  const EnumerationSettings& settings
+) {
+  Random::Engine& engine = randomnessEngine();
+  return pImpl_->enumerate(callback, engine(), settings);
 }
 
 } // namespace Molassembler

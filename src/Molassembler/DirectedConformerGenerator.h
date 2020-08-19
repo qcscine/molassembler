@@ -10,6 +10,7 @@
 
 #include "Molassembler/Conformers.h"
 #include "Molassembler/BondStereopermutator.h"
+#include "Molassembler/Options.h"
 
 #include "boost/variant/variant_fwd.hpp"
 
@@ -250,7 +251,7 @@ public:
    *
    * @returns a DecisionList of length matching the number of relevant bonds.
    */
-  DecisionList generateNewDecisionList();
+  DecisionList generateNewDecisionList(Random::Engine& engine = randomnessEngine());
 
   /*!
    * @brief Adds a decision list to the underlying set-like data structure
@@ -272,7 +273,7 @@ public:
    *
    * @complexity{@math{\Theta(N)}}
    */
-  bool contains(const DecisionList& decisionList);
+  bool contains(const DecisionList& decisionList) const;
 //!@}
 
 //!@name Information
@@ -321,8 +322,9 @@ public:
    */
   outcome::result<Utils::PositionCollection> generateRandomConformation(
     const DecisionList& decisionList,
-    const DistanceGeometry::Configuration& configuration = DistanceGeometry::Configuration {}
-  );
+    const DistanceGeometry::Configuration& configuration = DistanceGeometry::Configuration {},
+    BondStereopermutator::FittingMode fitting = BondStereopermutator::FittingMode::Thresholded
+  ) const;
 
   /*! @brief Try to generate a conformer for a particular decision list
    *
@@ -337,14 +339,15 @@ public:
   outcome::result<Utils::PositionCollection> generateConformation(
     const DecisionList& decisionList,
     const unsigned seed,
-    const DistanceGeometry::Configuration& configuration = DistanceGeometry::Configuration {}
-  );
+    const DistanceGeometry::Configuration& configuration = DistanceGeometry::Configuration {},
+    BondStereopermutator::FittingMode fitting = BondStereopermutator::FittingMode::Thresholded
+  ) const;
 
   /*! @brief Yields a molecule reference for a particular decision list
    *
    * @complexity{@math{\Theta(N)} bond stereopermutator assignments}
    */
-  const Molecule& conformationMolecule(const DecisionList& decisionList);
+  Molecule conformationMolecule(const DecisionList& decisionList) const;
 
   /*! @brief Infer a decision list for relevant bonds from an atom collection
    *
@@ -369,7 +372,7 @@ public:
   DecisionList getDecisionList(
     const Utils::AtomCollection& atomCollection,
     BondStereopermutator::FittingMode mode = BondStereopermutator::FittingMode::Thresholded
-  );
+  ) const;
 
   /*! @brief Infer a decision list for relevant bonds from positional information only
    *
@@ -390,6 +393,73 @@ public:
   DecisionList getDecisionList(
     const Utils::PositionCollection& positions,
     BondStereopermutator::FittingMode mode = BondStereopermutator::FittingMode::Thresholded
+  ) const;
+
+  /*! @brief Settings for enumeration
+   */
+  struct EnumerationSettings {
+    EnumerationSettings()
+      : dihedralRetries(3),
+        fitting(BondStereopermutator::FittingMode::Thresholded),
+        configuration()
+    {}
+
+    //! Number of attempts to generate the correct decision list
+    unsigned dihedralRetries;
+    //! How a decision list is fitted to a generated conformer
+    BondStereopermutator::FittingMode fitting;
+    //! Conformer generation settings
+    DistanceGeometry::Configuration configuration;
+  };
+
+  /*! @brief Enumerate all conformers of the captured molecule
+   *
+   * Clears the stored set of decision lists, then enumerates all conformers of
+   * the molecule in parallel.
+   *
+   * @param callback Function called with decision list and conformer
+   *    positions for each successfully generated. It is guaranteed that the
+   *    callback function is never called simultaneously even in parallel
+   *    execution.
+   * @param seed Randomness initiator for decision list and conformer
+   *    generation
+   * @param settings Further parameters for enumeration algorithms
+   *
+   * @parblock @note This function is parallelized. Use the OMP_NUM_THREADS
+   * environment variable to control the number of threads used. Results are
+   * sequenced and reproducible.
+   * @endparblock
+   */
+  void enumerate(
+    std::function<void(const DecisionList&, Utils::PositionCollection)> callback,
+    unsigned seed,
+    const EnumerationSettings& settings = {}
+  );
+
+  /*! @brief Enumerate all conformers of the captured molecule
+   *
+   * Clears the stored set of decision lists, then enumerates all conformers of
+   * the molecule in parallel.
+   *
+   * @param callback Function called with decision list and conformer
+   *   positions for each successfully generated pair. It is guaranteed that
+   *   the callback function is never called simultaneously even in parallel
+   *   execution.
+   * @param seed Randomness initiator for decision list and conformer
+   *   generation
+   * @param settings Further parameters for enumeration algorithms
+   *
+   * @parblock @note This function is parallelized. Use the OMP_NUM_THREADS
+   * environment variable to control the number of threads used. Callback
+   * invocations are unsequenced but the arguments are reproducible.
+   * @endparblock
+   *
+   * @parblock @note This function advances the state of the global PRNG.
+   * @endparblock
+   */
+  void enumerateRandom(
+    std::function<void(const DecisionList&, Utils::PositionCollection)> callback,
+    const EnumerationSettings& settings = {}
   );
 //!@}
 

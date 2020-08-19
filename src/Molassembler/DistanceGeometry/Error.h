@@ -110,9 +110,9 @@ enum class DgError {
    */
   RefinedChiralsWrong = 6,
   /**
-   * @brief Deprecated error in loosening-increasing DG procedures
+   * @brief In directed conformer generation, failed to generate decision list
    */
-  TooManyFailures = 7,
+  DecisionListMismatch = 7,
   /**
    * @brief Unknown exception
    */
@@ -144,8 +144,8 @@ namespace Detail {
           return "Refined structure deemed inacceptable.";
         case DgError::RefinedChiralsWrong:
           return "Refined structure has chiral constraints with wrong sign.";
-        case DgError::TooManyFailures:
-          return "Conformer generation yielded too many failures.";
+        case DgError::DecisionListMismatch:
+          return "Failed to generate decision list.";
         case DgError::UnknownException:
           return "Conformer generation encountered an unexpected exception.";
         default:

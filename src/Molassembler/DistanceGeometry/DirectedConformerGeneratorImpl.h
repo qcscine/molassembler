@@ -35,13 +35,17 @@ public:
     const BondList& bondsToConsider
   );
 
-  DecisionList generateNewDecisionList();
+  DecisionList generateNewDecisionList(Random::Engine& engine);
 
   bool insert(const DecisionList& decisionList) {
     return decisionLists_.insert(decisionList);
   }
 
-  bool contains(const DecisionList& decisionList) {
+  void clear() {
+    return decisionLists_.clear();
+  }
+
+  bool contains(const DecisionList& decisionList) const {
     return decisionLists_.contains(decisionList);
   }
 
@@ -57,28 +61,42 @@ public:
     return decisionLists_.capacity();
   }
 
+  outcome::result<Utils::PositionCollection> checkGeneratedConformation(
+    outcome::result<Utils::PositionCollection> conformerResult,
+    const DecisionList& decisionList,
+    BondStereopermutator::FittingMode fitting
+  ) const;
+
   outcome::result<Utils::PositionCollection> generateRandomConformation(
     const DecisionList& decisionList,
-    const DistanceGeometry::Configuration& configuration
-  );
+    const DistanceGeometry::Configuration& configuration,
+    BondStereopermutator::FittingMode fitting
+  ) const;
 
   outcome::result<Utils::PositionCollection> generateConformation(
     const DecisionList& decisionList,
     unsigned seed,
-    const DistanceGeometry::Configuration& configuration
-  );
+    const DistanceGeometry::Configuration& configuration,
+    BondStereopermutator::FittingMode fitting
+  ) const;
 
   DecisionList getDecisionList(
     const Utils::AtomCollection& atomCollection,
-    BondStereopermutator::FittingMode mode
-  );
+    BondStereopermutator::FittingMode fitting
+  ) const;
 
   DecisionList getDecisionList(
     const Utils::PositionCollection& positions,
-    BondStereopermutator::FittingMode mode
-  );
+    BondStereopermutator::FittingMode fitting
+  ) const;
 
-  const Molecule& conformationMolecule(const DecisionList& decisionList);
+  Molecule conformationMolecule(const DecisionList& decisionList) const;
+
+  void enumerate(
+    std::function<void(const DecisionList&, Utils::PositionCollection)> callback,
+    unsigned seed,
+    const EnumerationSettings& settings
+  );
 
 private:
   Molecule molecule_;
@@ -93,7 +111,7 @@ private:
    * common one will naturally be three). Then the bounds for construction of
    * this tree are e.g. {3, 2, 4}.
    *
-   * Possible Decisionlists are then e.g.:
+   * Possible DecisionLists are then e.g.:
    * - {0, 0, 0}, (this is the minimal choice list if ordered lexicographically)
    * - {2, 1, 3}, (this is the maximal choice list if ordered lexicographically)
    * - {1, 1, 3},

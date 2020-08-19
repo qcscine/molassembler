@@ -5,6 +5,7 @@
  */
 #include "TypeCasters.h"
 #include "pybind11/eigen.h"
+#include "pybind11/functional.h"
 
 #include "Molassembler/Molecule.h"
 #include "Molassembler/DirectedConformerGenerator.h"
@@ -12,9 +13,9 @@
 
 #include "Utils/Geometry/AtomCollection.h"
 
-void init_directed_conformer_generator(pybind11::module& m) {
-  using namespace Scine::Molassembler;
+using namespace Scine::Molassembler;
 
+void init_directed_conformer_generator(pybind11::module& m) {
   pybind11::class_<DirectedConformerGenerator> dirConfGen(
     m,
     "DirectedConformerGenerator",
@@ -156,7 +157,7 @@ void init_directed_conformer_generator(pybind11::module& m) {
     "Returns the number of conformers needed for a full ensemble"
   );
 
-  using VariantType = boost::variant<
+  using ConformerVariantType = boost::variant<
     Scine::Utils::PositionCollection,
     std::string
   >;
@@ -167,7 +168,7 @@ void init_directed_conformer_generator(pybind11::module& m) {
       DirectedConformerGenerator& generator,
       const DirectedConformerGenerator::DecisionList& decisionList,
       const DistanceGeometry::Configuration& configuration
-    ) -> VariantType {
+    ) -> ConformerVariantType {
       auto result = generator.generateRandomConformation(
         decisionList,
         configuration
@@ -200,7 +201,7 @@ void init_directed_conformer_generator(pybind11::module& m) {
       const DirectedConformerGenerator::DecisionList& decisionList,
       const unsigned seed,
       const DistanceGeometry::Configuration& configuration
-    ) -> VariantType {
+    ) -> ConformerVariantType {
       auto result = generator.generateConformation(
         decisionList,
         seed,
@@ -243,7 +244,8 @@ void init_directed_conformer_generator(pybind11::module& m) {
   dirConfGen.def(
     "get_decision_list",
     pybind11::overload_cast<const Scine::Utils::AtomCollection&, BondStereopermutator::FittingMode>(
-      &DirectedConformerGenerator::getDecisionList
+      &DirectedConformerGenerator::getDecisionList,
+      pybind11::const_
     ),
     pybind11::arg("atom_collection"),
     pybind11::arg("fitting_mode") = BondStereopermutator::FittingMode::Thresholded,
@@ -274,7 +276,8 @@ void init_directed_conformer_generator(pybind11::module& m) {
   dirConfGen.def(
     "get_decision_list",
     pybind11::overload_cast<const Scine::Utils::PositionCollection&, BondStereopermutator::FittingMode>(
-      &DirectedConformerGenerator::getDecisionList
+      &DirectedConformerGenerator::getDecisionList,
+      pybind11::const_
     ),
     pybind11::arg("positions"),
     pybind11::arg("fitting_mode") = BondStereopermutator::FittingMode::Thresholded,
@@ -306,6 +309,110 @@ void init_directed_conformer_generator(pybind11::module& m) {
     R"delim(
       Value set in decision list interpretations from positions if no assignment
       could be recovered.
+    )delim"
+  );
+
+  pybind11::class_<DirectedConformerGenerator::EnumerationSettings> enumerationSettings(
+    dirConfGen,
+    "EnumerationSettings",
+    R"delim(
+      Settings for conformer enumeration
+    )delim"
+  );
+
+  enumerationSettings.def(
+    pybind11::init<>(),
+    "Default-initialize enumeration settings"
+  );
+
+  enumerationSettings.def_readwrite(
+    "dihedral_retries",
+    &DirectedConformerGenerator::EnumerationSettings::dihedralRetries,
+    "Number of attempts to generate the dihedral decision"
+  );
+
+  enumerationSettings.def_readwrite(
+    "fitting",
+    &DirectedConformerGenerator::EnumerationSettings::fitting,
+    "Mode for fitting dihedral assignments"
+  );
+
+  enumerationSettings.def_readwrite(
+    "configuration",
+    &DirectedConformerGenerator::EnumerationSettings::configuration,
+    "Configuration for conformer generation scheme"
+  );
+
+  enumerationSettings.def(
+    "__repr__",
+    [](pybind11::object settings) -> std::string {
+      const std::vector<std::string> members {
+        "dihedral_retries",
+        "fitting",
+        "configuration"
+      };
+
+      std::string repr = "(";
+      for(const std::string& member : members) {
+        const std::string member_repr = pybind11::str(settings.attr(member.c_str()));
+        repr += member + "=" + member_repr + ", ";
+      }
+      repr.pop_back();
+      repr.pop_back();
+      repr += ")";
+      return repr;
+    }
+  );
+
+  dirConfGen.def(
+    "enumerate",
+    &DirectedConformerGenerator::enumerate,
+    pybind11::arg("callback"),
+    pybind11::arg("seed"),
+    pybind11::arg("settings") = DirectedConformerGenerator::EnumerationSettings {},
+    pybind11::call_guard<pybind11::gil_scoped_release>(),
+    R"delim(
+      Enumerate all conformers of the captured molecule
+
+      Clears the stored set of decision lists, then enumerates all conformers
+      of the molecule in parallel.
+
+      .. note::
+         This function is parallelized and will utilize ``OMP_NUM_THREADS``
+         threads. Callback invocations are unsequenced but the arguments are
+         reproducible.
+
+      :param callback: Function called with decision list and conformer
+        positions for each successfully generated pair.
+      :param seed: Randomness initiator for decision list and conformer
+        generation
+      :param settings: Further parameters for enumeration algorithms
+    )delim"
+  );
+
+  dirConfGen.def(
+    "enumerate_random",
+    &DirectedConformerGenerator::enumerateRandom,
+    pybind11::arg("callback"),
+    pybind11::arg("settings") = DirectedConformerGenerator::EnumerationSettings {},
+    pybind11::call_guard<pybind11::gil_scoped_release>(),
+    R"delim(
+      Enumerate all conformers of the captured molecule
+
+      Clears the stored set of decision lists, then enumerates all conformers
+      of the molecule in parallel.
+
+      .. note::
+         This function is parallelized and will utilize ``OMP_NUM_THREADS``
+         threads. Callback invocations are unsequenced but the arguments are
+         reproducible given the same global PRNG state.
+
+      .. note::
+         This function advances ``molassembler``'s global PRNG state.
+
+      :param callback: Function called with decision list and conformer
+        positions for each successfully generated pair.
+      :param settings: Further parameters for enumeration algorithms
     )delim"
   );
 }

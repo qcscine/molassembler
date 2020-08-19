@@ -11,8 +11,11 @@
 #include "Molassembler/StereopermutatorList.h"
 
 #include "Molassembler/Stereopermutation/Composites.h"
+#include "Molassembler/Temple/Adaptors/Zip.h"
 #include "Molassembler/Temple/Functional.h"
 #include "Molassembler/Temple/Optionals.h"
+#include "Molassembler/Temple/Random.h"
+#include "Molassembler/DistanceGeometry/Error.h"
 
 #include "Utils/Geometry/AtomCollection.h"
 #include "boost/variant.hpp"
@@ -42,6 +45,8 @@ unsigned distance(const int i, const int j, const int U) {
 
 template<typename ChoiceIndex>
 struct BoundedNodeTrieChooseFunctor {
+  Random::Engine& engine;
+
   /*!
    * @brief Calculates merit of a particular choice in a modulus value cycle
    *   with some elements in the cycle existing and others not.
@@ -292,40 +297,69 @@ DirectedConformerGenerator::Impl::Impl(
 }
 
 DirectedConformerGenerator::DecisionList
-DirectedConformerGenerator::Impl::generateNewDecisionList() {
+DirectedConformerGenerator::Impl::generateNewDecisionList(Random::Engine& engine) {
   if(relevantBonds_.empty()) {
     throw std::logic_error("List of relevant bonds is empty!");
   }
 
-  Detail::BoundedNodeTrieChooseFunctor<std::uint8_t> chooseFunctor {};
+  Detail::BoundedNodeTrieChooseFunctor<std::uint8_t> chooseFunctor {engine};
   return decisionLists_.generateNewEntry(chooseFunctor);
 }
 
-const Molecule& DirectedConformerGenerator::Impl::conformationMolecule(const DecisionList& decisionList) {
-  const unsigned U = decisionList.size();
+Molecule DirectedConformerGenerator::Impl::conformationMolecule(const DecisionList& decisionList) const {
+  StereopermutatorList permutators = molecule_.stereopermutators();
 
+  const unsigned U = decisionList.size();
   if(U != decisionLists_.bounds().size() || U != relevantBonds_.size()) {
     throw std::invalid_argument("Passed decision list has wrong length");
   }
 
-  for(unsigned i = 0; i < U; ++i) {
-    const BondIndex& bondIndex = relevantBonds_.at(i);
-    auto stereoOption = molecule_.pImpl_->stereopermutators_.option(bondIndex);
-    assert(stereoOption);
-    stereoOption->assign(decisionList[i]);
+  Temple::forEach(
+    Temple::Adaptors::zip(relevantBonds_, decisionList),
+    [&](const BondIndex& bond, const std::uint8_t assignment) {
+      permutators.option(bond)->assign(assignment);
+    }
+  );
+
+  return Molecule(
+    molecule_.graph(),
+    std::move(permutators)
+  );
+}
+
+outcome::result<Utils::PositionCollection>
+DirectedConformerGenerator::Impl::checkGeneratedConformation(
+  outcome::result<Utils::PositionCollection> conformerResult,
+  const DecisionList& decisionList,
+  const BondStereopermutator::FittingMode fitting
+) const {
+  if(conformerResult) {
+    const auto generatedDecisionList = getDecisionList(
+      conformerResult.value(),
+      fitting
+    );
+
+    if(generatedDecisionList != decisionList) {
+      return DgError::DecisionListMismatch;
+    }
   }
 
-  return molecule_;
+  return conformerResult;
 }
 
 outcome::result<Utils::PositionCollection>
 DirectedConformerGenerator::Impl::generateRandomConformation(
   const DecisionList& decisionList,
-  const DistanceGeometry::Configuration& configuration
-) {
-  return Scine::Molassembler::generateRandomConformation(
-    conformationMolecule(decisionList),
-    configuration
+  const DistanceGeometry::Configuration& configuration,
+  const BondStereopermutator::FittingMode fitting
+) const {
+  return checkGeneratedConformation(
+    Scine::Molassembler::generateRandomConformation(
+      conformationMolecule(decisionList),
+      configuration
+    ),
+    decisionList,
+    fitting
   );
 }
 
@@ -333,20 +367,25 @@ outcome::result<Utils::PositionCollection>
 DirectedConformerGenerator::Impl::generateConformation(
   const DecisionList& decisionList,
   const unsigned seed,
-  const DistanceGeometry::Configuration& configuration
-) {
-  return Scine::Molassembler::generateConformation(
-    conformationMolecule(decisionList),
-    seed,
-    configuration
+  const DistanceGeometry::Configuration& configuration,
+  const BondStereopermutator::FittingMode fitting
+) const {
+  return checkGeneratedConformation(
+    Scine::Molassembler::generateConformation(
+      conformationMolecule(decisionList),
+      seed,
+      configuration
+    ),
+    decisionList,
+    fitting
   );
 }
 
 DirectedConformerGenerator::DecisionList
 DirectedConformerGenerator::Impl::getDecisionList(
   const Utils::AtomCollection& atomCollection,
-  const BondStereopermutator::FittingMode mode
-) {
+  const BondStereopermutator::FittingMode fitting
+) const {
   if(
     !Temple::all_of(
       molecule_.graph().atoms(),
@@ -358,21 +397,21 @@ DirectedConformerGenerator::Impl::getDecisionList(
     throw std::logic_error("Input AtomCollection elements do not match generator's underlying molecule. Misordered? Different molecule input?");
   }
 
-  return getDecisionList(atomCollection.getPositions(), mode);
+  return getDecisionList(atomCollection.getPositions(), fitting);
 }
 
 DirectedConformerGenerator::DecisionList
 DirectedConformerGenerator::Impl::getDecisionList(
   const Utils::PositionCollection& positions,
-  const BondStereopermutator::FittingMode mode
-) {
-  AngstromPositions angstromPositions {positions};
+  const BondStereopermutator::FittingMode fitting
+) const {
+  const AngstromPositions angstromPositions {positions};
 
   if(
     !Temple::all_of(
       relevantBonds_,
       [&](const BondIndex& bondIndex) -> bool {
-        const auto& permutators = molecule_.pImpl_->stereopermutators_;
+        const auto& permutators = molecule_.stereopermutators();
         return (
           permutators.option(bondIndex.first)
           && permutators.option(bondIndex.second)
@@ -406,6 +445,13 @@ DirectedConformerGenerator::Impl::getDecisionList(
   return Temple::map(
     relevantBonds_,
     [&](const BondIndex& bondIndex) -> std::uint8_t {
+      const auto stereoOption = molecule_.stereopermutators().option(bondIndex);
+      if(!stereoOption) {
+        throw std::logic_error(
+          "No BondStereopermutator for selected bond in molecule!"
+        );
+      }
+
       const auto fittingReferences = Temple::mapHomogeneousPairlike(
         bondIndex,
         [&](const AtomIndex v) -> BondStereopermutator::FittingReferences {
@@ -415,16 +461,54 @@ DirectedConformerGenerator::Impl::getDecisionList(
           };
         }
       );
-      auto stereoOption = molecule_.pImpl_->stereopermutators_.option(bondIndex);
-      if(!stereoOption) {
-        throw std::logic_error(
-          "No BondStereopermutator for selected bond in molecule!"
-        );
-      }
-      stereoOption->fit(angstromPositions, fittingReferences, mode);
-      return stereoOption->assigned().value_or(unknownDecision);
+
+      BondStereopermutator stereopermutator = stereoOption.value();
+      stereopermutator.fit(angstromPositions, fittingReferences, fitting);
+      return stereopermutator.assigned().value_or(unknownDecision);
     }
   );
+}
+
+void DirectedConformerGenerator::Impl::enumerate(
+  std::function<void(const DecisionList&, Utils::PositionCollection)> callback,
+  const unsigned seed,
+  const EnumerationSettings& settings
+) {
+  clear();
+  const unsigned size = idealEnsembleSize();
+
+#pragma omp parallel for
+  for(unsigned increment = 0; increment < size; ++increment) {
+    Random::Engine localEngine(seed + increment);
+
+    DecisionList decisionList;
+#pragma omp critical(decisionSetAccess)
+    {
+      decisionList = generateNewDecisionList(localEngine);
+    }
+
+    for(unsigned i = 0; i < settings.dihedralRetries; ++i) {
+      const auto conformer = generateConformation(
+        decisionList,
+        localEngine(),
+        settings.configuration,
+        settings.fitting
+      );
+
+      if(conformer) {
+#pragma omp critical(guardCallback)
+        {
+          callback(decisionList, conformer.value());
+        }
+        break;
+      } else if(conformer.error() != DgError::DecisionListMismatch) {
+        /* Only allow decision list failure retries for retries, break on
+         * anything else
+         */
+        break;
+      }
+    }
+  }
 }
 
 } // namespace Molassembler

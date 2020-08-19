@@ -9,15 +9,22 @@
 #include "Molassembler/Conformers.h"
 #include "Molassembler/Molecule.h"
 
-using VariantType = boost::variant<
-  Scine::Utils::PositionCollection,
+using namespace Scine;
+using namespace Molassembler;
+
+/* TODO clean this up with a type caster (ideal) or with a Temple::map and a
+ * single converting fn (acceptable)
+ */
+
+using ConformerVariantType = boost::variant<
+  Utils::PositionCollection,
   std::string
 >;
 
-std::vector<VariantType> generateRandomEnsemble(
-  const Scine::Molassembler::Molecule& molecule,
+std::vector<ConformerVariantType> generateRandomEnsemble(
+  const Molecule& molecule,
   unsigned numStructures,
-  const Scine::Molassembler::DistanceGeometry::Configuration& config
+  const DistanceGeometry::Configuration& config
 ) {
   auto ensemble = Scine::Molassembler::generateRandomEnsemble(
     molecule,
@@ -25,7 +32,7 @@ std::vector<VariantType> generateRandomEnsemble(
     config
   );
 
-  std::vector<VariantType> returnList;
+  std::vector<ConformerVariantType> returnList;
   returnList.reserve(ensemble.size());
 
   for(auto& positionResult : ensemble) {
@@ -43,11 +50,11 @@ std::vector<VariantType> generateRandomEnsemble(
   return returnList;
 }
 
-std::vector<VariantType> generateEnsemble(
-  const Scine::Molassembler::Molecule& molecule,
+std::vector<ConformerVariantType> generateEnsemble(
+  const Molecule& molecule,
   const unsigned numStructures,
   const unsigned seed,
-  const Scine::Molassembler::DistanceGeometry::Configuration& config
+  const DistanceGeometry::Configuration& config
 ) {
   auto ensemble = Scine::Molassembler::generateEnsemble(
     molecule,
@@ -56,7 +63,7 @@ std::vector<VariantType> generateEnsemble(
     config
   );
 
-  std::vector<VariantType> returnList;
+  std::vector<ConformerVariantType> returnList;
   returnList.reserve(ensemble.size());
 
   for(auto& positionResult : ensemble) {
@@ -74,9 +81,9 @@ std::vector<VariantType> generateEnsemble(
   return returnList;
 }
 
-VariantType generateRandomConformation(
-  const Scine::Molassembler::Molecule& molecule,
-  const Scine::Molassembler::DistanceGeometry::Configuration& config
+ConformerVariantType generateRandomConformation(
+  const Molecule& molecule,
+  const DistanceGeometry::Configuration& config
 ) {
   auto conformerResult = Scine::Molassembler::generateRandomConformation(
     molecule,
@@ -90,10 +97,10 @@ VariantType generateRandomConformation(
   return conformerResult.error().message();
 }
 
-VariantType generateConformation(
-  const Scine::Molassembler::Molecule& molecule,
+ConformerVariantType generateConformation(
+  const Molecule& molecule,
   const unsigned seed,
-  const Scine::Molassembler::DistanceGeometry::Configuration& config
+  const DistanceGeometry::Configuration& config
 ) {
   auto conformerResult = Scine::Molassembler::generateConformation(
     molecule,
@@ -109,8 +116,6 @@ VariantType generateConformation(
 }
 
 void init_conformers(pybind11::module& m) {
-  using namespace Scine::Molassembler;
-
   auto dg = m.def_submodule("dg", "Distance geometry");
   dg.doc() = R"delim(
     Conformer generation is based on four-spatial dimension Distance Geometry. This
@@ -188,6 +193,29 @@ void init_conformers(pybind11::module& m) {
       haptic ligand binding site must be either completely free or completely
       fixed and nothing in between).
     )delim"
+  );
+
+  configuration.def(
+    "__repr__",
+    [](pybind11::object settings) -> std::string {
+      const std::vector<std::string> members {
+        "partiality",
+        "refinement_step_limit",
+        "refinement_gradient_target",
+        "spatial_model_loosening",
+        "fixed_positions"
+      };
+
+      std::string repr = "(";
+      for(const std::string& member : members) {
+        const std::string member_repr = pybind11::str(settings.attr(member.c_str()));
+        repr += member + "=" + member_repr + ", ";
+      }
+      repr.pop_back();
+      repr.pop_back();
+      repr += ")";
+      return repr;
+    }
   );
 
   dg.def(
