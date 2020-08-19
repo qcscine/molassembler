@@ -59,6 +59,7 @@ void executeTest(
   }
 
   // Make a stricter configuration. 2000 steps should be enough, even for testosterone
+  const auto fitting = BondStereopermutator::FittingMode::Nearest;
   DistanceGeometry::Configuration configuration {};
   configuration.refinementStepLimit = 2000;
 
@@ -66,25 +67,12 @@ void executeTest(
   const unsigned maxTries = 5;
   while(generator.decisionListSetSize() != generator.idealEnsembleSize()) {
     auto newDecisionList = generator.generateNewDecisionList();
-
-    bool couldGenerateConformer = false;
-    boost::optional<DirectedConformerGenerator::DecisionList> generatedDecisionsOption;
+    bool success = false;
     for(unsigned attempt = 0; attempt < maxTries; ++attempt) {
-      auto positionResult = generator.generateRandomConformation(newDecisionList, configuration);
+      const auto positionResult = generator.generateRandomConformation(newDecisionList, configuration, fitting);
       if(positionResult) {
-        auto recoveredDecisionList = generator.getDecisionList(
-          positionResult.value(),
-          BondStereopermutator::FittingMode::Nearest
-        );
-        if(recoveredDecisionList == newDecisionList) {
-          generatedDecisionsOption = std::move(recoveredDecisionList);
-          couldGenerateConformer = true;
-          break;
-        } else {
-          std::cout << "Decision list mismatch: "
-            << Temple::condense(recoveredDecisionList) << " != "
-            << Temple::condense(newDecisionList) << "\n";
-        }
+        success = true;
+        break;
       } else {
         std::cout << "Conformer generation failure: "
           << positionResult.error().message() << "\n";
@@ -92,23 +80,10 @@ void executeTest(
     }
 
     BOOST_CHECK_MESSAGE(
-      couldGenerateConformer,
+      success,
       "Could not generate " << filename << " conformer w/ decision list: "
         << Temple::stringify(newDecisionList) << " in " << maxTries << " attempts"
     );
-
-    if(generatedDecisionsOption) {
-      const bool matchingDecisionList = newDecisionList == generatedDecisionsOption.value();
-      BOOST_CHECK_MESSAGE(
-        matchingDecisionList,
-        "Supposedly generated and reinterpreted decision lists do not match for "
-        << filename
-        << ":\n"
-        << Temple::condense(newDecisionList) << " (supposedly generated)\n"
-        << Temple::condense(generatedDecisionsOption.value())
-        << " (reinterpreted)\n"
-      );
-    }
   }
 }
 
