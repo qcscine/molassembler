@@ -10,10 +10,17 @@
 #include "Molassembler/Molecule.h"
 #include "Molassembler/DirectedConformerGenerator.h"
 #include "Molassembler/BondStereopermutator.h"
+#include "Molassembler/DistanceGeometry/Error.h"
 
 #include "Utils/Geometry/AtomCollection.h"
 
 using namespace Scine::Molassembler;
+
+using ConformerVariantType = boost::variant<
+  Scine::Utils::PositionCollection,
+  DgError
+>;
+extern ConformerVariantType variantCast(outcome::result<Scine::Utils::PositionCollection>);
 
 void init_directed_conformer_generator(pybind11::module& m) {
   pybind11::class_<DirectedConformerGenerator> dirConfGen(
@@ -102,12 +109,17 @@ void init_directed_conformer_generator(pybind11::module& m) {
 
   dirConfGen.def(
     "generate_decision_list",
-    &DirectedConformerGenerator::generateNewDecisionList,
+    [](DirectedConformerGenerator& cg) {
+      return cg.generateNewDecisionList();
+    },
     R"delim(
       Generate a new list of discrete dihedral arrangement choices. Guarantees
       that the new list is not yet part of the underlying set. Inserts the
       generated list into the underlying set. Will not generate the same
       decision list twice.
+
+      .. note::
+         This function advances ``molassembler``'s global PRNG state.
     )delim"
   );
 
@@ -157,10 +169,6 @@ void init_directed_conformer_generator(pybind11::module& m) {
     "Returns the number of conformers needed for a full ensemble"
   );
 
-  using ConformerVariantType = boost::variant<
-    Scine::Utils::PositionCollection,
-    std::string
-  >;
 
   dirConfGen.def(
     "generate_random_conformation",
@@ -169,16 +177,9 @@ void init_directed_conformer_generator(pybind11::module& m) {
       const DirectedConformerGenerator::DecisionList& decisionList,
       const DistanceGeometry::Configuration& configuration
     ) -> ConformerVariantType {
-      auto result = generator.generateRandomConformation(
-        decisionList,
-        configuration
+      return variantCast(
+        generator.generateRandomConformation(decisionList, configuration)
       );
-
-      if(result) {
-        return result.value();
-      }
-
-      return result.error().message();
     },
     pybind11::arg("decision_list"),
     pybind11::arg("configuration") = DistanceGeometry::Configuration {},
@@ -202,17 +203,9 @@ void init_directed_conformer_generator(pybind11::module& m) {
       const unsigned seed,
       const DistanceGeometry::Configuration& configuration
     ) -> ConformerVariantType {
-      auto result = generator.generateConformation(
-        decisionList,
-        seed,
-        configuration
+      return variantCast(
+        generator.generateConformation(decisionList, seed, configuration)
       );
-
-      if(result) {
-        return result.value();
-      }
-
-      return result.error().message();
     },
     pybind11::arg("decision_list"),
     pybind11::arg("seed"),

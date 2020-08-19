@@ -248,6 +248,9 @@ public:
    * @post The new DecisionList is part of the stored list of generated
    *   decision lists and will not be generated again. The result of
    *   decisionListSetSize() is incremented.
+   * @parblock @note This function advances the state of the global PRNG if the
+   *   default argument for @p engine is chosen.
+   * @endparblock
    *
    * @returns a DecisionList of length matching the number of relevant bonds.
    */
