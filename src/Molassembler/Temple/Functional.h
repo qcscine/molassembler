@@ -133,57 +133,12 @@ template<
   };
 }
 
-namespace Detail {
-
-template<typename Container>
-struct Consumable {
-  static constexpr bool isTemporary = std::is_rvalue_reference<Container>::value;
-  using ContainerValueType = decltype(*std::declval<Container>().begin());
-  static constexpr bool membersMovable = (
-    std::is_lvalue_reference<ContainerValueType>::value
-    && !std::is_const<std::remove_reference_t<ContainerValueType>>::value
-  );
-  static constexpr bool value = isTemporary && membersMovable;
-};
-
-} // namespace Detail
-
 /*! @brief Maps all values of a container using a unary function. Returns a vector
  *
  * @complexity{@math{\Theta(N)}}
  */
 template<class Container, class UnaryFunction>
-auto map(
-  Container&& container,
-  UnaryFunction&& function,
-  std::enable_if_t<!Detail::Consumable<Container&&>::value, void>* = nullptr
-) {
-  using U = decltype(
-    invoke(function, *std::begin(container))
-  );
-
-  std::vector<U> returnContainer;
-  reserveIfPossible(returnContainer, container);
-
-  for(const auto& value : container) {
-    returnContainer.push_back(
-      invoke(function, value)
-    );
-  }
-
-  return returnContainer;
-}
-
-/*! @brief Maps all values of a container using a unary function. Returns a vector
- *
- * @complexity{@math{\Theta(N)}}
- */
-template<class Container, class UnaryFunction>
-auto map(
-  Container&& container,
-  UnaryFunction&& function,
-  std::enable_if_t<Detail::Consumable<Container&&>::value, void>* = nullptr
-) {
+auto map(Container&& container, UnaryFunction&& function) {
   using U = decltype(
     invoke(function, *std::begin(container))
   );
