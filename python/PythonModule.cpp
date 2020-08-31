@@ -60,5 +60,8 @@ PYBIND11_MODULE(scine_molassembler, m) {
   init_conformers(m);
   init_directed_conformer_generator(m);
   init_modeling(m);
+  /* Needed to avoid an exception at exit because of GIL and parallelization
+   * shenanigans in DirectedConformerGenerator's enumerate functions
+   */
   pybind11::module::import("threading");
 }
