@@ -28,7 +28,8 @@ void init_shape_submodule(pybind11::module& m) {
       Shape.TrigonalPrism
       >>> str(Shape.TrigonalPrism) # displayable string
       "trigonal prism"
-    )delim"
+    )delim",
+    pybind11::arithmetic()
   );
 
   shapeEnum.value("Line", Shapes::Shape::Line)

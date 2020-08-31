@@ -9,9 +9,7 @@
 #include "Molassembler/Temple/Optimization/Lbfgs.h"
 
 namespace Scine {
-
 namespace Molassembler {
-
 namespace CommonTrig {
 
 double dihedralLength(
@@ -159,7 +157,5 @@ ValueBounds dihedralLengthBounds(
 }
 
 } // namespace CommonTrig
-
 } // namespace Molassembler
-
 } // namespace Scine

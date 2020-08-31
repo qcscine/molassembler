@@ -12,9 +12,7 @@
 #include "Molassembler/Types.h"
 
 namespace Scine {
-
 namespace Molassembler {
-
 namespace Bond {
 
 //! Bond order definition for bond types as defined in common_typedefs
@@ -25,7 +23,7 @@ static constexpr std::array<double, 7> bondOrderMap {{
 //! UFF bond distance correction constant lambda
 constexpr double bondOrderCorrectionLambda = 0.1332;
 
-/*! @brief Calculates bond distance as modelled by UFF
+/*! @brief Calculates bond distance as modeled by UFF
  *
  * @complexity{@math{\Theta(1)}}
  */
@@ -35,7 +33,7 @@ double calculateBondDistance(
   BondType bondType
 );
 
-/*! @brief Calculates bond distances as modelled by UFF
+/*! @brief Calculates bond order as modeled by UFF
  *
  * @complexity{@math{\Theta(1)}}
  */
@@ -46,9 +44,7 @@ double calculateBondOrder(
 );
 
 } // namespace Bond
-
 } // namespace Molassembler
-
 } // namespace Scine
 
 #endif

@@ -7,12 +7,14 @@
 
 void init_atom_stereopermutator(pybind11::module& m);
 void init_bond_stereopermutator(pybind11::module& m);
+void init_composite(pybind11::module& m);
 void init_conformers(pybind11::module& m);
 void init_cycles(pybind11::module& m);
 void init_directed_conformer_generator(pybind11::module& m);
 void init_editing(pybind11::module& m);
 void init_interpret(pybind11::module& m);
 void init_io(pybind11::module& m);
+void init_modeling(pybind11::module& m);
 void init_molecule(pybind11::module& m);
 void init_options(pybind11::module& m);
 void init_graph(pybind11::module& m);
@@ -47,6 +49,7 @@ PYBIND11_MODULE(scine_molassembler, m) {
   init_graph(m);
   init_ranking_information(m);
   init_atom_stereopermutator(m);
+  init_composite(m);
   init_bond_stereopermutator(m);
   init_stereopermutator_list(m);
   init_molecule(m);
@@ -56,9 +59,6 @@ PYBIND11_MODULE(scine_molassembler, m) {
   init_serialization(m);
   init_conformers(m);
   init_directed_conformer_generator(m);
-
-  /* Needed to avoid an exception at exit because of GIL and parallelization
-   * shenanigans in DirectedConformerGenerator's enumerate functions
-   */
+  init_modeling(m);
   pybind11::module::import("threading");
 }

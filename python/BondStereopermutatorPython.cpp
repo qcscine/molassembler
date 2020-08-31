@@ -8,6 +8,10 @@
 
 #include "Molassembler/AtomStereopermutator.h"
 #include "Molassembler/BondStereopermutator.h"
+#include "Molassembler/Stereopermutation/Composites.h"
+#include "Molassembler/Molecule.h"
+#include "Molassembler/Graph.h"
+#include "Molassembler/StereopermutatorList.h"
 
 void init_bond_stereopermutator(pybind11::module& m) {
   using namespace Scine::Molassembler;
@@ -31,6 +35,34 @@ void init_bond_stereopermutator(pybind11::module& m) {
       >>> permutator.num_assignments
       2
     )delim"
+  );
+
+  pybind11::enum_<BondStereopermutator::Alignment> alignment(
+    bondStereopermutator,
+    "Alignment",
+    "How dihedrals are aligned in the generation of stereopermutations"
+  );
+  alignment.value("Eclipsed", BondStereopermutator::Alignment::Eclipsed);
+  alignment.value("Staggered", BondStereopermutator::Alignment::Staggered);
+
+  bondStereopermutator.def(
+    pybind11::init(
+      [](
+        const Molecule& mol,
+        const BondIndex& edge,
+        const BondStereopermutator::Alignment align
+      ) {
+        return BondStereopermutator {
+          mol.graph().inner(),
+          mol.stereopermutators(),
+          edge,
+          align
+        };
+      }
+    ),
+    pybind11::arg("molecule"),
+    pybind11::arg("placement"),
+    pybind11::arg("alignment") = BondStereopermutator::Alignment::Eclipsed
   );
 
   pybind11::enum_<BondStereopermutator::FittingMode> fittingMode(
@@ -110,6 +142,12 @@ void init_bond_stereopermutator(pybind11::module& m) {
     "placement",
     &BondStereopermutator::placement,
     "The edge this stereopermutator is placed on."
+  );
+
+  bondStereopermutator.def_property_readonly(
+    "composite",
+    &BondStereopermutator::composite,
+    "The underlying stereopermutation generating shape composite"
   );
 
   bondStereopermutator.def(

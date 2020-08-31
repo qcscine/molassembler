@@ -9,9 +9,7 @@
 #include <cmath>
 
 namespace Scine {
-
 namespace Molassembler {
-
 namespace Bond {
 
 double calculateBondDistance(
@@ -52,7 +50,5 @@ double calculateBondOrder(
 }
 
 } // namespace Bond
-
 } // namespace Molassembler
-
 } // namespace Scine

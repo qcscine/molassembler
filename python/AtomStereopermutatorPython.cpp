@@ -7,6 +7,7 @@
 #include "pybind11/operators.h"
 
 #include "Molassembler/AtomStereopermutator.h"
+#include "Molassembler/Graph.h"
 
 void init_atom_stereopermutator(pybind11::module& m) {
   using namespace Scine::Molassembler;
@@ -53,6 +54,15 @@ void init_atom_stereopermutator(pybind11::module& m) {
       >>> carbon_stereopermutator.assigned != enantiomer_stereopermutator.assigned
       True
     )delim"
+  );
+
+  atomStereopermutator.def(
+    pybind11::init<const Graph&, Shapes::Shape, AtomIndex, RankingInformation>(),
+    pybind11::arg("graph"),
+    pybind11::arg("shape"),
+    pybind11::arg("placement"),
+    pybind11::arg("ranking"),
+    "Instantiate an atom stereopermutator at a particular position in a graph"
   );
 
   atomStereopermutator.def(
@@ -172,6 +182,14 @@ void init_atom_stereopermutator(pybind11::module& m) {
 
       :raises: RuntimeError if the stereopermutator is not assigned
     )delim"
+  );
+
+  atomStereopermutator.def_property_readonly(
+    "vertex_map",
+    [](const AtomStereopermutator& perm) -> std::vector<Shapes::Vertex> {
+      const auto& map = perm.getShapePositionMap();
+      return {map.begin(), map.end()};
+    }
   );
 
   atomStereopermutator.def(pybind11::self == pybind11::self);

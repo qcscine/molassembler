@@ -11,6 +11,7 @@
 
 #include "boost/variant.hpp"
 #include "boost/optional.hpp"
+#include "Molassembler/Shapes/Data.h"
 #include "Molassembler/RankingInformation.h"
 
 namespace pybind11 {
@@ -56,6 +57,38 @@ struct type_caster<Scine::Molassembler::SiteIndex> {
 
   static handle cast(
     Scine::Molassembler::SiteIndex src,
+    return_value_policy /* policy */,
+    handle /* parent */
+  ) {
+    return PyLong_FromLong(src);
+  }
+};
+
+template<>
+struct type_caster<Scine::Molassembler::Shapes::Vertex> {
+  PYBIND11_TYPE_CASTER(Scine::Molassembler::Shapes::Vertex, _("Vertex"));
+
+  bool load(handle src, bool) {
+    PyObject* source = src.ptr();
+    // Try to convert the handle to an integer
+    PyObject* tmp = PyNumber_Index(source);
+    if(!tmp) {
+      return false;
+    }
+
+    PyObject* exc = nullptr;
+    const auto pyIndex = PyNumber_AsSsize_t(tmp, exc);
+    value = Scine::Molassembler::Shapes::Vertex(pyIndex);
+    Py_DECREF(tmp);
+    if(exc) {
+      return false;
+    }
+
+    return true;
+  }
+
+  static handle cast(
+    Scine::Molassembler::Shapes::Vertex src,
     return_value_policy /* policy */,
     handle /* parent */
   ) {
