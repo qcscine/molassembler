@@ -65,10 +65,10 @@ Can currently be compiled with:
 
 Unowned libraries included in distribution (see ``src/extern``):
 
-- RingDecomposerLib[1]_ (BSD-3 license): Unique Ring Family[2]_ cycle detection
+- RingDecomposerLib [1]_ (BSD-3 license): Unique Ring Family [2]_ cycle detection
 - Outcome (until released in boost): Improved error propagation
 - nlohmann/json (MIT license): JSON serialization
-- nauty[3]_ (Apache 2.0 license): Graph automorphism determination and canonical labeling
+- nauty [3]_ (Apache 2.0 license): Graph automorphism determination and canonical labeling
 
 This library uses CMake to model dependencies and make builds
 platform-independent.
