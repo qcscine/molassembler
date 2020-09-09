@@ -711,7 +711,7 @@ void distort(Eigen::Ref<Positions> positions, const double distortionNorm, PRNG&
   }
 }
 
-using RecognizersTuple = boost::mpl::list<AngularDeviationGeometryIndexHybrid, CShM, BiasedCShM, ShapeDistribution>;
+using RecognizersTuple = boost::mpl::list<PureAngularDeviationSquare, AngularDeviationGeometryIndexHybrid, PureCSM, CShM, BiasedCShM, ShapeDistribution, CShMPathDev>;
 constexpr std::size_t nRecognizers = boost::mpl::size<RecognizersTuple>::value;
 using RecognizersList = std::vector<std::unique_ptr<Recognizer>>;
 

@@ -73,15 +73,32 @@ Unowned libraries included in distribution (see ``src/extern``):
 This library uses CMake to model dependencies and make builds
 platform-independent.
 
+How to Cite
+===========
+
+When publishing results obtained with Molassembler, please cite the
+corresponding release as archived on Zenodo **TODO**.
+
+In addition, we kindly request you cite the following article when using
+Molassembler:
+
+J.-G. Sobez, M. Reiher, "Molassembler: Molecular Graph Construction,
+Modification, and Conformer Generation for Inorganic and Organic
+Molecules", *J. Chem. Inf. Model*, **2020**, *60*, 3884.
+
 Compilation
 ===========
 
-To build, run these commands starting at the main directory::
+To build with CMake only, run these commands starting at the main directory::
 
     mkdir build-release
     cd build-release
     cmake -DCMAKE_BUILD_TYPE=Release ..
     make
+
+To build with Conan::
+
+    conan create --build=missing .
 
 Tests
 =====
@@ -95,10 +112,15 @@ if available.
 Documentation
 =============
 
+Built documentation for releases is available for the `C++ library`_ and `Python bindings`_.
+
 If ``doxygen`` is found, the C++ library documentation is built. If the Python
 bindings are built and the ``sphinx`` Python module is available, the Python
 binding documentation is generated too.
 
+.. _C++ library: https://scine.ethz.ch/static/download/documentation/molassembler/v1.0.0/cpp/index.html
+
+.. _Python bindings: https://scine.ethz.ch/static/download/documentation/molassembler/v1.0.0/py/index.html
 
 .. [1]: Flachsenberg, F.; Andresen, N.; Rarey, M. RingDecomposerLib: An
         Open-Source implementation of Unique Ring Families and Other Cycle Bases. J.

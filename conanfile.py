@@ -6,7 +6,7 @@ class MolassemblerConan(ScineConan):
     version = "1.0.0"
     license = "BSD-3-Clause"
     author = "Jan-Grimo Sobez jan-grimo.sobez@phys.chem.ethz.ch"
-    url = "https://gitlab.chab.ethz.ch/scine/molassembler"
+    url = "https://scine.ethz.ch/download/molassembler"
     description = "Molecular graph interpretation, modification and conformer generation"
     options = {
         "shared": [True, False],
