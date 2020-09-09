@@ -122,13 +122,13 @@ binding documentation is generated too.
 
 .. _Python bindings: https://scine.ethz.ch/static/download/documentation/molassembler/v1.0.0/py/index.html
 
-.. [1]: Flachsenberg, F.; Andresen, N.; Rarey, M. RingDecomposerLib: An
-        Open-Source implementation of Unique Ring Families and Other Cycle Bases. J.
-        Chem. Inf. Model., 2017, 57 (2), pp 122–126
+.. [1] Flachsenberg, F.; Andresen, N.; Rarey, M. RingDecomposerLib: An
+       Open-Source implementation of Unique Ring Families and Other Cycle Bases. J.
+       Chem. Inf. Model., 2017, 57 (2), pp 122–126
 
-.. [2]: Kolodzik, A.; Urbaczek, S.; Rarey, M. Unique Ring Families: A Chemically
-        Meaningful Description of Molecular Ring Topologies. J. Chem. Inf. Model.,
-        2012, 52 (8), pp 2013–2021
+.. [2] Kolodzik, A.; Urbaczek, S.; Rarey, M. Unique Ring Families: A Chemically
+       Meaningful Description of Molecular Ring Topologies. J. Chem. Inf. Model.,
+       2012, 52 (8), pp 2013–2021
 
-.. [3]: McKay, Brendan D.; Adolfo Piperno. Practical graph isomorphism, II.
-        J. Symb. Comput., 2014, 60, pp 94-112.
+.. [3] McKay, Brendan D.; Adolfo Piperno. Practical graph isomorphism, II.
+       J. Symb. Comput., 2014, 60, pp 94-112.
