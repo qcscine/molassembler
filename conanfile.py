@@ -36,7 +36,11 @@ class MolassemblerConan(ScineConan):
         "python/*",
         "CMakeLists.txt",
     ]
-    requires = "scine_utilities/[~=3.0.0]@scine/develop"
+    requires = [
+        "scine_utilities/[~=3.0.0]@scine/develop",
+        "RingDecomposerLib/1.1.3@scine/stable",
+        "nauty/2.7r1@scine/stable"
+    ]
 
     def _configure_cmake(self):
         return super()._configure_cmake_base("molassembler", None)

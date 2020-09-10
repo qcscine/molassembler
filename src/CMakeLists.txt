@@ -42,7 +42,7 @@ if(${CMAKE_VERSION} VERSION_GREATER_EQUAL "3.12.0")
     Boost::boost
     Scine::UtilsOS
     outcome
-    RingDecomposerLibStatic
+    ${RDL_TARGET}
     json
     Boost::filesystem
     Boost::system
@@ -54,7 +54,7 @@ else()
     PUBLIC
       $<TARGET_PROPERTY:Scine::UtilsOS,INTERFACE_INCLUDE_DIRECTORIES>
       $<TARGET_PROPERTY:outcome,INTERFACE_INCLUDE_DIRECTORIES>
-      $<TARGET_PROPERTY:RingDecomposerLibStatic,INTERFACE_INCLUDE_DIRECTORIES>
+      $<TARGET_PROPERTY:${RDL_TARGET},INTERFACE_INCLUDE_DIRECTORIES>
       $<TARGET_PROPERTY:Boost::boost,INTERFACE_INCLUDE_DIRECTORIES>
   )
 endif()
@@ -112,7 +112,7 @@ function(molassembler_library_links target_name)
     PRIVATE
       Boost::filesystem
       Boost::system
-      RingDecomposerLibStatic
+      ${RDL_TARGET}
       nauty
       $<$<BOOL:${OpenMP_CXX_FOUND}>:OpenMP::OpenMP_CXX>
   )

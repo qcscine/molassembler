@@ -75,6 +75,8 @@ find_package(Boost
 )
 
 # Subdirectories
+find_package(RingDecomposerLib QUIET)
+find_package(nauty QUIET)
 add_subdirectory(extern)
 add_subdirectory(src)
 
