@@ -1,13 +1,19 @@
 include(CMakeFindDependencyMacro)
 
-find_dependency(RingDecomposerLib REQUIRED)
-find_dependency(nauty REQUIRED)
+# Public interface type dependencies
 find_dependency(Outcome REQUIRED)
 find_dependency(ScineUtilsOS REQUIRED)
 
 if(NOT TARGET Boost::filesystem OR NOT TARGET Boost::system)
   unset(Boost_FOUND)
   find_dependency(Boost REQUIRED COMPONENTS filesystem system)
+endif()
+
+# Only in a static build of molassembler do we need to be able to link these
+# subsumed static libraries again
+if(NOT @BUILD_SHARED_LIBS@)
+  find_dependency(RingDecomposerLib REQUIRED)
+  find_dependency(nauty REQUIRED)
 endif()
 
 if(NOT "${SCINE_MARCH}" STREQUAL "@SCINE_MARCH@")

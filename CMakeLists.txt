@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.9)
 project(molassembler
   VERSION 1.0.0
   DESCRIPTION "Graph-based molecular toolkit for possibly inorganic molecules"
-  LANGUAGES CXX
+  LANGUAGES C CXX
 )
 enable_testing()
 
@@ -76,7 +76,14 @@ find_package(Boost
 
 # Subdirectories
 find_package(RingDecomposerLib QUIET)
-find_package(nauty QUIET)
+
+include(ImportNauty)
+import_nauty()
+include(ImportOutcome)
+import_outcome()
+include(ImportJSON)
+import_json()
+
 add_subdirectory(extern)
 add_subdirectory(src)
 

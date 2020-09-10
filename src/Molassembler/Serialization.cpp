@@ -9,7 +9,7 @@
 #include "Molassembler/Shapes/Data.h"
 #include "boost/range/adaptor/map.hpp"
 #include "Utils/Typenames.h"
-#include "json/json.hpp"
+#include "nlohmann/json.hpp"
 
 #include "Molassembler/Graph.h"
 #include "Molassembler/Graph/GraphAlgorithms.h"
