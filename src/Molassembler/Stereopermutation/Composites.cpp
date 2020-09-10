@@ -77,6 +77,14 @@ void rotateCoordinates(
   }
 }
 
+void rotateCoordinates(
+  Eigen::Ref<Shapes::Coordinates> positions,
+  const Eigen::Vector3d& axis,
+  const double angle
+) {
+  positions = Eigen::AngleAxisd(angle, axis) * positions;
+}
+
 void translateCoordinates(
   Eigen::Ref<Shapes::Coordinates> positions,
   const Eigen::Vector3d& translation
@@ -676,15 +684,11 @@ Composite::Composite(
       angleGroups.second.vertices
     ),
     [&](const Shapes::Vertex f, const Shapes::Vertex s) -> void {
+      const Eigen::Vector3d xAxis = Eigen::Vector3d::UnitX();
       const double alignAngle = getDihedral(f, s);
 
-      // Twist the right coordinates around x so that f is cis with r
-      for(unsigned i = 0; i < secondCoordinates.cols(); ++i) {
-        secondCoordinates.col(i) = Eigen::AngleAxisd(
-          -alignAngle,
-          Eigen::Vector3d::UnitX()
-        ) * secondCoordinates.col(i);
-      }
+      // Twist the right coordinates around x so that f is ecliptic with r
+      rotateCoordinates(secondCoordinates, xAxis, -alignAngle);
 
       // Make sure the rotation leads to a zero dihedral
       assert(std::fabs(getDihedral(f, s)) < 1e-10);
@@ -717,12 +721,7 @@ Composite::Composite(
       }
 
       if(offsetAngle != 0.0) {
-        for(unsigned i = 0; i < secondCoordinates.cols(); ++i) {
-          secondCoordinates.col(i) = Eigen::AngleAxisd(
-            offsetAngle,
-            Eigen::Vector3d::UnitX()
-          ) * secondCoordinates.col(i);
-        }
+        rotateCoordinates(secondCoordinates, xAxis, offsetAngle);
       }
 
       auto dihedralList = Temple::sorted(

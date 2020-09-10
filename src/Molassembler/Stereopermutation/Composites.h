@@ -163,7 +163,11 @@ public:
     //! At least two substituents eclipse one another along the axis
     Eclipsed,
     //! At least one pair of substituents are staggered along the axis
-    Staggered
+    Staggered,
+    //! Both eclipsed and staggered alignments
+    EclipsedAndStaggered,
+    //! Offset exactly halfway between eclipsed and staggered alignments
+    BetweenEclipsedAndStaggered
   };
 //!@}
 
