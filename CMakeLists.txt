@@ -63,7 +63,7 @@ if(COVERAGE AND CMAKE_BUILD_TYPE STREQUAL "Debug")
   set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 -coverage ${CMAKE_CXX_FLAGS_DEBUG}")
 endif()
 
-# Fetch some dependencies already
+# Fetch dependencies
 include(ImportUtilsOS)
 import_utils_os()
 include(CompilerSpecificSetup)
@@ -73,18 +73,15 @@ find_package(Boost
   COMPONENTS regex unit_test_framework program_options filesystem system
   QUIET
 )
-
-# Subdirectories
-find_package(RingDecomposerLib QUIET)
-
 include(ImportNauty)
 import_nauty()
 include(ImportOutcome)
 import_outcome()
 include(ImportJSON)
 import_json()
+include(ImportRingDecomposerLib)
+import_rdl()
 
-add_subdirectory(extern)
 add_subdirectory(src)
 
 if(SCINE_BUILD_DOCS)
