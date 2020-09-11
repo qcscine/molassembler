@@ -33,7 +33,7 @@ macro(import_outcome)
 
   file(
     WRITE "${CMAKE_CURRENT_BINARY_DIR}/outcome/config.cmake.in"
-    "include(\$\{CMAKE_CURRENT_SOURCE_DIR\}/OutcomeTargets.cmake)"
+    "include(\$\{CMAKE_CURRENT_LIST_DIR\}/OutcomeTargets.cmake)\n@PACKAGE_INIT@"
   )
 
   configure_package_config_file(
