@@ -88,13 +88,10 @@ Installation
 CMake
 -----
 
-When building with CMake, the following dependencies must be installed and
-available via CMake's `find_package` (e.g. via `CMAKE_PREFIX_PATH`):
+When building with CMake, Boost and Eigen must be installed and available via
+CMake's ``find_package`` (e.g. via ``CMAKE_PREFIX_PATH``). Any of the other
+libraries can be available, but are downloaded dynamically if missing. 
 
-- Boost
-- Eigen
-
-All other libraries can be available, but are downloaded dynamically if missing.
 Clone the repository, then enter the following commands::
 
     mkdir build-release
@@ -103,8 +100,8 @@ Clone the repository, then enter the following commands::
     make
 
 You may want to peruse the CMake options to disable building the tests or
-activating the python binding builds. Run `cmake -L ..` to list options
-affecting the build. Look for options with the `SCINE_` prefix.
+activating the python binding builds. Run ``cmake -L ..`` to list options
+affecting the build. Look for options with the ``SCINE_`` prefix.
 
 Conan
 -----
@@ -115,13 +112,13 @@ sources. To install/build with Conan::
     conan remote add scine https://scine-artifactory.ethz.ch/artifactory/api/conan/public
     conan install -r scine --build=missing scine_molassembler/1.0.0@scine/stable
 
-Should you want python bindings, add `-o scine_molassembler:python=True` before
+Should you want python bindings, add ``-o scine_molassembler:python=True`` before
 the last argument.
 
 PyPI
 ----
 
-`manylinux` packages of the python bindings are available from PyPI and can be
+``manylinux`` packages of the python bindings are available from PyPI and can be
 installed with::
 
     python3 -m pip install scine_molassembler
