@@ -44,8 +44,8 @@ macro(import_outcome)
 
   install(
     FILES
-      "${CMAKE_CURRENT_BINARY_DIR}/OutcomeConfigVersion.cmake"
-      "${CMAKE_CURRENT_BINARY_DIR}/OutcomeConfig.cmake"
+      "${CMAKE_CURRENT_BINARY_DIR}/outcome/OutcomeConfigVersion.cmake"
+      "${CMAKE_CURRENT_BINARY_DIR}/outcome/OutcomeConfig.cmake"
     DESTINATION "lib/cmake/Outcome"
   )
 

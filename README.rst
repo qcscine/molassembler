@@ -51,27 +51,23 @@ This library requires the C++14 standard.
 
 Dependencies:
 
-- SCINE Utils (BSD-3 license) >= 3.0.0
-- Boost (Boost license) >= 1.65 (lowest tested, prefer newest)
-- Eigen (MPL 2.0 license) >= 3.3.2
-- (BLAS library, added if detected during compilation)
+- `SCINE Utilities <https://github.com/qcscine/utilities>`_ (BSD-3 license) >= 3.0.0
+- `Boost <https://www.boost.org/>`_ (Boost license) >= 1.65 (lowest tested, prefer newest)
+- `Eigen <http://eigen.tuxfamily.org>`_ (MPL 2.0 license) >= 3.3.2
+- `RingDecomposerLib <https://github.com/rareylab/RingDecomposerLib>`_ [1]_ (BSD-3 license): Unique Ring Family [2]_ cycle detection
+- `Outcome <https://github.com/ned14/outcome>`_ single-header (Boost license): Enforce error handling requirement in type system
+- `JSON For Modern C++ <https://github.com/nlohmann/json>`_ (MIT license): JSON serialization
+- `nauty <http://pallini.di.uniroma1.it>`_ [3]_ (Apache 2.0 license): Graph automorphism determination and canonical labeling
+- (MKL/LAPACK/BLAS libraries, added if detected during compilation)
 
 Can currently be compiled with:
 
-- [x] GCC >= 7
-- [x] Clang >= 4
-- [x] MinGW-w64 (latest)
-- [ ] MSVC (compiler compliance issues with ``constexpr``)
+- GCC >= 7
+- Clang >= 4
+- MinGW-w64 (latest)
 
-Unowned libraries included in distribution (see ``src/extern``):
-
-- RingDecomposerLib [1]_ (BSD-3 license): Unique Ring Family [2]_ cycle detection
-- Outcome (until released in boost): Improved error propagation
-- nlohmann/json (MIT license): JSON serialization
-- nauty [3]_ (Apache 2.0 license): Graph automorphism determination and canonical labeling
-
-This library uses CMake to model dependencies and make builds
-platform-independent.
+MSVC is currently untested. Last attempts failed because of compiler standard
+compliance issues with ``constexpr`` code.
 
 How to Cite
 ===========
@@ -86,28 +82,49 @@ J.-G. Sobez, M. Reiher, "Molassembler: Molecular Graph Construction,
 Modification, and Conformer Generation for Inorganic and Organic
 Molecules", *J. Chem. Inf. Model*, **2020**, *60*, 3884.
 
-Compilation
-===========
+Installation
+============
 
-To build with CMake only, run these commands starting at the main directory::
+CMake
+-----
+
+When building with CMake, the following dependencies must be installed and
+available via CMake's `find_package` (e.g. via `CMAKE_PREFIX_PATH`):
+
+- Boost
+- Eigen
+
+All other libraries can be available, but are downloaded dynamically if missing.
+Clone the repository, then enter the following commands::
 
     mkdir build-release
     cd build-release
     cmake -DCMAKE_BUILD_TYPE=Release ..
     make
 
-To build with Conan::
+You may want to peruse the CMake options to disable building the tests or
+activating the python binding builds. Run `cmake -L ..` to list options
+affecting the build. Look for options with the `SCINE_` prefix.
 
-    conan create --build=missing .
+Conan
+-----
 
-Tests
-=====
+No dependencies must be preinstalled, and you do not need to download the
+sources. To install/build with Conan::
 
-We recommend running the tests in a release build of the library. The debug
-builds can run for a good 10 minutes. After building the library and tests,
-run ``make test``. The Python bindings are tested with ``pytest`` and ``doctest``,
-if available.
+    conan remote add scine https://scine-artifactory.ethz.ch/artifactory/api/conan/public
+    conan install -r scine --build=missing scine_molassembler/1.0.0@scine/stable
 
+Should you want python bindings, add `-o scine_molassembler:python=True` before
+the last argument.
+
+PyPI
+----
+
+`manylinux` packages of the python bindings are available from PyPI and can be
+installed with::
+
+    python3 -m pip install scine_molassembler
 
 Documentation
 =============
@@ -121,6 +138,10 @@ binding documentation is generated too.
 .. _C++ library: https://scine.ethz.ch/static/download/documentation/molassembler/v1.0.0/cpp/index.html
 
 .. _Python bindings: https://scine.ethz.ch/static/download/documentation/molassembler/v1.0.0/py/index.html
+
+
+References
+==========
 
 .. [1] Flachsenberg, F.; Andresen, N.; Rarey, M. RingDecomposerLib: An
        Open-Source implementation of Unique Ring Families and Other Cycle Bases. J.
