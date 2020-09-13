@@ -62,7 +62,7 @@ macro(import_nauty)
         ${CMAKE_CURRENT_BINARY_DIR}/nauty/traces.c
       )
 
-      add_library(nauty ${NAUTY_HEADERS} ${NAUTY_SOURCES})
+      add_library(nauty STATIC ${NAUTY_HEADERS} ${NAUTY_SOURCES})
       target_include_directories(nauty PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
         $<INSTALL_INTERFACE:$<INSTALL_PREFIX>/include>
