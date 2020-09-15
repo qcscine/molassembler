@@ -10,6 +10,7 @@
 #include "Molassembler/Stereopermutation/Composites.h"
 #include "Molassembler/Temple/Adaptors/Zip.h"
 #include "Molassembler/Temple/Functional.h"
+#include "Molassembler/Temple/Stringify.h"
 
 using namespace Scine::Molassembler;
 using namespace Stereopermutations;
@@ -18,6 +19,40 @@ namespace {
 
 Shapes::Vertex operator "" _v(unsigned long long v) {
   return Shapes::Vertex(v);
+}
+
+// std::ostream& operator << (std::ostream& os, const Composite& composite) {
+//   const unsigned P = composite.permutations();
+//   os << P << " permutations:\n";
+//   for(unsigned i = 0; i < P; ++i) {
+//     Shapes::Vertex v1, v2;
+//     double dihedral;
+//     std::tie(v1, v2, dihedral) = composite.dihedrals(i).front();
+//     std::cout << i << ": " << v1 << "-" << v2 << " = " << dihedral << "\n";
+//   }
+//
+//   return os;
+// }
+
+void expectDominantAngles(
+  const Composite& composite,
+  const std::vector<double>& angleSet
+) {
+  for(const auto& stereopermutationDihedrals : composite) {
+    const double dihedral = std::get<2>(stereopermutationDihedrals.front());
+
+    const auto findIter = std::find_if(
+      std::begin(angleSet),
+      std::end(angleSet),
+      [dihedral](const double v) {
+        return Temple::Floating::isCloseAbsolute(v, dihedral, M_PI / 720);
+      }
+    );
+
+    BOOST_CHECK_MESSAGE(findIter != std::end(angleSet),
+      "Could not find dominant angle " << dihedral << " in set of expected dominant angles" << Temple::stringify(angleSet)
+    );
+  }
 }
 
 } // namespace
@@ -430,4 +465,109 @@ BOOST_AUTO_TEST_CASE(CompositeHomomorphisms, *boost::unit_test::label("Stereoper
   assert(multipleRotation.orientations().first == singleRotation.orientations().first);
 
   testHomomorphism(base, multipleRotation);
+}
+
+BOOST_AUTO_TEST_CASE(CompositeCombinedAlignments, *boost::unit_test::label("Stereopermutations")) {
+  constexpr unsigned leftIdentifier = 0;
+  constexpr unsigned rightIdentifier = 1;
+
+  Composite simplestEclipsed {
+    Composite::OrientationState {
+      Shapes::Shape::Bent,
+      0_v,
+      {{'A', 'B'}},
+      leftIdentifier
+    },
+    Composite::OrientationState {
+      Shapes::Shape::Bent,
+      0_v,
+      {{'A', 'B'}},
+      rightIdentifier
+    },
+    Composite::Alignment::Eclipsed
+  };
+  BOOST_CHECK_EQUAL(simplestEclipsed.permutations(), 2);
+  expectDominantAngles(simplestEclipsed, std::vector<double> {{0, M_PI}});
+
+  Composite simplestStaggered {
+    simplestEclipsed.orientations().first,
+    simplestEclipsed.orientations().second,
+    Composite::Alignment::Staggered
+  };
+  BOOST_CHECK_EQUAL(simplestStaggered.permutations(), 2);
+  expectDominantAngles(
+    simplestStaggered,
+    std::vector<double> {{-M_PI / 2, M_PI / 2}}
+  );
+
+  Composite simplestCombined {
+    simplestEclipsed.orientations().first,
+    simplestEclipsed.orientations().second,
+    Composite::Alignment::EclipsedAndStaggered
+  };
+
+  BOOST_CHECK_EQUAL(simplestCombined.permutations(), 4);
+  expectDominantAngles(
+    simplestCombined,
+    std::vector<double> {{-M_PI / 2, 0, M_PI / 2, M_PI}}
+  );
+
+  Composite simplestOffset {
+    simplestEclipsed.orientations().first,
+    simplestEclipsed.orientations().second,
+    Composite::Alignment::BetweenEclipsedAndStaggered
+  };
+  BOOST_CHECK_EQUAL(simplestOffset.permutations(), 4);
+  expectDominantAngles(
+    simplestOffset,
+    std::vector<double> {{-3 * M_PI / 4, -M_PI / 4, M_PI / 4, 3 * M_PI / 4}}
+  );
+
+  Composite bothTetrahedral {
+    Composite::OrientationState {
+      Shapes::Shape::Tetrahedron,
+      0_v,
+      {{'A', 'B', 'C', 'D'}},
+      leftIdentifier
+    },
+    Composite::OrientationState {
+      Shapes::Shape::Tetrahedron,
+      0_v,
+      {{'A', 'B', 'C', 'D'}},
+      rightIdentifier
+    },
+    Composite::Alignment::EclipsedAndStaggered
+  };
+  BOOST_CHECK_EQUAL(bothTetrahedral.permutations(), 6);
+
+  Composite offsetTetrahedral {
+    bothTetrahedral.orientations().first,
+    bothTetrahedral.orientations().second,
+    Composite::Alignment::BetweenEclipsedAndStaggered
+  };
+  BOOST_CHECK_EQUAL(offsetTetrahedral.permutations(), 6);
+  expectDominantAngles(
+    offsetTetrahedral,
+    std::vector<double> {{-5 * M_PI / 6, -3 * M_PI / 6, -M_PI / 6, M_PI / 6, 3 * M_PI / 6, 5 * M_PI /6}}
+  );
+
+  /* Eclipsed and staggered stereopermutations for triangle and tetrahedron are
+   * identical, so deduplication yields only six
+   */
+  Composite bothTriangleTetrahedron {
+    Composite::OrientationState {
+      Shapes::Shape::EquilateralTriangle,
+      0_v,
+      {{'A', 'B', 'C'}},
+      leftIdentifier
+    },
+    Composite::OrientationState {
+      Shapes::Shape::Tetrahedron,
+      0_v,
+      {{'A', 'B', 'C', 'D'}},
+      rightIdentifier
+    },
+    Composite::Alignment::EclipsedAndStaggered
+  };
+  BOOST_CHECK_EQUAL(bothTriangleTetrahedron.permutations(), 6);
 }

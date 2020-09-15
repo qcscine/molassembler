@@ -169,6 +169,48 @@ public:
     //! Offset exactly halfway between eclipsed and staggered alignments
     BetweenEclipsedAndStaggered
   };
+
+  struct PermutationGenerator {
+    static bool isDuplicate(
+      std::vector<DihedralTuple> permutation,
+      PermutationsList permutations,
+      double degrees
+    );
+
+    static PermutationsList deduplicate(PermutationsList permutations, double degrees);
+
+    PermutationGenerator(Temple::OrderedPair<OrientationState> orientations);
+
+    double dihedral(
+      const Shapes::Vertex firstVertex,
+      const Shapes::Vertex secondVertex
+    ) const;
+
+    bool isotropic() const;
+
+    std::vector<DihedralTuple> align(
+      const Shapes::Vertex firstVertex,
+      const Shapes::Vertex secondVertex,
+      Alignment alignment
+    );
+
+    PermutationsList generateEclipsedOrStaggered(
+      Alignment alignment,
+      double deduplicationDegrees
+    );
+
+    PermutationsList generate(
+      Alignment alignment,
+      double deduplicationDegrees=15
+    );
+
+  //!@name Members
+  //!@{
+    std::pair<Shapes::Permutation, Shapes::Permutation> reversionMappings;
+    std::pair<AngleGroup, AngleGroup> angleGroups;
+    std::pair<Eigen::MatrixXd, Eigen::MatrixXd> coordinates;
+  //!@}
+  };
 //!@}
 
 //!@name Constructors
@@ -212,12 +254,6 @@ public:
     Shapes::Shape shape,
     Shapes::Vertex fixedVertex,
     const std::vector<Shapes::Vertex>& perpendicularPlaneVertices
-  );
-
-  //! Creates sets of within-group cross angles in the perpendicular plane
-  static PerpendicularAngleGroups inGroupAngles(
-    const AngleGroup& angleGroup,
-    Shapes::Shape shape
   );
 //!@}
 

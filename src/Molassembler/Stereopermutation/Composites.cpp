@@ -13,6 +13,8 @@
 #include "Molassembler/Shapes/Data.h"
 #include "Molassembler/Detail/Cartesian.h"
 #include "Molassembler/Temple/Adaptors/AllPairs.h"
+#include "Molassembler/Temple/Adaptors/CyclicFrame.h"
+#include "Molassembler/Temple/Adaptors/Zip.h"
 #include "Molassembler/Temple/Functional.h"
 #include "Molassembler/Temple/Functor.h"
 #include "Molassembler/Temple/GroupBy.h"
@@ -23,18 +25,41 @@ namespace Molassembler {
 namespace Stereopermutations {
 namespace {
 
-template<typename T>
-std::pair<T, T> makeOrderedPair(T a, T b) {
-  std::pair<T, T> pair {
-    std::move(a),
-    std::move(b)
-  };
-
-  if(pair.second < pair.first) {
-    std::swap(pair.first, pair.second);
+double midpointPeriodic(const double angle) {
+  if(angle > M_PI) {
+    return angle - 2 * M_PI;
   }
 
-  return pair;
+  if(angle <= -M_PI) {
+    return angle + 2 * M_PI;
+  }
+
+  return angle;
+}
+
+double shiftToZeroBounded(const double angle) {
+  if(angle < 0) {
+    return angle + 2 * M_PI;
+  }
+
+  return angle;
+}
+
+double dihedralAverage(const double a, const double b) {
+  const double s = (std::sin(a) + std::sin(b)) / 2;
+  const double c = (std::cos(a) + std::cos(b)) / 2;
+
+  // What to do when angles are opposed (offset by pi)
+  if(s * s + c * c <= 1e-20) {
+    // Offset the smaller angle by pi/2 and ensure within [-pi, pi)
+    double average = std::min(a, b) + M_PI / 2;
+    if(average > M_PI) {
+      average -= 2 * M_PI;
+    }
+    return average;
+  }
+
+  return std::atan2(s, c);
 }
 
 void rotateCoordinates(
@@ -82,7 +107,10 @@ void rotateCoordinates(
   const Eigen::Vector3d& axis,
   const double angle
 ) {
-  positions = Eigen::AngleAxisd(angle, axis) * positions;
+  const unsigned cols = positions.cols();
+  for(unsigned i = 0; i < cols; ++i) {
+    positions.col(i) = Eigen::AngleAxisd(angle, axis) * positions.col(i);
+  }
 }
 
 void translateCoordinates(
@@ -370,6 +398,328 @@ Composite::AngleGroup Composite::OrientationState::smallestAngleGroup() const {
   return angleGroup;
 }
 
+Composite::PermutationGenerator::PermutationGenerator(
+  Temple::OrderedPair<OrientationState> orientations
+) {
+  /* In order to get meaningful indices of permutation, combinations of
+   * shapes across fused positions within the same group of shape
+   * vertices (e.g. equatorial or apical in square pyramidal) must be the same.
+   *
+   * In order to achieve this, the OrientationStates is transformed by a
+   * rotation that temporarily places the fused position at the lowest index
+   * shape vertex in its shape. After permutation are generated,
+   * the orientation state is transformed back.
+   */
+  reversionMappings = std::make_pair(
+    orientations.first.transformToCanonical(),
+    orientations.second.transformToCanonical()
+  );
+
+  /* Find the group of shape vertices with the smallest angle to the
+   * fused position (these are the only important ones when considering
+   * relative arrangements across the bond).
+   */
+  angleGroups = orientations.map(
+    [](const OrientationState& orientation) -> AngleGroup {
+      auto angleGroup = orientation.smallestAngleGroup();
+      /* Order both AngleGroups' vertices by descending ranking and
+       * index to get canonical initial combinations
+       */
+      Temple::sort(
+        angleGroup.vertices,
+        [&](const unsigned a, const unsigned b) -> bool {
+          return (
+            std::tie(orientation.characters.at(a), a)
+            > std::tie(orientation.characters.at(b), b)
+          );
+        }
+      );
+      return angleGroup;
+    }
+  );
+
+  /* Generate a set of stereopermutations for this particular combination,
+   * which can then be indexed
+   *
+   * Range of combinatorial possibilities:
+   * - Either side has zero shape vertices in the smallest angle group:
+   *   No relative positioning possible, this Composite has zero
+   *   stereopermutations
+   * - Both sides have one shape vertex in the smallest angle group:
+   *   Dihedrals for both can be cis / trans
+   * - One side has one shape vertices in the smallest angle group:
+   *   Dihedral is 0 to one shape vertex of the larger side, X to the others
+   * - Both sides have multiple shape vertices in the smallest angle group:
+   *   Figure out the relative angles between positions in each angle group and
+   *   try to find matches across groups -> these can be arranged in a coplanar
+   *   fashion. Then each rotation on one side generates a new overlay
+   *   possibility.
+   *
+   * NOTE: The central atom of both shapes is always placed at the origin
+   * in the coordinate definitions.
+   */
+  coordinates = orientations.map(
+    [](const OrientationState& orientation) {
+      return Shapes::coordinates(orientation.shape);
+    }
+  );
+
+  // Rotate left fused position onto <1, 0, 0>
+  rotateCoordinates(
+    coordinates.first,
+    coordinates.first.col(orientations.first.fusedVertex).normalized(),
+    Eigen::Vector3d::UnitX()
+  );
+
+  // Rotate right fused position onto <-1, 0, 0>
+  rotateCoordinates(
+    coordinates.second,
+    coordinates.second.col(orientations.second.fusedVertex).normalized(),
+    -Eigen::Vector3d::UnitX()
+  );
+
+  // Translate positions by <1, 0, 0>
+  translateCoordinates(
+    coordinates.second,
+    Eigen::Vector3d::UnitX()
+  );
+}
+
+Composite::PermutationsList
+Composite::PermutationGenerator::generateEclipsedOrStaggered(
+  const Alignment alignment,
+  const double deduplicationDegrees
+) {
+  assert(
+    alignment == Alignment::Eclipsed
+    || alignment == Alignment::Staggered
+  );
+
+  PermutationsList stereopermutations;
+
+  /* Sequentially align every pair.
+   *
+   * This is essentially brute-forcing the problem. I'm having a hard time
+   * thinking up an elegant solution that can satisfy all possible shapes...
+   */
+  Temple::forEach(
+    Temple::Adaptors::allPairs(
+      angleGroups.first.vertices,
+      angleGroups.second.vertices
+    ),
+    [&](const Shapes::Vertex f, const Shapes::Vertex s) -> void {
+      auto stereopermutation = align(f, s, alignment);
+      if(!isDuplicate(stereopermutation, stereopermutations, deduplicationDegrees)) {
+        stereopermutations.push_back(std::move(stereopermutation));
+      }
+    }
+  );
+
+  /* For situations in which only one position exists in both shapes, add
+   * the trans dihedral possibility explicitly. But what dihedral is set as
+   * the cis dihedral dependends on the alignment.
+   */
+  if(
+    angleGroups.first.vertices.size() == 1
+    && angleGroups.second.vertices.size() == 1
+  ) {
+    // Add trans dihedral possibility
+    stereopermutations.push_back(stereopermutations.front());
+    if(alignment == Alignment::Eclipsed) {
+      std::get<2>(stereopermutations.back().front()) = M_PI;
+    } else {
+      std::get<2>(stereopermutations.back().front()) = 0.0;
+    }
+
+    /* In staggered alignments of two single vertex sides, staggering with
+     * alignment yields a pi dihedral, and the code before a zero dihedral.
+     * But staggered here means offset by pi/2:
+     */
+    if(alignment == Alignment::Staggered) {
+      for(auto& stereopermutation : stereopermutations) {
+        for(auto& dihedral : stereopermutation) {
+          std::get<2>(dihedral) = midpointPeriodic(std::get<2>(dihedral) + M_PI / 2);
+        }
+      }
+    }
+  }
+
+  return stereopermutations;
+}
+
+std::vector<Composite::DihedralTuple> Composite::PermutationGenerator::align(
+  const Shapes::Vertex firstVertex,
+  const Shapes::Vertex secondVertex,
+  const Alignment alignment
+) {
+  const Eigen::Vector3d xAxis = Eigen::Vector3d::UnitX();
+  const double alignAngle = dihedral(firstVertex, secondVertex);
+
+  // Twist the right coordinates around x so that f is ecliptic with r
+  rotateCoordinates(coordinates.second, xAxis, -alignAngle);
+
+  // Make sure the rotation leads to a zero dihedral
+  assert(std::fabs(dihedral(firstVertex, secondVertex)) < 1e-10);
+
+  // Offset the dihedral angle for staggered alignments
+  if(alignment == Alignment::Staggered) {
+    /* The offset angle for a staggered arrangement is half of the angle
+     * to the next shape vertex in some direction. We'll go for nearest
+     * negative dihedral.
+     */
+    const double nearestNegativeDihedral = Temple::accumulate(
+      angleGroups.second.vertices,
+      std::numeric_limits<double>::lowest(),
+      [&](const double carry, const Shapes::Vertex secondShapeVertex) -> double {
+        double angle = dihedral(firstVertex, secondShapeVertex);
+        if(angle >= -1e-10) {
+          angle -= 2 * M_PI;
+        }
+
+        return std::max(carry, angle);
+      }
+    );
+
+    rotateCoordinates(coordinates.second, xAxis, nearestNegativeDihedral / 2);
+  }
+
+  return Temple::sorted(
+    Temple::map(
+      Temple::Adaptors::allPairs(
+        angleGroups.first.vertices,
+        angleGroups.second.vertices
+      ),
+      [&](const Shapes::Vertex a, const Shapes::Vertex b) -> DihedralTuple {
+        return {a, b, dihedral(a, b)};
+      }
+    )
+  );
+}
+
+bool Composite::PermutationGenerator::isDuplicate(
+  std::vector<DihedralTuple> permutation,
+  PermutationsList permutations,
+  const double degrees
+) {
+  return Temple::any_of(
+    permutations,
+    [&](const auto& rhsDihedralList) -> bool {
+      return dihedralIsClose(
+        std::get<2>(permutation.front()),
+        std::get<2>(rhsDihedralList.front()),
+        Temple::Math::toRadians(degrees)
+      );
+    }
+  );
+}
+
+Composite::PermutationsList Composite::PermutationGenerator::deduplicate(PermutationsList permutations, const double degrees) {
+  PermutationsList deduplicated;
+  for(auto& permutation : permutations) {
+    if(!isDuplicate(permutation, deduplicated, degrees)) {
+      deduplicated.push_back(std::move(permutation));
+    }
+  }
+  return deduplicated;
+}
+
+Composite::PermutationsList Composite::PermutationGenerator::generate(
+  const Alignment alignment,
+  const double deduplicationDegrees
+) {
+  PermutationsList stereopermutations;
+
+  if(alignment == Alignment::Eclipsed || alignment == Alignment::Staggered) {
+    stereopermutations = generateEclipsedOrStaggered(alignment, deduplicationDegrees);
+  } else {
+    /* Other cases are EclipsedAndStaggered and BetweenEclipsedAndStaggered,
+     * where we need both!
+     */
+    stereopermutations = generateEclipsedOrStaggered(Alignment::Eclipsed, deduplicationDegrees);
+    auto staggeredStereopermutations = generateEclipsedOrStaggered(Alignment::Staggered, deduplicationDegrees);
+
+    std::copy_if(
+      std::make_move_iterator(std::begin(staggeredStereopermutations)),
+      std::make_move_iterator(std::end(staggeredStereopermutations)),
+      std::back_inserter(stereopermutations),
+      [&](const auto& stereopermutation) -> bool {
+        return !isDuplicate(stereopermutation, stereopermutations, deduplicationDegrees);
+      }
+    );
+
+    // Sort stereopermutations starting at the dominant dihedral zero
+    Temple::sort(
+      stereopermutations,
+      [](const auto& lhs, const auto& rhs) {
+        return (
+          shiftToZeroBounded(std::get<2>(lhs.front()))
+          < shiftToZeroBounded(std::get<2>(rhs.front()))
+        );
+      }
+    );
+
+    if(alignment == Alignment::BetweenEclipsedAndStaggered) {
+      // Average the dihedral angle of successive pairs
+      stereopermutations = Temple::map(
+        Temple::Adaptors::cyclicFrame<2>(stereopermutations),
+        [](const auto& lhs, const auto& rhs) {
+          return Temple::map(
+            Temple::Adaptors::zip(lhs, rhs),
+            [](const DihedralTuple& a, const DihedralTuple& b) {
+              assert(std::get<0>(a) == std::get<0>(b));
+              assert(std::get<1>(a) == std::get<1>(b));
+              return DihedralTuple {
+                std::get<0>(a),
+                std::get<1>(a),
+                dihedralAverage(std::get<2>(a), std::get<2>(b))
+              };
+            }
+          );
+        }
+      );
+    }
+  }
+
+  // Transform the stereopermutations back through the reversion mappings
+  const auto revert = [](const Shapes::Vertex v, const Shapes::Permutation& mapping) {
+    const auto findIter = Temple::find(mapping, v);
+    assert(findIter != std::end(mapping));
+    unsigned index = findIter - std::begin(mapping);
+    return Shapes::Vertex {index};
+  };
+
+  for(auto& stereopermutation : stereopermutations) {
+    for(auto& dihedralTuple : stereopermutation) {
+      std::get<0>(dihedralTuple) = revert(std::get<0>(dihedralTuple), reversionMappings.first);
+      std::get<1>(dihedralTuple) = revert(std::get<1>(dihedralTuple), reversionMappings.second);
+    }
+  }
+
+  return stereopermutations;
+}
+
+bool Composite::PermutationGenerator::isotropic() const {
+  /* From the angle groups' characters, we can figure out if all
+   * stereopermutations that are generated will be ranking-wise equivalent
+   * spatially despite differing in the shape vertex at which the equally
+   * ranked substituents are placed. This is important information for deciding
+   * whether a Composite yields a stereogenic object.
+   */
+  return angleGroups.first.isotropic || angleGroups.second.isotropic;
+}
+
+double Composite::PermutationGenerator::dihedral(
+  const Shapes::Vertex firstVertex,
+  const Shapes::Vertex secondVertex
+) const {
+  return Cartesian::dihedral(
+    coordinates.first.col(firstVertex),
+    Eigen::Vector3d::Zero(),
+    Eigen::Vector3d::UnitX(),
+    coordinates.second.col(secondVertex)
+  );
+}
+
 double Composite::perpendicularSubstituentAngle(
   const double angleFromBoundShapeVertex,
   const double angleBetweenSubstituents
@@ -517,55 +867,6 @@ std::vector<Shapes::Vertex> Composite::rotation(
   return {};
 }
 
-Composite::PerpendicularAngleGroups Composite::inGroupAngles(
-  const AngleGroup& angleGroup,
-  const Shapes::Shape shape
-) {
-  PerpendicularAngleGroups groups;
-
-  using RecordVector = std::vector<
-    std::pair<unsigned, unsigned>
-  >;
-
-  Temple::forEach(
-    Temple::Adaptors::allPairs(angleGroup.vertices),
-    [&](const Shapes::Vertex a, const Shapes::Vertex b) -> void {
-      const double perpendicularAngle = perpendicularSubstituentAngle(
-        angleGroup.angle,
-        Shapes::angleFunction(shape)(a, b)
-      );
-
-      const auto findIter = std::find_if(
-        std::begin(groups),
-        std::end(groups),
-        [&](const auto& record) -> bool {
-          return Temple::any_of(
-            record.first,
-            [&](const double angle) -> bool {
-              return fpComparator.isEqual(perpendicularAngle, angle);
-            }
-          );
-        }
-      );
-
-      if(findIter == groups.end()) {
-        // No equal angles exist, add one yourself
-        groups.emplace_back(
-          std::vector<double> {perpendicularAngle},
-          RecordVector {makeOrderedPair(a, b)}
-        );
-      } else {
-        findIter->first.push_back(perpendicularAngle);
-        findIter->second.emplace_back(
-          makeOrderedPair(a, b)
-        );
-      }
-    }
-  );
-
-  return groups;
-}
-
 Composite::Composite(
   OrientationState first,
   OrientationState second,
@@ -576,244 +877,22 @@ Composite::Composite(
   // Do not construct the ordered pair of OrientationStates with same identifier
   assert(orientations_.first.identifier != orientations_.second.identifier);
 
-  /* In order to get meaningful indices of permutation, combinations of
-   * shapes across fused positions within the same group of shape
-   * vertices (e.g. equatorial or apical in square pyramidal) must be the same.
-   *
-   * In order to achieve this, the OrientationStates is transformed by a
-   * rotation that temporarily places the fused position at the lowest index
-   * shape vertex in its shape. After permutation are generated,
-   * the orientation state is transformed back.
-   */
-  const auto firstReversionMapping = orientations_.first.transformToCanonical();
-  const auto secondReversionMapping = orientations_.second.transformToCanonical();
+  PermutationGenerator generator(orientations_);
+  isotropic_ = generator.isotropic();
+  stereopermutations_ = generator.generate(alignment);
 
-  /* Find the group of shape vertices with the smallest angle to the
-   * fused position (these are the only important ones when considering
-   * relative arrangements across the bond).
-   */
-  const auto angleGroups = orientations_.map(
-    [](const OrientationState& orientation) -> AngleGroup {
-      auto angleGroup = orientation.smallestAngleGroup();
-      /* Order both AngleGroups' vertices by descending ranking and
-       * index to get canonical initial combinations
-       */
-      Temple::sort(
-        angleGroup.vertices,
-        [&](const unsigned a, const unsigned b) -> bool {
-          return (
-            std::tie(orientation.characters.at(a), a)
-            > std::tie(orientation.characters.at(b), b)
-          );
-        }
-      );
-      return angleGroup;
-    }
-  );
-
-  /* From the angle groups' characters, we can figure out if all
-   * stereopermutations that are generated will be ranking-wise equivalent
-   * spatially despite differing in the shape vertex at which the equally
-   * ranked substituents are placed. This is important information for deciding
-   * whether a Composite yields a stereogenic object.
-   */
-  isotropic_ = angleGroups.first.isotropic || angleGroups.second.isotropic;
-
-  /* Generate a set of stereopermutations for this particular combination,
-   * which can then be indexed
-   *
-   * Range of combinatorial possibilities:
-   * - Either side has zero shape vertices in the smallest angle group:
-   *   No relative positioning possible, this Composite has zero
-   *   stereopermutations
-   * - Both sides have one shape vertex in the smallest angle group:
-   *   Dihedrals for both can be cis / trans
-   * - One side has one shape vertices in the smallest angle group:
-   *   Dihedral is 0 to one shape vertex of the larger side, X to the others
-   * - Both sides have multiple shape vertices in the smallest angle group:
-   *   Figure out the relative angles between positions in each angle group and
-   *   try to find matches across groups -> these can be arranged in a coplanar
-   *   fashion. Then each rotation on one side generates a new overlay
-   *   possibility.
-   *
-   * NOTE: The central atom of both shapes is always placed at the origin
-   * in the coordinate definitions.
-   */
-  auto firstCoordinates = Shapes::coordinates(orientations_.first.shape);
-  // Rotate left fused position onto <1, 0, 0>
-  rotateCoordinates(
-    firstCoordinates,
-    firstCoordinates.col(orientations_.first.fusedVertex).normalized(),
-    Eigen::Vector3d::UnitX()
-  );
-
-  auto secondCoordinates = Shapes::coordinates(orientations_.second.shape);
-  // Rotate right fused position onto <-1, 0, 0>
-  rotateCoordinates(
-    secondCoordinates,
-    secondCoordinates.col(orientations_.second.fusedVertex).normalized(),
-    -Eigen::Vector3d::UnitX()
-  );
-
-  // Translate positions by <1, 0, 0>
-  translateCoordinates(
-    secondCoordinates,
-    Eigen::Vector3d::UnitX()
-  );
-
-  auto getDihedral = [&](const Shapes::Vertex f, const Shapes::Vertex s) -> double {
-    return Cartesian::dihedral(
-      firstCoordinates.col(f),
-      Eigen::Vector3d::Zero(),
-      Eigen::Vector3d::UnitX(),
-      secondCoordinates.col(s)
-    );
-  };
-
-  /* Sequentially align every pair. Pick that arrangement in which the number
-   * of cis dihedrals is maximal.
-   *
-   * This is essentially brute-forcing the problem. I'm having a hard time
-   * thinking up an elegant solution that can satisfy all possible shapes..
-   */
-
-  // Generate all arrangements regardless of whether the Composite is isotropic
-  Temple::forEach(
-    Temple::Adaptors::allPairs(
-      angleGroups.first.vertices,
-      angleGroups.second.vertices
-    ),
-    [&](const Shapes::Vertex f, const Shapes::Vertex s) -> void {
-      const Eigen::Vector3d xAxis = Eigen::Vector3d::UnitX();
-      const double alignAngle = getDihedral(f, s);
-
-      // Twist the right coordinates around x so that f is ecliptic with r
-      rotateCoordinates(secondCoordinates, xAxis, -alignAngle);
-
-      // Make sure the rotation leads to a zero dihedral
-      assert(std::fabs(getDihedral(f, s)) < 1e-10);
-
-      // Offset if desired
-      double offsetAngle = 0;
-      if(alignment == Alignment::Staggered) {
-        /* The offset angle for a staggered arrangement is half of the angle
-         * to the next shape vertex in some direction. We'll go for most
-         * negative.
-         */
-
-        const auto dihedrals = Temple::map(
-          angleGroups.second.vertices,
-          [&](const Shapes::Vertex secondShapeVertex) -> double {
-            double dihedral = getDihedral(f, secondShapeVertex);
-            if(dihedral >= -1e-10) {
-              dihedral -= 2 * M_PI;
-            }
-            return dihedral;
-          }
-        );
-
-        const unsigned maximumIndex = std::max_element(
-          std::begin(dihedrals),
-          std::end(dihedrals)
-        ) - std::begin(dihedrals);
-
-        offsetAngle = dihedrals.at(maximumIndex) / 2;
-      }
-
-      if(offsetAngle != 0.0) {
-        rotateCoordinates(secondCoordinates, xAxis, offsetAngle);
-      }
-
-      auto dihedralList = Temple::sorted(
-        Temple::map(
-          Temple::Adaptors::allPairs(
-            angleGroups.first.vertices,
-            angleGroups.second.vertices
-          ),
-          [&](const Shapes::Vertex a, const Shapes::Vertex b) -> DihedralTuple {
-            return {a, b, getDihedral(a, b)};
-          }
-        )
-      );
-
-      if(
-        !Temple::any_of(
-          stereopermutations_,
-          [&dihedralList](const auto& rhsDihedralList) -> bool {
-            return dihedralIsClose(
-              std::get<2>(dihedralList.front()),
-              std::get<2>(rhsDihedralList.front()),
-              Temple::Math::toRadians(15.0)
-            );
-          }
-        )
-      ) {
-        stereopermutations_.push_back(std::move(dihedralList));
-      }
-    }
-  );
-
-  /* For situations in which only one position exists in both shapes, add
-   * the trans dihedral possibility explicitly
-   */
-  if(
-    angleGroups.first.vertices.size() == 1
-    && angleGroups.second.vertices.size() == 1
-  ) {
-    // Add trans dihedral possibility
-    stereopermutations_.emplace_back(
-      std::vector<DihedralTuple> {
-        DihedralTuple {
-          angleGroups.first.vertices.front(),
-          angleGroups.second.vertices.front(),
-          M_PI
-        }
-      }
+  if(alignment == Alignment::Eclipsed) {
+    /* Reverse the stereopermutation sequence. This is so that the indices of the
+     * generated permutations yield the following simple comparison:
+     *
+     *   0 is E, 1 is Z
+     *   1 > 0 == Z > E
+     */
+    std::reverse(
+      std::begin(stereopermutations_),
+      std::end(stereopermutations_)
     );
   }
-
-  // Revert the OrientationStates and transform the stereopermutations too
-  orientations_.first.revert(firstReversionMapping);
-  orientations_.second.revert(secondReversionMapping);
-
-  for(auto& stereopermutation : stereopermutations_) {
-    for(auto& dihedralTuple : stereopermutation) {
-      auto findIter = std::find(
-        std::begin(firstReversionMapping),
-        std::end(firstReversionMapping),
-        std::get<0>(dihedralTuple)
-      );
-
-      assert(findIter != std::end(firstReversionMapping));
-
-      std::get<0>(dihedralTuple) = findIter - std::begin(firstReversionMapping);
-
-      assert(std::get<0>(dihedralTuple) != orientations_.first.fusedVertex);
-
-      findIter = std::find(
-        std::begin(secondReversionMapping),
-        std::end(secondReversionMapping),
-        std::get<1>(dihedralTuple)
-      );
-
-      assert(findIter != std::end(secondReversionMapping));
-
-      std::get<1>(dihedralTuple) = findIter - std::begin(secondReversionMapping);
-
-      assert(std::get<1>(dihedralTuple) != orientations_.second.fusedVertex);
-    }
-  }
-
-  /* Reverse the stereopermutation sequence. This is so that the indices of the
-   * generated permutations yield the following simple comparison:
-   *
-   *   0 is E, 1 is Z
-   *   1 > 0 == Z > E
-   */
-  std::reverse(
-    std::begin(stereopermutations_),
-    std::end(stereopermutations_)
-  );
 }
 
 void Composite::applyIdentifierPermutation(const std::vector<std::size_t>& permutation) {
