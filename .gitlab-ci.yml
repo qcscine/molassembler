@@ -44,6 +44,7 @@ complexity:
     - echo "Skip before_script"
   script:
     - python3 -m pip install lizard jinja2
+    - export PATH=$PATH:/home/ciuser/.local/bin
     - cd src
     - >-
       lizard -l cpp -m
