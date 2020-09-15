@@ -512,12 +512,16 @@ void DirectedConformerGenerator::Impl::enumerate(
     }
 
     for(unsigned i = 0; i < settings.dihedralRetries; ++i) {
-      const auto conformer = generateConformation(
-        decisionList,
-        localEngine(),
-        settings.configuration,
-        settings.fitting
-      );
+      outcome::result<Utils::PositionCollection> conformer {DgError::DecisionListMismatch};
+
+      try {
+        conformer = generateConformation(
+          decisionList,
+          localEngine(),
+          settings.configuration,
+          settings.fitting
+        );
+      } catch(...) {}
 
       if(conformer) {
 #pragma omp critical(guardCallback)
