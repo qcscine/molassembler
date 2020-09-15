@@ -398,8 +398,7 @@ public:
     BondStereopermutator::FittingMode mode = BondStereopermutator::FittingMode::Thresholded
   ) const;
 
-  /*! @brief Settings for enumeration
-   */
+  //! @brief Settings for enumeration
   struct EnumerationSettings {
     EnumerationSettings()
       : dihedralRetries(3),

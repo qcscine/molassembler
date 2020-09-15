@@ -434,10 +434,34 @@ DirectedConformerGenerator::Impl::getDecisionList(
     AtomStereopermutator refitted = stereopermutator;
     auto shapeMap = refitted.fit(molecule_.graph(), angstromPositions);
     if(refitted.getShape() != stereopermutator.getShape()) {
-      throw std::logic_error("Different shape found!");
+      const std::string error = (
+        Shapes::name(refitted.getShape())
+        + " was found instead of "
+        + Shapes::name(stereopermutator.getShape())
+        + " at atom "
+        + std::to_string(stereopermutator.placement())
+        + "! This indicates a precondition violation."
+      );
+      throw std::logic_error(error);
     }
     if(refitted.assigned() != stereopermutator.assigned()) {
-      throw std::logic_error("Detected change in assignment!");
+      auto assignmentToString = [](const boost::optional<unsigned>& assignment) -> std::string {
+        if(assignment) {
+          return std::to_string(assignment.value());
+        }
+
+        return "U";
+      };
+      const std::string error = (
+        "Assignment "
+        + assignmentToString(refitted.assigned())
+        + " was found instead of "
+        + assignmentToString(stereopermutator.assigned())
+        + " at atom "
+        + std::to_string(stereopermutator.placement())
+        + "! This indicates a precondition violation."
+      );
+      throw std::logic_error(error);
     }
     shapeMaps.emplace(stereopermutator.placement(), std::move(shapeMap.value()));
   }
