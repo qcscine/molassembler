@@ -88,7 +88,7 @@ macro(import_nauty)
 
       file(
         WRITE "${CMAKE_CURRENT_BINARY_DIR}/nauty/config.cmake.in"
-        "include(\$\{CMAKE_CURRENT_SOURCE_DIR\}/nautyTargets.cmake)\n@PACKAGE_INIT@"
+        "include(\$\{CMAKE_CURRENT_LIST_DIR\}/nautyTargets.cmake)\n@PACKAGE_INIT@"
       )
 
       configure_package_config_file(
