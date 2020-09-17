@@ -6,17 +6,32 @@ macro(import_rdl)
     if(TARGET RingDecomposerLib)
       message(STATUS "RingDecomposerLib found locally at ${RingDecomposerLib_DIR}")
     else()
+      include(DownloadFileHelper)
+      if(NOT EXISTS ${CMAKE_CURRENT_BINARY_DIR}/RingDecomposerLib)
+        try_resource_dir(
+          SOURCE v1.1.2.tar.gz
+          DESTINATION ${CMAKE_CURRENT_BINARY_DIR}
+        )
+        download_file(
+          "https://github.com/rareylab/RingDecomposerLib/archive/v1.1.2.tar.gz"
+          ${CMAKE_CURRENT_BINARY_DIR}/v1.1.2.tar.gz
+        )
+        execute_process(
+          COMMAND ${CMAKE_COMMAND} -E tar zxf
+          ${CMAKE_CURRENT_BINARY_DIR}/v1.1.2.tar.gz
+          WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+        )
+        file(REMOVE ${CMAKE_CURRENT_BINARY_DIR}/v1.1.2.tar.gz)
+        file(RENAME
+          ${CMAKE_CURRENT_BINARY_DIR}/RingDecomposerLib-1.1.2
+          ${CMAKE_CURRENT_BINARY_DIR}/RingDecomposerLib
+        )
+      endif()
+
       # Current state of the existing CMake code is unsuitable for subdirectory
       # inclusion and lacks installed config files, so prefer intrusive modeling
-      include(DownloadProject)
-      download_project(
-        PROJ RingDecomposerLib
-        GIT_REPOSITORY https://github.com/rareylab/RingDecomposerLib
-        GIT_TAG v1.1.2
-        QUIET
-      )
-
-      set(RDL_SOURCES_DIR "${RingDecomposerLib_SOURCE_DIR}/src/RingDecomposerLib")
+      set(RDL_ROOT ${CMAKE_CURRENT_BINARY_DIR}/RingDecomposerLib)
+      set(RDL_SOURCES_DIR "${RDL_ROOT}/src/RingDecomposerLib")
       file(GLOB RDL_SOURCES "${RDL_SOURCES_DIR}/*.c")
       add_library(RingDecomposerLib STATIC ${RDL_SOURCES})
       target_include_directories(RingDecomposerLib PUBLIC
@@ -33,31 +48,31 @@ macro(import_rdl)
 
       include(CMakePackageConfigHelpers)
       write_basic_package_version_file(
-        "${RingDecomposerLib_BINARY_DIR}/RingDecomposerLibConfigVersion.cmake"
-        VERSION 1.1.3
+        "${RDL_ROOT}/RingDecomposerLibConfigVersion.cmake"
+        VERSION 1.1.2
         COMPATIBILITY AnyNewerVersion
       )
 
-      file(WRITE "${RingDecomposerLib_BINARY_DIR}/config.cmake.in"
+    file(WRITE "${RDL_ROOT}/config.cmake.in"
         "include(\$\{CMAKE_CURRENT_LIST_DIR\}/RingDecomposerLibTargets.cmake)\n @PACKAGE_INIT@"
       )
 
       configure_package_config_file(
-        "${RingDecomposerLib_BINARY_DIR}/config.cmake.in"
-        "${RingDecomposerLib_BINARY_DIR}/RingDecomposerLibConfig.cmake"
+        "${RDL_ROOT}/config.cmake.in"
+        "${RDL_ROOT}/RingDecomposerLibConfig.cmake"
         INSTALL_DESTINATION "lib/cmake/RingDecomposerLib"
       )
 
       install(
         FILES
-          "${RingDecomposerLib_BINARY_DIR}/RingDecomposerLibConfigVersion.cmake"
-          "${RingDecomposerLib_BINARY_DIR}/RingDecomposerLibConfig.cmake"
+          "${RDL_ROOT}/RingDecomposerLibConfigVersion.cmake"
+          "${RDL_ROOT}/RingDecomposerLibConfig.cmake"
         DESTINATION "lib/cmake/RingDecomposerLib"
       )
 
       export(
         EXPORT RingDecomposerLibTargets
-        FILE "${RingDecomposerLib_BINARY_DIR}/RingDecomposerLibTargets.cmake"
+        FILE "${RDL_ROOT}/RingDecomposerLibTargets.cmake"
       )
 
       install(

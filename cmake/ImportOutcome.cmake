@@ -5,6 +5,11 @@ macro(import_outcome)
   set(OUTCOME_VERSION "2.1.4")
   set(OUTCOME_LICENSE_FILE ${CMAKE_CURRENT_BINARY_DIR}/outcome/LICENSE)
 
+  try_resource_dir(
+    SOURCE outcome/outcome.hpp outcome/LICENSE
+    DESTINATION ${CMAKE_CURRENT_BINARY_DIR}
+  )
+
   download_file(
     "https://raw.githubusercontent.com/ned14/outcome/v${OUTCOME_VERSION}/single-header/outcome.hpp"
     ${OUTCOME_HEADER}

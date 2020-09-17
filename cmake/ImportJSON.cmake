@@ -1,12 +1,16 @@
 macro(import_json)
-  include(DownloadFileHelper)
-
   set(JSON_VERSION "3.9.1")
   set(JSON_LICENSE_FILE "${CMAKE_CURRENT_BINARY_DIR}/nlohmann/LICENSE")
+  set(JSON_HPP_FILE "${CMAKE_CURRENT_BINARY_DIR}/nlohmann/json.hpp")
 
+  include(DownloadFileHelper)
+  try_resource_dir(
+    SOURCE nlohmann/LICENSE nlohmann/json.hpp
+    DESTINATION ${CMAKE_CURRENT_BINARY_DIR}
+  )
   download_file(
     "https://raw.githubusercontent.com/nlohmann/json/v${JSON_VERSION}/single_include/nlohmann/json.hpp"
-    "${CMAKE_CURRENT_BINARY_DIR}/nlohmann/json.hpp"
+    ${JSON_HPP_FILE}
   )
   download_file(
     "https://raw.githubusercontent.com/nlohmann/json/v${JSON_VERSION}/LICENSE.MIT"

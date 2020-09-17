@@ -10,17 +10,21 @@ macro(import_nauty)
       # Pull the archive if we haven't done so yet
       if(NOT EXISTS ${CMAKE_CURRENT_BINARY_DIR}/nauty)
         include(DownloadFileHelper)
+        try_resource_dir(
+          SOURCE nauty27r1.tar.gz
+          DESTINATION ${CMAKE_CURRENT_BINARY_DIR}
+        )
         download_file(
           "http://pallini.di.uniroma1.it/nauty27r1.tar.gz"
-          ${CMAKE_CURRENT_BINARY_DIR}/nauty.tar.gz
+          ${CMAKE_CURRENT_BINARY_DIR}/nauty27r1.tar.gz
         )
         # Unpack the archive and remove it
         execute_process(
           COMMAND ${CMAKE_COMMAND} -E tar zxf
-          ${CMAKE_CURRENT_BINARY_DIR}/nauty.tar.gz
+          ${CMAKE_CURRENT_BINARY_DIR}/nauty27r1.tar.gz
           WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
         )
-        file(REMOVE ${CMAKE_CURRENT_BINARY_DIR}/nauty.tar.gz)
+        file(REMOVE ${CMAKE_CURRENT_BINARY_DIR}/nauty27r1.tar.gz)
         file(RENAME
           ${CMAKE_CURRENT_BINARY_DIR}/nauty27r1
           ${CMAKE_CURRENT_BINARY_DIR}/nauty
