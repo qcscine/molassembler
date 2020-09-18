@@ -42,8 +42,26 @@ void init_bond_stereopermutator(pybind11::module& m) {
     "Alignment",
     "How dihedrals are aligned in the generation of stereopermutations"
   );
-  alignment.value("Eclipsed", BondStereopermutator::Alignment::Eclipsed);
-  alignment.value("Staggered", BondStereopermutator::Alignment::Staggered);
+  alignment.value(
+    "Eclipsed",
+    BondStereopermutator::Alignment::Eclipsed,
+    "At least two shape vertices eclipse one another along the axis"
+  );
+  alignment.value(
+    "Staggered",
+    BondStereopermutator::Alignment::Staggered,
+    "At least one pair of substituents are staggered along the axis"
+  );
+  alignment.value(
+    "EclipsedAndStaggered",
+    BondStereopermutator::Alignment::EclipsedAndStaggered,
+    "Both eclipsed and staggered alignments are generated"
+  );
+  alignment.value(
+    "BetweenEclipsedAndStaggered",
+    BondStereopermutator::Alignment::BetweenEclipsedAndStaggered,
+    "Offset exactly halfway between eclipsed and staggered alignments"
+  );
 
   bondStereopermutator.def(
     pybind11::init(

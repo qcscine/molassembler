@@ -39,6 +39,14 @@ struct BondStereopermutator::Impl : public Temple::Crtp::LexicographicComparable
     static_cast<Stereopermutations::Composite::Alignment>(BondStereopermutator::Alignment::Eclipsed) == Stereopermutations::Composite::Alignment::Eclipsed,
     "Eclipsed Alignment values do not match across Alignment types"
   );
+  static_assert(
+    static_cast<Stereopermutations::Composite::Alignment>(BondStereopermutator::Alignment::EclipsedAndStaggered) == Stereopermutations::Composite::Alignment::EclipsedAndStaggered,
+    "EclipsedAndStaggered Alignment values do not match across Alignment types"
+  );
+  static_assert(
+    static_cast<Stereopermutations::Composite::Alignment>(BondStereopermutator::Alignment::BetweenEclipsedAndStaggered) == Stereopermutations::Composite::Alignment::BetweenEclipsedAndStaggered,
+    "BetweenEclipsedAndStaggered Alignment values do not match across Alignment types"
+  );
 
 //!@name Static methods
 //!@{

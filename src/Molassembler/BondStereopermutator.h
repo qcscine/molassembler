@@ -40,8 +40,8 @@ struct ChiralConstraint;
  * @brief Handles specific relative arrangements of two atom stereopermutators
  *   joined by a bond
  *
- * This class exists to model rotational barriers in bond orders higher than
- * Single that join an arbitrary pair of idealized shapes.
+ * This class exists to model rotational barriers along bonds joining an
+ * arbitrary pair of idealized shapes.
  */
 class MASM_EXPORT BondStereopermutator {
 public:
@@ -51,8 +51,14 @@ public:
    * @brief How dihedrals are aligned in the generation of stereopermutations
    */
   enum class Alignment {
+    //! At least two shape vertices eclipse one another along the axis
     Eclipsed,
-    Staggered
+    //! At least one pair of substituents are staggered along the axis
+    Staggered,
+    //! Both eclipsed and staggered alignments
+    EclipsedAndStaggered,
+    //! Offset exactly halfway between eclipsed and staggered alignments
+    BetweenEclipsedAndStaggered
   };
 
   /**
