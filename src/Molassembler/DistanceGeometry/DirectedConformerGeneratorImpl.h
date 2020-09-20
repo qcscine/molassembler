@@ -27,11 +27,13 @@ public:
   static boost::variant<IgnoreReason, BondStereopermutator> considerBond(
     const BondIndex& bondIndex,
     const Molecule& molecule,
-    const std::unordered_map<AtomIndex, unsigned>& smallestCycleMap
+    const std::unordered_map<AtomIndex, unsigned>& smallestCycleMap,
+    BondStereopermutator::Alignment alignment
   );
 
   Impl(
     Molecule molecule,
+    const BondStereopermutator::Alignment alignment,
     const BondList& bondsToConsider
   );
 
@@ -98,8 +100,11 @@ public:
     const EnumerationSettings& settings
   );
 
+  Relabeler relabeler() const;
+
 private:
   Molecule molecule_;
+  BondStereopermutator::Alignment alignment_;
   BondList relevantBonds_;
 
   /* This data structure is primarily designed for use as a set-like type that

@@ -20,6 +20,7 @@
 #include "Molassembler/Temple/Invoke.h"
 #include "Molassembler/Temple/Stringify.h"
 #include "Molassembler/Temple/Functional.h"
+#include "Molassembler/Temple/constexpr/Math.h"
 
 #include <fstream>
 #include <iomanip>
@@ -152,4 +153,36 @@ BOOST_AUTO_TEST_CASE(DirectedConfGenHomomorphicSwap, *boost::unit_test::label("D
   }
 
   Options::temperatureRegime = previousTemperature;
+}
+
+BOOST_AUTO_TEST_CASE(DirConfGenRelabeler, *boost::unit_test::label("DG")) {
+  auto bins = &DirectedConformerGenerator::Relabeler::bins;
+
+  std::vector<double> observedDihedrals {{
+    Temple::Math::toRadians(1.0),
+    Temple::Math::toRadians(2.0),
+    Temple::Math::toRadians(2.4),
+    Temple::Math::toRadians(10.0),
+    Temple::Math::toRadians(40.0),
+    Temple::Math::toRadians(-93.0),
+    Temple::Math::toRadians(-95.0)
+  }};
+
+  const auto binned = bins(observedDihedrals, 10 * M_PI / 180.0);
+  BOOST_CHECK_EQUAL(binned.size(), 3);
+
+  BOOST_CHECK_EQUAL(bins(std::vector<double>(1, 3.0), 1.0).size(), 1);
+
+  BOOST_CHECK_EQUAL(bins(std::vector<double>(2, 3.0), 1.0).size(), 1);
+
+  BOOST_CHECK_EQUAL(
+    bins(std::vector<double> {{-M_PI/2, M_PI/2}}, M_PI).size(),
+    1
+  );
+
+  BOOST_CHECK_EQUAL(
+    bins(std::vector<double> {{-3 * M_PI / 4, 3 * M_PI / 4}}, 2 * M_PI / 3).size(),
+    1
+  );
+
 }

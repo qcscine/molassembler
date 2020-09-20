@@ -265,7 +265,6 @@ public:
     SiteIndex siteIndexB
   ) const;
 
-
   /*! @brief Returns whether this stereopermutator has the same relative
    *   orientation as another stereopermutator
    *

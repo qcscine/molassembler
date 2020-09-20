@@ -134,7 +134,8 @@ boost::variant<DirectedConformerGenerator::IgnoreReason, BondStereopermutator>
 DirectedConformerGenerator::Impl::considerBond(
   const BondIndex& bondIndex,
   const Molecule& molecule,
-  const std::unordered_map<AtomIndex, unsigned>& smallestCycleMap
+  const std::unordered_map<AtomIndex, unsigned>& smallestCycleMap,
+  BondStereopermutator::Alignment alignment
 ) {
   // Make sure the bond exists in the first place
   assert(molecule.graph().adjacent(bondIndex.first, bondIndex.second));
@@ -187,9 +188,14 @@ DirectedConformerGenerator::Impl::considerBond(
 
   // Try instantiating the BondStereopermutator
   try {
-    auto alignment = BondStereopermutator::Alignment::Eclipsed;
-    if(bondType == BondType::Single) {
-      alignment = BondStereopermutator::Alignment::Staggered;
+    if(
+      alignment != BondStereopermutator::Alignment::EclipsedAndStaggered
+      && alignment != BondStereopermutator::Alignment::BetweenEclipsedAndStaggered
+    ) {
+      alignment = BondStereopermutator::Alignment::Eclipsed;
+      if(bondType == BondType::Single) {
+        alignment = BondStereopermutator::Alignment::Staggered;
+      }
     }
 
     BondStereopermutator trialPermutator {
@@ -211,8 +217,9 @@ DirectedConformerGenerator::Impl::considerBond(
 
 DirectedConformerGenerator::Impl::Impl(
   Molecule molecule,
+  const BondStereopermutator::Alignment alignment,
   const BondList& bondsToConsider
-) : molecule_(std::move(molecule))
+) : molecule_(std::move(molecule)), alignment_(alignment)
 {
   // Precalculate the smallest cycle map
   auto smallestCycleMap = makeSmallestCycleMap(molecule_.graph().cycles());
@@ -238,23 +245,18 @@ DirectedConformerGenerator::Impl::Impl(
 
   ExtractStereopermutatorVisitor visitor {bondStereopermutators};
 
+  const auto processBond = [&](const BondIndex& bond) {
+    auto importanceVariant = considerBond(bond, molecule_, smallestCycleMap, alignment);
+
+    if(boost::apply_visitor(visitor, importanceVariant)) {
+      relevantBonds_.push_back(bond);
+    }
+  };
+
   if(bondsToConsider.empty()) {
-    // Consider all bonds
-    for(BondIndex bondIndex : molecule_.graph().bonds()) {
-      auto importanceVariant = considerBond(bondIndex, molecule_, smallestCycleMap);
-
-      if(boost::apply_visitor(visitor, importanceVariant)) {
-        relevantBonds_.push_back(bondIndex);
-      }
-    }
+    Temple::forEach(molecule_.graph().bonds(), processBond);
   } else {
-    for(const BondIndex& bondIndex : bondsToConsider) {
-      auto importanceVariant = considerBond(bondIndex, molecule_, smallestCycleMap);
-
-      if(boost::apply_visitor(visitor, importanceVariant)) {
-        relevantBonds_.push_back(bondIndex);
-      }
-    }
+    Temple::forEach(bondsToConsider, processBond);
   }
 
   // Sort the relevant bonds and shrink
@@ -537,6 +539,10 @@ void DirectedConformerGenerator::Impl::enumerate(
       }
     }
   }
+}
+
+DirectedConformerGenerator::Relabeler DirectedConformerGenerator::Impl::relabeler() const {
+  return Relabeler(relevantBonds_, molecule_);
 }
 
 } // namespace Molassembler

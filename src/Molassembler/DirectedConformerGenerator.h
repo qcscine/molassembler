@@ -139,6 +139,8 @@ public:
      */
     RotationIsIsotropic
   };
+
+  struct Relabeler;
 //!@}
 
 //!@name Static functions
@@ -150,6 +152,7 @@ public:
    * @param molecule The molecule in which @p bond exists
    * @param smallestCycleMap A map of atom indices to the smallest cycle
    *   they are in
+   * @param alignment Alignment to generate BondStereopermutator instances with.
    *
    * @complexity{@math{O(S!)} where @math{S} is the size of the larger shape
    * constituting @p bondIndex}
@@ -163,7 +166,8 @@ public:
   static boost::variant<IgnoreReason, BondStereopermutator> considerBond(
     const BondIndex& bondIndex,
     const Molecule& molecule,
-    const std::unordered_map<AtomIndex, unsigned>& smallestCycleMap
+    const std::unordered_map<AtomIndex, unsigned>& smallestCycleMap,
+    BondStereopermutator::Alignment alignment = BondStereopermutator::Alignment::Staggered
   );
 
   /** @brief Calculates a distance metric between two decision lists for
@@ -207,6 +211,8 @@ public:
   /** @brief Constructor
    *
    * @param molecule Molecule for which to generate conformers
+   * @param alignment Alignment with which to generate BondStereopermutator on
+   *   considered bonds
    * @param bondsToConsider A list of suggestions of which bonds to consider.
    *   Bonds for which considerBond() yields an IgnoreReason will still be
    *   ignored. If the list is empty, all bonds of a molecule will be
@@ -221,6 +227,7 @@ public:
    */
   explicit DirectedConformerGenerator(
     Molecule molecule,
+    BondStereopermutator::Alignment alignment = BondStereopermutator::Alignment::Staggered,
     const BondList& bondsToConsider = {}
   );
 //!@}
@@ -428,8 +435,8 @@ public:
    * @param settings Further parameters for enumeration algorithms
    *
    * @parblock @note This function is parallelized. Use the OMP_NUM_THREADS
-   * environment variable to control the number of threads used. Results are
-   * sequenced and reproducible.
+   * environment variable to control the number of threads used. Callback
+   * invocations are unsequenced but the arguments are reproducible.
    * @endparblock
    */
   void enumerate(
@@ -463,11 +470,54 @@ public:
     std::function<void(const DecisionList&, Utils::PositionCollection)> callback,
     const EnumerationSettings& settings = {}
   );
+
+  //! Generates a relabeler for the molecule and considered bonds
+  Relabeler relabeler() const;
 //!@}
 
 private:
   class Impl;
   std::unique_ptr<Impl> pImpl_;
+};
+
+/*! @brief Relabeler for decision lists with minimized structures
+ *
+ * Type to help with relabeling decision lists with true minima bins
+ * once all conformers have been energy minimized with a suitable procedure.
+ */
+struct DirectedConformerGenerator::Relabeler {
+//!@name Types
+//!@{
+  using DihedralSequence = std::tuple<std::vector<AtomIndex>, AtomIndex, AtomIndex, std::vector<AtomIndex>>;
+  using Interval = std::pair<double, double>;
+  using Intervals = std::vector<Interval>;
+//!@}
+
+  /*! @brief Simplest density-based binning function
+   *
+   * Just sorts the dihedral values and then considers any values within the
+   * delta as part of the same bin.
+   */
+  static Intervals bins(const std::vector<double>& dihedrals, double delta);
+
+  Relabeler(DirectedConformerGenerator::BondList bonds, const Molecule& mol);
+
+  //! Add a particular position to the set to relabel
+  void add(const Utils::PositionCollection& positions);
+
+  /*! @brief Determine relabeling for all added position sets in order
+   *
+   * Call this as soon as all positions to be reclassified have been added.
+   *
+   * Returns relabeling for each set of positions in order.
+   */
+  std::vector<std::vector<unsigned>> relabel(double delta=M_PI / 6) const;
+
+//!@name State
+//!@{
+  std::vector<DihedralSequence> sequences;
+  std::vector<std::vector<double>> observedDihedrals;
+//!@}
 };
 
 } // namespace Molassembler
