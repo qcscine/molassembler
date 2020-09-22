@@ -1,0 +1,91 @@
+/*!
+@page dev-notes Development notes
+
+@section paper-changes Changes since paper introducing Molassembler
+
+- The paper states that Molassembler chooses the shape whose Continuous Shape
+  Measure is lowest. In atom stereopermutator fitting, Continuous Shape
+  Measures are calculated for each shape of fitting vertex counts. Then, the
+  probability that the shape measure was calculated from a sample of randomly
+  generated Cartesian coordinates is computed. The shape whose probability is
+  lowest is chosen. 
+- Bond stereopermutator rotational isotropy is no longer based solely on
+  ranking characters, but additionally predicated on equidistribution about the
+  bond axis: A trigonal pyramidal side cannot be isotropic anymore. Another
+  example: There are two manners a square pyramidal side fused at the apical
+  position with ranking characters AABB in the plane can arrange. If equal
+  ranking characters are arranged trans to one another, the side is isotropic,
+  but if they are arranged cis to one another, they are not.
+
+@section dev-overview Developer overview
+
+This section is intended as a quick reference to various classes of
+functionality that Molassembler encompasses. Generally, file names are closely
+indicative of what they contain, and brief summaries are available for all
+files.
+
+- Top level headers (mostly): Consumer interface
+- Detail: Cartesian measurements, cyclic polygon modeling
+- Graph: Algorithms pertaining mostly to the graphs (atoms and bonds only)
+- IO: Input/Output details (binary, smiles parsing)
+- Modeling: Atom properties, bond distance estimations, shape inference from graph
+- Molecule: Molecule private impl, Graphviz writer, ranking
+- Shapes: Shape data, continuous measures
+- Stereopermutation: Stereopermutation enumeration at atoms and bonds
+- Stereopermutators: Impls of objects managing stereopermutations in Molecules
+- Temple: Assortment of constexpr containers, algorithms and metaprogramming
+
+@section dev-patterns Common patterns
+
+The most pervasive pattern in Molassembler is the usage of \masm{Temple::map},
+which is essentially a \c std::transform shortcut always yielding a new
+\c std::vector. This pattern is often augmented by a number of
+range-adaptors that generate variations on the input. For example:
+
+@code{.cpp}
+const auto input = std::vector<unsigned> {{0, 1, 2, 3}},
+const auto mapped = Temple::map(input, [](unsigned x) { return 3 * x; });
+std::cout << Temple::stringify(mapped) << "\n";  // Output: vector {0, 3, 6, 9}
+const auto combined = Temple::map(Temple::Adaptors::sequentialPairs(input), std::plus<>());
+std::cout << Temple::stringify(combined) << "\n"; // Output: vector {1, 3, 5}
+const auto pairs = Temple::map(Temple::Adaptors::allPairs(input), std::plus<>());
+std::cout << Temple::Stringify(pairs) << "\n"; // Output: vector {1, 2, 3, 3, 4, 5}
+@endcode
+
+Molassembler tries to follow a somewhat functional style with a lot of
+\c const where reasonable.
+
+@section dev-dependencies Dependencies
+
+Molassembler currently carries the following dependencies, for the following
+reasons:
+
+- Scine Utilities: Definition of interface types throughout the SCINE project
+  and some basic algorithms. It would be possible to separate Molassembler out
+  from the utilities, which would significantly reduce compile times (as the
+  utilities are quite bloated compared to the subset that Molassembler actually
+  needs), but would require duplication of a significant amount of basic
+  functionality and quite a bit of boilerplate to get the two libraries working
+  together again.
+- RingDecomposerLib: C library avoiding expontential storage requirements for
+  cycle perception of heavily fused graphs. Super useful and not an algorithm
+  particularly desirable to rewrite. Downside is that the way it stands, every
+  time cycle information is needed, the graph needs to be copied.
+- Nauty: C library for graphs that is used here for graph canonicalization.
+  Fairly simple to work with and interface. Downside is a graph copy for
+  canonicalization. Would need to rewrite to avoid, and definitely do not want
+  to do that.
+- JSON for Modern C++: Super pleasant single-header JSON serialization helper
+  library supporting various binary JSON formats.
+- Boost: There are so many boost libraries used in Molassembler that it is
+  completely inseparable. Some of these boost libraries have been
+  adopted into the C++17 standard and beyond and could be refactored when
+  adopting a newer standard.
+- Outcome: In some places in Molassembler, it was desirable to force consumers
+  to confront expected algorithmic failures by having error handling as part of
+  the return type. Outcome has been accepted into the Boost family in recent
+  releases, but backwards compatibility mantras in the SCINE project prevent
+  removal of the single-header version in favor of requiring a newer Boost
+  release.
+
+*/

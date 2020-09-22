@@ -39,7 +39,7 @@
 #include "Molassembler/BondStereopermutator.h"
 #include "Molassembler/Log.h"
 #include "Molassembler/Molecule.h"
-#include "Molassembler/Containers/OrderDiscoveryHelper.h"
+#include "Molassembler/Molecule/OrderDiscoveryHelper.h"
 
 #include "Molassembler/Temple/Adaptors/AllPairs.h"
 

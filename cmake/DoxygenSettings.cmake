@@ -25,7 +25,7 @@ macro(set_doxygen_vars)
     "${molassembler_SOURCE_DIR}/src/Molassembler/"
     "${molassembler_SOURCE_DIR}/doc/manual.dox"
     "${molassembler_SOURCE_DIR}/doc/known-issues.dox"
-    "${molassembler_SOURCE_DIR}/doc/dev-details.dox"
+    "${molassembler_SOURCE_DIR}/doc/developers.dox"
   )
   set(DOXYGEN_FILE_PATTERNS         "*.h;*.hxx;*.hpp;*.dox")
   set(DOXYGEN_RECURSIVE             YES)

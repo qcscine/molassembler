@@ -10,7 +10,6 @@
 #include "Molassembler/Temple/TinySet.h"
 #include "Molassembler/Temple/Poset.h"
 
-#include "Molassembler/Containers/OrderDiscoveryHelper.h"
 #include "Molassembler/Cycles.h"
 
 namespace Scine {

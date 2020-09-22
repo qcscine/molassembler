@@ -6,7 +6,7 @@
 
 #include "boost/test/unit_test.hpp"
 
-#include "Molassembler/Containers/OrderDiscoveryHelper.h"
+#include "Molassembler/Molecule/OrderDiscoveryHelper.h"
 
 #include "Molassembler/Temple/Stringify.h"
 

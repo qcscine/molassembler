@@ -29,13 +29,33 @@ class Molecule;
 
 /** @brief Helper type for directed conformer generation.
  *
- * Generates guaranteed new combinations of BondStereopermutator assignments
- * and provides helper functions for the generation of conformers using these
- * combinations and the reverse, finding the combinations from conformers.
+ * Generates new combinations of BondStereopermutator assignments and provides
+ * helper functions for the generation of conformers using these combinations
+ * and the reverse, finding the combinations from conformers.
  *
- * Client code could look something like this. Make sure to differentiate
- * cases in which the list of considered bonds by bondList() is empty, since
- * many member functions behave differently in those circumstances.
+ * It is important that you lower your expectations for the modeling of
+ * dihedral energy minima, however. Considering that Molassembler neither
+ * requires you to supply a correct graph, never detects or kekulizes aromatic
+ * systems nor asks you to supply an overall charge for a molecule, it should
+ * be understandable that the manner in which Molassembler decides where
+ * dihedral energy minima are is somewhat underpowered. The manner in which
+ * shape vertices are aligned in stereopermutation enumeration isn't even
+ * strictly based on a physical principle. We suggest the following to make the
+ * most of what the library can do for you:
+ *
+ * - Read the documentation for the various alignments. Consider using not just
+ *   the default Staggered alignment, but either EclipsedAndStaggered or
+ *   BetweenEclipsedAndStaggered to improve your chances of capturing all
+ *   rotational minima. This will likely generate more conformers than strictly
+ *   required, but should capture all minima.
+ * - Energy minimize all generated conformers with a suitable method and then
+ *   deduplicate.
+ * - Consider using the Relabeler to do a final deduplication step.
+ *
+ * Client code for generating conformers could look something like this. Make
+ * sure to differentiate cases in which the list of considered bonds by
+ * bondList() is empty, since many member functions behave differently in those
+ * circumstances.
  *
  * @code{cpp}
  * auto mol = IO::read(...);

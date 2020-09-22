@@ -9,7 +9,6 @@
 #define INCLUDE_MOLASSEMBLER_BUILD_TYPE_SWITCH_H
 
 namespace Scine {
-
 namespace Molassembler {
 
 #ifdef NDEBUG
@@ -19,7 +18,6 @@ constexpr bool buildTypeIsDebug = true;
 #endif
 
 } // namespace Molassembler
-
 } // namespace Scine
 
 #endif

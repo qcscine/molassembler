@@ -187,9 +187,12 @@ public:
 
   /*! @brief Determine the shape and assignment realized in positions
    *
-   * The shape and assignment are determined based on three-dimensional
-   * positions using angle and chiral distortions from the respective idealized
-   * shapes.
+   * The shape and assignment are determined from Cartesian coordinates by the
+   * probability that the continuous shape measure with respect to an idealized
+   * shape is least likely to be drawn from a sample of randomly generated
+   * vertex positions. For shapes with many vertices, generating enough samples
+   * for a statistical argument is too expensive, and the shape whose
+   * continuous shape measure is lowest is chosen instead.
    *
    * @param graph The molecule's graph which this permutator helps model
    * @param angstromWrapper The wrapped positions
