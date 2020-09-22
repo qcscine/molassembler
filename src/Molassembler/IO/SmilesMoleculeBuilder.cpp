@@ -518,33 +518,33 @@ void MoleculeBuilder::setBondStereo(
   auto marker = [](const auto& tup) { return std::get<2>(tup); };
 
   using Iterator = std::vector<StereoMarkedBondTuple>::const_iterator;
-  Iterator start = std::cbegin(stereoMarkedBonds);
+  Iterator iter = std::cbegin(stereoMarkedBonds);
   const Iterator end = std::cend(stereoMarkedBonds);
 
-  while(start != end) {
+  while(iter != end) {
     SmilesBondStereo state;
 
-    PrivateGraph::Vertex A = first(*start);
-    PrivateGraph::Vertex B = second(*start);
+    const PrivateGraph::Vertex A = first(*iter);
+    const PrivateGraph::Vertex B = second(*iter);
 
     // We assume that all vertices are in the same component
     Molecule& mol = molecules.at(componentMap.at(A));
 
-    std::vector<Iterator> leftMarkers {start};
+    std::vector<Iterator> leftMarkers {iter};
     std::vector<Iterator> rightMarkers;
 
     /* Iff the first two marked bonds have an overlapping atom index, then
      * they are on the same side of the bond. The overlapping bond must
      * then be the left atom.
      */
-    Iterator explorer = start + 1;
+    Iterator explorer = iter + 1;
     if(explorer == end) {
       throw std::runtime_error("Missing right side of stereo-marked double bond");
     }
 
     // Check for second marker left of bond
     {
-      PrivateGraph::Vertex X = first(*explorer);
+      const PrivateGraph::Vertex X = first(*explorer);
 
       if(A == X) {
         // Two markers left of bond, C(\F)(/[H]) pattern
@@ -564,7 +564,7 @@ void MoleculeBuilder::setBondStereo(
       throw std::runtime_error("Missing right side of stereo-marked double bond");
     }
 
-    auto bondTypeOption = [&](const PrivateGraph::Vertex a, const PrivateGraph::Vertex b) {
+    const auto bondTypeOption = [&](const PrivateGraph::Vertex a, const PrivateGraph::Vertex b) {
       return Temple::Optionals::map(
         mol.graph().bond(
           indexInComponentMap.at(a),
@@ -611,10 +611,10 @@ void MoleculeBuilder::setBondStereo(
        * - second of the marker is left and forward: F/C -> first is down
        * - second of the marker is left and backward: F\C -> first is up
        */
-      bool firstIsLeft = (first(*leftMarker) == state.left.value());
-      bool markerIsForward = (marker(*leftMarker) == BondData::StereoMarker::Forward);
-      bool up = (firstIsLeft == markerIsForward);
-      PrivateGraph::Vertex which = (firstIsLeft ? second(*leftMarker) : first(*leftMarker));
+      const bool firstIsLeft = (first(*leftMarker) == state.left.value());
+      const bool markerIsForward = (marker(*leftMarker) == BondData::StereoMarker::Forward);
+      const bool up = (firstIsLeft == markerIsForward);
+      const PrivateGraph::Vertex which = (firstIsLeft ? second(*leftMarker) : first(*leftMarker));
 
       if(up) {
         if(state.upOfLeft) {
@@ -644,7 +644,7 @@ void MoleculeBuilder::setBondStereo(
     }
 
     /* Add the information to the molecular graph */
-    auto molBondOption = mol.graph().bond(
+    const auto molBondOption = mol.graph().bond(
       indexInComponentMap.at(state.left.value()),
       indexInComponentMap.at(state.right)
     );
@@ -667,8 +667,8 @@ void MoleculeBuilder::setBondStereo(
       std::cerr << "Warning: Smiles contains stereo markers for non-stereogenic double bond\n";
     }
 
-    // Advance the start iterator
-    start = explorer;
+    // Advance the iterator
+    iter = explorer;
   }
 }
 

@@ -754,82 +754,10 @@ SpatialModel::BoundsMatrix SpatialModel::makePairwiseBounds(
   const BoundsMapType<3>& angleBounds,
   const BoundsMapType<4>& dihedralBounds
 ) {
-  BoundsMatrix bounds(N, N);
-  bounds.setZero();
-
-  /* There may be overlapping and possibly conflicting information present in
-   * the gathered data. If data affects the same atom-pair, we must ensure that
-   * we merely raise the lower bound and lower the upper bound, while never
-   * inverting the bounds overall.
-   */
-  auto addInformation = [&bounds](
-    AtomIndex i,
-    AtomIndex j,
-    const ValueBounds& newBounds
-  ) {
-    assert(i != j);
-    // Ensure i < j
-    if(j < i) {
-      std::swap(i, j);
-    }
-
-    double& lowerBound = bounds(j, i);
-    double& upperBound = bounds(i, j);
-
-    assert(newBounds.lower <= newBounds.upper);
-    assert(lowerBound <= upperBound);
-
-    if(lowerBound != 0.0 && upperBound != 0.0) {
-      if(
-        newBounds.lower > lowerBound
-        && newBounds.lower < upperBound
-      ) {
-        lowerBound = newBounds.lower;
-      }
-
-      // Try to lower the upper bound
-      if(
-        newBounds.upper < upperBound
-        && newBounds.upper > lowerBound
-      ) {
-        upperBound = newBounds.upper;
-      }
-    } else {
-      lowerBound = newBounds.lower;
-      upperBound = newBounds.upper;
-    }
-  };
-
-  auto getBondBounds = [&bounds](
-    AtomIndex i,
-    AtomIndex j
-  ) -> ValueBounds {
-    if(j < i) {
-      std::swap(i, j);
-    }
-
-    return ValueBounds {
-      bounds(j, i),
-      bounds(i, j)
-    };
-  };
-
-  auto copyMapIntoBounds = [&](const BoundsMapType<2>& boundsMap) {
-    for(const auto& indexArrayBoundsPair : boundsMap) {
-      const std::array<AtomIndex, 2>& indexArray = indexArrayBoundsPair.first;
-      const ValueBounds& valueBounds = indexArrayBoundsPair.second;
-
-      const AtomIndex i = indexArray.front();
-      const AtomIndex j = indexArray.back();
-
-      assert(i < j);
-      bounds(j, i) = valueBounds.lower;
-      bounds(i, j) = valueBounds.upper;
-    }
-  };
+  BoundsMatrixHelper bounds(N);
 
   // Copy the constraints as ground truth
-  copyMapIntoBounds(fixedPositionBounds);
+  bounds.addMap(fixedPositionBounds);
 
   // Add 1-2 information from the bonds
   if(fixedPositionBounds.empty()) {
@@ -837,11 +765,11 @@ SpatialModel::BoundsMatrix SpatialModel::makePairwiseBounds(
      * entire bond bounds (these are definitely compatible with triangle
      * inequalities)
      */
-    copyMapIntoBounds(bondBounds);
+    bounds.addMap(bondBounds);
   } else {
     // Otherwise, we have to carefully add bond information
     for(const auto& bondPair : bondBounds) {
-      addInformation(
+      bounds.add(
         bondPair.first.front(),
         bondPair.first.back(),
         bondPair.second
@@ -854,10 +782,10 @@ SpatialModel::BoundsMatrix SpatialModel::makePairwiseBounds(
     const auto& indices = anglePair.first;
     const auto& angleValueBounds = anglePair.second;
 
-    ValueBounds firstBounds = getBondBounds(indices.front(), indices.at(1));
-    ValueBounds secondBounds = getBondBounds(indices.at(1), indices.back());
+    ValueBounds firstBounds = bounds.get(indices.front(), indices.at(1));
+    ValueBounds secondBounds = bounds.get(indices.at(1), indices.back());
 
-    addInformation(
+    bounds.add(
       indices.front(),
       indices.back(),
       ValueBounds {
@@ -880,9 +808,9 @@ SpatialModel::BoundsMatrix SpatialModel::makePairwiseBounds(
     const auto& indices = dihedralPair.first;
     const auto& dihedralValueBounds = dihedralPair.second;
 
-    ValueBounds firstBounds = getBondBounds(indices.front(), indices.at(1));
-    ValueBounds secondBounds = getBondBounds(indices.at(1), indices.at(2));
-    ValueBounds thirdBounds = getBondBounds(indices.at(2), indices.back());
+    ValueBounds firstBounds = bounds.get(indices.front(), indices.at(1));
+    ValueBounds secondBounds = bounds.get(indices.at(1), indices.at(2));
+    ValueBounds thirdBounds = bounds.get(indices.at(2), indices.back());
 
     auto firstAngleFindIter = angleBounds.find(
       orderedSequence(
@@ -910,7 +838,7 @@ SpatialModel::BoundsMatrix SpatialModel::makePairwiseBounds(
     const auto& abAngleBounds = firstAngleFindIter->second;
     const auto& bcAngleBounds = secondAngleFindIter->second;
 
-    addInformation(
+    bounds.add(
       indices.front(),
       indices.back(),
       CommonTrig::dihedralLengthBounds(
@@ -924,7 +852,7 @@ SpatialModel::BoundsMatrix SpatialModel::makePairwiseBounds(
     );
   }
 
-  return bounds;
+  return bounds.matrix;
 }
 
 double SpatialModel::siteCentralAngle(
@@ -1994,7 +1922,7 @@ void SpatialModel::modelSpirocenters_(
     }
 
     unsigned* URFIDs;
-    auto nIDs = RDL_getURFsContainingNode(cycleData.dataPtr(), i, &URFIDs);
+    unsigned nIDs = RDL_getURFsContainingNode(cycleData.dataPtr(), i, &URFIDs);
     assert(nIDs == 2);
 
     bool allURFsSingularRC = true;
@@ -2020,7 +1948,7 @@ void SpatialModel::modelSpirocenters_(
 
       // We model them only if both are small.
       if(cycleOne -> weight <= 5 && cycleTwo -> weight <= 5) {
-        auto makeVerticesSet = [](const auto& cyclePtr) -> std::set<AtomIndex> {
+        auto makeVerticesSet = [](RDL_cycle* cyclePtr) -> std::set<AtomIndex> {
           std::set<AtomIndex> vertices;
 
           for(unsigned cycleIndex = 0; cycleIndex < cyclePtr -> weight; ++cycleIndex) {
@@ -2031,10 +1959,10 @@ void SpatialModel::modelSpirocenters_(
           return vertices;
         };
 
-        auto cycleOneVertices = makeVerticesSet(cycleOne);
-        auto cycleTwoVertices = makeVerticesSet(cycleTwo);
+        const auto cycleOneVertices = makeVerticesSet(cycleOne);
+        const auto cycleTwoVertices = makeVerticesSet(cycleTwo);
 
-        auto intersection = Temple::set_intersection(
+        const auto intersection = Temple::set_intersection(
           cycleOneVertices,
           cycleTwoVertices
         );
@@ -2054,13 +1982,13 @@ void SpatialModel::modelSpirocenters_(
 
           assert(firstAdjacents.size() == 2 && secondAdjacents.size() == 2);
 
-          auto firstSequence = orderedSequence(
+          const auto firstSequence = orderedSequence(
             firstAdjacents.front(),
             i,
             firstAdjacents.back()
           );
 
-          auto secondSequence = orderedSequence(
+          const auto secondSequence = orderedSequence(
             secondAdjacents.front(),
             i,
             secondAdjacents.back()
@@ -2073,11 +2001,11 @@ void SpatialModel::modelSpirocenters_(
             angleBounds_.count(firstSequence) == 1
             && angleBounds_.count(secondSequence) == 1
           ) {
-            ValueBounds firstAngleBounds = angleBounds_.at(firstSequence);
-            ValueBounds secondAngleBounds = angleBounds_.at(secondSequence);
+            const ValueBounds& firstAngleBounds = angleBounds_.at(firstSequence);
+            const ValueBounds& secondAngleBounds = angleBounds_.at(secondSequence);
 
             // Increases in cycle angles yield decrease in the cross angle
-            double crossAngleLower = Temple::Stl17::clamp(
+            const double crossAngleLower = Temple::Stl17::clamp(
               spiroCrossAngle(
                 firstAngleBounds.upper,
                 secondAngleBounds.upper
@@ -2086,7 +2014,7 @@ void SpatialModel::modelSpirocenters_(
               M_PI
             );
 
-            double crossAngleUpper = Temple::Stl17::clamp(
+            const double crossAngleUpper = Temple::Stl17::clamp(
               spiroCrossAngle(
                 firstAngleBounds.lower,
                 secondAngleBounds.lower
@@ -2095,10 +2023,7 @@ void SpatialModel::modelSpirocenters_(
               M_PI
             );
 
-            ValueBounds crossBounds {
-              crossAngleLower,
-              crossAngleUpper
-            };
+            const ValueBounds crossBounds { crossAngleLower, crossAngleUpper };
 
             Temple::forEach(
               Temple::Adaptors::allPairs(
@@ -2133,6 +2058,77 @@ void SpatialModel::modelSpirocenters_(
 
     // Must manually free the id array
     free(URFIDs);
+  }
+}
+
+void SpatialModel::BoundsMatrixHelper::add(
+  AtomIndex i,
+  AtomIndex j,
+  const ValueBounds& bounds
+) {
+  /* There may be overlapping and possibly conflicting information present in
+   * the gathered data. If data affects the same atom-pair, we must ensure that
+   * we merely raise the lower bound and lower the upper bound, while never
+   * inverting the bounds overall.
+   */
+  assert(i != j);
+  // Ensure i < j
+  if(j < i) {
+    std::swap(i, j);
+  }
+
+  double& lowerBound = matrix(j, i);
+  double& upperBound = matrix(i, j);
+
+  assert(bounds.lower <= bounds.upper);
+  assert(lowerBound <= upperBound);
+
+  if(lowerBound != 0.0 && upperBound != 0.0) {
+    if(
+      bounds.lower > lowerBound
+      && bounds.lower < upperBound
+    ) {
+      lowerBound = bounds.lower;
+    }
+
+    // Try to lower the upper bound
+    if(
+      bounds.upper < upperBound
+      && bounds.upper > lowerBound
+    ) {
+      upperBound = bounds.upper;
+    }
+  } else {
+    lowerBound = bounds.lower;
+    upperBound = bounds.upper;
+  }
+}
+
+ValueBounds SpatialModel::BoundsMatrixHelper::get(
+  AtomIndex i,
+  AtomIndex j
+) const {
+  if(j < i) {
+    std::swap(i, j);
+  }
+
+  return ValueBounds {
+    matrix(j, i),
+    matrix(i, j)
+  };
+}
+
+void SpatialModel::BoundsMatrixHelper::addMap(const BoundsMapType<2>& boundsMap) {
+  for(const auto& indexArrayBoundsPair : boundsMap) {
+    const std::array<AtomIndex, 2>& indexArray = indexArrayBoundsPair.first;
+    const ValueBounds& valueBounds = indexArrayBoundsPair.second;
+
+    const AtomIndex i = indexArray.front();
+    const AtomIndex j = indexArray.back();
+
+    assert(i < j);
+    matrix(j, i) = valueBounds.lower;
+    matrix(i, j) = valueBounds.upper;
   }
 }
 

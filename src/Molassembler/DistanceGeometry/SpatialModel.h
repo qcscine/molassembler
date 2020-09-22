@@ -64,6 +64,17 @@ public:
    * bounds, strict upper triangle contains upper bounds.
    */
   using BoundsMatrix = Eigen::MatrixXd;
+
+  struct BoundsMatrixHelper {
+    inline explicit BoundsMatrixHelper(AtomIndex size) : matrix(size, size) { matrix.setZero(); }
+
+    void add(AtomIndex i, AtomIndex j, const ValueBounds& bounds);
+    void addMap(const BoundsMapType<2>& boundsMap);
+
+    ValueBounds get(AtomIndex i, AtomIndex j) const;
+
+    Eigen::MatrixXd matrix;
+  };
 //!@}
 
 //!@name Static members
