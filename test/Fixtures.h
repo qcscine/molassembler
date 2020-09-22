@@ -16,12 +16,19 @@ namespace Molassembler {
  * stereopermutators)
  */
 struct LowTemperatureFixture {
-  void swap() { std::swap(Options::temperatureRegime, priorRegime); }
+  void swap() {
+    std::swap(Options::Thermalization::pyramidalInversion, pyramidalInversion);
+    std::swap(Options::Thermalization::berryPseudorotation, berryPseudorotation);
+    std::swap(Options::Thermalization::bartellMechanism, bartellMechanism);
+  }
 
   LowTemperatureFixture();
   ~LowTemperatureFixture();
 
-  TemperatureRegime priorRegime = TemperatureRegime::Low;
+
+  bool pyramidalInversion = false;
+  bool berryPseudorotation = false;
+  bool bartellMechanism = false;
 };
 
 

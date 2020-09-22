@@ -458,11 +458,7 @@ void MoleculeBuilder::setAtomStereo(
       assignables,
       [&](const unsigned stereopermutationIndex) -> bool {
         const auto& stereopermutation = permutator.getAbstract().permutations.list.at(stereopermutationIndex);
-        return std::find(
-          std::begin(soughtRotations),
-          std::end(soughtRotations),
-          stereopermutation
-        ) != std::end(soughtRotations);
+        return Temple::find(soughtRotations, stereopermutation) != std::end(soughtRotations);
       }
     );
 

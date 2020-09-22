@@ -17,6 +17,7 @@
 #include <iostream>
 
 /* TODO
+ * - Allenes
  * - Collect the passed bond data and use it to figure out some Kekule
  *   variation of double bonds in aromatic cycles or at least to set triangle
  *   shapes when elements are aromatic
@@ -37,24 +38,6 @@
  *     (anticlockwise looking along the first to the center) to define order.
  *     (Watch out for the special case involving h-count hydrogens instead of
  *     explicit ones, then they are first in the ordering).
- *   - Square planar centers
- *     This is more complicated than tetrahedral owing to the fact that there
- *     are more possible stereopermutations. The specified index corresponds to
- *     a 2D character's shape that is made if you follow the atoms as ordered
- *     in the smiles: One for U, two for 4, three for Z. You can relate these
- *     shapes to the shape vertex indinces for square planar (ccw in order,
- *     so one is just 0123, 3210, or any rotation thereof)
- *   - Trigonal biypramidal centers
- *     The trigonal bipyramidal spec is that each number corresponds to a pair
- *     of apical atoms and an ccw/cw sense of the equatorial atoms viewed
- *     along the axis. The ordering is arbitrarily weird (without explanation).
- *     I think the same applies as before to the shape vertex ordering choice
- *     (4 and 5 are the ordered top and bottom pair forming the axis, and then
- *     the rest can only be rotations of 012 (ccw) or 021 (cw))
- *   - Octahedral centers
- *     Combination of the earlier ideas (square planar shapes combined with a
- *     specified axis and an ordering criterion, have another look at this
- *     when done with the rest)
  */
 
 namespace Scine {

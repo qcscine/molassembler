@@ -5,10 +5,6 @@ Options
    :members:
    :undoc-members:
 
-.. autoclass:: scine_molassembler.TemperatureRegime
-   :members:
-   :undoc-members:
-
 .. autoclass:: scine_molassembler.Options
    :members:
    :undoc-members:

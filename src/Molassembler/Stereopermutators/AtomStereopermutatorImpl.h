@@ -61,8 +61,7 @@ public:
     const Graph& graph,
     AtomIndex centerAtom,
     const Shapes::Shape shape,
-    const RankingInformation& ranking,
-    const TemperatureRegime temperature
+    const RankingInformation& ranking
   );
 //!@}
 

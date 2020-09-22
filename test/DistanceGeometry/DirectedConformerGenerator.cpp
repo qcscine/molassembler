@@ -15,6 +15,8 @@
 #include "Molassembler/IO/SmilesParser.h"
 #include "Molassembler/IO.h"
 
+#include "Fixtures.h"
+
 #include "Utils/Typenames.h"
 
 #include "Molassembler/Temple/Invoke.h"
@@ -105,9 +107,7 @@ BOOST_AUTO_TEST_CASE(DirectedConformerGeneration, *boost::unit_test::label("DG")
   }
 }
 
-BOOST_AUTO_TEST_CASE(DirectedConfGenHomomorphicSwap, *boost::unit_test::label("DG")) {
-  auto previousTemperature = Options::temperatureRegime;
-  Options::temperatureRegime = TemperatureRegime::Low;
+BOOST_FIXTURE_TEST_CASE(DirectedConfGenHomomorphicSwap, LowTemperatureFixture, *boost::unit_test::label("DG")) {
   auto mol = IO::Experimental::parseSmilesSingleMolecule("CCN");
   DirectedConformerGenerator generator {mol};
   BOOST_REQUIRE_MESSAGE(
@@ -151,8 +151,6 @@ BOOST_AUTO_TEST_CASE(DirectedConfGenHomomorphicSwap, *boost::unit_test::label("D
       );
     }
   }
-
-  Options::temperatureRegime = previousTemperature;
 }
 
 BOOST_AUTO_TEST_CASE(DirConfGenRelabeler, *boost::unit_test::label("DG")) {

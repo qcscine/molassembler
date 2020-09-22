@@ -9,23 +9,6 @@
 void init_options(pybind11::module& m) {
   using namespace Scine::Molassembler;
 
-  /* Temperature regime */
-  pybind11::enum_<TemperatureRegime>(
-    m,
-    "TemperatureRegime",
-    R"delim(
-      Temperature we model molecules at. Low means that no stereopermutations
-      interconvert thermally. There is no pyramidal inversion and all nitrogen
-      atoms can be stereocenters. No Berry pseudorotations or Bartell mechanisms
-      occur, so trigonal bipyramid and pentagonal bipyramid centers can be
-      stereocenters. If ``High`` is set, then nitrogen atoms in
-      particularly strained cycles (3, 4) can be stereocenters. Berry
-      pseudorotations and Bartell mechanisms thermalize all stereopermutations
-      of their respective shapes if none of the substituents are linked.
-    )delim"
-  ).value("Low", TemperatureRegime::Low, "No stereopermutations interconvert thermally.")
-    .value("High", TemperatureRegime::High, "Under specific circumstances, stereopermutations interconvert rapidly.");
-
   /* Chiral state preservation */
   pybind11::enum_<ChiralStatePreservation>(
     m,
@@ -77,11 +60,39 @@ void init_options(pybind11::module& m) {
   );
 
   pybind11::class_<Options> options(m, "Options", "Contains global library settings");
-  options.def_readwrite_static(
-    "temperature_regime",
-    &Options::temperatureRegime,
-    "Global temperature regime setting of the library. Defaults to high."
+  pybind11::class_<Options::Thermalization> thermalization(options, "Thermalization");
+  thermalization.def_readwrite_static(
+    "pyramidal_inversion",
+    &Options::Thermalization::pyramidalInversion,
+    "When set, pyramidal nitrogen atoms not part of a small cycle invert quickly"
   );
+  thermalization.def_readwrite_static(
+    "berry_pseudorotation",
+    &Options::Thermalization::berryPseudorotation,
+    R"delim(
+      If set and there are no linked substituents in a trigonal bipyramid
+      shape, stereopermutations are thermalized.
+    )delim"
+  );
+  thermalization.def_readwrite_static(
+    "bartell_mechanism",
+    &Options::Thermalization::bartellMechanism,
+    R"delim(
+      If set and there are no linked substituents in a pentagonal bipyramid
+      shape, stereopermutations are thermalized.
+    )delim"
+  );
+  thermalization.def(
+    "enable",
+    &Options::Thermalization::enable,
+    "Sets a high temperature approximation where all thermalizations are enabled"
+  );
+  thermalization.def(
+    "disable",
+    &Options::Thermalization::disable,
+    "Sets a low temperature approximation where all thermalizations are disabled"
+  );
+
   options.def_readwrite_static(
     "chiral_state_preservation",
     &Options::chiralStatePreservation,

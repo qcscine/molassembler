@@ -232,45 +232,32 @@ bool AtomStereopermutator::Impl::thermalized(
   const Graph& graph,
   const AtomIndex centerAtom,
   const Shapes::Shape shape,
-  const RankingInformation& ranking,
-  const TemperatureRegime temperature
+  const RankingInformation& ranking
 ) {
-  if(temperature == TemperatureRegime::Low) {
-    return false;
-  }
+  if(Options::Thermalization::pyramidalInversion) {
+    /* Nitrogen atom inversion */
+    constexpr unsigned nitrogenZ = Utils::ElementInfo::Z(Utils::ElementType::N);
+    const bool isNitrogenIsotope = Utils::ElementInfo::Z(graph.elementType(centerAtom)) == nitrogenZ;
 
-  /* Nitrogen atom inversion */
-  constexpr unsigned nitrogenZ = Utils::ElementInfo::Z(Utils::ElementType::N);
-  bool isNitrogenIsotope = Utils::ElementInfo::Z(graph.elementType(centerAtom)) == nitrogenZ;
-
-  if(
-    isNitrogenIsotope
-    && shape == Shapes::Shape::VacantTetrahedron
-  ) {
-    // Generally thermalized, except if in a small cycle
-    if(
-      Temple::any_of(
+    if(isNitrogenIsotope && shape == Shapes::Shape::VacantTetrahedron) {
+      const bool inSmallCycle = Temple::any_of(
         ranking.links,
         [](const RankingInformation::Link& link) {
           return link.cycleSequence.size() <= 4;
         }
-      )
-    ) {
-      return false;
+      );
+      return !inSmallCycle;
     }
-
-    return true;
   }
 
+  if(ranking.links.empty()) {
+    if(Options::Thermalization::berryPseudorotation && shape == Shapes::Shape::TrigonalBipyramid) {
+      return true;
+    }
 
-  // Berry pseudorotation and Bartell mechanism
-  if(
-    ranking.links.empty() && (
-      shape == Shapes::Shape::PentagonalBipyramid
-      || shape == Shapes::Shape::TrigonalBipyramid
-    )
-  ) {
-    return true;
+    if(Options::Thermalization::bartellMechanism && shape == Shapes::Shape::PentagonalBipyramid) {
+      return true;
+    }
   }
 
   return false;
@@ -296,8 +283,7 @@ AtomStereopermutator::Impl::Impl(
       graph,
       centerAtom,
       shape_,
-      ranking_,
-      Options::temperatureRegime
+      ranking_
     )}
 {}
 
@@ -685,8 +671,7 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
     graph,
     centerAtom_,
     shape_,
-    ranking_,
-    Options::temperatureRegime
+    ranking_
   );
   assign(newAssignmentOption);
 
@@ -1011,8 +996,7 @@ void AtomStereopermutator::Impl::setShape(
     graph,
     centerAtom_,
     shape_,
-    ranking_,
-    Options::temperatureRegime
+    ranking_
   );
 
   // Dis-assign the stereopermutator

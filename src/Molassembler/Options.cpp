@@ -17,7 +17,10 @@ Random::Engine& randomnessEngine() {
   return engine;
 }
 
-TemperatureRegime Options::temperatureRegime = TemperatureRegime::High;
+bool Options::Thermalization::pyramidalInversion = true;
+bool Options::Thermalization::berryPseudorotation = true;
+bool Options::Thermalization::bartellMechanism = true;
+
 ChiralStatePreservation Options::chiralStatePreservation = ChiralStatePreservation::EffortlessAndUnique;
 ShapeTransition Options::shapeTransition = ShapeTransition::MaximizeChiralStatePreservation;
 

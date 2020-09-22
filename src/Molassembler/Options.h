@@ -35,32 +35,6 @@ class Graph;
  */
 MASM_EXPORT Random::Engine& randomnessEngine();
 
-/*! @brief Modeling temperature regime enumerator
- *
- * Specifies for which temperature regime the Molecule is being modeled.
- *
- * This affects
- * - whether nitrogen atoms with a vacant tetrahedron shape and not part of a
- *   small cycle can be stereocenters (nitrogen inversion)
- * - whether trigonal- and pentagonal bipyramids without linked ligands can be
- *   stereocenters (Berry pseudorotation and Bartell mechanism)
- */
-enum class MASM_EXPORT TemperatureRegime {
-  /*! @brief No thermalization of stereopermutations at atom stereopermutators
-   *
-   * Meaning no pyramidal inversion, Berry pseudorotation or Bartell mechanisms.
-   */
-  Low,
-  /*! @brief In certain circumstances, stereopermutations are thermalized
-   *
-   * Only vacant tetrahedron nitrogen atoms in particularly strained cycles (3,
-   * 4) can be stereopermutators. Berry pseudorotation and Bartell mechanisms
-   * thermalize all stereopermutations of trigonal bipyramid and pentagonal
-   * bipyramid shaped centers if none of its substituents are linked.
-   */
-  High
-};
-
 /*! @brief Specifies the effects of graph modifications on chiral centers
  *
  * In case a substituent is added or removed at a stereopermutator, an attempt
@@ -198,12 +172,50 @@ enum class MASM_EXPORT ShapeTransition {
  * @brief Contains all global settings for the library
  */
 struct MASM_EXPORT Options {
-  /*!
-   * @brief Sets the temperature regime to be used for all Molecules
-   *
-   * Defaults to high temperature approximation.
-   */
-  static TemperatureRegime temperatureRegime;
+  //! Model thermal effects on stereopermutation interconversions
+  struct Thermalization {
+    /*! Nitrogen atoms not part of a small cycle invert quickly
+     *
+     * If set, only vacant tetrahedron nitrogen atoms in particularly strained
+     * cycles (3, 4) can be stereopermutators.
+     *
+     * Default is on.
+     */
+    static bool pyramidalInversion;
+
+    /*! Unlinked trigonal bipyramid substituents interconvert freely
+     *
+     * If set and there are no linked substituents in a trigonal bipyramid
+     * shape, stereopermutations are thermalized.
+     *
+     * Default is on.
+     */
+    static bool berryPseudorotation;
+
+    /*! Unlinked pentagonal bipyramid substituents interconvert freely
+     *
+     * If set and there are no linked substituents in a pentagonal bipyramid
+     * shape, stereopermutations are thermalized.
+     *
+     * Default is on.
+     */
+    static bool bartellMechanism;
+
+    //! Sets high temperature approximation where all thermalizations are enabled
+    static inline void enable() {
+      pyramidalInversion = true;
+      berryPseudorotation = true;
+      bartellMechanism = true;
+    }
+
+    //! Sets low temperature approximation where all thermalizations are disabled
+    static inline void disable() {
+      pyramidalInversion = false;
+      berryPseudorotation = false;
+      bartellMechanism = false;
+    }
+  };
+
   /*!
    * @brief Sets the manner in which chiral state is preserved for all Molecules
    *
