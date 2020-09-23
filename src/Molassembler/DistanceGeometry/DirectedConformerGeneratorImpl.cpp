@@ -545,5 +545,21 @@ DirectedConformerGenerator::Relabeler DirectedConformerGenerator::Impl::relabele
   return Relabeler(relevantBonds_, molecule_);
 }
 
+std::vector<int>
+DirectedConformerGenerator::Impl::binMidpointIntegers(
+  const DecisionList& decisions
+) const {
+  return Temple::map(
+    Temple::Adaptors::zip(relevantBonds_, decisions),
+    [&](const BondIndex bond, const unsigned stereopermutation) -> int {
+      const auto& permutator = molecule_.stereopermutators().at(bond);
+      const auto& dominantDihedral = permutator.composite().dihedrals(stereopermutation).front();
+      return std::round(
+        180 * std::get<2>(dominantDihedral) / M_PI
+      );
+    }
+  );
+}
+
 } // namespace Molassembler
 } // namespace Scine

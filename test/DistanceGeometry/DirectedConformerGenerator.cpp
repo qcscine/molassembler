@@ -154,7 +154,7 @@ BOOST_FIXTURE_TEST_CASE(DirectedConfGenHomomorphicSwap, LowTemperatureFixture, *
 }
 
 BOOST_AUTO_TEST_CASE(DirConfGenRelabeler, *boost::unit_test::label("DG")) {
-  auto bins = &DirectedConformerGenerator::Relabeler::bins;
+  auto bins = &DirectedConformerGenerator::Relabeler::densityBins;
 
   std::vector<double> observedDihedrals {{
     Temple::Math::toRadians(1.0),

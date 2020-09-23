@@ -102,6 +102,8 @@ public:
 
   Relabeler relabeler() const;
 
+  std::vector<int> binMidpointIntegers(const DecisionList& decision) const;
+
 private:
   Molecule molecule_;
   BondStereopermutator::Alignment alignment_;

@@ -136,6 +136,13 @@ DirectedConformerGenerator::Relabeler DirectedConformerGenerator::relabeler() co
   return pImpl_->relabeler();
 }
 
+std::vector<int>
+DirectedConformerGenerator::binMidpointIntegers(
+  const DecisionList& decisions
+) const {
+  return pImpl_->binMidpointIntegers(decisions);
+}
+
 DirectedConformerGenerator::Relabeler::Relabeler(
   DirectedConformerGenerator::BondList bonds,
   const Molecule& mol
@@ -193,7 +200,7 @@ void DirectedConformerGenerator::Relabeler::add(
 }
 
 DirectedConformerGenerator::Relabeler::Intervals
-DirectedConformerGenerator::Relabeler::bins(
+DirectedConformerGenerator::Relabeler::densityBins(
   const std::vector<double>& dihedrals,
   const double delta
 ) {
@@ -247,28 +254,33 @@ DirectedConformerGenerator::Relabeler::bins(
   return intervals;
 }
 
-std::vector<std::vector<unsigned>>
-DirectedConformerGenerator::Relabeler::relabel(const double delta) const {
-  const auto binIntervals = Temple::map(
+std::vector<DirectedConformerGenerator::Relabeler::Intervals>
+DirectedConformerGenerator::Relabeler::bins(const double delta) const {
+  return Temple::map(
     observedDihedrals,
-    [=](const auto& dihedrals) {
-      return bins(dihedrals, delta);
+    [&](const auto& dihedrals) -> Intervals {
+      return densityBins(dihedrals, delta);
     }
   );
+}
 
+std::vector<std::vector<unsigned>>
+DirectedConformerGenerator::Relabeler::binIndices(
+  const std::vector<Intervals>& allBins
+) const {
   const unsigned structureCount = observedDihedrals.front().size();
   const unsigned bondCount = observedDihedrals.size();
+
   std::vector<std::vector<unsigned>> relabeling(structureCount, std::vector<unsigned>(bondCount));
 
 #pragma omp parallel for collapse(2)
   for(unsigned structure = 0; structure < structureCount; ++structure) {
     for(unsigned bond = 0; bond < bondCount; ++bond) {
-      const auto& bins = binIntervals.at(bond);
+      const auto& bins = allBins.at(bond);
       double observedDihedral = observedDihedrals.at(bond).at(structure);
 
-      const auto findIter = std::find_if(
-        std::begin(bins),
-        std::end(bins),
+      const auto findIter = Temple::find_if(
+        bins,
         [&](const auto& interval) -> bool {
           if(interval.first <= interval.second) {
             return interval.first <= observedDihedral && observedDihedral <= interval.second;
@@ -281,6 +293,45 @@ DirectedConformerGenerator::Relabeler::relabel(const double delta) const {
       assert(findIter != std::end(bins));
 
       relabeling.at(structure).at(bond) = findIter - std::begin(bins);
+    }
+  }
+
+
+  return relabeling;
+}
+
+std::vector<std::vector<int>>
+DirectedConformerGenerator::Relabeler::binMidpointIntegers(
+  const std::vector<std::vector<unsigned>>& binIndices,
+  const std::vector<Intervals>& allBins
+) const {
+  const auto intervalMidpoint = [](const Interval interval) -> int {
+    if(interval.first <= interval.second) {
+      return std::round(180 * (interval.first + interval.second) / (2 * M_PI));
+    }
+
+    double average = (interval.first + interval.second + 2 * M_PI) / 2;
+    if(average > M_PI) {
+      average -= 2 * M_PI;
+    }
+    return std::round(180 * average / M_PI);
+  };
+  const auto binMidpointIntegers = Temple::map(
+    allBins,
+    Temple::Functor::map(intervalMidpoint)
+  );
+
+  const unsigned structureCount = binIndices.size();
+  const unsigned bondCount = binIndices.front().size();
+
+  std::vector<std::vector<int>> relabeling(structureCount, std::vector<int>(bondCount));
+
+#pragma omp parallel for collapse(2)
+  for(unsigned structure = 0; structure < structureCount; ++structure) {
+    for(unsigned bond = 0; bond < bondCount; ++bond) {
+      relabeling.at(structure).at(bond) = binMidpointIntegers.at(bond).at(
+        binIndices.at(structure).at(bond)
+      );
     }
   }
 

@@ -447,6 +447,12 @@ void init_directed_conformer_generator(pybind11::module& m) {
     "Generate a Relabeler for the underlying molecule and bonds"
   );
 
+  dirConfGen.def(
+    "bin_midpoint_integers",
+    &DirectedConformerGenerator::binMidpointIntegers,
+    "Relabels a decision list into bin midpoint integers"
+  );
+
   pybind11::class_<DirectedConformerGenerator::Relabeler> relabeler(
     dirConfGen,
     "Relabeler",
@@ -460,8 +466,8 @@ void init_directed_conformer_generator(pybind11::module& m) {
   );
 
   relabeler.def_static(
-    "bins",
-    &DirectedConformerGenerator::Relabeler::bins,
+    "density_bins",
+    &DirectedConformerGenerator::Relabeler::densityBins,
     pybind11::arg("dihedrals"),
     pybind11::arg("delta"),
     R"delim(
@@ -477,8 +483,8 @@ void init_directed_conformer_generator(pybind11::module& m) {
       interval of the bins can have inverted order to indicate wrapping.
 
       :param dihedrals: List of dihedral values to bin
-      :param delta: Maximum distance between dihedral values to include in the
-        same bin
+      :param delta: Maximum dihedral distance between dihedral values to
+        include in the same bin in radians
 
       :raises RuntimeError: If the passed list of dihedrals is empty
 
@@ -493,6 +499,18 @@ void init_directed_conformer_generator(pybind11::module& m) {
   );
 
   relabeler.def(
+    "bins",
+    &DirectedConformerGenerator::Relabeler::bins,
+    pybind11::arg("delta") = M_PI / 6,
+    R"delim(
+      Generate bins for all observed dihedrals
+
+      :param delta: Maximum dihedral distance between dihedral values to
+        include in the same bin in radians
+    )delim"
+  );
+
+  relabeler.def(
     "add",
     &DirectedConformerGenerator::Relabeler::add,
     pybind11::arg("positions"),
@@ -500,17 +518,29 @@ void init_directed_conformer_generator(pybind11::module& m) {
   );
 
   relabeler.def(
-    "relabel",
-    &DirectedConformerGenerator::Relabeler::relabel,
-    pybind11::arg("delta") = M_PI / 6,
+    "bin_indices",
+    &DirectedConformerGenerator::Relabeler::binIndices,
+    pybind11::arg("bins"),
     R"delim(
       Determine relabeling for all added positions
 
       Returns a list of bin membership indices for each added structure in
       sequence.
 
-      :param delta: Maximum distance between dihedral values to include in the
-        same bin
+      :param bins: Bin intervals for all observed bonds (see bins function)
+    )delim"
+  );
+
+  relabeler.def(
+    "bin_midpoint_integers",
+    &DirectedConformerGenerator::Relabeler::binMidpointIntegers,
+    pybind11::arg("bin_indices"),
+    pybind11::arg("bins"),
+    R"delim(
+      Relabel bin indices into the rounded dihedral value of their bin midpoint
+
+      :param bin_indices: All structures' bin indices (see bin_indices)
+      :param bins: Bin intervals for all observed bonds (see bins function)
     )delim"
   );
 

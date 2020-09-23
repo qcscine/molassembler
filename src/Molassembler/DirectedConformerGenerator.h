@@ -493,6 +493,9 @@ public:
 
   //! Generates a relabeler for the molecule and considered bonds
   Relabeler relabeler() const;
+
+  //! Relabels a DecisionList into bin midpoint integers
+  std::vector<int> binMidpointIntegers(const DecisionList& decision) const;
 //!@}
 
 private:
@@ -518,12 +521,15 @@ struct DirectedConformerGenerator::Relabeler {
    * Just sorts the dihedral values and then considers any values within the
    * delta as part of the same bin.
    */
-  static Intervals bins(const std::vector<double>& dihedrals, double delta);
+  static Intervals densityBins(const std::vector<double>& dihedrals, double delta);
 
   Relabeler(DirectedConformerGenerator::BondList bonds, const Molecule& mol);
 
   //! Add a particular position to the set to relabel
   void add(const Utils::PositionCollection& positions);
+
+  //! Generate bins for each set of observed dihedrals
+  std::vector<Intervals> bins(double delta=M_PI / 6) const;
 
   /*! @brief Determine relabeling for all added position sets in order
    *
@@ -531,7 +537,15 @@ struct DirectedConformerGenerator::Relabeler {
    *
    * Returns relabeling for each set of positions in order.
    */
-  std::vector<std::vector<unsigned>> relabel(double delta=M_PI / 6) const;
+  std::vector<std::vector<unsigned>> binIndices(
+    const std::vector<Intervals>& allBins
+  ) const;
+
+  //! Relabel bin indices for all structures with bin midpoint integers
+  std::vector<std::vector<int>> binMidpointIntegers(
+    const std::vector<std::vector<unsigned>>& binIndices,
+    const std::vector<Intervals>& allBins
+  ) const;
 
 //!@name State
 //!@{
