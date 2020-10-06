@@ -741,17 +741,11 @@ void RankingTree::applySequenceRules_(
     nextChildren.clear();
 
     for(const auto& edge : byDepth.back()) {
-      auto outIterPair = boost::out_edges(
-        boost::target(edge, tree_), tree_
-      );
-
+      auto outIterPair = boost::out_edges(boost::target(edge, tree_), tree_);
       while(outIterPair.first != outIterPair.second) {
         if( // Only add edges that have non-terminal targets
           boost::out_degree(
-            boost::target(
-              *outIterPair.first,
-              tree_
-            ),
+            boost::target(*outIterPair.first, tree_),
             tree_
           ) > 0
         ) {

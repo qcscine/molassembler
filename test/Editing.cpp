@@ -97,10 +97,9 @@ boost::optional<BondIndex> findEdge(const Molecule& mol, UnaryPredicate&& predic
 BOOST_AUTO_TEST_CASE(EditingCleave, *boost::unit_test::label("Molassembler")) {
   auto makeNMe = []() -> std::pair<Molecule, BondIndex> {
     Molecule methyl = IO::Experimental::parseSmilesSingleMolecule("[CH3]");
-    std::vector<AtomIndex> methylPlugAtoms(1, 0);
-
-    const AtomIndex CIndex = methylPlugAtoms.front();
-    const AtomIndex NIndex = methyl.addAtom(Utils::ElementType::N, CIndex);
+    const AtomIndex CIndex = 0;
+    assert(methyl.graph().elementType(CIndex) == Utils::ElementType::C);
+    const AtomIndex NIndex = methyl.addAtom(Utils::ElementType::N, 0);
     return {
       methyl,
       BondIndex {CIndex, NIndex}
@@ -112,10 +111,7 @@ BOOST_AUTO_TEST_CASE(EditingCleave, *boost::unit_test::label("Molassembler")) {
 
   // Find a N-Me bridge bond to cleave
   const auto pattern = makeNMe();
-  const auto matches = subgraphs::maximum(
-    pattern.first,
-    caffeine
-  );
+  const auto matches = subgraphs::maximum(pattern.first, caffeine);
   BOOST_REQUIRE_MESSAGE(
     matches.size() > 0,
     "No matches found for N-Me pattern in caffeine!"

@@ -197,12 +197,7 @@ void Molecule::Impl::propagateGraphChange_() {
 
   GraphAlgorithms::updateEtaBonds(adjacencies_.inner());
 
-  // All graph access after this point must be const for thread safety
   const PrivateGraph& inner = adjacencies_.inner();
-
-  /*! @todo
-   * Need state propagation for BondStereopermutators, anything else is madness
-   */
 
   for(const PrivateGraph::Vertex vertex : inner.vertices()) {
     auto stereopermutatorOption = stereopermutators_.option(vertex);
@@ -235,7 +230,7 @@ void Molecule::Impl::propagateGraphChange_() {
       }
 
       // Propagate the state
-      auto oldAtomStereopermutatorStateOption = stereopermutatorOption -> propagate(
+      auto oldAtomStereopermutatorStateOption = stereopermutatorOption->propagate(
         adjacencies_,
         std::move(localRanking),
         newShapeOption
@@ -245,10 +240,10 @@ void Molecule::Impl::propagateGraphChange_() {
        * unassigned due to the graph change, default-assign it
        */
       if(
-        stereopermutatorOption -> numAssignments() == 1
-        && stereopermutatorOption -> assigned() == boost::none
+        stereopermutatorOption->numAssignments() == 1
+        && stereopermutatorOption->assigned() == boost::none
       ) {
-        stereopermutatorOption -> assign(0);
+        stereopermutatorOption->assign(0);
       }
 
       /* If the chiral state for this atom stereopermutator was not successfully
@@ -439,7 +434,7 @@ void Molecule::Impl::assignStereopermutator(
 
   // No need to rerank and remove canonical components if nothing changes
   if(assignmentOption != stereopermutatorOption->assigned()) {
-    stereopermutatorOption -> assign(assignmentOption);
+    stereopermutatorOption->assign(assignmentOption);
 
     // A reassignment can change ranking! See the RankingTree tests
     propagateGraphChange_();
@@ -470,7 +465,7 @@ void Molecule::Impl::assignStereopermutator(
 
   // No need to rerank and remove canonical components if nothing changes
   if(assignmentOption != stereopermutatorOption->assigned()) {
-    stereopermutatorOption -> assign(assignmentOption);
+    stereopermutatorOption->assign(assignmentOption);
 
     // A reassignment can change ranking! See the RankingTree tests
     propagateGraphChange_();
@@ -619,11 +614,11 @@ void Molecule::Impl::removeAtom(const AtomIndex a) {
 
     //! @todo BondStereopermutator update
     /*if(stereopermutators_.involving(indexToUpdate)) {
-      if(stereopermutators_.at(indexToUpdate) -> type() == Stereopermutators::Type::AtomStereopermutator) {
+      if(stereopermutators_.at(indexToUpdate)->type() == Stereopermutators::Type::AtomStereopermutator) {
       } else {
         std::dynamic_pointer_cast<Stereopermutators::BondStereopermutator>(
           stereopermutators_.at(indexToUpdate)
-        ) -> removeSubstituent(
+        )->removeSubstituent(
           indexToUpdate,
           Stereopermutators::Stereopermutator::removalPlaceholder
         );
@@ -691,11 +686,11 @@ void Molecule::Impl::removeBond(
 
     //! @todo propagation
     /*if(stereopermutators_.involving(indexToUpdate)) {
-      if(stereopermutators_.at(indexToUpdate) -> type() == Stereopermutators::Type::AtomStereopermutator) {
+      if(stereopermutators_.at(indexToUpdate)->type() == Stereopermutators::Type::AtomStereopermutator) {
       } else {
         std::dynamic_pointer_cast<Stereopermutators::BondStereopermutator>(
           stereopermutators_.at(indexToUpdate)
-        ) -> removeSubstituent(
+        )->removeSubstituent(
           indexToUpdate,
           removedIndex
         );

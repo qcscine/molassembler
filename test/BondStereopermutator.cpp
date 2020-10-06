@@ -24,27 +24,27 @@ using BondIndex = Molassembler::BondIndex;
 
 struct Expectation {
   BondIndex edge;
-  unsigned numPermutations;
+  unsigned numAssignments;
   unsigned fittedAssignment;
 
   Expectation(
     BondIndex passEdge,
-    unsigned permutations,
+    unsigned assignments,
     unsigned assignment
   ) : edge(passEdge),
-      numPermutations(permutations),
+      numAssignments(assignments),
       fittedAssignment(assignment)
   {
-    assert(permutations > 1);
+    assert(assignments > 1);
   }
 
   Expectation(
     BondIndex passEdge,
-    unsigned permutations
+    unsigned assignments
   ) : edge(passEdge),
-      numPermutations(permutations)
+      numAssignments(assignments)
   {
-    assert(permutations == 1);
+    assert(assignments == 1);
     // Define the value, but no comparisons with it should be performed
     fittedAssignment = std::numeric_limits<unsigned>::max();
   }
@@ -121,13 +121,13 @@ void checkExpectations(const boost::filesystem::path& filePath) {
     );
 
     BOOST_REQUIRE_MESSAGE(
-      bondStereopermutatorOption->numStereopermutations() == expectation.numPermutations,
+      bondStereopermutatorOption->numAssignments() == expectation.numAssignments,
       "The expected number of permutations was not met for " << moleculeName
-        << ": expected " << expectation.numPermutations << ", got "
-        << bondStereopermutatorOption->numStereopermutations()
+        << ": expected " << expectation.numAssignments << ", got "
+        << bondStereopermutatorOption->numAssignments()
     );
 
-    if(expectation.numPermutations == stereogenic) {
+    if(expectation.numAssignments == stereogenic) {
       auto assignmentOptional = bondStereopermutatorOption->assigned();
 
       BOOST_REQUIRE(assignmentOptional);
@@ -167,7 +167,7 @@ void checkExpectations(const boost::filesystem::path& filePath) {
   }
 }
 
-BOOST_AUTO_TEST_CASE(stereopermutatorExpectationTests, *boost::unit_test::label("Molassembler")) {
+BOOST_AUTO_TEST_CASE(BondStereopermutatorConsistency, *boost::unit_test::label("Molassembler")) {
   for(
     const boost::filesystem::path& currentFilePath :
     boost::filesystem::recursive_directory_iterator("ez_stereocenters")
@@ -178,7 +178,7 @@ BOOST_AUTO_TEST_CASE(stereopermutatorExpectationTests, *boost::unit_test::label(
   }
 }
 
-BOOST_AUTO_TEST_CASE(BondStatePropagationTests, *boost::unit_test::label("Molassembler")) {
+BOOST_AUTO_TEST_CASE(BondStatePropagation, *boost::unit_test::label("Molassembler")) {
   using namespace Molassembler;
 
   auto mol = IO::read("ez_stereocenters/but-2E-ene.mol");

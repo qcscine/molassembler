@@ -165,6 +165,32 @@ double planeOfBestFitRmsd(
   return planeRmsd(plane, positions, indices);
 }
 
+double signedDihedralAngle(const double radians) {
+  return radians - std::floor((radians + M_PI) / (2 * M_PI)) * 2 * M_PI;
+}
+
+double positiveDihedralAngle(const double radians) {
+  return radians - std::floor(radians / (2 * M_PI)) * 2 * M_PI;
+}
+
+double dihedralDifference(const double a, const double b) {
+  double midpointComparison = std::fabs(signedDihedralAngle(a) - signedDihedralAngle(b));
+  double zeroboundedComparison = std::fabs(positiveDihedralAngle(a) - positiveDihedralAngle(b));
+  return std::min(midpointComparison, zeroboundedComparison);
+}
+
+double dihedralAverage(const double a, const double b) {
+  const double s = (std::sin(a) + std::sin(b)) / 2;
+  const double c = (std::cos(a) + std::cos(b)) / 2;
+
+  // What to do when angles are opposed (offset by pi)
+  if(s * s + c * c <= 1e-20) {
+    return signedDihedralAngle(std::min(a, b) + M_PI / 2);
+  }
+
+  return std::atan2(s, c);
+}
+
 } // namespace Cartesian
 } // namespace Molassembler
 } // namespace Scine

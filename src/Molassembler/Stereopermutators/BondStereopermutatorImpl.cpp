@@ -17,6 +17,7 @@
 #include "Molassembler/Temple/OrderedPair.h"
 #include "Molassembler/Temple/Random.h"
 #include "Molassembler/Temple/Stl17.h"
+#include "Molassembler/Temple/Optionals.h"
 
 #include "Molassembler/AngstromPositions.h"
 #include "Molassembler/AtomStereopermutator.h"
@@ -56,16 +57,6 @@ inline auto orderMappedSequence(
   }
 
   return indices;
-}
-
-bool piPeriodicFPCompare(const double a, const double b) {
-  /* Reduces everything to [-pi, pi) bounds and then compares
-   */
-  auto reduceToBounds = [](const double x) -> double {
-    return x - std::floor((x + M_PI)/(2 * M_PI)) * 2 * M_PI;
-  };
-
-  return std::fabs(reduceToBounds(a) - reduceToBounds(b)) < 1e-10;
 }
 
 /*
@@ -210,7 +201,7 @@ double BondStereopermutator::Impl::dihedral(
   std::pair<Shapes::Vertex, Shapes::Vertex> vertices;
   double dihedralAngle;
 
-  for(const auto& dihedralTuple : composite_.dihedrals(*assignment_)) {
+  for(const auto& dihedralTuple : composite_.allPermutations().at(*assignment_).dihedrals) {
     std::tie(vertices.first, vertices.second, dihedralAngle) = dihedralTuple;
 
     if(
@@ -666,15 +657,9 @@ std::vector<unsigned> BondStereopermutator::Impl::notObviouslyInfeasibleStereope
   const StereopermutatorList& stereopermutators,
   const Stereopermutations::Composite& composite
 ) {
-  const unsigned compositePermutations = composite.permutations();
-
-  auto permutatorReferences = composite.orientations().map(
+  const auto permutatorReferences = composite.orientations().map(
     [&](const auto& orientationState) -> const AtomStereopermutator& {
-      auto permutatorOption = stereopermutators.option(orientationState.identifier);
-      if(!permutatorOption) {
-        throw std::logic_error("Atom stereopermutators are not present for this composite!");
-      }
-      return *permutatorOption;
+      return stereopermutators.at(orientationState.identifier);
     }
   );
 
@@ -682,7 +667,7 @@ std::vector<unsigned> BondStereopermutator::Impl::notObviouslyInfeasibleStereope
    * if substituents of both stereopermutators are fused somehow, i.e. if there
    * are cycles involving the bond between A and B.
    */
-  auto links = GraphAlgorithms::siteLinks(
+  const auto links = GraphAlgorithms::siteLinks(
     graph,
     permutatorReferences.first,
     permutatorReferences.second
@@ -692,10 +677,10 @@ std::vector<unsigned> BondStereopermutator::Impl::notObviouslyInfeasibleStereope
    * all permutations are presumably feasible.
    */
   if(links.empty()) {
-    return Temple::iota<unsigned>(compositePermutations);
+    return composite.nonEquivalentPermutationIndices();
   }
 
-  /* Try to match the shape position of the composite dihedral to the link's
+  /* Try to match the shape vertex of the composite dihedral to the link's
    * site index pair using the atom stereopermutator shape position maps
    *
    * Note that there may be links that are not involved in dihedrals (i.e.
@@ -703,7 +688,7 @@ std::vector<unsigned> BondStereopermutator::Impl::notObviouslyInfeasibleStereope
    * dihedral, e.g. the position trans in a triangle - square combination.)
    */
   auto getDihedralInformation = [&](
-    const std::vector<Stereopermutations::Composite::DihedralTuple>& dihedrals,
+    const std::vector<Stereopermutations::Composite::Permutation::DihedralTuple>& dihedrals,
     const RankingInformation::Link& link
   ) -> boost::optional<std::tuple<AtomIndex, AtomIndex, double>> {
     const auto& firstSiteIndices = permutatorReferences.first.getRanking().sites.at(link.sites.first);
@@ -714,19 +699,18 @@ std::vector<unsigned> BondStereopermutator::Impl::notObviouslyInfeasibleStereope
       return boost::none;
     }
 
-    const std::pair<unsigned, unsigned> linkShapePositions {
+    const std::pair<Shapes::Vertex, Shapes::Vertex> linkVertices {
       permutatorReferences.first.getShapePositionMap().at(link.sites.first),
       permutatorReferences.second.getShapePositionMap().at(link.sites.second)
     };
 
     // Look for a composite dihedral matching the shape positions
-    auto findIter = std::find_if(
-      std::begin(dihedrals),
-      std::end(dihedrals),
-      [&](const auto& dihedral) -> bool {
+    const auto findIter = Temple::find_if(
+      dihedrals,
+      [&](const auto& dihedralTuple) -> bool {
         return (
-          std::get<0>(dihedral) == std::get<0>(linkShapePositions)
-          && std::get<1>(dihedral) == std::get<1>(linkShapePositions)
+          std::get<0>(dihedralTuple) == std::get<0>(linkVertices)
+          && std::get<1>(dihedralTuple) == std::get<1>(linkVertices)
         );
       }
     );
@@ -744,22 +728,20 @@ std::vector<unsigned> BondStereopermutator::Impl::notObviouslyInfeasibleStereope
     );
   };
 
-  std::vector<unsigned> viableStereopermutations;
-  for(
-    unsigned stereopermutationIndex = 0;
-    stereopermutationIndex < compositePermutations;
-    ++stereopermutationIndex
-  ) {
+  std::set<unsigned> viableStereopermutations;
+  const auto permEnd = std::end(composite);
+  for(auto permIter = std::begin(composite); permIter != permEnd; ++permIter) {
+    if(permIter->rankingEquivalentTo) {
+      continue;
+    }
+
     if(
       !Temple::any_of(
         links,
         [&](const RankingInformation::Link& link) -> bool {
-          auto dihedralInformationOption = getDihedralInformation(
-            composite.dihedrals(stereopermutationIndex),
-            link
-          );
+          auto infoOption = getDihedralInformation(permIter->dihedrals, link);
 
-          if(!dihedralInformationOption) {
+          if(!infoOption) {
             /* Haptic sites involved, we don't deal with those currently, we
              * blanket accept them. Or the link is irrelevant to the dihedral,
              * so it doesn't matter to the viability of the stereopermutation.
@@ -772,17 +754,19 @@ std::vector<unsigned> BondStereopermutator::Impl::notObviouslyInfeasibleStereope
             stereopermutators,
             permutatorReferences.first,
             permutatorReferences.second,
-            *dihedralInformationOption,
+            *infoOption,
             link
           );
         }
       )
     ) {
-      viableStereopermutations.push_back(stereopermutationIndex);
+      viableStereopermutations.insert(
+        composite.rankingEquivalentBase(permIter - std::begin(composite))
+      );
     }
   }
 
-  return viableStereopermutations;
+  return {std::begin(viableStereopermutations), std::end(viableStereopermutations)};
 }
 
 /* Constructors */
@@ -797,7 +781,7 @@ BondStereopermutator::Impl::Impl(
       static_cast<Stereopermutations::Composite::Alignment>(alignment)
     },
     edge_(edge),
-    feasiblePermutations_(Temple::iota<unsigned>(composite_.permutations())),
+    feasiblePermutations_(composite_.nonEquivalentPermutationIndices()),
     assignment_(boost::none)
 {}
 
@@ -809,9 +793,7 @@ BondStereopermutator::Impl::Impl(
 ) : composite_(constructComposite_(stereopermutators, edge, alignment)),
     edge_(edge),
     feasiblePermutations_(
-      notObviouslyInfeasibleStereopermutations(
-        graph, stereopermutators, composite_
-      )
+      notObviouslyInfeasibleStereopermutations(graph, stereopermutators, composite_)
     ),
     assignment_(boost::none)
 {}
@@ -872,7 +854,7 @@ void BondStereopermutator::Impl::fit(
   const FittingMode mode
 ) {
   // Early exit
-  if(composite_.permutations() == 0) {
+  if(composite_.countNonEquivalentPermutations() == 0) {
     assignment_ = boost::none;
     return;
   }
@@ -892,7 +874,7 @@ void BondStereopermutator::Impl::fit(
     composite_.alignment()
   };
 
-  auto makeSitePositions = [&angstromWrapper](const AtomStereopermutator& permutator) -> Eigen::Matrix<double, 3, Eigen::Dynamic> {
+  auto makeSitePositions = [&angstromWrapper](const AtomStereopermutator& permutator) -> auto {
     const unsigned S = permutator.getRanking().sites.size();
     assert(S == Shapes::size(permutator.getShape()));
     Eigen::Matrix<double, 3, Eigen::Dynamic> sitePositions(3, S);
@@ -917,9 +899,27 @@ void BondStereopermutator::Impl::fit(
   double bestMisalignment = std::numeric_limits<double>::max();
   std::vector<unsigned> bestStereopermutations;
 
-  for(const unsigned feasiblePermutationIndex : feasiblePermutations_) {
+  // Expand the feasible permutations by ranking equivalent rotations
+  std::unordered_map<unsigned, unsigned> permutationMapToFeasibleBase;
+  for(const unsigned i : feasiblePermutations_) {
+    permutationMapToFeasibleBase.emplace(i, i);
+  }
+  for(unsigned i = 0; i < composite_.allPermutations().size(); ++i) {
+    unsigned base = composite_.rankingEquivalentBase(i);
+
+    if(permutationMapToFeasibleBase.count(base) > 0) {
+      permutationMapToFeasibleBase.emplace(i, base);
+    }
+  }
+
+  for(auto mapPair : permutationMapToFeasibleBase) {
+    const unsigned feasiblePermutationIndex = mapPair.first;
+
     double misalignment = 0.0;
-    for(const auto& dihedralTuple : matchedComposite.dihedrals(feasiblePermutationIndex)) {
+    for(
+      const auto& dihedralTuple :
+      matchedComposite.allPermutations().at(feasiblePermutationIndex).dihedrals
+    ) {
       std::tie(shapeVertices.first, shapeVertices.second, dihedralAngle) = dihedralTuple;
 
       const auto siteIndices = zipMapPair(
@@ -950,18 +950,7 @@ void BondStereopermutator::Impl::fit(
         sitePositions.second.col(siteIndices.second)
       );
 
-      double dihedralDifference = measuredDihedral - dihedralAngle;
-
-      // + pi is part of the definition interval, so use greater than
-      if(dihedralDifference > M_PI) {
-        dihedralDifference -= 2 * M_PI;
-      }
-
-      // - pi is not part of the definition interval, so use less than or equal
-      if(dihedralDifference <= -M_PI) {
-        dihedralDifference += 2 * M_PI;
-      }
-      misalignment += std::fabs(dihedralDifference);
+      misalignment += Cartesian::dihedralDifference(measuredDihedral, dihedralAngle);
     }
 
     /* Check if this misalignment is within acceptance threshold if fitting mode
@@ -972,7 +961,7 @@ void BondStereopermutator::Impl::fit(
      * substituents at one side, the deviation per dihedral should be smaller
      * than if there were only two).
      */
-    const double misalignmentPerDihedral = misalignment / composite_.dihedrals(feasiblePermutationIndex).size();
+    const double misalignmentPerDihedral = misalignment / composite_.allPermutations().at(feasiblePermutationIndex).dihedrals.size();
     const double acceptableMisalignment = assignmentAcceptanceParameter * 2 * M_PI / composite_.order();
     if(
       mode == FittingMode::Thresholded
@@ -989,18 +978,17 @@ void BondStereopermutator::Impl::fit(
     }
   }
 
-  /* The best stereopermutation must be singular, no other may match it in
-   * fit value, otherwise assignment is ambiguous
+  /* The best permutation must be singular, no other may match it in fit value,
+   * otherwise assignment is ambiguous
    */
   if(bestStereopermutations.size() == 1) {
-    /* Retrieve the index of the best stereopermutation from among the feasible
+    /* Retrieve the index of the best permutation from among the feasible
      * permutations
      */
-    const unsigned stereopermutation = bestStereopermutations.front();
-    assignment_ = (
-      Temple::find(feasiblePermutations_, stereopermutation)
-      - std::begin(feasiblePermutations_)
-    );
+    const unsigned feasiblePermutationIndex = permutationMapToFeasibleBase.at(bestStereopermutations.front());
+    auto findIter = Temple::find(feasiblePermutations_, feasiblePermutationIndex);
+    assert(findIter != std::end(feasiblePermutations_));
+    assignment_ = findIter - std::begin(feasiblePermutations_);
   } else {
     // On ambiguous matching, dis-assign the stereopermutator
     assignment_ = boost::none;
@@ -1072,7 +1060,7 @@ void BondStereopermutator::Impl::propagateGraphChange(
     unchangedOrientation
   };
 
-  // feasibility has to be rechecked
+  // Recheck feasibility
   std::vector<unsigned> newFeasiblePermutations = notObviouslyInfeasibleStereopermutations(
     graph,
     permutators,
@@ -1124,11 +1112,11 @@ void BondStereopermutator::Impl::propagateGraphChange(
     == possiblyModifiedOrientation.identifier
   );
 
-  using DihedralTuple = Stereopermutations::Composite::DihedralTuple;
-  // This permutator is assigned since that is ensured a few lines earlier
-  const std::vector<DihedralTuple>& oldDihedralList = composite_.dihedrals(
-    assignment_.value()
-  );
+  using DihedralTuple = Stereopermutations::Composite::Permutation::DihedralTuple;
+  // We know the permutator is assigned from a few lines earlier
+  const std::vector<DihedralTuple>& oldDihedralList = composite_.allPermutations().at(
+    feasiblePermutations_.at(*assignment_)
+  ).dihedrals;
 
   auto getNewShapeVertex = [&](Shapes::Vertex oldVertex) -> Shapes::Vertex {
     const SiteIndex oldSiteIndex = oldShapeMap.indexOf(oldVertex);
@@ -1210,25 +1198,10 @@ void BondStereopermutator::Impl::propagateGraphChange(
    * their associated ranking character as in Composite. So we need set
    * membership tests instead of lexicographic equality.
    */
-  auto matchIter = std::find_if(
-    std::begin(newComposite),
-    std::end(newComposite),
-    [&](const std::vector<DihedralTuple>& dihedrals) -> bool {
-      return Temple::all_of(
-        newCompositeDihedrals,
-        [&](const DihedralTuple& newDihedral) -> bool {
-          return Temple::find_if(
-            dihedrals,
-            [&](const DihedralTuple& existingDihedral) -> bool {
-              return (
-                std::get<0>(newDihedral) == std::get<0>(existingDihedral)
-                && std::get<1>(newDihedral) == std::get<1>(existingDihedral)
-                && piPeriodicFPCompare(std::get<2>(newDihedral), std::get<2>(existingDihedral))
-              );
-            }
-          ) != std::end(dihedrals);
-        }
-      );
+  const auto matchIter = Temple::find_if(
+    newComposite,
+    [&](const auto& newCompositePermutation) -> bool {
+      return newCompositePermutation.close(newCompositeDihedrals);
     }
   );
 
@@ -1237,8 +1210,15 @@ void BondStereopermutator::Impl::propagateGraphChange(
     throw std::logic_error("Bug: no match found in new composite.");
   }
 
+  const unsigned permutationIndex = matchIter - std::begin(newComposite);
+  const unsigned basePermutationIndex = newComposite.rankingEquivalentBase(permutationIndex);
+  const auto feasibleIter = Temple::find(newFeasiblePermutations, basePermutationIndex);
+  if(feasibleIter == std::end(newFeasiblePermutations)) {
+    throw std::logic_error("Bug: no match for permutation in feasible");
+  }
+
   // Overwrite class state
-  assignment_ = matchIter - std::begin(newComposite);
+  assignment_ = feasibleIter - std::begin(newFeasiblePermutations);
   composite_ = std::move(newComposite);
   feasiblePermutations_ = std::move(newFeasiblePermutations);
 }
@@ -1251,16 +1231,6 @@ BondStereopermutator::Alignment BondStereopermutator::Impl::alignment() const {
 }
 
 boost::optional<unsigned> BondStereopermutator::Impl::assigned() const {
-  /* If the underlying composite is isotropic, it does not matter which of those
-   * permutations by shape position is the factual spatial arrangement (since
-   * they are all rotationally equivalent). We have to spoof that there is only
-   * one arrangement in this case (although we need all of them for spatial
-   * fitting).
-   */
-  if(assignment_ && (composite_.isIsotropic() && !feasiblePermutations_.empty())) {
-    return 0U;
-  }
-
   return assignment_;
 }
 
@@ -1269,31 +1239,18 @@ bool BondStereopermutator::Impl::hasSameCompositeOrientation(const BondStereoper
 }
 
 boost::optional<unsigned> BondStereopermutator::Impl::indexOfPermutation() const {
-  if(assignment_ && composite_.isIsotropic()) {
-    return 0U;
-  }
-
-  if(!assignment_) {
-    return boost::none;
-  }
-
-  return feasiblePermutations_.at(*assignment_);
+  return Temple::Optionals::map(
+    assignment_,
+    Temple::Functor::at(feasiblePermutations_)
+  );
 }
 
 unsigned BondStereopermutator::Impl::numAssignments() const {
-  if(composite_.isIsotropic() && !feasiblePermutations_.empty()) {
-    return 1;
-  }
-
   return feasiblePermutations_.size();
 }
 
 unsigned BondStereopermutator::Impl::numStereopermutations() const {
-  if(composite_.isIsotropic()) {
-    return 1;
-  }
-
-  return composite_.permutations();
+  return composite_.countNonEquivalentPermutations();
 }
 
 std::string BondStereopermutator::Impl::info() const {

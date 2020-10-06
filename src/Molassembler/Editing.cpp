@@ -259,7 +259,14 @@ std::pair<Molecule, Molecule> Editing::cleave(const Molecule& a, const BondIndex
         stereopermutatorOption->assign(0);
       }
 
-      // TODO notify or just remove any bond stereopermutators on notifyIndex
+      /* TODO propagate bond stereopermutators on the adjacent vertex instead
+       * of dropping them
+       */
+      for(const BondIndex bond : molecule.graph().bonds(notifyIndex)) {
+        if(molecule.stereopermutators().option(bond)) {
+          molecule.pImpl_->stereopermutators_.remove(bond);
+        }
+      }
     }
 
     // Rerank everywhere and update all stereopermutators

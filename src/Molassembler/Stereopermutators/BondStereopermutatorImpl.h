@@ -154,7 +154,7 @@ private:
   Stereopermutations::Composite composite_;
   //! Edge this stereopermutator is placed on
   BondIndex edge_;
-  //! List of stereopermutations of composite_ that are not obviously infeasible
+  //! List of indices into allPermutations of composite_ that are not obviously infeasible
   std::vector<unsigned> feasiblePermutations_;
   //! Index optional into feasiblePermutations_ of the current assignment
   boost::optional<unsigned> assignment_;

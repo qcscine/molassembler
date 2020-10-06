@@ -19,48 +19,12 @@
 #include "Molassembler/Temple/Functor.h"
 #include "Molassembler/Temple/GroupBy.h"
 #include "Molassembler/Temple/Permutations.h"
+#include "Molassembler/Temple/Stl17.h"
 
 namespace Scine {
 namespace Molassembler {
 namespace Stereopermutations {
 namespace {
-
-double midpointPeriodic(const double angle) {
-  if(angle > M_PI) {
-    return angle - 2 * M_PI;
-  }
-
-  if(angle <= -M_PI) {
-    return angle + 2 * M_PI;
-  }
-
-  return angle;
-}
-
-double shiftToZeroBounded(const double angle) {
-  if(angle < 0) {
-    return angle + 2 * M_PI;
-  }
-
-  return angle;
-}
-
-double dihedralAverage(const double a, const double b) {
-  const double s = (std::sin(a) + std::sin(b)) / 2;
-  const double c = (std::cos(a) + std::cos(b)) / 2;
-
-  // What to do when angles are opposed (offset by pi)
-  if(s * s + c * c <= 1e-20) {
-    // Offset the smaller angle by pi/2 and ensure within [-pi, pi)
-    double average = std::min(a, b) + M_PI / 2;
-    if(average > M_PI) {
-      average -= 2 * M_PI;
-    }
-    return average;
-  }
-
-  return std::atan2(s, c);
-}
 
 void rotateCoordinates(
   Eigen::Ref<Shapes::Coordinates> positions,
@@ -120,24 +84,6 @@ void translateCoordinates(
   for(unsigned i = 0; i < positions.cols(); ++i) {
     positions.col(i) += translation;
   }
-}
-
-bool dihedralIsClose(
-  const double a,
-  const double b,
-  const double epsilon
-) {
-  double diff = b - a;
-
-  if(diff > M_PI) {
-    diff -= 2 * M_PI;
-  }
-
-  if(diff <= -M_PI) {
-    diff += 2 * M_PI;
-  }
-
-  return std::fabs(diff) < epsilon;
 }
 
 } // namespace
@@ -398,9 +344,27 @@ Composite::AngleGroup Composite::OrientationState::smallestAngleGroup() const {
   return angleGroup;
 }
 
+bool Composite::Permutation::close(const std::vector<DihedralTuple>& comparisonDihedrals) const {
+  return Temple::all_of(
+    comparisonDihedrals,
+    [&](const DihedralTuple& dihedral) -> bool {
+      return Temple::find_if(
+        dihedrals,
+        [&](const DihedralTuple& existingDihedral) -> bool {
+          return (
+            std::get<0>(dihedral) == std::get<0>(existingDihedral)
+            && std::get<1>(dihedral) == std::get<1>(existingDihedral)
+            && Cartesian::dihedralDifference(std::get<2>(dihedral), std::get<2>(existingDihedral)) < 1e-8
+          );
+        }
+      ) != std::end(dihedrals);
+    }
+  );
+}
+
 Composite::PermutationGenerator::PermutationGenerator(
-  Temple::OrderedPair<OrientationState> orientations
-) {
+  Temple::OrderedPair<OrientationState> passOrientations
+) : orientations(std::move(passOrientations)) {
   /* In order to get meaningful indices of permutation, combinations of
    * shapes across fused positions within the same group of shape
    * vertices (e.g. equatorial or apical in square pyramidal) must be the same.
@@ -497,6 +461,49 @@ Composite::PermutationGenerator::generateEclipsedOrStaggered(
 
   PermutationsList stereopermutations;
 
+  auto findRankingEquivalent = [&](const Permutation& permutation) -> boost::optional<Permutation::VertexPair> {
+    auto replaceVertices = [&](Shapes::Vertex i, Shapes::Vertex j, double dihedral) {
+      return std::make_tuple(
+        orientations.first.characters.at(i),
+        orientations.second.characters.at(j),
+        dihedral
+      );
+    };
+
+    const auto characterDihedrals = Temple::map(permutation.dihedrals, replaceVertices);
+
+    const auto equivalentIter = Temple::find_if(
+      stereopermutations,
+      [&](const Permutation& searchPermutation) -> bool {
+        if(searchPermutation.rankingEquivalentTo) {
+          return false;
+        }
+
+        return Temple::all_of(
+          Temple::map(searchPermutation.dihedrals, replaceVertices),
+          [&](const auto& characterTuple) -> bool {
+            return Temple::find_if(
+              characterDihedrals,
+              [&](const auto& baseTuple) -> bool {
+                return (
+                  std::get<0>(characterTuple) == std::get<0>(baseTuple)
+                  && std::get<1>(characterTuple) == std::get<1>(baseTuple)
+                  && Cartesian::dihedralDifference(std::get<2>(characterTuple), std::get<2>(baseTuple)) <= 1e-5
+                );
+              }
+            ) != std::end(characterDihedrals);
+          }
+        );
+      }
+    );
+
+    if(equivalentIter != std::end(stereopermutations)) {
+      return equivalentIter->alignedVertices;
+    }
+
+    return boost::none;
+  };
+
   /* Sequentially align every pair.
    *
    * This is essentially brute-forcing the problem. I'm having a hard time
@@ -510,6 +517,7 @@ Composite::PermutationGenerator::generateEclipsedOrStaggered(
     [&](const Shapes::Vertex f, const Shapes::Vertex s) -> void {
       auto stereopermutation = align(f, s, alignment);
       if(!isDuplicate(stereopermutation, stereopermutations, deduplicationDegrees)) {
+        stereopermutation.rankingEquivalentTo = findRankingEquivalent(stereopermutation);
         stereopermutations.push_back(std::move(stereopermutation));
       }
     }
@@ -526,9 +534,9 @@ Composite::PermutationGenerator::generateEclipsedOrStaggered(
     // Add trans dihedral possibility
     stereopermutations.push_back(stereopermutations.front());
     if(alignment == Alignment::Eclipsed) {
-      std::get<2>(stereopermutations.back().front()) = M_PI;
+      std::get<2>(stereopermutations.back().dihedrals.front()) = M_PI;
     } else {
-      std::get<2>(stereopermutations.back().front()) = 0.0;
+      std::get<2>(stereopermutations.back().dihedrals.front()) = 0.0;
     }
 
     /* In staggered alignments of two single vertex sides, staggering with
@@ -537,8 +545,8 @@ Composite::PermutationGenerator::generateEclipsedOrStaggered(
      */
     if(alignment == Alignment::Staggered) {
       for(auto& stereopermutation : stereopermutations) {
-        for(auto& dihedral : stereopermutation) {
-          std::get<2>(dihedral) = midpointPeriodic(std::get<2>(dihedral) + M_PI / 2);
+        for(auto& dihedral : stereopermutation.dihedrals) {
+          std::get<2>(dihedral) = Cartesian::signedDihedralAngle(std::get<2>(dihedral) + M_PI / 2);
         }
       }
     }
@@ -547,7 +555,7 @@ Composite::PermutationGenerator::generateEclipsedOrStaggered(
   return stereopermutations;
 }
 
-std::vector<Composite::DihedralTuple> Composite::PermutationGenerator::align(
+Composite::Permutation Composite::PermutationGenerator::align(
   const Shapes::Vertex firstVertex,
   const Shapes::Vertex secondVertex,
   const Alignment alignment
@@ -583,32 +591,38 @@ std::vector<Composite::DihedralTuple> Composite::PermutationGenerator::align(
     rotateCoordinates(coordinates.second, xAxis, nearestNegativeDihedral / 2);
   }
 
-  return Temple::sorted(
+  auto vertices = std::make_pair(firstVertex, secondVertex);
+  auto sortedDihedrals = Temple::sorted(
     Temple::map(
       Temple::Adaptors::allPairs(
         angleGroups.first.vertices,
         angleGroups.second.vertices
       ),
-      [&](const Shapes::Vertex a, const Shapes::Vertex b) -> DihedralTuple {
+      [&](const Shapes::Vertex a, const Shapes::Vertex b) -> Permutation::DihedralTuple {
         return {a, b, dihedral(a, b)};
       }
     )
   );
+
+  return Permutation {
+    std::move(vertices),
+    std::move(sortedDihedrals),
+    boost::none
+  };
 }
 
 bool Composite::PermutationGenerator::isDuplicate(
-  std::vector<DihedralTuple> permutation,
-  PermutationsList permutations,
+  Permutation permutation,
+  const PermutationsList& permutations,
   const double degrees
 ) {
   return Temple::any_of(
     permutations,
-    [&](const auto& rhsDihedralList) -> bool {
-      return dihedralIsClose(
-        std::get<2>(permutation.front()),
-        std::get<2>(rhsDihedralList.front()),
-        Temple::Math::toRadians(degrees)
-      );
+    [&](const auto& existingPermutation) -> bool {
+      return Cartesian::dihedralDifference(
+        std::get<2>(permutation.dihedrals.front()),
+        std::get<2>(existingPermutation.dihedrals.front())
+      ) <= Temple::Math::toRadians(degrees);
     }
   );
 }
@@ -650,10 +664,10 @@ Composite::PermutationsList Composite::PermutationGenerator::generate(
     // Sort stereopermutations starting at the dominant dihedral zero
     Temple::sort(
       stereopermutations,
-      [](const auto& lhs, const auto& rhs) {
+      [](const Permutation& lhs, const Permutation& rhs) {
         return (
-          shiftToZeroBounded(std::get<2>(lhs.front()))
-          < shiftToZeroBounded(std::get<2>(rhs.front()))
+          Cartesian::positiveDihedralAngle(std::get<2>(lhs.dihedrals.front()))
+          < Cartesian::positiveDihedralAngle(std::get<2>(rhs.dihedrals.front()))
         );
       }
     );
@@ -662,19 +676,25 @@ Composite::PermutationsList Composite::PermutationGenerator::generate(
       // Average the dihedral angle of successive pairs
       stereopermutations = Temple::map(
         Temple::Adaptors::cyclicFrame<2>(stereopermutations),
-        [](const auto& lhs, const auto& rhs) {
-          return Temple::map(
-            Temple::Adaptors::zip(lhs, rhs),
-            [](const DihedralTuple& a, const DihedralTuple& b) {
+        [](const Permutation& lhs, const Permutation& rhs) {
+          auto dihedrals = Temple::map(
+            Temple::Adaptors::zip(lhs.dihedrals, rhs.dihedrals),
+            [](const Permutation::DihedralTuple& a, const Permutation::DihedralTuple& b) {
               assert(std::get<0>(a) == std::get<0>(b));
               assert(std::get<1>(a) == std::get<1>(b));
-              return DihedralTuple {
+              return Permutation::DihedralTuple {
                 std::get<0>(a),
                 std::get<1>(a),
-                dihedralAverage(std::get<2>(a), std::get<2>(b))
+                Cartesian::dihedralAverage(std::get<2>(a), std::get<2>(b))
               };
             }
           );
+
+          return Permutation {
+            lhs.alignedVertices,
+            std::move(dihedrals),
+            lhs.rankingEquivalentTo
+          };
         }
       );
     }
@@ -689,23 +709,44 @@ Composite::PermutationsList Composite::PermutationGenerator::generate(
   };
 
   for(auto& stereopermutation : stereopermutations) {
-    for(auto& dihedralTuple : stereopermutation) {
+    stereopermutation.alignedVertices = std::make_pair(
+      revert(stereopermutation.alignedVertices.first, reversionMappings.first),
+      revert(stereopermutation.alignedVertices.second, reversionMappings.second)
+    );
+    for(auto& dihedralTuple : stereopermutation.dihedrals) {
       std::get<0>(dihedralTuple) = revert(std::get<0>(dihedralTuple), reversionMappings.first);
       std::get<1>(dihedralTuple) = revert(std::get<1>(dihedralTuple), reversionMappings.second);
     }
+    if(stereopermutation.rankingEquivalentTo) {
+      stereopermutation.rankingEquivalentTo = std::make_pair(
+        revert(stereopermutation.rankingEquivalentTo->first, reversionMappings.first),
+        revert(stereopermutation.rankingEquivalentTo->second, reversionMappings.second)
+      );
+    }
   }
 
-  return stereopermutations;
-}
-
-bool Composite::PermutationGenerator::isotropic() const {
-  /* From the angle groups' characters, we can figure out if all
-   * stereopermutations that are generated will be ranking-wise equivalent
-   * spatially despite differing in the shape vertex at which the equally
-   * ranked substituents are placed. This is important information for deciding
-   * whether a Composite yields a stereogenic object.
+  /* Ensure that each permutation is either a ranking-unique, or its referenced
+   * base exists
    */
-  return angleGroups.first.isotropic || angleGroups.second.isotropic;
+  assert(
+    Temple::all_of(
+      stereopermutations,
+      [&](const Permutation& permutation) {
+        if(!permutation.rankingEquivalentTo) {
+          return true;
+        }
+
+        return Temple::find_if(
+          stereopermutations,
+          [&](const Permutation& searchPerm) {
+            return searchPerm.alignedVertices == permutation.rankingEquivalentTo.value();
+          }
+        ) != std::end(stereopermutations);
+      }
+    )
+  );
+
+  return stereopermutations;
 }
 
 double Composite::PermutationGenerator::dihedral(
@@ -878,7 +919,6 @@ Composite::Composite(
   assert(orientations_.first.identifier != orientations_.second.identifier);
 
   PermutationGenerator generator(orientations_);
-  isotropic_ = generator.isotropic();
   stereopermutations_ = generator.generate(alignment);
 
   if(alignment == Alignment::Eclipsed) {
@@ -901,26 +941,70 @@ void Composite::applyIdentifierPermutation(const std::vector<std::size_t>& permu
   }
 }
 
-unsigned Composite::permutations() const {
-  return stereopermutations_.size();
+const Composite::PermutationsList& Composite::allPermutations() const {
+  return stereopermutations_;
 }
 
 Composite::Alignment Composite::alignment() const {
   return alignment_;
 }
 
-const std::vector<Composite::DihedralTuple>& Composite::dihedrals(unsigned permutationIndex) const {
-  return stereopermutations_.at(permutationIndex);
+unsigned Composite::rankingEquivalentBase(const unsigned permutation) const {
+  const Permutation& stereopermutation = stereopermutations_.at(permutation);
+
+  if(!stereopermutation.rankingEquivalentTo) {
+    return permutation;
+  }
+
+  auto findIter = Temple::find_if(
+    stereopermutations_,
+    [&](const auto& searchPermutation) {
+      return searchPermutation.alignedVertices == stereopermutation.rankingEquivalentTo.value();
+    }
+  );
+
+  assert(findIter != std::end(stereopermutations_));
+
+  return findIter - std::begin(stereopermutations_);
+}
+
+std::vector<unsigned> Composite::nonEquivalentPermutationIndices() const {
+  std::vector<unsigned> indices;
+  const unsigned N = stereopermutations_.size();
+  for(unsigned i = 0; i < N; ++i) {
+    if(!stereopermutations_.at(i).rankingEquivalentTo) {
+      indices.push_back(i);
+    }
+  }
+  return indices;
+}
+
+unsigned Composite::countNonEquivalentPermutations() const {
+  return Temple::accumulate(
+    stereopermutations_,
+    0u,
+    [](unsigned carry, const Permutation& permutation) -> unsigned {
+      if(permutation.rankingEquivalentTo) {
+        return carry;
+      }
+
+      return carry + 1;
+    }
+  );
 }
 
 bool Composite::isIsotropic() const {
-  return isotropic_;
+  return countNonEquivalentPermutations() <= 1;
 }
 
 unsigned Composite::order() const {
+  /* Angle groups information is gone, but we can deduce the information
+   * by counting the distinct vertices at both sides of the dihedral lists of a
+   * permutation.
+   */
   auto countDistinct = [&](auto&& f) {
     std::set<unsigned> positions;
-    for(const DihedralTuple& t : stereopermutations_.front()) {
+    for(const Permutation::DihedralTuple& t : stereopermutations_.front().dihedrals) {
       positions.insert(f(t));
     }
     return positions.size();

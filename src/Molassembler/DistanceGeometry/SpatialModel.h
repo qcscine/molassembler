@@ -432,6 +432,12 @@ public:
     double looseningMultiplier,
     const std::unordered_map<AtomIndex, Utils::Position>& fixedAngstromPositions
   );
+
+  bool modelPartiallyFixedBond(
+    const BondStereopermutator& permutator,
+    const std::pair<const AtomStereopermutator&, const AtomStereopermutator&>& atomStereopermutators,
+    const std::unordered_map<AtomIndex, Utils::Position>& fixedAngstromPositions
+  );
 //!@}
 
 //!@name Information

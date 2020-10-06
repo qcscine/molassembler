@@ -155,7 +155,7 @@ DirectedConformerGenerator::Relabeler::Relabeler(
     const auto& left = mol.stereopermutators().at(leftPlacement);
     const AtomIndex rightPlacement = composite.orientations().second.identifier;
     const auto& right = mol.stereopermutators().at(rightPlacement);
-    const auto& dominantDihedralTuple = composite.dihedrals(0).front();
+    const auto& dominantDihedralTuple = composite.allPermutations().at(0).dihedrals.front();
     const SiteIndex leftSite = left.getShapePositionMap().indexOf(std::get<0>(dominantDihedralTuple));
     const SiteIndex rightSite = right.getShapePositionMap().indexOf(std::get<1>(dominantDihedralTuple));
 
@@ -279,9 +279,10 @@ DirectedConformerGenerator::Relabeler::binIndices(
       const auto& bins = allBins.at(bond);
       double observedDihedral = observedDihedrals.at(bond).at(structure);
 
+      // TODO this find is buggy! But why?
       const auto findIter = Temple::find_if(
         bins,
-        [&](const auto& interval) -> bool {
+        [&](const Interval& interval) -> bool {
           if(interval.first <= interval.second) {
             return interval.first <= observedDihedral && observedDihedral <= interval.second;
           }

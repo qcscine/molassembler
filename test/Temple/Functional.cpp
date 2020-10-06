@@ -156,6 +156,7 @@ BOOST_AUTO_TEST_CASE(ReduceTests, *boost::unit_test::label("Temple")) {
     ) == 120u
   );
 }
+
 BOOST_AUTO_TEST_CASE(MinMaxTests, *boost::unit_test::label("Temple")) {
   const std::vector<unsigned> values {1, 4, 6, 8};
   BOOST_CHECK(Temple::max(values) == 8u);

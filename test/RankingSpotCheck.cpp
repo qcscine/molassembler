@@ -165,7 +165,7 @@ bool noCarbonsAreTrigonalPyramidal(const Molecule& molecule) {
   return pass;
 }
 
-BOOST_AUTO_TEST_CASE(sequenceRuleOneTests, *boost::unit_test::label("Molassembler")) {
+BOOST_AUTO_TEST_CASE(SequenceRuleOne, *boost::unit_test::label("Molassembler")) {
   using namespace std::string_literals;
   // P. 92.2.2 Sequence subrule 1b: Priority due to duplicate atoms
   // Cycle and multiple-bond splitting
@@ -213,7 +213,7 @@ BOOST_AUTO_TEST_CASE(sequenceRuleOneTests, *boost::unit_test::label("Molassemble
   ));
 }
 
-BOOST_AUTO_TEST_CASE(sequenceRuleThreeTests, *boost::unit_test::label("Molassembler")) {
+BOOST_AUTO_TEST_CASE(SequenceRuleThree, *boost::unit_test::label("Molassembler")) {
   // P-92.4.2.1 Example 1 (Z before E)
   auto zeDifference = IO::read(
     getPathString("2Z5S7E-nona-2,7-dien-5-ol.mol"s)
@@ -263,7 +263,7 @@ BOOST_AUTO_TEST_CASE(sequenceRuleThreeTests, *boost::unit_test::label("Molassemb
   );
 }
 
-BOOST_AUTO_TEST_CASE(sequenceRuleFourTests, *boost::unit_test::label("Molassembler")) {
+BOOST_AUTO_TEST_CASE(SequenceRuleFour, *boost::unit_test::label("Molassembler")) {
   // (4A) P-92.5.1 Example (stereogenic before non-stereogenic)
   auto pseudoOverNonstg = IO::read(
     getPathString("(2R,3s,4S,6R)-2,6-dichloro-5-(1R-1-chloroethyl)-3-(1S-1-chloroethyl)heptan-4-ol.mol"s)
@@ -376,7 +376,7 @@ BOOST_AUTO_TEST_CASE(sequenceRuleFourTests, *boost::unit_test::label("Molassembl
   );
 }
 
-BOOST_AUTO_TEST_CASE(sequenceRuleFiveTests, *boost::unit_test::label("Molassembler")) {
+BOOST_AUTO_TEST_CASE(SequenceRuleFive, *boost::unit_test::label("Molassembler")) {
   // (4C) P-92.5.3 Example r/s leads to R difference
   auto rsDifference = IO::read(
     getPathString("(2R,3r,4R,5s,6R)-2,6-dichloro-3,5-bis(1S-1-chloroethyl)heptan-4-ol.mol")

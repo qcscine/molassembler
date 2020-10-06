@@ -98,7 +98,7 @@ BOOST_AUTO_TEST_CASE(DirectedConformerGeneration, *boost::unit_test::label("DG")
   > testCases {
     {"directed_conformer_generation/butane.mol", 1, 3},
     {"directed_conformer_generation/pentane.mol", 2, 9},
-    {"directed_conformer_generation/caffeine.mol", 0, 0},
+    {"directed_conformer_generation/caffeine.mol", 3, 8},
     {"isomorphisms/testosterone.mol", 1, 3},
   };
 

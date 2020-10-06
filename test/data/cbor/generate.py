@@ -1,4 +1,4 @@
-import molassembler
+import scine_molassembler as masm
 
 molecules = {
     "caffeine": "CN1C=NC2=C1C(=O)N(C(=O)N2C)C",
@@ -15,5 +15,5 @@ molecules = {
 }
 
 for name, smiles in molecules.items():
-    mol = molassembler.io.LineNotation.from_canonical_smiles(smiles)
-    molassembler.io.write(filename=(name + ".cbor"), molecule=mol)
+    mol = masm.io.LineNotation.from_canonical_smiles(smiles)
+    masm.io.write(filename=(name + ".cbor"), molecule=mol)

@@ -537,110 +537,40 @@ void SpatialModel::addBondStereopermutatorInformation(
   const double looseningMultiplier,
   const std::unordered_map<AtomIndex, Utils::Position>& fixedAngstromPositions
 ) {
-  // Check preconditions
+  // Check precondition that the permutator must be assigned
   assert(permutator.indexOfPermutation());
 
-  // Match stereopermutators to order in Composite
+  // Match stereopermutators to the order in Composite
   const Stereopermutations::Composite& composite = permutator.composite();
+  using PermutatorPair = std::pair<const AtomStereopermutator&, const AtomStereopermutator&>;
+  auto atomPermutators = [&]() {
+    if(stereopermutatorA.placement() == composite.orientations().first.identifier) {
+      return PermutatorPair(stereopermutatorA, stereopermutatorB);
+    }
 
-  const AtomStereopermutator& firstStereopermutator = (
-    stereopermutatorA.placement() == composite.orientations().first.identifier
-    ? stereopermutatorA
-    : stereopermutatorB
-  );
-
-  const AtomStereopermutator& secondStereopermutator = (
-    stereopermutatorB.placement() == composite.orientations().second.identifier
-    ? stereopermutatorB
-    : stereopermutatorA
-  );
+    return PermutatorPair(stereopermutatorB, stereopermutatorA);
+  }();
 
   const unsigned permutation = permutator.indexOfPermutation().value();
 
-  /* Only dihedrals */
-  Shapes::Vertex firstShapePosition;
-  Shapes::Vertex secondShapePosition;
-  double dihedralAngle;
-
-  // Is any part of the dihedral fixed?
-  const bool firstStereopermutatorFixed = fixedAngstromPositions.count(firstStereopermutator.placement()) > 0;
-  const bool secondStereopermutatorFixed = fixedAngstromPositions.count(secondStereopermutator.placement()) > 0;
-  const bool anyDihedralMembersFixed = (
-    firstStereopermutatorFixed
-    || secondStereopermutatorFixed
-    || Temple::any_of(
-      composite.orientations().first.smallestAngleGroup().vertices,
-      makeVertexFixedPredicate(firstStereopermutator, fixedAngstromPositions)
-    )
-    || Temple::any_of(
-      composite.orientations().second.smallestAngleGroup().vertices,
-      makeVertexFixedPredicate(secondStereopermutator, fixedAngstromPositions)
-    )
-  );
-
-  if(anyDihedralMembersFixed) {
-    /* Only model those dihedrals that are fully fixed and nothing else
-     *
-     * If the two atom stereopermutators aren't fixed, there's definitely no
-     * fully fixed dihedral
-     */
-    if(!firstStereopermutatorFixed && !secondStereopermutatorFixed) {
-      return;
-    }
-
-    for(const auto& dihedralTuple : composite.dihedrals(permutation)) {
-      std::tie(firstShapePosition, secondShapePosition, dihedralAngle) = dihedralTuple;
-      /* To figure out if this dihedral is fixed, we only need to check the
-       * vertices at each end, since we've established that the atom
-       * stereopermutators are both fixed above
-       */
-      const bool dihedralFixed = (
-        makeVertexFixedPredicate(firstStereopermutator, fixedAngstromPositions)(firstShapePosition)
-        && makeVertexFixedPredicate(secondStereopermutator, fixedAngstromPositions)(secondShapePosition)
-      );
-      if(!dihedralFixed) {
-        continue;
-      }
-
-      const SiteIndex iAtFirst = firstStereopermutator.getShapePositionMap().indexOf(firstShapePosition);
-      const SiteIndex lAtSecond = secondStereopermutator.getShapePositionMap().indexOf(secondShapePosition);
-
-      const auto& iSite = firstStereopermutator.getRanking().sites.at(iAtFirst);
-      const auto& lSite = secondStereopermutator.getRanking().sites.at(lAtSecond);
-
-      // Calculate the shape dihedral from the fixed positions
-      const double fixedDihedralAngle = Cartesian::dihedral(
-        averagePosition(iSite, fixedAngstromPositions),
-        fixedAngstromPositions.at(firstStereopermutator.placement()),
-        fixedAngstromPositions.at(secondStereopermutator.placement()),
-        averagePosition(lSite, fixedAngstromPositions)
-      );
-
-      // Add it without variance
-      dihedralConstraints_.emplace_back(
-        DihedralConstraint::SiteSequence {
-          iSite,
-          {firstStereopermutator.placement()},
-          {secondStereopermutator.placement()},
-          lSite
-        },
-        fixedDihedralAngle,
-        fixedDihedralAngle
-      );
-    }
-
+  // Separate modeling code for partially fixed bonds
+  if(modelPartiallyFixedBond(permutator, atomPermutators, fixedAngstromPositions)) {
     return;
   }
 
   // Default case: No part of the dihedral is fixed
-  for(const auto& dihedralTuple : composite.dihedrals(permutation)) {
+  Shapes::Vertex firstShapePosition;
+  Shapes::Vertex secondShapePosition;
+  double dihedralAngle;
+
+  for(const auto& dihedralTuple : composite.allPermutations().at(permutation).dihedrals) {
     std::tie(firstShapePosition, secondShapePosition, dihedralAngle) = dihedralTuple;
 
-    const SiteIndex iAtFirst = firstStereopermutator.getShapePositionMap().indexOf(firstShapePosition);
-    const SiteIndex lAtSecond = secondStereopermutator.getShapePositionMap().indexOf(secondShapePosition);
+    const SiteIndex iAtFirst = atomPermutators.first.getShapePositionMap().indexOf(firstShapePosition);
+    const SiteIndex lAtSecond = atomPermutators.second.getShapePositionMap().indexOf(secondShapePosition);
 
-    const auto& coneAngleIOption = firstStereopermutator.getFeasible().coneAngles.at(iAtFirst);
-    const auto& coneAngleLOption = secondStereopermutator.getFeasible().coneAngles.at(lAtSecond);
+    const auto& coneAngleIOption = atomPermutators.first.getFeasible().coneAngles.at(iAtFirst);
+    const auto& coneAngleLOption = atomPermutators.second.getFeasible().coneAngles.at(lAtSecond);
 
     // Do not emit chiral constraints if cone angles are unknown
     if(!coneAngleIOption || !coneAngleLOption) {
@@ -684,15 +614,16 @@ void SpatialModel::addBondStereopermutatorInformation(
     // Set per-atom sequence dihedral distance bounds
     Temple::forEach(
       Temple::Adaptors::allPairs(
-        firstStereopermutator.getRanking().sites.at(iAtFirst),
-        secondStereopermutator.getRanking().sites.at(lAtSecond)
+        atomPermutators.first.getRanking().sites.at(iAtFirst),
+        atomPermutators.second.getRanking().sites.at(lAtSecond)
       ),
       [&](const AtomIndex firstIndex, const AtomIndex secondIndex) -> void {
+        // NOTE: Reordering the sequence does not affect the dihedral bound
         setDihedralBoundsIfEmpty(
           orderedSequence(
             firstIndex,
-            firstStereopermutator.placement(),
-            secondStereopermutator.placement(),
+            atomPermutators.first.placement(),
+            atomPermutators.second.placement(),
             secondIndex
           ),
           dihedralBounds
@@ -700,28 +631,115 @@ void SpatialModel::addBondStereopermutatorInformation(
       }
     );
 
-    /* Depending on alignment, we do not want to overdo the number of dihedral
-     * constraints. If alignment is staggered, then we only do one-to-all
-     * dihedrals instead of all-to-all.
+    /* Dihedral constraints are tricky, and having either all-to-all or
+     * one-to-all is problematic for minimization, especially if adjacent bonds
+     * are affected. So we only place a single dihedral constraint on each bond
+     * unless alignment is eclipsed, where we want everything very flat.
      */
+    const auto& firstDihedral = composite.allPermutations().at(permutation).dihedrals;
     if(
-      composite.alignment() == Stereopermutations::Composite::Alignment::Staggered
-      && std::get<0>(composite.dihedrals(permutation).front()) != firstShapePosition
+      composite.alignment() != Stereopermutations::Composite::Alignment::Eclipsed
+      && std::get<0>(firstDihedral.front()) != firstShapePosition
+      && std::get<1>(firstDihedral.front()) != secondShapePosition
     ) {
       continue;
     }
 
     dihedralConstraints_.emplace_back(
       DihedralConstraint::SiteSequence {
-        firstStereopermutator.getRanking().sites.at(iAtFirst),
-        {firstStereopermutator.placement()},
-        {secondStereopermutator.placement()},
-        secondStereopermutator.getRanking().sites.at(lAtSecond)
+        atomPermutators.first.getRanking().sites.at(iAtFirst),
+        {atomPermutators.first.placement()},
+        {atomPermutators.second.placement()},
+        atomPermutators.second.getRanking().sites.at(lAtSecond)
       },
       dihedralBounds.lower,
       dihedralBounds.upper
     );
   }
+}
+
+bool SpatialModel::modelPartiallyFixedBond(
+  const BondStereopermutator& permutator,
+  const std::pair<const AtomStereopermutator&, const AtomStereopermutator&>& atomPermutators,
+  const std::unordered_map<AtomIndex, Utils::Position>& fixedAngstromPositions
+) {
+  const auto& composite = permutator.composite();
+  const unsigned permutation = permutator.indexOfPermutation().value();
+
+  const bool firstStereopermutatorFixed = fixedAngstromPositions.count(atomPermutators.first.placement()) > 0;
+  const bool secondStereopermutatorFixed = fixedAngstromPositions.count(atomPermutators.second.placement()) > 0;
+  const bool anyDihedralMembersFixed = (
+    firstStereopermutatorFixed
+    || secondStereopermutatorFixed
+    || Temple::any_of(
+      composite.orientations().first.smallestAngleGroup().vertices,
+      makeVertexFixedPredicate(atomPermutators.first, fixedAngstromPositions)
+    )
+    || Temple::any_of(
+      composite.orientations().second.smallestAngleGroup().vertices,
+      makeVertexFixedPredicate(atomPermutators.second, fixedAngstromPositions)
+    )
+  );
+
+  if(anyDihedralMembersFixed) {
+    /* Only model those dihedrals that are fully fixed and nothing else
+     *
+     * If the two atom stereopermutators aren't fixed, there's definitely no
+     * fully fixed dihedral
+     */
+    if(!firstStereopermutatorFixed && !secondStereopermutatorFixed) {
+      return true;
+    }
+
+    Shapes::Vertex firstShapePosition;
+    Shapes::Vertex secondShapePosition;
+    double dihedralAngle;
+
+    for(const auto& dihedralTuple : composite.allPermutations().at(permutation).dihedrals) {
+      std::tie(firstShapePosition, secondShapePosition, dihedralAngle) = dihedralTuple;
+      /* To figure out if this dihedral is fixed, we only need to check the
+       * vertices at each end, since we've established that the atom
+       * stereopermutators are both fixed above
+       */
+      const bool dihedralFixed = (
+        makeVertexFixedPredicate(atomPermutators.first, fixedAngstromPositions)(firstShapePosition)
+        && makeVertexFixedPredicate(atomPermutators.second, fixedAngstromPositions)(secondShapePosition)
+      );
+      if(!dihedralFixed) {
+        continue;
+      }
+
+      const SiteIndex iAtFirst = atomPermutators.first.getShapePositionMap().indexOf(firstShapePosition);
+      const SiteIndex lAtSecond = atomPermutators.second.getShapePositionMap().indexOf(secondShapePosition);
+
+      const auto& iSite = atomPermutators.first.getRanking().sites.at(iAtFirst);
+      const auto& lSite = atomPermutators.second.getRanking().sites.at(lAtSecond);
+
+      // Calculate the shape dihedral from the fixed positions
+      const double fixedDihedralAngle = Cartesian::dihedral(
+        averagePosition(iSite, fixedAngstromPositions),
+        fixedAngstromPositions.at(atomPermutators.first.placement()),
+        fixedAngstromPositions.at(atomPermutators.second.placement()),
+        averagePosition(lSite, fixedAngstromPositions)
+      );
+
+      // Add it without variance
+      dihedralConstraints_.emplace_back(
+        DihedralConstraint::SiteSequence {
+          iSite,
+          {atomPermutators.first.placement()},
+          {atomPermutators.second.placement()},
+          lSite
+        },
+        fixedDihedralAngle,
+        fixedDihedralAngle
+      );
+    }
+
+    return true;
+  }
+
+  return false;
 }
 
 template<std::size_t N>

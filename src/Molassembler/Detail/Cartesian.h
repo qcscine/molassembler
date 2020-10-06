@@ -96,6 +96,26 @@ double planeOfBestFitRmsd(
   const std::vector<AtomIndex>& indices
 );
 
+//! Reduce any angular value to the boundaries [-pi, pi)
+double signedDihedralAngle(double radians);
+
+//! Reduce any angular value to the boundaries [0, 2 pi)
+double positiveDihedralAngle(double radians);
+
+/*! Absolute difference between dihedral angles in radians
+ *
+ * Yields values in the [0, pi) range
+ */
+double dihedralDifference(double a, double b);
+
+/*! Average of dihedral angles in radians
+ *
+ * If the angles are exactly opposed, returns the smaller angle offset by pi/2.
+ *
+ * Returns values in the boundaries [-pi, pi).
+ */
+double dihedralAverage(double a, double b);
+
 } // namespace Cartesian
 } // namespace Molassembler
 } // namespace Scine

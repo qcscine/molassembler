@@ -45,6 +45,32 @@ void init_composite(pybind11::module& m) {
     "Whether the ranking characters indicate that this group of shape vertices is isotropic in this shape"
   );
 
+  pybind11::class_<Composite::Permutation> permutation(
+    composite,
+    "Permutation",
+    R"delim(
+      Individual rotational permutation
+    )delim"
+  );
+
+  permutation.def_readonly(
+    "aligned_vertices",
+    &Composite::Permutation::alignedVertices,
+    "Shape vertices aligned for this set of dihedrals"
+  );
+
+  permutation.def_readonly(
+    "dihedrals",
+    &Composite::Permutation::dihedrals,
+    "Dihedrals between all vertices of the bond"
+  );
+
+  permutation.def_readonly(
+    "ranking_equivalent",
+    &Composite::Permutation::rankingEquivalentTo,
+    "Aligned shape vertices of the ranking equivalent permutation, if applicable"
+  );
+
   pybind11::class_<Composite::OrientationState> orientationState(
     composite,
     "OrientationState",
@@ -90,6 +116,11 @@ void init_composite(pybind11::module& m) {
   );
 
   composite.def_property_readonly(
+    "non_equivalent_permutations",
+    &Composite::nonEquivalentPermutationIndices
+  );
+
+  composite.def_property_readonly(
     "order",
     &Composite::order,
     "The higher number of relevant vertices of both sides"
@@ -114,13 +145,13 @@ void init_composite(pybind11::module& m) {
 
   composite.def(
     "__len__",
-    [](const Composite& c) { return c.permutations(); }
+    [](const Composite& c) { return c.allPermutations().size(); }
   );
 
   composite.def(
     "__getitem__",
     [](const Composite& c, const unsigned i) {
-      return c.dihedrals(i);
+      return c.allPermutations().at(i);
     }
   );
 }

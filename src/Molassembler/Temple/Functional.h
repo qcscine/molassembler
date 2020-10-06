@@ -228,10 +228,9 @@ template<
   T init,
   BinaryFunction&& reductionFunction
 ) {
-
   for(const auto& value: container) {
     // Call variadic invoke (no tuple unpacking!)
-    init = invoke(reductionFunction, init, value);
+    init = invoke(reductionFunction, std::move(init), value);
   }
 
   return init;

@@ -205,7 +205,7 @@ DirectedConformerGenerator::Impl::considerBond(
       alignment
     };
 
-    if(trialPermutator.numStereopermutations() == 1) {
+    if(trialPermutator.numAssignments() < 2) {
       return IgnoreReason::RotationIsIsotropic;
     }
 
@@ -288,9 +288,7 @@ DirectedConformerGenerator::Impl::Impl(
         );
       }
 
-      unsigned nPermutations = stereoOption->numStereopermutations();
-      assert(nPermutations < std::numeric_limits<std::uint8_t>::max());
-      return nPermutations;
+      return stereoOption->numAssignments();
     }
   );
 
@@ -482,7 +480,7 @@ DirectedConformerGenerator::Impl::getDecisionList(
         bondIndex,
         [&](const AtomIndex v) -> BondStereopermutator::FittingReferences {
           return {
-            molecule_.stereopermutators().option(v).value(),
+            molecule_.stereopermutators().at(v),
             shapeMaps.at(v)
           };
         }
@@ -553,7 +551,7 @@ DirectedConformerGenerator::Impl::binMidpointIntegers(
     Temple::Adaptors::zip(relevantBonds_, decisions),
     [&](const BondIndex bond, const unsigned stereopermutation) -> int {
       const auto& permutator = molecule_.stereopermutators().at(bond);
-      const auto& dominantDihedral = permutator.composite().dihedrals(stereopermutation).front();
+      const auto& dominantDihedral = permutator.composite().allPermutations().at(stereopermutation).dihedrals.front();
       return std::round(
         180 * std::get<2>(dominantDihedral) / M_PI
       );

@@ -17,6 +17,8 @@
 #include "Molassembler/Temple/OrderedPair.h"
 #include "Molassembler/Temple/constexpr/FloatingPointComparison.h"
 
+#include "boost/optional.hpp"
+
 namespace Scine {
 namespace Molassembler {
 namespace Stereopermutations {
@@ -141,23 +143,6 @@ public:
     }
   };
 
-  //! First shape vertex, second shape vertex, dihedral angle tuple
-  using DihedralTuple = std::tuple<Shapes::Vertex, Shapes::Vertex, double>;
-
-  //! List of lists of dihedral angles for distinct rotational configurations
-  using PermutationsList = std::vector<
-    std::vector<DihedralTuple>
-  >;
-
-  using PerpendicularAngleGroups = std::vector<
-    std::pair<
-      std::vector<double>,
-      std::vector<
-        std::pair<unsigned, unsigned>
-      >
-    >
-  >;
-
   //! Relative orientation of substituent groups along the dihedral
   enum class Alignment {
     //! At least two substituents eclipse one another along the axis
@@ -170,10 +155,27 @@ public:
     BetweenEclipsedAndStaggered
   };
 
+  //! Class representing a single rotational permutation
+  struct Permutation {
+    using DihedralTuple = std::tuple<Shapes::Vertex, Shapes::Vertex, double>;
+    using VertexPair = std::pair<Shapes::Vertex, Shapes::Vertex>;
+
+    bool close(const std::vector<DihedralTuple>& comparisonDihedrals) const;
+
+    //! Shape vertices aligned for this set of dihedrals
+    VertexPair alignedVertices;
+    //! Set of dihedrals between all relevant vertices along the bond
+    std::vector<DihedralTuple> dihedrals;
+    //! Shape vertices this permutation is ranking equivalent to, if applicable
+    boost::optional<VertexPair> rankingEquivalentTo;
+  };
+
+  using PermutationsList = std::vector<Permutation>;
+
   struct PermutationGenerator {
     static bool isDuplicate(
-      std::vector<DihedralTuple> permutation,
-      PermutationsList permutations,
+      Permutation permutation,
+      const PermutationsList& permutations,
       double degrees
     );
 
@@ -186,9 +188,7 @@ public:
       const Shapes::Vertex secondVertex
     ) const;
 
-    bool isotropic() const;
-
-    std::vector<DihedralTuple> align(
+    Permutation align(
       const Shapes::Vertex firstVertex,
       const Shapes::Vertex secondVertex,
       Alignment alignment
@@ -206,6 +206,7 @@ public:
 
   //!@name Members
   //!@{
+    Temple::OrderedPair<OrientationState> orientations;
     std::pair<Shapes::Permutation, Shapes::Permutation> reversionMappings;
     std::pair<AngleGroup, AngleGroup> angleGroups;
     std::pair<Eigen::MatrixXd, Eigen::MatrixXd> coordinates;
@@ -264,15 +265,8 @@ public:
 
 //!@name Information
 //!@{
-  /*!
-   * @brief Returns a set of dihedrals for a particular permutation
-   *
-   * @complexity{@math{\Theta(1)}}
-   * @note The first two elements of each tuple specify the shape position
-   * within that side's shape. The first element is for the left shape,
-   * the second for the right shape.
-   */
-  const std::vector<DihedralTuple>& dihedrals(unsigned permutationIndex) const;
+  //! Returns all permutations, including ranking-duplicates
+  const PermutationsList& allPermutations() const;
 
   /*! @brief Returns whether the Composite is isotropic overall
    *
@@ -294,11 +288,18 @@ public:
    */
   const Temple::OrderedPair<OrientationState>& orientations() const;
 
-  /*! @brief Returns the number of permutations for this Composite
+  //! Index of the ranking equivalent base to a permutation
+  unsigned rankingEquivalentBase(const unsigned permutation) const;
+
+  //! List of all base permutation indices (without ranking-equivalents)
+  std::vector<unsigned> nonEquivalentPermutationIndices() const;
+
+  /*! @brief Returns the number of non-ranking-equivalent permutations for this
+   *   Composite
    *
    * @complexity{@math{\Theta(1)}}
    */
-  unsigned permutations() const;
+  unsigned countNonEquivalentPermutations() const;
 
   /*! @brief Returns the alignment with which the Composite was generated with
    *
@@ -309,7 +310,7 @@ public:
 
 //!@name Iterators
 //!@{
-  //! Through-iteration of the generated dihedral permutations
+  //! Through-iteration of all generated dihedral permutations
   PermutationsList::const_iterator begin() const;
   PermutationsList::const_iterator end() const;
 //!@}
@@ -332,9 +333,6 @@ private:
 
   //! List of dihedral sets that comprise all spatial arrangements
   PermutationsList stereopermutations_;
-
-  //! Stores whether the Composite is isotropic
-  bool isotropic_;
 
   //! Stores with which Alignment the stereopermutations were generated
   Alignment alignment_;
