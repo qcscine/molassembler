@@ -134,7 +134,6 @@ boost::variant<DirectedConformerGenerator::IgnoreReason, BondStereopermutator>
 DirectedConformerGenerator::Impl::considerBond(
   const BondIndex& bondIndex,
   const Molecule& molecule,
-  const std::unordered_map<AtomIndex, unsigned>& smallestCycleMap,
   BondStereopermutator::Alignment alignment
 ) {
   // Make sure the bond exists in the first place
@@ -167,11 +166,8 @@ DirectedConformerGenerator::Impl::considerBond(
     }
   }
 
-  // Check with cycles information next: If the dihedral is in a cycle, skip it
-  if(
-    smallestCycleMap.count(bondIndex.first) > 0
-    && smallestCycleMap.count(bondIndex.second) > 0
-  ) {
+  // Check with cycles information next: If the bond is in a cycle, skip it
+  if(molecule.graph().cycles().numCycleFamilies(bondIndex) > 0) {
     return IgnoreReason::InCycle;
   }
 
@@ -221,9 +217,6 @@ DirectedConformerGenerator::Impl::Impl(
   const BondList& bondsToConsider
 ) : molecule_(std::move(molecule)), alignment_(alignment)
 {
-  // Precalculate the smallest cycle map
-  auto smallestCycleMap = makeSmallestCycleMap(molecule_.graph().cycles());
-
   // Allocate some space for the relevant bonds and new stereopermutators
   relevantBonds_.reserve(molecule_.graph().B() / 2);
   std::vector<BondStereopermutator> bondStereopermutators;
@@ -246,7 +239,7 @@ DirectedConformerGenerator::Impl::Impl(
   ExtractStereopermutatorVisitor visitor {bondStereopermutators};
 
   const auto processBond = [&](const BondIndex& bond) {
-    auto importanceVariant = considerBond(bond, molecule_, smallestCycleMap, alignment);
+    auto importanceVariant = considerBond(bond, molecule_, alignment);
 
     if(boost::apply_visitor(visitor, importanceVariant)) {
       relevantBonds_.push_back(bond);

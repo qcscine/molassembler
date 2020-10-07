@@ -46,7 +46,16 @@ void init_cycles(pybind11::module& m) {
       pybind11::const_
     ),
     pybind11::arg("constituting_index"),
-    "Returns the number of cycle families an atom index belongs to"
+    "Returns the number of cycle families an atom belongs to"
+  );
+  cycles.def(
+    "num_cycle_families",
+    pybind11::overload_cast<const BondIndex&>(
+      &Cycles::numCycleFamilies,
+      pybind11::const_
+    ),
+    pybind11::arg("constituting_index"),
+    "Returns the number of cycle families a bond belongs to"
   );
   cycles.def(
     "num_relevant_cycles",
@@ -63,7 +72,16 @@ void init_cycles(pybind11::module& m) {
       pybind11::const_
     ),
     pybind11::arg("constituting_index"),
-    "Returns the number of relevant cycles an atom index belongs to"
+    "Returns the number of relevant cycles an atom belongs to"
+  );
+  cycles.def(
+    "num_relevant_cycles",
+    pybind11::overload_cast<const BondIndex&>(
+      &Cycles::numRelevantCycles,
+      pybind11::const_
+    ),
+    pybind11::arg("constituting_index"),
+    "Returns the number of relevant cycles a bond belongs to"
   );
 
   cycles.def(

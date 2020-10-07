@@ -33,15 +33,9 @@ boost::variant<DirectedConformerGenerator::IgnoreReason, BondStereopermutator>
 DirectedConformerGenerator::considerBond(
   const BondIndex& bondIndex,
   const Molecule& molecule,
-  const std::unordered_map<AtomIndex, unsigned>& smallestCycleMap,
   const BondStereopermutator::Alignment alignment
 ) {
-  return Impl::considerBond(
-    bondIndex,
-    molecule,
-    smallestCycleMap,
-    alignment
-  );
+  return Impl::considerBond(bondIndex, molecule, alignment);
 }
 
 DirectedConformerGenerator::DirectedConformerGenerator(

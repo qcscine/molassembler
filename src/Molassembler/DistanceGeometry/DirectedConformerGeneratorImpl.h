@@ -27,7 +27,6 @@ public:
   static boost::variant<IgnoreReason, BondStereopermutator> considerBond(
     const BondIndex& bondIndex,
     const Molecule& molecule,
-    const std::unordered_map<AtomIndex, unsigned>& smallestCycleMap,
     BondStereopermutator::Alignment alignment
   );
 

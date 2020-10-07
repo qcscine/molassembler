@@ -97,6 +97,10 @@ unsigned Cycles::numCycleFamilies() const {
   return RDL_getNofURF(rdlPtr_->dataPtr);
 }
 
+unsigned Cycles::numCycleFamilies(const BondIndex& bond) const {
+  return RDL_getNofURFContainingEdge(rdlPtr_->dataPtr, bond.first, bond.second);
+}
+
 unsigned Cycles::numCycleFamilies(const AtomIndex index) const {
   return RDL_getNofURFContainingNode(rdlPtr_->dataPtr, index);
 }
@@ -108,6 +112,10 @@ unsigned Cycles::numRelevantCycles() const {
 
 unsigned Cycles::numRelevantCycles(const AtomIndex index) const {
   return RDL_getNofRCFContainingNode(rdlPtr_->dataPtr, index);
+}
+
+unsigned Cycles::numRelevantCycles(const BondIndex& bond) const {
+  return RDL_getNofRCFContainingEdge(rdlPtr_->dataPtr, bond.first, bond.second);
 }
 
 Cycles::AllCyclesIterator Cycles::begin() const {

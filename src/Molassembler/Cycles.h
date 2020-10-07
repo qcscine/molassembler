@@ -185,6 +185,13 @@ public:
    */
   unsigned numCycleFamilies(AtomIndex index) const;
 
+  /*! @brief Returns the number of unique ring families (URFs) a bond is in
+   *
+   * @complexity{@math{\Theta(U)} where @math{U} is the number of unique ring
+   * families in the molecule}
+   */
+  unsigned numCycleFamilies(const BondIndex& bond) const;
+
   /*! @brief Returns the number of relevant cycles (RCs)
    *
    * @complexity{@math{\Theta(1)}}
@@ -197,6 +204,13 @@ public:
    * families in the molecule}
    */
   unsigned numRelevantCycles(AtomIndex index) const;
+
+  /*! @brief Returns the number of relevant cycles (RCs) a bond is in
+   *
+   * @complexity{@math{\Theta(U)} where @math{U} is the number of unique ring
+   * families in the molecule}
+   */
+  unsigned numRelevantCycles(const BondIndex& index) const;
 
   //! Provide access to calculated data
   RDL_data* dataPtr() const;

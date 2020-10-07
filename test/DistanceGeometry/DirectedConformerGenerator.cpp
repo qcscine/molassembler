@@ -207,6 +207,4 @@ BOOST_AUTO_TEST_CASE(DirConfGenRelabeler, *boost::unit_test::label("DG")) {
   auto bins = relabeler.bins();
   auto binIndices = relabeler.binIndices(bins);
   auto midpoints = relabeler.binMidpointIntegers(binIndices, bins);
-
-  std::cout << Temple::stringify(midpoints) << "\n";
 }
