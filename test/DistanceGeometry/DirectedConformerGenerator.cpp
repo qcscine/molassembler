@@ -153,7 +153,7 @@ BOOST_FIXTURE_TEST_CASE(DirectedConfGenHomomorphicSwap, LowTemperatureFixture, *
   }
 }
 
-BOOST_AUTO_TEST_CASE(DirConfGenRelabeler, *boost::unit_test::label("DG")) {
+BOOST_AUTO_TEST_CASE(DirConfGenRelabelerBins, *boost::unit_test::label("DG")) {
   auto bins = &DirectedConformerGenerator::Relabeler::densityBins;
 
   std::vector<double> observedDihedrals {{
@@ -182,5 +182,31 @@ BOOST_AUTO_TEST_CASE(DirConfGenRelabeler, *boost::unit_test::label("DG")) {
     bins(std::vector<double> {{-3 * M_PI / 4, 3 * M_PI / 4}}, 2 * M_PI / 3).size(),
     1
   );
+}
 
+BOOST_AUTO_TEST_CASE(DirConfGenRelabeler, *boost::unit_test::label("DG")) {
+  auto mol = IO::Experimental::parseSmilesSingleMolecule("CCC(=O)O");
+  auto generator = DirectedConformerGenerator(mol);
+
+  std::vector<Utils::PositionCollection> conformers;
+  generator.enumerateRandom([&](const auto&, const auto& conf) {
+    conformers.push_back(conf);
+  });
+
+  BOOST_REQUIRE_EQUAL(generator.idealEnsembleSize(), 12);
+  BOOST_REQUIRE_MESSAGE(
+    conformers.size() >= 10,
+    "Require at least 10 conformers to properly test relabeler, got " << conformers.size()
+  );
+
+  auto relabeler = generator.relabeler();
+  for(const auto& pos : conformers) {
+    relabeler.add(pos);
+  }
+
+  auto bins = relabeler.bins();
+  auto binIndices = relabeler.binIndices(bins);
+  auto midpoints = relabeler.binMidpointIntegers(binIndices, bins);
+
+  std::cout << Temple::stringify(midpoints) << "\n";
 }

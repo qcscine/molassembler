@@ -528,7 +528,11 @@ struct DirectedConformerGenerator::Relabeler {
   //! Add a particular position to the set to relabel
   void add(const Utils::PositionCollection& positions);
 
-  //! Generate bins for each set of observed dihedrals
+  /*! Generate bins for each set of observed dihedrals
+   *
+   * Yields a vector of dimension equal to the bonds, with each element a
+   * vector with the intervals for the bond.
+   */
   std::vector<Intervals> bins(double delta=M_PI / 6) const;
 
   /*! @brief Determine relabeling for all added position sets in order
@@ -536,6 +540,9 @@ struct DirectedConformerGenerator::Relabeler {
    * Call this as soon as all positions to be reclassified have been added.
    *
    * Returns relabeling for each set of positions in order.
+   *
+   * Yields a vector of dimension equal to the number of structures, with each
+   * element a vector of dimension equal to the number of bonds.
    */
   std::vector<std::vector<unsigned>> binIndices(
     const std::vector<Intervals>& allBins

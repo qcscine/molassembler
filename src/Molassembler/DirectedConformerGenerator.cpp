@@ -279,7 +279,6 @@ DirectedConformerGenerator::Relabeler::binIndices(
       const auto& bins = allBins.at(bond);
       double observedDihedral = observedDihedrals.at(bond).at(structure);
 
-      // TODO this find is buggy! But why?
       const auto findIter = Temple::find_if(
         bins,
         [&](const Interval& interval) -> bool {
@@ -287,7 +286,7 @@ DirectedConformerGenerator::Relabeler::binIndices(
             return interval.first <= observedDihedral && observedDihedral <= interval.second;
           }
 
-          return interval.first <= observedDihedral && observedDihedral <= interval.second + 2 * M_PI;
+          return interval.first <= observedDihedral || observedDihedral <= interval.second;
         }
       );
 
