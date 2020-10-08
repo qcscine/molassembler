@@ -30,9 +30,9 @@ conan-coverage:
   extends:
     - .conan_coverage
 
-pypi-cp36:
-  extends:
-    - .pypi
+# pypi-cp36:
+#   extends:
+#     - .pypi
 
 license:
   extends: .license
@@ -84,18 +84,18 @@ pypi-cp37:
 pypi-cp38:
   extends:
     - .manylinux
-  only:
-    - master
+#  only:
+#    - master
   variables:
-    PYABI: cp38-cp38m
+    PYABI: cp38-cp38
 
 pypi-cp39:
   extends:
     - .manylinux
-  only:
-    - master
+#   only:
+#     - master
   variables:
-    PYABI: cp39-cp39m
+    PYABI: cp39-cp39
 
 # CMake-only build
 cmake-only:
