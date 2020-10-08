@@ -467,6 +467,7 @@ void init_directed_conformer_generator(pybind11::module& m) {
     &DirectedConformerGenerator::Relabeler::densityBins,
     pybind11::arg("dihedrals"),
     pybind11::arg("delta"),
+    pybind11::arg("symmetry_order") = 1,
     R"delim(
       Simplest density-based binning function
 

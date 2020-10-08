@@ -154,7 +154,7 @@ BOOST_FIXTURE_TEST_CASE(DirectedConfGenHomomorphicSwap, LowTemperatureFixture, *
 }
 
 BOOST_AUTO_TEST_CASE(DirConfGenRelabelerBins, *boost::unit_test::label("DG")) {
-  auto bins = &DirectedConformerGenerator::Relabeler::densityBins;
+  using Relabeler = DirectedConformerGenerator::Relabeler;
 
   std::vector<double> observedDihedrals {{
     Temple::Math::toRadians(1.0),
@@ -166,21 +166,40 @@ BOOST_AUTO_TEST_CASE(DirConfGenRelabelerBins, *boost::unit_test::label("DG")) {
     Temple::Math::toRadians(-95.0)
   }};
 
-  const auto binned = bins(observedDihedrals, 10 * M_PI / 180.0);
-  BOOST_CHECK_EQUAL(binned.size(), 3);
+  BOOST_CHECK_EQUAL(Relabeler::densityBins(observedDihedrals, 10 * M_PI / 180.0).size(), 3);
 
-  BOOST_CHECK_EQUAL(bins(std::vector<double>(1, 3.0), 1.0).size(), 1);
+  BOOST_CHECK_EQUAL(Relabeler::densityBins(std::vector<double>(1, 3.0), 1.0).size(), 1);
 
-  BOOST_CHECK_EQUAL(bins(std::vector<double>(2, 3.0), 1.0).size(), 1);
+  BOOST_CHECK_EQUAL(Relabeler::densityBins(std::vector<double>(2, 3.0), 1.0).size(), 1);
 
   BOOST_CHECK_EQUAL(
-    bins(std::vector<double> {{-M_PI/2, M_PI/2}}, M_PI).size(),
+    Relabeler::densityBins(std::vector<double> {{-M_PI/2, M_PI/2}}, M_PI).size(),
     1
   );
 
   BOOST_CHECK_EQUAL(
-    bins(std::vector<double> {{-3 * M_PI / 4, 3 * M_PI / 4}}, 2 * M_PI / 3).size(),
+    Relabeler::densityBins(std::vector<double> {{-3 * M_PI / 4, 3 * M_PI / 4}}, 2 * M_PI / 3).size(),
     1
+  );
+
+  const auto periodicInputDihedrals = std::vector<double> {{
+    Temple::Math::toRadians(1.0),
+    Temple::Math::toRadians(119.0)
+  }};
+
+  const auto expectedPeriodicOutput = Relabeler::Intervals {
+    Relabeler::Interval {
+      Temple::Math::toRadians(119.0),
+      Temple::Math::toRadians(1.0)
+    }
+  };
+
+  BOOST_CHECK(
+    Relabeler::densityBins(
+      periodicInputDihedrals,
+      Temple::Math::toRadians(5.0),
+      3
+    ) == expectedPeriodicOutput
   );
 }
 

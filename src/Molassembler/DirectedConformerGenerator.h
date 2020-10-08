@@ -510,7 +510,13 @@ private:
 struct DirectedConformerGenerator::Relabeler {
 //!@name Types
 //!@{
-  using DihedralSequence = std::tuple<std::vector<AtomIndex>, AtomIndex, AtomIndex, std::vector<AtomIndex>>;
+  struct DihedralInfo {
+    std::vector<AtomIndex> is;
+    AtomIndex j;
+    AtomIndex k;
+    std::vector<AtomIndex> ls;
+    unsigned symmetryOrder;
+  };
   using Interval = std::pair<double, double>;
   using Intervals = std::vector<Interval>;
 //!@}
@@ -520,7 +526,11 @@ struct DirectedConformerGenerator::Relabeler {
    * Just sorts the dihedral values and then considers any values within the
    * delta as part of the same bin.
    */
-  static Intervals densityBins(const std::vector<double>& dihedrals, double delta);
+  static Intervals densityBins(
+    const std::vector<double>& dihedrals,
+    double delta,
+    unsigned symmetryOrder = 1
+  );
 
   Relabeler(DirectedConformerGenerator::BondList bonds, const Molecule& mol);
 
@@ -555,7 +565,7 @@ struct DirectedConformerGenerator::Relabeler {
 
 //!@name State
 //!@{
-  std::vector<DihedralSequence> sequences;
+  std::vector<DihedralInfo> sequences;
   std::vector<std::vector<double>> observedDihedrals;
 //!@}
 };

@@ -25,7 +25,13 @@ std::ostream& operator << (std::ostream& os, const Composite& composite) {
   os << P << " permutations:\n";
   for(const auto& p : composite) {
     double dihedral = std::get<2>(p.dihedrals.front());
-    os << "- " << p.alignedVertices.first << "-" << p.alignedVertices.second << " = " << Temple::Math::toDegrees(dihedral);
+    os << "- ";
+    if(p.alignment == Composite::Alignment::Eclipsed) {
+      os << "E ";
+    } else if(p.alignment == Composite::Alignment::Staggered) {
+      os << "S ";
+    }
+    os << p.alignedVertices.first << "-" << p.alignedVertices.second << " = " << Temple::Math::toDegrees(dihedral);
 
     if(p.rankingEquivalentTo) {
       os << "(equivalent to " << p.rankingEquivalentTo->first << "-" << p.rankingEquivalentTo->second << ")";
@@ -140,6 +146,7 @@ BOOST_AUTO_TEST_CASE(CompositePermutationCounts, *boost::unit_test::label("Stere
   struct Expectation {
     unsigned rotations;
     unsigned permutations;
+    unsigned axisOrder;
   };
 
   const std::vector<std::pair<Args, Expectation>> tests {
@@ -148,119 +155,119 @@ BOOST_AUTO_TEST_CASE(CompositePermutationCounts, *boost::unit_test::label("Stere
         {Shapes::Shape::Seesaw, Shapes::Shape::Tetrahedron},
         {"ABCD", "ABCD"},
       },
-      Expectation {3, 3}
+      Expectation {3, 3, 1}
     },
     {
       Args {
         {Shapes::Shape::Octahedron, Shapes::Shape::Octahedron},
         {"ABCDEF", "ABCDEF"},
       },
-      Expectation {4, 4}
+      Expectation {4, 4, 1}
     },
     {
       Args {
         {Shapes::Shape::Bent, Shapes::Shape::EquilateralTriangle},
         {"AB", "ABC"},
       },
-      Expectation {2, 2}
+      Expectation {2, 2, 1}
     },
     {
       Args {
         {Shapes::Shape::EquilateralTriangle, Shapes::Shape::EquilateralTriangle},
         {"ABC", "ABC"},
       },
-      Expectation {2, 2}
+      Expectation {2, 2, 1}
     },
     {
       Args {
         {Shapes::Shape::Bent, Shapes::Shape::Bent},
         {"AB", "AB"},
       },
-      Expectation {2, 2}
+      Expectation {2, 2, 1}
     },
     {
       Args {
         {Shapes::Shape::Line, Shapes::Shape::Line},
         {"AB", "AB"},
       },
-      Expectation {0, 0}
+      Expectation {0, 0, 0}
     },
     {
       Args {
         {Shapes::Shape::Octahedron, Shapes::Shape::Octahedron},
         {"ABABCC", "AAAAAA"},
       },
-      Expectation {4, 1}
+      Expectation {4, 1, 4}
     },
     {
       Args {
         {Shapes::Shape::Octahedron, Shapes::Shape::Octahedron},
         {"ABABCC", "ABABCC"},
       },
-      Expectation {4, 2}
+      Expectation {4, 2, 2}
     },
     {
       Args {
         {Shapes::Shape::Tetrahedron, Shapes::Shape::Tetrahedron},
         {"AAAA", "ABCD"},
       },
-      Expectation {3, 1}
+      Expectation {3, 1, 3}
     },
     {
       Args {
         {Shapes::Shape::Tetrahedron, Shapes::Shape::VacantTetrahedron},
         {"ABCD", "AAA"},
       },
-      Expectation {3, 3}
+      Expectation {3, 3, 1}
     },
     {
       Args {
         {Shapes::Shape::EquilateralTriangle, Shapes::Shape::EquilateralTriangle},
         {"ABC", "AAA"},
       },
-      Expectation {2, 1}
+      Expectation {2, 1, 2}
     },
     {
       Args {
         {Shapes::Shape::EquilateralTriangle, Shapes::Shape::EquilateralTriangle},
         {"AAA", "AAA"},
       },
-      Expectation {2, 1}
+      Expectation {2, 1, 2}
     },
     {
       Args {
         {Shapes::Shape::Tetrahedron, Shapes::Shape::EquilateralTriangle},
         {"ABCD", "ABC"},
       },
-      Expectation {6, 6}
+      Expectation {6, 6, 1}
     },
     {
       Args {
         {Shapes::Shape::Tetrahedron, Shapes::Shape::EquilateralTriangle},
         {"AAAA", "ABC"},
       },
-      Expectation {6, 2}
+      Expectation {6, 2, 3}
     },
     {
       Args {
         {Shapes::Shape::Tetrahedron, Shapes::Shape::EquilateralTriangle},
         {"ABCD", "AAA"},
       },
-      Expectation {6, 3}
+      Expectation {6, 3, 2}
     },
     {
       Args {
         {Shapes::Shape::Tetrahedron, Shapes::Shape::EquilateralTriangle},
         {"AAAA", "AAA"},
       },
-      Expectation {6, 1}
+      Expectation {6, 1, 6}
     },
     {
       Args {
         {Shapes::Shape::Tetrahedron, Shapes::Shape::EquilateralTriangle},
         {"AAAB", "AAA"},
       },
-      Expectation {6, 3}
+      Expectation {6, 3, 2}
     },
     {
       Args {
@@ -268,7 +275,7 @@ BOOST_AUTO_TEST_CASE(CompositePermutationCounts, *boost::unit_test::label("Stere
         {"BAB", "CAB"},
         {1_v, 2_v}
       },
-      Expectation {2, 1}
+      Expectation {2, 1, 2}
     },
     {
       Args {
@@ -277,7 +284,34 @@ BOOST_AUTO_TEST_CASE(CompositePermutationCounts, *boost::unit_test::label("Stere
         {0_v, 0_v},
         Composite::Alignment::Staggered
       },
-      Expectation {3, 1}
+      Expectation {3, 1, 3}
+    },
+    {
+      Args {
+        {Shapes::Shape::EquilateralTriangle, Shapes::Shape::EquilateralTriangle},
+        {"AAA", "ABC"},
+        {0_v, 0_v},
+        Composite::Alignment::EclipsedAndStaggered
+      },
+      Expectation {4, 2, 2}
+    },
+    {
+      Args {
+        {Shapes::Shape::EquilateralTriangle, Shapes::Shape::EquilateralTriangle},
+        {"ABC", "ABC"},
+        {0_v, 0_v},
+        Composite::Alignment::EclipsedAndStaggered
+      },
+      Expectation {4, 4, 1}
+    },
+    {
+      Args {
+        {Shapes::Shape::Tetrahedron, Shapes::Shape::Tetrahedron},
+        {"AAAA", "AAAB"},
+        {0_v, 0_v},
+        Composite::Alignment::EclipsedAndStaggered
+      },
+      Expectation {6, 2, 3}
     },
   };
 
@@ -296,6 +330,7 @@ BOOST_AUTO_TEST_CASE(CompositePermutationCounts, *boost::unit_test::label("Stere
     BOOST_TEST_CONTEXT(context.str()) {
       BOOST_CHECK_EQUAL(composite.allPermutations().size(), expectation.rotations);
       BOOST_CHECK_EQUAL(composite.countNonEquivalentPermutations(), expectation.permutations);
+      BOOST_CHECK_EQUAL(composite.rotationalAxisSymmetryOrder(), expectation.axisOrder);
     }
   }
 }

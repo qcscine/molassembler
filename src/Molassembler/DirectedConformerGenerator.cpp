@@ -12,6 +12,7 @@
 #include "Molassembler/Stereopermutation/Composites.h"
 #include "Molassembler/Detail/Cartesian.h"
 #include "Molassembler/Temple/Adaptors/CyclicFrame.h"
+#include "Molassembler/Temple/Adaptors/Zip.h"
 
 #include "boost/variant.hpp"
 
@@ -145,19 +146,25 @@ DirectedConformerGenerator::Relabeler::Relabeler(
   for(const BondIndex& bond : bonds) {
     const auto& stereopermutator = mol.stereopermutators().at(bond);
     const auto& composite = stereopermutator.composite();
+
     const AtomIndex leftPlacement = composite.orientations().first.identifier;
-    const auto& left = mol.stereopermutators().at(leftPlacement);
     const AtomIndex rightPlacement = composite.orientations().second.identifier;
+
+    const auto& left = mol.stereopermutators().at(leftPlacement);
     const auto& right = mol.stereopermutators().at(rightPlacement);
+
     const auto& dominantDihedralTuple = composite.allPermutations().at(0).dihedrals.front();
     const SiteIndex leftSite = left.getShapePositionMap().indexOf(std::get<0>(dominantDihedralTuple));
     const SiteIndex rightSite = right.getShapePositionMap().indexOf(std::get<1>(dominantDihedralTuple));
 
-    sequences.emplace_back(
-      left.getRanking().sites.at(leftSite),
-      leftPlacement,
-      rightPlacement,
-      right.getRanking().sites.at(rightSite)
+    sequences.push_back(
+      DihedralInfo {
+        left.getRanking().sites.at(leftSite),
+        leftPlacement,
+        rightPlacement,
+        right.getRanking().sites.at(rightSite),
+        composite.rotationalAxisSymmetryOrder()
+      }
     );
   }
 
@@ -173,20 +180,24 @@ void DirectedConformerGenerator::Relabeler::add(
   const auto dihedralEnd = std::end(observedDihedrals);
 
   while(sequenceIter != bondEnd && dihedralIter != dihedralEnd) {
-    dihedralIter->push_back(
-      Cartesian::dihedral(
-        Cartesian::averagePosition(
-          positions,
-          std::get<0>(*sequenceIter)
-        ),
-        positions.row(std::get<1>(*sequenceIter)),
-        positions.row(std::get<2>(*sequenceIter)),
-        Cartesian::averagePosition(
-          positions,
-          std::get<3>(*sequenceIter)
-        )
-      )
+    double dihedral = Cartesian::dihedral(
+      Cartesian::averagePosition(positions, sequenceIter->is),
+      positions.row(sequenceIter->j),
+      positions.row(sequenceIter->k),
+      Cartesian::averagePosition(positions, sequenceIter->ls)
     );
+
+    // Reduce by rotational symmetry if present
+    if(sequenceIter->symmetryOrder > 1) {
+      dihedral = Cartesian::signedDihedralAngle(
+        std::fmod(
+          Cartesian::positiveDihedralAngle(dihedral),
+          2 * M_PI / sequenceIter->symmetryOrder
+        )
+      );
+    }
+
+    dihedralIter->push_back(dihedral);
 
     ++sequenceIter;
     ++dihedralIter;
@@ -196,7 +207,8 @@ void DirectedConformerGenerator::Relabeler::add(
 DirectedConformerGenerator::Relabeler::Intervals
 DirectedConformerGenerator::Relabeler::densityBins(
   const std::vector<double>& dihedrals,
-  const double delta
+  const double delta,
+  unsigned symmetryOrder
 ) {
   if(dihedrals.empty()) {
     throw std::logic_error("Cannot make bins for empty list of dihedrals");
@@ -207,6 +219,7 @@ DirectedConformerGenerator::Relabeler::densityBins(
   }
 
   const auto sortedDihedrals = Temple::sorted(dihedrals);
+  const double boundary = 2 * M_PI / symmetryOrder;
 
   std::pair<double, double> interval {
     sortedDihedrals.front(),
@@ -222,7 +235,7 @@ DirectedConformerGenerator::Relabeler::densityBins(
       if(prev <= next) {
         closeInterval = (next - prev) > delta;
       } else {
-        closeInterval = (next + 2 * M_PI - prev) > delta;
+        closeInterval = (next + boundary - prev) > delta;
       }
 
       if(closeInterval) {
@@ -251,9 +264,9 @@ DirectedConformerGenerator::Relabeler::densityBins(
 std::vector<DirectedConformerGenerator::Relabeler::Intervals>
 DirectedConformerGenerator::Relabeler::bins(const double delta) const {
   return Temple::map(
-    observedDihedrals,
-    [&](const auto& dihedrals) -> Intervals {
-      return densityBins(dihedrals, delta);
+    Temple::Adaptors::zip(observedDihedrals, sequences),
+    [&](const auto& dihedrals, const DihedralInfo& sequence) -> Intervals {
+      return densityBins(dihedrals, delta, sequence.symmetryOrder);
     }
   );
 }
@@ -299,20 +312,31 @@ DirectedConformerGenerator::Relabeler::binMidpointIntegers(
   const std::vector<std::vector<unsigned>>& binIndices,
   const std::vector<Intervals>& allBins
 ) const {
-  const auto intervalMidpoint = [](const Interval interval) -> int {
+  const auto intervalMidpoint = [](
+    const Interval& interval,
+    unsigned symmetryOrder
+  ) -> int {
     if(interval.first <= interval.second) {
       return std::round(180 * (interval.first + interval.second) / (2 * M_PI));
     }
 
-    double average = (interval.first + interval.second + 2 * M_PI) / 2;
-    if(average > M_PI) {
-      average -= 2 * M_PI;
-    }
+    double boundary = 2 * M_PI / symmetryOrder;
+    double average = Cartesian::signedDihedralAngle(
+      (interval.first + interval.second + boundary) / 2
+    );
     return std::round(180 * average / M_PI);
   };
+
   const auto binMidpointIntegers = Temple::map(
-    allBins,
-    Temple::Functor::map(intervalMidpoint)
+    Temple::Adaptors::zip(allBins, sequences),
+    [&](const auto& intervals, const DihedralInfo& sequence) {
+      return Temple::map(
+        intervals,
+        [&](const Interval& v) {
+          return intervalMidpoint(v, sequence.symmetryOrder);
+        }
+      );
+    }
   );
 
   const unsigned structureCount = binIndices.size();

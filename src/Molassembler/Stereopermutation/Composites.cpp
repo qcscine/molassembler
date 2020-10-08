@@ -479,6 +479,10 @@ Composite::PermutationGenerator::generateEclipsedOrStaggered(
           return false;
         }
 
+        if(searchPermutation.alignment != permutation.alignment) {
+          return false;
+        }
+
         return Temple::all_of(
           Temple::map(searchPermutation.dihedrals, replaceVertices),
           [&](const auto& characterTuple) -> bool {
@@ -606,6 +610,7 @@ Composite::Permutation Composite::PermutationGenerator::align(
 
   return Permutation {
     std::move(vertices),
+    alignment,
     std::move(sortedDihedrals),
     boost::none
   };
@@ -692,6 +697,7 @@ Composite::PermutationsList Composite::PermutationGenerator::generate(
 
           return Permutation {
             lhs.alignedVertices,
+            lhs.alignment,
             std::move(dihedrals),
             lhs.rankingEquivalentTo
           };
@@ -959,7 +965,10 @@ unsigned Composite::rankingEquivalentBase(const unsigned permutation) const {
   auto findIter = Temple::find_if(
     stereopermutations_,
     [&](const auto& searchPermutation) {
-      return searchPermutation.alignedVertices == stereopermutation.rankingEquivalentTo.value();
+      return (
+        searchPermutation.alignment == stereopermutation.alignment
+        && searchPermutation.alignedVertices == stereopermutation.rankingEquivalentTo.value()
+      );
     }
   );
 
@@ -1014,6 +1023,44 @@ unsigned Composite::order() const {
     countDistinct(Temple::Functor::first),
     countDistinct(Temple::Functor::second)
   );
+}
+
+unsigned Composite::rotationalAxisSymmetryOrder() const {
+  std::set<unsigned> counts;
+  for(const Permutation& permutation : stereopermutations_) {
+    if(permutation.rankingEquivalentTo) {
+      continue;
+    }
+
+    auto count = Temple::accumulate(
+      stereopermutations_,
+      1u,
+      [&](unsigned carry, const Permutation& other) -> unsigned {
+        if(
+          permutation.alignment == other.alignment
+          && permutation.alignedVertices == other.rankingEquivalentTo
+        ) {
+          return carry + 1;
+        }
+
+        return carry;
+      }
+    );
+
+    counts.insert(count);
+  }
+
+  // If there are different counts, then this cannot have a rotational symmetry
+  if(counts.empty()) {
+    return 0;
+  }
+
+  if(counts.size() > 1) {
+    return 1;
+  }
+
+  // TODO maybe recheck by actually rotating and making sure?
+  return *std::begin(counts);
 }
 
 const Temple::OrderedPair<Composite::OrientationState>& Composite::orientations() const {

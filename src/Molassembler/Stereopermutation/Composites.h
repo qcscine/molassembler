@@ -164,6 +164,8 @@ public:
 
     //! Shape vertices aligned for this set of dihedrals
     VertexPair alignedVertices;
+    //! Alignment used to generate this permutation
+    Alignment alignment;
     //! Set of dihedrals between all relevant vertices along the bond
     std::vector<DihedralTuple> dihedrals;
     //! Shape vertices this permutation is ranking equivalent to, if applicable
@@ -281,6 +283,9 @@ public:
    * three.
    */
   unsigned order() const;
+
+  //! Rotational axis symmetry element order
+  unsigned rotationalAxisSymmetryOrder() const;
 
   /*! @brief Returns the orientation state of the composite
    *
