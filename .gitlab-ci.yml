@@ -63,7 +63,8 @@ complexity:
       - src/lizard.html
 
 
-# Missing three python ABI builds on master
+# Additional builds on master
+# Missing python ABIs
 pypi-cp35:
   extends:
     - .manylinux
@@ -95,3 +96,11 @@ pypi-cp39:
     - master
   variables:
     PYABI: cp39-cp39m
+
+# CMake-only build
+cmake-only:
+  extends:
+    - .gcc
+    - .cmake_release
+#   only:
+#     - master
