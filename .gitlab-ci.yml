@@ -87,3 +87,11 @@ pypi-cp38:
     - master
   variables:
     PYABI: cp38-cp38m
+
+pypi-cp39:
+  extends:
+    - .manylinux
+  only:
+    - master
+  variables:
+    PYABI: cp39-cp39m

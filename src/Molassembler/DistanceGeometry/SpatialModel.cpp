@@ -6,7 +6,6 @@
 
 #include "Molassembler/DistanceGeometry/SpatialModel.h"
 
-#include "boost/numeric/interval.hpp"
 #include "boost/graph/graphviz.hpp"
 #include "Utils/Typenames.h"
 #include "Utils/Geometry/ElementInfo.h"
