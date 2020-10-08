@@ -505,7 +505,12 @@ private:
 /*! @brief Relabeler for decision lists with minimized structures
  *
  * Type to help with relabeling decision lists with true minima bins
- * once all conformers have been energy minimized with a suitable procedure.
+ * once a set of conformers has been energy minimized with a suitable
+ * procedure. This helps to deal with dihedral extremum placements that differ
+ * significantly from Molassembler's simple expectations.
+ *
+ * Rotational symmetries from the hypothesized alignments are reused to map
+ * rotationally equivalent dihedrals down to single bins.
  */
 struct DirectedConformerGenerator::Relabeler {
 //!@name Types
@@ -532,6 +537,16 @@ struct DirectedConformerGenerator::Relabeler {
     unsigned symmetryOrder = 1
   );
 
+  /*! @brief Construct a relabeler with a custom list of bonds
+   *
+   * @param bonds List of bonds to consider.
+   * @param mol Molecule whose bonds we want to consider. Needs to have
+   * BondStereopermutators instantiated on bonds in @p bonds.
+   *
+   * @note A relabeler with the inferred list of bonds that can be considered
+   * as determined by a DirectedConformerGenerator can be obtained by calling
+   * DirectedConformerGenerator::relabeler().
+   */
   Relabeler(DirectedConformerGenerator::BondList bonds, const Molecule& mol);
 
   //! Add a particular position to the set to relabel

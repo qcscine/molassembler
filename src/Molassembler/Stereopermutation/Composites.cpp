@@ -1026,6 +1026,12 @@ unsigned Composite::order() const {
 }
 
 unsigned Composite::rotationalAxisSymmetryOrder() const {
+  /* NOTE: Maybe this can be replaced with the integer division
+   * stereopermutations_.count() / countNonEquivalentPermutations()?
+   *
+   * (well, with a special case for zeroes)
+   */
+
   std::set<unsigned> counts;
   for(const Permutation& permutation : stereopermutations_) {
     if(permutation.rankingEquivalentTo) {
@@ -1059,7 +1065,6 @@ unsigned Composite::rotationalAxisSymmetryOrder() const {
     return 1;
   }
 
-  // TODO maybe recheck by actually rotating and making sure?
   return *std::begin(counts);
 }
 
