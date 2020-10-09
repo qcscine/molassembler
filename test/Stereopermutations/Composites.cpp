@@ -11,6 +11,8 @@
 #include "Molassembler/Temple/Functional.h"
 #include "Molassembler/Temple/Stringify.h"
 
+#include <iostream>
+
 using namespace Scine::Molassembler;
 using namespace Stereopermutations;
 
