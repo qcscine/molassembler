@@ -27,19 +27,16 @@ conan-clang:
     - .conan_create
 
 conan-coverage:
-  extends:
-    - .conan_coverage
+  extends: .conan_coverage
 
-# pypi-cp36:
-#   extends:
-#     - .pypi
+pypi-cp36:
+  extends: .pypi
 
 license:
   extends: .license
 
 complexity:
-  extends:
-    .gcc
+  extends: .gcc
   before_script:
     - echo "Skip before_script"
   script:
@@ -59,48 +56,41 @@ complexity:
       -W ../.whitelizard.txt
   artifacts:
     expire_in: 1 day
-    paths:
-      - src/lizard.html
+    paths: [src/lizard.html]
 
 
 # Additional builds on master
 # Missing python ABIs
 pypi-cp35:
-  extends:
-    - .manylinux
-  only:
-    - master
+  extends: .manylinux
+  only: [master]
   variables:
     PYABI: cp35-cp35m
 
 pypi-cp37:
-  extends:
-    - .manylinux
-  only:
-    - master
+  extends: .manylinux
+  only: [master]
   variables:
     PYABI: cp37-cp37m
 
 pypi-cp38:
-  extends:
-    - .manylinux
-#  only:
-#    - master
+  extends: .manylinux
+  only: [master]
   variables:
     PYABI: cp38-cp38
 
-pypi-cp39:
-  extends:
-    - .manylinux
-#   only:
-#     - master
-  variables:
-    PYABI: cp39-cp39
+# scipy build for 3.9 fails in the CI
+# pypi-cp39:
+#   extends: .manylinux
+#   only: [master]
+#   variables:
+#     PYABI: cp39-cp39
 
 # CMake-only build
 cmake-only:
   extends:
     - .gcc
     - .cmake_release
-#   only:
-#     - master
+  only: [master]
+  variables:
+    CMAKE_OPTIONS: "-DSCINE_BUILD_PYTHON_BINDINGS=ON"
