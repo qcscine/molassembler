@@ -9,7 +9,7 @@ def test_DirectedConformerGenerator():
         return
 
     arginine_smiles = "C(CC(C(=O)O)N)CN=C(N)N"
-    arginine = masm.io.LineNotation.from_isomeric_smiles(arginine_smiles)
+    arginine = masm.io.experimental.from_smiles(arginine_smiles)
 
     # Create the generator, a decision list, and a conformer
     generator = masm.DirectedConformerGenerator(arginine)
