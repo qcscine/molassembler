@@ -447,10 +447,6 @@ Composite::PermutationGenerator::PermutationGenerator(
     coordinates.second,
     Eigen::Vector3d::UnitX()
   );
-
-  // Ensure expectations
-  assert(coordinates.second.col(orientations.second.fusedVertex).isApprox(Eigen::Vector3d::Zero(), 1e-5));
-  assert(coordinates.first.col(orientations.first.fusedVertex).isApprox(Eigen::Vector3d::UnitX(), 1e-5));
 }
 
 Composite::PermutationsList
