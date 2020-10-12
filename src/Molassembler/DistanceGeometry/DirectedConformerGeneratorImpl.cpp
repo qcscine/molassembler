@@ -239,7 +239,7 @@ DirectedConformerGenerator::Impl::Impl(
   ExtractStereopermutatorVisitor visitor {bondStereopermutators};
 
   const auto processBond = [&](const BondIndex& bond) {
-    auto importanceVariant = considerBond(bond, molecule_, alignment);
+    auto importanceVariant = considerBond(bond, molecule_, alignment_);
 
     if(boost::apply_visitor(visitor, importanceVariant)) {
       relevantBonds_.push_back(bond);

@@ -62,6 +62,10 @@ bool DirectedConformerGenerator::contains(const DecisionList& decisionList) cons
   return pImpl_->contains(decisionList);
 }
 
+BondStereopermutator::Alignment DirectedConformerGenerator::alignment() const {
+  return pImpl_->alignment();
+}
+
 const DirectedConformerGenerator::BondList& DirectedConformerGenerator::bondList() const {
   return pImpl_->bondList();
 }

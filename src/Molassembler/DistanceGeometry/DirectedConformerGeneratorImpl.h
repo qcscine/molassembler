@@ -46,12 +46,16 @@ public:
     return decisionLists_.clear();
   }
 
-  bool contains(const DecisionList& decisionList) const {
-    return decisionLists_.contains(decisionList);
+  BondStereopermutator::Alignment alignment () {
+    return alignment_;
   }
 
   const BondList& bondList() const {
     return relevantBonds_;
+  }
+
+  bool contains(const DecisionList& decisionList) const {
+    return decisionLists_.contains(decisionList);
   }
 
   unsigned decisionListSetSize() const {

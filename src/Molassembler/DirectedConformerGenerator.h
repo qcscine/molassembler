@@ -307,6 +307,9 @@ public:
 
 //!@name Information
 //!@{
+  //! Get alignment with which this generator was instantiated with
+  BondStereopermutator::Alignment alignment() const;
+
   /*!
    * @brief Accessor for list of relevant bonds
    *
