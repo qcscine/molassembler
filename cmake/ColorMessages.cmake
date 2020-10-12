@@ -1,3 +1,9 @@
+#
+# This file is licensed under the 3-clause BSD license.
+# Copyright ETH Zurich, Laboratory of Physical Chemistry, Reiher Group.
+# See LICENSE.txt for details.
+#
+
 macro(cmessage_format)
   string(CONCAT _msg ${ARGV})
   string(STRIP ${_msg} _msg)

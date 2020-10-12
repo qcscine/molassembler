@@ -1,3 +1,8 @@
+__copyright__ = """This code is licensed under the 3-clause BSD license.
+Copyright ETH Zurich, Laboratory of Physical Chemistry, Reiher Group.
+See LICENSE.txt for details.
+"""
+
 from recognition_data import symmetrySizes, n_distortion_values, max_distortion, shapes, repeats, results, recognizers
 import matplotlib.pyplot as plt
 import numpy as np

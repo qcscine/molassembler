@@ -1,3 +1,9 @@
+#
+# This file is licensed under the 3-clause BSD license.
+# Copyright ETH Zurich, Laboratory of Physical Chemistry, Reiher Group.
+# See LICENSE.txt for details.
+#
+
 # Use C++14
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)

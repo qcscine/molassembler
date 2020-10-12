@@ -1,3 +1,9 @@
+#
+# This file is licensed under the 3-clause BSD license.
+# Copyright ETH Zurich, Laboratory of Physical Chemistry, Reiher Group.
+# See LICENSE.txt for details.
+#
+
 macro(set_doxygen_vars)
   set(DOXYGEN_PROJECT_NAME          Molassembler)
   set(DOXYGEN_PROJECT_NUMBER        ${molassembler_VERSION})

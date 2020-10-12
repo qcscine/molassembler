@@ -1,3 +1,9 @@
+#
+# This file is licensed under the 3-clause BSD license.
+# Copyright ETH Zurich, Laboratory of Physical Chemistry, Reiher Group.
+# See LICENSE.txt for details.
+#
+
 macro(determine_lib_type target)
   get_target_property(_target_type ${target} TYPE)
   if(${_target_type} STREQUAL "SHARED_LIBRARY")

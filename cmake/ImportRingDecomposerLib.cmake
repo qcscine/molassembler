@@ -1,3 +1,9 @@
+#
+# This file is licensed under the 3-clause BSD license.
+# Copyright ETH Zurich, Laboratory of Physical Chemistry, Reiher Group.
+# See LICENSE.txt for details.
+#
+
 macro(import_rdl)
   # Do nothing if the target already exists
   if(NOT TARGET RingDecomposerLib)

@@ -1,3 +1,9 @@
+#
+# This file is licensed under the 3-clause BSD license.
+# Copyright ETH Zurich, Laboratory of Physical Chemistry, Reiher Group.
+# See LICENSE.txt for details.
+#
+
 include(FindPackageHandleStandardArgs)
 # Find if a Python module is installed
 # Found at http://www.cmake.org/pipermail/cmake/2011-January/041666.html

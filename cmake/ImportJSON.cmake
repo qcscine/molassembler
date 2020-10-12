@@ -1,3 +1,9 @@
+#
+# This file is licensed under the 3-clause BSD license.
+# Copyright ETH Zurich, Laboratory of Physical Chemistry, Reiher Group.
+# See LICENSE.txt for details.
+#
+
 macro(import_json)
   set(JSON_VERSION "3.9.1")
   set(JSON_LICENSE_FILE "${CMAKE_CURRENT_BINARY_DIR}/nlohmann/LICENSE")
