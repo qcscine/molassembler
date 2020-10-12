@@ -258,7 +258,7 @@ python3 -m pip upgrade --user pip
 python3 -m pip install --user scine_molassembler
 \end{Verbatim}
 
-When installed this way, the python bindings are not optimized to your
+When installed this way, the Python bindings are not optimized to your
 particular CPU instruction set and may therefore be slower than if you had
 compiled them yourself.
 
@@ -286,7 +286,7 @@ value in bold face:
 \begin{itemize} 
   \item \texttt{shared=[\textbf{True}, False]}: Build molassembler as a shared
     library
-  \item \texttt{python=[True, \textbf{False}]}: Build the python bindings
+  \item \texttt{python=[True, \textbf{False}]}: Build the Python bindings
   \item \texttt{docs=[True, \textbf{False}]}: Build documentation
   \item \texttt{tests=[True, \textbf{False}]}: Build and run tests
   \item \texttt{microarch=[detect, \textbf{none}]}: Tune build to CPU
@@ -302,7 +302,7 @@ conan install scine_molassembler/1.0.0@scine/stable
 Changes to default options can be supplied right after \texttt{conan install}
 with \texttt{-o scine\_molassembler:<option>=<value>}.
 
-For instance, if you want python bindings, your install command will be:
+For instance, if you want Python bindings, your install command will be:
 
 \begin{Verbatim}
 conan install -o scine_molassembler:python=True scine_molassembler/1.0.0@scine/stable
@@ -339,14 +339,14 @@ libeigen3-dev
 First, we must get a complete set of source files. You can get a complete set of
 files with:
 \begin{Verbatim}
-git clone -{}-recursive https://github.com/qcscine/molassembler.git
+git clone --recursive https://github.com/qcscine/molassembler.git
 \end{Verbatim} 
 or by extracting a downloaded
 release archive and executing 
 \begin{Verbatim}
 git clone https://github.com/qcscine/development-utils.git
-\end{Verbatim} within the
-\texttt{molassembler} folder.
+\end{Verbatim}
+within the \texttt{molassembler} folder.
 
 Next, we'll get to configuring the source build:
 
@@ -360,7 +360,7 @@ This will look through the dependencies to make sure everything needed is there
 and prepare for building. We have specified an installation prefix on the
 command line that we will install into, which you can replace at your leisure.
 
-If you additionally wish to compile and install the python bindings, you can
+If you additionally wish to compile and install the Python bindings, you can
 rerun \texttt{cmake} with the following flags added:
 
 \begin{Verbatim}
