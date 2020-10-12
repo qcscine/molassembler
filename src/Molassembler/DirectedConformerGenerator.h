@@ -352,7 +352,7 @@ public:
   outcome::result<Utils::PositionCollection> generateRandomConformation(
     const DecisionList& decisionList,
     const DistanceGeometry::Configuration& configuration = DistanceGeometry::Configuration {},
-    BondStereopermutator::FittingMode fitting = BondStereopermutator::FittingMode::Thresholded
+    BondStereopermutator::FittingMode fitting = BondStereopermutator::FittingMode::Nearest
   ) const;
 
   /*! @brief Try to generate a conformer for a particular decision list
@@ -369,7 +369,7 @@ public:
     const DecisionList& decisionList,
     const unsigned seed,
     const DistanceGeometry::Configuration& configuration = DistanceGeometry::Configuration {},
-    BondStereopermutator::FittingMode fitting = BondStereopermutator::FittingMode::Thresholded
+    BondStereopermutator::FittingMode fitting = BondStereopermutator::FittingMode::Nearest
   ) const;
 
   /*! @brief Yields a molecule reference for a particular decision list
@@ -400,7 +400,7 @@ public:
    */
   DecisionList getDecisionList(
     const Utils::AtomCollection& atomCollection,
-    BondStereopermutator::FittingMode mode = BondStereopermutator::FittingMode::Thresholded
+    BondStereopermutator::FittingMode mode = BondStereopermutator::FittingMode::Nearest
   ) const;
 
   /*! @brief Infer a decision list for relevant bonds from positional information only
@@ -428,7 +428,7 @@ public:
   struct EnumerationSettings {
     EnumerationSettings()
       : dihedralRetries(3),
-        fitting(BondStereopermutator::FittingMode::Thresholded),
+        fitting(BondStereopermutator::FittingMode::Nearest),
         configuration()
     {}
 

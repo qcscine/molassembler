@@ -175,61 +175,56 @@ std::enable_if_t<
 
 template<typename T, typename U>
 std::string stringify(const std::pair<T, U>& pair) {
-  return "pair {"s + stringify(pair.first) + ", "s + stringify(pair.second) + "}"s;
+  return "("s + stringify(pair.first) + ", "s + stringify(pair.second) + ")"s;
 }
 
 template<typename T>
 std::string stringify(const std::vector<T>& vec) {
-  return "vector "s + stringifyContainer(vec);
+  return stringifyContainer(vec);
 }
 
 template<typename T, size_t size>
 std::string stringify(const std::array<T, size>& arr) {
-  return "array "s + stringifyContainer(arr);
+  return stringifyContainer(arr);
 }
 
 template<typename T>
 std::string stringify(const std::set<T>& set) {
-  return "set "s + stringifyContainer(set);
+  return stringifyContainer(set);
 }
 
 template<typename T>
 std::string stringify(const std::unordered_set<T>& set) {
-  return "unord. set "s + stringifyContainer(set);
+  return stringifyContainer(set);
 }
 
 template<typename T>
 std::string stringify(const std::list<T>& list) {
-  return "list "s + stringifyContainer(list);
-}
-
-template<typename T>
-std::string stringify(const std::forward_list<T>& list) {
-  return "fwd. list "s + stringifyContainer(list);
+  return stringifyContainer(list);
 }
 
 template<typename T, typename U>
 std::string stringify(const std::map<T, U>& map) {
-  return "map "s + stringifyMap(map);
+  return stringifyMap(map);
 }
 
 template<typename T, typename U>
 std::string stringify(const std::unordered_map<T, U>& map) {
-  return "unord. map "s + stringifyMap(map);
+  return stringifyMap(map);
 }
 
 template<typename ... Ts>
 std::string stringify(const std::tuple<Ts...>& tuple) {
-  return "tuple "s + stringifyTuple(tuple, std::make_index_sequence<sizeof...(Ts)> {});
+  return stringifyTuple(tuple, std::make_index_sequence<sizeof...(Ts)> {});
 }
 
 template<typename T>
 std::string stringify(const boost::optional<T>& optional) {
   if(optional) {
-    return "boost Some "s + stringify(optional.value());
+    return "Some "s + stringify(optional.value());
   }
 
-  return "boost None";
+  return "None";
 }
 
 template<typename T>
@@ -237,7 +232,7 @@ std::enable_if_t<
   std::is_enum<T>::value,
   std::string
 > stringify(const T& enumType) {
-  return "Enum underlying = "s + stringify(
+  return "Enum="s + stringify(
     static_cast<
       std::underlying_type_t<T>
     >(enumType)
@@ -263,7 +258,7 @@ std::enable_if_t<
 
 template<typename T>
 std::string stringifyContainer(const T& container) {
-  std::string representation = "{";
+  std::string representation = "[";
 
   for(auto it = container.begin(); it != container.end(); /*-*/) {
     representation += stringify(*it);
@@ -272,7 +267,7 @@ std::string stringifyContainer(const T& container) {
     }
   }
 
-  return representation + "}"s;
+  return representation + "]"s;
 }
 
 template<typename Container, class ElementStringifier>

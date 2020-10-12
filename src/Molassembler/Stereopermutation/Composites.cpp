@@ -442,11 +442,15 @@ Composite::PermutationGenerator::PermutationGenerator(
     -Eigen::Vector3d::UnitX()
   );
 
-  // Translate positions by <1, 0, 0>
+  // Translate right positions by <1, 0, 0>
   translateCoordinates(
     coordinates.second,
     Eigen::Vector3d::UnitX()
   );
+
+  // Ensure expectations
+  assert(coordinates.second.col(orientations.second.fusedVertex).isApprox(Eigen::Vector3d::Zero(), 1e-5));
+  assert(coordinates.first.col(orientations.first.fusedVertex).isApprox(Eigen::Vector3d::UnitX(), 1e-5));
 }
 
 Composite::PermutationsList
@@ -519,10 +523,10 @@ Composite::PermutationGenerator::generateEclipsedOrStaggered(
       angleGroups.second.vertices
     ),
     [&](const Shapes::Vertex f, const Shapes::Vertex s) -> void {
-      auto stereopermutation = align(f, s, alignment);
-      if(!isDuplicate(stereopermutation, stereopermutations, deduplicationDegrees)) {
-        stereopermutation.rankingEquivalentTo = findRankingEquivalent(stereopermutation);
-        stereopermutations.push_back(std::move(stereopermutation));
+      auto permutation = align(f, s, alignment);
+      if(!isDuplicate(permutation, stereopermutations, deduplicationDegrees)) {
+        permutation.rankingEquivalentTo = findRankingEquivalent(permutation);
+        stereopermutations.push_back(std::move(permutation));
       }
     }
   );
@@ -548,8 +552,8 @@ Composite::PermutationGenerator::generateEclipsedOrStaggered(
      * But staggered here means offset by pi/2:
      */
     if(alignment == Alignment::Staggered) {
-      for(auto& stereopermutation : stereopermutations) {
-        for(auto& dihedral : stereopermutation.dihedrals) {
+      for(auto& permutation : stereopermutations) {
+        for(auto& dihedral : permutation.dihedrals) {
           std::get<2>(dihedral) = Cartesian::signedDihedralAngle(std::get<2>(dihedral) + M_PI / 2);
         }
       }
@@ -777,10 +781,7 @@ double Composite::perpendicularSubstituentAngle(
     1.0 - (
       1.0 - std::cos(angleBetweenSubstituents)
     ) / (
-      std::pow(
-        std::sin(angleFromBoundShapeVertex),
-        2
-      )
+      std::pow(std::sin(angleFromBoundShapeVertex), 2)
     )
   );
 }
@@ -1006,12 +1007,12 @@ bool Composite::isIsotropic() const {
   return countNonEquivalentPermutations() <= 1;
 }
 
-unsigned Composite::order() const {
+std::pair<unsigned, unsigned> Composite::orders() const {
   /* Angle groups information is gone, but we can deduce the information
    * by counting the distinct vertices at both sides of the dihedral lists of a
    * permutation.
    */
-  auto countDistinct = [&](auto&& f) {
+  const auto countDistinct = [&](auto&& f) {
     std::set<unsigned> positions;
     for(const Permutation::DihedralTuple& t : stereopermutations_.front().dihedrals) {
       positions.insert(f(t));
@@ -1019,11 +1020,17 @@ unsigned Composite::order() const {
     return positions.size();
   };
 
-  return std::max(
+  return std::make_pair(
     countDistinct(Temple::Functor::first),
     countDistinct(Temple::Functor::second)
   );
 }
+
+unsigned Composite::order() const {
+  const auto both = orders();
+  return std::max(both.first, both.second);
+}
+
 
 unsigned Composite::rotationalAxisSymmetryOrder() const {
   /* NOTE: Maybe this can be replaced with the integer division

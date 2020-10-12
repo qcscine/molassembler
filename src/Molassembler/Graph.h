@@ -272,6 +272,8 @@ public:
    *
    * @complexity{@math{\Theta(N)}}
    *
+   * The atoms making up the bond are in the resulting atom lists, too.
+   *
    * @note This function is not thread-safe.
    */
   std::pair<

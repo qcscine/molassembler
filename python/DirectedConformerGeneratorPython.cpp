@@ -270,7 +270,7 @@ void init_directed_conformer_generator(pybind11::module& m) {
       pybind11::const_
     ),
     pybind11::arg("atom_collection"),
-    pybind11::arg("fitting_mode") = BondStereopermutator::FittingMode::Thresholded,
+    pybind11::arg("fitting_mode") = BondStereopermutator::FittingMode::Nearest,
     R"delim(
       Infer a decision list for the relevant bonds from positions.
 
@@ -302,7 +302,7 @@ void init_directed_conformer_generator(pybind11::module& m) {
       pybind11::const_
     ),
     pybind11::arg("positions"),
-    pybind11::arg("fitting_mode") = BondStereopermutator::FittingMode::Thresholded,
+    pybind11::arg("fitting_mode") = BondStereopermutator::FittingMode::Nearest,
     R"delim(
       Infer a decision list for the relevant bonds from positions.
 

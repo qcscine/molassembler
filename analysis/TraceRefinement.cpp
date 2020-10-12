@@ -11,7 +11,9 @@
 
 #include "boost/filesystem.hpp"
 #include "boost/program_options.hpp"
+#include "boost/functional/hash.hpp"
 
+#include "Molassembler/Detail/Cartesian.h"
 #include "Molassembler/DistanceGeometry/ConformerGeneration.h"
 #include "Molassembler/DistanceGeometry/EigenRefinement.h"
 #include "Molassembler/DistanceGeometry/ExplicitBoundsGraph.h"
@@ -24,6 +26,7 @@
 #include "Molassembler/GraphAlgorithms.h"
 
 #include "Molassembler/Temple/Adaptors/Enumerate.h"
+#include "Molassembler/Temple/Adaptors/Zip.h"
 #include "Molassembler/Temple/Functional.h"
 #include "Molassembler/Temple/Optimization/Lbfgs.h"
 #include "Molassembler/Temple/constexpr/Numeric.h"
@@ -33,7 +36,292 @@
 
 namespace Scine {
 namespace Molassembler {
+namespace {
+
+template<typename T, typename U>
+std::pair<double, unsigned> covarianceImpl(const T& t, const U& u) {
+  // Single-pass covariance calculation from Wikipedia
+  double mu_x = 0;
+  double mu_y = 0;
+  double C = 0;
+  unsigned N = 0;
+
+  Temple::forEach(
+    Temple::Adaptors::zip(t, u),
+    [&](const double x, const double y) {
+      N += 1;
+      const double dx = x - mu_x;
+      mu_x += dx / N;
+      mu_y += (y - mu_y) / N;
+      C += dx * (y - mu_y);
+    }
+  );
+
+  return std::make_pair(C, N);
+}
+
+template<typename T, typename U>
+double sampleCovariance(const T& t, const U& u) {
+  auto parts = covarianceImpl(t, u);
+  if(parts.second < 2) {
+    throw std::logic_error("Need at least two values to calculate covariance");
+  }
+  return parts.first / (parts.second - 1);
+}
+
+} // namespace
+
 namespace DistanceGeometry {
+
+struct TermTraceVisitor {
+  using IndexPair = std::pair<AtomIndex, AtomIndex>;
+
+  template<typename Map, typename Key>
+  static void addToMap(Map& map, const Key& key, double value) {
+    const auto findIter = map.find(key);
+    if(findIter == map.end()) {
+      std::vector<double> values;
+      values.push_back(value);
+      map.emplace(key, values);
+    } else {
+      findIter->second.push_back(value);
+    }
+  }
+
+  void distanceTerm(unsigned i, unsigned j, double value) {
+    addToMap(distanceTerms, IndexPair {i, j}, value);
+  }
+
+  void chiralTerm(const ChiralConstraint::SiteSequence& sites, double value) {
+    addToMap(chiralTerms, sites, value);
+  }
+
+  void dihedralTerm(const DihedralConstraint::SiteSequence& sites, double value) {
+    addToMap(dihedralTerms, sites, value);
+  }
+
+  void fourthDimensionTerm(unsigned i, double value) {
+    addToMap(fourthDimensionTerms, i, value);
+  }
+
+  using NameCovariancePair = std::pair<std::string, double>;
+  using CovarianceContainer = std::vector<NameCovariancePair>;
+
+  template<typename Key, typename DataContainer, typename Stringifier>
+  static CovarianceContainer accumulateHighestCovariance(
+    CovarianceContainer covariances,
+    const DataContainer& container,
+    const Key& deduplicationKey,
+    const std::vector<double>& referenceData,
+    unsigned count,
+    Stringifier&& stringifier
+  ) {
+    return Temple::accumulate(
+      container,
+      std::move(covariances),
+      [&](auto best, const auto& iterPair) {
+        // Avoid calculating autocovariances
+        if(iterPair.first == deduplicationKey) {
+          return best;
+        }
+
+        const double covariance = sampleCovariance(iterPair.second, referenceData);
+
+        if(best.size() < count) {
+          best.emplace_back(stringifier(iterPair.first), covariance);
+          return best;
+        }
+
+        const auto findIter = std::find_if(
+          std::begin(best),
+          std::end(best),
+          [&](const auto& currentPair) {
+            return currentPair.second < covariance;
+          }
+        );
+
+        if(findIter != std::end(best)) {
+          *findIter = NameCovariancePair {
+            stringifier(iterPair.first),
+            covariance
+          };
+        }
+
+        return best;
+      }
+    );
+  }
+
+  void highestCovariance(std::ostream& os, unsigned i, unsigned j, unsigned count) const {
+    const IndexPair distanceKey {i, j};
+    const auto& referenceValues = distanceTerms.at(distanceKey);
+
+    auto best = accumulateHighestCovariance(
+      CovarianceContainer {},
+      distanceTerms,
+      IndexPair {i, j},
+      referenceValues,
+      count,
+      [](auto x) { return "Distance " + Temple::stringify(x); }
+    );
+
+    best = accumulateHighestCovariance(
+      std::move(best),
+      chiralTerms,
+      ChiralConstraint::SiteSequence {},
+      referenceValues,
+      count,
+      [](auto x) { return "Chiral " + Temple::stringify(x); }
+    );
+
+    best = accumulateHighestCovariance(
+      std::move(best),
+      dihedralTerms,
+      DihedralConstraint::SiteSequence {},
+      referenceValues,
+      count,
+      [](auto x) { return "Dihedral " + Temple::stringify(x); }
+    );
+
+    best = accumulateHighestCovariance(
+      std::move(best),
+      fourthDimensionTerms,
+      -1u,
+      referenceValues,
+      count,
+      [](auto x) { return "4D " + Temple::stringify(x); }
+    );
+
+    Temple::sort(best, [](const auto& lhs, const auto& rhs) {
+      return lhs.second > rhs.second;
+    });
+
+    for(const auto& nameCovariancePair : best) {
+      os << nameCovariancePair.second << ": " << nameCovariancePair.first << "\n";
+    }
+  }
+
+  std::unordered_map<IndexPair, std::vector<double>, boost::hash<IndexPair>> distanceTerms;
+  std::unordered_map<ChiralConstraint::SiteSequence, std::vector<double>, boost::hash<ChiralConstraint::SiteSequence>> chiralTerms;
+  std::unordered_map<DihedralConstraint::SiteSequence, std::vector<double>, boost::hash<DihedralConstraint::SiteSequence>> dihedralTerms;
+  std::unordered_map<AtomIndex, std::vector<double>> fourthDimensionTerms;
+};
+
+/**
+ * @brief Writes messages to the log explaining why a structure was rejected
+ *
+ * @see finalStructureAcceptable for criteria on acceptability
+ *
+ * A final structure is acceptable if
+ * - All distance bounds are within 0.5 of either the lower or upper boundary
+ * - All chiral constraints are within 0.5 of either the lower or upper boundary
+ *
+ * @complexity{@math{\Theta(N)}}
+ *
+ * @param refinement The refinement functor
+ * @param bounds The distance bounds
+ * @param positions The final positions from a refinement
+ */
+template<class RefinementType, typename PositionType>
+void explainAcceptanceFailure(
+  const RefinementType& refinement,
+  const DistanceBoundsMatrix& bounds,
+  const PositionType& positions,
+  const TermTraceVisitor& termTrace
+) {
+  struct AcceptanceFailureExplainer {
+    const double deviationThreshold = 0.5;
+    bool earlyExit = false;
+    bool value = true;
+    std::ostream& log = Log::log(Log::Particulars::DgStructureAcceptanceFailures);
+    const DistanceBoundsMatrix& distanceBounds;
+    const TermTraceVisitor& trace;
+
+    AcceptanceFailureExplainer(const DistanceBoundsMatrix& passBounds, const TermTraceVisitor& termTrace)
+      : distanceBounds(passBounds), trace(termTrace) {}
+
+    void distanceOverThreshold(AtomIndex i, AtomIndex j, double distance) {
+      log << "Distance constraint " << i << " - " << j << " : ["
+        << distanceBounds.lowerBound(i, j) << ", " << distanceBounds.upperBound(i, j)
+        << "] deviation over threshold, distance is : " << distance << "\n";
+      trace.highestCovariance(log, i, j, 5);
+    }
+
+    void chiralOverThreshold(const ChiralConstraint& chiral, double volume) {
+      if(!chiral.targetVolumeIsZero()) {
+        log << "Chiral constraint " << Temple::stringifyContainer(chiral.sites) << " : ["
+          << chiral.lower << ", " << chiral.upper
+          << "] deviation over threshold, volume is : " << volume << "\n";
+      }
+    }
+
+    void dihedralOverThreshold(const DihedralConstraint& dihedral, double angle, double term) {
+      log << "Dihedral constraint " << Temple::stringifyContainer(dihedral.sites)
+        << " : [" << dihedral.lower << ", " << dihedral.upper
+        << "], angle is : " << angle << ", term is: " << term << "\n";
+    }
+  };
+
+  refinement.visitUnfulfilledConstraints(
+    bounds,
+    positions,
+    AcceptanceFailureExplainer {bounds, termTrace}
+  );
+}
+
+/**
+ * @brief Writes messages to the log explaining the final contributions to
+ *   the error function
+ *
+ * @complexity{@math{\Theta(N)}}
+ *
+ * @param refinement The refinement functor
+ * @param bounds The distance bounds
+ * @param positions The final positions from a refinement
+ */
+template<class RefinementType, typename PositionType>
+void explainFinalContributions(
+  const RefinementType& refinement,
+  const DistanceBoundsMatrix& bounds,
+  const PositionType& positions
+) {
+  struct FinalContributionsExplainer {
+    const double deviationThreshold = 0;
+    bool earlyExit = false;
+    bool value = true;
+    std::ostream& log = Log::log(Log::Particulars::DgFinalErrorContributions);
+    const DistanceBoundsMatrix& distanceBounds;
+
+    FinalContributionsExplainer(const DistanceBoundsMatrix& passBounds)
+      : distanceBounds(passBounds) {}
+
+    void distanceOverThreshold(AtomIndex i, AtomIndex j, double distance) {
+      log << "Distance constraint " << i << " - " << j << " : ["
+        << distanceBounds.lowerBound(i, j) << ", " << distanceBounds.upperBound(i, j)
+        << "] is unsatisfied, distance is: " << distance << "\n";
+    }
+
+    void chiralOverThreshold(const ChiralConstraint& chiral, double volume) {
+      log << "Chiral constraint " << Temple::stringify(chiral.sites) << " : ["
+        << chiral.lower << ", " << chiral.upper
+        << "] is unsatisfied, volume is: " << volume << "\n";
+    }
+
+    void dihedralOverThreshold(const DihedralConstraint& dihedral, double angle, double term) {
+      log << "Dihedral constraint " << Temple::stringify(dihedral.sites)
+        << " : [" << dihedral.lower << ", " << dihedral.upper
+        << "] is unsatisfied, angle is: " << angle << ", term is " << term << "\n";
+    }
+  };
+
+  refinement.visitUnfulfilledConstraints(
+    bounds,
+    positions,
+    FinalContributionsExplainer {bounds}
+  );
+}
+
+
 
 /**
  * @brief Debug class containing a step from refinement
@@ -83,10 +371,6 @@ namespace Detail {
 
 template<typename EigenRefinementType>
 struct InversionOrIterLimitStop {
-  const unsigned iterLimit;
-  const EigenRefinementType& refinementFunctorReference;
-
-
   using VectorType = typename EigenRefinementType::VectorType;
   using FloatType = typename EigenRefinementType::FloatingPointType;
 
@@ -98,12 +382,17 @@ struct InversionOrIterLimitStop {
   {}
 
   template<typename StepValues>
-  bool shouldContinue(unsigned iteration, const StepValues& /* step */) {
+  bool shouldContinue(unsigned iteration, const StepValues& step) {
     return (
       iteration < iterLimit
       && refinementFunctorReference.proportionChiralConstraintsCorrectSign < 1.0
+      && (step.parameters.proposed - step.parameters.current).norm() > minParameterDiffNorm
     );
   }
+
+  const unsigned iterLimit;
+  const EigenRefinementType& refinementFunctorReference;
+  double minParameterDiffNorm = 1e-3;
 };
 
 template<typename FloatType>
@@ -115,12 +404,83 @@ struct GradientOrIterLimitStop {
     return (
       iteration < iterLimit
       && step.gradients.current.template cast<double>().norm() > gradNorm
+      && (step.parameters.proposed - step.parameters.current).norm() > minParameterDiffNorm
     );
   }
 
   unsigned iterLimit = 10000;
   double gradNorm = 1e-5;
+  double minParameterDiffNorm = 1e-3;
 };
+
+template<unsigned dimensionality>
+Eigen::Vector3d averagePosition(
+  const Eigen::VectorXd& linearPositions,
+  const std::vector<AtomIndex>& indices
+) {
+  if(indices.size() == 1) {
+    return linearPositions.template segment<3>(dimensionality * indices.front());
+  }
+
+  Eigen::Vector3d average = Eigen::Vector3d::Zero();
+  for(AtomIndex i : indices) {
+    average += linearPositions.template segment<3>(dimensionality * i);
+  }
+  average /= indices.size();
+  return average;
+}
+
+template<unsigned dimensionality>
+void twistRotatableDihedrals(
+  Eigen::Ref<Eigen::VectorXd> positions,
+  const std::vector<DihedralConstraint>& constraints,
+  const MoleculeDGInformation::GroupMapType& rotatableGroupMap
+) {
+  for(const DihedralConstraint& constraint : constraints) {
+    const AtomIndex j = constraint.sites.at(1).front();
+    const AtomIndex k = constraint.sites.at(2).front();
+    BondIndex bond {j, k};
+
+    const auto findIter = rotatableGroupMap.find(bond);
+    if(findIter == std::end(rotatableGroupMap)) {
+      continue;
+    }
+
+    const MoleculeDGInformation::RotatableGroup& group = findIter->second;
+
+    const Eigen::Vector3d jVector = positions.template segment<3>(dimensionality * j);
+    const Eigen::Vector3d kVector = positions.template segment<3>(dimensionality * k);
+
+    const double measuredDihedral = Cartesian::dihedral(
+      averagePosition<dimensionality>(positions, constraint.sites.at(0)),
+      jVector,
+      kVector,
+      averagePosition<dimensionality>(positions, constraint.sites.at(3))
+    );
+
+    const double targetDihedral = Cartesian::dihedralAverage(
+      constraint.lower,
+      constraint.upper
+    );
+
+    Eigen::Vector3d axisVector = (kVector - jVector).normalized();
+    if(group.side == j) {
+      axisVector *= -1;
+    }
+
+    const Eigen::Matrix3d rotation = Eigen::AngleAxisd {
+      targetDihedral - measuredDihedral,
+      axisVector
+    }.toRotationMatrix();
+
+    const Eigen::Vector3d sideVector = positions.template segment<3>(dimensionality * group.side);
+    for(AtomIndex i : group.vertices) {
+      positions.template segment<3>(dimensionality * i) = sideVector + rotation * (
+        positions.template segment<3>(dimensionality * i) - sideVector
+      );
+    }
+  }
+}
 
 } // namespace Detail
 
@@ -140,6 +500,7 @@ MoleculeDGInformation gatherDGInformation(
   data.bounds = spatialModel.makePairwiseBounds();
   data.chiralConstraints = spatialModel.getChiralConstraints();
   data.dihedralConstraints = spatialModel.getDihedralConstraints();
+  data.rotatableGroups = MoleculeDGInformation::make(data.dihedralConstraints, molecule);
 
   if(applyTetrangleSmoothing) {
     /* Add implicit lower and upper bounds */
@@ -373,9 +734,10 @@ std::list<RefinementData> debugRefinement(
       const Molecule& mol;
       FullRefinementType& functor;
       std::list<RefinementStepData>& steps;
+      TermTraceVisitor& termTracer;
 
-      Observer(const Molecule& passMolecule, FullRefinementType& passFunctor, std::list<RefinementStepData>& passSteps)
-        : mol(passMolecule), functor(passFunctor), steps(passSteps) {}
+      Observer(const Molecule& passMolecule, FullRefinementType& passFunctor, std::list<RefinementStepData>& passSteps, TermTraceVisitor& passTracer)
+        : mol(passMolecule), functor(passFunctor), steps(passSteps), termTracer(passTracer) {}
 
       using VectorType = typename FullRefinementType::VectorType;
 
@@ -403,10 +765,13 @@ std::list<RefinementData> debugRefinement(
           functor.proportionChiralConstraintsCorrectSign,
           functor.compressFourthDimension
         );
+
+        functor.visitTerms(positions, termTracer);
       }
     };
 
-    Observer observer(molecule, refinementFunctor, refinementSteps);
+    TermTraceVisitor termTracer;
+    Observer observer(molecule, refinementFunctor, refinementSteps, termTracer);
 
     /* Our embedded coordinates are (dimensionality) dimensional. Now we want
      * to make sure that all chiral constraints are correct, allowing the
@@ -512,6 +877,16 @@ std::list<RefinementData> debugRefinement(
         continue; // this triggers a new structure to be generated
     }
 
+    /* Twist all freely rotatable dihedrals to their target values to avoid
+     * conflicts between distance and dihedral errors to prevent rotations to
+     * target values.
+     */
+    Detail::twistRotatableDihedrals<dimensionality>(
+      transformedPositions,
+      DgData.dihedralConstraints,
+      DgData.rotatableGroups
+    );
+
     /* Add dihedral terms and refine again */
     unsigned thirdStageIterations = 0;
     gradientChecker = Detail::GradientOrIterLimitStop<FloatType> {};
@@ -588,7 +963,8 @@ std::list<RefinementData> debugRefinement(
           explainAcceptanceFailure(
             refinementFunctor,
             distanceBounds,
-            transformedPositions
+            transformedPositions,
+            termTracer
           );
         }
       }

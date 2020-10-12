@@ -39,6 +39,14 @@ std::ostream& operator << (std::ostream& os, const Composite& composite) {
       os << "(equivalent to " << p.rankingEquivalentTo->first << "-" << p.rankingEquivalentTo->second << ")";
     }
 
+    os << ", dihedrals " << Temple::stringify(
+      Temple::map(p.dihedrals,
+        [](const auto& tup) {
+          return static_cast<int>(Temple::Math::toDegrees(std::get<2>(tup)));
+        }
+      )
+    );
+
     os << "\n";
   }
 

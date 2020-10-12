@@ -786,7 +786,6 @@ private:
     StepValues step;
     VectorType direction = step.generateInitialDirection(function, parameters, stepLength, boxes ...);
     observer(step.parameters.proposed);
-    //std::cout << "Propose step to " << step.parameters.proposed.transpose() << ", value " << step.values.proposed << "\n";
 
     /* Set up ring buffer to keep changes in gradient and parameters to
      * approximate the inverse Hessian with
@@ -813,9 +812,7 @@ private:
       /* Accept the proposed step and prepare a new prospective step using the
        * updated direction vector
        */
-      //std::cout << "Accepting step to " << step.parameters.proposed.transpose() << "\n";
       step.propagate(function, stepLength, direction, boxes ...);
-      //std::cout << "Propose step to " << step.parameters.proposed.transpose() << ", value " << step.values.proposed << "\n";
       observer(step.parameters.proposed);
     }
 

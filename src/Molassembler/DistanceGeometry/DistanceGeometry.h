@@ -46,6 +46,10 @@ struct ChiralConstraint {
   double weight = 1.0;
 
   ChiralConstraint(SiteSequence passSites, double passLower, double passUpper);
+
+  bool targetVolumeIsZero() const {
+    return lower + upper < 1e-4;
+  }
 };
 
 /**
@@ -60,9 +64,9 @@ struct DihedralConstraint {
 
   //! Site definition sequence (odd permutations invert sign)
   SiteSequence sites;
-  //! Lower bound on signed volume
+  //! Lower bound on dihedral angle
   double lower;
-  //! Upper bound on signed volume
+  //! Upper bound on dihedral angle
   double upper;
 
   DihedralConstraint(SiteSequence passSites, double passLower, double passUpper);

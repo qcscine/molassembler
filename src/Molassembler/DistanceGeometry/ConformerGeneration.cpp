@@ -19,8 +19,10 @@
 #include "Molassembler/Graph/GraphAlgorithms.h"
 #include "Utils/Math/QuaternionFit.h"
 
+#include "Molassembler/Detail/Cartesian.h"
 #include "Molassembler/Temple/Optimization/Lbfgs.h"
 #include "Molassembler/Temple/Optionals.h"
+#include "Molassembler/Temple/Functional.h"
 #include "Molassembler/Temple/Random.h"
 
 #include <iostream>
@@ -137,10 +139,6 @@ Molecule narrow(Molecule molecule, Random::Engine& engine) {
 
 template<typename EigenRefinementType>
 struct InversionOrIterLimitStop {
-  const unsigned iterLimit;
-  const EigenRefinementType& refinementFunctorReference;
-
-
   using VectorType = typename EigenRefinementType::VectorType;
   using FloatType = typename EigenRefinementType::FloatingPointType;
 
@@ -152,12 +150,17 @@ struct InversionOrIterLimitStop {
   {}
 
   template<typename StepValues>
-  bool shouldContinue(unsigned iteration, const StepValues& /* step */) {
+  bool shouldContinue(unsigned iteration, const StepValues& step) {
     return (
       iteration < iterLimit
       && refinementFunctorReference.proportionChiralConstraintsCorrectSign < 1.0
+      && (step.parameters.proposed - step.parameters.current).norm() > minParameterDiffNorm
     );
   }
+
+  const unsigned iterLimit;
+  const EigenRefinementType& refinementFunctorReference;
+  double minParameterDiffNorm = 1e-3;
 };
 
 template<typename FloatType>
@@ -169,14 +172,121 @@ struct GradientOrIterLimitStop {
     return (
       iteration < iterLimit
       && step.gradients.current.template cast<double>().norm() > gradNorm
+      && (step.parameters.proposed - step.parameters.current).norm() > minParameterDiffNorm
     );
   }
 
   unsigned iterLimit = 10000;
   double gradNorm = 1e-5;
+  double minParameterDiffNorm = 1e-3;
 };
 
+template<unsigned dimensionality>
+Eigen::Vector3d averagePosition(
+  const Eigen::VectorXd& linearPositions,
+  const std::vector<AtomIndex>& indices
+) {
+  if(indices.size() == 1) {
+    return linearPositions.template segment<3>(dimensionality * indices.front());
+  }
+
+  Eigen::Vector3d average = Eigen::Vector3d::Zero();
+  for(AtomIndex i : indices) {
+    average += linearPositions.template segment<3>(dimensionality * i);
+  }
+  average /= indices.size();
+  return average;
+}
+
+template<unsigned dimensionality>
+void twistRotatableDihedrals(
+  Eigen::Ref<Eigen::VectorXd> positions,
+  const std::vector<DihedralConstraint>& constraints,
+  const MoleculeDGInformation::GroupMapType& rotatableGroupMap
+) {
+  for(const DihedralConstraint& constraint : constraints) {
+    const AtomIndex j = constraint.sites.at(1).front();
+    const AtomIndex k = constraint.sites.at(2).front();
+    BondIndex bond {j, k};
+
+    const auto findIter = rotatableGroupMap.find(bond);
+    if(findIter == std::end(rotatableGroupMap)) {
+      continue;
+    }
+
+    const MoleculeDGInformation::RotatableGroup& group = findIter->second;
+
+    const Eigen::Vector3d jVector = positions.template segment<3>(dimensionality * j);
+    const Eigen::Vector3d kVector = positions.template segment<3>(dimensionality * k);
+
+    const double measuredDihedral = Cartesian::dihedral(
+      averagePosition<dimensionality>(positions, constraint.sites.at(0)),
+      jVector,
+      kVector,
+      averagePosition<dimensionality>(positions, constraint.sites.at(3))
+    );
+
+    const double targetDihedral = Cartesian::dihedralAverage(
+      constraint.lower,
+      constraint.upper
+    );
+
+    Eigen::Vector3d axisVector = (kVector - jVector).normalized();
+    if(group.side == j) {
+      axisVector *= -1;
+    }
+
+    const Eigen::Matrix3d rotation = Eigen::AngleAxisd {
+      targetDihedral - measuredDihedral,
+      axisVector
+    }.toRotationMatrix();
+
+    const Eigen::Vector3d sideVector = positions.template segment<3>(dimensionality * group.side);
+    for(AtomIndex i : group.vertices) {
+      positions.template segment<3>(dimensionality * i) = sideVector + rotation * (
+        positions.template segment<3>(dimensionality * i) - sideVector
+      );
+    }
+  }
+}
+
 } // namespace Detail
+
+MoleculeDGInformation::GroupMapType MoleculeDGInformation::make(
+  const std::vector<DihedralConstraint>& constraints,
+  const Molecule& molecule
+) {
+  MoleculeDGInformation::GroupMapType groups;
+
+  Temple::forEach(constraints,
+    [&](const DihedralConstraint& constraint) {
+      // It is guaranteed that the sites in the middle have one index only
+      BondIndex bond {
+        constraint.sites.at(1).front(),
+        constraint.sites.at(2).front(),
+      };
+
+      // Populate with group to rotate information on the smaller side
+      if(molecule.graph().cycles().numCycleFamilies(bond) == 0) {
+        auto sides = molecule.graph().splitAlongBridge(bond);
+        if(sides.first.size() < sides.second.size()) {
+          groups.emplace(
+            bond,
+            MoleculeDGInformation::RotatableGroup {bond.first, sides.first}
+          );
+        } else {
+          groups.emplace(
+            bond,
+            MoleculeDGInformation::RotatableGroup {bond.second, sides.second}
+          );
+        }
+      }
+    }
+  );
+
+  return groups;
+}
+
 
 MoleculeDGInformation gatherDGInformation(
   const Molecule& molecule,
@@ -190,6 +300,7 @@ MoleculeDGInformation gatherDGInformation(
   data.bounds = spatialModel.makePairwiseBounds();
   data.chiralConstraints = spatialModel.getChiralConstraints();
   data.dihedralConstraints = spatialModel.getDihedralConstraints();
+  data.rotatableGroups = MoleculeDGInformation::make(data.dihedralConstraints, molecule);
 
   return data;
 }
@@ -316,6 +427,16 @@ outcome::result<AngstromPositions> refine(
   if(refinementFunctor.proportionChiralConstraintsCorrectSign < 1) {
     return DgError::RefinedChiralsWrong;
   }
+
+  /* Twist all freely rotatable dihedrals to their target values to avoid
+   * conflicts between distance and dihedral errors to prevent rotations to
+   * target values.
+   */
+  Detail::twistRotatableDihedrals<dimensionality>(
+    transformedPositions,
+    DgDataPtr->dihedralConstraints,
+    DgDataPtr->rotatableGroups
+  );
 
   /* Add dihedral terms and refine again */
   unsigned thirdStageIterations = 0;

@@ -542,12 +542,12 @@ void SpatialModel::addBondStereopermutatorInformation(
   // Match stereopermutators to the order in Composite
   const Stereopermutations::Composite& composite = permutator.composite();
   using PermutatorPair = std::pair<const AtomStereopermutator&, const AtomStereopermutator&>;
-  auto atomPermutators = [&]() {
-    if(stereopermutatorA.placement() == composite.orientations().first.identifier) {
-      return PermutatorPair(stereopermutatorA, stereopermutatorB);
+  const auto atomPermutators = [&]() -> PermutatorPair {
+    if(stereopermutatorA.placement() == composite.orientations().first.identifier)  {
+      return {stereopermutatorA, stereopermutatorB};
     }
 
-    return PermutatorPair(stereopermutatorB, stereopermutatorA);
+    return {stereopermutatorB, stereopermutatorA};
   }();
 
   const unsigned permutation = permutator.indexOfPermutation().value();
@@ -557,12 +557,17 @@ void SpatialModel::addBondStereopermutatorInformation(
     return;
   }
 
+  const auto& dihedrals = composite.allPermutations().at(permutation).dihedrals;
+  const auto& firstDihedral = dihedrals.front();
+  const auto vertexCountPair = composite.orders();
+  const bool leftIsSideWithMoreVertices = vertexCountPair.first < vertexCountPair.second;
+
   // Default case: No part of the dihedral is fixed
   Shapes::Vertex firstShapePosition;
   Shapes::Vertex secondShapePosition;
   double dihedralAngle;
 
-  for(const auto& dihedralTuple : composite.allPermutations().at(permutation).dihedrals) {
+  for(const auto& dihedralTuple : dihedrals) {
     std::tie(firstShapePosition, secondShapePosition, dihedralAngle) = dihedralTuple;
 
     const SiteIndex iAtFirst = atomPermutators.first.getShapePositionMap().indexOf(firstShapePosition);
@@ -631,17 +636,26 @@ void SpatialModel::addBondStereopermutatorInformation(
     );
 
     /* Dihedral constraints are tricky, and having either all-to-all or
-     * one-to-all is problematic for minimization, especially if adjacent bonds
-     * are affected. So we only place a single dihedral constraint on each bond
-     * unless alignment is eclipsed, where we want everything very flat.
+     * one-to-all can be problematic for minimization, especially if adjacent
+     * bonds are affected simultaneously. So we place as few dihedral
+     * constraints on each bond as possible.
+     *
+     * It's important to "anchor" the dihedral constraints at the side of the
+     * bond with more vertices. This cuts down on the number of dihedral
+     * constraints emitted and keeps their gradient contributions from
+     * counteracting each other. So we want to emit constraints only
+     * referencing one of the vertices on the side with more vertices.
      */
-    const auto& firstDihedral = composite.allPermutations().at(permutation).dihedrals;
-    if(
-      composite.alignment() != Stereopermutations::Composite::Alignment::Eclipsed
-      && std::get<0>(firstDihedral.front()) != firstShapePosition
-      && std::get<1>(firstDihedral.front()) != secondShapePosition
-    ) {
-      continue;
+    if(composite.alignment() != Stereopermutations::Composite::Alignment::Eclipsed) {
+      if(leftIsSideWithMoreVertices) {
+        if(std::get<1>(firstDihedral) != secondShapePosition) {
+          continue;
+        }
+      } else {
+        if(std::get<0>(firstDihedral) != firstShapePosition) {
+          continue;
+        }
+      }
     }
 
     dihedralConstraints_.emplace_back(

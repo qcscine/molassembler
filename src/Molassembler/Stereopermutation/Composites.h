@@ -276,6 +276,9 @@ public:
    */
   bool isIsotropic() const;
 
+  //! Returns the number of relevant substituent shape vertices for each side
+  std::pair<unsigned, unsigned> orders() const;
+
   /*! @brief Returns the higher number of relevant substituent shape vertices
    *   of both sides
    *

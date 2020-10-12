@@ -69,9 +69,23 @@ Molecule narrow(Molecule molecule, Random::Engine& engine);
 
 //! Intermediate conformational data about a Molecule given by a spatial model
 struct MoleculeDGInformation {
+  struct RotatableGroup {
+    AtomIndex side;
+    std::vector<AtomIndex> vertices;
+  };
+
+  using GroupMapType = std::unordered_map<BondIndex, RotatableGroup, boost::hash<BondIndex>>;
+
+  //! @brief Records freely rotatable groups with dihedral constraints
+  static GroupMapType make(
+    const std::vector<DihedralConstraint>& constraints,
+    const Molecule& molecule
+  );
+
   SpatialModel::BoundsMatrix bounds;
   std::vector<ChiralConstraint> chiralConstraints;
   std::vector<DihedralConstraint> dihedralConstraints;
+  GroupMapType rotatableGroups;
 };
 
 /*! @brief Collects intermediate conformational data about a Molecule using a spatial model

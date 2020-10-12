@@ -48,6 +48,14 @@ public:
   using FullDimensionalMatrixType = Eigen::Matrix<FloatType, dimensionality, Eigen::Dynamic>;
   //! Template argument specifying floating-point type
   using FloatingPointType = FloatType;
+
+  //! Visitor that can be passed to visit all terms
+  struct DefaultTermVisitor {
+    void distanceTerm(unsigned /* i */, unsigned /* j */, double /* value */) {}
+    void chiralTerm(const ChiralConstraint::SiteSequence& /* sites */, double /* value */) {}
+    void dihedralTerm(const DihedralConstraint::SiteSequence& /* sites */, double /* value */) {}
+    void fourthDimensionTerm(unsigned /* i */, double /* value */) {}
+  };
 //!@}
 
 //!@name Static member functions
@@ -222,44 +230,47 @@ public:
    *
    * @complexity{@math{\Omega(N^2)}}
    */
-  void distanceContributions(const VectorType& positions, FloatType& error, Eigen::Ref<VectorType> gradient) const {
+  void distanceContributions(
+    const VectorType& positions,
+    FloatType& error,
+    Eigen::Ref<VectorType> gradient
+  ) const {
     // Delegate to SIMD or non-SIMD implementation
-    distanceContributionsImpl(positions, error, gradient);
+    distanceContributionsImpl(positions, error, gradient, DefaultTermVisitor {});
   }
 
   /*! @brief Adds chiral error and gradient contributions
    *
    * @complexity{@math{\Omega(C)}}
    */
-  void chiralContributions(const VectorType& positions, FloatType& error, Eigen::Ref<VectorType> gradient) const {
-    chiralContributionsImpl(positions, error, gradient);
+  void chiralContributions(
+    const VectorType& positions,
+    FloatType& error,
+    Eigen::Ref<VectorType> gradient
+  ) const {
+    chiralContributionsImpl(positions, error, gradient, DefaultTermVisitor {});
   }
 
   /*! @brief Adds dihedral error and gradient contributions
    *
    * @complexity{@math{\Omega(D)}}
    */
-  void dihedralContributions(const VectorType& positions, FloatType& error, Eigen::Ref<VectorType> gradient) const {
+  void dihedralContributions(
+    const VectorType& positions,
+    FloatType& error,
+    Eigen::Ref<VectorType> gradient
+  ) const {
     if(dihedralTerms) {
-      dihedralContributionsImpl(positions, error, gradient);
+      dihedralContributionsImpl(positions, error, gradient, DefaultTermVisitor {});
     }
   }
 
-  /*! @brief Adds fourth dimension error and gradient contributions
-   *
-   * @complexity{@math{\Theta(N)}}
-   */
-  void fourthDimensionContributions(const VectorType& positions, FloatType& error, Eigen::Ref<VectorType> gradient) const {
-    assert(positions.size() == gradient.size());
-    // Collect all fourth dimension values, square and sum, add to error
-    if(dimensionality == 4 && compressFourthDimension) {
-      const unsigned N = positions.size() / dimensionality;
-      for(unsigned i = 0; i < N; ++i) {
-        const FloatType fourthDimensionalValue = positions(4 * i + 3);
-        error += fourthDimensionalValue * fourthDimensionalValue;
-        gradient(4 * i + 3) += 2 * fourthDimensionalValue;
-      }
-    }
+  void fourthDimensionContributions(
+    const VectorType& positions,
+    FloatType& error,
+    Eigen::Ref<VectorType> gradient
+  ) const {
+    fourthDimensionContributionsImpl(positions, error, gradient, DefaultTermVisitor {});
   }
 //!@}
 
@@ -300,7 +311,7 @@ public:
        * refinement step. If they are outside their target values by a large
        * amount, that is caught by finalStructureAcceptable anyway.
        */
-      if(std::fabs(constraint.lower + constraint.upper) > 1e-4) {
+      if(!constraint.targetVolumeIsZero()) {
         nonZeroChiralConstraints += 1;
 
         const ThreeDimensionalVector delta = getAveragePosition3D(positions, constraint.sites[3]);
@@ -316,7 +327,7 @@ public:
         );
 
         if( // can this be simplified? -> sign bit XOR?
-          ( volume < 0 && constraint.lower > 0)
+          (volume < 0 && constraint.lower > 0)
           || (volume > 0 && constraint.lower < 0)
         ) {
           incorrectNonZeroChiralConstraints += 1;
@@ -333,6 +344,19 @@ public:
     }
 
     return proportionChiralConstraintsCorrectSign;
+  }
+
+  template<typename Visitor>
+  auto visitTerms(const VectorType& positions, Visitor&& visitor) const {
+    FloatType dummyValue = 0;
+    VectorType dummyGradient;
+    dummyGradient.resize(positions.size());
+    dummyGradient.setZero();
+
+    fourthDimensionContributionsImpl(positions, dummyValue, dummyGradient, visitor);
+    dihedralContributionsImpl(positions, dummyValue, dummyGradient, visitor);
+    distanceContributionsImpl(positions, dummyValue, dummyGradient, visitor);
+    chiralContributionsImpl(positions, dummyValue, dummyGradient, visitor);
   }
 
   /**
@@ -422,9 +446,7 @@ public:
       const ThreeDimensionalVector b = h.cross(g);
 
       const double dihedral = std::atan2(
-        a.cross(b).dot(
-          -g.normalized()
-        ),
+        a.cross(b).dot(-g.normalized()),
         a.dot(b)
       );
 
@@ -442,7 +464,7 @@ public:
       const double term = std::fabs(phi - constraintSumHalved) - (constraint.upper - constraint.lower) / 2;
 
       if(term > visitor.deviationThreshold) {
-        visitor.dihedralOverThreshold(constraint, term);
+        visitor.dihedralOverThreshold(constraint, dihedral, term);
         if(visitor.earlyExit) {
           return visitor.value;
         }
@@ -458,11 +480,12 @@ private:
   /*!
    * @brief Adds distance error and gradient contributions (non-SIMD)
    */
-  template<bool dependent = SIMD, std::enable_if_t<!dependent, int>...>
+  template<class Visitor, bool dependent = SIMD, std::enable_if_t<!dependent, int>...>
   void distanceContributionsImpl(
     const VectorType& positions,
     FloatType& error,
-    Eigen::Ref<VectorType> gradient
+    Eigen::Ref<VectorType> gradient,
+    Visitor&& visitor
   ) const {
     assert(positions.size() == gradient.size());
     const unsigned N = positions.size() / dimensionality;
@@ -485,7 +508,9 @@ private:
         const FloatType upperTerm = squareDistance / upperBoundSquared - 1;
 
         if(upperTerm > 0) {
-          error += upperTerm * upperTerm;
+          const FloatType value = upperTerm * upperTerm;
+          error += value;
+          visitor.distanceTerm(i, j, value);
 
           const FullDimensionalVector f = 4 * positionDifference * upperTerm / upperBoundSquared;
 
@@ -497,7 +522,9 @@ private:
           const FloatType lowerTerm = 2 * lowerBoundSquared / quotient - 1;
 
           if(lowerTerm > 0) {
-            error += lowerTerm * lowerTerm;
+            const FloatType value = lowerTerm * lowerTerm;
+            error += value;
+            visitor.distanceTerm(i, j, value);
 
             const FullDimensionalVector g = 8 * lowerBoundSquared * positionDifference * lowerTerm / (
               quotient * quotient
@@ -509,6 +536,8 @@ private:
              */
             gradient.template segment<dimensionality>(dimensionality * i) -= g;
             gradient.template segment<dimensionality>(dimensionality * j) += g;
+          } else {
+            visitor.distanceTerm(i, j, 0.0);
           }
         }
       }
@@ -518,11 +547,12 @@ private:
   /*!
    * @brief SIMD implementation of distance contributions
    */
-  template<bool dependent = SIMD, std::enable_if_t<dependent, int>...>
+  template<class Visitor, bool dependent = SIMD, std::enable_if_t<dependent, int>...>
   void distanceContributionsImpl(
     const VectorType& positions,
     FloatType& error,
-    Eigen::Ref<VectorType> gradient
+    Eigen::Ref<VectorType> gradient,
+    Visitor&& /* visitor */
   ) const {
     assert(positions.size() == gradient.size());
     /* Using the squared distance bounds to avoid unneeded square-root calculations
@@ -663,7 +693,13 @@ private:
   /*!
    * @brief Adds chiral error and gradient contributions
    */
-  void chiralContributionsImpl(const VectorType& positions, FloatType& error, Eigen::Ref<VectorType> gradient) const {
+  template<typename Visitor>
+  void chiralContributionsImpl(
+    const VectorType& positions,
+    FloatType& error,
+    Eigen::Ref<VectorType> gradient,
+    Visitor&& visitor
+  ) const {
     unsigned nonZeroChiralConstraints = 0;
     unsigned incorrectNonZeroChiralConstraints = 0;
 
@@ -681,7 +717,7 @@ private:
         betaMinusDelta.cross(gammaMinusDelta)
       );
 
-      if(std::fabs(constraint.lower + constraint.upper) > 1e-4) {
+      if(!constraint.targetVolumeIsZero()) {
         ++nonZeroChiralConstraints;
         if(
           ( volume < 0 && constraint.lower > 0)
@@ -693,15 +729,18 @@ private:
 
       // Upper bound term
       const FloatType upperTerm = static_cast<FloatType>(constraint.weight) * (volume - static_cast<FloatType>(constraint.upper));
-
       if(upperTerm > 0) {
-        error += upperTerm * upperTerm;
+        const FloatType value = upperTerm * upperTerm;
+        error += value;
+        visitor.chiralTerm(constraint.sites, value);
       }
 
       // Lower bound term
       const FloatType lowerTerm = static_cast<FloatType>(constraint.weight) * (static_cast<FloatType>(constraint.lower) - volume);
       if(lowerTerm > 0) {
-        error += lowerTerm * lowerTerm;
+        const FloatType value = lowerTerm * lowerTerm;
+        error += value;
+        visitor.chiralTerm(constraint.sites, value);
       }
 
       const FloatType factor = 2 * (
@@ -715,7 +754,6 @@ private:
       if(factor != 0) {
         // Specific to deltaI only but still repeated
         const ThreeDimensionalVector alphaMinusGamma = alpha - gamma;
-
         const ThreeDimensionalVector betaMinusGamma = beta - gamma;
 
         const ThreeDimensionalVector iContribution = (
@@ -753,6 +791,8 @@ private:
         for(const AtomIndex deltaI : constraint.sites[3]) {
           gradient.template segment<3>(dimensionality * deltaI) += lContribution;
         }
+      } else {
+        visitor.chiralTerm(constraint.sites, 0.0);
       }
     }
 
@@ -769,7 +809,13 @@ private:
   /*!
    * @brief Adds dihedral error and gradient contributions
    */
-  void dihedralContributionsImpl(const VectorType& positions, FloatType& error, Eigen::Ref<VectorType> gradient) const {
+  template<class Visitor>
+  void dihedralContributionsImpl(
+    const VectorType& positions,
+    FloatType& error,
+    Eigen::Ref<VectorType> gradient,
+    Visitor&& visitor
+  ) const {
     assert(positions.size() == gradient.size());
     constexpr FloatType reductionFactor = 1.0 / 10;
 
@@ -788,9 +834,7 @@ private:
 
       // Calculate the dihedral angle
       FloatType phi = std::atan2(
-        a.cross(b).dot(
-          -g.normalized()
-        ),
+        a.cross(b).dot(-g.normalized()),
         a.dot(b)
       );
 
@@ -812,11 +856,14 @@ private:
        * so we can skip this constraint
        */
       if(h_phi <= 0) {
+        visitor.dihedralTerm(constraint.sites, 0.0);
         continue;
       }
 
       // Error contribution
-      error += h_phi * h_phi * reductionFactor;
+      const FloatType errorContribution = h_phi * h_phi * reductionFactor;
+      error += errorContribution;
+      visitor.dihedralTerm(constraint.sites, errorContribution);
 
       // Multiply with sgn (w)
       h_phi *= static_cast<int>(0 < w_phi) - static_cast<int>(w_phi < 0);
@@ -889,6 +936,38 @@ private:
 
       for(const AtomIndex deltaConstitutingIndex : constraint.sites[3]) {
         gradient.template segment<3>(dimensionality * deltaConstitutingIndex) += lContribution;
+      }
+    }
+  }
+
+  /*! @brief Adds fourth dimension error and gradient contributions
+   *
+   * @complexity{@math{\Theta(N)}}
+   */
+  template<class Visitor = DefaultTermVisitor>
+  void fourthDimensionContributionsImpl(
+    const VectorType& positions,
+    FloatType& error,
+    Eigen::Ref<VectorType> gradient,
+    Visitor&& visitor = {}
+  ) const {
+    if(dimensionality != 4) {
+      return;
+    }
+
+    // Collect all fourth dimension values, square and sum, add to error
+    const unsigned N = positions.size() / dimensionality;
+    if(compressFourthDimension) {
+      for(unsigned i = 0; i < N; ++i) {
+        const FloatType fourthDimensionalValue = positions(4 * i + 3);
+        const FloatType value = fourthDimensionalValue * fourthDimensionalValue;
+        error += value;
+        visitor.fourthDimensionTerm(i, value);
+        gradient(4 * i + 3) += 2 * fourthDimensionalValue;
+      }
+    } else {
+      for(unsigned i = 0; i < N; ++i) {
+        visitor.fourthDimensionTerm(i, 0.0);
       }
     }
   }
