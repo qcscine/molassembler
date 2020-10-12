@@ -73,7 +73,7 @@ How to Cite
 ===========
 
 When publishing results obtained with Molassembler, please cite the
-corresponding release as archived on Zenodo **TODO**.
+corresponding release as archived on Zenodo.
 
 In addition, we kindly request you cite the following article when using
 Molassembler:
