@@ -1,6 +1,6 @@
 /* @file
  * @copyright This code is licensed under the 3-clause BSD license.
- *   Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher PointGroup.
+ *   Copyright ETH Zurich, Laboratory of Physical Chemistry, Reiher PointGroup.
  *   See LICENSE.txt for details. for details.
  */
 
