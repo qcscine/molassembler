@@ -15,37 +15,31 @@
 #include "Molassembler/Stereopermutators/AbstractPermutations.h"
 #include "Molassembler/Stereopermutators/FeasiblePermutations.h"
 #include "Molassembler/Shapes/Data.h"
+#include "Molassembler/Temple/Optionals.h"
 
 namespace Scine {
 namespace Molassembler {
 namespace {
 
-bool partiallyCanonicalizedEnantiomeric(const Molecule& a, const Molecule& b) {
-  // Check the precondition
-  if(a.graph().N() != b.graph().N() || a.graph().B() != b.graph().B()) {
-    return false;
-  }
-
+bool everythingBesidesStereopermutationsSame(const Molecule& a, const Molecule& b) {
   // Use weaker definition
   constexpr auto bitmask = AtomEnvironmentComponents::ElementTypes
     | AtomEnvironmentComponents::BondOrders
     | AtomEnvironmentComponents::Shapes;
 
-  if(
-    a.canonicalComponents() != bitmask
-    || b.canonicalComponents() != bitmask
-  ) {
-    throw std::logic_error(
-      "One or more arguments are not partially canonical as required by "
-      "the precondition"
-    );
+  // Check the precondition
+  assert(a.canonicalComponents() == bitmask && b.canonicalComponents() == bitmask);
+
+  // Graph basic equality
+  if(a.graph().N() != b.graph().N() || a.graph().B() != b.graph().B()) {
+    return false;
   }
 
   const auto aHashes = Hashes::generate(a.graph().inner(), a.stereopermutators(), bitmask);
   const auto bHashes = Hashes::generate(b.graph().inner(), b.stereopermutators(), bitmask);
 
   if(aHashes != bHashes) {
-    throw std::logic_error("Both molecules are canonical but weaker hashes do not match.");
+    return false;
   }
 
   /* The number of AtomStereopermutators and BondStereopermutarors must match
@@ -55,6 +49,14 @@ bool partiallyCanonicalizedEnantiomeric(const Molecule& a, const Molecule& b) {
     a.stereopermutators().A() != b.stereopermutators().A()
     && a.stereopermutators().B() != b.stereopermutators().B()
   ) {
+    return false;
+  }
+
+  return true;
+}
+
+bool partiallyCanonicalizedEnantiomeric(const Molecule& a, const Molecule& b) {
+  if(!everythingBesidesStereopermutationsSame(a, b)) {
     return false;
   }
 
@@ -164,27 +166,116 @@ bool partiallyCanonicalizedEnantiomeric(const Molecule& a, const Molecule& b) {
   return true;
 }
 
-} // namespace
+boost::optional<unsigned> permutationDifferences(const Molecule& a, const Molecule &b) {
+  unsigned permutationDifferences = 0;
+  for(
+    const AtomStereopermutator& permutator :
+    a.stereopermutators().atomStereopermutators()
+  ) {
+    auto matchOption = b.stereopermutators().option(permutator.placement());
+    if(!matchOption) {
+      return boost::none;
+    }
 
-bool enantiomeric(const Molecule& a, const Molecule& b) {
+    if(permutator.getShape() != matchOption->getShape()) {
+      return boost::none;
+    }
+
+    if(permutator.indexOfPermutation() != matchOption->indexOfPermutation()) {
+      ++permutationDifferences;
+    }
+  }
+
+  for(
+    const BondStereopermutator& permutator :
+    a.stereopermutators().bondStereopermutators()
+  ) {
+    auto matchOption = b.stereopermutators().option(permutator.placement());
+    if(!matchOption) {
+      return boost::none;
+    }
+
+    if(permutator.indexOfPermutation() != matchOption->indexOfPermutation()) {
+      ++permutationDifferences;
+    }
+  }
+
+  return permutationDifferences;
+}
+
+bool partiallyCanonicalizedDiastereomeric(const Molecule& a, const Molecule& b) {
+  // Different at one or more stereopermutators, but not mirror images
+  if(!everythingBesidesStereopermutationsSame(a, b)) {
+    return false;
+  }
+
+  if(partiallyCanonicalizedEnantiomeric(a, b)) {
+    return false;
+  }
+
+  return Temple::Optionals::map(
+    permutationDifferences(a, b),
+    [](unsigned differences) -> bool {
+      return differences > 0;
+    }
+  ).value_or(false);
+}
+
+bool partiallyCanonicalizedEpimeric(const Molecule& a, const Molecule& b) {
+  // Different at one or more stereopermutators, but not mirror images
+  if(!everythingBesidesStereopermutationsSame(a, b)) {
+    return false;
+  }
+
+  return Temple::Optionals::map(
+    permutationDifferences(a, b),
+    [](unsigned differences) -> bool {
+      return differences == 1;
+    }
+  ).value_or(false);
+}
+
+boost::optional<Molecule> maybeCanonicalize(const Molecule& m) {
   constexpr auto componentsBitmask = AtomEnvironmentComponents::ElementTypes
     | AtomEnvironmentComponents::BondOrders
     | AtomEnvironmentComponents::Shapes;
 
-  const auto maybeCanonicalize = [&](const Molecule& m) -> boost::optional<Molecule> {
-    if(m.canonicalComponents() != componentsBitmask) {
-      boost::optional<Molecule> canonicalCopy = m;
-      canonicalCopy->canonicalize(componentsBitmask);
-      return canonicalCopy;
-    }
+  if(m.canonicalComponents() != componentsBitmask) {
+    boost::optional<Molecule> canonicalCopy = m;
+    canonicalCopy->canonicalize(componentsBitmask);
+    return canonicalCopy;
+  }
 
-    return boost::none;
-  };
+  return boost::none;
+}
 
+} // namespace
+
+bool enantiomeric(const Molecule& a, const Molecule& b) {
   const auto maybeCanonicalA = maybeCanonicalize(a);
   const auto maybeCanonicalB = maybeCanonicalize(b);
 
   return partiallyCanonicalizedEnantiomeric(
+    maybeCanonicalA.value_or(a),
+    maybeCanonicalB.value_or(b)
+  );
+}
+
+bool diastereomeric(const Molecule& a, const Molecule& b) {
+  const auto maybeCanonicalA = maybeCanonicalize(a);
+  const auto maybeCanonicalB = maybeCanonicalize(b);
+
+  return partiallyCanonicalizedDiastereomeric(
+    maybeCanonicalA.value_or(a),
+    maybeCanonicalB.value_or(b)
+  );
+}
+
+bool epimeric(const Molecule& a, const Molecule& b) {
+  const auto maybeCanonicalA = maybeCanonicalize(a);
+  const auto maybeCanonicalB = maybeCanonicalize(b);
+
+  return partiallyCanonicalizedEpimeric(
     maybeCanonicalA.value_or(a),
     maybeCanonicalB.value_or(b)
   );

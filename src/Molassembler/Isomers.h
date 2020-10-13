@@ -24,25 +24,6 @@ class Molecule;
  * checks whether each pair of assigned AtomStereopermutators are mirror images
  * of one another and there is at least one enantiomeric pair.
  *
- * @complexity{@math{O(A)} where @math{A} is the number of chiral atom
- * stereopermutators of one molecule}
- *
- * @pre The two molecules are both canonicalized with all components except
- * `Stereopermutations`, i.e.:
- * \code{.cpp}
- * constexpr auto componentsBitmask = AtomEnvironmentComponents::ElementTypes
- *   | AtomEnvironmentComponents::BondOrders
- *   | AtomEnvironmentComponents::Shapes;
- *
- * Molecule a, b;
- * assert(a.canonicalComponents() == componentsBitmask);
- * assert(b.canonicalComponents() == componentsBitmask);
- *
- * // You can ensure this is the case by calling
- * a.canonicalize(componentsBitmask);
- * b.canonicalize(componentsBitmask);
- * \endcode
- *
  * @note When determining enantiomerism of a pair of AtomStereopermutators, if
  *   either permutator is unassigned, then three-dimensional representations @b
  *   may be enantiomeric or not (determined by random choice of assignments at
@@ -60,6 +41,16 @@ MASM_EXPORT bool enantiomeric(
  * and have different configurations at one or more stereocenters.
  */
 MASM_EXPORT bool diastereomeric(
+  const Molecule& a,
+  const Molecule& b
+);
+
+/**
+ * @brief Determine whether molecules are epimers of one another
+ *
+ * Two molecules are epimers if they differ in exactly one stereocenter.
+ */
+MASM_EXPORT bool epimeric(
   const Molecule& a,
   const Molecule& b
 );

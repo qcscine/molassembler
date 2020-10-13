@@ -695,21 +695,68 @@ BOOST_AUTO_TEST_CASE(MoleculeGeometryChoices, *boost::unit_test::label("Molassem
 
 // Isomer predicates work as expected
 BOOST_AUTO_TEST_CASE(IsomerPredicateTests, *boost::unit_test::label("Molassembler")) {
+  const std::string rCitalopram = "CN(C)CCC[C@]1(C2=C(CO1)C=C(C=C2)C#N)C3=CC=C(C=C3)F";
+  const std::string sCitalopram = "CN(C)CCC[C@@]1(C2=C(CO1)C=C(C=C2)C#N)C3=CC=C(C=C3)F";
+
   Molecule a, b;
-  BOOST_REQUIRE_NO_THROW(a = IO::read("isomers/enantiomers/Citalopram-R.mol"));
-  BOOST_REQUIRE_NO_THROW(b = IO::read("isomers/enantiomers/Citalopram-S.mol"));
+  BOOST_REQUIRE_NO_THROW(a = IO::Experimental::parseSmilesSingleMolecule(rCitalopram));
+  BOOST_REQUIRE_NO_THROW(b = IO::Experimental::parseSmilesSingleMolecule(sCitalopram));
 
   BOOST_CHECK_MESSAGE(
     enantiomeric(a, b),
     "Citalopram-R and -S are falsely determined not to be enantiomers."
   );
 
-  BOOST_REQUIRE_NO_THROW(a = IO::read("isomers/enantiomers/Isoleucine-RS.mol"));
-  BOOST_REQUIRE_NO_THROW(b = IO::read("isomers/enantiomers/Isoleucine-SR.mol"));
+  BOOST_CHECK_MESSAGE(
+    !diastereomeric(a, b),
+    "Citalopram-R and -S are falsely determined as diastereomers"
+  );
+
+  BOOST_CHECK_MESSAGE(
+    epimeric(a, b),
+    "Citalopram-R and -S aren't recognized as epimers."
+  );
+
+  const std::string lIsoleucine = "CC[C@H](C)[C@@H](C(=O)O)N";
+  const std::string dIsoleucine = "CC[C@@H](C)[C@H](C(=O)O)N";
+
+  BOOST_REQUIRE_NO_THROW(a = IO::Experimental::parseSmilesSingleMolecule(lIsoleucine));
+  BOOST_REQUIRE_NO_THROW(b = IO::Experimental::parseSmilesSingleMolecule(dIsoleucine));
 
   BOOST_CHECK_MESSAGE(
     enantiomeric(a, b),
     "Isoleucine-RS and -SR are falsely determined not to be enantiomers."
+  );
+
+  BOOST_CHECK_MESSAGE(
+    !diastereomeric(a, b),
+    "Isoleucine-RS and -SR are falsely recognized as diastereomers"
+  );
+
+  BOOST_CHECK_MESSAGE(
+    !epimeric(a, b),
+    "Isoleucine-RS and -SR are falsely recognized as epimers"
+  );
+
+  const std::string betaDGlucopyranose = "C([C@@H]1[C@H]([C@@H]([C@H]([C@@H](O1)O)O)O)O)O";
+  const std::string betaDMannose = "C([C@@H]1[C@H]([C@@H]([C@@H]([C@@H](O1)O)O)O)O)O";
+
+  a = IO::Experimental::parseSmilesSingleMolecule(betaDGlucopyranose);
+  b = IO::Experimental::parseSmilesSingleMolecule(betaDMannose);
+
+  BOOST_CHECK_MESSAGE(
+    !enantiomeric(a, b),
+    "beta-d-glucopyranose and beta-d-mannose are falsely labeled enantiomers"
+  );
+
+  BOOST_CHECK_MESSAGE(
+    diastereomeric(a, b),
+    "beta-d-glucopyranose and beta-d-mannose aren't recognized as diastereomers"
+  );
+
+  BOOST_CHECK_MESSAGE(
+    epimeric(a, b),
+    "beta-d-glucopyranose and beta-d-mannose aren't recognized as epimers"
   );
 }
 
