@@ -63,7 +63,7 @@ void init_directed_conformer_generator(pybind11::module& m) {
       >>> generator = DirectedConformerGenerator(butane)
       >>> assert generator.bond_list()
       >>> conformers = []
-      >>> while generator.decision_list_set_size() < generator.ideal_ensemble_size():
+      >>> while generator.decision_list_set_size() < generator.ideal_ensemble_size:
       ...     conformers.append(
       ...       generator.generate_random_conformation(
       ...         generator.generate_decision_list()

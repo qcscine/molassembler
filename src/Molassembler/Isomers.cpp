@@ -18,14 +18,12 @@
 
 namespace Scine {
 namespace Molassembler {
+namespace {
 
-bool enantiomeric(const Molecule& a, const Molecule& b) {
+bool partiallyCanonicalizedEnantiomeric(const Molecule& a, const Molecule& b) {
   // Check the precondition
   if(a.graph().N() != b.graph().N() || a.graph().B() != b.graph().B()) {
-    throw std::logic_error(
-      "Enantiomer check precondition violated: Molecules do not have the same "
-      "number of vertices and bonds."
-    );
+    return false;
   }
 
   // Use weaker definition
@@ -47,18 +45,16 @@ bool enantiomeric(const Molecule& a, const Molecule& b) {
   const auto bHashes = Hashes::generate(b.graph().inner(), b.stereopermutators(), bitmask);
 
   if(aHashes != bHashes) {
-    throw std::logic_error("Both molecules are fully canonical but weaker hashes do not match.");
+    throw std::logic_error("Both molecules are canonical but weaker hashes do not match.");
   }
 
-  /* The number of AtomStereopermutators must match between both molecules.
-   *
-   * We don't care about BondStereopermutators since these are unchanged by
-   * mirroring operations.
-   *
-   * TODO that isn't strictly true as soon as bond stereopermutators are
-   * more complicated than 2x trigonal planar
+  /* The number of AtomStereopermutators and BondStereopermutarors must match
+   * between both molecules.
    */
-  if(a.stereopermutators().A() != b.stereopermutators().A()) {
+  if(
+    a.stereopermutators().A() != b.stereopermutators().A()
+    && a.stereopermutators().B() != b.stereopermutators().B()
+  ) {
     return false;
   }
 
@@ -90,7 +86,7 @@ bool enantiomeric(const Molecule& a, const Molecule& b) {
       continue;
     }
 
-    const auto& bPermutatorOption = b.stereopermutators().option(
+    const auto bPermutatorOption = b.stereopermutators().option(
       aPermutator.placement()
     );
 
@@ -137,7 +133,61 @@ bool enantiomeric(const Molecule& a, const Molecule& b) {
     }
   }
 
-  return atLeastOneEnantiomericPair;
+  if(!atLeastOneEnantiomericPair) {
+    return false;
+  }
+
+  /* Assignments of bond stereopermutators must match as these are
+   * unaffected by mirroring.
+   */
+  for(
+    const BondStereopermutator& permutator :
+    a.stereopermutators().bondStereopermutators()
+  ) {
+    if(permutator.numStereopermutations() <= 1) {
+      continue;
+    }
+
+    const auto matchOption = b.stereopermutators().option(permutator.placement());
+
+    // There must be a matching permutator
+    if(!matchOption) {
+      return false;
+    }
+
+    // Index of permutation must match
+    if(permutator.indexOfPermutation() != matchOption->indexOfPermutation()) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+} // namespace
+
+bool enantiomeric(const Molecule& a, const Molecule& b) {
+  constexpr auto componentsBitmask = AtomEnvironmentComponents::ElementTypes
+    | AtomEnvironmentComponents::BondOrders
+    | AtomEnvironmentComponents::Shapes;
+
+  const auto maybeCanonicalize = [&](const Molecule& m) -> boost::optional<Molecule> {
+    if(m.canonicalComponents() != componentsBitmask) {
+      boost::optional<Molecule> canonicalCopy = m;
+      canonicalCopy->canonicalize(componentsBitmask);
+      return canonicalCopy;
+    }
+
+    return boost::none;
+  };
+
+  const auto maybeCanonicalA = maybeCanonicalize(a);
+  const auto maybeCanonicalB = maybeCanonicalize(b);
+
+  return partiallyCanonicalizedEnantiomeric(
+    maybeCanonicalA.value_or(a),
+    maybeCanonicalB.value_or(b)
+  );
 }
 
 Molecule enantiomer(const Molecule& a) {

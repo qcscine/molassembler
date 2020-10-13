@@ -47,17 +47,19 @@ class Molecule;
  *   either permutator is unassigned, then three-dimensional representations @b
  *   may be enantiomeric or not (determined by random choice of assignments at
  *   conformer generation time). In these cases, this function returns false.
- *
- * @throws std::logic_error If the molecules are too different to be
- *   enantiomers (E.g. different number of atoms, bonds). Those checks should
- *   be done before calling this function.
- *
- * @param a The first molecule to compare
- * @param b The second molecule to compare
- *
- * @returns Whether two Molecules' conformers are enantiomeric
  */
 MASM_EXPORT bool enantiomeric(
+  const Molecule& a,
+  const Molecule& b
+);
+
+/**
+ * @brief Determine whether molecules are diastereomers of one another
+ *
+ * Two molecules are diastereomers if they are not mirror images of one another
+ * and have different configurations at one or more stereocenters.
+ */
+MASM_EXPORT bool diastereomeric(
   const Molecule& a,
   const Molecule& b
 );

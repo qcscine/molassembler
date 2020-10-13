@@ -24,6 +24,7 @@
 #include "Molassembler/Graph.h"
 #include "Molassembler/Graph/PrivateGraph.h"
 #include "Molassembler/IO.h"
+#include "Molassembler/IO/SmilesParser.h"
 #include "Molassembler/Interpret.h"
 #include "Molassembler/Isomers.h"
 #include "Molassembler/Molecule.h"
@@ -116,7 +117,7 @@ BOOST_AUTO_TEST_CASE(MoleculeRuleOfFiveTrivial, *boost::unit_test::label("Molass
 
 using HashArgumentsType = std::tuple<
   Utils::ElementType,
-  std::vector<Molassembler::Hashes::BondInformation>,
+  std::vector<Hashes::BondInformation>,
   boost::optional<Shapes::Shape>,
   boost::optional<unsigned>
 >;
@@ -160,7 +161,7 @@ std::string repr(const HashArgumentsType& hashArgs) {
 }
 
 HashArgumentsType randomArguments() {
-  auto genBondInformation = []() -> Molassembler::Hashes::BondInformation {
+  auto genBondInformation = []() -> Hashes::BondInformation {
     auto bty = static_cast<BondType>(
       Temple::Random::getSingle<unsigned>(0, 6, randomnessEngine())
     );
@@ -191,7 +192,7 @@ HashArgumentsType randomArguments() {
   }
 
   // If a symmetry is specified, the bond number must match
-  std::vector<Molassembler::Hashes::BondInformation> bonds;
+  std::vector<Hashes::BondInformation> bonds;
   unsigned S;
   if(shapeOptional) {
     S = Shapes::size(*shapeOptional);
@@ -221,7 +222,7 @@ BOOST_AUTO_TEST_CASE(AtomEnvironmentHashesDoNotCollide, *boost::unit_test::label
   );
 
   // Try to guess a disjoint combination that has the same value
-  std::unordered_map<Molassembler::Hashes::WideHashType, HashArgumentsType> resultsMap;
+  std::unordered_map<Hashes::WideHashType, HashArgumentsType> resultsMap;
   for(unsigned N = 0; N < 1e6; ++N) {
     auto arguments = randomArguments();
 
@@ -671,7 +672,7 @@ BOOST_AUTO_TEST_CASE(MoleculeSplitRecognition, *boost::unit_test::label("Molasse
 }
 
 BOOST_AUTO_TEST_CASE(MoleculeGeometryChoices, *boost::unit_test::label("Molassembler")) {
-  Molassembler::Molecule testMol(Utils::ElementType::Ru, Utils::ElementType::N, BondType::Single);
+  Molecule testMol(Utils::ElementType::Ru, Utils::ElementType::N, BondType::Single);
   testMol.addAtom(Utils::ElementType::H, 1u, BondType::Single);
   testMol.addAtom(Utils::ElementType::H, 1u, BondType::Single);
 
@@ -695,29 +696,19 @@ BOOST_AUTO_TEST_CASE(MoleculeGeometryChoices, *boost::unit_test::label("Molassem
 // Isomer predicates work as expected
 BOOST_AUTO_TEST_CASE(IsomerPredicateTests, *boost::unit_test::label("Molassembler")) {
   Molecule a, b;
-  BOOST_REQUIRE_NO_THROW(a = Molassembler::IO::read("isomers/enantiomers/Citalopram-R.mol"));
-  BOOST_REQUIRE_NO_THROW(b = Molassembler::IO::read("isomers/enantiomers/Citalopram-S.mol"));
-
-  constexpr auto bitmask = AtomEnvironmentComponents::ElementTypes
-    | AtomEnvironmentComponents::BondOrders
-    | AtomEnvironmentComponents::Shapes;
-
-  a.canonicalize(bitmask);
-  b.canonicalize(bitmask);
+  BOOST_REQUIRE_NO_THROW(a = IO::read("isomers/enantiomers/Citalopram-R.mol"));
+  BOOST_REQUIRE_NO_THROW(b = IO::read("isomers/enantiomers/Citalopram-S.mol"));
 
   BOOST_CHECK_MESSAGE(
-    Molassembler::enantiomeric(a, b),
+    enantiomeric(a, b),
     "Citalopram-R and -S are falsely determined not to be enantiomers."
   );
 
-  BOOST_REQUIRE_NO_THROW(a = Molassembler::IO::read("isomers/enantiomers/Isoleucine-RS.mol"));
-  BOOST_REQUIRE_NO_THROW(b = Molassembler::IO::read("isomers/enantiomers/Isoleucine-SR.mol"));
-
-  a.canonicalize(bitmask);
-  b.canonicalize(bitmask);
+  BOOST_REQUIRE_NO_THROW(a = IO::read("isomers/enantiomers/Isoleucine-RS.mol"));
+  BOOST_REQUIRE_NO_THROW(b = IO::read("isomers/enantiomers/Isoleucine-SR.mol"));
 
   BOOST_CHECK_MESSAGE(
-    Molassembler::enantiomeric(a, b),
+    enantiomeric(a, b),
     "Isoleucine-RS and -SR are falsely determined not to be enantiomers."
   );
 }
