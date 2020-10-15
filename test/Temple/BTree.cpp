@@ -4,7 +4,6 @@
  *   See LICENSE.txt for details.
  */
 
-#include <boost/test/results_collector.hpp>
 #include <boost/test/unit_test.hpp>
 
 #include "Molassembler/Temple/Adaptors/Zip.h"
@@ -21,14 +20,6 @@
 using namespace Scine::Molassembler;
 
 extern Temple::Generator<> generator;
-
-inline bool lastTestPassed() {
-  using namespace boost::unit_test;
-
-  test_case::id_t id = framework::current_test_case().p_id;
-  test_results rez = results_collector.results(id);
-  return rez.passed();
-}
 
 namespace BTreeStaticTests {
 
@@ -98,7 +89,7 @@ inline unsigned popRandom(std::set<unsigned>& values) {
   return value;
 }
 
-BOOST_AUTO_TEST_CASE(ConstexprBTreeTests, *boost::unit_test::label("Temple")) {
+BOOST_AUTO_TEST_CASE(ConstexprBTree, *boost::unit_test::label("Temple")) {
   constexpr unsigned nKeys = 100;
 
   using namespace std::string_literals;
@@ -125,15 +116,15 @@ BOOST_AUTO_TEST_CASE(ConstexprBTreeTests, *boost::unit_test::label("Temple")) {
     auto toAdd = popRandom(notInTree);
     decisions.emplace_back("i"s + std::to_string(toAdd));
 
-    BOOST_CHECK_NO_THROW(tree.insert(toAdd));
-    BOOST_REQUIRE_MESSAGE(
-      lastTestPassed(),
-      "Element insertion failed. Operation sequence: "
-        << Temple::condense(decisions)
-        << ". Prior to last operation: \n"
-        << treeGraph << "\n\n After last operation: \n"
-        << tree.dumpGraphviz()
-    );
+    BOOST_TEST_CONTEXT(
+      "Element insertion threw. Operation sequence: "
+      << Temple::condense(decisions)
+      << ". Prior to last operation: \n"
+      << treeGraph << "\n\n After last operation: \n"
+      << tree.dumpGraphviz()
+    ) {
+      BOOST_REQUIRE_NO_THROW(tree.insert(toAdd));
+    }
 
     inTree.insert(toAdd);
   };
@@ -143,30 +134,30 @@ BOOST_AUTO_TEST_CASE(ConstexprBTreeTests, *boost::unit_test::label("Temple")) {
     auto toRemove = popRandom(inTree);
     decisions.emplace_back("r"s + std::to_string(toRemove));
 
-    BOOST_CHECK_NO_THROW(tree.remove(toRemove));
-    BOOST_REQUIRE_MESSAGE(
-      lastTestPassed(),
+    BOOST_TEST_CONTEXT(
       "Tree element removal failed. Operation sequence: "
         << Temple::condense(decisions)
         << ". Prior to last operation: \n"
         << treeGraph << "\n\n After last operation: \n"
         << tree.dumpGraphviz()
-    );
+    ) {
+      BOOST_REQUIRE_NO_THROW(tree.remove(toRemove));
+    }
 
     notInTree.insert(toRemove);
   };
 
   auto fullValidation = [&](const std::string& treeGraph) {
     // Validate the tree
-    BOOST_CHECK_NO_THROW(tree.validate());
-    BOOST_REQUIRE_MESSAGE(
-      lastTestPassed(),
+    BOOST_TEST_CONTEXT(
       "Tree validation failed. Operation sequence: "
         << Temple::condense(decisions)
         << ". Prior to last operation: \n"
         << treeGraph << "\n\n After last operation: \n"
         << tree.dumpGraphviz()
-    );
+    ) {
+      BOOST_REQUIRE_NO_THROW(tree.validate());
+    }
 
     // Check that elements that weren't inserted aren't falsely contained
     auto notInsertedButContained = Temple::copy_if(
@@ -261,6 +252,8 @@ BOOST_AUTO_TEST_CASE(ConstexprBTreeTests, *boost::unit_test::label("Temple")) {
   }
 }
 
+namespace {
+
 /* Test that if a BTree is instantiated with a specific size, that size
  * definitely fits in the tree
  */
@@ -314,3 +307,5 @@ static_assert(
   testAllBTrees(),
   "For some B-Trees, you cannot fit as many elements in as requested at instantiation"
 );
+
+} // namespace

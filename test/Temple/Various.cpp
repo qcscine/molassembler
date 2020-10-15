@@ -15,9 +15,7 @@
 #include "Molassembler/Temple/Stringify.h"
 #include "Molassembler/Temple/constexpr/Numeric.h"
 #include "Molassembler/Temple/constexpr/Optional.h"
-#include "Molassembler/Temple/constexpr/Jsf.h"
 
-#include <chrono>
 #include <cmath>
 #include <vector>
 #include <array>
@@ -35,29 +33,6 @@ std::ostream& operator << (std::ostream& os, const boost::optional<T>& valueOpti
   return os;
 }
 
-template<typename NullaryCallable>
-double timeNullaryCallable(
-  NullaryCallable&& function
-) {
-  using namespace std::chrono;
-
-  time_point<system_clock> start, end;
-  std::array<unsigned, 1000> timings;
-  for(unsigned N = 0; N < 1000; ++N) {
-    start = system_clock::now();
-
-    function();
-
-    end = system_clock::now();
-    duration<double> elapsed = end - start;
-
-    timings.at(N) = elapsed.count() * 1e9;
-  }
-
-  return Temple::average(timings);
-}
-
-
 BOOST_AUTO_TEST_CASE(SetRemovalDefect, *boost::unit_test::label("Temple")) {
   /* Sets and maps cannot use std::remove_if! Not a defect. */
 
@@ -71,7 +46,7 @@ BOOST_AUTO_TEST_CASE(SetRemovalDefect, *boost::unit_test::label("Temple")) {
   BOOST_CHECK((testSet == std::set<unsigned> {1, 3, 5, 9}));
 }
 
-BOOST_AUTO_TEST_CASE(selectTestCases, *boost::unit_test::label("Temple")) {
+BOOST_AUTO_TEST_CASE(SelectTestCases, *boost::unit_test::label("Temple")) {
   auto ragged2D = std::vector<
     std::vector<unsigned>
   > {
@@ -102,14 +77,11 @@ BOOST_AUTO_TEST_CASE(selectTestCases, *boost::unit_test::label("Temple")) {
   BOOST_CHECK((*largestVector == std::vector<unsigned> {9, 44, 33, 12}));
 }
 
-BOOST_AUTO_TEST_CASE(stringifyTests, *boost::unit_test::label("Temple")) {
+BOOST_AUTO_TEST_CASE(StringifyTests, *boost::unit_test::label("Temple")) {
   std::vector<
     std::map<
       unsigned,
-      std::pair<
-        int,
-        double
-      >
+      std::pair<int, double>
     >
   > complicatedStructure {
     {
@@ -167,7 +139,7 @@ struct TupleLike : Temple::Crtp::LexicographicComparable<TupleLike> {
   }
 };
 
-BOOST_AUTO_TEST_CASE(crtpTests, *boost::unit_test::label("Temple")) {
+BOOST_AUTO_TEST_CASE(CrtpTests, *boost::unit_test::label("Temple")) {
   TupleLike a {4u, -3}, b {9u, 4}, c {9u, 4};
   BOOST_CHECK(b == c);
   BOOST_CHECK(a < b);
@@ -204,24 +176,4 @@ BOOST_AUTO_TEST_CASE(FunctorSafety, *boost::unit_test::label("Temple")) {
   static_assert(Temple::Functor::get<0>()(t) == 4, "Get functor doesn't work");
   static_assert(Temple::Functor::first(t) == 4, "Pair_first doesn't work");
   BOOST_CHECK_EQUAL(Temple::Functor::second(t), 1.0);
-}
-
-BOOST_AUTO_TEST_CASE(JsfRandomness, *boost::unit_test::label("Temple")) {
-  const int fixedSeed = 1042;
-
-  Temple::JSF64 engine;
-  engine.seed(fixedSeed);
-  auto engineStateCopy = engine;
-  for(unsigned i = 0; i < 10; ++i) {
-    engine();
-  }
-  engine.seed(fixedSeed);
-  BOOST_CHECK(engine == engineStateCopy);
-
-  Temple::JSF64 directlySeededEngine {fixedSeed};
-  BOOST_CHECK(engine == directlySeededEngine);
-
-  std::seed_seq sequence {fixedSeed};
-  directlySeededEngine = Temple::JSF64 {sequence};
-  BOOST_CHECK(engine == directlySeededEngine);
 }
