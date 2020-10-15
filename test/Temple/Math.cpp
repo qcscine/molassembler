@@ -26,16 +26,16 @@ static_assert(Temple::Math::factorial(0) == 1, "Factorial is incorrect");
 namespace {
 
 constexpr unsigned numTests = 100;
-constexpr double accuracy = 1e-12;
+constexpr double relativeAccuracy = 1e-12;
 
 static_assert(
-  accuracy >= std::numeric_limits<double>::epsilon(),
-  "Testing accuracy must be greater than machine epsilon!"
+  relativeAccuracy >= std::numeric_limits<double>::epsilon(),
+  "Testing relative accuracy must be greater than machine epsilon!"
 );
 
 template<typename F, typename G>
-auto compareImplFn(F&& testFn, G&& referenceFn) {
-  return [&](const auto ... values) {
+auto compareImplFn(F&& testFn, G&& referenceFn, double accuracy=relativeAccuracy) {
+  return [=](const auto ... values) {
     const double testValue = testFn(values...);
     const double referenceValue = referenceFn(values...);
 
@@ -77,7 +77,8 @@ BOOST_AUTO_TEST_CASE(ConstexprAsin, *boost::unit_test::label("Temple")) {
     randomInverseTrigNumbers,
     compareImplFn(
       [](double x) { return Temple::Math::asin(x); },
-      [](double x) { return std::asin(x); }
+      [](double x) { return std::asin(x); },
+      1e-8
     )
   );
 }
