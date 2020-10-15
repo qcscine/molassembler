@@ -422,7 +422,7 @@ PURITY_STRONG constexpr Traits::enableIfFloatingWithReturn<T, T> asin(const T x)
     throw "Inverse sine domain error: only real if -1 < x < 1!";
   }
 
-  if(Temple::Math::abs(x) > 0.92) {
+  if(Temple::Math::abs(x) > 0.90) {
     return (x >= 0) ? Detail::asinApprox(x) : -Detail::asinApprox(-x);
   }
 
