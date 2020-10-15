@@ -16,9 +16,9 @@ function(download_file source_file target_file)
       endif()
       list(GET PULL_STATUS 1 PULL_ERROR)
       cmessage(FATAL_ERROR
-        "Could not download file: ${PULL_ERROR}"
-        "Please download the file at ${source_file}"
-        "and place it in your build tree at ${target_file}."
+        "Could not download file: ${PULL_ERROR} "
+        "Please download the file at ${source_file} "
+        "and place it in your build tree at ${target_file}"
       )
     endif()
   endif()
