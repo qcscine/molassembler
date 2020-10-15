@@ -6,7 +6,6 @@
 
 #include <boost/test/unit_test.hpp>
 
-#include "Molassembler/Temple/Adaptors/Zip.h"
 #include "Molassembler/Temple/Functional.h"
 #include "Molassembler/Temple/Random.h"
 #include "Molassembler/Temple/Stringify.h"
@@ -18,7 +17,6 @@
 #include "Molassembler/Temple/constexpr/DynamicArray.h"
 #include "Molassembler/Temple/constexpr/DynamicMap.h"
 #include "Molassembler/Temple/constexpr/DynamicSet.h"
-#include "Molassembler/Temple/constexpr/FloatingPointComparison.h"
 #include "Molassembler/Temple/constexpr/Jsf.h"
 #include "Molassembler/Temple/constexpr/LogicalOperatorTests.h"
 #include "Molassembler/Temple/constexpr/Math.h"
@@ -26,19 +24,9 @@
 #include "Molassembler/Temple/constexpr/TupleTypePairs.h"
 
 #include <iostream>
-#include <iomanip>
-
-#include <boost/test/results_collector.hpp>
 
 using namespace Scine::Molassembler;
 extern Temple::Generator<> generator;
-
-inline bool lastTestPassed() {
-  using namespace boost::unit_test;
-  test_case::id_t id = framework::current_test_case().p_id;
-  test_results rez = results_collector.results(id);
-  return rez.passed();
-}
 
 using namespace std::string_literals;
 
@@ -62,16 +50,6 @@ static_assert(
   "Swap doesn't work as expected"
 );
 
-template<size_t size>
-constexpr void testIteration(const Temple::Array<unsigned, size>& array) {
-  for(const auto& element : array) {
-    std::cout << element << std::endl;
-  }
-}
-
-static_assert(Temple::Math::factorial(5) == 120, "Factorial is incorrect");
-static_assert(Temple::Math::factorial(0) == 1, "Factorial is incorrect");
-
 static_assert(
   std::is_same<
     decltype(Temple::makeArray(4, 3, 9)),
@@ -81,198 +59,6 @@ static_assert(
 );
 
 } // namespace ArrayTests
-
-BOOST_AUTO_TEST_CASE(MathFnCorrectness, *boost::unit_test::label("Temple")) {
-  const unsigned numTests = 100;
-
-  constexpr double accuracy = 1e-12;
-
-  static_assert(
-    accuracy >= std::numeric_limits<double>::epsilon(),
-    "Testing accuracy must be greater than machine epsilon!"
-  );
-
-  // sqrt
-  const auto sqrt_failures = Temple::copy_if(
-    Temple::Random::getN<double>(0, 1e6, numTests, generator.engine),
-    [&](const double randomPositiveNumber) -> bool {
-      return !Temple::Floating::isCloseRelative(
-        Temple::Math::sqrt(randomPositiveNumber),
-        std::sqrt(randomPositiveNumber),
-        accuracy
-      );
-    }
-  );
-
-  BOOST_CHECK(sqrt_failures.empty());
-
-  if(!sqrt_failures.empty()) {
-    std::cout << "Square-root implementation is lacking! Failures: " << std::endl;
-
-    for(const double value : sqrt_failures) {
-      std::cout << "  x = " << std::setw(12) << value
-        << ", sqrt = " << std::setw(12) << Temple::Math::sqrt(value)
-        << ", std::sqrt = " << std::setw(12) << std::sqrt(value)
-        << ", |Δ| = " << std::setw(12) << std::fabs(
-          Temple::Math::sqrt(value) - std::sqrt(value)
-        ) << std::endl;
-    }
-
-    std::cout << std::endl;
-  }
-
-  // asin
-  const auto randomInverseTrigNumbers = Temple::Random::getN<double>(
-    std::nexttoward(-1.0, 0.0),
-    std::nexttoward(1.0, 0.0),
-    numTests,
-    generator.engine
-  );
-
-  const auto asin_failures = Temple::copy_if(
-    randomInverseTrigNumbers,
-    [&](const double randomInverseTrigNumber) -> bool {
-      return !Temple::Floating::isCloseRelative(
-        Temple::Math::asin(randomInverseTrigNumber),
-        std::asin(randomInverseTrigNumber),
-        1e-8
-      );
-    }
-  );
-
-  BOOST_CHECK(asin_failures.empty());
-
-  if(!asin_failures.empty()) {
-    std::cout << "Inverse sine implementation is lacking! Failures: " << std::endl;
-
-    for(const double value : asin_failures) {
-      std::cout << "  x = " << std::setw(12) << value
-        << ", asin = " << std::setw(12) << Temple::Math::asin(value)
-        << ", std::asin = " << std::setw(12) << std::asin(value)
-        << ", |Δ| = " << std::setw(12) << std::fabs(
-          Temple::Math::asin(value) - std::asin(value)
-        ) << std::endl;
-    }
-
-    std::cout << std::endl;
-  }
-
-  auto testPow = [&](const double number, const int& exponent) -> bool {
-    const double test = Temple::Math::pow(number, exponent);
-    const double reference = std::pow(number, exponent);
-
-    bool passes = Temple::Floating::isCloseRelative(test, reference, accuracy);
-
-    if(!passes) {
-      std::cout << "  x = " << std::setw(12) << number
-        << ", exp = " << std::setw(4) << exponent
-        << ", pow = " << std::setw(12) << test
-        << ", std::pow = " << std::setw(12) << reference
-        << ", |Δ| = " << std::setw(12) << std::fabs(test - reference) << ", max permissible diff: "
-        << accuracy * std::max(std::fabs(test), std::fabs(reference))
-        << std::endl;
-    }
-
-    return passes;
-  };
-
-  BOOST_CHECK(
-    Temple::all_of(
-      Temple::Adaptors::zip(
-        Temple::Random::getN<double>(-1e5, 1e5, numTests, generator.engine),
-        Temple::Random::getN<int>(-40, 40, numTests, generator.engine)
-      ),
-      testPow
-    )
-  );
-
-  auto testRecPow = [&](const double number, const unsigned exponent) -> bool {
-    const double test = Temple::Math::recPow(number, exponent);
-    const double reference = std::pow(number, exponent);
-
-    bool passes = Temple::Floating::isCloseRelative(test, reference, accuracy);
-
-    if(!passes) {
-      std::cout << "  x = " << std::setw(12) << number
-        << ", exp = " << std::setw(4) << exponent
-        << ", recPow = " << std::setw(12) << test
-        << ", std::pow = " << std::setw(12) << reference
-        << ", |Δ| = " << std::setw(12) << std::fabs(test - reference) << ", max permissible diff: "
-        << accuracy * std::max(std::fabs(test), std::fabs(reference))
-        << std::endl;
-    }
-
-    return passes;
-  };
-
-  BOOST_CHECK(
-    Temple::all_of(
-      Temple::Adaptors::zip(
-        Temple::Random::getN<double>(-1e5, 1e5, numTests, generator.engine),
-        Temple::Random::getN<unsigned>(0, 40, numTests, generator.engine)
-      ),
-      testRecPow
-    )
-  );
-
-
-  // ln
-  const auto randomZ = Temple::Random::getN<double>(1e-10, 1e10, numTests, generator.engine);
-  bool all_ln_pass = Temple::all_of(
-    randomZ,
-    [&](const auto& z) -> bool {
-      bool pass = Temple::Floating::isCloseRelative(
-        Temple::Math::ln(z),
-        std::log(z),
-        accuracy
-      );
-
-      if(!pass) {
-        std::cout << "ln deviates for z = " << std::setw(12) << z
-          << ", ln(z) = " << std::setw(12) << Temple::Math::ln(z)
-          << ", std::log(z) = " << std::setw(12) << std::log(z)
-          << ", |Δ| = " << std::setw(12) << std::fabs(
-            Temple::Math::ln(z) - std::log(z)
-          ) << std::endl;
-      }
-
-      return pass;
-    }
-  );
-
-  BOOST_CHECK(all_ln_pass);
-
-  BOOST_CHECK(
-    Temple::all_of(
-      Temple::Random::getN<double>(-100, 100, numTests, generator.engine),
-      [](const double x) -> bool {
-        return(Temple::Math::floor(x) <= x);
-      }
-    )
-  );
-
-  BOOST_CHECK(
-    Temple::all_of(
-      Temple::Random::getN<double>(-100, 100, numTests, generator.engine),
-      [](const double x) -> bool {
-        return(Temple::Math::ceil(x) >= x);
-      }
-    )
-  );
-
-  BOOST_CHECK(
-    Temple::all_of(
-      Temple::Random::getN<double>(-M_PI / 2, M_PI / 2, numTests, generator.engine),
-      [&](const double x) -> bool {
-        return Temple::Floating::isCloseRelative(
-          Temple::Math::atan(x),
-          std::atan(x),
-          accuracy
-        );
-      }
-    )
-  );
-}
 
 BOOST_AUTO_TEST_CASE(ArrayPermutation, *boost::unit_test::label("Temple")) {
   std::array<unsigned, 4> base {{0, 1, 2, 3}};
@@ -550,6 +336,10 @@ BOOST_AUTO_TEST_CASE(DynamicSetTests, *boost::unit_test::label("Temple")) {
 
 template<typename T, size_t size>
 bool validate(const Temple::DynamicSet<T, size>& set) {
+  /* NOTE: std::is_sorted isn't constexpr yet, and the range adaptors
+   * aren't constexpr, so we need to do the sequential pairs thing ourselves
+   */
+
   // Is the set ordered?
   auto leftIter = set.begin();
   auto rightIter = leftIter; ++rightIter;
@@ -560,10 +350,7 @@ bool validate(const Temple::DynamicSet<T, size>& set) {
   }
 
   while(rightIter != bound) {
-    if(*leftIter >= *rightIter) {
-      std::cout << "*left >= *right -> " << *leftIter << " >= " << *rightIter << std::endl;
-      return false;
-    }
+    BOOST_REQUIRE_LT(*leftIter, *rightIter);
 
     ++leftIter;
     ++rightIter;
@@ -607,7 +394,7 @@ BOOST_AUTO_TEST_CASE(DynamicSetFuzzing, *boost::unit_test::label("Temple")) {
     for(const auto& number : numbers) {
       subject.insert(number);
 
-      bool isValid = validate(subject);
+      const bool isValid = validate(subject);
       if(!isValid) {
         std::cout << "After inserting " << number
           << ", set is left in invalid state. Set: {"
@@ -770,84 +557,6 @@ static_assert(
 );
 
 } // namespace tuple_type_tests
-
-namespace FloatingPointComparisonTests {
-
-template<typename T>
-constexpr bool testAbsoluteComparison(const T& a, const T& b, const T& tolerance) {
-  Temple::Floating::ExpandedAbsoluteEqualityComparator<T> comparator {
-    tolerance
-  };
-
-  return (
-    Temple::Math::XOR(
-      (
-        comparator.isLessThan(a, b)
-        && comparator.isMoreThan(b, a)
-        && comparator.isUnequal(a, b)
-      ),
-      (
-        comparator.isLessThan(b, a)
-        && comparator.isMoreThan(a, b)
-        && comparator.isUnequal(a, b)
-      ),
-      (
-        !comparator.isLessThan(a, b)
-        && !comparator.isMoreThan(a, b)
-        && comparator.isEqual(a, b)
-      )
-    ) && Temple::Math::XOR(
-      comparator.isEqual(a, b),
-      comparator.isUnequal(a, b)
-    )
-  );
-}
-
-template<typename T>
-constexpr bool testRelativeComparison(const T& a, const T& b, const T& tolerance) {
-  Temple::Floating::ExpandedRelativeEqualityComparator<T> comparator {
-    tolerance
-  };
-
-  return (
-    Temple::Math::XOR(
-      (
-        comparator.isLessThan(a, b)
-        && comparator.isMoreThan(b, a)
-        && comparator.isUnequal(a, b)
-      ),
-      (
-        comparator.isLessThan(b, a)
-        && comparator.isMoreThan(a, b)
-        && comparator.isUnequal(a, b)
-      ),
-      (
-        !comparator.isLessThan(a, b)
-        && !comparator.isMoreThan(a, b)
-        && comparator.isEqual(a, b)
-      )
-    ) && Temple::Math::XOR(
-      comparator.isEqual(a, b),
-      comparator.isUnequal(a, b)
-    )
-  );
-}
-
-static_assert(
-  testAbsoluteComparison(4.3, 3.9, 1e-4)
-  && testAbsoluteComparison(4.3, 3.9, 1.0)
-  && testAbsoluteComparison(4.4, 4.4, 1e-10),
-  "absolute comparison has inconsistent operators!"
-);
-
-static_assert(
-  testRelativeComparison(4.3, 3.9, 1e-4)
-  && testRelativeComparison(4.3, 3.9, 1.0)
-  && testRelativeComparison(4.4, 4.4, 1e-10),
-  "relative comparison has inconsistent operators!"
-);
-
-} // namespace FloatingPointComparisonTests
 
 namespace ConcatenationTests {
 
