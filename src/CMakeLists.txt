@@ -30,7 +30,7 @@ set_target_properties(molassembler_obj PROPERTIES POSITION_INDEPENDENT_CODE ON)
 target_include_directories(molassembler_obj PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
   $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
-  $<INSTALL_INTERFACE:$<INSTALL_PREFIX>/include>
+  $<INSTALL_INTERFACE:$<INSTALL_PREFIX>/include/Scine>
 )
 
 # Object library build requirements
@@ -194,7 +194,7 @@ install(
 # Headers
 install(
   DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/Molassembler"
-  DESTINATION include
+  DESTINATION include/Scine
   FILES_MATCHING
     PATTERN "*.h"
     PATTERN "*.hpp"
@@ -205,7 +205,7 @@ install(
   FILES
     ${CMAKE_CURRENT_BINARY_DIR}/Molassembler/Version.h
     ${CMAKE_CURRENT_BINARY_DIR}/Molassembler/Export.h
-  DESTINATION include/Molassembler
+  DESTINATION include/Scine/Molassembler
 )
 
 # Source groups

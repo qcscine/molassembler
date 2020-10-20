@@ -18,11 +18,11 @@ namespace Molassembler {
 namespace Version {
 
 //! The major version number. Incremented on incompatible API changes
-constexpr unsigned major = @molassembler_VERSION_MAJOR@;
+constexpr unsigned major = @Molassembler_VERSION_MAJOR@;
 //! The minor version number. Incremented on backwards-compatible functionality additions
-constexpr unsigned minor = @molassembler_VERSION_MINOR@;
+constexpr unsigned minor = @Molassembler_VERSION_MINOR@;
 //! The patch version number. Incremented on backwards-compatible bug fixes
-constexpr unsigned patch = @molassembler_VERSION_PATCH@;
+constexpr unsigned patch = @Molassembler_VERSION_PATCH@;
 
 //! Major.minor string
 inline std::string majorMinor() {

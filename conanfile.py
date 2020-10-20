@@ -32,6 +32,7 @@ class MolassemblerConan(ScineConan):
     exports = "dev/conan/*.py"
     exports_sources = [
         "dev/conan/hook.cmake",
+        "dev/conan/glue/*",
         "dev/cmake/*",
         "cmake/*",
         "extern/*",
@@ -42,10 +43,8 @@ class MolassemblerConan(ScineConan):
         "CMakeLists.txt",
     ]
     requires = [
-        "scine_utilities/[~=3.0.0]@scine/develop",
-        "RingDecomposerLib/1.1.3@scine/stable",
-        "nauty/2.7r1@scine/stable"
+        "scine_utilities/[~=3.0.0]",
+        "RingDecomposerLib/1.1.3",
+        "nauty/2.7r1"
     ]
-
-    def _configure_cmake(self):
-        return super()._configure_cmake_base("molassembler", None)
+    cmake_name = "Molassembler"
