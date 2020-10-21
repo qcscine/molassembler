@@ -3084,6 +3084,8 @@ RankingTree::RankingTree(
       }
     }
 
+    unsigned depth = 1;
+
     //! @todo try to avoid repeated computation with molIndicesInBranch_ somehow
     // Main BFS loop
     while(!undecidedSets.empty() && relevantSeeds_(seeds, undecidedSets)) {
@@ -3093,7 +3095,9 @@ RankingTree::RankingTree(
        * symmetrical systems with many cycles (which leads to a high branching
        * factor) with the potential to fill an enormous amount of RAM.
        */
-      if(boost::num_vertices(tree_) > 8192) {
+      const unsigned numVertices = boost::num_vertices(tree_);
+      const double averageBranchingFactor = std::pow(numVertices, 1.0 / depth++);
+      if(numVertices > 8192 && averageBranchingFactor > 2) {
         return;
       }
 
