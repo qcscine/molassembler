@@ -3087,6 +3087,15 @@ RankingTree::RankingTree(
     //! @todo try to avoid repeated computation with molIndicesInBranch_ somehow
     // Main BFS loop
     while(!undecidedSets.empty() && relevantSeeds_(seeds, undecidedSets)) {
+      /* If the number of vertices in the partially (!) expanded tree exceeds
+       * 2^13 ~= 8192 nodes, bug out and keep whatever partial ranking was
+       * established so far. Such large numbers of nodes are indicative of highly
+       * symmetrical systems with many cycles (which leads to a high branching
+       * factor) with the potential to fill an enormous amount of RAM.
+       */
+      if(boost::num_vertices(tree_) > 8192) {
+        return;
+      }
 
       // Perform a step
       for(const auto& undecidedSet : undecidedSets) {
@@ -3156,9 +3165,7 @@ RankingTree::RankingTree(
         }
       }
     }
-
   } else { // Full tree expansion requested
-
     std::vector<TreeVertexIndex> seeds;
     std::copy(
       branchIndices.begin(),
