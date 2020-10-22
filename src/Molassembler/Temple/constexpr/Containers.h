@@ -14,6 +14,7 @@
 
 #include <array>
 #include <limits>
+#include <functional>
 
 namespace Scine {
 namespace Molassembler {
@@ -30,11 +31,11 @@ namespace Detail {
 
 //!  Implementation of mapping with a unary function for any array type.
 template<
-  template<typename, size_t> class ArrayType,
+  template<typename, std::size_t> class ArrayType,
   typename T,
-  size_t size,
+  std::size_t size,
   class UnaryFunction,
-  size_t ... Inds
+  std::size_t ... Inds
 > constexpr auto mapImpl(
   const ArrayType<T, size>& array,
   UnaryFunction&& function,
@@ -55,9 +56,9 @@ template<
  * @complexity{@math{\Theta(N)}}
  */
 template<
-  template<typename, size_t> class ArrayType,
+  template<typename, std::size_t> class ArrayType,
   typename T,
-  size_t size,
+  std::size_t size,
   class UnaryFunction
 > constexpr auto map(
   const ArrayType<T, size>& array,
@@ -81,9 +82,9 @@ template<
  * @todo rename to accumulate
  */
 template<
-  template<typename, size_t> class ArrayType,
+  template<typename, std::size_t> class ArrayType,
   typename T,
-  size_t size,
+  std::size_t size,
   class BinaryFunction
 > constexpr T reduce(
   const ArrayType<T, size>& array,
@@ -105,9 +106,9 @@ template<
  * @complexity{@math{\Theta(N)}}
  */
 template<
-  template<typename, size_t> class ArrayType,
+  template<typename, std::size_t> class ArrayType,
   typename T,
-  size_t size
+  std::size_t size
 > constexpr T sum(const ArrayType<T, size>& array) {
   T sum {0};
 
@@ -122,10 +123,10 @@ namespace Detail {
 
 
 template<
-  template<typename, size_t> class ArrayType,
+  template<typename, std::size_t> class ArrayType,
   typename T,
-  size_t size,
-  size_t ... Inds
+  std::size_t size,
+  std::size_t ... Inds
 > constexpr ArrayType<T, size> iotaHelper(
   std::index_sequence<Inds...> /* inds */
 ) {
@@ -136,9 +137,9 @@ template<
 
 //! Iota for any array type
 template<
-  template<typename, size_t> class ArrayType,
+  template<typename, std::size_t> class ArrayType,
   typename T,
-  size_t size
+  std::size_t size
 > PURITY_STRONG constexpr std::enable_if_t<
   std::is_arithmetic<T>::value,
   ArrayType<T, size>
@@ -151,11 +152,11 @@ template<
 namespace Detail {
 
 template<
-  template<typename, size_t> class ArrayType,
+  template<typename, std::size_t> class ArrayType,
   typename T,
-  size_t begin,
-  size_t end,
-  size_t ... Inds
+  std::size_t begin,
+  std::size_t end,
+  std::size_t ... Inds
 > constexpr ArrayType<T, (end - begin)> rangeHelper(
   std::index_sequence<Inds...> /* inds */
 ) {
@@ -168,10 +169,10 @@ template<
 
 //! Range for any array type
 template<
-  template<typename, size_t> class ArrayType,
+  template<typename, std::size_t> class ArrayType,
   typename T,
-  size_t begin, // inclusive
-  size_t end // exclusive
+  std::size_t begin, // inclusive
+  std::size_t end // exclusive
 > constexpr ArrayType<T, (end - begin)> range() {
   return Detail::rangeHelper<ArrayType, T, begin, end>(
     std::make_index_sequence<(end - begin)>()
@@ -182,12 +183,12 @@ namespace Detail {
 
 //! Implementation helper of array-like type concatenation.
 template<
-  template<typename, size_t> class ArrayType,
+  template<typename, std::size_t> class ArrayType,
   typename T,
-  size_t N1,
-  size_t... AIndices,
-  size_t N2,
-  size_t... BIndices
+  std::size_t N1,
+  std::size_t... AIndices,
+  std::size_t N2,
+  std::size_t... BIndices
 >
 constexpr ArrayType<T, N1+N2> arrayConcatenateImpl(
   const ArrayType<T, N1>& a,
@@ -205,10 +206,10 @@ constexpr ArrayType<T, N1+N2> arrayConcatenateImpl(
 
 //! Concatenation of two instances of an array-like class
 template<
-  template<typename, size_t> class ArrayType,
+  template<typename, std::size_t> class ArrayType,
   typename T,
-  size_t N1,
-  size_t N2
+  std::size_t N1,
+  std::size_t N2
 >
 constexpr ArrayType<T, N1+N2> arrayConcatenate(
   const ArrayType<T, N1>& a,
@@ -225,9 +226,9 @@ constexpr ArrayType<T, N1+N2> arrayConcatenate(
 namespace Detail {
 
 template<
-  template<typename, size_t> class ArrayType,
+  template<typename, std::size_t> class ArrayType,
   typename T,
-  size_t concatenatedSize
+  std::size_t concatenatedSize
 > constexpr ArrayType<T, concatenatedSize> concatenateHelper(
   const ArrayType<T, concatenatedSize>& concatenated
 ) {
@@ -235,11 +236,11 @@ template<
 }
 
 template<
-  template<typename, size_t> class ArrayType,
+  template<typename, std::size_t> class ArrayType,
   typename T,
-  size_t concatenatedSize,
-  size_t curSize,
-  size_t ... Ns
+  std::size_t concatenatedSize,
+  std::size_t curSize,
+  std::size_t ... Ns
 > constexpr auto concatenateHelper(
   const ArrayType<T, concatenatedSize>& concatenated,
   const ArrayType<T, curSize>& array,
@@ -258,10 +259,10 @@ template<
 
 //! Variadic concatenation of multiple array-like class instances
 template<
-  template<typename, size_t> class ArrayType,
+  template<typename, std::size_t> class ArrayType,
   typename T,
-  size_t N,
-  size_t ... Ns
+  std::size_t N,
+  std::size_t ... Ns
 > constexpr auto arrayConcatenate(
   const ArrayType<T, N>& startingArray,
   const ArrayType<T, Ns>& ... remainingArrays
@@ -274,9 +275,9 @@ template<
  * @complexity{@math{O(N)}}
  */
 template<
-  template<typename, size_t> class ArrayType,
+  template<typename, std::size_t> class ArrayType,
   typename T,
-  size_t size
+  std::size_t size
 > constexpr bool arraysEqual(
   const ArrayType<T, size>& a,
   const ArrayType<T, size>& b
@@ -298,10 +299,10 @@ template<
  * @complexity{@math{O(N)}}
  */
 template<
-  template<typename, size_t> class ArrayType,
+  template<typename, std::size_t> class ArrayType,
   typename T,
-  size_t sizeA,
-  size_t sizeB
+  std::size_t sizeA,
+  std::size_t sizeB
 > constexpr std::enable_if_t<
   sizeA == sizeB,
   bool
@@ -324,10 +325,10 @@ template<
  * unequal size, case a < b
  */
 template<
-  template<typename, size_t> class ArrayType,
+  template<typename, std::size_t> class ArrayType,
   typename T,
-  size_t sizeA,
-  size_t sizeB
+  std::size_t sizeA,
+  std::size_t sizeB
 > constexpr std::enable_if_t<
   sizeA < sizeB,
   bool
@@ -344,10 +345,10 @@ template<
  * unequal size, case a > b
  */
 template<
-  template<typename, size_t> class ArrayType,
+  template<typename, std::size_t> class ArrayType,
   typename T,
-  size_t sizeA,
-  size_t sizeB
+  std::size_t sizeA,
+  std::size_t sizeB
 > constexpr std::enable_if_t<
   (sizeA > sizeB),
   bool
@@ -360,10 +361,10 @@ template<
 
 // C++17: Replace all arraysLess functions with this single function below:
 /*template<
-  template<typename, size_t> class ArrayType,
+  template<typename, std::size_t> class ArrayType,
   typename T,
-  size_t sizeA,
-  size_t sizeB
+  std::size_t sizeA,
+  std::size_t sizeB
 > constexpr std::enable_if_t<
   (sizeA > sizeB),
   bool
@@ -411,7 +412,8 @@ template<
   );
 
   Iter it = bound;
-  DiffType count = last - bound, step = 0;
+  DiffType count = last - bound;
+  DiffType step = 0;
 
   while(count > 0) {
     it = bound;
@@ -474,13 +476,13 @@ template<
  * @complexity{@math{\Theta(1)}}
  */
 template<
-  template<typename, size_t> class ArrayType,
+  template<typename, std::size_t> class ArrayType,
   typename T,
-  size_t size
+  std::size_t size
 > constexpr void inPlaceSwap(
   ArrayType<T, size>& data,
-  const size_t& a,
-  const size_t& b
+  const std::size_t& a,
+  const std::size_t& b
 ) {
   T intermediate = std::move(data.at(b));
   data.at(b) = std::move(data.at(a));
@@ -492,15 +494,16 @@ template<
  * @complexity{@math{\Theta(N)}}
  */
 template<
-  template<typename, size_t> class ArrayType,
+  template<typename, std::size_t> class ArrayType,
   typename T,
-  size_t size
+  std::size_t size
 > constexpr void inPlaceReverse(
   ArrayType<T, size>& data,
   const unsigned indexFrom,
   const unsigned indexTo
 ) {
-  size_t a = indexFrom, b = indexTo;
+  std::size_t a = indexFrom;
+  std::size_t b = indexTo;
   while(a != b && a != --b) {
     inPlaceSwap(data, a++, b);
   }
@@ -515,16 +518,16 @@ template<
  * @complexity{@math{O(N/2)}}
  */
 template<
-  template<typename, size_t> class ArrayType,
+  template<typename, std::size_t> class ArrayType,
   typename T,
-  size_t size
+  std::size_t size
 > constexpr std::enable_if_t<
   (size > 1),
   bool
 > inPlaceNextPermutation(
   ArrayType<T, size>& data,
-  const size_t& first,
-  const size_t& last
+  const std::size_t first,
+  const std::size_t last
 ) {
   if(!(
     first < last
@@ -534,7 +537,9 @@ template<
     throw "Call parameters to inPlaceNextPermutation make no sense!";
   }
 
-  size_t i = last - 1, j = 0, k = 0;
+  std::size_t i = last - 1;
+  std::size_t j = 0;
+  std::size_t k = 0;
 
   while(true) {
     j = i;
@@ -568,9 +573,9 @@ template<
 
 //! @overload
 template<
-  template<typename, size_t> class ArrayType,
+  template<typename, std::size_t> class ArrayType,
   typename T,
-  size_t size
+  std::size_t size
 > constexpr std::enable_if_t<
   (size > 1),
   bool
@@ -587,16 +592,16 @@ template<
  * @complexity{@math{O(N/2)}}
  */
 template<
-  template<typename, size_t> class ArrayType,
+  template<typename, std::size_t> class ArrayType,
   typename T,
-  size_t size
+  std::size_t size
 > constexpr std::enable_if_t<
   (size > 1),
   bool
 > inPlacePreviousPermutation(
   ArrayType<T, size>& data,
-  const size_t& first,
-  const size_t& last
+  const std::size_t& first,
+  const std::size_t& last
 ) {
   if(!(
     first < last
@@ -606,7 +611,9 @@ template<
     throw "Call parameters to inPlaceNextPermutation make no sense!";
   }
 
-  size_t i = last - 1, j = 0, k = 0;
+  std::size_t i = last - 1;
+  std::size_t j = 0;
+  std::size_t k = 0;
 
   while(true) {
     j = i;
@@ -640,9 +647,9 @@ template<
 
 //! @overload
 template<
-  template<typename, size_t> class ArrayType,
+  template<typename, std::size_t> class ArrayType,
   typename T,
-  size_t size
+  std::size_t size
 > constexpr std::enable_if_t<
   (size > 1),
   bool
@@ -655,18 +662,18 @@ template<
  * @complexity{@math{\Theta(N^2)}}
  */
 template<
-  template<typename, size_t> class ArrayType,
+  template<typename, std::size_t> class ArrayType,
   typename T,
-  size_t size
-> constexpr size_t permutationIndex(const ArrayType<T, size>& container) {
-  size_t index = 0;
-  size_t position = 2;// position 1 is paired with factor 0 and so is skipped
-  size_t factor = 1;
+  std::size_t size
+> constexpr std::size_t permutationIndex(const ArrayType<T, size>& container) {
+  std::size_t index = 0;
+  std::size_t position = 2;// position 1 is paired with factor 0 and so is skipped
+  std::size_t factor = 1;
 
-  for(size_t p = size - 2; p != std::numeric_limits<size_t>::max(); --p) {
-    size_t largerSuccessors = 0;
+  for(std::size_t p = size - 2; p != std::numeric_limits<std::size_t>::max(); --p) {
+    std::size_t largerSuccessors = 0;
 
-    for(size_t q = p + 1; q < size; ++q) {
+    for(std::size_t q = p + 1; q < size; ++q) {
       if(container.at(p) > container.at(q)) {
         ++largerSuccessors;
       }

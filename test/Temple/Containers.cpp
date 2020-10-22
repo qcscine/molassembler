@@ -21,7 +21,7 @@ using namespace Scine::Molassembler;
 extern Temple::Generator<> generator;
 
 BOOST_AUTO_TEST_CASE(OrderedPairTests, *boost::unit_test::label("Temple")) {
-  Temple::OrderedPair<unsigned> a {14u, 3u};
+  Temple::OrderedPair<unsigned> a {14, 3};
   BOOST_CHECK(a.front() < a.back());
   BOOST_CHECK(a.first < a.second);
   BOOST_CHECK(

@@ -27,7 +27,8 @@ void readTriples(const std::string& file, Scine::Utils::BondOrderCollection& bon
   std::string line;
 
   unsigned numBondOrders = 0;
-  unsigned i,j;
+  unsigned i;
+  unsigned j;
   double value;
   if(in.is_open()) {
     while(true) {
@@ -44,7 +45,7 @@ void readTriples(const std::string& file, Scine::Utils::BondOrderCollection& bon
   std::cout << "Read " << numBondOrders << " bond orders from '" << file << "'\n";
 }
 
-Eigen::MatrixXd readCSV(std::string file, int rows, int cols) {
+Eigen::MatrixXd readCSV(const std::string& file, int rows, int cols) {
   std::ifstream in(file);
 
   std::string line;

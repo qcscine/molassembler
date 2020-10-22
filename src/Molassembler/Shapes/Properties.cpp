@@ -348,12 +348,7 @@ double calculateChiralDistortion(
   const std::vector<Vertex>& indexMapping
 ) {
 
-  assert(
-    indexMapping.size() >= std::min(
-      Shapes::size(from),
-      Shapes::size(to)
-    )
-  );
+  assert(indexMapping.size() >= std::min(Shapes::size(from), Shapes::size(to)));
 
   double chiralDistortion = 0;
 

@@ -60,7 +60,7 @@ Temple::MinimalCache<
   Properties::ShapeTransitionGroup
 > mappingsCache;
 
-const boost::optional<const Properties::ShapeTransitionGroup&> getMapping(
+boost::optional<const Properties::ShapeTransitionGroup&> getMapping(
   const Shape a,
   const Shape b,
   const boost::optional<Vertex>& removedIndexOption

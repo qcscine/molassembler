@@ -74,7 +74,8 @@ Graph SPACYC_P2N(
 
   // Add random edges
   for(unsigned N = 0; N < edges; ++N) {
-    Graph::vertex_descriptor i, j;
+    Graph::vertex_descriptor i;
+    Graph::vertex_descriptor j;
 
     // Keep fetching new pairs of indices if i is j or i and j are already connected
     do {

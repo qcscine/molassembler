@@ -82,7 +82,7 @@ double bondRadius(Utils::ElementType elementType);
  *   Configuration Irregularities, Chem Phys Lett 362, 5-6, August 2002
  *   http://dx.doi.org/10.1016/S0009-2614(02)00919-3
  */
-extern std::array<ElementInfo, 110> elementData;
+extern const std::array<ElementInfo, 110> elementData;
 
 bool isMainGroupElement(Utils::ElementType elementType);
 

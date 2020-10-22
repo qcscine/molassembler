@@ -90,7 +90,8 @@ std::tuple<Molecule, Molecule, std::vector<AtomIndex>> readIsomorphism(const boo
 // Molecule instances are trivial to handle and can do all they should
 BOOST_AUTO_TEST_CASE(MoleculeRuleOfFiveTrivial, *boost::unit_test::label("Molassembler")) {
   // Default constructor
-  Molecule f, g;
+  Molecule f;
+  Molecule g;
 
   // Copy assignment
   f = g;
@@ -193,12 +194,13 @@ HashArgumentsType randomArguments() {
 
   // If a symmetry is specified, the bond number must match
   std::vector<Hashes::BondInformation> bonds;
-  unsigned S;
-  if(shapeOptional) {
-    S = Shapes::size(*shapeOptional);
-  } else {
-    S = Temple::Random::getSingle<unsigned>(1, 8, randomnessEngine());
-  }
+  const unsigned S = [&]() {
+    if(shapeOptional) {
+      return Shapes::size(*shapeOptional);
+    }
+
+    return Temple::Random::getSingle<unsigned>(1, 8, randomnessEngine());
+  }();
 
   for(unsigned i = 0; i < S; ++i) {
     bonds.emplace_back(genBondInformation());
@@ -260,7 +262,8 @@ BOOST_AUTO_TEST_CASE(MoleculeGraphPermutation, *boost::unit_test::label("Molasse
       continue;
     }
 
-    Molecule a, b;
+    Molecule a;
+    Molecule b;
     std::vector<AtomIndex> permutation;
     std::tie(a, b, permutation) = readIsomorphism(currentFilePath);
 
@@ -363,7 +366,8 @@ BOOST_AUTO_TEST_CASE(MoleculeCanonicalization, *boost::unit_test::label("Molasse
       continue;
     }
 
-    Molecule a, b;
+    Molecule a;
+    Molecule b;
     std::tie(a, b, std::ignore) = readIsomorphism(currentFilePath);
 
     // Canonicalize both molecules
@@ -407,7 +411,8 @@ BOOST_AUTO_TEST_CASE(MoleculeHashes, *boost::unit_test::label("Molassembler")) {
       continue;
     }
 
-    Molecule a, b;
+    Molecule a;
+    Molecule b;
     std::tie(a, b, std::ignore) = readIsomorphism(currentFilePath);
 
     for(C components : testComponents) {
@@ -437,7 +442,8 @@ BOOST_AUTO_TEST_CASE(MoleculeIsomorphism, *boost::unit_test::label("Molassembler
       continue;
     }
 
-    Molecule a, b;
+    Molecule a;
+    Molecule b;
     std::tie(a, b, std::ignore) = readIsomorphism(currentFilePath);
 
     bool pass = (a == b);
@@ -613,7 +619,8 @@ BOOST_AUTO_TEST_CASE(PropagateGraphChangeTests, *boost::unit_test::label("Molass
 }
 
 BOOST_AUTO_TEST_CASE(MoleculeSplitRecognition, *boost::unit_test::label("Molassembler")) {
-  std::vector<Molecule> molSplat, xyzSplat;
+  std::vector<Molecule> molSplat;
+  std::vector<Molecule> xyzSplat;
 
   BOOST_REQUIRE_NO_THROW(molSplat = IO::split("multiple_molecules/multi_interpret.mol"));
   BOOST_REQUIRE_NO_THROW(xyzSplat = IO::split("multiple_molecules/multi_interpret.xyz"));
@@ -673,23 +680,23 @@ BOOST_AUTO_TEST_CASE(MoleculeSplitRecognition, *boost::unit_test::label("Molasse
 
 BOOST_AUTO_TEST_CASE(MoleculeGeometryChoices, *boost::unit_test::label("Molassembler")) {
   Molecule testMol(Utils::ElementType::Ru, Utils::ElementType::N, BondType::Single);
-  testMol.addAtom(Utils::ElementType::H, 1u, BondType::Single);
-  testMol.addAtom(Utils::ElementType::H, 1u, BondType::Single);
+  testMol.addAtom(Utils::ElementType::H, 1U, BondType::Single);
+  testMol.addAtom(Utils::ElementType::H, 1U, BondType::Single);
 
 
-  auto stereocenterOption = testMol.stereopermutators().option(1u);
+  auto stereocenterOption = testMol.stereopermutators().option(1U);
   BOOST_REQUIRE(stereocenterOption);
 
-  if(auto suggestedShapeOption = testMol.inferShape(1u, stereocenterOption->getRanking())) {
+  if(auto suggestedShapeOption = testMol.inferShape(1U, stereocenterOption->getRanking())) {
     BOOST_CHECK(suggestedShapeOption.value() == Shapes::Shape::VacantTetrahedron);
     testMol.setShapeAtAtom(1u, suggestedShapeOption.value());
   }
 
-  testMol.addAtom(Utils::ElementType::H, 1u, BondType::Single);
+  testMol.addAtom(Utils::ElementType::H, 1U, BondType::Single);
 
   BOOST_CHECK(
-    testMol.stereopermutators().option(1u)
-    && testMol.stereopermutators().option(1u)->getShape() == Shapes::Shape::Tetrahedron
+    testMol.stereopermutators().option(1U)
+    && testMol.stereopermutators().option(1U)->getShape() == Shapes::Shape::Tetrahedron
   );
 }
 
@@ -698,7 +705,8 @@ BOOST_AUTO_TEST_CASE(IsomerPredicateTests, *boost::unit_test::label("Molassemble
   const std::string rCitalopram = "CN(C)CCC[C@]1(C2=C(CO1)C=C(C=C2)C#N)C3=CC=C(C=C3)F";
   const std::string sCitalopram = "CN(C)CCC[C@@]1(C2=C(CO1)C=C(C=C2)C#N)C3=CC=C(C=C3)F";
 
-  Molecule a, b;
+  Molecule a;
+  Molecule b;
   BOOST_REQUIRE_NO_THROW(a = IO::Experimental::parseSmilesSingleMolecule(rCitalopram));
   BOOST_REQUIRE_NO_THROW(b = IO::Experimental::parseSmilesSingleMolecule(sCitalopram));
 
@@ -763,7 +771,7 @@ BOOST_AUTO_TEST_CASE(IsomerPredicateTests, *boost::unit_test::label("Molassemble
 BOOST_AUTO_TEST_CASE(EtaBondDynamism, *boost::unit_test::label("Molassembler")) {
   Molecule mol {Utils::ElementType::Fe, Utils::ElementType::C, BondType::Single};
 
-  const AtomIndex carbonSubstituent = 1u;
+  const AtomIndex carbonSubstituent = 1U;
   const AtomIndex secondCarbon = mol.addAtom(Utils::ElementType::C, carbonSubstituent, BondType::Double);
   mol.addAtom(Utils::ElementType::H, carbonSubstituent, BondType::Single);
   mol.addAtom(Utils::ElementType::H, carbonSubstituent, BondType::Single);

@@ -44,8 +44,8 @@ public:
   //! Explicit value initialization
   constexpr explicit StrongIndex(T v) : v_(v) {}
   constexpr StrongIndex(const StrongIndex& other) = default;
-  constexpr StrongIndex(StrongIndex&& other) = default;
-  constexpr StrongIndex& operator = (const StrongIndex& other) noexcept = default;
+  constexpr StrongIndex(StrongIndex&& other) noexcept = default;
+  constexpr StrongIndex& operator = (const StrongIndex& other) = default;
   constexpr StrongIndex& operator = (StrongIndex&& other) noexcept = default;
 
   //! Assignment from fundamental base type

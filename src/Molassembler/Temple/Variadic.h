@@ -103,10 +103,7 @@ auto concatenate(const Containers& ... containers) {
   using T = std::tuple_element_t<0, ValueTypes>;
 
   static_assert(
-    Tuples::countType<
-      ValueTypes,
-      T
-    >() == std::tuple_size<ValueTypes>::value,
+    Tuples::countType<ValueTypes, T>() == std::tuple_size<ValueTypes>::value,
     "Value types of all containers involved in concatenation must be identical!"
   );
 

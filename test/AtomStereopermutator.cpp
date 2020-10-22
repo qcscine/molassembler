@@ -249,7 +249,7 @@ BOOST_FIXTURE_TEST_CASE(LigandAdditionPropagatedStateSuperposable, LowTemperatur
 
     if(
       Shapes::size(shape) != Shapes::ConstexprProperties::maxShapeSize
-      && Shapes::hasMultipleUnlinkedStereopermutations(shape, 0u)
+      && Shapes::hasMultipleUnlinkedStereopermutations(shape, 0)
     ) {
       if(trySymmetryPropagation(shape)) {
         ++testedCount;

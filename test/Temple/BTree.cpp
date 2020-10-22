@@ -35,7 +35,7 @@ constexpr Temple::BTree<unsigned, 3, 20> generateTree() {
 }
 
 constexpr auto testTree = generateTree();
-static_assert(testTree.size() == 4u, "Size of generated tree is wrong!");
+static_assert(testTree.size() == 4, "Size of generated tree is wrong!");
 
 static_assert(
   /* BTree of minimum order 3 has max 5 keys per node and max 6 children per node

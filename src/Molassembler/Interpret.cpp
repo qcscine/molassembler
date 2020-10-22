@@ -50,7 +50,7 @@ struct HapticPlaneGeometry {
 };
 
 HapticPlaneGeometry hapticPlaneGeometry(
-  const std::vector<Utils::Position> positions,
+  const std::vector<Utils::Position>& positions,
   const AtomIndex v,
   const std::vector<AtomIndex>& site
 ) {
@@ -295,12 +295,12 @@ std::vector<Utils::AtomCollection> ComponentMap::apply(
   return collections;
 }
 
-ComponentMap::ComponentIndexPair ComponentMap::apply(const unsigned left) const {
+ComponentMap::ComponentIndexPair ComponentMap::apply(const unsigned index) const {
   ComponentIndexPair pair;
-  pair.component = map.at(left);
+  pair.component = map.at(index);
   pair.atomIndex = std::count(
     std::begin(map),
-    std::begin(map) + left,
+    std::begin(map) + index,
     pair.component
   );
   return pair;

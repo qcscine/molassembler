@@ -89,7 +89,9 @@ BOOST_AUTO_TEST_CASE(OrderDiscoveryExample, *boost::unit_test::label("Molassembl
     "Does not recognize total order condition after full ordering discovered"
   );
 
-  int x = 4, y = 9, z = 1;
+  int x = 4;
+  int y = 9;
+  int z = 1;
 
   std::set<const int*> pointerSet {&x, &y, &z};
 
@@ -108,7 +110,7 @@ BOOST_AUTO_TEST_CASE(OrderDiscoveryExample, *boost::unit_test::label("Molassembl
 
 BOOST_AUTO_TEST_CASE(OrderDiscoverTransfer, *boost::unit_test::label("Molassembler")) {
   OrderDiscoveryHelper<unsigned> knowledge {
-    std::set<unsigned> {4u, 9u, 13u, 20u}
+    std::set<unsigned> {4, 9, 13, 20}
   };
 
   knowledge.addLessThanRelationship(4, 9);
@@ -119,7 +121,7 @@ BOOST_AUTO_TEST_CASE(OrderDiscoverTransfer, *boost::unit_test::label("Molassembl
   knowledge.addLessThanRelationship(13, 20);
 
   OrderDiscoveryHelper<unsigned> partialMatch {
-    std::set<unsigned> {4u, 13u, 20u}
+    std::set<unsigned> {4, 13, 20}
   };
 
   partialMatch.addRelationshipsFromOther(knowledge);
@@ -132,7 +134,7 @@ BOOST_AUTO_TEST_CASE(OrderDiscoverTransfer, *boost::unit_test::label("Molassembl
   );
 
   OrderDiscoveryHelper<unsigned> toMerge {
-    std::set<unsigned> {10u, 13u}
+    std::set<unsigned> {10, 13}
   };
 
 

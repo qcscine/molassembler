@@ -19,7 +19,7 @@ namespace Log {
 namespace Detail {
 class NullBuffer : public std::streambuf {
 public:
-  int overflow(int c);
+  int overflow(int c) override;
 };
 
 // Some objects we need

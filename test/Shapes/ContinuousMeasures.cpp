@@ -156,7 +156,7 @@ std::ostream& operator << (std::ostream& os, const PointGroup group) {
 BOOST_AUTO_TEST_CASE(PointGroupElementGroupings, *boost::unit_test::label("Shapes")) {
   const PointGroup limit = PointGroup::Ih;
   for(unsigned g = 0; g <= underlying(limit); ++g) {
-    const PointGroup pointGroup = static_cast<PointGroup>(g);
+    const auto pointGroup = static_cast<PointGroup>(g);
     const auto elements = Elements::symmetryElements(pointGroup);
     const auto groupings = Elements::npGroupings(elements);
 

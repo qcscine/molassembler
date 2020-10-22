@@ -54,7 +54,7 @@ public:
     std::size_t blockIndex = Math::floor(static_cast<double>(i) / bitsPerBlock);
     std::size_t bitIndex = i - bitsPerBlock * blockIndex;
 
-    storage.at(blockIndex) |= (1ull << bitIndex);
+    storage.at(blockIndex) |= (1ULL << bitIndex);
   }
 
   /*! @brief Unsets a specific bit
@@ -65,7 +65,7 @@ public:
     std::size_t blockIndex = Math::floor(static_cast<double>(i) / bitsPerBlock);
     std::size_t bitIndex = i - bitsPerBlock * blockIndex;
 
-    storage.at(blockIndex) ^= (1ull << bitIndex);
+    storage.at(blockIndex) ^= (1ULL << bitIndex);
   }
 
   /*! @brief Sets a specific bit to a specified value
@@ -92,7 +92,7 @@ public:
     std::size_t bitIndex = i - bitsPerBlock * blockIndex;
 
     return (
-      storage.at(blockIndex) & (1ull << bitIndex)
+      storage.at(blockIndex) & (1ULL << bitIndex)
     ) != 0;
   }
 //!@}

@@ -32,7 +32,7 @@ public:
 
   Impl(
     Molecule molecule,
-    const BondStereopermutator::Alignment alignment,
+    BondStereopermutator::Alignment alignment,
     const BondList& bondsToConsider
   );
 

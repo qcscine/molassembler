@@ -26,7 +26,7 @@ constexpr unsigned binomial(const unsigned n, const unsigned k) {
   );
 }
 
-double tauFourPrime(const std::vector<double>& angles) {
+inline double tauFourPrime(const std::vector<double>& angles) {
   assert(std::is_sorted(std::begin(angles), std::end(angles)));
 
   const double beta = angles.back();
@@ -40,7 +40,7 @@ double tauFourPrime(const std::vector<double>& angles) {
   );
 }
 
-double tauFive(const std::vector<double>& angles) {
+inline double tauFive(const std::vector<double>& angles) {
   assert(std::is_sorted(std::begin(angles), std::end(angles)));
 
   return (
@@ -60,7 +60,7 @@ double tauFive(const std::vector<double>& angles) {
  *
  * @return τ₄' or τ₅
  */
-MASM_EXPORT double tau(const std::vector<double>& angles) {
+MASM_EXPORT inline double tau(const std::vector<double>& angles) {
   constexpr unsigned anglesInSymmetryOfSizeFour = Detail::binomial(4, 2);
   constexpr unsigned anglesInSymmetryOfSizeFive = Detail::binomial(5, 2);
 

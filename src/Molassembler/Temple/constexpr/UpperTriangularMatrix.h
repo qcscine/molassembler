@@ -68,7 +68,7 @@ namespace index_conversion {
 
 //! Checks if an array size is a valid size for an upper triangular matrix
 PURITY_STRONG constexpr bool isValidMatrixSize(const size_t dataSize) {
-  auto root = Math::sqrt(1.0 + 8 * dataSize);
+  auto root = Math::sqrt(1.0 + 8.0 * dataSize);
 
   return(
     Floating::isCloseRelative(
@@ -82,7 +82,7 @@ PURITY_STRONG constexpr bool isValidMatrixSize(const size_t dataSize) {
 //! Calculates the square matrix dimension for a particular array size
 PURITY_STRONG constexpr size_t getMatrixSize(const size_t dataSize) {
   return (
-    1 + Math::sqrt(1.0 + 8 * dataSize)
+    1 + Math::sqrt(1.0 + 8.0 * dataSize)
   ) / 2;
 }
 

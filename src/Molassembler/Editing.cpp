@@ -513,8 +513,8 @@ Molecule Editing::substitute(
   StereopermutatorList stereopermutators;
 
   // Identify sides of each bond
-  auto leftSides = left.graph().splitAlongBridge(leftBond);
-  auto rightSides = right.graph().splitAlongBridge(rightBond);
+  const auto leftSides = left.graph().splitAlongBridge(leftBond);
+  const auto rightSides = right.graph().splitAlongBridge(rightBond);
 
   // Figure out which side of each bond is 'heavier'
   auto sideCompare = [](
@@ -530,7 +530,7 @@ Molecule Editing::substitute(
       return false;
     }
 
-    double aWeight = Temple::accumulate(
+    const double aWeight = Temple::accumulate(
       sideA,
       0.0,
       [&molecule](double carry, const AtomIndex i) -> double {
@@ -538,7 +538,7 @@ Molecule Editing::substitute(
       }
     );
 
-    double bWeight = Temple::accumulate(
+    const double bWeight = Temple::accumulate(
       sideB,
       0.0,
       [&molecule](double carry, const AtomIndex i) -> double {
@@ -553,7 +553,10 @@ Molecule Editing::substitute(
   const auto& rightHeavierSide = sideCompare(right, rightSides.first, rightSides.second) ? rightSides.second : rightSides.first;
 
   // Figure out which bond index of the bond is the one that belongs to the heavier side
-  AtomIndex leftHeavierBondSide, leftLighterBondSide, rightHeavierBondSide, rightLighterBondSide;
+  AtomIndex leftHeavierBondSide;
+  AtomIndex leftLighterBondSide;
+  AtomIndex rightHeavierBondSide;
+  AtomIndex rightLighterBondSide;
 
   if(std::addressof(leftHeavierSide) == std::addressof(leftSides.first)) {
     leftHeavierBondSide = leftBond.first;
@@ -571,12 +574,8 @@ Molecule Editing::substitute(
     rightLighterBondSide = rightBond.first;
   }
 
-  assert(
-    Temple::makeContainsPredicate(leftHeavierSide)(leftHeavierBondSide)
-  );
-  assert(
-    Temple::makeContainsPredicate(rightHeavierSide)(rightHeavierBondSide)
-  );
+  assert(Temple::makeContainsPredicate(leftHeavierSide)(leftHeavierBondSide));
+  assert(Temple::makeContainsPredicate(rightHeavierSide)(rightHeavierBondSide));
 
   // Copy over graphs
   auto leftVertexMapping = transferGraph(

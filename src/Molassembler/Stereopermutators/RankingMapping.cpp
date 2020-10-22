@@ -36,7 +36,7 @@ boost::optional<SiteIndex> determineChangedSite(
   const unsigned A,
   const unsigned B,
   const SiteMapping::Map& map,
-  const std::vector<SiteIndex> mappedBs
+  const std::vector<SiteIndex>& mappedBs
 ) {
   if(A == B) {
     return boost::none;
@@ -65,8 +65,8 @@ boost::optional<SiteIndex> determineChangedSite(
   const unsigned A,
   const unsigned B,
   const SiteMapping::Map& map,
-  const std::vector<SiteIndex> possiblyUnmappedAs,
-  const std::vector<SiteIndex> mappedBs
+  const std::vector<SiteIndex>& possiblyUnmappedAs,
+  const std::vector<SiteIndex>& mappedBs
 ) {
   if(A == B) {
     return boost::none;

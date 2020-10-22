@@ -42,7 +42,7 @@ public:
    *
    * @complexity{@math{\Theta(S\cdot E)}}
    */
-  Partitioner(const unsigned s, const unsigned e);
+  Partitioner(unsigned s, unsigned e);
 
   /*! @brief Advance underlying state to the next partition
    *

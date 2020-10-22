@@ -193,7 +193,7 @@ public:
    *   multiplier is > 1.
    */
   static double smallestCycleDistortionMultiplier(
-    const AtomIndex i,
+    AtomIndex i,
     const Cycles& cycles
   );
 
@@ -266,7 +266,7 @@ public:
   static ValueBounds modelSiteAngleBounds(
     const AtomStereopermutator& permutator,
     const std::pair<SiteIndex, SiteIndex>& sites,
-    const double looseningMultiplier,
+    double looseningMultiplier,
     const PrivateGraph& inner
   );
 
@@ -286,7 +286,7 @@ public:
   static ChiralConstraint makeChiralConstraint(
     const AtomStereopermutator::MinimalChiralConstraint& minimalConstraint,
     const AtomStereopermutator& permutator,
-    const double looseningMultiplier
+    double looseningMultiplier
   );
 
   /** @brief Analogous to C++17's clamp, reduces ValueBounds to the maximal
@@ -435,7 +435,7 @@ public:
 
   bool modelPartiallyFixedBond(
     const BondStereopermutator& permutator,
-    const std::pair<const AtomStereopermutator&, const AtomStereopermutator&>& atomStereopermutators,
+    const std::pair<const AtomStereopermutator&, const AtomStereopermutator&>& atomPermutators,
     const std::unordered_map<AtomIndex, Utils::Position>& fixedAngstromPositions
   );
 //!@}

@@ -85,7 +85,7 @@ public:
       os << R"(, fillcolor="tomato")";
     } else if(hasStereopermutator) {
       os << R"(, fillcolor="steelblue")";
-    } else if(MolGraphWriter::elementBGColorMap.count(symbolString) != 0u) {
+    } else if(MolGraphWriter::elementBGColorMap.count(symbolString) != 0) {
       os << R"(, fillcolor=")"
         << MolGraphWriter::elementBGColorMap.at(symbolString) << R"(")";
     }
@@ -93,7 +93,7 @@ public:
     // Font coloring
     if(colorVertices_.count(vertexIndex) > 0) {
       os << R"(, fontcolor="white")";
-    } else if(MolGraphWriter::elementTextColorMap.count(symbolString) != 0u) {
+    } else if(MolGraphWriter::elementTextColorMap.count(symbolString) != 0) {
       os << R"(, fontcolor=")"
         << MolGraphWriter::elementTextColorMap.at(symbolString) << R"(")";
     } else if(hasStereopermutator) {
@@ -1446,7 +1446,7 @@ void RankingTree::applySequenceRules_(
 
         auto maxSize = Temple::accumulate(
           groupedByStringRep,
-          0u,
+          0U,
           [](const unsigned currentMaxSize, const auto& stringGroup) -> unsigned {
             if(stringGroup.size() > currentMaxSize) {
               return stringGroup.size();
@@ -1561,7 +1561,8 @@ void RankingTree::applySequenceRules_(
               branchAStereopermutatorGroupIter != branchAOrders.rend()
               && branchBStereopermutatorGroupIter != branchBOrders.rend()
             ) {
-              unsigned aBranchLikePairs = 0, bBranchLikePairs = 0;
+              unsigned aBranchLikePairs = 0;
+              unsigned bBranchLikePairs = 0;
 
               // Count A-branch like pairs
               Temple::forEach(
@@ -1710,7 +1711,7 @@ std::vector<
   OrderDiscoveryHelper<TreeVertexIndex> orderingHelper {adjacentsToRank};
 
   // Return immediately if depthLimit is zero
-  if(depthLimitOptional && depthLimitOptional.value() == 0u) {
+  if(depthLimitOptional && depthLimitOptional.value() == 0U) {
     return orderingHelper.getSets();
   }
 
@@ -2188,9 +2189,9 @@ std::vector<
           }
         );
 
-        auto maxSize = Temple::accumulate(
+        const auto maxSize = Temple::accumulate(
           groupedByStringRep,
-          0u,
+          0U,
           [](const unsigned currentMaxSize, const auto& stringGroup) -> unsigned {
             if(stringGroup.size() > currentMaxSize) {
               return stringGroup.size();
@@ -2273,7 +2274,8 @@ std::vector<
               branchAStereopermutatorGroupIter != branchAOrders.rend()
               && branchBStereopermutatorGroupIter != branchBOrders.rend()
             ) {
-              unsigned aBranchLikePairs = 0, bBranchLikePairs = 0;
+              unsigned aBranchLikePairs = 0;
+              unsigned bBranchLikePairs = 0;
 
               // Count A-branch like pairs
               Temple::forEach(
@@ -2416,7 +2418,8 @@ std::vector<RankingTree::TreeVertexIndex> RankingTree::expand_(
   std::vector<TreeVertexIndex> newIndices;
 
   std::set<AtomIndex> treeOutAdjacencies;
-  BglType::out_edge_iterator iter, end;
+  BglType::out_edge_iterator iter;
+  BglType::out_edge_iterator end;
   std::tie(iter, end) = boost::out_edges(index, tree_);
   while(iter != end) {
     auto targetVertex = boost::target(*iter, tree_);
@@ -2473,7 +2476,7 @@ std::vector<RankingTree::TreeVertexIndex> RankingTree::expand_(
   return newIndices;
 }
 
-std::string RankingTree::toString(const TreeVertexIndex vertex) const {
+std::string RankingTree::toString(const TreeVertexIndex vertex) {
   return std::to_string(vertex);
 }
 
@@ -2675,11 +2678,10 @@ std::vector<RankingTree::TreeVertexIndex> RankingTree::auxiliaryAdjacentsToRank_
 }
 
 unsigned RankingTree::nonDuplicateDegree_(const RankingTree::TreeVertexIndex& index) const {
-  auto adjacents = adjacents_(index);
-
-  auto numDuplicate = Temple::accumulate(
+  const auto adjacents = adjacents_(index);
+  const auto numDuplicate = Temple::accumulate(
     adjacents,
-    0u,
+    0U,
     [&](const unsigned count, const auto& treeIndex) -> unsigned {
       return count + static_cast<unsigned>(
         tree_[treeIndex].isDuplicate

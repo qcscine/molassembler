@@ -223,7 +223,7 @@ struct AnglePotential {
   }
 };
 
-void writeXYZ(std::string name, const M& m) {
+void writeXYZ(const std::string& name, const M& m) {
   const unsigned N = m.cols();
   std::ofstream xyz(name);
   xyz << (N + 1) << "\n\n";

@@ -76,7 +76,7 @@ void expectDominantAngles(
 
 } // namespace
 
-bool testOrientationState(Composite::OrientationState a) {
+bool testOrientationState(const Composite::OrientationState& a) {
   // Make a copy and modify that
   auto aCopy = a;
 

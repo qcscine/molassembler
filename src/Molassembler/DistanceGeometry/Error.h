@@ -126,11 +126,11 @@ namespace std {
 
 namespace Detail {
   struct DGError_category : public std::error_category {
-    virtual const char* name() const noexcept override final {
+    const char* name() const noexcept final {
       return "DistanceGeometryError";
     }
 
-    virtual std::string message(int c) const override final {
+    std::string message(int c) const final {
       switch(static_cast<DgError>(c)) {
         case DgError::ZeroAssignmentStereopermutators:
           return "Graph contains Stereopermutators with zero possible permutations.";

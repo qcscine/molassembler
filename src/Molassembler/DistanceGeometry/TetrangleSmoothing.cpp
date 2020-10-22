@@ -11,7 +11,7 @@
 #include "Molassembler/Temple/Invoke.h"
 
 #include <Eigen/Dense>
-#include <fenv.h>
+#include <cfenv>
 
 namespace Scine {
 namespace Molassembler {

@@ -627,7 +627,7 @@ struct ThermodynamicAnneal final : OldShapeAlgorithm {
     return - 1.0 / solver.eigenvalues()(1);
   }
 
-  double updateTemperature(const double temperature, double minimalEnergy) {
+  double updateTemperature(const double temperature, double minimalEnergy) const {
     const double hundredEnergiesAverage = lastEnergies.average();
     const double hundredEnergiesVariance = lastEnergies.variance(hundredEnergiesAverage);
     const double thermodynamicSpeed = (hundredEnergiesAverage - minimalEnergy) / hundredEnergiesVariance;

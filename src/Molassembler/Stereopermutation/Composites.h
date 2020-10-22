@@ -186,13 +186,13 @@ public:
     PermutationGenerator(Temple::OrderedPair<OrientationState> orientations);
 
     double dihedral(
-      const Shapes::Vertex firstVertex,
-      const Shapes::Vertex secondVertex
+      Shapes::Vertex firstVertex,
+      Shapes::Vertex secondVertex
     ) const;
 
     Permutation align(
-      const Shapes::Vertex firstVertex,
-      const Shapes::Vertex secondVertex,
+      Shapes::Vertex firstVertex,
+      Shapes::Vertex secondVertex,
       Alignment alignment
     );
 
@@ -297,7 +297,7 @@ public:
   const Temple::OrderedPair<OrientationState>& orientations() const;
 
   //! Index of the ranking equivalent base to a permutation
-  unsigned rankingEquivalentBase(const unsigned permutation) const;
+  unsigned rankingEquivalentBase(unsigned permutation) const;
 
   //! List of all base permutation indices (without ranking-equivalents)
   std::vector<unsigned> nonEquivalentPermutationIndices() const;

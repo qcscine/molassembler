@@ -604,7 +604,7 @@ struct JsonSerialization::Impl {
     return deserialize(serialization);
   }
 
-  BinaryType toBinary(const BinaryFormat format) {
+  BinaryType toBinary(const BinaryFormat format) const {
     if(format == BinaryFormat::CBOR) {
       return nlohmann::json::to_cbor(serialization);
     }
@@ -645,8 +645,8 @@ std::string JsonSerialization::base64Encode(const BinaryType& binary) {
   return base64::encode(binary);
 }
 
-JsonSerialization::BinaryType JsonSerialization::base64Decode(const std::string& binary) {
-  return base64::decode(binary);
+JsonSerialization::BinaryType JsonSerialization::base64Decode(const std::string& base64String) {
+  return base64::decode(base64String);
 }
 
 JsonSerialization::JsonSerialization(JsonSerialization&& other) noexcept = default;

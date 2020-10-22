@@ -113,7 +113,7 @@ BOOST_AUTO_TEST_CASE(EditingCleave, *boost::unit_test::label("Molassembler")) {
   const auto pattern = makeNMe();
   const auto matches = subgraphs::maximum(pattern.first, caffeine);
   BOOST_REQUIRE_MESSAGE(
-    matches.size() > 0,
+    !matches.empty(),
     "No matches found for N-Me pattern in caffeine!"
   );
 

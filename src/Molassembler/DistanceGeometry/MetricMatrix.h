@@ -30,9 +30,7 @@
 #include "Molassembler/DistanceGeometry/DistanceGeometry.h"
 
 namespace Scine {
-
 namespace Molassembler {
-
 namespace DistanceGeometry {
 
 class MetricMatrix {
@@ -83,9 +81,7 @@ private:
 };
 
 } // namespace DistanceGeometry
-
 } // namespace Molassembler
-
 } // namespace Scine
 
 #endif

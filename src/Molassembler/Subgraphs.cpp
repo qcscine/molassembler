@@ -9,11 +9,8 @@
 #include "boost/graph/mcgregor_common_subgraphs.hpp"
 
 #include "Molassembler/Shapes/PropertyCaching.h"
-
 #include "Molassembler/Shapes/Shapes.h"
 #include "Molassembler/Temple/constexpr/UpperTriangularMatrix.h"
-
-
 #include "Molassembler/Graph/Bridge.h"
 #include "Molassembler/Molecule.h"
 #include "Molassembler/AtomStereopermutator.h"
@@ -125,7 +122,7 @@ struct VertexComparator {
           // These should always be a Some type
           assert(mappingOptional);
 
-          auto& mapping = mappingOptional.value();
+          const auto& mapping = mappingOptional.value();
 
           matrixEntry = (mapping.angularDistortion + mapping.chiralDistortion <= 0.2);
         }

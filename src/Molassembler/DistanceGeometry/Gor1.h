@@ -190,7 +190,8 @@ std::enable_if_t<
   put(color_map, root_vertex, Color::gray());
   put(predecessor_map, root_vertex, root_vertex);
 
-  std::stack<VertexDescriptor> A, B;
+  std::stack<VertexDescriptor> A;
+  std::stack<VertexDescriptor> B;
   B.push(root_vertex);
 
   while(!B.empty()) {
@@ -390,7 +391,8 @@ std::enable_if_t<
   put(color_map, root_vertex, Color::gray());
   put(predecessor_map, root_vertex, root_vertex);
 
-  std::stack<VertexDescriptor> A, B;
+  std::stack<VertexDescriptor> A;
+  std::stack<VertexDescriptor> B;
   B.push(root_vertex);
 
   while(!B.empty()) {

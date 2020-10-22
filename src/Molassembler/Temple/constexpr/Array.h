@@ -22,7 +22,7 @@ namespace Scine {
 namespace Molassembler {
 namespace Temple {
 
-template<typename T, size_t nItems>
+template<typename T, std::size_t nItems>
 class Array {
 public:
 //!@name Types
@@ -39,7 +39,7 @@ public:
    *
    * @complexity{@math{\Theta(N)}}
    */
-  template<size_t ... Inds>
+  template<std::size_t ... Inds>
   constexpr Array(
     const Array& other,
     std::index_sequence<Inds...> /* inds */
@@ -63,7 +63,7 @@ public:
    *
    * @complexity{@math{\Theta(N)}}
    */
-  template<size_t ... Inds>
+  template<std::size_t ... Inds>
   constexpr Array(
     Array&& other,
     std::index_sequence<Inds...> /* inds */

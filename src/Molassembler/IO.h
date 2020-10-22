@@ -8,7 +8,6 @@
  * MOLFile V2000 specification.
  *
  * @todo
- * - test MOLFile V2000
  * - implement MOLFile V3000
  */
 
@@ -76,7 +75,7 @@ private:
  */
 MASM_EXPORT std::pair<Utils::AtomCollection, Utils::BondOrderCollection> exchangeFormat(
   const Molecule& molecule,
-  AngstromPositions angstromWrapper
+  const AngstromPositions& angstromWrapper
 );
 
 //! @overload

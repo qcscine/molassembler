@@ -4,9 +4,10 @@
  *   See LICENSE.txt for details.
  */
 
-#include "molassembler/IO.h"
+#include "Molassembler/IO.h"
+#include "Molassembler/Molecule.h"
 
-using namespace molassembler;
+using namespace Scine::Molassembler;
 
 /* Default-construct a hydrogen molecule. Molecule enforces the concept that a
  * molecule must consist of at least two atoms, and the molecular graph must

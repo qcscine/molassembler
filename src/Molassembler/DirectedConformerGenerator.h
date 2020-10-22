@@ -370,7 +370,7 @@ public:
    */
   outcome::result<Utils::PositionCollection> generateConformation(
     const DecisionList& decisionList,
-    const unsigned seed,
+    unsigned seed,
     const DistanceGeometry::Configuration& configuration = DistanceGeometry::Configuration {},
     BondStereopermutator::FittingMode fitting = BondStereopermutator::FittingMode::Nearest
   ) const;
@@ -429,16 +429,12 @@ public:
 
   //! @brief Settings for enumeration
   struct EnumerationSettings {
-    EnumerationSettings()
-      : dihedralRetries(3),
-        fitting(BondStereopermutator::FittingMode::Nearest),
-        configuration()
-    {}
+    EnumerationSettings() : configuration() {}
 
     //! Number of attempts to generate the correct decision list
-    unsigned dihedralRetries;
+    unsigned dihedralRetries = 3;
     //! How a decision list is fitted to a generated conformer
-    BondStereopermutator::FittingMode fitting;
+    BondStereopermutator::FittingMode fitting = BondStereopermutator::FittingMode::Nearest;
     //! Conformer generation settings
     DistanceGeometry::Configuration configuration;
   };
@@ -550,7 +546,7 @@ struct DirectedConformerGenerator::Relabeler {
    * as determined by a DirectedConformerGenerator can be obtained by calling
    * DirectedConformerGenerator::relabeler().
    */
-  Relabeler(DirectedConformerGenerator::BondList bonds, const Molecule& mol);
+  Relabeler(const DirectedConformerGenerator::BondList& bonds, const Molecule& mol);
 
   //! Add a particular position to the set to relabel
   void add(const Utils::PositionCollection& positions);

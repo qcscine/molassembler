@@ -55,7 +55,7 @@ struct ShapeClass : std::integral_constant<bool,
     && std::is_same<PointGroup, std::decay_t<decltype(T::pointGroup)>>::value
     && std::is_same<unsigned, std::decay_t<decltype(T::size)>>::value
     && std::is_same<const char*, std::decay_t<decltype(T::stringName)>>::value
-    && std::is_same<double, decltype(T::angleFunction(0u, 1u))>::value
+    && std::is_same<double, decltype(T::angleFunction(0U, 1U))>::value
     && std::is_same<
       Temple::Vector,
       Temple::getValueType<decltype(T::coordinates)>

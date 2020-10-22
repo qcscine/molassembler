@@ -225,18 +225,10 @@ public:
 private:
 /* Private members */
   //! Cache data
-  std::map<
-    KeyType,
-    boost::any
-  > cache_;
+  std::map<KeyType, boost::any> cache_;
 
   //! Map of key values to generating functions
-  std::map<
-    KeyType,
-    std::function<
-      boost::any()
-    >
-  > generationMap_;
+  std::map<KeyType, std::function<boost::any()>> generationMap_;
 };
 
 } // namespace Temple

@@ -84,12 +84,13 @@ PrivateGraph::PrivateGraph(const PrivateGraph::Vertex N) : graph_ {N} {}
  */
 PrivateGraph::PrivateGraph(const PrivateGraph& other) : graph_(other.graph_) {}
 PrivateGraph::PrivateGraph(PrivateGraph&& other) = default;
+
 PrivateGraph& PrivateGraph::operator = (const PrivateGraph& other) {
   graph_ = other.graph_;
   properties_.invalidate();
   return *this;
 }
-PrivateGraph& PrivateGraph::operator = (PrivateGraph&& other) {
+PrivateGraph& PrivateGraph::operator = (PrivateGraph&& other) noexcept {
   graph_ = std::move(other.graph_);
   properties_ = std::move(other.properties_);
   return *this;
@@ -301,7 +302,8 @@ boost::optional<std::vector<AtomIndex>> PrivateGraph::modularIsomorphism(
     return boost::none;
   }
 
-  std::vector<Hashes::HashType> thisHashes, otherHashes;
+  std::vector<Hashes::HashType> thisHashes;
+  std::vector<Hashes::HashType> otherHashes;
   Hashes::HashType maxHash;
   std::tie(thisHashes, otherHashes, maxHash) = Hashes::narrow(
     Hashes::generate(*this, boost::none, components),
@@ -372,7 +374,8 @@ std::pair<
   );
 
   // Transform the bitset into a left and right
-  std::vector<AtomIndex> left, right;
+  std::vector<AtomIndex> left;
+  std::vector<AtomIndex> right;
   left.reserve(N());
   right.reserve(N());
 

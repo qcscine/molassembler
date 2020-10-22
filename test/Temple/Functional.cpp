@@ -144,23 +144,23 @@ BOOST_AUTO_TEST_CASE(ReduceTests, *boost::unit_test::label("Temple")) {
   BOOST_CHECK(
     Temple::accumulate(
       values,
-      0u,
+      0U,
       std::plus<>()
-    ) == 15u
+    ) == 15U
   );
   BOOST_CHECK(
     Temple::accumulate(
       values,
-      1u,
+      1U,
       std::multiplies<>()
-    ) == 120u
+    ) == 120U
   );
 }
 
 BOOST_AUTO_TEST_CASE(MinMaxTests, *boost::unit_test::label("Temple")) {
   const std::vector<unsigned> values {1, 4, 6, 8};
-  BOOST_CHECK(Temple::max(values) == 8u);
-  BOOST_CHECK(Temple::min(values) == 1u);
+  BOOST_CHECK(Temple::max(values) == 8);
+  BOOST_CHECK(Temple::min(values) == 1);
 }
 
 

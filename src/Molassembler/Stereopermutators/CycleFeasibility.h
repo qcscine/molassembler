@@ -55,10 +55,10 @@ bool cycleModelContradictsGraph(
  *   triangle is shorter or equal to the bond radius
  */
 bool triangleBondTooClose(
-  const double a,
-  const double b,
-  const double angle,
-  const double bondRadius
+  double a,
+  double b,
+  double angle,
+  double bondRadius
 );
 
 } // namespace Stereopermutators

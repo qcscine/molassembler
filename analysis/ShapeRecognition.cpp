@@ -509,7 +509,8 @@ struct CShMPathDevBiased final : public Recognizer {
       }
       return findIter - std::begin(validShapes);
     };
-    unsigned i, j;
+    unsigned i;
+    unsigned j;
     std::tie(i, j) = std::minmax(
       indexOfShape(a),
       indexOfShape(b)
@@ -572,7 +573,8 @@ struct CShMPathDevBiased final : public Recognizer {
 
     /* Bias tetrahedral - trigonal pyramid towards tetrahedral 80:20 */
     if(std::minmax(aShape, bShape) == std::minmax(Shapes::Shape::Tetrahedron, Shapes::Shape::TrigonalPyramid)) {
-      double tetrahedronShapeMeasure, trigonalPyramidShapeMeasure;
+      double tetrahedronShapeMeasure;
+      double trigonalPyramidShapeMeasure;
       std::tie(tetrahedronShapeMeasure, trigonalPyramidShapeMeasure) = (aShape == Shapes::Shape::Tetrahedron)
         ? std::tie(shapeMeasures.at(a), shapeMeasures.at(b))
         : std::tie(shapeMeasures.at(b), shapeMeasures.at(a));
@@ -867,7 +869,7 @@ int main(int argc, char* argv[]) {
   scriptFile.writeHeader(recognizerPtrs);
 
   Temple::JSF64 prng;
-  if(options_variables_map.count("seed")) {
+  if(options_variables_map.count("seed") > 0) {
     const int seed = options_variables_map["seed"].as<int>();
     prng.seed(seed);
     std::cout << "PRNG seeded from parameters: " << seed << ".\n";
@@ -889,7 +891,7 @@ int main(int argc, char* argv[]) {
 
     const unsigned shapesOfSameSize = Temple::accumulate(
       Shapes::allShapes,
-      0u,
+      0U,
       [&S](const unsigned carry, Shapes::Shape n) -> unsigned {
         if(Shapes::size(n) == S) {
           return carry + 1;

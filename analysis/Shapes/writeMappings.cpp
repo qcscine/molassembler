@@ -184,10 +184,10 @@ int main(int argc, char* argv[]) {
       return 1;
     }
 
-    Shapes::Shape sourceShape(Shapes::allShapes.at(sourceShapeArg)),
-                   targetShape(Shapes::allShapes.at(targetShapeArg));
+    const Shapes::Shape sourceShape(Shapes::allShapes.at(sourceShapeArg));
+    const Shapes::Shape targetShape(Shapes::allShapes.at(targetShapeArg));
 
-    int diff = (
+    const int diff = (
       static_cast<int>(Shapes::size(targetShape))
       - static_cast<int>(Shapes::size(sourceShape))
     );
@@ -244,7 +244,7 @@ int main(int argc, char* argv[]) {
           continue;
         }
 
-        int diff = (
+        const int diff = (
           static_cast<int>(Shapes::size(targetShape))
           - static_cast<int>(Shapes::size(sourceShape))
         );

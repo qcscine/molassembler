@@ -238,7 +238,7 @@ MASM_EXPORT ShapeResult shape(
 //! @brief Same as shape(), except with set centroid mapping
 MASM_EXPORT ShapeResult shapeCentroidLast(
   const PositionCollection& normalizedPositions,
-  const Shape shape
+  Shape shape
 );
 
 /*! @brief Calculates minimum distortion angle in radians for shapes A and B
@@ -276,7 +276,7 @@ MASM_EXPORT double minimalDistortionPathDeviation(
   const PositionCollection& positions,
   Shape a,
   Shape b,
-  const double minimumDistortionAngle
+  double minimumDistortionAngle
 );
 
 /*! @overload

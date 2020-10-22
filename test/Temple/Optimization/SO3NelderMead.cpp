@@ -88,9 +88,9 @@ BOOST_AUTO_TEST_CASE(SO3NelderMead, *boost::unit_test::label("Temple")) {
     if(std::fabs(result.value) < 1e-2) {
       pass = true;
       break;
-    } else {
-      std::cout << "Attempt " << i << " lowest SO(3) minim. value = " << result.value << "\n";
     }
+
+    std::cout << "Attempt " << i << " lowest SO(3) minim. value = " << result.value << "\n";
   }
 
   BOOST_CHECK_MESSAGE(

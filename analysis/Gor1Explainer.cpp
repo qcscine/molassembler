@@ -11,15 +11,13 @@
 #include "boost/program_options.hpp"
 #include "boost/regex.hpp"
 
+// NOTE: Include order is important here!
 #include "Molassembler/DistanceGeometry/ImplicitBoundsGraphBoost.h"
 #include "Molassembler/DistanceGeometry/SpatialModel.h"
 #include "Molassembler/IO.h"
 #include "Molassembler/Molecule.h"
-
 #include "Molassembler/Graph/Gor1.h"
-
 #include "boost/graph/graphviz.hpp"
-
 #include "Molassembler/Temple/StringAlgorithms.h"
 
 #include <random>
@@ -73,7 +71,7 @@ public:
       colors_ {colors}
   {}
 
-  std::shared_ptr<WriterState> statePtr {new WriterState};
+  std::shared_ptr<WriterState> statePtr = std::make_shared<WriterState>();
 
   void write_clusters(std::ostream& os) {
     os << "\nsubgraph cluster_left {\n";

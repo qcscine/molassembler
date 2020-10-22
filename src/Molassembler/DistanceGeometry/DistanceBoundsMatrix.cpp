@@ -15,9 +15,7 @@
 #include <algorithm>
 
 namespace Scine {
-
 namespace Molassembler {
-
 namespace DistanceGeometry {
 
 constexpr double DistanceBoundsMatrix::defaultLower;
@@ -150,7 +148,7 @@ outcome::result<Eigen::MatrixXd> DistanceBoundsMatrix::makeDistanceMatrix(Random
   std::vector<AtomIndex>::const_iterator separator;
 
   if(partiality == Partiality::FourAtom) {
-    separator = indices.cbegin() + std::min(N, 4u);
+    separator = indices.cbegin() + std::min(N, 4U);
   } else if(partiality == Partiality::TenPercent) {
     separator = indices.cbegin() + std::min(N, static_cast<unsigned>(0.1 * N));
   } else { // All
@@ -172,7 +170,7 @@ outcome::result<Eigen::MatrixXd> DistanceBoundsMatrix::makeDistanceMatrix(Random
         return DgError::GraphImpossible;
       }
 
-      double chosenDistance = Temple::Random::getSingle<double>(
+      const double chosenDistance = Temple::Random::getSingle<double>(
         lowerBound(matrixCopy, i, j),
         upperBound(matrixCopy, i, j),
         engine
@@ -231,7 +229,5 @@ unsigned DistanceBoundsMatrix::N() const {
 }
 
 } // namespace DistanceGeometry
-
 } // namespace Molassembler
-
 } // namespace Scine

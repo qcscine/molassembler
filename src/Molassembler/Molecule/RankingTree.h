@@ -374,7 +374,7 @@ private:
     }
   }
 
-  std::string toString(TreeVertexIndex vertex) const;
+  static std::string toString(TreeVertexIndex vertex);
   std::string toString(const TreeEdgeIndex& edge) const;
   std::string toString(const VariantType& vertexOrEdge) const;
 

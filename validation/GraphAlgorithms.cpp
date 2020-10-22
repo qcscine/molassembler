@@ -580,8 +580,8 @@ bool testHapticBonds(const boost::filesystem::path& filePath) {
   bool pass = true;
   Temple::TinyUnorderedSet<PrivateGraph::Edge> expectedEtaBonds;
   for(const auto& expectedEtaBond : relevantData) {
-    AtomIndex i = expectedEtaBond.front(),
-                  j = expectedEtaBond.back();
+    const AtomIndex i = expectedEtaBond.front();
+    const AtomIndex j = expectedEtaBond.back();
     auto edgeOption = graph.edgeOption(i, j);
 
     if(!edgeOption) {
@@ -636,7 +636,7 @@ bool testHapticBonds(const boost::filesystem::path& filePath) {
     );
   }
 
-  auto& expectedLigands = hapticLigandsData.at(filePath.stem().string());
+  const auto& expectedLigands = hapticLigandsData.at(filePath.stem().string());
   if(ligands != expectedLigands) {
     pass = false;
     std::cout << "Ligands at the central atom do not match expectation.\n"
@@ -663,7 +663,7 @@ bool testHapticBonds(const boost::filesystem::path& filePath) {
   return pass;
 }
 
-BOOST_AUTO_TEST_CASE(hapticGraphsTests) {
+BOOST_AUTO_TEST_CASE(HapticGraphsTests) {
   boost::filesystem::path filesPath("inorganics/haptic");
   boost::filesystem::recursive_directory_iterator end;
 

@@ -347,7 +347,8 @@ bool BondStereopermutator::Impl::cycleObviouslyInfeasible(
   const Eigen::Vector3d DMinusA = D - A;
 
   // P is on BC, Q on AD
-  Eigen::Vector3d P, Q;
+  Eigen::Vector3d P;
+  Eigen::Vector3d Q;
 
   /* If DMinusA and C are approximately parallel, getting the shortest path
    * between them is numerically dangerous
@@ -1256,7 +1257,7 @@ unsigned BondStereopermutator::Impl::numStereopermutations() const {
 std::string BondStereopermutator::Impl::info() const {
   using namespace std::string_literals;
 
-  std::string returnString =  "";
+  std::string returnString;
 
   returnString += std::to_string(composite_.orientations().first.identifier);
   returnString += "-";

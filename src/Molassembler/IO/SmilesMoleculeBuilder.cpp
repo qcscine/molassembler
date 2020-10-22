@@ -412,7 +412,7 @@ void MoleculeBuilder::setAtomStereo(
      * hcount instead of explicitly, then it is considered to be the first
      * atom in the clockwise or anticlockwise counting.
      */
-    if(vertexData.at(i).hCount == 1u) {
+    if(vertexData.at(i).hCount == 1U) {
       for(SiteIndex j {0}; j < ranking.sites.size(); ++j) {
         if(
           ranking.sites.at(j).size() == 1

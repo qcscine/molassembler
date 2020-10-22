@@ -120,7 +120,7 @@ void DirectedConformerGenerator::enumerate(
   unsigned seed,
   const EnumerationSettings& settings
 ) {
-  return pImpl_->enumerate(callback, seed, settings);
+  return pImpl_->enumerate(std::move(callback), seed, settings);
 }
 
 void DirectedConformerGenerator::enumerateRandom(
@@ -128,7 +128,7 @@ void DirectedConformerGenerator::enumerateRandom(
   const EnumerationSettings& settings
 ) {
   Random::Engine& engine = randomnessEngine();
-  return pImpl_->enumerate(callback, engine(), settings);
+  return pImpl_->enumerate(std::move(callback), engine(), settings);
 }
 
 DirectedConformerGenerator::Relabeler DirectedConformerGenerator::relabeler() const {
@@ -143,7 +143,7 @@ DirectedConformerGenerator::binMidpointIntegers(
 }
 
 DirectedConformerGenerator::Relabeler::Relabeler(
-  DirectedConformerGenerator::BondList bonds,
+  const DirectedConformerGenerator::BondList& bonds,
   const Molecule& mol
 ) {
   // Determine the dominant dihedral sequences at each bond

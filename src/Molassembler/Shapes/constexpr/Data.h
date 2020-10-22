@@ -589,7 +589,8 @@ struct TrigonalBipyramid {
       return 0;
     }
 
-    unsigned smaller = std::min(a, b), larger = std::max(a, b);
+    const unsigned smaller = std::min(a, b);
+    const unsigned larger = std::max(a, b);
     if(larger < 3) {
       // -> smaller < 2, this means either 0,1 0,2 1,2 axial
       return 2 * M_PI / 3;

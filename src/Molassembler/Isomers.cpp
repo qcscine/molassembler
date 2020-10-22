@@ -16,6 +16,7 @@
 #include "Molassembler/Stereopermutators/FeasiblePermutations.h"
 #include "Molassembler/Shapes/Data.h"
 #include "Molassembler/Temple/Optionals.h"
+#include "Molassembler/Temple/Functional.h"
 
 namespace Scine {
 namespace Molassembler {
@@ -142,28 +143,26 @@ bool partiallyCanonicalizedEnantiomeric(const Molecule& a, const Molecule& b) {
   /* Assignments of bond stereopermutators must match as these are
    * unaffected by mirroring.
    */
-  for(
-    const BondStereopermutator& permutator :
-    a.stereopermutators().bondStereopermutators()
-  ) {
-    if(permutator.numStereopermutations() <= 1) {
-      continue;
+  return Temple::all_of(
+    a.stereopermutators().bondStereopermutators(),
+    [&](const BondStereopermutator& permutator) -> bool {
+      if(permutator.numStereopermutations() <= 1) {
+        return true;
+      }
+
+      const auto matchOption = b.stereopermutators().option(permutator.placement());
+
+      if(!matchOption) {
+        return false;
+      }
+
+      if(permutator.indexOfPermutation() != matchOption->indexOfPermutation()) {
+        return false;
+      }
+
+      return true;
     }
-
-    const auto matchOption = b.stereopermutators().option(permutator.placement());
-
-    // There must be a matching permutator
-    if(!matchOption) {
-      return false;
-    }
-
-    // Index of permutation must match
-    if(permutator.indexOfPermutation() != matchOption->indexOfPermutation()) {
-      return false;
-    }
-  }
-
-  return true;
+  );
 }
 
 boost::optional<unsigned> permutationDifferences(const Molecule& a, const Molecule &b) {

@@ -9,9 +9,7 @@
 #include <limits>
 
 namespace Scine {
-
 namespace Molassembler {
-
 namespace DistanceGeometry {
 
 ValueBounds::ValueBounds() : ValueBounds(
@@ -31,7 +29,5 @@ bool ValueBounds::operator != (const ValueBounds& other) const {
 }
 
 } // namespace Molassembler
-
 } // namespace DistanceGeometry
-
 } // namespace Scine

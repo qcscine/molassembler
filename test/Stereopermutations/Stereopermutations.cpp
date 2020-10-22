@@ -402,7 +402,7 @@ BOOST_AUTO_TEST_CASE(OctahedralCaseWithoutTransRemoval, *boost::unit_test::label
 
   const Stereopermutation stereopermutation {characters, makeLinks(pairs)};
   const auto unique = uniques(stereopermutation, shape);
-  BOOST_CHECK_EQUAL(unique.list.size(), 4u);
+  BOOST_CHECK_EQUAL(unique.list.size(), 4);
 }
 
 BOOST_AUTO_TEST_CASE(numUnlinkedStereopermutationsTest, *boost::unit_test::label("Stereopermutations")) {

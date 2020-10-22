@@ -24,6 +24,9 @@ struct Molecule::Impl {
     const Utils::AtomCollection& atomCollection
   );
 
+  //! Returns whether an edge is double, triple or higher bond order
+  static bool isGraphBasedBondStereopermutatorCandidate_(BondType bondType);
+
   Graph adjacencies_;
   StereopermutatorList stereopermutators_;
   boost::optional<AtomEnvironmentComponents> canonicalComponentsOption_;
@@ -47,9 +50,6 @@ struct Molecule::Impl {
 
   //! Returns whether the specified index is valid or not
   bool isValidIndex_(AtomIndex index) const;
-
-  //! Returns whether an edge is double, triple or higher bond order
-  bool isGraphBasedBondStereopermutatorCandidate_(BondType bondType) const;
 
   //! Updates the molecule's StereopermutatorList after a graph modification
   void propagateGraphChange_();

@@ -64,7 +64,8 @@ BOOST_AUTO_TEST_CASE(ArrayPermutation, *boost::unit_test::label("Temple")) {
   std::array<unsigned, 4> base {{0, 1, 2, 3}};
   std::array<unsigned, 4> STLComparison {{0, 1, 2, 3}};
 
-  bool customHasNext, STLHasNext;
+  bool customHasNext;
+  bool STLHasNext;
 
   do {
     customHasNext = Temple::inPlaceNextPermutation(base);
@@ -237,7 +238,7 @@ BOOST_AUTO_TEST_CASE(DynamicSetTests, *boost::unit_test::label("Temple")) {
     std::distance(
       set.begin(),
       set.end()
-    ) == 0u
+    ) == 0
   );
 
   for(const auto& item : {9u, 3u, 5u}) {
@@ -249,7 +250,7 @@ BOOST_AUTO_TEST_CASE(DynamicSetTests, *boost::unit_test::label("Temple")) {
     std::distance(
       set.begin(),
       set.end()
-    ) == 3u
+    ) == 3
   );
   BOOST_CHECK(set.contains(3) && set.contains(5) && set.contains(9));
   for(const auto& item : {2u, 4u, 8u, 10u}) {
@@ -263,9 +264,7 @@ BOOST_AUTO_TEST_CASE(DynamicSetTests, *boost::unit_test::label("Temple")) {
   BOOST_CHECK(isSorted(set));
 
   Temple::DynamicSet<unsigned, 10> setInitList {
-    Temple::DynamicArray<unsigned, 10> {
-      4u, 9u, 13u
-    }
+    Temple::DynamicArray<unsigned, 10> {4, 9, 13}
   };
 
   BOOST_CHECK(setInitList.size() == 3);
@@ -273,10 +272,10 @@ BOOST_AUTO_TEST_CASE(DynamicSetTests, *boost::unit_test::label("Temple")) {
     std::distance(
       setInitList.begin(),
       setInitList.end()
-    ) == 3u
+    ) == 3
   );
 
-  setInitList.insert(0u);
+  setInitList.insert(0);
 
   BOOST_CHECK(setInitList.size() == 4);
 
@@ -303,11 +302,11 @@ BOOST_AUTO_TEST_CASE(DynamicSetTests, *boost::unit_test::label("Temple")) {
     Temple::Array<unsigned, 4>,
     5
   > sampleArrays {
-    Temple::Array<unsigned, 4> {1u, 2u, 3u, 4u},
-    Temple::Array<unsigned, 4> {1u, 2u, 4u, 3u},
-    Temple::Array<unsigned, 4> {1u, 4u, 3u, 2u},
-    Temple::Array<unsigned, 4> {1u, 4u, 2u, 3u},
-    Temple::Array<unsigned, 4> {2u, 1u, 3u, 4u}
+    Temple::Array<unsigned, 4> {1, 2, 3, 4},
+    Temple::Array<unsigned, 4> {1, 2, 4, 3},
+    Temple::Array<unsigned, 4> {1, 4, 3, 2},
+    Temple::Array<unsigned, 4> {1, 4, 2, 3},
+    Temple::Array<unsigned, 4> {2, 1, 3, 4}
   };
 
   Temple::DynamicSet<
@@ -605,9 +604,9 @@ constexpr Temple::DynamicMap<unsigned, int, 20> generateMap() {
 
 constexpr auto a = generateMap();
 
-static_assert(a.at(4u) == -2, "Map does not find element with key 4");
-static_assert(a.at(1u) == 4, "Map does not find element with key 1");
-static_assert(a.at(3u) == 9, "Map does not find element with key 3");
+static_assert(a.at(4) == -2, "Map does not find element with key 4");
+static_assert(a.at(1) == 4, "Map does not find element with key 1");
+static_assert(a.at(3) == 9, "Map does not find element with key 3");
 
 } // namespace DynamicMapTests
 
@@ -615,13 +614,13 @@ namespace UpperTriangularMatrixTests {
 
 // Can default-construct
 constexpr auto defaultMatr = Temple::UpperTriangularMatrix<bool, 15> {};
-static_assert(decltype(defaultMatr)::N == 6u, "Size isn't right");
+static_assert(decltype(defaultMatr)::N == 6, "Size isn't right");
 
 constexpr auto matr = Temple::makeUpperTriangularMatrix(
   std::array<unsigned, 6> {{1, 2, 3, 4, 5, 6}}
 );
 
-static_assert(decltype(matr)::N == 4u, "Size isn't right");
+static_assert(decltype(matr)::N == 4, "Size isn't right");
 
 /*constexpr auto failing = Temple::makeUpperTriangularMatrix(
   std::array<unsigned, 5> {{1, 2, 3, 4, 5}}
@@ -630,7 +629,7 @@ static_assert(decltype(matr)::N == 4u, "Size isn't right");
 constexpr auto fromArray = Temple::makeUpperTriangularMatrix(
   Temple::Array<unsigned, 6> {{1, 2, 3, 4, 5, 6}}
 );
-static_assert(decltype(fromArray)::N == 4u, "Size isn't right");
+static_assert(decltype(fromArray)::N == 4, "Size isn't right");
 
 } // namespace UpperTriangularMatrixTests
 

@@ -77,7 +77,8 @@ BOOST_AUTO_TEST_CASE(IotaAdaptorTests, *boost::unit_test::label("Temple")) {
 }
 
 BOOST_AUTO_TEST_CASE(ZipAdaptorTests, *boost::unit_test::label("Temple")) {
-  const std::vector<unsigned> i {5, 3, 9, 11}, j {3, 4};
+  const std::vector<unsigned> i {5, 3, 9, 11};
+  const std::vector<unsigned> j {3, 4};
 
   auto zipRange = Temple::Adaptors::zip(i, j);
 
@@ -163,7 +164,8 @@ BOOST_AUTO_TEST_CASE(CompoundAdaptorOwnership, *boost::unit_test::label("Temple"
   checkPairs(pairsOfRange);
   checkPairs(referenceOwningPairs);
 
-  std::vector<unsigned> i {1, 4, 9}, j {5, 2};
+  const std::vector<unsigned> i {1, 4, 9};
+  const std::vector<unsigned> j {5, 2};
 
   auto pairFromTwoReferences = Temple::Adaptors::allPairs(i, j);
   auto pairFromTwoRValues = Temple::Adaptors::allPairs(

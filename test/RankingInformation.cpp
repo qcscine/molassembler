@@ -30,8 +30,10 @@ BOOST_AUTO_TEST_CASE(SiteRanking, *boost::unit_test::label("Molassembler")) {
   };
 
   std::vector<RankingInformation::Link> symmetricHapticPincerLinks;
-  RankingInformation::Link a, b;
+  RankingInformation::Link a;
   a.sites = {0_s, 1_s};
+
+  RankingInformation::Link b;
   b.sites = {1_s, 2_s};
 
   symmetricHapticPincerLinks.push_back(a);

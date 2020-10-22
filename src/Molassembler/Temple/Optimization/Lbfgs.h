@@ -793,9 +793,9 @@ private:
     CollectiveRingBuffer ringBuffer {static_cast<unsigned>(parameters.size())};
 
     // Begin optimization loop
-    unsigned iteration;
+    unsigned iteration = 1;
     for(
-      iteration = 1;
+      ;
       check.shouldContinue(iteration, Stl17::as_const(step));
       ++iteration
     ) {

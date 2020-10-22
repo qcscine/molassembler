@@ -25,7 +25,7 @@ extern const Temple::Array<std::pair<double, double>, nShapes> symmetryAngleBoun
  * @complexity{@math{\Theta(S^2)}}
  * @see ConstexprProperties::calculateSmallestAngle
  */
-MASM_EXPORT double minimumAngle(Shape symmetryName);
+MASM_EXPORT double minimumAngle(Shape shape);
 
 /*! @brief Calculate the maximum angle in a symmetry
  *
@@ -33,7 +33,7 @@ MASM_EXPORT double minimumAngle(Shape symmetryName);
  *
  * @complexity{@math{\Theta(S^2)}}
  */
-MASM_EXPORT double maximumAngle(Shape symmetryName);
+MASM_EXPORT double maximumAngle(Shape shape);
 
 /* Derived stored constexpr data */
 /*! @brief The smallest angle between ligands in all symmetries
@@ -86,7 +86,7 @@ extern Temple::MinimalCache<
  *
  * @returns The symmetry transition if possible, None otherwise
  */
-const boost::optional<const Properties::ShapeTransitionGroup&> getMapping(
+boost::optional<const Properties::ShapeTransitionGroup&> getMapping(
   Shape a,
   Shape b,
   const boost::optional<Vertex>& removedIndexOption = boost::none
@@ -128,7 +128,7 @@ extern Temple::MinimalCache<
  *   are linked
  */
 MASM_EXPORT bool hasMultipleUnlinkedStereopermutations(
-  Shape symmetryName,
+  Shape shape,
   unsigned nIdenticalLigands
 );
 

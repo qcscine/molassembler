@@ -64,7 +64,8 @@ std::vector<FunctorResults> timeFunctors(
 ) {
   using namespace std::chrono;
 
-  time_point<steady_clock> start, end;
+  time_point<steady_clock> start;
+  time_point<steady_clock> end;
 
   struct Counter {
     std::vector<double> timings;

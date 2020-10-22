@@ -122,19 +122,19 @@ public:
     /* Constructors */
     UrfIdsCycleIterator(
       AtomIndex soughtIndex,
-      const std::shared_ptr<RdlDataPtrs>& dataPtr
+      std::shared_ptr<RdlDataPtrs> dataPtr
     );
 
     UrfIdsCycleIterator(
       const BondIndex& soughtBond,
-      const std::vector<unsigned> urfs,
-      const std::shared_ptr<RdlDataPtrs>& dataPtr
+      std::vector<unsigned> urfs,
+      std::shared_ptr<RdlDataPtrs> dataPtr
     );
 
     UrfIdsCycleIterator(
       const std::vector<BondIndex>& soughtBonds,
-      const std::vector<unsigned> urfs,
-      const std::shared_ptr<RdlDataPtrs>& dataPtr
+      std::vector<unsigned> urfs,
+      std::shared_ptr<RdlDataPtrs> dataPtr
     );
 
     UrfIdsCycleIterator& operator ++ ();
@@ -210,7 +210,7 @@ public:
    * @complexity{@math{\Theta(U)} where @math{U} is the number of unique ring
    * families in the molecule}
    */
-  unsigned numRelevantCycles(const BondIndex& index) const;
+  unsigned numRelevantCycles(const BondIndex& bond) const;
 
   //! Provide access to calculated data
   RDL_data* dataPtr() const;

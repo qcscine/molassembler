@@ -17,6 +17,7 @@ namespace Scine {
 namespace Molassembler {
 namespace Shapes {
 namespace Detail {
+
 //! Determine degeneracy of intertial moments
 unsigned degeneracy(const Eigen::Vector3d& inertialMoments) {
   constexpr double degeneracyEpsilon = 0.05;

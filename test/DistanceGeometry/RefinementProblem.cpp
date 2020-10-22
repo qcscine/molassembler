@@ -173,7 +173,7 @@ struct RotationalTranslationalInvarianceTest {
 
     // Initialize name, function and reference value and gradient
     void initialize(std::string passName, FunctionType passFunction, const PositionType& referencePositions) {
-      name = passName;
+      name = std::move(passName);
       function = passFunction;
 
       referenceValue = 0;

@@ -212,7 +212,8 @@ BOOST_AUTO_TEST_CASE(DifferentSmiles, *boost::unit_test::label("Molassembler")) 
   };
 
   for(const auto& pair : pairs) {
-    Molecule a, b;
+    Molecule a;
+    Molecule b;
     BOOST_REQUIRE_NO_THROW(a = expectSingle(IO::Experimental::parseSmiles(pair.first)));
     BOOST_REQUIRE_NO_THROW(b = expectSingle(IO::Experimental::parseSmiles(pair.second)));
     BOOST_CHECK_MESSAGE(

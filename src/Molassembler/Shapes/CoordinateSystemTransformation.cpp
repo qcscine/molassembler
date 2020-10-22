@@ -58,7 +58,7 @@ Eigen::Matrix3d rotationMatrix(const CoordinateSystem& a, const CoordinateSystem
    * anything. Catch the case that z matches already:
    */
   if(a.z.isApprox(b.z, 1e-8)) {
-    const Eigen::Matrix3d R = Eigen::AngleAxisd(
+    Eigen::Matrix3d R = Eigen::AngleAxisd(
       Detail::signedAngle(a.x, b.x, a.z),
       a.z.normalized()
     ).toRotationMatrix();
@@ -70,7 +70,7 @@ Eigen::Matrix3d rotationMatrix(const CoordinateSystem& a, const CoordinateSystem
    * rotate anything. Catch that case too:
    */
   if(a.z.isApprox(-b.z, 1e-8)) {
-    const Eigen::Matrix3d R = -Eigen::AngleAxisd(
+    Eigen::Matrix3d R = -Eigen::AngleAxisd(
       -Detail::signedAngle(a.x, b.x, a.z),
       a.z.normalized()
     ).toRotationMatrix();
@@ -90,7 +90,7 @@ Eigen::Matrix3d rotationMatrix(const CoordinateSystem& a, const CoordinateSystem
 
   assert(!std::isnan(alpha) && !std::isnan(beta) && !std::isnan(gamma));
 
-  const Eigen::Matrix3d R = (
+  Eigen::Matrix3d R = (
     Eigen::AngleAxisd(gamma, b.z.normalized())
     * Eigen::AngleAxisd(beta, N.normalized())
     * Eigen::AngleAxisd(alpha, a.z.normalized())

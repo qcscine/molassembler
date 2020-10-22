@@ -67,8 +67,8 @@ Cycles::Cycles(const Graph& sourceGraph, const bool ignoreEtaBonds)
   : Cycles {sourceGraph.inner(), ignoreEtaBonds}
 {}
 
-Cycles::Cycles(const PrivateGraph& sourceGraph, const bool ignoreEtaBonds)
-  : rdlPtr_(std::make_shared<RdlDataPtrs>(sourceGraph, ignoreEtaBonds))
+Cycles::Cycles(const PrivateGraph& innerGraph, const bool ignoreEtaBonds)
+  : rdlPtr_(std::make_shared<RdlDataPtrs>(innerGraph, ignoreEtaBonds))
 {
   unsigned U = RDL_getNofURF(rdlPtr_->dataPtr);
   for(unsigned i = 0; i < U; ++i) {
@@ -580,8 +580,8 @@ struct Cycles::UrfIdsCycleIterator::UrfHelper {
 
 Cycles::UrfIdsCycleIterator::UrfIdsCycleIterator(
   AtomIndex soughtIndex,
-  const std::shared_ptr<RdlDataPtrs>& dataPtr
-) : rdlPtr_(dataPtr),
+  std::shared_ptr<RdlDataPtrs> dataPtr
+) : rdlPtr_(std::move(dataPtr)),
     urfsPtr_(std::make_unique<UrfHelper>(soughtIndex, *dataPtr)),
     cyclePtr_()
 {
@@ -591,8 +591,8 @@ Cycles::UrfIdsCycleIterator::UrfIdsCycleIterator(
 Cycles::UrfIdsCycleIterator::UrfIdsCycleIterator(
   const BondIndex& soughtBond,
   std::vector<unsigned> urfs,
-  const std::shared_ptr<RdlDataPtrs>& dataPtr
-) : rdlPtr_(dataPtr),
+  std::shared_ptr<RdlDataPtrs> dataPtr
+) : rdlPtr_(std::move(dataPtr)),
     urfsPtr_(
       std::make_unique<UrfHelper>(
         std::vector<BondIndex> {soughtBond},
@@ -607,8 +607,8 @@ Cycles::UrfIdsCycleIterator::UrfIdsCycleIterator(
 Cycles::UrfIdsCycleIterator::UrfIdsCycleIterator(
   const std::vector<BondIndex>& soughtBonds,
   std::vector<unsigned> urfs,
-  const std::shared_ptr<RdlDataPtrs>& dataPtr
-) : rdlPtr_(dataPtr),
+  std::shared_ptr<RdlDataPtrs> dataPtr
+) : rdlPtr_(std::move(dataPtr)),
     urfsPtr_(
       std::make_unique<UrfHelper>(soughtBonds, std::move(urfs))
     ),
@@ -899,7 +899,7 @@ unsigned countPlanarityEnforcingBonds(
   return std::accumulate(
     std::begin(edgeSet),
     std::end(edgeSet),
-    0u,
+    0U,
     [&graph](const unsigned carry, const BondIndex& edge) {
       if(graph.bondType(edge) == BondType::Double) {
         return carry + 1;

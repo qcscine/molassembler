@@ -66,7 +66,7 @@ Graph::InnerBasedIterator<T, isVertexInitialized>::operator = (const InnerBasedI
 }
 
 template<typename T, bool isVertexInitialized>
-Graph::InnerBasedIterator<T, isVertexInitialized>::~InnerBasedIterator() = default;
+Graph::InnerBasedIterator<T, isVertexInitialized>::~InnerBasedIterator<T, isVertexInitialized>() = default;
 
 template<typename T, bool isVertexInitialized>
 Graph::InnerBasedIterator<T, isVertexInitialized>::InnerBasedIterator() : pImpl_(std::make_unique<Impl>()) {}

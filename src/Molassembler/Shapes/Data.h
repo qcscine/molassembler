@@ -83,7 +83,7 @@ constexpr std::array<Shape, nShapes> allShapes = Detail::makeAllShapes(
  *
  * @complexity{@math{\Theta(1)}}
  */
-MASM_EXPORT const std::string& name(const Shape shape);
+MASM_EXPORT const std::string& name(Shape shape);
 
 /*! @brief Fetch the shape name from its string
  *
@@ -102,37 +102,37 @@ MASM_EXPORT std::string spaceFreeName(Shape shape);
  *
  * @complexity{@math{\Theta(1)}}
  */
-MASM_EXPORT unsigned size(const Shape shape);
+MASM_EXPORT unsigned size(Shape shape);
 
 /*! @brief Fetches a shape's list of rotations
  *
  * @complexity{@math{\Theta(1)}}
  */
-MASM_EXPORT const RotationsList& rotations(const Shape shape);
+MASM_EXPORT const RotationsList& rotations(Shape shape);
 
 /*! @brief Fetches the mirror index mapping for a particular shape
  *
  * @complexity{@math{\Theta(1)}}
  */
-MASM_EXPORT const Permutation& mirror(const Shape shape);
+MASM_EXPORT const Permutation& mirror(Shape shape);
 
 /*! @brief Gets a shape's angle function
  *
  * @complexity{@math{\Theta(1)}}
  */
-MASM_EXPORT AngleFunction angleFunction(const Shape shape);
+MASM_EXPORT AngleFunction angleFunction(Shape shape);
 
 /*! @brief Fetch a shape's idealized coordiantes
  *
  * @complexity{@math{\Theta(1)}}
  */
-MASM_EXPORT Coordinates coordinates(const Shape shape);
+MASM_EXPORT Coordinates coordinates(Shape shape);
 
 /*! @brief Get a shape's point group
  *
  * @complexity{@math{\Theta(1)}}
  */
-MASM_EXPORT PointGroup pointGroup(const Shape shape);
+MASM_EXPORT PointGroup pointGroup(Shape shape);
 
 /*! @brief Returns the index of a shape within allShapes
  *
@@ -144,13 +144,13 @@ MASM_EXPORT unsigned nameIndex(Shape shape);
  *
  * @complexity{@math{\Theta(1)}}
  */
-MASM_EXPORT const TetrahedronList& tetrahedra(const Shape shape);
+MASM_EXPORT const TetrahedronList& tetrahedra(Shape shape);
 
 /*! @brief Returns whether a shape is three dimensional
  *
  * @complexity{@math{\Theta(1)}}
  */
-MASM_EXPORT bool threeDimensional(const Shape shape);
+MASM_EXPORT bool threeDimensional(Shape shape);
 
 } // namespace Shapes
 } // namespace Molassembler

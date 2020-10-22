@@ -183,8 +183,8 @@ void writeSymmetryTransitionDotFile(
       );
 
       RgbGradient gradient {
-        {{0u, 100u, 0u}}, // HTML dark green
-        {{255u, 99u, 71u}}, // HTML color tomato
+        {{0, 100, 0}}, // HTML dark green
+        {{255, 99, 71}}, // HTML color tomato
         0.0, // smallest ist green
         maxDistortion // largest is red
       };

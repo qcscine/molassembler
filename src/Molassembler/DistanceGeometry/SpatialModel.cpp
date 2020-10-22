@@ -1542,20 +1542,18 @@ ValueBounds SpatialModel::siteDistanceFromCenter(
 ) {
   assert(!siteAtomList.empty());
 
-  double distance;
-
-  if(siteAtomList.size() == 1) {
+  const double distance = [&]() {
     // Single-atom binding site
-    AtomIndex atomIndex = siteAtomList.front();
+    if(siteAtomList.size() == 1) {
+      return modelDistance(
+        siteAtomList.front(),
+        placement,
+        graph.inner()
+      );
+    }
 
-    distance = modelDistance(
-      atomIndex,
-      placement,
-      graph.inner()
-    );
-  } else {
     // Haptic binding site
-    distance = 0.9 * Temple::average(
+    return 0.9 * Temple::average(
       Temple::Adaptors::transform(
         siteAtomList,
         [&](AtomIndex atomIndex) -> double {
@@ -1567,7 +1565,7 @@ ValueBounds SpatialModel::siteDistanceFromCenter(
         }
       )
     );
-  }
+  }();
 
   return {
     (1 - bondRelativeVariance) * distance,

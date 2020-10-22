@@ -452,14 +452,17 @@ public:
 
       const double constraintSumHalved = (constraint.lower + constraint.upper) / 2;
 
-      double phi;
-      if(dihedral < constraintSumHalved - M_PI) {
-        phi = dihedral + 2 * M_PI;
-      } else if(dihedral > constraintSumHalved + M_PI) {
-        phi = dihedral - 2 * M_PI;
-      } else {
-        phi = dihedral;
-      }
+      const double phi = [&]() {
+        if(dihedral < constraintSumHalved - M_PI) {
+          return dihedral + 2 * M_PI;
+        }
+
+        if(dihedral > constraintSumHalved + M_PI) {
+          return dihedral - 2 * M_PI;
+        }
+
+        return dihedral;
+      }();
 
       const double term = std::fabs(phi - constraintSumHalved) - (constraint.upper - constraint.lower) / 2;
 
@@ -832,15 +835,14 @@ private:
       ThreeDimensionalVector a = f.cross(g);
       ThreeDimensionalVector b = h.cross(g);
 
+      const FloatType constraintSumHalved = (static_cast<FloatType>(constraint.lower) + static_cast<FloatType>(constraint.upper)) / 2;
+      constexpr FloatType pi {M_PI};
+
       // Calculate the dihedral angle
       FloatType phi = std::atan2(
         a.cross(b).dot(-g.normalized()),
         a.dot(b)
       );
-
-      const FloatType constraintSumHalved = (static_cast<FloatType>(constraint.lower) + static_cast<FloatType>(constraint.upper)) / 2;
-
-      constexpr FloatType pi {M_PI};
 
       if(phi < constraintSumHalved - pi) {
         phi += 2 * pi;

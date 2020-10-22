@@ -320,7 +320,7 @@ std::vector<FalsePositive> badHapticLigandBonds(
  */
 Utils::BondOrderCollection removeFalsePositives(
   const Utils::AtomCollection& atoms,
-  const Utils::BondOrderCollection bonds
+  Utils::BondOrderCollection bonds
 );
 
 } // namespace Interpret

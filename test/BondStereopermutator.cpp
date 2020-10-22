@@ -59,7 +59,7 @@ constexpr unsigned E = 0;
 constexpr unsigned stereogenic = 2;
 constexpr unsigned nonStereogenic = 1;
 
-std::map<std::string, Expectation> recognitionExpectations {
+const std::map<std::string, Expectation> recognitionExpectations {
   {
     "but-2E-ene",
     {{0, 1}, stereogenic, E}
@@ -226,7 +226,6 @@ BOOST_AUTO_TEST_CASE(BondStatePropagation, *boost::unit_test::label("Molassemble
 BOOST_AUTO_TEST_CASE(StereocentersInSmallCycles, *boost::unit_test::label("Molassembler")) {
   // Flat map from cycle size to number of assignments
   const std::vector<unsigned> expectedAssignmentsMap {
-  //0, 1, 2, 3, 4, 5, 6, 7, 8
     0, 0, 0, 1, 1, 1, 1, 2, 2
   };
 

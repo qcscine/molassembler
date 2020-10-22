@@ -59,7 +59,8 @@ struct NewtonRaphson {
     VectorType numericalGradient(P);
     {
       constexpr FloatType h = 1e-4;
-      FloatType a, b;
+      FloatType a;
+      FloatType b;
       VectorType diffParameters = parameters;
       for(unsigned i = 0; i < P; ++i) {
         diffParameters(i) += h;
@@ -84,7 +85,10 @@ struct NewtonRaphson {
     MatrixType numericalHessian(P, P);
     {
       constexpr FloatType h = 1e-4;
-      FloatType a, b, c, d;
+      FloatType a;
+      FloatType b;
+      FloatType c;
+      FloatType d;
       VectorType diffParameters = parameters;
       for(unsigned i = 0; i < P; ++i) {
         // Diagonal second derivative from forward and backward derivative

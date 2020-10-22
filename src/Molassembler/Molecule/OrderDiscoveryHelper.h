@@ -88,7 +88,9 @@ private:
       std::vector<VertexIndexType>
     > degreeToSetMap;
 
-    typename DependencyGraphType::vertex_iterator iter, end;
+    using Iterator = typename DependencyGraphType::vertex_iterator;
+    Iterator iter;
+    Iterator end;
     std::tie(iter, end) = boost::vertices(graph_);
 
     while(iter != end) {

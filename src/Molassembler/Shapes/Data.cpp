@@ -35,7 +35,7 @@ using ShapeDataMapType = std::unordered_map<
   Shape,
   ShapeInformation,
   std::hash<Shape>,
-  std::equal_to<Shape>,
+  std::equal_to<>,
   Eigen::aligned_allocator<std::pair<const Shape, ShapeInformation>>
 >;
 
@@ -116,9 +116,6 @@ TetrahedronList makeTetrahedra(
 
   return tetrahedra;
 }
-
-//! Conversion helper to Eigen type from constexpr vector type
-Eigen::Vector3d toEigen(const Temple::Vector& cVector);
 
 /*! Conversion function to make the dynamic coordinates list type from the
  * constexpr data types given in a specific shape class type

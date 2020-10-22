@@ -15,6 +15,7 @@
 #include <algorithm>
 #include <array>
 #include <random>
+#include <stdexcept>
 
 namespace Scine {
 namespace Molassembler {

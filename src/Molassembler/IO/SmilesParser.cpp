@@ -45,7 +45,6 @@ namespace Molassembler {
 namespace IO {
 
 namespace qi = boost::spirit::qi;
-namespace ascii = boost::spirit::ascii;
 
 namespace symbols {
 
@@ -63,7 +62,7 @@ struct organic_aliphatic_element_ : qi::symbols<char, ElementData> {
       ("Br", ElementData(Utils::ElementType::Br))
       ("I",  ElementData(Utils::ElementType::I));
   }
-} organic_aliphatic_element;
+} const organic_aliphatic_element;
 
 //! Organic aromatic elements (for alternative in atom)
 struct organic_aromatic_element_ : qi::symbols<char, ElementData> {
@@ -76,7 +75,7 @@ struct organic_aromatic_element_ : qi::symbols<char, ElementData> {
       ("s", ElementData::aromaticElement(Utils::ElementType::S))
       ("p", ElementData::aromaticElement(Utils::ElementType::P));
   }
-} organic_aromatic_element;
+} const organic_aromatic_element;
 
 //! Aromatic symbols (for use in atom bracket)
 struct aromatic_symbols_ : qi::symbols<char, ElementData> {
@@ -91,7 +90,7 @@ struct aromatic_symbols_ : qi::symbols<char, ElementData> {
       ("se", ElementData::aromaticElement(Utils::ElementType::Se))
       ("as", ElementData::aromaticElement(Utils::ElementType::As));
   }
-} aromatic_symbols;
+} const aromatic_symbols;
 
 //! All element symbol strings (for use in atom bracket)
 struct element_symbols_ : qi::symbols<char, ElementData> {
@@ -102,7 +101,7 @@ struct element_symbols_ : qi::symbols<char, ElementData> {
       add(Utils::ElementInfo::symbol(element), ElementData(element));
     }
   }
-} element_symbols;
+} const element_symbols;
 
 struct chiral_subset_ : qi::symbols<char, ChiralData> {
   chiral_subset_() {
@@ -117,7 +116,7 @@ struct chiral_subset_ : qi::symbols<char, ChiralData> {
       ("@SP2", {Shapes::Shape::Square, 2})
       ("@SP3", {Shapes::Shape::Square, 3});
   }
-} chiral_subset;
+} const chiral_subset;
 
 struct bond_ : qi::symbols<char, BondData> {
   bond_() {
@@ -130,7 +129,7 @@ struct bond_ : qi::symbols<char, BondData> {
       ("/", {BondType::Single, BondData::StereoMarker::Forward, boost::none})
       ("\\", {BondType::Single, BondData::StereoMarker::Backward, boost::none});
   }
-} bond;
+} const bond;
 
 } // namespace symbols
 

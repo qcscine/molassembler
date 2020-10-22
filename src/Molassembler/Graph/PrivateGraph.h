@@ -101,7 +101,7 @@ public:
   PrivateGraph(const PrivateGraph& other);
   PrivateGraph(PrivateGraph&& other);
   PrivateGraph& operator = (const PrivateGraph& other);
-  PrivateGraph& operator = (PrivateGraph&& other);
+  PrivateGraph& operator = (PrivateGraph&& other) noexcept;
   ~PrivateGraph();
 //!@}
 

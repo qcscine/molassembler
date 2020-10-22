@@ -83,7 +83,7 @@ template<class Container> std::enable_if_t<
 namespace Detail {
 
 template<class T, class R = void>
-struct enable_if_type { typedef R type; };
+struct enable_if_type { using type = R; };
 
 template<class T, class Enable = void>
 struct isMapType : std::false_type {};

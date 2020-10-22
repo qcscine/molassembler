@@ -123,7 +123,7 @@ void MolGraphWriter::operator() (
 
   // Bond Type display options
   BondType bondType = inner.bondType(edgeIndex);
-  if(bondTypeDisplayString.count(bondType) != 0u) {
+  if(bondTypeDisplayString.count(bondType) != 0) {
     os << bondTypeDisplayString.at(bondType);
   }
 

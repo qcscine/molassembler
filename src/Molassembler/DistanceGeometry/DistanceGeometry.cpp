@@ -37,6 +37,6 @@ DihedralConstraint::DihedralConstraint(
   }
 }
 
-}
-}
-}
+} // namespace DistanceGeometry
+} // namespace Molassembler
+} // namespace Scine

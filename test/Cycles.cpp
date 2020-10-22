@@ -21,9 +21,6 @@
 #include <array>
 #include <iterator>
 
-/* TODO add further tests for free functions
- */
-
 using namespace Scine::Molassembler;
 
 
@@ -34,7 +31,7 @@ struct ExpectationData {
     : cycleSizes(Temple::sorted(passCycleSizes)) {}
 };
 
-std::map<std::string, ExpectationData> decompositionData {
+const std::map<std::string, ExpectationData> decompositionData {
   {
     "fenestrane-3",
     {
@@ -117,7 +114,7 @@ BOOST_AUTO_TEST_CASE(cycleIterators, *boost::unit_test::label("Molassembler")) {
   std::vector<
     std::tuple<std::string, AtomIndex, unsigned>
   > tests {
-    {"strained_organic_molecules/fenestrane-4.mol", 0ul, 4u}
+    {"strained_organic_molecules/fenestrane-4.mol", 0, 4}
   };
 
   std::string file;

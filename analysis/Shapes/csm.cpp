@@ -144,7 +144,7 @@ std::ostream& operator << (std::ostream& os, const std::vector<double>& values) 
 struct RScriptWriter {
   std::ofstream file;
 
-  RScriptWriter(std::string str) : file(str) {
+  RScriptWriter(const std::string& str) : file(str) {
     writeHeader();
   }
 
@@ -234,7 +234,7 @@ int main(int argc, char* argv[]) {
     showElements ? "elements.R" : "point_groups_data.R"
   };
   Temple::JSF64 prng;
-  if(options_variables_map.count("seed")) {
+  if(options_variables_map.count("seed") > 0) {
     const int seed = options_variables_map["seed"].as<int>();
     prng.seed(seed);
     writer.writeSeed(seed);

@@ -522,7 +522,9 @@ void DirectedConformerGenerator::Impl::enumerate(
           callback(decisionList, conformer.value());
         }
         break;
-      } else if(conformer.error() != DgError::DecisionListMismatch) {
+      }
+
+      if(conformer.error() != DgError::DecisionListMismatch) {
         /* Only allow decision list failure retries for retries, break on
          * anything else
          */

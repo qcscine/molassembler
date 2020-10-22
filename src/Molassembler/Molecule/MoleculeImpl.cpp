@@ -169,7 +169,7 @@ bool Molecule::Impl::isValidIndex_(const AtomIndex index) const {
 
 bool Molecule::Impl::isGraphBasedBondStereopermutatorCandidate_(
   BondType bondType
-) const {
+) {
   return (
     bondType == BondType::Double
     || bondType == BondType::Triple
@@ -782,7 +782,7 @@ void Molecule::Impl::setShapeAtAtom(
 
     // Default-assign stereopermutators with only one assignment
     if(newStereopermutator.numAssignments() == 1) {
-      newStereopermutator.assign(0u);
+      newStereopermutator.assign(0U);
     }
 
     stereopermutators_.add(std::move(newStereopermutator));
@@ -1103,7 +1103,8 @@ boost::optional<std::vector<AtomIndex>> Molecule::Impl::modularIsomorphism(
    *
    * This maps the hashes to an incremented number:
    */
-  std::vector<Hashes::HashType> thisHashes, otherHashes;
+  std::vector<Hashes::HashType> thisHashes;
+  std::vector<Hashes::HashType> otherHashes;
   Hashes::HashType maxHash;
 
   std::tie(thisHashes, otherHashes, maxHash) = Hashes::narrow(

@@ -167,7 +167,9 @@ BOOST_AUTO_TEST_CASE(LBFGSBoxedMinimization, *boost::unit_test::label("Temple"))
 
   OptimizerType optimizer;
   GradientBasedChecker<double> gradientChecker;
-  Eigen::VectorXd positions(2), boxMinima(2), boxMaxima(2);
+  Eigen::VectorXd positions(2);
+  Eigen::VectorXd boxMinima(2);
+  Eigen::VectorXd boxMaxima(2);
   boxMinima << 0.1, 0;
   positions << 0.6, 0.5;
   boxMaxima << M_PI, M_PI;

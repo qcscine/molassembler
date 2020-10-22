@@ -76,10 +76,10 @@ void executeTest(
       if(positionResult) {
         success = true;
         break;
-      } else {
-        std::cout << "Conformer generation failure: "
-          << positionResult.error().message() << "\n";
       }
+
+      std::cout << "Conformer generation failure: "
+        << positionResult.error().message() << "\n";
     }
 
     BOOST_CHECK_MESSAGE(
@@ -208,7 +208,7 @@ BOOST_AUTO_TEST_CASE(DirConfGenRelabeler, *boost::unit_test::label("DG")) {
   auto generator = DirectedConformerGenerator(mol);
 
   std::vector<Utils::PositionCollection> conformers;
-  generator.enumerateRandom([&](const auto&, const auto& conf) {
+  generator.enumerateRandom([&](const auto& /* decList */, const auto& conf) {
     conformers.push_back(conf);
   });
 

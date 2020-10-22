@@ -12,18 +12,22 @@
 Checks:          '-*,
                   bugprone-*,
                   cppcoreguidelines-*,
+                  -cppcoreguidelines-avoid-magic-numbers,
                   -cppcoreguidelines-owning-memory,
                   -cppcoreguidelines-pro-bounds-array-to-pointer-decay,
                   -cppcoreguidelines-pro-bounds-constant-array-index,
                   -cppcoreguidelines-pro-bounds-pointer-arithmetic,
                   -cppcoreguidelines-pro-type-member-init,
                   -cppcoreguidelines-pro-type-vararg,
+                  -cppcoreguidelines-non-private-member-variables-in-classes,
                   misc-*,
+                  -misc-non-private-member-variables-in-classes,
                   modernize-*,
+                  -modernize-use-trailing-return-type,
                   performance-*,
                   portability-*,
-                  readability-*',
-                  -readability-magic-numbers
+                  readability-*,
+                  -readability-magic-numbers'
 #HeaderFilterRegex: './src/*'
 AnalyzeTemporaryDtors: false
 FormatStyle:     none

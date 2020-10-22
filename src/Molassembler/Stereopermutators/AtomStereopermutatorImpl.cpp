@@ -45,14 +45,12 @@ using namespace std::placeholders;
 namespace Scine {
 namespace Molassembler {
 
-/* Static functions */
-
 namespace {
 
 Shapes::Shape pickTransition(
   const Shapes::Shape shape,
   const unsigned T,
-  boost::optional<Shapes::Vertex> removedVertexOptional
+  const boost::optional<Shapes::Vertex>& removedVertexOptional
 ) {
   boost::optional<Shapes::Properties::ShapeTransitionGroup> bestTransition;
   std::vector<Shapes::Shape> propositions;
@@ -159,7 +157,7 @@ std::pair<Shapes::Shape, std::vector<Shapes::Vertex>> classifyShape(const Eigen:
     const auto minElementIter = std::min_element(
       std::begin(randomCloudProbabilities),
       std::end(randomCloudProbabilities),
-      [](const boost::optional<double>& a, const boost::optional<double>& b) -> double {
+      [](const boost::optional<double>& a, const boost::optional<double>& b) -> bool {
         // We know all optionals are Somes from the previous all_of call
         return a.value() < b.value();
       }
@@ -541,7 +539,9 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
 
     const auto shapeMapping = Temple::Optionals::flatMap(
       Shapes::getMapping(shape_, newShape, removedVertexOptional),
-      std::bind(selectTransitionMapping, _1, Options::chiralStatePreservation)
+      [](const auto& mapping) {
+        return selectTransitionMapping(mapping, Options::chiralStatePreservation);
+      }
     );
 
     const auto appliedShapeMapping = Temple::Optionals::map(

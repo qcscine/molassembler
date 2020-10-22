@@ -501,7 +501,7 @@ constexpr ArrayType<unsigned, size> symPosMapping(
  */
 template<typename ShapeClass>
 constexpr unsigned maxRotations() {
-  return Temple::reduce(rotationPeriodicities<ShapeClass>(), 1u, std::multiplies<>());
+  return Temple::reduce(rotationPeriodicities<ShapeClass>(), 1U, std::multiplies<>());
 }
 
 // Some helper types for use in generateAllRotations
@@ -543,7 +543,7 @@ constexpr auto generateAllRotations(const IndicesList<ShapeClass>& indices) {
   ChainStructuresArrayType<ShapeClass> chainStructures;
   chainStructures.push_back(indices);
 
-  ChainArrayType<ShapeClass> chain {0u};
+  ChainArrayType<ShapeClass> chain {0U};
 
   while(chain.front() < ShapeClass::rotations.size()) {
 

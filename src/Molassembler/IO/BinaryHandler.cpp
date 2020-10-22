@@ -10,9 +10,7 @@
 #include "boost/filesystem.hpp"
 
 namespace Scine {
-
 namespace Molassembler {
-
 namespace IO {
 
 bool BinaryHandler::canRead(const std::string& filename) {
@@ -57,7 +55,5 @@ BinaryHandler::BinaryType BinaryHandler::read(const std::string& filename) {
 }
 
 } // namespace IO
-
 } // namespace Molassembler
-
 } // namespace Scine

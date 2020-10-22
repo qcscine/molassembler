@@ -65,7 +65,7 @@ public:
     using value_type = EnumerationStruct;
     using difference_type = unsigned;
     using pointer = const EnumerationStruct*;
-    using reference = const EnumerationStruct;
+    using reference = EnumerationStruct;
 
     explicit iterator(
       ContainerIterator it,

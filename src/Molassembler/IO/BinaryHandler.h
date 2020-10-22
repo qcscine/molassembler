@@ -14,7 +14,6 @@
 #include <bitset>
 
 namespace Scine {
-
 namespace Molassembler {
 
 // Forward-declarations
@@ -46,9 +45,7 @@ struct BinaryHandler {
 };
 
 } // namespace IO
-
 } // namespace Molassembler
-
 } // namespace Scine
 
 #endif

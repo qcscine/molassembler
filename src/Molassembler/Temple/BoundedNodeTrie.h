@@ -446,7 +446,7 @@ private:
   void establishCapacity_() {
     capacity_ = Temple::accumulate(
       bounds_,
-      1u,
+      1U,
       std::multiplies<>()
     );
   }

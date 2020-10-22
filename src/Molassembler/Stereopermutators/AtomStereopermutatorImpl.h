@@ -60,7 +60,7 @@ public:
   static bool thermalized(
     const Graph& graph,
     AtomIndex centerAtom,
-    const Shapes::Shape shape,
+    Shapes::Shape shape,
     const RankingInformation& ranking
   );
 //!@}

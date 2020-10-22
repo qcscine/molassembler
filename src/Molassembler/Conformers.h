@@ -89,7 +89,7 @@ struct MASM_EXPORT Configuration {
    * The default value is typically enough for medium-sized systems, but may
    * need to be incremented for large systems.
    */
-  unsigned refinementStepLimit {10000};
+  unsigned refinementStepLimit {10'000};
 
   /**
    * @brief Sets the gradient at which a refinement is considered complete

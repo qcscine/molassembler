@@ -864,20 +864,20 @@ std::vector<Shapes::Vertex> Composite::generateRotation(
 std::vector<Shapes::Vertex> Composite::rotation(
   const Shapes::Shape shape,
   const Shapes::Vertex fixedVertex,
-  const std::vector<Shapes::Vertex>& perpendicularPlanePositions
+  const std::vector<Shapes::Vertex>& perpendicularPlaneVertices
 ) {
   // Three possibilities:
 
-  if(perpendicularPlanePositions.size() > 1) {
-    /* There are multiple elements in perpendicularPlanePositions. We have to
+  if(perpendicularPlaneVertices.size() > 1) {
+    /* There are multiple elements in perpendicularPlaneVertices. We have to
      * generate a rotation that keeps fixedVertex fixed but rotates the
-     * perpendicularPlanePositions, ideally with a periodicity equivalent to the
+     * perpendicularPlaneVertices, ideally with a periodicity equivalent to the
      * amount of shape vertices involved.
      */
     auto candidateRotation = generateRotation(
       shape,
       fixedVertex,
-      perpendicularPlanePositions
+      perpendicularPlaneVertices
     );
 
     // There may be multiple elements, but no rotation. Return identity
@@ -891,21 +891,21 @@ std::vector<Shapes::Vertex> Composite::rotation(
      */
     assert(
       Shapes::Properties::rotationPeriodicity(shape, candidateRotation)
-      == perpendicularPlanePositions.size()
+      == perpendicularPlaneVertices.size()
     );
 
     return candidateRotation;
   }
 
-  if(perpendicularPlanePositions.size() == 1) {
-    /* There is a single element in perpendicularPlanePositions. The resulting
+  if(perpendicularPlaneVertices.size() == 1) {
+    /* There is a single element in perpendicularPlaneVertices. The resulting
      * rotation within that shape is the identity rotation, because this
      * single index can be rotated any which way to satisfy the other side.
      */
     return {Shapes::Vertex(1)};
   }
 
-  /* Remaining case: There are no elements in perpendicularPlanePositions. Then
+  /* Remaining case: There are no elements in perpendicularPlaneVertices. Then
    * there is no rotation, not even identity, to help in combinatorial handling
    */
   return {};
@@ -988,7 +988,7 @@ std::vector<unsigned> Composite::nonEquivalentPermutationIndices() const {
 unsigned Composite::countNonEquivalentPermutations() const {
   return Temple::accumulate(
     stereopermutations_,
-    0u,
+    0U,
     [](unsigned carry, const Permutation& permutation) -> unsigned {
       if(permutation.rankingEquivalentTo) {
         return carry;
@@ -1041,9 +1041,9 @@ unsigned Composite::rotationalAxisSymmetryOrder() const {
       continue;
     }
 
-    auto count = Temple::accumulate(
+    const auto count = Temple::accumulate(
       stereopermutations_,
-      1u,
+      1U,
       [&](unsigned carry, const Permutation& other) -> unsigned {
         if(
           permutation.alignment == other.alignment

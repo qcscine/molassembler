@@ -10,9 +10,7 @@
 #include <Eigen/Eigenvalues>
 
 namespace Scine {
-
 namespace Molassembler {
-
 namespace DistanceGeometry {
 
 void MetricMatrix::constructFromTemporary_(Eigen::MatrixXd&& distances) {
@@ -157,7 +155,5 @@ bool MetricMatrix::operator == (const MetricMatrix& other) const {
 }
 
 } // namespace DistanceGeometry
-
 } // namespace Molassembler
-
 } // namespace Scine

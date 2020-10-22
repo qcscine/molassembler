@@ -28,7 +28,7 @@ struct SiteIndexColor {
   using result_type = unsigned;
 
   inline SiteIndexColor(std::vector<unsigned> colors)
-    : rankingColor(colors) {}
+    : rankingColor(std::move(colors)) {}
 
   inline unsigned operator() (const Vertex i) const {
     return rankingColor.at(i);
@@ -290,7 +290,7 @@ Stereopermutations::Stereopermutation stereopermutationFromSiteToShapeVertexMap(
 
   // Now for the links.
   Stereopermutations::Stereopermutation::OrderedLinks selfReferentialLinks;
-  for(auto linkInformation: links) {
+  for(const auto& linkInformation: links) {
     selfReferentialLinks.emplace_back(
       siteToShapeVertexMap.at(linkInformation.sites.first),
       siteToShapeVertexMap.at(linkInformation.sites.second)

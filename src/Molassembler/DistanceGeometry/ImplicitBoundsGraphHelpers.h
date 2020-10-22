@@ -24,10 +24,7 @@ inline std::pair<
 > vertices(
   const Scine::Molassembler::DistanceGeometry::ImplicitBoundsGraph& g
 ) {
-  return {
-    g.vbegin(),
-    g.vend()
-  };
+  return {g.vbegin(), g.vend()};
 }
 
 inline Scine::Molassembler::DistanceGeometry::ImplicitBoundsGraph::VertexDescriptor num_vertices(
@@ -41,10 +38,7 @@ inline std::pair<
   Scine::Molassembler::DistanceGeometry::ImplicitBoundsGraph::edge_iterator,
   Scine::Molassembler::DistanceGeometry::ImplicitBoundsGraph::edge_iterator
 > edges(const Scine::Molassembler::DistanceGeometry::ImplicitBoundsGraph& g) {
-  return {
-    g.ebegin(),
-    g.eend()
-  };
+  return {g.ebegin(), g.eend()};
 }
 
 inline Scine::Molassembler::DistanceGeometry::ImplicitBoundsGraph::VertexDescriptor num_edges(
@@ -80,15 +74,15 @@ inline std::pair<
 }
 
 /* PropertyGraph concept */
-inline const Scine::Molassembler::DistanceGeometry::ImplicitBoundsGraph::EdgeWeightMap get(
-  const boost::edge_weight_t&,
+inline Scine::Molassembler::DistanceGeometry::ImplicitBoundsGraph::EdgeWeightMap get(
+  const boost::edge_weight_t& /* tag */,
   const Scine::Molassembler::DistanceGeometry::ImplicitBoundsGraph& g
 ) {
   return g.getEdgeWeightPropertyMap();
 }
 
 inline Scine::Molassembler::DistanceGeometry::ImplicitBoundsGraph::EdgeWeightMap get(
-  const boost::edge_weight_t&,
+  const boost::edge_weight_t& /* tag */,
   Scine::Molassembler::DistanceGeometry::ImplicitBoundsGraph& g
 ) {
   return g.getEdgeWeightPropertyMap();
@@ -111,17 +105,17 @@ inline double get(
 }
 
 inline void put(
-  const boost::edge_weight_t&,
-  Scine::Molassembler::DistanceGeometry::ImplicitBoundsGraph&,
-  const Scine::Molassembler::DistanceGeometry::ImplicitBoundsGraph::EdgeDescriptor&,
-  double
+  const boost::edge_weight_t& /* tag */,
+  Scine::Molassembler::DistanceGeometry::ImplicitBoundsGraph& /* g */,
+  const Scine::Molassembler::DistanceGeometry::ImplicitBoundsGraph::EdgeDescriptor& /* e */,
+  double /* v */
 ) {
   /* do nothing */
 }
 
 inline Scine::Molassembler::DistanceGeometry::ImplicitBoundsGraph::VertexIndexMap get(
-  const boost::vertex_index_t&,
-  const Scine::Molassembler::DistanceGeometry::ImplicitBoundsGraph&
+  const boost::vertex_index_t& /* tag */,
+  const Scine::Molassembler::DistanceGeometry::ImplicitBoundsGraph& /* g */
 ) {
   return Scine::Molassembler::DistanceGeometry::ImplicitBoundsGraph::VertexIndexMap {};
 }
@@ -134,10 +128,7 @@ inline std::pair<
   const Scine::Molassembler::DistanceGeometry::ImplicitBoundsGraph::VertexDescriptor& u,
   const Scine::Molassembler::DistanceGeometry::ImplicitBoundsGraph& g
 ) {
-  return {
-    g.obegin(u),
-    g.oend(u)
-  };
+  return {g.obegin(u), g.oend(u)};
 }
 
 inline unsigned long out_degree(

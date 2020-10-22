@@ -186,7 +186,7 @@ struct TermTraceVisitor {
     best = accumulateHighestCovariance(
       std::move(best),
       fourthDimensionTerms,
-      -1u,
+      std::numeric_limits<unsigned>::max(),
       referenceValues,
       count,
       [](auto x) { return "4D " + Temple::stringify(x); }

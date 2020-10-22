@@ -65,7 +65,8 @@ void StereopermutatorList::Impl::applyPermutation(const std::vector<AtomIndex>& 
     permutator.applyPermutation(permutation);
 #pragma omp critical(applyPermutationAtomMapMutation)
     {
-      newAtomMap.emplace(permutator.placement(), std::move(permutator));
+      const AtomIndex placement = permutator.placement();
+      newAtomMap.emplace(placement, std::move(permutator));
     }
   };
 

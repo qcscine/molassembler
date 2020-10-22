@@ -11,11 +11,8 @@
 #include "boost/multiprecision/cpp_int.hpp"
 #include "boost/optional.hpp"
 #include "Utils/Geometry/ElementTypes.h"
-
 #include "Molassembler/Shapes/Shapes.h"
-
 #include "Molassembler/Types.h"
-
 #include <vector>
 
 namespace Scine {

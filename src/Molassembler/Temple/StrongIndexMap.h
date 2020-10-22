@@ -30,7 +30,7 @@ public:
     : map_(std::begin(weak), std::end(weak)) {}
 
   T indexOf(const U u) const {
-    auto findIter = std::find(
+    const auto findIter = std::find(
       std::begin(map_),
       std::end(map_),
       u

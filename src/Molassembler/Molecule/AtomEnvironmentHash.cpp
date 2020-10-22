@@ -8,15 +8,12 @@
 
 #include "boost/range/join.hpp"
 #include "Molassembler/Shapes/PropertyCaching.h"
-
 #include "Molassembler/AtomStereopermutator.h"
 #include "Molassembler/BondStereopermutator.h"
 #include "Molassembler/StereopermutatorList.h"
 #include "Molassembler/Graph/PrivateGraph.h"
-
 #include "Molassembler/Temple/Functional.h"
 #include "Molassembler/Temple/Adaptors/Iota.h"
-
 #include "Utils/Geometry/ElementInfo.h"
 
 namespace Scine {
@@ -194,7 +191,7 @@ WideHashType hash(
 
 std::vector<BondInformation> gatherBonds(
   const PrivateGraph& inner,
-  boost::optional<const StereopermutatorList&> stereopermutators,
+  const boost::optional<const StereopermutatorList&>& stereopermutators,
   const AtomEnvironmentComponents componentsBitmask,
   const AtomIndex i
 ) {

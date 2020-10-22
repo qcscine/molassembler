@@ -57,7 +57,7 @@ struct Feasible {
    * @todo Move this to SpatialModel
    */
   static bool possiblyFeasible(
-    const Stereopermutations::Stereopermutation& assignment,
+    const Stereopermutations::Stereopermutation& stereopermutation,
     AtomIndex placement,
     const RankingInformation::RankedSitesType& canonicalSites,
     const ConeAngleType& coneAngles,

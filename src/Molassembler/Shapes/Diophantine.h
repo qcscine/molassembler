@@ -28,10 +28,7 @@ namespace Diophantine {
  * @returns whether `gcd(a_1, ..., a_n)` is a divisor of b. If so, the diophantine
  *   has a solution.
  */
-MASM_EXPORT bool has_solution(
-  const std::vector<unsigned>& a,
-  const int b
-);
+MASM_EXPORT bool has_solution(const std::vector<unsigned>& a, int b);
 
 /*! @brief Finds the next solution of the diophantine equation, if it exists
  *
@@ -66,7 +63,7 @@ MASM_EXPORT bool has_solution(
 MASM_EXPORT bool next_solution(
   std::vector<unsigned>& x,
   const std::vector<unsigned>& a,
-  const int b
+  int b
 );
 
 /*! @brief Finds the first solution of the diophantine equation, if it exists
@@ -102,7 +99,7 @@ MASM_EXPORT bool next_solution(
 MASM_EXPORT bool first_solution(
   std::vector<unsigned>& x,
   const std::vector<unsigned>& a,
-  const int b
+  int b
 );
 
 } // namespace Diophantine

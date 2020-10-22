@@ -140,7 +140,9 @@ struct TupleLike : Temple::Crtp::LexicographicComparable<TupleLike> {
 };
 
 BOOST_AUTO_TEST_CASE(CrtpTests, *boost::unit_test::label("Temple")) {
-  TupleLike a {4u, -3}, b {9u, 4}, c {9u, 4};
+  TupleLike a {4, -3};
+  TupleLike b {9, 4};
+  TupleLike c {9, 4};
   BOOST_CHECK(b == c);
   BOOST_CHECK(a < b);
   BOOST_CHECK(b > a);

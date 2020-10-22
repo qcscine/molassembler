@@ -144,7 +144,7 @@ boost::optional<Shapes::Shape> vsepr(
 
 Shapes::Shape firstOfSize(const unsigned size) {
   // Pick the first shape of fitting size
-  auto findIter = std::find_if(
+  const auto findIter = std::find_if(
     std::begin(Shapes::allShapes),
     std::end(Shapes::allShapes),
     [&size](const auto shape) -> bool {

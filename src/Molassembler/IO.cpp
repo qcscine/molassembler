@@ -119,7 +119,7 @@ Molecule LineNotation::fromInChI(const std::string& inchi) {
 
 std::pair<Utils::AtomCollection, Utils::BondOrderCollection> exchangeFormat(
   const Molecule& molecule,
-  AngstromPositions angstromWrapper
+  const AngstromPositions& angstromWrapper
 ) {
   return std::make_pair(
     Utils::AtomCollection(

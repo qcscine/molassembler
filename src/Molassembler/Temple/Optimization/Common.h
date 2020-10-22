@@ -90,7 +90,8 @@ auto numericalGradient(
 
   // Central differences for all individual parameters
   constexpr FloatType h = 1e-4;
-  FloatType a, b;
+  FloatType a;
+  FloatType b;
   for(unsigned i = 0; i < P; ++i) {
     diffParameters(i) += h;
     b = function(diffParameters);
@@ -116,7 +117,10 @@ auto numericalHessian(
 
   // Form the hessian using finite differences
   constexpr FloatType h = 1e-4;
-  FloatType a, b, c, d;
+  FloatType a;
+  FloatType b;
+  FloatType c;
+  FloatType d;
   for(unsigned i = 0; i < P; ++i) {
     // Diagonal second derivative from forward and backward derivative
     b = function(diffParameters);

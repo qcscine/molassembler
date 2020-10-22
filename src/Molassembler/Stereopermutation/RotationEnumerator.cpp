@@ -19,11 +19,7 @@ RotationEnumerator::RotationEnumerator(Stereopermutation initial, const Shapes::
   : shape(s),
     linkLimit(Shapes::rotations(shape).size())
 {
-  chain.emplace_back(
-    0u,
-    initial
-  );
-
+  chain.emplace_back(0U, initial);
   rotations.push_back(std::move(initial));
 }
 
@@ -63,9 +59,9 @@ boost::optional<const Stereopermutation&> RotationEnumerator::next() {
       );
 
       return chain.back().permutation;
-    } else {
-      increment();
     }
+
+    increment();
   }
 
   return boost::none;

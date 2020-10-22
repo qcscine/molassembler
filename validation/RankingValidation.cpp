@@ -571,7 +571,7 @@ BOOST_AUTO_TEST_CASE(CipValidationSuiteTests) {
   auto skipped = std::accumulate(
     std::begin(summaries),
     std::end(summaries),
-    0u,
+    0U,
     [](const unsigned carry, const Temple::Bitmask<TestFlags>& flags) -> unsigned {
       if(flags.isSet(TestFlags::Skipped)) {
         return carry + 1;
@@ -584,7 +584,7 @@ BOOST_AUTO_TEST_CASE(CipValidationSuiteTests) {
   auto errors = std::accumulate(
     std::begin(summaries),
     std::end(summaries),
-    0u,
+    0U,
     [](const unsigned carry, const Temple::Bitmask<TestFlags>& flags) -> unsigned {
       if(flags.isSet(TestFlags::MissingExpected)) {
         return carry + 1;
@@ -597,7 +597,7 @@ BOOST_AUTO_TEST_CASE(CipValidationSuiteTests) {
   auto withUnexpected = std::accumulate(
     std::begin(summaries),
     std::end(summaries),
-    0u,
+    0U,
     [](const unsigned carry, const Temple::Bitmask<TestFlags>& flags) -> unsigned {
       if(flags.isSet(TestFlags::Unexpected)) {
         return carry + 1;
