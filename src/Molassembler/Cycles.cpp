@@ -580,8 +580,8 @@ struct Cycles::UrfIdsCycleIterator::UrfHelper {
 
 Cycles::UrfIdsCycleIterator::UrfIdsCycleIterator(
   AtomIndex soughtIndex,
-  std::shared_ptr<RdlDataPtrs> dataPtr
-) : rdlPtr_(std::move(dataPtr)),
+  const std::shared_ptr<RdlDataPtrs>& dataPtr
+) : rdlPtr_(dataPtr),
     urfsPtr_(std::make_unique<UrfHelper>(soughtIndex, *dataPtr)),
     cyclePtr_()
 {
@@ -591,8 +591,8 @@ Cycles::UrfIdsCycleIterator::UrfIdsCycleIterator(
 Cycles::UrfIdsCycleIterator::UrfIdsCycleIterator(
   const BondIndex& soughtBond,
   std::vector<unsigned> urfs,
-  std::shared_ptr<RdlDataPtrs> dataPtr
-) : rdlPtr_(std::move(dataPtr)),
+  const std::shared_ptr<RdlDataPtrs>& dataPtr
+) : rdlPtr_(dataPtr),
     urfsPtr_(
       std::make_unique<UrfHelper>(
         std::vector<BondIndex> {soughtBond},
@@ -607,8 +607,8 @@ Cycles::UrfIdsCycleIterator::UrfIdsCycleIterator(
 Cycles::UrfIdsCycleIterator::UrfIdsCycleIterator(
   const std::vector<BondIndex>& soughtBonds,
   std::vector<unsigned> urfs,
-  std::shared_ptr<RdlDataPtrs> dataPtr
-) : rdlPtr_(std::move(dataPtr)),
+  const std::shared_ptr<RdlDataPtrs>& dataPtr
+) : rdlPtr_(dataPtr),
     urfsPtr_(
       std::make_unique<UrfHelper>(soughtBonds, std::move(urfs))
     ),

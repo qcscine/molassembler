@@ -122,19 +122,19 @@ public:
     /* Constructors */
     UrfIdsCycleIterator(
       AtomIndex soughtIndex,
-      std::shared_ptr<RdlDataPtrs> dataPtr
+      const std::shared_ptr<RdlDataPtrs>& dataPtr
     );
 
     UrfIdsCycleIterator(
       const BondIndex& soughtBond,
       std::vector<unsigned> urfs,
-      std::shared_ptr<RdlDataPtrs> dataPtr
+      const std::shared_ptr<RdlDataPtrs>& dataPtr
     );
 
     UrfIdsCycleIterator(
       const std::vector<BondIndex>& soughtBonds,
       std::vector<unsigned> urfs,
-      std::shared_ptr<RdlDataPtrs> dataPtr
+      const std::shared_ptr<RdlDataPtrs>& dataPtr
     );
 
     UrfIdsCycleIterator& operator ++ ();
