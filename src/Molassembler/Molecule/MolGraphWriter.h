@@ -32,6 +32,9 @@ struct MolGraphWriter {
 
 //!@name Members
 //!@{
+  /*! Note: The members are pointers due to the manner in which this object is
+   * passed to boost.
+   */
   const PrivateGraph* const graphPtr;
   const StereopermutatorList* const stereopermutatorListPtr;
 //!@}

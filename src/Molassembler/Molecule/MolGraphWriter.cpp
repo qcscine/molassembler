@@ -135,14 +135,16 @@ void MolGraphWriter::operator() (
   );
 
   const BondIndex b {inner.source(edgeIndex), inner.target(edgeIndex)};
-  if(auto permutatorOption = stereopermutatorListPtr->option(b)) {
-    if(permutatorOption->numAssignments() > 1) {
-      os << R"(, color="tomato")";
-    } else {
-      os << R"(, color="steelblue")";
-    }
+  if(stereopermutatorListPtr != nullptr) {
+    if(auto permutatorOption = stereopermutatorListPtr->option(b)) {
+      if(permutatorOption->numAssignments() > 1) {
+        os << R"(, color="tomato")";
+      } else {
+        os << R"(, color="steelblue")";
+      }
 
-    tooltips.push_back(permutatorOption->info());
+      tooltips.push_back(permutatorOption->info());
+    }
   }
 
   if(!tooltips.empty()) {
