@@ -12,7 +12,6 @@
 #define INCLUDE_MOLASSEMBLER_TEMPLE_CONTAINER_TRAITS_H
 
 #include "Molassembler/Temple/Traits.h"
-#include "boost/type_traits/is_detected.hpp"
 
 #include <utility>
 
@@ -20,61 +19,132 @@ namespace Scine {
 namespace Molassembler {
 namespace Temple {
 namespace Traits {
+
+/*! Template base class for SFINAE expression validity checking
+ *
+ * @note The integer-long substitution trick is explained in Tricks.rst
+ */
+template<class>
+struct sfinae_true : std::true_type{};
+
 namespace Detail {
 
+/* Short explanation: If the expression EXPR in sfinae_true<EXPR> returns a
+ * valid type, sfinae_true can be instantiated, and the default-interpretation
+ * of 0 as an int succeeds. If this fails, the backup-interpretation of 0 as a
+ * long is chosen and returns std::false_type.
+ */
 template<class Container>
-using TestHasInsert = decltype(
-  std::declval<Container>().insert(
-    std::declval<getValueType<Container>>()
-  )
-);
+static auto testHasInsert(int)
+  -> sfinae_true<
+    decltype(
+      std::declval<Container>().insert(
+        std::declval<
+          getValueType<Container>
+        >()
+      )
+    )
+  >;
 
 template<class Container>
-using TestHasPushBack = decltype(
-  std::declval<Container>().push_back(
-    std::declval<getValueType<Container>>()
-  )
-);
-
-template<class Container>
-using TestHasEmplace = decltype(
-  std::declval<Container>().emplace(
-    std::declval<getValueType<Container>>()
-  )
-);
-
-template<class Container>
-using TestHasEmplaceBack = decltype(
-  std::declval<Container>().emplace_back(
-    std::declval<getValueType<Container>>()
-  )
-);
-
-template<class Container>
-using TestHasSize = decltype(std::declval<Container>().size());
-
-template<class Container>
-using TestHasReserve = decltype(std::declval<Container>().reserve(0));
-
+static auto testHasInsert(long) -> std::false_type;
 } // namespace Detail
 
 template<class Container>
-struct hasInsert : std::integral_constant<bool, boost::is_detected_v<Detail::TestHasInsert, Container>> {};
+struct hasInsert : decltype(Detail::testHasInsert<Container>(0)){};
+
+namespace Detail {
+template<class Container>
+static auto testHasPushBack(int)
+  -> sfinae_true<
+    decltype(
+      std::declval<Container>().push_back(
+        std::declval<
+          getValueType<Container>
+        >()
+      )
+    )
+  >;
 
 template<class Container>
-struct hasPushBack : std::integral_constant<bool, boost::is_detected_v<Detail::TestHasPushBack, Container>> {};
+static auto testHasPushBack(long) -> std::false_type;
+} // namespace Detail
 
 template<class Container>
-struct hasEmplace : std::integral_constant<bool, boost::is_detected_v<Detail::TestHasEmplace, Container>> {};
+struct hasPushBack : decltype(Detail::testHasPushBack<Container>(0)){};
+
+namespace Detail {
+template<class Container>
+static auto testHasEmplace(int)
+  -> sfinae_true<
+    decltype(
+      std::declval<Container>().emplace(
+        std::declval<
+          getValueType<Container>
+        >()
+      )
+    )
+  >;
 
 template<class Container>
-struct hasEmplaceBack : std::integral_constant<bool, boost::is_detected_v<Detail::TestHasEmplaceBack, Container>> {};
+static auto testHasEmplace(long) -> std::false_type;
+} // namespace Detail
 
 template<class Container>
-struct hasSize : std::integral_constant<bool, boost::is_detected_v<Detail::TestHasSize, Container>> {};
+struct hasEmplace : decltype(Detail::testHasEmplace<Container>(0)){};
+
+namespace Detail {
+template<class Container>
+static auto testHasEmplaceBack(int)
+  -> sfinae_true<
+    decltype(
+      std::declval<Container>().emplace_back(
+        std::declval<
+          getValueType<Container>
+        >()
+      )
+    )
+  >;
 
 template<class Container>
-struct hasReserve : std::integral_constant<bool, boost::is_detected_v<Detail::TestHasReserve, Container>> {};
+static auto testHasEmplaceBack(long) -> std::false_type;
+} // namespace Detail
+
+template<class Container>
+struct hasEmplaceBack : decltype(Detail::testHasEmplaceBack<Container>(0)){};
+
+
+namespace Detail {
+template<class Container>
+static auto testHasSize(int)
+  -> sfinae_true<
+    decltype(
+      std::declval<Container>().size()
+    )
+  >;
+
+template<class Container>
+static auto testHasSize(long) -> std::false_type;
+} // namespace Detail
+
+template<class Container>
+struct hasSize : decltype(Detail::testHasSize<Container>(0)){};
+
+namespace Detail {
+template<class Container>
+static auto testHasReserve(int)
+  -> sfinae_true<
+    decltype(
+      std::declval<Container>().reserve()
+    )
+  >;
+
+template<class Container>
+static auto testHasReserve(long) -> std::false_type;
+} // namespace Detail
+
+template<class Container>
+struct hasReserve : decltype(Detail::testHasReserve<Container>(0)){};
 
 } // namespace Traits
 } // namespace Temple
