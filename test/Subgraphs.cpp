@@ -21,9 +21,6 @@ BOOST_AUTO_TEST_CASE(SubgraphBasic, *boost::unit_test::label("Molassembler")) {
   const Molecule neopentane = IO::read("isomorphisms/neopentane.mol");
   const Molecule methyl = IO::Experimental::parseSmilesSingleMolecule("[CH3]");
 
-  const auto mappings = subgraphs::maximum(methyl, neopentane);
-  BOOST_CHECK_MESSAGE(
-    mappings.size() == 4,
-    "Expected four mappings total, got " << mappings.size() << " instead"
-  );
+  const auto mappings = Subgraphs::maximum(methyl, neopentane);
+  BOOST_CHECK_EQUAL(mappings.size(), 4);
 }

@@ -111,7 +111,7 @@ BOOST_AUTO_TEST_CASE(EditingCleave, *boost::unit_test::label("Molassembler")) {
 
   // Find a N-Me bridge bond to cleave
   const auto pattern = makeNMe();
-  const auto matches = subgraphs::maximum(pattern.first, caffeine);
+  const auto matches = Subgraphs::maximum(pattern.first, caffeine);
   BOOST_REQUIRE_MESSAGE(
     !matches.empty(),
     "No matches found for N-Me pattern in caffeine!"
@@ -328,7 +328,7 @@ BOOST_AUTO_TEST_CASE(EditingBugfixMesityleneSubstitution, *boost::unit_test::lab
     pattern.addAtom(Utils::ElementType::N, 0);
   }
 
-  auto matches = subgraphs::maximum(pattern, nhc);
+  auto matches = Subgraphs::maximum(pattern, nhc);
   BOOST_REQUIRE_MESSAGE(!matches.empty(), "Could not find C(HNN) pattern in NHC");
 
   // Map C-H bond indices from pattern to nhc

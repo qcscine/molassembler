@@ -19,10 +19,11 @@
 namespace Scine {
 namespace Molassembler {
 
-// Forward-declare Molecule
+// Forward-declarations
 class Molecule;
+class Graph;
 
-namespace subgraphs {
+namespace Subgraphs {
 
 /*!
  * @brief Type used to represent mappings.
@@ -79,11 +80,54 @@ enum class MASM_EXPORT EdgeStrictness : unsigned {
   SubsumeStereopermutation
 };
 
+
+/*!
+ * @brief Find mappings for the maximum common subgraph between two graphs
+ *
+ * Finds an index mapping from a to b representing all found maximum common
+ * subgraphs (if present).
+ *
+ * @params a The first graph
+ * @params b The second graph
+ * @params vertexStrictness Strictness with which to allow vertex matching.
+ *   Maximum strictness for graph MCS is VertexStrictness::ElementType.
+ * @params edgeStrictness Strictness with which to allow edge matching. Maximum
+ *   strictness for graph MCS is EdgeStrictness::BondType.
+ * @params removeHydrogenPermutations Select whether to receive all possible
+ *   permutations of hydrogen atom matches. E.g. searching for a methyl in
+ *   methane will yield either many or just one
+ *
+ * @complexity{@math{O(N_1 \cdot N_2)} where @math{N_i} is the number of
+ * vertices in graph @math{i}}
+ *
+ * @warning For subgraph comparison, only element and bond types are considered.
+ * Stereocenters and Stereopermutations are not graph-local properties suitable
+ * to a common substructure matching.
+ */
+MASM_EXPORT std::vector<IndexMap> maximum(
+  const Graph& a,
+  const Graph& b,
+  VertexStrictness vertexStrictness = VertexStrictness::ElementType,
+  EdgeStrictness edgeStrictness = EdgeStrictness::Topographic,
+  bool removeHydrogenPermutations = true
+);
+
 /*!
  * @brief Find mappings for the maximum common subgraph between two molecules
  *
  * Finds an index mapping from a to b representing all found maximum common
  * subgraphs (if present).
+ *
+ * @params a The first molecule
+ * @params b The second molecule
+ * @params vertexStrictness Strictness with which to allow vertex matching.
+ *   Maximum implemented strictness for molecule MCS is
+ *   VertexStrictness::ElementType.
+ * @params edgeStrictness Strictness with which to allow edge matching. Maximum
+ *   implemented strictness for molecule MCS is EdgeStrictness::BondType.
+ * @params removeHydrogenPermutations Select whether to receive all possible
+ *   permutations of hydrogen atom matches. E.g. searching for a methyl in
+ *   methane will yield either many or just one
  *
  * @complexity{@math{O(N_1 \cdot N_2)} where @math{N_i} is the number of
  * vertices in graph @math{i}}
@@ -100,7 +144,7 @@ MASM_EXPORT std::vector<IndexMap> maximum(
   bool removeHydrogenPermutations = true
 );
 
-} // namespace subgraphs
+} // namespace Subgraphs
 } // namespace Molassembler
 } // namespace Scine
 
