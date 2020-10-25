@@ -22,6 +22,7 @@ void init_random_engine(pybind11::module& m);
 void init_ranking_information(pybind11::module& m);
 void init_serialization(pybind11::module& m);
 void init_stereopermutator_list(pybind11::module& m);
+void init_subgraphs(pybind11::module& m);
 void init_shape_submodule(pybind11::module& m);
 void init_types(pybind11::module& m);
 void init_version(pybind11::module& m);
@@ -53,6 +54,7 @@ PYBIND11_MODULE(scine_molassembler, m) {
   init_bond_stereopermutator(m);
   init_stereopermutator_list(m);
   init_molecule(m);
+  init_subgraphs(m);
   init_editing(m);
   init_interpret(m);
   init_io(m);

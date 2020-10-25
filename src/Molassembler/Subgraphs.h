@@ -2,7 +2,7 @@
  * @copyright This code is licensed under the 3-clause BSD license.
  *   Copyright ETH Zurich, Laboratory of Physical Chemistry, Reiher Group.
  *   See LICENSE.txt for details.
- * @brief Maximum common subgraph matching algorithms for molecules
+ * @brief Subgraph matching algorithms for molecules and graphs
  */
 
 #ifndef INCLUDE_MOLASSEMBLER_SUBGRAPHS_H
@@ -10,11 +10,6 @@
 
 #include "boost/bimap.hpp"
 #include "Molassembler/Types.h"
-
-/*!@file
- *
- * Enables common subgraph computations
- */
 
 namespace Scine {
 namespace Molassembler {
@@ -48,11 +43,15 @@ enum class MASM_EXPORT VertexStrictness : unsigned {
    *
    * E.g. Trigonal pyramidal is subsumed in tetrahedral, seesaw is subsumed in
    * square pyramidal, square pyramidal is subsumed in octahedral, etc.
+   *
+   * @warning This strictness is not implemented
    */
   SubsumeShape,
   /*!
    * If a needle vertex carries an assigned stereopermutator, a haystack vertex
    * matches only if its chiral state encompasses
+   *
+   * @warning This strictness is not implemented
    */
   SubsumeStereopermutation
 };
@@ -65,7 +64,7 @@ enum class MASM_EXPORT VertexStrictness : unsigned {
  * successive enum encompasses all previous comparison components.
  */
 enum class MASM_EXPORT EdgeStrictness : unsigned {
-  //! No constraints are set upon vertex matching besides graph topography
+  //! No constraints are set upon edge matching besides graph topography
   Topographic,
   //! Bond types must match exactly
   BondType,
@@ -76,10 +75,54 @@ enum class MASM_EXPORT EdgeStrictness : unsigned {
    * E.g. Z-diazene (one assignment of two possible) in pyridazene (one
    * assignment of one possible), but not E-diazene in pyridazene (chiral state
    * is mismatched).
+   *
+   * @warning This strictness is not implemented
    */
   SubsumeStereopermutation
 };
 
+/**
+ * @brief Searches for subgraphs of needle in haystack
+ *
+ * @param needle The smaller graph to search for
+ * @param haystack The larger graph to search in
+ * @params vertexStrictness Strictness with which to allow vertex matching.
+ *   Maximum strictness for subgraph isomorphism is
+ *   VertexStrictness::ElementType.
+ * @params edgeStrictness Strictness with which to allow edge matching. Maximum
+ *   strictness for subgraph isomorphism is EdgeStrictness::BondType.
+ *
+ * @return List of index mappings of vertices the needle to vertices of the
+ *   haystack
+ */
+MASM_EXPORT std::vector<IndexMap> complete(
+  const Graph& needle,
+  const Graph& haystack,
+  VertexStrictness vertexStrictness = VertexStrictness::ElementType,
+  EdgeStrictness edgeStrictness = EdgeStrictness::Topographic
+);
+
+/**
+ * @brief Searches for subgraphs of needle in haystack
+ *
+ * @param needle The smaller molecule to search for
+ * @param haystack The larger molecule to search in
+ * @params vertexStrictness Strictness with which to allow vertex matching.
+ *   Maximum implemented strictness for molecule subgraph isomorphism is
+ *   VertexStrictness::ElementType.
+ * @params edgeStrictness Strictness with which to allow edge matching. Maximum
+ *   implemented strictness for molecule subgraph isomorphism is
+ *   EdgeStrictness::BondType.
+ *
+ * @return List of index mappings of vertices the needle to vertices of the
+ *   haystack
+ */
+MASM_EXPORT std::vector<IndexMap> complete(
+  const Molecule& needle,
+  const Molecule& haystack,
+  VertexStrictness vertexStrictness = VertexStrictness::ElementType,
+  EdgeStrictness edgeStrictness = EdgeStrictness::Topographic
+);
 
 /*!
  * @brief Find mappings for the maximum common subgraph between two graphs
@@ -93,9 +136,6 @@ enum class MASM_EXPORT EdgeStrictness : unsigned {
  *   Maximum strictness for graph MCS is VertexStrictness::ElementType.
  * @params edgeStrictness Strictness with which to allow edge matching. Maximum
  *   strictness for graph MCS is EdgeStrictness::BondType.
- * @params removeHydrogenPermutations Select whether to receive all possible
- *   permutations of hydrogen atom matches. E.g. searching for a methyl in
- *   methane will yield either many or just one
  *
  * @complexity{@math{O(N_1 \cdot N_2)} where @math{N_i} is the number of
  * vertices in graph @math{i}}
@@ -108,8 +148,7 @@ MASM_EXPORT std::vector<IndexMap> maximum(
   const Graph& a,
   const Graph& b,
   VertexStrictness vertexStrictness = VertexStrictness::ElementType,
-  EdgeStrictness edgeStrictness = EdgeStrictness::Topographic,
-  bool removeHydrogenPermutations = true
+  EdgeStrictness edgeStrictness = EdgeStrictness::Topographic
 );
 
 /*!
@@ -125,9 +164,6 @@ MASM_EXPORT std::vector<IndexMap> maximum(
  *   VertexStrictness::ElementType.
  * @params edgeStrictness Strictness with which to allow edge matching. Maximum
  *   implemented strictness for molecule MCS is EdgeStrictness::BondType.
- * @params removeHydrogenPermutations Select whether to receive all possible
- *   permutations of hydrogen atom matches. E.g. searching for a methyl in
- *   methane will yield either many or just one
  *
  * @complexity{@math{O(N_1 \cdot N_2)} where @math{N_i} is the number of
  * vertices in graph @math{i}}
@@ -140,8 +176,7 @@ MASM_EXPORT std::vector<IndexMap> maximum(
   const Molecule& a,
   const Molecule& b,
   VertexStrictness vertexStrictness = VertexStrictness::ElementType,
-  EdgeStrictness edgeStrictness = EdgeStrictness::Topographic,
-  bool removeHydrogenPermutations = true
+  EdgeStrictness edgeStrictness = EdgeStrictness::Topographic
 );
 
 } // namespace Subgraphs

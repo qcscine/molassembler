@@ -7,15 +7,16 @@
 #include "Molassembler/Subgraphs.h"
 
 #include "boost/graph/mcgregor_common_subgraphs.hpp"
+#include "boost/graph/vf2_sub_graph_iso.hpp"
 
 #include "Molassembler/Shapes/PropertyCaching.h"
 #include "Molassembler/Shapes/Shapes.h"
-#include "Molassembler/Temple/constexpr/UpperTriangularMatrix.h"
 #include "Molassembler/Graph/Bridge.h"
 #include "Molassembler/Molecule.h"
 #include "Molassembler/AtomStereopermutator.h"
 #include "Molassembler/BondStereopermutator.h"
 #include "Molassembler/StereopermutatorList.h"
+#include "Molassembler/Temple/Functional.h"
 
 /* TODO
  * - Missing algorithm for stereopermutator extension
@@ -28,20 +29,58 @@ namespace Molassembler {
 namespace Subgraphs {
 namespace {
 
+bool isHydrogenPermutation(
+  const IndexMap& a,
+  const IndexMap& b,
+  const Graph& right
+) {
+  /* Left maps are ordered in their first index, so we can
+   * sequentially compare elements of the mapping.
+   *
+   * The idea here is that if the mapping is sequence identical
+   * regarding non-hydrogen elements, then it must be a permutation
+   * thereof. This is much cheaper than using std::is_permutation.
+   */
+  return std::equal(
+    std::begin(a.left),
+    std::end(a.left),
+    std::begin(b.left),
+    std::end(b.left),
+    [&](const auto& firstMap, const auto& secondMap) -> bool {
+      // Ensure left-sequence identical
+      if(firstMap.first != secondMap.first) {
+        return false;
+      }
+
+      /* Do not compare mapped indices if the elements of the mapped vertices
+       * are hydrogen
+       */
+      if(
+        right.elementType(firstMap.second) == Utils::ElementType::H
+        && right.elementType(secondMap.second) == Utils::ElementType::H
+      ) {
+        return true;
+      }
+
+      // Compare target vertices of the mappings
+      return (firstMap.second == secondMap.second);
+    }
+  );
+}
+
 struct SubgraphCallback {
   AtomIndex N;
   using IndexMapVector = std::vector<IndexMap>;
+  const Graph& targetGraph;
   std::reference_wrapper<IndexMapVector> mappingsRef;
+  bool removeHydrogenPermutations = true;
 
-  SubgraphCallback(
-    const Graph& a,
-    IndexMapVector& mappings
-  ) : N {a.N()},
-      mappingsRef(mappings)
-  {}
+  SubgraphCallback(const Graph& a, const Graph& b, IndexMapVector& mappings)
+    : N {a.N()}, targetGraph(b), mappingsRef(mappings) {}
 
   template<class AbMap>
   IndexMap makeIndexMap(const AbMap& m) {
+    // TODO this has to be possible to do better
     IndexMap bimap;
 
     for(AtomIndex i = 0; i < N; ++i) {
@@ -57,15 +96,30 @@ struct SubgraphCallback {
   }
 
   template<class AbMap, class BaMap>
-  bool operator() (
-    AbMap a,
-    BaMap /* b */,
-    AtomIndex /* subgraphSize */
-  ) {
-    mappingsRef.get().push_back(makeIndexMap(a));
+  bool operator() (const AbMap& a, const BaMap& /* b */) {
+    auto indexMap = makeIndexMap(a);
+
+    if(
+      removeHydrogenPermutations
+      && Temple::any_of(
+        mappingsRef.get(),
+        [&](const IndexMap& foundMap) -> bool {
+          return isHydrogenPermutation(indexMap, foundMap, targetGraph);
+        }
+      )
+    ) {
+      return true;
+    }
+
+    mappingsRef.get().push_back(std::move(indexMap));
 
     //! Don't force stop after any mappings are found
     return true;
+  }
+
+  template<class AbMap, class BaMap>
+  bool operator() (const AbMap& a, const BaMap& b, AtomIndex /* subgraphSize */) {
+    return this->operator()(a, b);
   }
 };
 
@@ -78,7 +132,7 @@ struct PartialMolecule {
   using MaybePermutators = boost::optional<const StereopermutatorList&>;
 
   explicit PartialMolecule(const Molecule& molecule) : graph(molecule.graph()), permutatorsOption(molecule.stereopermutators()) {}
-  explicit PartialMolecule(const Graph& graph) : graph(graph), permutatorsOption(boost::none) {}
+  explicit PartialMolecule(const Graph& passGraph) : graph(passGraph), permutatorsOption(boost::none) {}
 
   const Graph& graph;
   MaybePermutators permutatorsOption;
@@ -148,11 +202,10 @@ std::vector<IndexMap> maximumImpl(
   const PartialMolecule& a,
   const PartialMolecule& b,
   const VertexStrictness vertexStrictness,
-  const EdgeStrictness edgeStrictness,
-  const bool removeHydrogenPermutations
+  const EdgeStrictness edgeStrictness
 ) {
   std::vector<IndexMap> mappings;
-  SubgraphCallback callback {a.graph, mappings};
+  SubgraphCallback callback {a.graph, b.graph, mappings};
 
   boost::mcgregor_common_subgraphs_maximum_unique(
     a.graph.inner().bgl(),
@@ -167,59 +220,68 @@ std::vector<IndexMap> maximumImpl(
     )
   );
 
-  if(removeHydrogenPermutations) {
-    for(unsigned i = 0; i < mappings.size() - 1; ++i) {
-      const IndexMap& fixedMap = mappings.at(i);
-      mappings.erase(
-        std::remove_if(
-          std::begin(mappings) + i + 1,
-          std::end(mappings),
-          [&](const IndexMap& indexMap) -> bool {
-            /* Left maps are ordered in their first index, so we can
-             * sequentially compare elements of the mapping.
-             *
-             * The idea here is that if the mapping is sequence identical
-             * regarding non-hydrogen elements, then it must be a permutation
-             * thereof. This is much cheaper than using std::is_permutation.
-             */
-            return std::equal(
-              std::begin(fixedMap.left),
-              std::end(fixedMap.left),
-              std::begin(indexMap.left),
-              std::end(indexMap.left),
-              [&](const auto& fixedPair, const auto& sites) -> bool {
-                if(fixedPair.first != sites.first) {
-                  return false;
-                }
+  return mappings;
+}
 
-                if(
-                  b.graph.elementType(fixedPair.second) == Utils::ElementType::H
-                  && b.graph.elementType(sites.second) == Utils::ElementType::H
-                ) {
-                  return true;
-                }
+std::vector<IndexMap> completeImpl(
+  const PartialMolecule& needle,
+  const PartialMolecule& haystack,
+  VertexStrictness vertexStrictness = VertexStrictness::ElementType,
+  EdgeStrictness edgeStrictness = EdgeStrictness::Topographic
+) {
+  std::vector<IndexMap> mappings;
+  SubgraphCallback callback {needle.graph, haystack.graph, mappings};
 
-                return (fixedPair.second == sites.second);
-              }
-            );
-          }
-        ),
-        std::end(mappings)
-      );
-    }
-  }
+  boost::vf2_subgraph_mono(
+    needle.graph.inner().bgl(),
+    haystack.graph.inner().bgl(),
+    callback,
+    boost::vertex_order_by_mult(needle.graph.inner().bgl()),
+    boost::vertices_equivalent(
+      VertexComparator {needle, haystack, vertexStrictness}
+    ).edges_equivalent(
+      EdgeComparator {needle, haystack, edgeStrictness}
+    )
+  );
 
   return mappings;
 }
 
 } // namespace
 
+std::vector<IndexMap> complete(
+  const Graph& needle,
+  const Graph& haystack,
+  VertexStrictness vertexStrictness,
+  EdgeStrictness edgeStrictness
+) {
+  return completeImpl(
+    PartialMolecule(needle),
+    PartialMolecule(haystack),
+    vertexStrictness,
+    edgeStrictness
+  );
+}
+
+std::vector<IndexMap> complete(
+  const Molecule& needle,
+  const Molecule& haystack,
+  VertexStrictness vertexStrictness,
+  EdgeStrictness edgeStrictness
+) {
+  return completeImpl(
+    PartialMolecule(needle),
+    PartialMolecule(haystack),
+    vertexStrictness,
+    edgeStrictness
+  );
+}
+
 std::vector<IndexMap> maximum(
   const Graph& a,
   const Graph& b,
   const VertexStrictness vertexStrictness,
-  const EdgeStrictness edgeStrictness,
-  const bool removeHydrogenPermutations
+  const EdgeStrictness edgeStrictness
 ) {
   if(underlying(vertexStrictness) >= underlying(VertexStrictness::SubsumeShape)) {
     throw std::runtime_error("Requested vertex comparison strictness not possible without stereopermutator information");
@@ -233,8 +295,7 @@ std::vector<IndexMap> maximum(
     PartialMolecule(a),
     PartialMolecule(b),
     vertexStrictness,
-    edgeStrictness,
-    removeHydrogenPermutations
+    edgeStrictness
   );
 }
 
@@ -242,15 +303,13 @@ std::vector<IndexMap> maximum(
   const Molecule& a,
   const Molecule& b,
   const VertexStrictness vertexStrictness,
-  const EdgeStrictness edgeStrictness,
-  const bool removeHydrogenPermutations
+  const EdgeStrictness edgeStrictness
 ) {
   return maximumImpl(
     PartialMolecule(a),
     PartialMolecule(b),
     vertexStrictness,
-    edgeStrictness,
-    removeHydrogenPermutations
+    edgeStrictness
   );
 }
 
