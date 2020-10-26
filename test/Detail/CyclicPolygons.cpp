@@ -12,6 +12,7 @@
 #include "Molassembler/Temple/Stringify.h"
 #include "Molassembler/Temple/constexpr/Jsf.h"
 
+#include <iomanip>
 #include <iostream>
 #include <fstream>
 
@@ -120,15 +121,15 @@ BOOST_AUTO_TEST_CASE(CentralAngleRootFinding, *boost::unit_test::label("Molassem
         );
       }
 
-      bool pass = std::fabs(deviation) < 1e-5;
+      bool pass = std::fabs(deviation) < 1e-4;
 
       BOOST_CHECK_MESSAGE(
         pass,
         "Central angle deviation norm is not smaller than 1e-5 for " << Temple::stringify(edgeLengths)
-          << ", circumcenter is inside: " << circumcenterInside << ", deviation: " << deviation
+          << ", circumcenter is inside: " << std::boolalpha << circumcenterInside << ", deviation: " << deviation
       );
 
-      auto internalAngleSumDeviation = Temple::sum(
+      const double internalAngleSumDeviation = Temple::sum(
         CyclicPolygons::Detail::generalizedInternalAngles(edgeLengths, circumradius, circumcenterInside)
       ) - (nSides - 2) * M_PI;
 
