@@ -11,5 +11,3 @@ Shapes
    a matching number of vertices.
 
 .. automodule:: scine_molassembler.shapes
-   :members:
-   :undoc-members:

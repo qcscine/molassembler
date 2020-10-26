@@ -31,19 +31,13 @@ shape has multiple position groups. For instance, this is the case in square
 pyramidal shapes, where there are axial and equatorial shape positions.
 
 .. autoclass:: scine_molassembler.StereopermutatorList
-   :members:
-   :undoc-members:
 
 Atom stereopermutators
 ----------------------
 
 .. autoclass:: scine_molassembler.AtomStereopermutator
-   :members:
-   :undoc-members:
 
 Bond stereopermutators
 ----------------------
 
 .. autoclass:: scine_molassembler.BondStereopermutator
-   :members:
-   :undoc-members:

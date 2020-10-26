@@ -24,7 +24,3 @@ deduplicating energy minimized conformer guesses with the
 :class:`~scine_molassembler.DirectedConformerGenerator.Relabeler`.
 
 .. autoclass:: scine_molassembler.DirectedConformerGenerator
-   :members:
-   :undoc-members:
-
-   .. automethod:: __init__
