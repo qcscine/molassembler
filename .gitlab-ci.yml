@@ -60,13 +60,7 @@ complexity:
 
 
 # Additional builds on master
-# Missing python ABIs
-pypi-cp35:
-  extends: .manylinux
-  only: [master]
-  variables:
-    PYABI: cp35-cp35m
-
+# Additional python ABIs
 pypi-cp37:
   extends: .manylinux
   only: [master]
@@ -79,7 +73,7 @@ pypi-cp38:
   variables:
     PYABI: cp38-cp38
 
-# scipy build for 3.9 fails in the CI
+# scipy build for 3.9 fails in the CI because numpy doesn't have a package!
 # pypi-cp39:
 #   extends: .manylinux
 #   only: [master]
