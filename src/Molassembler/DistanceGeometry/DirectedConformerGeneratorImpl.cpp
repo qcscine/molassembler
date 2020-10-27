@@ -9,9 +9,11 @@
 #include "Molassembler/Molecule/MoleculeImpl.h"
 #include "Molassembler/Graph.h"
 #include "Molassembler/StereopermutatorList.h"
+#include "Molassembler/Detail/Cartesian.h"
 
 #include "Molassembler/Stereopermutation/Composites.h"
 #include "Molassembler/Temple/Adaptors/Zip.h"
+#include "Molassembler/Temple/Adaptors/SequentialPairs.h"
 #include "Molassembler/Temple/Functional.h"
 #include "Molassembler/Temple/Optionals.h"
 #include "Molassembler/Temple/Random.h"
@@ -469,7 +471,7 @@ DirectedConformerGenerator::Impl::getDecisionList(
         );
       }
 
-      const auto fittingReferences = Temple::mapHomogeneousPairlike(
+      const auto fittingReferences = Temple::map(
         bondIndex,
         [&](const AtomIndex v) -> BondStereopermutator::FittingReferences {
           return {
@@ -547,9 +549,49 @@ DirectedConformerGenerator::Impl::binMidpointIntegers(
     [&](const BondIndex bond, const unsigned stereopermutation) -> int {
       const auto& permutator = molecule_.stereopermutators().at(bond);
       const auto& dominantDihedral = permutator.composite().allPermutations().at(stereopermutation).dihedrals.front();
-      return std::round(
-        180 * std::get<2>(dominantDihedral) / M_PI
+      return static_cast<int>(std::round(Temple::Math::toDegrees(std::get<2>(dominantDihedral))));
+    }
+  );
+}
+
+std::vector<std::pair<int, int>>
+DirectedConformerGenerator::Impl::binBounds(
+  const DecisionList& decisions
+) const {
+  return Temple::map(
+    Temple::Adaptors::zip(relevantBonds_, decisions),
+    [&](const BondIndex bond, const unsigned stereopermutation) -> std::pair<int, int> {
+      const auto& permutator = molecule_.stereopermutators().at(bond);
+      const unsigned numStereopermutations = permutator.numStereopermutations();
+
+      std::array<unsigned, 3> permutations {{
+        (stereopermutation + (numStereopermutations - 1)) % numStereopermutations,
+        stereopermutation,
+        (stereopermutation + 1) % numStereopermutations
+      }};
+
+      const auto dominantAngles = Temple::map(permutations, [&](const unsigned permutation) -> double {
+        const auto& dominantDihedral = permutator.composite().allPermutations().at(permutation).dihedrals.front();
+        return std::get<2>(dominantDihedral);
+      });
+
+      const auto averages = Temple::map(
+        Temple::Adaptors::sequentialPairs(dominantAngles),
+        [](const double x, const double y) -> int {
+          return static_cast<int>(std::round(Temple::Math::toDegrees(Cartesian::dihedralAverage(x, y))));
+        }
       );
+
+      // Increment the front to make exclusive bin bounds
+      const unsigned front = [](int x) -> int {
+        if(x == 180) {
+          return -179;
+        }
+
+        return x + 1;
+      }(averages.front());
+
+      return std::make_pair(front, averages.back());
     }
   );
 }

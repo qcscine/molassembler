@@ -91,81 +91,71 @@ template<
   return returnContainer;
 }
 
-//! @overload
+namespace Detail {
+
 template<
-  template<typename, std::size_t> class ArrayType,
-  typename T,
-  std::size_t size,
-  class UnaryFunction
-> auto map_stl(
-  const ArrayType<T, size>& container,
-  UnaryFunction&& function
-) {
-  using U = decltype(
-    invoke(function, *std::begin(container))
-  );
-
-  ArrayType<U, size> returnContainer;
-
-  for(unsigned i = 0; i < size; ++i) {
-    returnContainer[i] = invoke(function, container[i]);
-  }
-
-  return returnContainer;
+  template<typename ...> class Tuplelike,
+  typename Tuple,
+  typename Unary,
+  std::size_t ... Inds
+>
+constexpr auto mapTupleHelper(Tuple&& tup, Unary&& f, std::index_sequence<Inds ...> /* inds */) {
+  using ReturnType = Tuplelike<
+    decltype(
+      invoke(f, std::declval<std::tuple_element_t<Inds, Tuple>>())
+    )
+  ...>;
+  return ReturnType(invoke(f, std::get<Inds>(tup))...);
 }
 
-//! @overload
-template<
-  template<typename, typename> class PairType,
-  typename T,
-  class UnaryFunction
-> auto map_stl(
-  const PairType<T, T>& pair,
-  UnaryFunction&& function
-) {
-  using U = decltype(
-    invoke(function, pair.first)
-  );
+} // namespace Detail
 
-  return PairType<U, U> {
-    function(pair.first),
-    function(pair.second)
-  };
+template<
+  template<typename ...> class Tuplelike,
+  typename Unary,
+  typename ... Ts,
+  std::enable_if_t<!Traits::isPairlike<Tuplelike<Ts...>>::value && Traits::isTuplelike<Tuplelike<Ts...>>::value>* = nullptr
+> constexpr auto map(Tuplelike<Ts...>&& tup, Unary&& f) {
+  return Detail::mapTupleHelper<Tuplelike>(
+    std::forward<Tuplelike<Ts...>>(tup),
+    std::forward<Unary>(f),
+    std::make_index_sequence<std::tuple_size<Tuplelike<Ts...>>::value> {}
+  );
+}
+
+// Catch pair-like classes that can't provide an overload for tuple_size
+template<
+  typename Pairlike,
+  typename Unary,
+  std::enable_if_t<Traits::isPairlike<Pairlike>::value && !Traits::isTuplelike<Pairlike>::value>* = nullptr
+> constexpr auto map(Pairlike&& pair, Unary&& f) {
+  return std::make_pair(
+    invoke(f, pair.first),
+    invoke(f, pair.second)
+  );
 }
 
 /*! @brief Maps all values of a container using a unary function. Returns a vector
  *
  * @complexity{@math{\Theta(N)}}
  */
-template<class Container, class UnaryFunction>
+template<class Container, class UnaryFunction, std::enable_if_t<!Traits::isPairlike<Container>::value && !Traits::isTuplelike<Container>::value>* = nullptr>
 auto map(Container&& container, UnaryFunction&& function) {
-  using U = decltype(
-    invoke(function, *std::begin(container))
-  );
+  using U = decltype(invoke(function, *std::begin(container)));
 
   std::vector<U> returnContainer;
   reserveIfPossible(returnContainer, container);
 
   for(auto&& value : container) {
-    returnContainer.push_back(
-      invoke(function, std::move(value))
-    );
+    returnContainer.push_back(invoke(function, std::move(value)));
   }
 
   return returnContainer;
 }
 
-template<class Pairlike, typename Unary>
-auto mapHomogeneousPairlike(Pairlike p, Unary&& f) {
-  return std::make_pair(f(p.first), f(p.second));
-}
-
 //! Apply a callable for all values of a container
 template<class Container, class Callable>
-void forEach(
-  const Container& container,
-  Callable&& callable
-) {
+void forEach(const Container& container, Callable&& callable) {
   for(const auto& value : container) {
     invoke(callable, value);
   }

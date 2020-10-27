@@ -107,7 +107,7 @@ std::pair<BondStereopermutator::FittingReferences, BondStereopermutator::Fitting
     [](const auto& x) { return x.identifier; }
   );
 
-  const auto placements = Temple::mapHomogeneousPairlike(
+  const auto placements = Temple::map(
     references,
     [](const auto& r) -> AtomIndex { return r.stereopermutator.placement(); }
   );
@@ -191,7 +191,7 @@ double BondStereopermutator::Impl::dihedral(
   }
 
   // Derived from possibly swapped references
-  auto shapeVertexMaps = Temple::map_stl(
+  auto shapeVertexMaps = Temple::map(
     references,
     [](const PermutatorReference& ref) {
       return ref.get().getShapePositionMap();
@@ -889,7 +889,7 @@ void BondStereopermutator::Impl::fit(
   };
 
   // For all atoms making up a site, decide on the spatial average position
-  const auto sitePositions = Temple::mapHomogeneousPairlike(
+  const auto sitePositions = Temple::map(
     alignedReferences,
     [&](const auto& ref) { return makeSitePositions(ref.stereopermutator); }
   );

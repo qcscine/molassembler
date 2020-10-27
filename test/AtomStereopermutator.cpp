@@ -64,7 +64,7 @@ BOOST_AUTO_TEST_CASE(ShipscrewShapeVertexMap, *boost::unit_test::label("Molassem
     {{4_s, 5_s}, {0, 5, 6}, 0}
   };
 
-  const auto maps = Temple::map_stl(
+  const auto maps = Temple::map(
     std::make_pair(shipscrew, shipscrewEnantiomer),
     [&](const auto& s) {
       return siteToShapeVertexMap(s, canonicalSites, siteLinks);

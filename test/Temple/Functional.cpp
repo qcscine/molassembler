@@ -192,3 +192,14 @@ BOOST_AUTO_TEST_CASE(MapToSameContainerTests, *boost::unit_test::label("Temple")
     "Map to same container does not work as expected"
   );
 }
+
+BOOST_AUTO_TEST_CASE(MapTuplelikes, *boost::unit_test::label("Temple")) {
+  auto f = Temple::map(std::make_pair(4, -1), [](const int x) { return x > 0; });
+  static_assert(std::is_same<decltype(f), std::pair<bool, bool>>::value, "Different return type than expected");
+
+  auto g = Temple::map(std::make_tuple(4U, -9, 5.9), [](auto x) { return x + 1; });
+  static_assert(std::is_same<decltype(g), std::tuple<unsigned, int, double>>::value, "different return type than expected");
+
+  auto h = Temple::map(std::array<int, 2> {{-1, 4}}, [](int x) { return x > 0; });
+  static_assert(std::is_same<decltype(h), std::array<bool, 2>>::value, "Different return type than expected");
+}

@@ -1036,7 +1036,7 @@ void RankingTree::applySequenceRules_(
             const std::pair<const AtomStereopermutator&, const AtomStereopermutator&> permutators {
               sourcePermutator, targetPermutator
             };
-            const auto fittingReferences = Temple::mapHomogeneousPairlike(
+            const auto fittingReferences = Temple::map(
               permutators,
               [&](const auto& perm) -> BondStereopermutator::FittingReferences {
                 return {

@@ -229,7 +229,7 @@ DirectedConformerGenerator::Relabeler::densityBins(
     sortedDihedrals.front(),
     sortedDihedrals.front()
   };
-  bool closeInterval;
+  bool closeInterval = false;
 
   Intervals intervals;
 
@@ -318,17 +318,17 @@ DirectedConformerGenerator::Relabeler::binMidpointIntegers(
 ) const {
   const auto intervalMidpoint = [](
     const Interval& interval,
-    unsigned symmetryOrder
+    const unsigned symmetryOrder
   ) -> int {
     if(interval.first <= interval.second) {
-      return std::round(180 * (interval.first + interval.second) / (2 * M_PI));
+      return static_cast<int>(std::round(180 * (interval.first + interval.second) / (2 * M_PI)));
     }
 
     double boundary = 2 * M_PI / symmetryOrder;
     double average = Cartesian::signedDihedralAngle(
       (interval.first + interval.second + boundary) / 2
     );
-    return std::round(180 * average / M_PI);
+    return static_cast<int>(std::round(180 * average / M_PI));
   };
 
   const auto binMidpointIntegers = Temple::map(
@@ -352,6 +352,56 @@ DirectedConformerGenerator::Relabeler::binMidpointIntegers(
   for(unsigned structure = 0; structure < structureCount; ++structure) {
     for(unsigned bond = 0; bond < bondCount; ++bond) {
       relabeling.at(structure).at(bond) = binMidpointIntegers.at(bond).at(
+        binIndices.at(structure).at(bond)
+      );
+    }
+  }
+
+  return relabeling;
+}
+
+std::vector<std::vector<std::pair<int, int>>>
+DirectedConformerGenerator::Relabeler::binBounds(
+  const std::vector<std::vector<unsigned>>& binIndices,
+  const std::vector<Intervals>& allBins
+) const {
+  const auto binBoundIntegers = Temple::map(
+    Temple::Adaptors::zip(allBins, sequences),
+    [&](const auto& intervals, const DihedralInfo& sequence) {
+      return Temple::map(
+        intervals,
+        [&](const Interval& v) -> std::pair<int, int> {
+          const auto reducedBounds = Temple::map(
+            v,
+            [&](const double phi) -> double {
+              // Reduce the dihedral angle by the symmetry order
+              return Cartesian::signedDihedralAngle(
+                std::fmod(
+                  Cartesian::positiveDihedralAngle(phi),
+                  2 * M_PI / sequence.symmetryOrder
+                )
+              );
+            }
+          );
+
+          return std::make_pair(
+            static_cast<int>(std::floor(Temple::Math::toDegrees(reducedBounds.first))),
+            static_cast<int>(std::ceil(Temple::Math::toDegrees(reducedBounds.second)))
+          );
+        }
+      );
+    }
+  );
+
+  const unsigned structureCount = binIndices.size();
+  const unsigned bondCount = binIndices.front().size();
+
+  std::vector<std::vector<std::pair<int, int>>> relabeling(structureCount, std::vector<std::pair<int, int>>(bondCount));
+
+#pragma omp parallel for collapse(2)
+  for(unsigned structure = 0; structure < structureCount; ++structure) {
+    for(unsigned bond = 0; bond < bondCount; ++bond) {
+      relabeling.at(structure).at(bond) = binBoundIntegers.at(bond).at(
         binIndices.at(structure).at(bond)
       );
     }

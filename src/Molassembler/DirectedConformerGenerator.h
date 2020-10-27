@@ -494,6 +494,9 @@ public:
 
   //! Relabels a DecisionList into bin midpoint integers
   std::vector<int> binMidpointIntegers(const DecisionList& decision) const;
+
+  //! Relabels a DecisionList into the bounds of its bin
+  std::vector<std::pair<int, int>> binBounds(const DecisionList& decision) const;
 //!@}
 
 private:
@@ -573,6 +576,14 @@ struct DirectedConformerGenerator::Relabeler {
 
   //! Relabel bin indices for all structures with bin midpoint integers
   std::vector<std::vector<int>> binMidpointIntegers(
+    const std::vector<std::vector<unsigned>>& binIndices,
+    const std::vector<Intervals>& allBins
+  ) const;
+
+  //! Relabel bin indices for all structures the bin bounds
+  std::vector<
+    std::vector<std::pair<int, int>>
+  > binBounds(
     const std::vector<std::vector<unsigned>>& binIndices,
     const std::vector<Intervals>& allBins
   ) const;

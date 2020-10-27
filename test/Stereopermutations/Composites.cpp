@@ -129,7 +129,7 @@ BOOST_AUTO_TEST_CASE(CompositePermutationCounts, *boost::unit_test::label("Stere
     Composite::Alignment alignment = Composite::Alignment::Eclipsed;
 
     operator Composite() const {
-      auto chars = Temple::mapHomogeneousPairlike(characters,
+      auto chars = Temple::map(characters,
         [](const auto& str) -> std::vector<char> {
           return {str.begin(), str.end()};
         }

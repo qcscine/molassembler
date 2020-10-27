@@ -959,13 +959,13 @@ StereopermutatorList Molecule::Impl::inferStereopermutatorsFromPositions(
 
   auto tryInstantiateBondStereopermutator = [&](const BondIndex& bondIndex) -> void {
     // TODO this is suspiciously close to tryAddBondStereopermutator_
-    const auto stereopermutatorOptions = Temple::mapHomogeneousPairlike(
+    const auto stereopermutatorOptions = Temple::map(
       bondIndex,
       [&](const AtomIndex v) { return stereopermutators.option(v); }
     );
 
     // There need to be assigned stereopermutators on both vertices
-    const auto existAndAssigned = Temple::mapHomogeneousPairlike(
+    const auto existAndAssigned = Temple::map(
       stereopermutatorOptions,
       [](const auto& opt) -> bool {
         return opt && opt->assigned() != boost::none;
@@ -977,7 +977,7 @@ StereopermutatorList Molecule::Impl::inferStereopermutatorsFromPositions(
     }
 
     // Generate references for call to BondStereopermutator::fit
-    const auto fittingReferences = Temple::mapHomogeneousPairlike(
+    const auto fittingReferences = Temple::map(
       stereopermutatorOptions,
       [&](const auto& opt) -> BondStereopermutator::FittingReferences {
         return {

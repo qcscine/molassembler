@@ -107,6 +107,8 @@ public:
 
   std::vector<int> binMidpointIntegers(const DecisionList& decision) const;
 
+  std::vector<std::pair<int, int>> binBounds(const DecisionList& decision) const;
+
 private:
   Molecule molecule_;
   BondStereopermutator::Alignment alignment_;
