@@ -10,6 +10,8 @@
 
 #include "boost/optional.hpp"
 
+#include <algorithm>
+
 namespace Scine {
 
 namespace Molassembler {
