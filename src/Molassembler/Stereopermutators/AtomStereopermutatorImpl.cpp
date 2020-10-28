@@ -868,7 +868,7 @@ AtomStereopermutator::Impl::minimalChiralConstraints(const bool enforce) const {
     return Temple::map(
       Shapes::tetrahedra(shape_),
       [&](const auto& tetrahedron) -> MinimalChiralConstraint {
-        return Temple::map_stl(
+        return Temple::map(
           tetrahedron,
           [&](const auto& shapeVertexOptional) -> boost::optional<SiteIndex> {
             return Temple::Optionals::map(
