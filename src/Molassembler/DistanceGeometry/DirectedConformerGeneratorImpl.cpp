@@ -578,7 +578,15 @@ DirectedConformerGenerator::Impl::binBounds(
       const auto averages = Temple::map(
         Temple::Adaptors::sequentialPairs(dominantAngles),
         [](const double x, const double y) -> int {
-          return static_cast<int>(std::round(Temple::Math::toDegrees(Cartesian::dihedralAverage(x, y))));
+          const double average = [&]() {
+            if(x <= y) {
+              return (x + y) / 2;
+            }
+
+            return (x + y) / 2 + M_PI;
+          }();
+
+          return static_cast<int>(std::round(Temple::Math::toDegrees(average)));
         }
       );
 

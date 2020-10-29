@@ -69,7 +69,7 @@ void expectDominantAngles(
     );
 
     BOOST_CHECK_MESSAGE(findIter != std::end(angleSet),
-      "Could not find dominant angle " << dihedral << " in set of expected dominant angles" << Temple::stringify(angleSet)
+      "Dominant angle " << dihedral << " from composite isn't in set of expected dominant angles" << Temple::stringify(angleSet)
     );
   }
 }
@@ -103,12 +103,7 @@ BOOST_AUTO_TEST_CASE(OrientationStateTests, *boost::unit_test::label("Stereoperm
     for(Shapes::Vertex i {0}; i < S; ++i ) {
       BOOST_CHECK_MESSAGE(
         testOrientationState(
-          Composite::OrientationState {
-            shape,
-            i,
-            maximumAsymmetricCase,
-            0
-          }
+          Composite::OrientationState {shape, i, maximumAsymmetricCase, 0}
         ),
         "Transformation and reversion does not work for "
         << Shapes::name(shape)
@@ -547,10 +542,10 @@ BOOST_AUTO_TEST_CASE(CompositeCombinedAlignments, *boost::unit_test::label("Ster
     simplestEclipsed.orientations().second,
     Composite::Alignment::BetweenEclipsedAndStaggered
   };
-  BOOST_CHECK_EQUAL(simplestOffset.allPermutations().size(), 4);
+  BOOST_CHECK_EQUAL(simplestOffset.allPermutations().size(), 2);
   expectDominantAngles(
     simplestOffset,
-    std::vector<double> {{-3 * M_PI / 4, -M_PI / 4, M_PI / 4, 3 * M_PI / 4}}
+    std::vector<double> {{-3 * M_PI / 4, M_PI / 4}}
   );
 
   const Composite bothTetrahedral {
@@ -575,11 +570,13 @@ BOOST_AUTO_TEST_CASE(CompositeCombinedAlignments, *boost::unit_test::label("Ster
     bothTetrahedral.orientations().second,
     Composite::Alignment::BetweenEclipsedAndStaggered
   };
-  BOOST_CHECK_EQUAL(offsetTetrahedral.allPermutations().size(), 6);
-  expectDominantAngles(
-    offsetTetrahedral,
-    std::vector<double> {{-5 * M_PI / 6, -3 * M_PI / 6, -M_PI / 6, M_PI / 6, 3 * M_PI / 6, 5 * M_PI /6}}
-  );
+  BOOST_CHECK_EQUAL(offsetTetrahedral.allPermutations().size(), 3);
+  BOOST_TEST_CONTEXT("For tetr-tetr between eclipsed and staggered") {
+    expectDominantAngles(
+      offsetTetrahedral,
+      std::vector<double> {{-5 * M_PI / 6, -M_PI / 6, 3 * M_PI / 6}}
+    );
+  }
 
   /* Eclipsed and staggered stereopermutations for triangle and tetrahedron are
    * identical, so deduplication yields only six

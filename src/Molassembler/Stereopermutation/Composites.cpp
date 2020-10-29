@@ -556,6 +556,16 @@ Composite::PermutationGenerator::generateEclipsedOrStaggered(
     }
   }
 
+  Temple::sort(
+    stereopermutations,
+    [](const Permutation& lhs, const Permutation& rhs) {
+      return (
+        Cartesian::positiveDihedralAngle(std::get<2>(lhs.dihedrals.front()))
+        < Cartesian::positiveDihedralAngle(std::get<2>(rhs.dihedrals.front()))
+      );
+    }
+  );
+
   return stereopermutations;
 }
 
@@ -657,31 +667,40 @@ Composite::PermutationsList Composite::PermutationGenerator::generate(
     stereopermutations = generateEclipsedOrStaggered(Alignment::Eclipsed, deduplicationDegrees);
     auto staggeredStereopermutations = generateEclipsedOrStaggered(Alignment::Staggered, deduplicationDegrees);
 
-    std::copy_if(
-      std::make_move_iterator(std::begin(staggeredStereopermutations)),
-      std::make_move_iterator(std::end(staggeredStereopermutations)),
-      std::back_inserter(stereopermutations),
-      [&](const auto& stereopermutation) -> bool {
-        return !isDuplicate(stereopermutation, stereopermutations, deduplicationDegrees);
-      }
-    );
+    if(alignment == Alignment::EclipsedAndStaggered) {
+      // Merge the two sets of alignments without creating duplicates
+      auto middleIter = std::end(stereopermutations);
 
-    // Sort stereopermutations starting at the dominant dihedral zero
-    Temple::sort(
-      stereopermutations,
-      [](const Permutation& lhs, const Permutation& rhs) {
-        return (
-          Cartesian::positiveDihedralAngle(std::get<2>(lhs.dihedrals.front()))
-          < Cartesian::positiveDihedralAngle(std::get<2>(rhs.dihedrals.front()))
-        );
-      }
-    );
+      std::copy_if(
+        std::make_move_iterator(std::begin(staggeredStereopermutations)),
+        std::make_move_iterator(std::end(staggeredStereopermutations)),
+        std::back_inserter(stereopermutations),
+        [&](const auto& stereopermutation) -> bool {
+          return !isDuplicate(stereopermutation, stereopermutations, deduplicationDegrees);
+        }
+      );
+
+      // Merge the sorted ranges
+      std::inplace_merge(
+        std::begin(stereopermutations),
+        middleIter,
+        std::end(stereopermutations),
+        [](const Permutation& lhs, const Permutation& rhs) {
+          return (
+            Cartesian::positiveDihedralAngle(std::get<2>(lhs.dihedrals.front()))
+            < Cartesian::positiveDihedralAngle(std::get<2>(rhs.dihedrals.front()))
+          );
+        }
+      );
+    }
 
     if(alignment == Alignment::BetweenEclipsedAndStaggered) {
-      // Average the dihedral angle of successive pairs
+      // Average out matching ecliptic and staggered alignments
+      assert(stereopermutations.size() == staggeredStereopermutations.size());
+
       stereopermutations = Temple::map(
-        Temple::Adaptors::cyclicFrame<2>(stereopermutations),
-        [](const Permutation& lhs, const Permutation& rhs) {
+        Temple::Adaptors::zip(stereopermutations, staggeredStereopermutations),
+        [](const Permutation& lhs, const Permutation& rhs) -> Permutation {
           auto dihedrals = Temple::map(
             Temple::Adaptors::zip(lhs.dihedrals, rhs.dihedrals),
             [](const Permutation::DihedralTuple& a, const Permutation::DihedralTuple& b) {

@@ -539,6 +539,9 @@ struct DirectedConformerGenerator::Relabeler {
     unsigned symmetryOrder = 1
   );
 
+  static std::pair<double, double> makeBounds(double phi, double tolerance);
+  static std::pair<int, int> integerBounds(const std::pair<double, double>& bounds);
+
   /*! @brief Construct a relabeler with a custom list of bonds
    *
    * @param bonds List of bonds to consider.
@@ -551,8 +554,8 @@ struct DirectedConformerGenerator::Relabeler {
    */
   Relabeler(const DirectedConformerGenerator::BondList& bonds, const Molecule& mol);
 
-  //! Add a particular position to the set to relabel
-  void add(const Utils::PositionCollection& positions);
+  //! Add a structure to the set to relabel. Yields the considered dihedrals
+  std::vector<double> add(const Utils::PositionCollection& positions);
 
   /*! Generate bins for each set of observed dihedrals
    *
@@ -580,7 +583,7 @@ struct DirectedConformerGenerator::Relabeler {
     const std::vector<Intervals>& allBins
   ) const;
 
-  //! Relabel bin indices for all structures the bin bounds
+  //! Relabel bin indices for all structures with bin bounds
   std::vector<
     std::vector<std::pair<int, int>>
   > binBounds(

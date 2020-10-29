@@ -450,6 +450,12 @@ void init_directed_conformer_generator(pybind11::module& m) {
     "Relabels a decision list into bin midpoint integers"
   );
 
+  dirConfGen.def(
+    "bin_bounds",
+    &DirectedConformerGenerator::binBounds,
+    "Relabels a decision list into integer bounds of its stereopermutation bin"
+  );
+
   pybind11::class_<DirectedConformerGenerator::Relabeler> relabeler(
     dirConfGen,
     "Relabeler",
@@ -493,6 +499,37 @@ void init_directed_conformer_generator(pybind11::module& m) {
       [(0.1, 0.2), (0.4, 0.4)]
       >>> bins([0.1, 0.2, 3.1, -3.1], 0.1)  # Inverted boundaries with wrap
       [(3.1, -3.1), (0.1, 0.2)]
+    )delim"
+  );
+
+  relabeler.def_static(
+    "make_bounds",
+    &DirectedConformerGenerator::Relabeler::makeBounds,
+    pybind11::arg("dihedral"),
+    pybind11::arg("tolerance"),
+    R"delim(
+      Generates [-pi, pi) wrapped bounds on a dihedral value in radians with a
+      tolerance.
+
+      >>> DirectedConformerGenerator.Relabeler.make_bounds(0, 0.1)
+      (-0.1, 0.1)
+    )delim"
+  );
+
+  relabeler.def_static(
+    "integer_bounds",
+    &DirectedConformerGenerator::Relabeler::integerBounds,
+    pybind11::arg("floating_bounds"),
+    R"delim(
+      Converts dihedral bounds in radians into integer degree bounds. Rounds
+      the lower bound down and rounds the upper bound up.
+
+      :param floating_bounds: Pair of dihedral values in radians
+      :returns: Pair of integer dihedral values in degrees
+
+      >>> int_bounds = DirectedConformerGenerator.Relabeler.integer_bounds
+      >>> int_bounds((-0.1, 0.1))
+      (-5, 6)
     )delim"
   );
 
@@ -542,15 +579,28 @@ void init_directed_conformer_generator(pybind11::module& m) {
     )delim"
   );
 
+  relabeler.def(
+    "bin_bounds",
+    &DirectedConformerGenerator::Relabeler::binBounds,
+    pybind11::arg("bin_indices"),
+    pybind11::arg("bins"),
+    R"delim(
+      Relabel bin indices into integer bounds on their bins
+
+      :param bin_indices: All structures' bin indices (see bin_indices)
+      :param bins: Bin intervals for all observed bonds (see bins function)
+    )delim"
+  );
+
   relabeler.def_readonly(
     "sequences",
     &DirectedConformerGenerator::Relabeler::sequences,
-    "Dominant index sequences at each considered bond"
+    "Dominant dihedral index sequences at each considered bond"
   );
 
   relabeler.def_readonly(
     "dihedrals",
     &DirectedConformerGenerator::Relabeler::observedDihedrals,
-    "Observed dihedrals at each bond in added structures"
+    "Observed dihedral values at each bond in added structures"
   );
 }

@@ -124,6 +124,24 @@ constexpr Get<0> first;
 //! @brief Calls std::get<1> on any argument it is invoked with
 constexpr Get<1> second;
 
+template<typename UnaryF, typename UnaryG>
+struct Currier {
+  Currier(UnaryF&& outer, UnaryG&& inner) : f(outer), g(inner) {}
+
+  template<typename T>
+  auto operator() (T&& t) -> decltype(auto) {
+    return f(g(t));
+  }
+
+  UnaryF f;
+  UnaryG g;
+};
+
+template<typename UnaryF, typename UnaryG>
+auto curry(UnaryF&& outer, UnaryG&& inner) {
+  return Currier<UnaryF, UnaryG>(std::forward<UnaryF>(outer), std::forward<UnaryG>(inner));
+}
+
 } // namespace Functor
 } // namespace Temple
 } // namespace Molassembler

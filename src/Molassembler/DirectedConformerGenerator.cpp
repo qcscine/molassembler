@@ -13,6 +13,7 @@
 #include "Molassembler/Detail/Cartesian.h"
 #include "Molassembler/Temple/Adaptors/CyclicFrame.h"
 #include "Molassembler/Temple/Adaptors/Zip.h"
+#include "Molassembler/Temple/Functor.h"
 
 #include "boost/variant.hpp"
 
@@ -136,10 +137,32 @@ DirectedConformerGenerator::Relabeler DirectedConformerGenerator::relabeler() co
 }
 
 std::vector<int>
-DirectedConformerGenerator::binMidpointIntegers(
-  const DecisionList& decisions
-) const {
+DirectedConformerGenerator::binMidpointIntegers(const DecisionList& decisions) const {
   return pImpl_->binMidpointIntegers(decisions);
+}
+
+std::vector<std::pair<int, int>>
+DirectedConformerGenerator::binBounds(const DecisionList& decisions) const {
+  return pImpl_->binBounds(decisions);
+}
+
+std::pair<double, double> DirectedConformerGenerator::Relabeler::makeBounds(
+  double phi,
+  double tolerance
+) {
+  return Temple::map(
+    std::make_pair(phi - tolerance, phi + tolerance),
+    &Cartesian::signedDihedralAngle
+  );
+}
+
+std::pair<int, int> DirectedConformerGenerator::Relabeler::integerBounds(
+  const std::pair<double, double>& bounds
+) {
+  return std::make_pair(
+    static_cast<int>(std::floor(Temple::Math::toDegrees(bounds.first))),
+    static_cast<int>(std::ceil(Temple::Math::toDegrees(bounds.second)))
+  );
 }
 
 DirectedConformerGenerator::Relabeler::Relabeler(
@@ -175,37 +198,42 @@ DirectedConformerGenerator::Relabeler::Relabeler(
   observedDihedrals.resize(sequences.size());
 }
 
-void DirectedConformerGenerator::Relabeler::add(
+std::vector<double> DirectedConformerGenerator::Relabeler::add(
   const Utils::PositionCollection& positions
 ) {
-  auto sequenceIter = std::cbegin(sequences);
-  const auto bondEnd = std::cend(sequences);
-  auto dihedralIter = std::begin(observedDihedrals);
-  const auto dihedralEnd = std::end(observedDihedrals);
-
-  while(sequenceIter != bondEnd && dihedralIter != dihedralEnd) {
-    double dihedral = Cartesian::dihedral(
-      Cartesian::averagePosition(positions, sequenceIter->is),
-      positions.row(sequenceIter->j),
-      positions.row(sequenceIter->k),
-      Cartesian::averagePosition(positions, sequenceIter->ls)
-    );
-
-    // Reduce by rotational symmetry if present
-    if(sequenceIter->symmetryOrder > 1) {
-      dihedral = Cartesian::signedDihedralAngle(
-        std::fmod(
-          Cartesian::positiveDihedralAngle(dihedral),
-          2 * M_PI / sequenceIter->symmetryOrder
-        )
+  auto structureDihedrals = Temple::map(
+    sequences,
+    [&](const auto& sequence) -> double {
+      double dihedral = Cartesian::dihedral(
+        Cartesian::averagePosition(positions, sequence.is),
+        positions.row(sequence.j),
+        positions.row(sequence.k),
+        Cartesian::averagePosition(positions, sequence.ls)
       );
+
+      // Reduce by rotational symmetry if present
+      if(sequence.symmetryOrder > 1) {
+        dihedral = Cartesian::signedDihedralAngle(
+          std::fmod(
+            Cartesian::positiveDihedralAngle(dihedral),
+            2 * M_PI / sequence.symmetryOrder
+          )
+        );
+      }
+
+      return dihedral;
     }
+  );
 
+  // Distribute the dihedrals into each sequence's list of dihedrals
+  auto dihedralIter = std::begin(observedDihedrals);
+  assert(observedDihedrals.size() == structureDihedrals.size());
+  for(double dihedral : structureDihedrals) {
     dihedralIter->push_back(dihedral);
-
-    ++sequenceIter;
     ++dihedralIter;
   }
+
+  return structureDihedrals;
 }
 
 DirectedConformerGenerator::Relabeler::Intervals
@@ -324,8 +352,8 @@ DirectedConformerGenerator::Relabeler::binMidpointIntegers(
       return static_cast<int>(std::round(180 * (interval.first + interval.second) / (2 * M_PI)));
     }
 
-    double boundary = 2 * M_PI / symmetryOrder;
-    double average = Cartesian::signedDihedralAngle(
+    const double boundary = 2 * M_PI / symmetryOrder;
+    const double average = Cartesian::signedDihedralAngle(
       (interval.first + interval.second + boundary) / 2
     );
     return static_cast<int>(std::round(180 * average / M_PI));
