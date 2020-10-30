@@ -13,12 +13,12 @@ option(BUILD_SHARED_LIBS ON)
 # Project-specific options
 option(MOLASSEMBLER_ANALYSIS "Compile analysis binaries" OFF)
 option(MOLASSEMBLER_VALIDATION "Compile validation tests" OFF)
-option(MOLASSEMBLER_PARALLELIZE "Enables OpenMP parallelization" ON)
 option(MOLASSEMBLER_IPO "Try to enable interprocedural optimization" OFF)
 option(MOLASSEMBLER_NO_GNU_UNIQUE "Set --no-gnu-unique GCC flag" OFF)
 option(MOLASSEMBLER_SANITIZE "Add address and UB sanitizers" OFF)
 
 # SCINE options
+option(SCINE_PARALLELIZE "Enables OpenMP parallelization" ON)
 option(SCINE_BUILD_TESTS "Build test executables" ON)
 option(SCINE_BUILD_DOCS "Build the documentation" ON)
 option(SCINE_BUILD_PYTHON_BINDINGS "Build python bindings" OFF)

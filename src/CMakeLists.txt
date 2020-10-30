@@ -1,5 +1,5 @@
 # Dependencies
-if(MOLASSEMBLER_PARALLELIZE)
+if(SCINE_PARALLELIZE)
   find_package(OpenMP REQUIRED QUIET)
 endif()
 

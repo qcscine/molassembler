@@ -48,3 +48,9 @@ class MolassemblerConan(ScineConan):
         "nauty/2.7r1"
     ]
     cmake_name = "Molassembler"
+
+    def package_info(self):
+        super().package_info()
+
+        self.cpp_info.components["Molassembler"].cxxflags = ["-fopenmp"]
+        self.cpp_info.components["Molassembler"].sharedlinkflags = ["-fopenmp"]
