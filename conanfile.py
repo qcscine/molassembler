@@ -54,3 +54,4 @@ class MolassemblerConan(ScineConan):
 
         self.cpp_info.components["Molassembler"].cxxflags = ["-fopenmp"]
         self.cpp_info.components["Molassembler"].sharedlinkflags = ["-fopenmp"]
+        self.cpp_info.components["Molassembler"].exelinkflags = ["-fopenmp"]
