@@ -82,6 +82,7 @@ Cycles::Cycles(const PrivateGraph& innerGraph, const bool ignoreEtaBonds)
       const BondIndex bond { edgeArray[j][0], edgeArray[j][1] };
       urfMap_[bond].push_back(i);
     }
+    free(*edgeArray);
   }
 
   // Sort the URFs for set intersections
