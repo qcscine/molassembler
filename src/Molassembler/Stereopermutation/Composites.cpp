@@ -556,16 +556,6 @@ Composite::PermutationGenerator::generateEclipsedOrStaggered(
     }
   }
 
-  Temple::sort(
-    stereopermutations,
-    [](const Permutation& lhs, const Permutation& rhs) {
-      return (
-        Cartesian::positiveDihedralAngle(std::get<2>(lhs.dihedrals.front()))
-        < Cartesian::positiveDihedralAngle(std::get<2>(rhs.dihedrals.front()))
-      );
-    }
-  );
-
   return stereopermutations;
 }
 
@@ -666,6 +656,16 @@ Composite::PermutationsList Composite::PermutationGenerator::generate(
      */
     stereopermutations = generateEclipsedOrStaggered(Alignment::Eclipsed, deduplicationDegrees);
     auto staggeredStereopermutations = generateEclipsedOrStaggered(Alignment::Staggered, deduplicationDegrees);
+
+    const auto compareDominantAngle = [](const Permutation& lhs, const Permutation& rhs) {
+      return (
+        Cartesian::positiveDihedralAngle(std::get<2>(lhs.dihedrals.front()))
+        < Cartesian::positiveDihedralAngle(std::get<2>(rhs.dihedrals.front()))
+      );
+    };
+
+    Temple::sort(stereopermutations, compareDominantAngle);
+    Temple::sort(staggeredStereopermutations, compareDominantAngle);
 
     if(alignment == Alignment::EclipsedAndStaggered) {
       // Merge the two sets of alignments without creating duplicates

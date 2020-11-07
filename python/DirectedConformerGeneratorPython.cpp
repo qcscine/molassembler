@@ -61,7 +61,7 @@ void init_directed_conformer_generator(pybind11::module& m) {
 
       >>> butane = io.experimental.from_smiles("CCCC")
       >>> generator = DirectedConformerGenerator(butane)
-      >>> assert generator.bond_list()
+      >>> assert len(generator.bond_list) > 0
       >>> conformers = []
       >>> while generator.decision_list_set_size() < generator.ideal_ensemble_size:
       ...     conformers.append(
@@ -69,7 +69,7 @@ void init_directed_conformer_generator(pybind11::module& m) {
       ...         generator.generate_decision_list()
       ...       )
       ...     )
-      >>> assert len(conformers) == generator.ideal_ensemble_size()
+      >>> assert len(conformers) == generator.ideal_ensemble_size
     )delim"
   );
 
@@ -492,7 +492,7 @@ void init_directed_conformer_generator(pybind11::module& m) {
 
       :raises RuntimeError: If the passed list of dihedrals is empty
 
-      >>> bins = DirectedConformerGenerator.Relabeler.bins
+      >>> bins = DirectedConformerGenerator.Relabeler.density_bins
       >>> bins([0.1, 0.2], 0.1)
       [(0.1, 0.2)]
       >>> bins([0.1, 0.2, 0.4], 0.1)
@@ -529,7 +529,7 @@ void init_directed_conformer_generator(pybind11::module& m) {
 
       >>> int_bounds = DirectedConformerGenerator.Relabeler.integer_bounds
       >>> int_bounds((-0.1, 0.1))
-      (-5, 6)
+      (-6, 6)
     )delim"
   );
 
