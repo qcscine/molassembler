@@ -146,8 +146,8 @@ auto map(Container&& container, UnaryFunction&& function) {
   std::vector<U> returnContainer;
   reserveIfPossible(returnContainer, container);
 
-  for(const auto& value : container) {
-    returnContainer.push_back(invoke(function, value));
+  for(auto&& value : container) {
+    returnContainer.push_back(invoke(function, std::move(value)));
   }
 
   return returnContainer;

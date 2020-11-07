@@ -95,27 +95,59 @@ using TestIsPairlike = decltype(std::declval<Container>().first);
 
 } // namespace Detail
 
+/**
+ * @brief Has an insert method accepting the container value type
+ * @tparam Container Fully qualified type to test
+ */
 template<class Container>
 struct hasInsert : std::integral_constant<bool, Detail::is_detected_v<Detail::TestHasInsert, Container>> {};
 
+/**
+ * @brief Has a push_back method accepting the container value type
+ * @tparam Container Fully qualified type to test
+ */
 template<class Container>
 struct hasPushBack : std::integral_constant<bool, Detail::is_detected_v<Detail::TestHasPushBack, Container>> {};
 
+/**
+ * @brief Has an emplace method accepting the container value type
+ * @tparam Container Fully qualified type to test
+ */
 template<class Container>
 struct hasEmplace : std::integral_constant<bool, Detail::is_detected_v<Detail::TestHasEmplace, Container>> {};
 
+/**
+ * @brief Has an emplace_back method accepting the container value type
+ * @tparam Container Fully qualified type to test
+ */
 template<class Container>
 struct hasEmplaceBack : std::integral_constant<bool, Detail::is_detected_v<Detail::TestHasEmplaceBack, Container>> {};
 
+/**
+ * @brief Has a nullary size member
+ * @tparam Container Fully qualified type to test
+ */
 template<class Container>
 struct hasSize : std::integral_constant<bool, Detail::is_detected_v<Detail::TestHasSize, Container>> {};
 
+/**
+ * @brief Has a reserve member accepting an integer type
+ * @tparam Container Fully qualified type to test
+ */
 template<class Container>
 struct hasReserve : std::integral_constant<bool, Detail::is_detected_v<Detail::TestHasReserve, Container>> {};
 
+/**
+ * @brief Has support for std::tuple_size
+ * @tparam Container Fully qualified type to test
+ */
 template<class Container>
 struct isTuplelike : std::integral_constant<bool, Detail::is_detected_v<Detail::TestIsTuplelike, Container>> {};
 
+/**
+ * @brief Has first and second members, but no support for std::tuple_size
+ * @tparam Container Fully qualified type to test
+ */
 template<class Container>
 struct isPairlike : std::integral_constant<bool, Detail::is_detected_v<Detail::TestIsPairlike, Container> && !isTuplelike<Container>::value> {};
 

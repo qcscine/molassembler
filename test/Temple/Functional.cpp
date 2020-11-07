@@ -23,6 +23,31 @@ PURITY_STRONG double divByThree (unsigned a) {
   return static_cast<double>(a) / 3.0;
 }
 
+namespace {
+
+static_assert(Temple::Traits::hasInsert<std::set<int>>::value, "Nope");
+static_assert(Temple::Traits::hasEmplace<std::set<int>>::value, "Nope");
+static_assert(!Temple::Traits::hasPushBack<std::set<int>>::value, "Nope");
+static_assert(!Temple::Traits::hasEmplaceBack<std::set<int>>::value, "Nope");
+static_assert(Temple::Traits::hasSize<std::set<int>>::value, "Nope");
+static_assert(!Temple::Traits::hasReserve<std::set<int>>::value, "Nope");
+
+static_assert(!Temple::Traits::hasInsert<std::vector<int>>::value, "Nope");
+static_assert(!Temple::Traits::hasEmplace<std::vector<int>>::value, "Nope");
+static_assert(Temple::Traits::hasPushBack<std::vector<int>>::value, "Nope");
+static_assert(Temple::Traits::hasEmplaceBack<std::vector<int>>::value, "Nope");
+static_assert(Temple::Traits::hasSize<std::vector<int>>::value, "Nope");
+static_assert(Temple::Traits::hasReserve<std::vector<int>>::value, "Nope");
+
+static_assert(!Temple::Traits::isTuplelike<std::vector<int>>::value, "Nope");
+static_assert(!Temple::Traits::isTuplelike<std::set<int>>::value, "Nope");
+static_assert(Temple::Traits::isTuplelike<std::tuple<int, double>>::value, "Nope");
+static_assert(Temple::Traits::isTuplelike<std::pair<int, double>>::value, "Nope");
+static_assert(!Temple::Traits::isPairlike<std::pair<int, double>>::value, "Nope");
+static_assert(!Temple::Traits::isPairlike<std::tuple<int, double>>::value, "Nope");
+
+} // namespace
+
 BOOST_AUTO_TEST_CASE(SumTest, *boost::unit_test::label("Temple")) {
   std::vector<unsigned> instance {0, 1, 2, 3};
   auto f = Temple::sum(instance);
