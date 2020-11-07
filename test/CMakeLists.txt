@@ -26,7 +26,7 @@ target_compile_options(MolassemblerTests PRIVATE ${MOLASSEMBLER_CXX_FLAGS})
 target_include_directories(MolassemblerTests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 add_test(
   NAME Molassembler
-  COMMAND MolassemblerTests
+  COMMAND MolassemblerTests --build_info --log_level=test_suite
   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/data
 )
 

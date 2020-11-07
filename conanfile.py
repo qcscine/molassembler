@@ -27,7 +27,9 @@ class MolassemblerConan(ScineConan):
         "tests": False,
         "docs": False,
         "coverage": False,
-        "microarch": "none"
+        "microarch": "none",
+        "RingDecomposerLib:shared": False,
+        "nauty:shared": False
     }
     exports = "dev/conan/*.py"
     exports_sources = [
