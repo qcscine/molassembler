@@ -24,35 +24,34 @@ inline std::ostream& nl(std::ostream& os) {
   return os;
 }
 
-BOOST_AUTO_TEST_CASE(ImplicitBoundsGraphConcepts, *boost::unit_test::label("DG")) {
-  using namespace Scine::Molassembler;
+using namespace Scine::Molassembler;
+using GraphType = DistanceGeometry::ImplicitBoundsGraph;
 
-  using GraphType = DistanceGeometry::ImplicitBoundsGraph;
+namespace {
 
-  BOOST_CONCEPT_ASSERT(( boost::VertexListGraphConcept<GraphType> ));
-  BOOST_CONCEPT_ASSERT(( boost::EdgeListGraphConcept<GraphType> ));
-  BOOST_CONCEPT_ASSERT(( boost::AdjacencyMatrixConcept<GraphType> ));
+BOOST_CONCEPT_ASSERT(( boost::VertexListGraphConcept<GraphType> ));
+BOOST_CONCEPT_ASSERT(( boost::EdgeListGraphConcept<GraphType> ));
+BOOST_CONCEPT_ASSERT(( boost::AdjacencyMatrixConcept<GraphType> ));
 
-  BOOST_CONCEPT_ASSERT((
-    boost::ReadablePropertyMapConcept<
-      boost::property_map<GraphType, boost::vertex_index_t>::type,
-      boost::graph_traits<GraphType>::vertex_descriptor
-    >
-  ));
+BOOST_CONCEPT_ASSERT((
+  boost::ReadablePropertyMapConcept<
+    boost::property_map<GraphType, boost::vertex_index_t>::type,
+    boost::graph_traits<GraphType>::vertex_descriptor
+  >
+));
 
-  BOOST_CONCEPT_ASSERT((
-    boost::ReadablePropertyMapConcept<
-      boost::property_map<GraphType, boost::edge_weight_t>::type,
-      boost::graph_traits<GraphType>::edge_descriptor
-    >
-  ));
+BOOST_CONCEPT_ASSERT((
+  boost::ReadablePropertyMapConcept<
+    boost::property_map<GraphType, boost::edge_weight_t>::type,
+    boost::graph_traits<GraphType>::edge_descriptor
+  >
+));
 
-  BOOST_CONCEPT_ASSERT(( boost::IncidenceGraphConcept<GraphType> ));
-}
+BOOST_CONCEPT_ASSERT(( boost::IncidenceGraphConcept<GraphType> ));
+
+} // namespace
 
 BOOST_AUTO_TEST_CASE(ImplicitBoundsGraphStructure, *boost::unit_test::label("DG")) {
-  using namespace Scine::Molassembler;
-
   for(
     const boost::filesystem::path& currentFilePath :
     boost::filesystem::recursive_directory_iterator("stereocenter_detection_molecules")

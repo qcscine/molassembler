@@ -664,13 +664,7 @@ Composite::PermutationsList Composite::PermutationGenerator::generate(
       );
     };
 
-    Temple::sort(stereopermutations, compareDominantAngle);
-    Temple::sort(staggeredStereopermutations, compareDominantAngle);
-
     if(alignment == Alignment::EclipsedAndStaggered) {
-      // Merge the two sets of alignments without creating duplicates
-      auto middleIter = std::end(stereopermutations);
-
       std::copy_if(
         std::make_move_iterator(std::begin(staggeredStereopermutations)),
         std::make_move_iterator(std::end(staggeredStereopermutations)),
@@ -680,23 +674,15 @@ Composite::PermutationsList Composite::PermutationGenerator::generate(
         }
       );
 
-      // Merge the sorted ranges
-      std::inplace_merge(
-        std::begin(stereopermutations),
-        middleIter,
-        std::end(stereopermutations),
-        [](const Permutation& lhs, const Permutation& rhs) {
-          return (
-            Cartesian::positiveDihedralAngle(std::get<2>(lhs.dihedrals.front()))
-            < Cartesian::positiveDihedralAngle(std::get<2>(rhs.dihedrals.front()))
-          );
-        }
-      );
+      Temple::sort(stereopermutations, compareDominantAngle);
     }
 
     if(alignment == Alignment::BetweenEclipsedAndStaggered) {
       // Average out matching ecliptic and staggered alignments
       assert(stereopermutations.size() == staggeredStereopermutations.size());
+
+      Temple::sort(stereopermutations, compareDominantAngle);
+      Temple::sort(staggeredStereopermutations, compareDominantAngle);
 
       stereopermutations = Temple::map(
         Temple::Adaptors::zip(stereopermutations, staggeredStereopermutations),
