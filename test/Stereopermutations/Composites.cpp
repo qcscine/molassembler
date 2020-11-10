@@ -543,10 +543,12 @@ BOOST_AUTO_TEST_CASE(CompositeCombinedAlignments, *boost::unit_test::label("Ster
     Composite::Alignment::BetweenEclipsedAndStaggered
   };
   BOOST_CHECK_EQUAL(simplestOffset.allPermutations().size(), 2);
-  expectDominantAngles(
-    simplestOffset,
-    std::vector<double> {{-3 * M_PI / 4, M_PI / 4}}
-  );
+  BOOST_TEST_CONTEXT("For trig-trig between eclipsed and staggered") {
+    expectDominantAngles(
+      simplestOffset,
+      std::vector<double> {{-M_PI / 4, 3 * M_PI / 4}}
+    );
+  }
 
   const Composite bothTetrahedral {
     Composite::OrientationState {
