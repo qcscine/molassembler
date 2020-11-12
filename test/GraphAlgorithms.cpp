@@ -41,10 +41,10 @@ BOOST_AUTO_TEST_CASE(PathsGeneration, *boost::unit_test::label("Molassembler")) 
   BOOST_CHECK_EQUAL(toAdjacent.back(), 1);
 
   const auto toExtended = predecessors.path(2);
-  BOOST_CHECK_EQUAL(toAdjacent.size(), 3);
-  BOOST_CHECK_EQUAL(toAdjacent.at(0), 0);
-  BOOST_CHECK_EQUAL(toAdjacent.at(1), 1);
-  BOOST_CHECK_EQUAL(toAdjacent.at(2), 2);
+  BOOST_CHECK_EQUAL(toExtended.size(), 3);
+  BOOST_CHECK_EQUAL(toExtended.at(0), 0);
+  BOOST_CHECK_EQUAL(toExtended.at(1), 1);
+  BOOST_CHECK_EQUAL(toExtended.at(2), 2);
 }
 
 BOOST_AUTO_TEST_CASE(UniqueDescendants, *boost::unit_test::label("Molassembler")) {

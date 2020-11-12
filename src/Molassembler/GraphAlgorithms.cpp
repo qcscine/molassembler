@@ -42,6 +42,7 @@ std::vector<AtomIndex> PredecessorMap::path(const AtomIndex target) const {
     pathVertices.push_back(position);
     position = predecessors.at(position);
   }
+  pathVertices.push_back(position);
 
   std::reverse(
     std::begin(pathVertices),
