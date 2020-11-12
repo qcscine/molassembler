@@ -47,8 +47,8 @@ MASM_EXPORT unsigned numRotatableBonds(const Molecule& mol);
  *
  * Uses atom-stereopermutator ranking information to determine which parts of
  * molecules are completely ranking-equivalent. Note that ranking symmetry at
- * bonds is not found by this method, yielding more ranking equivalent atoms
- * than there truly are in many cases, such as in ethane.
+ * bonds is not found by this method, yielding more distinct atoms than there
+ * truly are in many cases, such as in ethane, cyclobutane or benzene.
  *
  * @return Unordered list of non-ranking equivalent atoms
  */

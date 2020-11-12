@@ -12,11 +12,59 @@
 #include "Molassembler/StereopermutatorList.h"
 #include "Molassembler/BondStereopermutator.h"
 #include "Molassembler/Graph/GraphAlgorithms.h"
+#include "Molassembler/Temple/Adaptors/SequentialPairs.h"
+#include "Molassembler/Temple/Functional.h"
 
-#include "boost/dynamic_bitset.hpp"
+#include "boost/bimap.hpp"
 
 namespace Scine {
 namespace Molassembler {
+namespace {
+
+struct DescendantSubgraph {
+  using Bimap = boost::bimap<AtomIndex, AtomIndex>;
+
+  DescendantSubgraph(
+    const AtomIndex source,
+    const std::vector<AtomIndex>& descendants,
+    const PrivateGraph& molGraph
+  ) {
+    // Add the source as anchor
+    const AtomIndex N = descendants.size();
+    for(AtomIndex i = 0; i < N; ++i) {
+      if(descendants.at(i) == source) {
+        const AtomIndex newVertex = subgraph.addVertex(molGraph.elementType(i));
+        indexMap.insert(Bimap::value_type(i, newVertex));
+      }
+    }
+
+    // Copy edges
+    for(const auto& vertexPair : indexMap.left) {
+      const AtomIndex molGraphI = vertexPair.first;
+      for(const AtomIndex molGraphJ : molGraph.adjacents(molGraphI)) {
+        const auto findIter = indexMap.left.find(molGraphJ);
+        if(findIter != indexMap.left.end()) {
+          if(!subgraph.edgeOption(vertexPair.second, findIter->second)) {
+            subgraph.addEdge(
+              vertexPair.second,
+              findIter->second,
+              molGraph.bondType(molGraph.edge(molGraphI, molGraphJ))
+            );
+          }
+        }
+      }
+    }
+
+    if(subgraph.connectedComponents() != 1) {
+      throw std::runtime_error("Subgraph construction of descendant did not yield a single connected component!");
+    }
+  }
+
+  PrivateGraph subgraph;
+  Bimap indexMap;
+};
+
+} // namespace
 
 unsigned numRotatableBonds(const Molecule& mol) {
   Cycles cycleData = mol.graph().cycles();
@@ -87,36 +135,16 @@ unsigned numRotatableBonds(const Molecule& mol) {
 }
 
 std::vector<AtomIndex> rankingDistinctAtoms(const Molecule& mol) {
-  std::unordered_set<AtomIndex> nonRankingEquivalents;
-  for(const AtomIndex i : mol.graph().atoms()) {
-    nonRankingEquivalents.insert(i);
-  }
+  PrivateGraph relationshipGraph(mol.graph().N());
 
-  /* Since atom stereopermutators are placed in an unordered_map, but the
-   * following algorithm is sequence-dependent on them (a different ordering
-   * yields equivalent sets of non-ranking-equivalent atoms, but different
-   * ones), we sequence the permutator ordering here.
-   */
-  std::vector<AtomIndex> permutatorPlacements;
-  permutatorPlacements.reserve(mol.stereopermutators().A());
   for(
     const AtomStereopermutator& permutator:
     mol.stereopermutators().atomStereopermutators()
   ) {
-    permutatorPlacements.push_back(permutator.placement());
-  }
-  std::sort(std::begin(permutatorPlacements), std::end(permutatorPlacements));
-
-  for(const AtomIndex placement : permutatorPlacements) {
-    const auto& permutator = mol.stereopermutators().at(placement);
-
-    // Do not try to get any information from vertices already marked duplicate
-    if(nonRankingEquivalents.count(placement) == 0) {
-      continue;
-    }
+    const AtomIndex placement = permutator.placement();
 
     // Skip equivalently ranked substituents of stereogenic permutators
-    if(permutator.numStereopermutations() > 1) {
+    if(permutator.numAssignments() > 1) {
       continue;
     }
 
@@ -124,44 +152,74 @@ std::vector<AtomIndex> rankingDistinctAtoms(const Molecule& mol) {
       const auto& equallyRankedSubstituentGroup:
       permutator.getRanking().substituentRanking
     ) {
-      // Skip single-vertex groups, those are uninteresting, really
+      // Skip single-vertex groups, no point to processing those
       if(equallyRankedSubstituentGroup.size() == 1) {
         continue;
       }
 
-      constexpr AtomIndex split = std::numeric_limits<AtomIndex>::max();
       const auto descendants = GraphAlgorithms::bfsUniqueDescendants(
         placement,
         equallyRankedSubstituentGroup,
         mol.graph().inner()
       );
 
-      const auto groupBegin = std::begin(equallyRankedSubstituentGroup);
-      const auto groupEnd = std::end(equallyRankedSubstituentGroup);
-
-      for(const AtomIndex i : mol.graph().atoms()) {
-        const AtomIndex descendant = descendants.at(i);
-        // The split group of vertices is set as equivalent
-        if(descendant == split) {
-          nonRankingEquivalents.erase(i);
-          continue;
+      const auto subgraphs = Temple::map(
+        equallyRankedSubstituentGroup,
+        [&](const AtomIndex i) -> DescendantSubgraph {
+          return DescendantSubgraph(i, descendants, mol.graph().inner());
         }
+      );
 
-        /* If the vertex is a descendant of the equally ranked vertices
-         * with the exception of the first equally ranked vertex (so as to keep
-         * one of X equivalent branches), mark the vertex ranking equivalent
-         */
-        const auto findIter = std::find(groupBegin, groupEnd, descendant);
-        if(findIter != groupBegin && findIter != groupEnd) {
-          nonRankingEquivalents.erase(i);
+      // Sequential pairs is enough, no need for all pairs
+      Temple::forEach(
+        Temple::Adaptors::sequentialPairs(subgraphs),
+        [&](const DescendantSubgraph& lhs, const DescendantSubgraph& rhs) {
+          /* Avoid an isomorphism if the subgraph is a single vertex, not least
+           * because boost::isomorphism yields out of range values in the index
+           * map.
+           */
+          if(lhs.subgraph.N() == 1) {
+            const AtomIndex source = lhs.indexMap.left.begin()->first;
+            const AtomIndex target = rhs.indexMap.left.begin()->first;
+            if(!relationshipGraph.edgeOption(source, target)) {
+              relationshipGraph.addEdge(source, target, BondType::Single);
+            }
+            return;
+          }
+
+          const auto isomorphismOption = lhs.subgraph.modularIsomorphism(rhs.subgraph);
+          if(!isomorphismOption) {
+            throw std::runtime_error("Found no isomorphism for ranking-identical branch subgraphs!");
+          }
+          const auto isomorphism = isomorphismOption.value();
+          const AtomIndex subgraphN = lhs.subgraph.N();
+          for(AtomIndex lhsSubgraphV = 0; lhsSubgraphV < subgraphN; ++lhsSubgraphV) {
+            const AtomIndex rhsSubgraphV = isomorphism.at(lhsSubgraphV);
+            const AtomIndex source = lhs.indexMap.right.at(lhsSubgraphV);
+            const AtomIndex target = rhs.indexMap.right.at(rhsSubgraphV);
+            if(!relationshipGraph.edgeOption(source, target)) {
+              relationshipGraph.addEdge(source, target, BondType::Single);
+            }
+          }
         }
-      }
+      );
     }
   }
 
-  return std::vector<AtomIndex>(
-    std::begin(nonRankingEquivalents),
-    std::end(nonRankingEquivalents)
+  /* Transform the relationship graph into connected components and select the
+   * first vertex from each component
+   */
+  std::vector<unsigned> components;
+  const unsigned C = relationshipGraph.connectedComponents(components);
+
+  // Find the smallest AtomIndex belonging to each of the connected components
+  return Temple::map(
+    Temple::iota<unsigned>(C),
+    [&](const unsigned i) -> AtomIndex {
+      const auto findIter = Temple::find(components, i);
+      assert(findIter != std::end(components));
+      return findIter - std::begin(components);
+    }
   );
 }
 

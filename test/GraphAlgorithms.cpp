@@ -52,7 +52,7 @@ BOOST_AUTO_TEST_CASE(UniqueDescendants, *boost::unit_test::label("Molassembler")
   const auto cyclopentane = parse("C1CCCC1");
   const auto cyclohexane = parse("C1CCCCC1");
 
-  auto getCarbonNeighbors = [](const AtomIndex i, const Molecule& m) {
+  const auto getCarbonNeighbors = [](const AtomIndex i, const Molecule& m) {
     std::vector<AtomIndex> vs;
     for(AtomIndex adjacent : m.graph().adjacents(i)) {
       if(m.graph().elementType(adjacent) == Utils::ElementType::C) {
@@ -84,7 +84,9 @@ BOOST_AUTO_TEST_CASE(UniqueDescendants, *boost::unit_test::label("Molassembler")
     cyclohexane.graph().inner()
   );
 
-  BOOST_CHECK_EQUAL(count(0, hexaneDescendants), 6);
+  constexpr auto split = std::numeric_limits<AtomIndex>::max();
+  BOOST_CHECK_EQUAL(count(0, hexaneDescendants), 3);
+  BOOST_CHECK_EQUAL(count(split, hexaneDescendants), 3);
   BOOST_CHECK_EQUAL(count(cyclohexaneNeighbors.front(), hexaneDescendants), 6);
   BOOST_CHECK_EQUAL(count(cyclohexaneNeighbors.back(), hexaneDescendants), 6);
 }
