@@ -135,6 +135,26 @@ std::vector<unsigned> distance(AtomIndex a, const PrivateGraph& graph);
  */
 std::vector<AtomIndex> shortestPaths(AtomIndex a, const PrivateGraph& graph);
 
+/**
+ * @brief Marks each vertex in the graph a unique descendant of a set of
+ *   vertices adjacent to a starting vertex
+ *
+ * @param source BFS source
+ * @param descendants Vertices to classify each vertex a descendant of
+ * @param graph Graph to visit
+ *
+ * @return For each vertex in the graph, either:
+ *   - the index of a descendant to signify unique descendance
+ *   - the source vertex to signify belonging to none of the descendants
+ *   - std::numeric_limits<AtomIndex>::max() to signify split ownership between
+ *     descendants
+ */
+std::vector<AtomIndex> bfsUniqueDescendants(
+  AtomIndex source,
+  const std::vector<AtomIndex>& descendants,
+  const PrivateGraph& graph
+);
+
 } // namespace GraphAlgorithms
 } // namespace Molassembler
 } // namespace Scine

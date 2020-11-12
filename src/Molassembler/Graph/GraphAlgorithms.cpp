@@ -265,7 +265,7 @@ bool isHapticSite(
     siteAtoms.size() > 1
     && Temple::accumulate(
       siteAtoms,
-      0u,
+      0U,
       [&](const unsigned carry, const AtomIndex adjacent) -> unsigned {
         if(!AtomInfo::isMainGroupElement(graph.elementType(adjacent))) {
           return carry + 1;
@@ -506,6 +506,78 @@ std::vector<AtomIndex> shortestPaths(AtomIndex a, const PrivateGraph& graph) {
   );
 
   return predecessors;
+}
+
+std::vector<AtomIndex> bfsUniqueDescendants(
+  const AtomIndex source,
+  const std::vector<AtomIndex>& descendants,
+  const PrivateGraph& graph
+) {
+  assert(source < graph.N());
+  constexpr AtomIndex unmarked = std::numeric_limits<AtomIndex>::max() - 1;
+  constexpr AtomIndex split = std::numeric_limits<AtomIndex>::max();
+
+  struct Visitor {
+    using Graph = PrivateGraph::BglType;
+    using Vertex = Graph::vertex_descriptor;
+    using Edge = Graph::edge_descriptor;
+
+    explicit Visitor(const AtomIndex a, std::vector<AtomIndex>& components, const Graph& g)
+      : componentMembership(components)
+    {
+      depths.resize(boost::num_vertices(g), 0);
+      depths.at(a) = 0;
+    }
+
+    void initialize_vertex(const Vertex /* v */, const Graph& /* g */) {}
+    void discover_vertex(const Vertex /* v */, const Graph& /* g */) {}
+    void examine_vertex(const Vertex /* v */, const Graph& /* g */) {}
+    void examine_edge(const Edge /* e */, const Graph& /* g */) {}
+    void tree_edge(const Edge e, const Graph& g) {
+      const Vertex source = boost::source(e, g);
+      const Vertex target = boost::target(e, g);
+      auto& components = componentMembership.get();
+      if(components.at(target) == unmarked) {
+        components.at(target) = components.at(source);
+      }
+      depths.at(target) = depths.at(source) + 1;
+    }
+    void non_tree_edge(const PrivateGraph::Edge /* e */, const Graph& /* g */) {}
+    void gray_target(const PrivateGraph::Edge e, const Graph& g) {
+      auto& components = componentMembership.get();
+      const Vertex source = boost::source(e, g);
+      const Vertex target = boost::target(e, g);
+      if(
+        depths.at(target) > depths.at(source)
+        && components.at(target) != components.at(source)
+      ) {
+        components.at(target) = split;
+      }
+    }
+    void black_target(const PrivateGraph::Edge /* e */, const Graph& /* g */) {}
+    void finish_vertex(const PrivateGraph::Vertex /* v */, const Graph& /* g */) {}
+
+    std::vector<unsigned> depths;
+    std::reference_wrapper<std::vector<AtomIndex>> componentMembership;
+  };
+
+  std::vector<AtomIndex> components(graph.N(), unmarked);
+  components.at(source) = source;
+  for(const AtomIndex descendant : descendants) {
+    components.at(descendant) = descendant;
+  }
+
+  boost::breadth_first_search(
+    graph.bgl(),
+    source,
+    boost::visitor(
+      Visitor(source, components, graph.bgl())
+    )
+  );
+
+  assert(Temple::all_of(components, [&](const AtomIndex grp) { return grp != unmarked; }));
+
+  return components;
 }
 
 } // namespace GraphAlgorithms

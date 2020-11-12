@@ -11,6 +11,9 @@
 #include "Molassembler/Molecule.h"
 #include "Molassembler/StereopermutatorList.h"
 #include "Molassembler/BondStereopermutator.h"
+#include "Molassembler/Graph/GraphAlgorithms.h"
+
+#include "boost/dynamic_bitset.hpp"
 
 namespace Scine {
 namespace Molassembler {
@@ -83,5 +86,84 @@ unsigned numRotatableBonds(const Molecule& mol) {
   );
 }
 
-} // namespace molassmembler
+std::vector<AtomIndex> nonRankingEquivalentAtoms(const Molecule& mol) {
+  std::unordered_set<AtomIndex> nonRankingEquivalents;
+  for(const AtomIndex i : mol.graph().atoms()) {
+    nonRankingEquivalents.insert(i);
+  }
+
+  /* Since atom stereopermutators are placed in an unordered_map, but the
+   * following algorithm is sequence-dependent on them (a different ordering
+   * yields equivalent sets of non-ranking-equivalent atoms, but different
+   * ones), we sequence the permutator ordering here.
+   */
+  std::vector<AtomIndex> permutatorPlacements;
+  permutatorPlacements.reserve(mol.stereopermutators().A());
+  for(
+    const AtomStereopermutator& permutator:
+    mol.stereopermutators().atomStereopermutators()
+  ) {
+    permutatorPlacements.push_back(permutator.placement());
+  }
+  std::sort(std::begin(permutatorPlacements), std::end(permutatorPlacements));
+
+  for(const AtomIndex placement : permutatorPlacements) {
+    const auto& permutator = mol.stereopermutators().at(placement);
+
+    // Do not try to get any information from vertices already marked duplicate
+    if(nonRankingEquivalents.count(placement) == 0) {
+      continue;
+    }
+
+    // Skip equivalently ranked substituents of stereogenic permutators
+    if(permutator.numStereopermutations() > 1) {
+      continue;
+    }
+
+    for(
+      const auto& equallyRankedSubstituentGroup:
+      permutator.getRanking().substituentRanking
+    ) {
+      // Skip single-vertex groups, those are uninteresting, really
+      if(equallyRankedSubstituentGroup.size() == 1) {
+        continue;
+      }
+
+      constexpr AtomIndex split = std::numeric_limits<AtomIndex>::max();
+      const auto descendants = GraphAlgorithms::bfsUniqueDescendants(
+        placement,
+        equallyRankedSubstituentGroup,
+        mol.graph().inner()
+      );
+
+      const auto groupBegin = std::begin(equallyRankedSubstituentGroup);
+      const auto groupEnd = std::end(equallyRankedSubstituentGroup);
+
+      for(const AtomIndex i : mol.graph().atoms()) {
+        const AtomIndex descendant = descendants.at(i);
+        // The split group of vertices is set as equivalent
+        if(descendant == split) {
+          nonRankingEquivalents.erase(i);
+          continue;
+        }
+
+        /* If the vertex is a descendant of the equally ranked vertices
+         * with the exception of the first equally ranked vertex (so as to keep
+         * one of X equivalent branches), mark the vertex ranking equivalent
+         */
+        const auto findIter = std::find(groupBegin, groupEnd, descendant);
+        if(findIter != groupBegin && findIter != groupEnd) {
+          nonRankingEquivalents.erase(i);
+        }
+      }
+    }
+  }
+
+  return std::vector<AtomIndex>(
+    std::begin(nonRankingEquivalents),
+    std::end(nonRankingEquivalents)
+  );
+}
+
+} // namespace Molassembler
 } // namespace Scine

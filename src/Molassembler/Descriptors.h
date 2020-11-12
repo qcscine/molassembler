@@ -8,7 +8,8 @@
 #ifndef INCLUDE_MOLASSEMBLER_DESCRIPTORS_H
 #define INCLUDE_MOLASSEMBLER_DESCRIPTORS_H
 
-#include "Molassembler/Export.h"
+#include "Molassembler/Types.h"
+#include <vector>
 
 namespace Scine {
 namespace Molassembler {
@@ -40,6 +41,18 @@ class Molecule;
  *   interface, and a custom algorithm can be implemented.
  */
 MASM_EXPORT unsigned numRotatableBonds(const Molecule& mol);
+
+/**
+ * @brief Determines non-ranking equivalent atoms in a molecule
+ *
+ * Uses atom-stereopermutator ranking information to determine which parts of
+ * molecules are completely ranking-equivalent. Note that ranking symmetry at
+ * bonds is not found by this method, yielding more ranking equivalent atoms
+ * than there truly are in many cases, such as in ethane.
+ *
+ * @return Unordered list of non-ranking equivalent atoms
+ */
+MASM_EXPORT std::vector<AtomIndex> nonRankingEquivalentAtoms(const Molecule& mol);
 
 } // namespace Molassembler
 } // namespace Scine
