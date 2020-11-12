@@ -10,6 +10,7 @@ void init_bond_stereopermutator(pybind11::module& m);
 void init_composite(pybind11::module& m);
 void init_conformers(pybind11::module& m);
 void init_cycles(pybind11::module& m);
+void init_descriptors(pybind11::module& m);
 void init_directed_conformer_generator(pybind11::module& m);
 void init_editing(pybind11::module& m);
 void init_interpret(pybind11::module& m);
@@ -54,6 +55,7 @@ PYBIND11_MODULE(scine_molassembler, m) {
   init_bond_stereopermutator(m);
   init_stereopermutator_list(m);
   init_molecule(m);
+  init_descriptors(m);
   init_subgraphs(m);
   init_editing(m);
   init_interpret(m);

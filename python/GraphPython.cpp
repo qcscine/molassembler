@@ -420,7 +420,7 @@ void init_graph(pybind11::module& m) {
 
   pybind11::class_<PredecessorMap> predecessor_map(m, "PredecessorMap");
 
-  predecessor_map.def_property_readonly("predecessors", &PredecessorMap::predecessors);
+  predecessor_map.def_readonly("predecessors", &PredecessorMap::predecessors);
   predecessor_map.def(
     "path",
     &PredecessorMap::path,

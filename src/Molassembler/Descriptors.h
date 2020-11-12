@@ -52,7 +52,7 @@ MASM_EXPORT unsigned numRotatableBonds(const Molecule& mol);
  *
  * @return Unordered list of non-ranking equivalent atoms
  */
-MASM_EXPORT std::vector<AtomIndex> nonRankingEquivalentAtoms(const Molecule& mol);
+MASM_EXPORT std::vector<AtomIndex> rankingDistinctAtoms(const Molecule& mol);
 
 } // namespace Molassembler
 } // namespace Scine

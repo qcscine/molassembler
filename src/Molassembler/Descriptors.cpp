@@ -86,7 +86,7 @@ unsigned numRotatableBonds(const Molecule& mol) {
   );
 }
 
-std::vector<AtomIndex> nonRankingEquivalentAtoms(const Molecule& mol) {
+std::vector<AtomIndex> rankingDistinctAtoms(const Molecule& mol) {
   std::unordered_set<AtomIndex> nonRankingEquivalents;
   for(const AtomIndex i : mol.graph().atoms()) {
     nonRankingEquivalents.insert(i);

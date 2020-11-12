@@ -30,7 +30,7 @@ BOOST_AUTO_TEST_CASE(RankingEquivalenceTests, *boost::unit_test::label("Molassem
 
   for(const auto& iterPair : expectations) {
     const auto molecule = IO::Experimental::parseSmilesSingleMolecule(iterPair.first);
-    const auto nonEquivalent = nonRankingEquivalentAtoms(molecule);
+    const auto nonEquivalent = rankingDistinctAtoms(molecule);
     BOOST_CHECK_EQUAL(nonEquivalent.size(), iterPair.second);
   }
 }
