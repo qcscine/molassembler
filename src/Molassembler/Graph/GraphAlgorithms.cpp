@@ -490,6 +490,24 @@ std::vector<unsigned> distance(AtomIndex a, const PrivateGraph& graph) {
   return distances;
 }
 
+std::vector<AtomIndex> shortestPaths(AtomIndex a, const PrivateGraph& graph) {
+  assert(a < graph.N());
+
+  std::vector<AtomIndex> predecessors(graph.N(), 0);
+
+  boost::breadth_first_search(
+    graph.bgl(),
+    a,
+    boost::visitor(
+      boost::make_bfs_visitor(
+        boost::record_predecessors(&predecessors[0], boost::on_tree_edge())
+      )
+    )
+  );
+
+  return predecessors;
+}
+
 } // namespace GraphAlgorithms
 } // namespace Molassembler
 } // namespace Scine

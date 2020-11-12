@@ -417,4 +417,40 @@ void init_graph(pybind11::module& m) {
       Sites consisting of multiple atoms are haptic.
     )delim"
   );
+
+  pybind11::class_<PredecessorMap> predecessor_map(m, "PredecessorMap");
+
+  predecessor_map.def_property_readonly("predecessors", &PredecessorMap::predecessors);
+  predecessor_map.def(
+    "path",
+    &PredecessorMap::path,
+    pybind11::arg("target"),
+    R"delim(
+      Generate path vertices to target vertex
+
+      :param target: Target vertex to generate path to
+      :returns: Vertex path starting at source and including target
+
+    )delim"
+  );
+
+  m.def(
+    "shortest_paths",
+    &shortestPaths,
+    pybind11::arg("source"),
+    pybind11::arg("graph"),
+    R"delim(
+      Generate predecessor map containing shortest paths to each vertex in a graph
+
+      :param source: Source vertex to generate shortest paths from
+      :param graph: Graph in which to generate shortest paths
+
+      >>> m = io.experimental.from_smiles("CC(CC)C")
+      >>> predecessors = shortest_paths(1, m.graph)
+      >>> predecessors.path(0)
+      [1, 0]
+      >>> predecessors.path(3)
+      [1, 2, 3]
+    )delim"
+  );
 }

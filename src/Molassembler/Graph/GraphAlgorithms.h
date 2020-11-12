@@ -123,6 +123,18 @@ void updateEtaBonds(PrivateGraph& graph);
  */
 std::vector<unsigned> distance(AtomIndex a, const PrivateGraph& graph);
 
+/**
+ * @brief Generates the shortest paths to each vertex in theg raph
+ *
+ * @complexity{@math{\Theta(N)}}
+ *
+ * @param a Source vertex
+ * @param graph The graph
+ *
+ * @return A flat predecessor map
+ */
+std::vector<AtomIndex> shortestPaths(AtomIndex a, const PrivateGraph& graph);
+
 } // namespace GraphAlgorithms
 } // namespace Molassembler
 } // namespace Scine

@@ -15,17 +15,41 @@
  */
 
 namespace Scine {
-
 namespace Molassembler {
 
-std::vector<unsigned> distance(AtomIndex i, const Graph& graph) {
-  if(i > graph.N()) {
+std::vector<unsigned> distance(AtomIndex source, const Graph& graph) {
+  if(source > graph.N()) {
     throw std::out_of_range("Supplied atom index is invalid!");
   }
 
-  return GraphAlgorithms::distance(i, graph.inner());
+  return GraphAlgorithms::distance(source, graph.inner());
+}
+
+PredecessorMap shortestPaths(AtomIndex source, const Graph& graph) {
+  if(source > graph.N()) {
+    throw std::out_of_range("Supplied atom index is invalid!");
+  }
+
+  return PredecessorMap {
+    GraphAlgorithms::shortestPaths(source, graph.inner())
+  };
+}
+
+std::vector<AtomIndex> PredecessorMap::path(const AtomIndex target) const {
+  std::vector<AtomIndex> pathVertices;
+  AtomIndex position = target;
+  while(predecessors.at(position) != position) {
+    pathVertices.push_back(position);
+    position = predecessors.at(position);
+  }
+
+  std::reverse(
+    std::begin(pathVertices),
+    std::end(pathVertices)
+  );
+
+  return pathVertices;
 }
 
 } // namespace Molassembler
-
 } // namespace Scine

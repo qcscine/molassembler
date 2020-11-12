@@ -24,12 +24,38 @@ class Graph;
  *
  * @complexity{@math{O(N)}}
  *
- * @throws std::out_of_range If i >= N()
+ * @throws std::out_of_range If source >= N()
  *
  * @returns A vector containing the distances of all vertices to the supplied
  *   index
  */
-MASM_EXPORT std::vector<unsigned> distance(AtomIndex i, const Graph& graph);
+MASM_EXPORT std::vector<unsigned> distance(AtomIndex source, const Graph& graph);
+
+struct PredecessorMap {
+  std::vector<AtomIndex> predecessors;
+
+  /**
+   * @brief Generate path from source to target vertex
+   *
+   * @param target Target vertex of shortest path
+   *
+   * @return Path starting at source and ending at target, including both
+   *   source and target vertices
+   */
+  std::vector<AtomIndex> path(AtomIndex target) const;
+};
+
+/**
+ * @brief Generates shortest paths to each vertex in a graph
+ *
+ * @param source Vertex to start at
+ * @param graph Graph containing the vertex
+ *
+ * @throws std::out_of_range If source >= N()
+ *
+ * @return A flat predecessor map
+ */
+MASM_EXPORT PredecessorMap shortestPaths(AtomIndex source, const Graph& graph);
 
 } // namespace Molassembler
 } // namespace Scine
