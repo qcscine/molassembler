@@ -505,6 +505,8 @@ std::vector<AtomIndex> shortestPaths(AtomIndex a, const PrivateGraph& graph) {
     )
   );
 
+  // Link the source vertex to itself
+  predecessors.at(a) = a;
   return predecessors;
 }
 
