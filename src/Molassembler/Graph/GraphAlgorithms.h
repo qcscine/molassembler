@@ -124,7 +124,7 @@ void updateEtaBonds(PrivateGraph& graph);
 std::vector<unsigned> distance(AtomIndex a, const PrivateGraph& graph);
 
 /**
- * @brief Generates the shortest paths to each vertex in theg raph
+ * @brief Generates the shortest paths to each vertex in the graph
  *
  * @complexity{@math{\Theta(N)}}
  *
