@@ -130,6 +130,11 @@ void init_types(pybind11::module& m) {
   bondIndex.def(pybind11::self == pybind11::self);
   bondIndex.def(pybind11::self < pybind11::self);
 
+  bondIndex.def(
+    "__hash__",
+    pybind11::overload_cast<const BondIndex&>(hash_value)
+  );
+
   /* AtomEnvironmentComponents binding
    * Cannot use None as an enum value since None is a reserved keyword in Python
    */
