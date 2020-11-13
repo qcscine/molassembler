@@ -1,14 +1,13 @@
-=======================
 Contribution guidelines
 =======================
 
 Code style
-==========
+-----------
 
 Molassembler follows SCINE code style conventions.
 
 signed vs unsigned
-------------------
+..................
 
 Molassembler prefers unsigned integers for container element indices (follow
 STL style).
@@ -24,12 +23,12 @@ Any integers where subtracting is expected should be signed. If unsigned values
 are used in subtractions, ``static_cast`` them beforehand!
 
 C++ style
----------
+.........
 
 Try to follow the C++ Core Guidelines.
 
 Formatting
-----------
+..........
 
 Unenforced, follows my own idiosyncratic formatting style that I think
 clang-format doesn't support. I try to keep the code 80-char wide.

@@ -1,9 +1,8 @@
-====================
 SCINE - Molassembler
 ====================
 
 Overview
-========
+--------
 
 Molassembler is a C++ library that aims to facilitate conversions between
 Cartesian and graph representations of molecules. It provides the necessary
@@ -15,7 +14,7 @@ atoms and non-isotropic bonds at arbitrary local shapes ranging up to the
 icosahedron and cuboctahedron.
 
 Features
-========
+--------
 
 - Molecules can be constructed from many types of information.
 - Stereocenters are treated in shapes ranging from monovacant tetrahedron all
@@ -39,13 +38,13 @@ Features
 - Directed conformer generation through enumeration of rotamers
 
 License
-=======
+-------
 
 Molassembler is licensed under the BSD 3-clause "New" or "Revised" license. See
 also the ``LICENSE.txt`` file.
 
 Integrating
-===========
+-----------
 
 This library requires the C++14 standard.
 
@@ -70,7 +69,7 @@ MSVC is currently untested. Last attempts failed because of compiler standard
 compliance issues with ``constexpr`` code.
 
 How to Cite
-===========
+-----------
 
 When publishing results obtained with Molassembler, please cite the
 corresponding release as archived on Zenodo.
@@ -83,10 +82,10 @@ Modification, and Conformer Generation for Inorganic and Organic
 Molecules", *J. Chem. Inf. Model*, **2020**, *60*, 3884.
 
 Installation
-============
+------------
 
 CMake
------
+.....
 
 When building with CMake, Boost and Eigen must be installed and available via
 CMake's ``find_package`` (e.g. via ``CMAKE_PREFIX_PATH``). Any of the other
@@ -104,7 +103,7 @@ activating the python binding builds. Run ``cmake -L ..`` to list options
 affecting the build. Look for options with the ``SCINE_`` prefix.
 
 Conan
------
+.....
 
 No dependencies must be preinstalled, and you do not need to download the
 sources. To install/build with Conan::
@@ -116,7 +115,7 @@ Should you want python bindings, add ``-o scine_molassembler:python=True`` befor
 the last argument.
 
 PyPI
-----
+....
 
 ``manylinux`` packages of the python bindings are available from PyPI and can be
 installed with::
@@ -124,7 +123,7 @@ installed with::
     python3 -m pip install scine_molassembler
 
 Documentation
-=============
+-------------
 
 Built documentation for releases is available for the `C++ library`_ and `Python bindings`_.
 
@@ -136,9 +135,8 @@ binding documentation is generated too.
 
 .. _Python bindings: https://scine.ethz.ch/static/download/documentation/molassembler/v1.0.0/py/index.html
 
-
 References
-==========
+----------
 
 .. [1] Flachsenberg, F.; Andresen, N.; Rarey, M. RingDecomposerLib: An
        Open-Source implementation of Unique Ring Families and Other Cycle Bases. J.

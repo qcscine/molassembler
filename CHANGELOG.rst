@@ -1,4 +1,3 @@
-=========
 Changelog
 =========
 
@@ -8,10 +7,10 @@ The format is based on `Keep a Changelog <http://keepachangelog.com/en/1.0.0/>`_
 and this project adheres to `Semantic Versioning <http://semver.org/spec/v2.0.0.html>`_.
 
 1.0.0
-=====
+-----
 
 Added
------
+.....
 
 - Add Conan support
 - Explicit definition of which headers make up the public API in the
@@ -35,7 +34,7 @@ Added
   - Doctested examples
 
 Changed
--------
+.......
 - The PRNG Engine is seeded directly instead of a wrapper object that helps
   with generating random numbers. The PRNG engine is part of molassembler's
   public interface instead of the sublibrary temple. The engine is constructed
@@ -48,20 +47,20 @@ Changed
   namespace
 
 [Unreleased]
-============
+------------
 
 Added
------
+.....
 
 Changed
--------
+.......
 
 Deprecated
-----------
+..........
 
 Removed
--------
+.......
 
 Fixed
------
+.....
 
