@@ -67,7 +67,9 @@ std::string pipeSVG(const Scine::Molassembler::Graph& graph) {
 } // namespace
 
 void init_graph(pybind11::module& m) {
-  using namespace Scine::Molassembler;
+  using namespace Scine;
+  using namespace Molassembler;
+
   pybind11::class_<Graph> graphClass(
     m,
     "Graph",
@@ -351,6 +353,151 @@ void init_graph(pybind11::module& m) {
       >>> [b for b in m.graph.bonds(0)]
       [(0, 1), (0, 2), (0, 3)]
     )delim"
+  );
+
+  graphClass.def(
+    "add_atom",
+    [](Graph& graph, const AtomIndex i, const Utils::ElementType element, const BondType type) -> AtomIndex {
+      if(i >= graph.N()) {
+        throw std::out_of_range("Invalid atom index");
+      }
+
+      if(type == BondType::Eta) {
+        throw std::logic_error("Eta bond types may not be inserted into the graph");
+      }
+
+      AtomIndex newVertex = graph.inner().addVertex(element);
+      graph.inner().addEdge(i, newVertex, type);
+      return newVertex;
+    },
+    pybind11::arg("bonded_to"),
+    pybind11::arg("element"),
+    pybind11::arg("bond_type"),
+    R"delim(
+      Adds a bonded vertex to the graph
+
+      :warning: Do not edit `Graph` instances that are components of `Molecule`
+        instances. `Molecule` must update its stereopermutators when
+        a vertex in the graph is added. Use `Molecule.add_atom` instead.
+        Modifying a component graph and then using the Molecule containing it
+        can yield UB.
+
+      :param bonded_to: The atom the new atom is bonded to
+      :param element: The element type of the new atom
+      :param bond_type: The bond type between `bonded_to` and `element`.
+
+      :returns: The atom index of the new vertex
+    )delim"
+  );
+
+  graphClass.def(
+    "add_bond",
+    [](Graph& graph, const AtomIndex i, const AtomIndex j, const BondType type) -> BondIndex {
+      if(type == BondType::Eta) {
+        throw std::logic_error("Eta bond types may not be inserted into the graph");
+      }
+
+      PrivateGraph& inner = graph.inner();
+      inner.addEdge(i, j, type);
+      return BondIndex {i, j};
+    },
+    pybind11::arg("i"),
+    pybind11::arg("j"),
+    pybind11::arg("bond_type"),
+    R"delim(
+      :warning: Do not edit `Graph` instances that are components of `Molecule`
+        instances. `Molecule` must update its stereopermutators when
+        a bond in the graph is added. Use `Molecule.add_bond` instead.
+        Modifying a component graph and then using the Molecule containing it
+        can yield UB.
+
+      :raises RuntimeError: If either vertex is out of range or the bond
+        already exists.
+    )delim"
+  );
+
+  graphClass.def(
+    "remove_atom",
+    [](Graph& graph, const AtomIndex i) -> void {
+      if(i >= graph.N()) {
+        throw std::out_of_range("Invalid atom index");
+      }
+
+      PrivateGraph& inner = graph.inner();
+      if(!graph.canRemove(i)) {
+        throw std::logic_error("Bond removal would disconnect the graph");
+      }
+      inner.removeVertex(i);
+    },
+    pybind11::arg("atom_index"),
+    R"delim(
+      Removes a vertex from the graph.
+
+      :warning: Do not edit `Graph` instances that are components of `Molecule`
+        instances. `Molecule` must update its stereopermutators when
+        a vertex in the graph is removed. Use `Molecule.remove_atom` instead.
+        Modifying a component graph and then using the Molecule containing it
+        can yield UB.
+
+      :raises RuntimeError: If the bond does not exist in the graph or if
+        removing it would disconnect the graph (see Graph.can_remove).
+    )delim"
+  );
+
+  graphClass.def(
+    "remove_bond",
+    [](Graph& graph, const BondIndex& bond) -> void {
+      PrivateGraph& inner = graph.inner();
+      const auto edgeOption = inner.edgeOption(bond.first, bond.second);
+      if(!edgeOption) {
+        throw std::out_of_range("That bond does not exist!");
+      }
+
+      if(!graph.canRemove(bond)) {
+        throw std::logic_error("Bond removal would disconnect the graph");
+      }
+
+      inner.removeEdge(edgeOption.value());
+    },
+    pybind11::arg("bond"),
+    R"delim(
+      Removes a bond from the graph.
+
+      :warning: Do not edit `Graph` instances that are components of `Molecule`
+        instances. `Molecule` must update its stereopermutators when
+        an edge in the graph is removed. Use `Molecule.remove_bond` instead.
+        Modifying a component graph and then using the Molecule containing it
+        can yield UB.
+
+      :raises RuntimeError: If the bond does not exist in the graph or if
+        removing it would disconnect the graph (see Graph.can_remove).
+
+      >>> # Let's linearize acenaphythlene, a tricyclic aromatic molecule
+      >>> acenaphtyhlene_smiles = "C1=CC2=C3C(=C1)C=CC3=CC=C2"
+      >>> acenaphthylene = io.experimental.from_smiles(acenaphtyhlene_smiles)
+      >>> from copy import deepcopy
+      >>> graph = deepcopy(acenaphthylene.graph)  # Never modify a molecule's graph in-place
+      >>> graph.B
+      22
+      >>> can_remove = [b for b in graph.bonds() if graph.can_remove(b)]
+      >>> while len(can_remove) != 0:
+      ...     graph.remove_bond(can_remove[0])
+      ...     # Have to re-evaluate this!
+      ...     can_remove = [b for b in graph.bonds() if graph.can_remove(b)]
+      ...
+      >>> graph.B
+      19
+    )delim"
+  );
+
+  graphClass.def("__copy__", [](const Graph& self) { return Graph(self); });
+
+  graphClass.def(
+    "__deepcopy__",
+    [](const Graph& self, pybind11::dict /* memo */) {
+      return Graph(self);
+    },
+    pybind11::arg("memo")
   );
 
   graphClass.def(
