@@ -43,6 +43,19 @@ class Molecule;
 MASM_EXPORT unsigned numRotatableBonds(const Molecule& mol);
 
 /**
+ * @brief Yields group memberships for ranking equivalent atoms
+ *
+ * Uses atom-stereopermutator ranking information to determine which parts of
+ * molecules are completely ranking-equivalent. Note that ranking symmetry at
+ * bonds is not found by this method, yielding more distinct atoms than there
+ * truly are in many cases, such as in ethane, cyclobutane or benzene.
+ *
+ * @return A list of length equal to the number of atoms in @p mol of group
+ * indices. Atoms with the same group index are ranking equivalent.
+ */
+MASM_EXPORT std::vector<unsigned> rankingEquivalentGroups(const Molecule& mol);
+
+/**
  * @brief Determines non-ranking equivalent atoms in a molecule
  *
  * Uses atom-stereopermutator ranking information to determine which parts of

@@ -430,7 +430,6 @@ void init_graph(pybind11::module& m) {
 
       :param target: Target vertex to generate path to
       :returns: Vertex path starting at source and including target
-
     )delim"
   );
 

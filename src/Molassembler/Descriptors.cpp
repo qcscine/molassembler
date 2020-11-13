@@ -134,7 +134,7 @@ unsigned numRotatableBonds(const Molecule& mol) {
   );
 }
 
-std::vector<AtomIndex> rankingDistinctAtoms(const Molecule& mol) {
+std::vector<unsigned> rankingEquivalentGroups(const Molecule& mol) {
   PrivateGraph relationshipGraph(mol.graph().N());
 
   for(
@@ -210,17 +210,27 @@ std::vector<AtomIndex> rankingDistinctAtoms(const Molecule& mol) {
    * first vertex from each component
    */
   std::vector<unsigned> components;
-  const unsigned C = relationshipGraph.connectedComponents(components);
+  relationshipGraph.connectedComponents(components);
+  return components;
+}
+
+std::vector<AtomIndex> rankingDistinctAtoms(const Molecule& mol) {
+  const auto components = rankingEquivalentGroups(mol);
+  assert(!components.empty());
 
   // Find the smallest AtomIndex belonging to each of the connected components
-  return Temple::map(
-    Temple::iota<unsigned>(C),
-    [&](const unsigned i) -> AtomIndex {
-      const auto findIter = Temple::find(components, i);
-      assert(findIter != std::end(components));
-      return findIter - std::begin(components);
+  std::unordered_set<unsigned> componentsFound;
+  std::vector<AtomIndex> distinct;
+  const auto begin = std::begin(components);
+  const auto end = std::end(components);
+  for(auto iter = begin; iter != end; ++iter) {
+    if(componentsFound.count(*iter) == 0) {
+      componentsFound.insert(*iter);
+      distinct.push_back(iter - begin);
     }
-  );
+  }
+
+  return distinct;
 }
 
 } // namespace Molassembler
