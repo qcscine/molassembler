@@ -25,7 +25,7 @@ class EmptyListWithLength(list):
 # Define the setup
 setuptools.setup(
     name="scine_molassembler",
-    version="@molassembler_VERSION@",
+    version="@Molassembler_VERSION@",
     author="Jan-Grimo Sobez",
     author_email="jan-grimo.sobez@phys.chem.ethz.ch",
     description="Inorganic molecular graph interpretation, modification and conformer generation",
