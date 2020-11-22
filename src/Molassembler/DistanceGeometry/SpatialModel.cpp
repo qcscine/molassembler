@@ -142,16 +142,6 @@ SpatialModel::SpatialModel(
     throw std::logic_error("Failed precondition: molecule has zero-assignment or unassigned stereopermutators");
   }
 
-  for(AtomIndex i : molecule_.graph().atoms()) {
-    if(molecule_.graph().degree(i) == 1) {
-      continue;
-    }
-
-    if(!molecule_.stereopermutators().option(i)) {
-      throw std::logic_error("Non-terminal atom is missing an atom stereopermutator");
-    }
-  }
-
   // Helper variables
   const Cycles& cycleData = molecule.graph().cycles();
   auto smallestCycleMap = makeSmallestCycleMap(cycleData);

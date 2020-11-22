@@ -57,7 +57,7 @@ void init_interpret(pybind11::module& m) {
   pybind11::class_<Interpret::MoleculesResult> interpretResult(
     interpretSubmodule,
     "MoleculesResult",
-    "Result type of a molceule interpret call."
+    "Result type of a molecule interpret call."
   );
 
   interpretResult.def_readwrite(
