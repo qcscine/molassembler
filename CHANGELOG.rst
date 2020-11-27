@@ -12,25 +12,26 @@ and this project adheres to `Semantic Versioning <http://semver.org/spec/v2.0.0.
 Added
 .....
 
-- Ranking equivalent groups and ranking distinct atoms algorithms exploiting
-  ranking results to classify chemical equivalence.
-- More ``Relabeler``-related functions for conformer deduplication
-- Shortest path generator between vertices in the graph
-- Python:
+- Graph algorithm: Ranking equivalent groups and ranking distinct atoms
+  algorithms exploiting ranking results to classify chemical equivalence.
+- Graph algorithm: Shortest path generator between vertices in the graph
+- Conformer deduplication: More ``Relabeler``-related functions
+- Python bindings:
 
   - Added modifying functions to ``Graph``
 
 Changed
 .......
 
-- Better conan integration with community packages. No longer require full CMake
+- Conan: Better integration with community packages. No longer require full CMake
   from all dependencies but follow conan `packaging philosophy <https://github.com/conan-io/conan-center-index/blob/master/docs/faqs.md#why-are-cmake-findconfig-files-and-pkg-config-files-not-packaged>`_.
-- CMake option ``MOLASSEMBLER_PARALLELIZE`` is now ``SCINE_PARALLELIZE`` to follow
-  SCINE convention.
-- ``BondStereopermutator::Alignment::BetweenEclipsedAndStaggered`` now generates
-  the same amount of alignments as ``BondStereopermutator::Alignment::Eclipsed``,
-  not twice as many.
-- Temple
+- CMake: option ``MOLASSEMBLER_PARALLELIZE`` is now ``SCINE_PARALLELIZE`` to
+  follow SCINE convention.
+- Bond stereopermutator alignment:
+  ``BondStereopermutator::Alignment::BetweenEclipsedAndStaggered`` now generates
+  the same amount of alignments as
+  ``BondStereopermutator::Alignment::Eclipsed``, not twice as many.
+- Auxiliary library ``Temple``
 
   - Refactor ``map`` to be able to apply it to tuples and arrays, too.
   - Clean up ``ContainerTraits.h``
@@ -44,8 +45,8 @@ Removed
 Fixed
 .....
 
-- Removed an incorrect check for non-terminal vertices without an atom
-  stereopermutator in conformer generation
+- Conformer generation: Removed an incorrect check for non-terminal vertices
+  without an atom stereopermutator
 
 
 1.0.0

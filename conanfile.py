@@ -8,7 +8,7 @@ from dev.conan.base import ScineConan
 
 class MolassemblerConan(ScineConan):
     name = "scine_molassembler"
-    version = "1.0.0"
+    version = "1.1.0"
     license = "BSD-3-Clause"
     author = "Jan-Grimo Sobez jan-grimo.sobez@phys.chem.ethz.ch"
     url = "https://scine.ethz.ch/download/molassembler"
