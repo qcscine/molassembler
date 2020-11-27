@@ -74,11 +74,11 @@ pypi-cp38:
     PYABI: cp38-cp38
 
 # scipy build for 3.9 fails in the CI because numpy doesn't have a package!
-# pypi-cp39:
-#   extends: .manylinux
-#   only: [master]
-#   variables:
-#     PYABI: cp39-cp39
+pypi-cp39:
+  extends: .manylinux
+  only: [master]
+  variables:
+    PYABI: cp39-cp39
 
 # CMake-only build
 cmake-only:
