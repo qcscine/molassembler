@@ -14,26 +14,26 @@ Added
 
 - Ranking equivalent groups and ranking distinct atoms algorithms exploiting
   ranking results to classify chemical equivalence.
-- More `Relabeler`-related functions for conformer deduplication
+- More ``Relabeler``-related functions for conformer deduplication
 - Shortest path generator between vertices in the graph
 - Python:
 
-  - Added modifying functions to `Graph`
+  - Added modifying functions to ``Graph``
 
 Changed
 .......
 
 - Better conan integration with community packages. No longer require full CMake
   from all dependencies but follow conan `packaging philosophy <https://github.com/conan-io/conan-center-index/blob/master/docs/faqs.md#why-are-cmake-findconfig-files-and-pkg-config-files-not-packaged>`_.
-- CMake option `MOLASSEMBLER_PARALLELIZE` is now `SCINE_PARALLELIZE` to follow
+- CMake option ``MOLASSEMBLER_PARALLELIZE`` is now ``SCINE_PARALLELIZE`` to follow
   SCINE convention.
-- `BondStereopermutator::Alignment::BetweenEclipsedAndStaggered` now generates
-  the same amount of alignments as `BondStereopermutator::Alignment::Eclipsed`,
+- ``BondStereopermutator::Alignment::BetweenEclipsedAndStaggered`` now generates
+  the same amount of alignments as ``BondStereopermutator::Alignment::Eclipsed``,
   not twice as many.
 - Temple
 
-  - Refactor `map` to be able to apply it to tuples and arrays, too.
-  - Clean up `ContainerTraits.h`
+  - Refactor ``map`` to be able to apply it to tuples and arrays, too.
+  - Clean up ``ContainerTraits.h``
 
 Deprecated
 ..........

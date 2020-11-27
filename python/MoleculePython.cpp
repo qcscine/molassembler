@@ -343,8 +343,9 @@ void init_molecule(pybind11::module& m) {
     &Molecule::canonicalize,
     pybind11::arg("components_bitmask") = AtomEnvironmentComponents::All,
     R"delim(
-      Transform the molecule to a canonical form. Invalidates all atom and bond
-      indices.
+      Transform the molecule to a canonical form.
+
+      :warning: Invalidates all external atom and bond indices.
 
       Molecule instances can be canonicalized. Graph canonicalization is an
       algorithm that reduces all isomorphic forms of an input graph into a
@@ -393,7 +394,8 @@ void init_molecule(pybind11::module& m) {
     R"delim(
       Remove an atom from the graph, including bonds to it, after checking
       that removing it is safe, i.e. the removal does not disconnect the graph.
-      Invalidates all atom and bond indices.
+
+      :warning: Invalidates all external atom and bond indices.
 
       :param atom: Atom to remove
 
@@ -417,8 +419,9 @@ void init_molecule(pybind11::module& m) {
     pybind11::arg("second_atom"),
     R"delim(
       Remove a bond from the graph, after checking that removing it is safe,
-      i.e. the removal does not disconnect the graph. Invalidates all atom and
-      bond indices.
+      i.e. the removal does not disconnect the graph.
+
+      :warning: Invalidates all external atom and bond indices.
 
       :param first_atom: First atom of the bond to be removed
       :param second_atom: Second atom of the bond to be removed
