@@ -6,6 +6,48 @@ All notable changes to this project will be documented in this file.
 The format is based on `Keep a Changelog <http://keepachangelog.com/en/1.0.0/>`_
 and this project adheres to `Semantic Versioning <http://semver.org/spec/v2.0.0.html>`_.
 
+1.1.0 [in progress]
+-------------------
+
+Added
+.....
+
+- Ranking equivalent groups and ranking distinct atoms algorithms exploiting
+  ranking results to classify chemical equivalence.
+- More `Relabeler`-related functions for conformer deduplication
+- Shortest path generator between vertices in the graph
+- Python:
+
+  - Added modifying functions to `Graph`
+
+Changed
+.......
+
+- Better conan integration with community packages. No longer require full CMake
+  from all dependencies but follow conan `packaging philosophy <https://github.com/conan-io/conan-center-index/blob/master/docs/faqs.md#why-are-cmake-findconfig-files-and-pkg-config-files-not-packaged>`_.
+- CMake option `MOLASSEMBLER_PARALLELIZE` is now `SCINE_PARALLELIZE` to follow
+  SCINE convention.
+- `BondStereopermutator::Alignment::BetweenEclipsedAndStaggered` now generates
+  the same amount of alignments as `BondStereopermutator::Alignment::Eclipsed`,
+  not twice as many.
+- Temple
+
+  - Refactor `map` to be able to apply it to tuples and arrays, too.
+  - Clean up `ContainerTraits.h`
+
+Deprecated
+..........
+
+Removed
+.......
+
+Fixed
+.....
+
+- Removed an incorrect check for non-terminal vertices without an atom
+  stereopermutator in conformer generation
+
+
 1.0.0
 -----
 
@@ -45,22 +87,3 @@ Changed
 - Adopt Scine code conventions regarding namespace formatting
 - Enclose temple, shapes, and stereopermutation sub-libraries in molassembler
   namespace
-
-[Unreleased]
-------------
-
-Added
-.....
-
-Changed
-.......
-
-Deprecated
-..........
-
-Removed
-.......
-
-Fixed
-.....
-
