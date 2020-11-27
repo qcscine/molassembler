@@ -31,7 +31,7 @@ setuptools.setup(
     description="Inorganic molecular graph interpretation, modification and conformer generation",
     long_description=markdown_description,
     long_description_content_type="text/markdown",
-    url="https://gitlab.chab.ethz.ch/scine/molassembler",
+    url="https://scine.ethz.ch/download/molassembler",
     packages=["scine_molassembler"],
     package_data={"scine_molassembler": filelist},
     classifiers=[
