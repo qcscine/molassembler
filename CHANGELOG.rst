@@ -47,6 +47,8 @@ Fixed
 
 - Conformer generation: Removed an incorrect check for non-terminal vertices
   without an atom stereopermutator
+- Permutator propagation: Fixed missing propagation of atom stereopermutator
+  placement and re-keying the atom stereopermutator map in StereopermutatorList
 
 
 1.0.0

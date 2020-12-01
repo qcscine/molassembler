@@ -618,6 +618,34 @@ BOOST_AUTO_TEST_CASE(PropagateGraphChangeTests, *boost::unit_test::label("Molass
   );
 }
 
+BOOST_AUTO_TEST_CASE(AtomRemovalPropagation, *boost::unit_test::label("Molassembler")) {
+  std::string smiles = "[Fe](P)(P)(P)PC";
+  Molecule mol = IO::Experimental::parseSmilesSingleMolecule(smiles);
+  /* Shuffle molecule indices so that hydrogen atoms are before heavy atoms,
+   * that ensures that removing a hydrogen will require full state propagation
+   * and successive calls will fail if something isn't propagated right
+   */
+  mol.canonicalize();
+
+  auto hydrogenAtoms = [](const Molecule& m) -> std::vector<AtomIndex> {
+    std::vector<AtomIndex> atoms;
+    auto elements = m.graph().elementCollection();
+    for(unsigned i = 0; i < elements.size(); ++i) {
+      if(elements.at(i) == Utils::ElementType::H) {
+        atoms.push_back(i);
+      }
+    }
+    return atoms;
+  };
+
+  auto hydrogens = hydrogenAtoms(mol);
+  while(!hydrogens.empty()) {
+    BOOST_REQUIRE_NO_THROW(mol.removeAtom(hydrogens.front()));
+    mol.canonicalize();
+    hydrogens = hydrogenAtoms(mol);
+  }
+}
+
 BOOST_AUTO_TEST_CASE(MoleculeSplitRecognition, *boost::unit_test::label("Molassembler")) {
   std::vector<Molecule> molSplat;
   std::vector<Molecule> xyzSplat;

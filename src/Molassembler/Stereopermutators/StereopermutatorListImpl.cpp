@@ -117,9 +117,13 @@ void StereopermutatorList::Impl::propagateVertexRemoval(const AtomIndex removedI
   /* Go through all state in the StereopermutatorList and decrement any indices
    * larger than the one being removed
    */
-  for(auto& stereopermutators : atomStereopermutators | boost::adaptors::map_values) {
-    stereopermutators.propagateVertexRemoval(removedIndex);
+  AtomMapType updatedAtomPermutators;
+  for(auto& stereopermutator : atomStereopermutators | boost::adaptors::map_values) {
+    stereopermutator.propagateVertexRemoval(removedIndex);
+    AtomIndex placement = stereopermutator.placement();
+    updatedAtomPermutators.emplace(placement, std::move(stereopermutator));
   }
+  std::swap(atomStereopermutators, updatedAtomPermutators);
 
   /*for(auto& bondMapPair : bondStereopermutators()) {
     bondMapPair.second.propagateVertexRemoval(removedIndex);

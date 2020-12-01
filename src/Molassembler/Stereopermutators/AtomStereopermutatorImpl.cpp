@@ -710,6 +710,8 @@ void AtomStereopermutator::Impl::propagateVertexRemoval(const AtomIndex removedI
     return index;
   };
 
+  updateIndexInplace(centerAtom_);
+
   /* Update indices in RankingInformation */
   for(auto& equalPrioritySet : ranking_.substituentRanking) {
     for(auto& index : equalPrioritySet) {
