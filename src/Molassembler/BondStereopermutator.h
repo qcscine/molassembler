@@ -222,6 +222,9 @@ public:
     const PrivateGraph& inner,
     const StereopermutatorList& permutators
   );
+
+  //! Propagates invalidated atom indices through the removal of an index
+  void propagateVertexRemoval(AtomIndex removedIndex);
 //!@}
 
 //!@name Information

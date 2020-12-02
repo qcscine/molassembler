@@ -684,19 +684,10 @@ void AtomStereopermutator::Impl::propagateVertexRemoval(const AtomIndex removedI
    * any invalidated atom indices.
    */
 
-  /* If the central atom is being removed, just drop this stereopermutator
+  /* If the central atom is being removed, drop this stereopermutator
    * beforehand in caller. This would just be unnecessary work.
    */
   assert(centerAtom_ != removedIndex);
-
-  // Define some helper functions
-  auto updateIndexInplace = [&removedIndex](AtomIndex& index) -> void {
-    if(index > removedIndex) {
-      --index;
-    } else if(index == removedIndex) {
-      index = PrivateGraph::removalPlaceholder;
-    }
-  };
 
   auto updateIndex = [&removedIndex](const AtomIndex index) -> AtomIndex {
     if(index > removedIndex) {
@@ -710,18 +701,18 @@ void AtomStereopermutator::Impl::propagateVertexRemoval(const AtomIndex removedI
     return index;
   };
 
-  updateIndexInplace(centerAtom_);
+  centerAtom_ = updateIndex(centerAtom_);
 
   /* Update indices in RankingInformation */
   for(auto& equalPrioritySet : ranking_.substituentRanking) {
     for(auto& index : equalPrioritySet) {
-      updateIndexInplace(index);
+      index = updateIndex(index);
     }
   }
 
   for(auto& siteAtomList : ranking_.sites) {
     for(auto& atomIndex : siteAtomList) {
-      updateIndexInplace(atomIndex);
+      atomIndex = updateIndex(atomIndex);
     }
   }
 

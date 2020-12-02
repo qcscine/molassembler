@@ -263,6 +263,15 @@ public:
 //!@name Modification
 //!@{
   void applyIdentifierPermutation(const std::vector<std::size_t>& permutation);
+
+  template<typename F>
+  void updateIdentifiers(F f) {
+    // NOTE: OrientationState identifiers are not part of their comparison
+    // operators, so no reordering can take place
+    for(auto& orientationState : orientations_) {
+      orientationState.identifier = f(orientationState.identifier);
+    }
+  }
 //!@}
 
 //!@name Information

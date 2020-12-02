@@ -627,7 +627,7 @@ BOOST_AUTO_TEST_CASE(AtomRemovalPropagation, *boost::unit_test::label("Molassemb
    */
   mol.canonicalize();
 
-  auto hydrogenAtoms = [](const Molecule& m) -> std::vector<AtomIndex> {
+  const auto hydrogenAtoms = [](const Molecule& m) -> std::vector<AtomIndex> {
     std::vector<AtomIndex> atoms;
     auto elements = m.graph().elementCollection();
     for(unsigned i = 0; i < elements.size(); ++i) {
@@ -643,6 +643,54 @@ BOOST_AUTO_TEST_CASE(AtomRemovalPropagation, *boost::unit_test::label("Molassemb
     BOOST_REQUIRE_NO_THROW(mol.removeAtom(hydrogens.front()));
     mol.canonicalize();
     hydrogens = hydrogenAtoms(mol);
+  }
+
+  smiles = "CC(C)(C)/C=C/C(C)(C)C";
+  mol = IO::Experimental::parseSmilesSingleMolecule(smiles);
+  mol.canonicalize();
+
+  const auto dbAdjacentHydrogenAtoms = [](const Molecule& m) -> std::vector<AtomIndex> {
+    BOOST_REQUIRE(m.stereopermutators().B() == 1);
+    std::vector<AtomIndex> adjacentHydrogenAtoms;
+    for(const auto& p : m.stereopermutators().bondStereopermutators()) {
+      BondIndex placement = p.placement();
+      const bool placedAtCarbon = Temple::all_of(
+        placement,
+        [&](AtomIndex i) {
+          return m.graph().elementType(i) == Utils::ElementType::C;
+        }
+      );
+      BOOST_REQUIRE(placedAtCarbon);
+
+      Temple::forEach(
+        placement,
+        [&](const AtomIndex i) {
+          Temple::forEach(
+            m.graph().adjacents(i),
+            [&](AtomIndex j) {
+              if(m.graph().elementType(j) == Utils::ElementType::H) {
+                adjacentHydrogenAtoms.push_back(j);
+              }
+            }
+          );
+        }
+      );
+    }
+
+    BOOST_REQUIRE_EQUAL(adjacentHydrogenAtoms.size(), 2);
+    return adjacentHydrogenAtoms;
+  };
+
+  hydrogens = hydrogenAtoms(mol);
+  auto dbAdjacentHydrogens = dbAdjacentHydrogenAtoms(mol);
+  Temple::remove_if(hydrogens, Temple::makeContainsPredicate(dbAdjacentHydrogens));
+
+  while(!hydrogens.empty()) {
+    BOOST_REQUIRE_NO_THROW(mol.removeAtom(hydrogens.front()));
+    mol.canonicalize();
+    hydrogens = hydrogenAtoms(mol);
+    dbAdjacentHydrogens = dbAdjacentHydrogenAtoms(mol);
+    Temple::remove_if(hydrogens, Temple::makeContainsPredicate(dbAdjacentHydrogens));
   }
 }
 

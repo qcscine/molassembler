@@ -19,6 +19,8 @@ Added
 - Python bindings:
 
   - Added modifying functions to ``Graph``
+  - Direct copying support for ``Molecule`` (``__copy__`` and ``__deepcopy__``)
+    instead of indirect via pickling
 
 Changed
 .......
@@ -47,8 +49,11 @@ Fixed
 
 - Conformer generation: Removed an incorrect check for non-terminal vertices
   without an atom stereopermutator
-- Permutator propagation: Fixed missing propagation of atom stereopermutator
-  placement and re-keying the atom stereopermutator map in StereopermutatorList
+- Permutator propagation: 
+
+  - Fixed missing propagation of atom stereopermutator placement and re-keying
+    the atom stereopermutator map in StereopermutatorList
+  - Add missing propagation of bond stereopermutator state on vertex removal
 
 
 1.0.0

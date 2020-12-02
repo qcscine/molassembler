@@ -114,8 +114,8 @@ void StereopermutatorList::Impl::propagateVertexRemoval(const AtomIndex removedI
     atomStereopermutators.erase(findIter);
   }
 
-  /* Go through all state in the StereopermutatorList and decrement any indices
-   * larger than the one being removed
+  /* Go through all state in the StereopermutatorList and decrement any atom
+   * indices larger than the one being removed
    */
   AtomMapType updatedAtomPermutators;
   for(auto& stereopermutator : atomStereopermutators | boost::adaptors::map_values) {
@@ -125,9 +125,13 @@ void StereopermutatorList::Impl::propagateVertexRemoval(const AtomIndex removedI
   }
   std::swap(atomStereopermutators, updatedAtomPermutators);
 
-  /*for(auto& bondMapPair : bondStereopermutators()) {
-    bondMapPair.second.propagateVertexRemoval(removedIndex);
-  }*/
+  BondMapType updatedBondPermutators;
+  for(auto& stereopermutator : bondStereopermutators | boost::adaptors::map_values) {
+    stereopermutator.propagateVertexRemoval(removedIndex);
+    BondIndex placement = stereopermutator.placement();
+    updatedBondPermutators.emplace(placement, std::move(stereopermutator));
+  }
+  std::swap(bondStereopermutators, updatedBondPermutators);
 }
 
 void StereopermutatorList::Impl::remove(const AtomIndex index) {

@@ -1224,11 +1224,28 @@ void BondStereopermutator::Impl::propagateGraphChange(
   feasiblePermutations_ = std::move(newFeasiblePermutations);
 }
 
+void BondStereopermutator::Impl::propagateVertexRemoval(const AtomIndex removedIndex) {
+  using Stereopermutations::Composite;
+  const auto updateIndex = [&](const AtomIndex index) -> AtomIndex {
+    if(index > removedIndex) {
+      return index - 1;
+    }
+
+    if(index == removedIndex) {
+      return PrivateGraph::removalPlaceholder;
+    }
+
+    return index;
+  };
+
+  // Atom indices are used in composite identifiers and the placement edge
+  composite_.updateIdentifiers(updateIndex);
+  edge_ = BondIndex(updateIndex(edge_.first), updateIndex(edge_.second));
+}
+
 /* Information */
 BondStereopermutator::Alignment BondStereopermutator::Impl::alignment() const {
-  return static_cast<BondStereopermutator::Alignment>(
-    composite_.alignment()
-  );
+  return static_cast<BondStereopermutator::Alignment>(composite_.alignment());
 }
 
 boost::optional<unsigned> BondStereopermutator::Impl::assigned() const {

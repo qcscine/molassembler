@@ -113,6 +113,8 @@ struct BondStereopermutator::Impl : public Temple::Crtp::LexicographicComparable
     const StereopermutatorList& permutators
   );
 
+  void propagateVertexRemoval(AtomIndex removedIndex);
+
 /* Information */
   Alignment alignment() const;
 
