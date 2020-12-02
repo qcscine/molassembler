@@ -711,7 +711,22 @@ void init_molecule(pybind11::module& m) {
     "Generate a string representation of the molecule"
   );
 
-  /* Pickling support (allows copying) */
+  /* Direct copying support */
+  molecule.def(
+    "__copy__",
+    [](const Molecule& mol) -> Molecule {
+      return Molecule(mol);
+    }
+  );
+  molecule.def(
+    "__deepcopy__",
+    [](const Molecule& mol, pybind11::dict /* memo */) -> Molecule {
+      return Molecule(mol);
+    },
+    pybind11::arg("memo")
+  );
+
+  /* Pickling support */
   molecule.def(
     pybind11::pickle(
       [](const Molecule& mol) {
