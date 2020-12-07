@@ -178,7 +178,7 @@ const std::map<std::string, std::string>& MolGraphWriter::elementBGColorMap() {
     {"Cd", "#ffd88f"},
     {"Ca", "#3cff00"},
     {"Cf", "#a036d3"},
-    {"C", "#33ff33"},
+    {"C", "gray"},
     {"Ce", "#ffffc7"},
     {"Cs", "#57168f"},
     {"Cl", "#1ef01e"},
