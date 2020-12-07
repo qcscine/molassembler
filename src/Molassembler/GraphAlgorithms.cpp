@@ -8,6 +8,7 @@
 
 #include "Molassembler/Graph.h"
 #include "Molassembler/Graph/GraphAlgorithms.h"
+#include "Molassembler/Graph/EditDistance.h"
 
 /* GraphAlgorithms.h is the public API point for algorithms that act on
  * Graph. In Graph/GraphAlgorithms.h, those algorithms are implemented on
@@ -50,6 +51,10 @@ std::vector<AtomIndex> PredecessorMap::path(const AtomIndex target) const {
   );
 
   return pathVertices;
+}
+
+unsigned editDistance(const Graph& a, const Graph& b) {
+  return GraphAlgorithms::editDistance(a.inner(), b.inner());
 }
 
 } // namespace Molassembler

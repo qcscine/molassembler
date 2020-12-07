@@ -279,7 +279,7 @@ PrivateGraph::Vertex PrivateGraph::target(const PrivateGraph::Edge& edge) const 
   return boost::target(edge, graph_);
 }
 
-PrivateGraph::Vertex PrivateGraph::degree(const PrivateGraph::Vertex a) const {
+unsigned PrivateGraph::degree(const PrivateGraph::Vertex a) const {
   return boost::out_degree(a, graph_);
 }
 

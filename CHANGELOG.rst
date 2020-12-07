@@ -15,6 +15,7 @@ Added
 - Graph algorithm: Ranking equivalent groups and ranking distinct atoms
   algorithms exploiting ranking results to classify chemical equivalence.
 - Graph algorithm: Shortest path generator between vertices in the graph
+- Graph algorithm: Edit distance
 - Conformer deduplication: More ``Relabeler``-related functions
 - Python bindings:
 

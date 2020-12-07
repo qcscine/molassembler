@@ -241,7 +241,7 @@ public:
    *
    * @complexity{@math{\Theta(1)}}
    */
-  Vertex degree(Vertex a) const;
+  unsigned degree(Vertex a) const;
 
   //! Number of vertices in the graph
   Vertex N() const;

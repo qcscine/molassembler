@@ -13,6 +13,7 @@
 #include "Molassembler/Graph.h"
 #include "Molassembler/Temple/Functional.h"
 #include "Molassembler/Graph/GraphAlgorithms.h"
+#include "Molassembler/Graph/EditDistance.h"
 
 #include <iostream>
 #include "Molassembler/Temple/Stringify.h"
@@ -89,4 +90,29 @@ BOOST_AUTO_TEST_CASE(UniqueDescendants, *boost::unit_test::label("Molassembler")
   BOOST_CHECK_EQUAL(count(split, hexaneDescendants), 3);
   BOOST_CHECK_EQUAL(count(cyclohexaneNeighbors.front(), hexaneDescendants), 6);
   BOOST_CHECK_EQUAL(count(cyclohexaneNeighbors.back(), hexaneDescendants), 6);
+}
+
+BOOST_AUTO_TEST_CASE(EditDistance, *boost::unit_test::label("Molassembler")) {
+  const auto parse = &IO::Experimental::parseSmilesSingleMolecule;
+  auto methane = parse("C");
+  auto methyl = parse("[CH3]");
+  BOOST_CHECK_EQUAL(
+    editDistance(methane.graph(), methyl.graph()),
+    2
+  );
+  // Must be symmetric
+  BOOST_CHECK_EQUAL(
+    editDistance(methyl.graph(), methane.graph()),
+    2
+  );
+
+  auto silane = parse("[SiH4]");
+  BOOST_CHECK_EQUAL(
+    editDistance(silane.graph(), methane.graph()),
+    1
+  );
+  BOOST_CHECK_EQUAL(
+    editDistance(silane.graph(), methyl.graph()),
+    3
+  );
 }

@@ -31,7 +31,7 @@ class Graph;
  */
 MASM_EXPORT std::vector<unsigned> distance(AtomIndex source, const Graph& graph);
 
-struct PredecessorMap {
+struct MASM_EXPORT PredecessorMap {
   std::vector<AtomIndex> predecessors;
 
   /**
@@ -56,6 +56,18 @@ struct PredecessorMap {
  * @return A flat predecessor map
  */
 MASM_EXPORT PredecessorMap shortestPaths(AtomIndex source, const Graph& graph);
+
+/**
+ * @brief Exact graph edit distance calculation
+ *
+ * Graph edit distance is symmetric, so order of arguments is irrelevant.
+ *
+ * @param a First graph to calculate edit distance for
+ * @param b Second graph to calculate edit distance for
+ *
+ * @return Graph edit distance metric
+ */
+MASM_EXPORT unsigned editDistance(const Graph& a, const Graph& b);
 
 } // namespace Molassembler
 } // namespace Scine
