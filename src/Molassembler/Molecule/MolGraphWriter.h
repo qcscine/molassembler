@@ -14,7 +14,6 @@
 #include "Molassembler/Graph/PrivateGraph.h"
 
 namespace Scine {
-
 namespace Molassembler {
 
 class StereopermutatorList;
@@ -25,9 +24,9 @@ class BondStereopermutator;
 struct MolGraphWriter {
 //!@name Static data
 //!@{
-  static const std::map<std::string, std::string> elementBGColorMap;
-  static const std::map<std::string, std::string> elementTextColorMap;
-  static const std::map<BondType, std::string> bondTypeDisplayString;
+  static const std::map<std::string, std::string>& elementBGColorMap();
+  static const std::map<std::string, std::string>& elementTextColorMap();
+  static const std::map<BondType, std::string>& bondTypeDisplayString();
 //!@}
 
 //!@name Members
@@ -49,13 +48,8 @@ struct MolGraphWriter {
   /* Information */
   Utils::ElementType getElementType(PrivateGraph::Vertex vertexIndex) const;
 
-  // Global options
   void operator() (std::ostream& os) const;
-
-  // Vertex options
   void operator() (std::ostream& os, PrivateGraph::Vertex vertexIndex) const;
-
-  // Edge options
   void operator() (std::ostream& os, const PrivateGraph::Edge& edgeIndex) const;
 
   virtual std::vector<std::string> edgeTooltips(AtomIndex source, AtomIndex target) const;
@@ -70,7 +64,6 @@ struct MolGraphWriter {
 };
 
 } // namespace Molassembler
-
 } // namespace Scine
 
 #endif

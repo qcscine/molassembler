@@ -85,17 +85,17 @@ public:
       os << R"(, fillcolor="tomato")";
     } else if(hasStereopermutator) {
       os << R"(, fillcolor="steelblue")";
-    } else if(MolGraphWriter::elementBGColorMap.count(symbolString) != 0) {
+    } else if(MolGraphWriter::elementBGColorMap().count(symbolString) != 0) {
       os << R"(, fillcolor=")"
-        << MolGraphWriter::elementBGColorMap.at(symbolString) << R"(")";
+        << MolGraphWriter::elementBGColorMap().at(symbolString) << R"(")";
     }
 
     // Font coloring
     if(colorVertices_.count(vertexIndex) > 0) {
       os << R"(, fontcolor="white")";
-    } else if(MolGraphWriter::elementTextColorMap.count(symbolString) != 0) {
+    } else if(MolGraphWriter::elementTextColorMap().count(symbolString) != 0) {
       os << R"(, fontcolor=")"
-        << MolGraphWriter::elementTextColorMap.at(symbolString) << R"(")";
+        << MolGraphWriter::elementTextColorMap().at(symbolString) << R"(")";
     } else if(hasStereopermutator) {
       os << R"(, fontcolor="white")";
     }

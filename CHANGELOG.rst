@@ -25,6 +25,7 @@ Added
 Changed
 .......
 
+- More colorful graphviz rendering for elements
 - Conan: Better integration with community packages. No longer require full CMake
   from all dependencies but follow conan `packaging philosophy <https://github.com/conan-io/conan-center-index/blob/master/docs/faqs.md#why-are-cmake-findconfig-files-and-pkg-config-files-not-packaged>`_.
 - CMake: option ``MOLASSEMBLER_PARALLELIZE`` is now ``SCINE_PARALLELIZE`` to
