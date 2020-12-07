@@ -63,7 +63,7 @@ void init_shape_submodule(pybind11::module& m) {
     .value("Icosahedron", Shapes::Shape::Icosahedron)
     .value("Cuboctahedron", Shapes::Shape::Cuboctahedron);
 
-  shapeEnum.def("__str__", &Shapes::name);
+  shapeEnum.def("__str__", &Shapes::name, pybind11::prepend());
 
   shapeSubmodule.def(
     "name_from_str",
