@@ -590,50 +590,58 @@ void Molecule::Impl::removeAtom(const AtomIndex a) {
    * propagateVertexRemoval replaces the removed index with in the
    * stereopermutators' internal state
    */
-  for(const auto& indexToUpdate : previouslyAdjacentVertices) {
-    if(auto stereopermutatorOption = stereopermutators_.option(indexToUpdate)) {
-      auto localRanking = rankPriority(indexToUpdate);
-
-      // If index becomes terminal, drop the stereopermutator
-      if(localRanking.sites.size() <= 1) {
-        stereopermutators_.remove(indexToUpdate);
-        continue;
-      }
-
-      boost::optional<Shapes::Shape> newShapeOption;
-      if(Options::shapeTransition == ShapeTransition::PrioritizeInferenceFromGraph) {
-        newShapeOption = inferShape(indexToUpdate, localRanking);
-      }
-
-      stereopermutatorOption->propagate(
-        adjacencies_,
-        std::move(localRanking),
-        newShapeOption
-      );
+  for(AtomIndex indexToUpdate : previouslyAdjacentVertices) {
+    if(indexToUpdate > a) {
+      --indexToUpdate;
     }
 
-    //! @todo BondStereopermutator update
-    /*if(stereopermutators_.involving(indexToUpdate)) {
-      if(stereopermutators_.at(indexToUpdate)->type() == Stereopermutators::Type::AtomStereopermutator) {
-      } else {
-        std::dynamic_pointer_cast<Stereopermutators::BondStereopermutator>(
-          stereopermutators_.at(indexToUpdate)
-        )->removeSubstituent(
-          indexToUpdate,
-          Stereopermutators::Stereopermutator::removalPlaceholder
-        );
+    auto stereopermutatorOption = stereopermutators_.option(indexToUpdate);
+    if(!stereopermutatorOption) {
+      /* If there's no atom stereopermutator on this vertex, there's nothing
+       * to do
+       */
+      continue;
+    }
+
+    RankingInformation localRanking = rankPriority(indexToUpdate);
+
+    /* If index becomes terminal, drop the stereopermutator and any adjoining
+     * bond stereopermutators
+     */
+    if(localRanking.sites.size() <= 1) {
+      stereopermutators_.remove(indexToUpdate);
+      for(const BondIndex edge : adjacencies_.bonds(indexToUpdate)) {
+        stereopermutators_.try_remove(edge);
       }
-    }*/
+      continue;
+    }
+
+    // Generate a target shape for the atom stereopermutator
+    boost::optional<Shapes::Shape> newShapeOption;
+    if(Options::shapeTransition == ShapeTransition::PrioritizeInferenceFromGraph) {
+      newShapeOption = inferShape(indexToUpdate, localRanking);
+    }
+
+    const auto propagatedState = stereopermutatorOption->propagate(
+      adjacencies_,
+      std::move(localRanking),
+      newShapeOption
+    );
+
+    for(const BondIndex edge : adjacencies_.bonds(indexToUpdate)) {
+      stereopermutators_.try_remove(edge);
+      // TODO propagate
+      // if(auto permutator = stereopermutators_.option(edge)) {
+      //   permutator->propagate(propagatedState);
+      // }
+    }
   }
 
   propagateGraphChange_();
   canonicalComponentsOption_ = boost::none;
 }
 
-void Molecule::Impl::removeBond(
-  const AtomIndex a,
-  const AtomIndex b
-) {
+void Molecule::Impl::removeBond(const AtomIndex a, const AtomIndex b) {
   if(!isValidIndex_(a) || !isValidIndex_(b)) {
     throw std::out_of_range("Molecule::removeBond: Supplied index is invalid!");
   }

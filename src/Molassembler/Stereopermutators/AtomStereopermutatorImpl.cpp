@@ -411,18 +411,6 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
   RankingInformation newRanking,
   boost::optional<Shapes::Shape> shapeOption
 ) {
-#ifndef NDEBUG
-  /* Check preconditions! */
-  for(const auto& siteAtomList : boost::range::join(ranking_.sites, newRanking.sites)) {
-    assert(
-      std::is_sorted(
-        std::begin(siteAtomList),
-        std::end(siteAtomList)
-      )
-    );
-  }
-#endif
-
   /* There are a lot of changes that can occur prior to a call to propagate that
    * we need to correct. Multiple of these can apply at any given time!
    *
@@ -468,7 +456,7 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
   auto siteMapping = SiteMapping::from(ranking_, newRanking);
 
   /* Decide the new shape */
-  Shapes::Shape newShape = shapeOption.value_or_eval(
+  const Shapes::Shape newShape = shapeOption.value_or_eval(
     [&]() {
       if(siteCountChange == +1) {
         return up(shape_);
@@ -653,6 +641,10 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
       return assignmentFindIter - std::begin(newFeasible.indices);
     }
   );
+
+  if(!newAssignmentOption && newFeasible.indices.size() == 1) {
+    newAssignmentOption = 0;
+  }
 
   // Extract old state from the class
   auto oldStateTuple = std::make_tuple(

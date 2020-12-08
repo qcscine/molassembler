@@ -692,6 +692,15 @@ BOOST_AUTO_TEST_CASE(AtomRemovalPropagation, *boost::unit_test::label("Molassemb
     dbAdjacentHydrogens = dbAdjacentHydrogenAtoms(mol);
     Temple::remove_if(hydrogens, Temple::makeContainsPredicate(dbAdjacentHydrogens));
   }
+
+  // Same pattern with benzole
+  mol = IO::Experimental::parseSmilesSingleMolecule("c1=cc=cc=c1");
+  hydrogens = hydrogenAtoms(mol);
+  while(!hydrogens.empty()) {
+    BOOST_REQUIRE_NO_THROW(mol.removeAtom(hydrogens.front()));
+    mol.canonicalize();
+    hydrogens = hydrogenAtoms(mol);
+  }
 }
 
 BOOST_AUTO_TEST_CASE(MoleculeSplitRecognition, *boost::unit_test::label("Molassembler")) {

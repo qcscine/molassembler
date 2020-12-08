@@ -1103,7 +1103,7 @@ void BondStereopermutator::Impl::propagateGraphChange(
    *   and then compare dihedral values between the composites. This scheme
    *   has works even if the fused position has changed.
    * - Since newComposite may have reordered the OrientationStates, we have
-   *   to be careful which part of the DihedralTuple's we extract shape
+   *   to be careful which part of the DihedralTuples we extract shape
    *   vertices from.
    * - Inversions of the dihedral defining sequence do not invert the sign of
    *   the dihedral
