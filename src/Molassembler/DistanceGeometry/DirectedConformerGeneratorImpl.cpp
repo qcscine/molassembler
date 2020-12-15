@@ -439,7 +439,7 @@ DirectedConformerGenerator::Impl::getDecisionList(
       );
       throw std::logic_error(error);
     }
-    if(refitted.assigned() != stereopermutator.assigned()) {
+    if(stereopermutator.assigned() && refitted.assigned() != stereopermutator.assigned()) {
       auto assignmentToString = [](const boost::optional<unsigned>& assignment) -> std::string {
         if(assignment) {
           return std::to_string(assignment.value());
