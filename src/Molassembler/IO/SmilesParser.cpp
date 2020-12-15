@@ -43,6 +43,20 @@
 namespace Scine {
 namespace Molassembler {
 namespace IO {
+namespace {
+
+std::string abbreviate(std::string x, const unsigned len) {
+  assert(len > 3);
+
+  if(x.size() > len) {
+    x.resize(len - 3);
+    x += "...";
+  }
+
+  return x;
+}
+
+} // namespace
 
 namespace qi = boost::spirit::qi;
 
@@ -296,19 +310,32 @@ struct openSMILES : qi::grammar<Iterator> {
 
     /* Error handling */
     qi::on_error<qi::fail>(bracket_atom,
-      std::cout << phoenix::val("Expected atom symbol and ']' after opening of atom bracket '[' here: \"")
-        << phoenix::construct<std::string>(qi::_3, qi::_2)
-        << phoenix::val("\"\n")
+      phoenix::ref(error) = (
+        phoenix::val("Expected atom symbol and ']' after atom bracket '[' here: \"")
+        + phoenix::bind(
+          &abbreviate,
+          phoenix::construct<std::string>(qi::_3, qi::_2),
+          20
+        )
+        + phoenix::val("\"\n")
+      )
     );
 
     qi::on_error<qi::fail>(branch,
-      std::cout << phoenix::val("Expected branch continuation and ')' after branch opening '(' here: \"")
-        << phoenix::construct<std::string>(qi::_3, qi::_2)
-        << phoenix::val("\"\n")
+      phoenix::ref(error) = (
+        phoenix::val("Expected branch continuation and ')' after '(' here: \"")
+        + phoenix::bind(
+          &abbreviate,
+          phoenix::construct<std::string>(qi::_3, qi::_2),
+          20
+        )
+        + phoenix::val("\"\n")
+      )
     );
   }
 
   MoleculeBuilder builder;
+  std::string error;
 
   // Everything needed for atom
   qi::rule<Iterator, ChiralData()> chiral;
@@ -345,7 +372,7 @@ std::vector<Molecule> parseSmiles(const std::string& smiles) {
     return parser.builder.interpret();
   }
 
-  throw std::runtime_error("Failed to parse SMILES");
+  throw std::runtime_error("Parsing failure: " + parser.error);
 }
 
 Molecule parseSmilesSingleMolecule(const std::string& smiles) {

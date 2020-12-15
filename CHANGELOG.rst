@@ -40,6 +40,10 @@ Changed
   - Refactor ``map`` to be able to apply it to tuples and arrays, too.
   - Clean up ``ContainerTraits.h``
 
+- SMILES parser
+
+  - Parsing errors as part of exception string, not written to stdout
+
 Deprecated
 ..........
 
@@ -56,6 +60,10 @@ Fixed
   - Fixed missing propagation of atom stereopermutator placement and re-keying
     the atom stereopermutator map in StereopermutatorList
   - Add missing propagation of bond stereopermutator state on vertex removal
+
+- Directed conformer generation: Fixed incorrect precondition check with
+  unassigned stereopermutators
+
 
 
 1.0.0
