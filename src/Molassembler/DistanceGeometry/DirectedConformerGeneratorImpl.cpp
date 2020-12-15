@@ -220,30 +220,12 @@ DirectedConformerGenerator::Impl::Impl(
 ) : molecule_(std::move(molecule)), alignment_(alignment)
 {
   // Allocate some space for the relevant bonds and new stereopermutators
-  relevantBonds_.reserve(molecule_.graph().B() / 2);
-  std::vector<BondStereopermutator> bondStereopermutators;
-  bondStereopermutators.reserve(molecule_.graph().B() / 2);
-
-  // Make a visitor to move out bond stereopermutators from the variant
-  struct ExtractStereopermutatorVisitor : public boost::static_visitor<bool> {
-    ExtractStereopermutatorVisitor(std::vector<BondStereopermutator>& stereoList) : vectorRef(stereoList) {}
-
-    std::vector<BondStereopermutator>& vectorRef;
-
-    bool operator() (BondStereopermutator& permutator) {
-      vectorRef.push_back(std::move(permutator));
-      return true;
-    }
-
-    bool operator() (IgnoreReason /* reason */) { return false; }
-  };
-
-  ExtractStereopermutatorVisitor visitor {bondStereopermutators};
+  relevantBonds_.reserve(molecule_.graph().E() / 2);
 
   const auto processBond = [&](const BondIndex& bond) {
-    auto importanceVariant = considerBond(bond, molecule_, alignment_);
-
-    if(boost::apply_visitor(visitor, importanceVariant)) {
+    const auto variant = considerBond(bond, molecule_, alignment_);
+    if(variant.type() == typeid(BondStereopermutator)) {
+      molecule_.addPermutator(bond, alignment_);
       relevantBonds_.push_back(bond);
     }
   };
@@ -263,13 +245,6 @@ DirectedConformerGenerator::Impl::Impl(
    */
   if(relevantBonds_.empty()) {
     return;
-  }
-
-  // Add the BondStereopermutators to our underlying molecule's stereopermutator list
-  for(auto& bondStereopermutator : bondStereopermutators) {
-    molecule_.pImpl_->stereopermutators_.add(
-      std::move(bondStereopermutator)
-    );
   }
 
   // Collect the bounds on each stereopermutator's permutations for the trie

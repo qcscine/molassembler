@@ -115,7 +115,7 @@ public:
    *
    * @complexity{@math{\Theta(1)} amortized}
    *
-   * @returns An iterator pointing to the added stereopermutator
+   * @returns A reference to the added stereopermutator
    */
   AtomStereopermutator& add(AtomStereopermutator stereopermutator);
 
@@ -123,7 +123,7 @@ public:
    *
    * @complexity{@math{\Theta(1)} amortized}
    *
-   * @returns An iterator pointing to the added stereopermutator
+   * @returns A reference to the added stereopermutator
    */
   BondStereopermutator& add(BondStereopermutator stereopermutator);
 
@@ -170,28 +170,32 @@ public:
    */
   void propagateVertexRemoval(AtomIndex removedIndex);
 
-  /*! @brief Removes the AtomStereopermutator on a specified index
+  /*! @brief Removes the AtomStereopermutator on a specified index, if present
    *
    * @complexity{@math{\Theta(1)}}
+   * @returns Whether a permutator was deleted
    */
-  void remove(AtomIndex index);
+  bool remove(AtomIndex index);
 
-  /*! @brief Removes the BondStereopermutator on a specified edge
+  /*! @brief Removes the BondStereopermutator on a specified edge, if present
    *
    * @complexity{@math{\Theta(1)}}
+   * @returns Whether a permutator was deleted
    */
-  void remove(const BondIndex& edge);
+  bool remove(const BondIndex& edge);
 
   /*! @brief Removes the AtomStereopermutator on a specified index, if present
    *
    * @complexity{@math{\Theta(1)}}
    */
+  [[deprecated("Prefer remove")]]
   void try_remove(AtomIndex index);
 
   /*! @brief Removes the BondStereopermutator on a specified edge, if present
    *
    * @complexity{@math{\Theta(1)}}
    */
+  [[deprecated("Prefer remove")]]
   void try_remove(const BondIndex& edge);
 //!@}
 

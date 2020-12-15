@@ -19,7 +19,7 @@ namespace Scine {
 namespace Molassembler {
 
 std::vector<unsigned> distance(AtomIndex source, const Graph& graph) {
-  if(source > graph.N()) {
+  if(source > graph.V()) {
     throw std::out_of_range("Supplied atom index is invalid!");
   }
 
@@ -27,7 +27,7 @@ std::vector<unsigned> distance(AtomIndex source, const Graph& graph) {
 }
 
 PredecessorMap shortestPaths(AtomIndex source, const Graph& graph) {
-  if(source > graph.N()) {
+  if(source > graph.V()) {
     throw std::out_of_range("Supplied atom index is invalid!");
   }
 

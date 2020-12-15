@@ -78,7 +78,7 @@ void init_io(pybind11::module& m) {
 
       >>> import scine_utilities as utils
       >>> methane = from_smiles("C")
-      >>> methane.graph.N == 4
+      >>> methane.graph.V == 4
       True
       >>> cobalt_complex = from_smiles("Br[Co@OH12](Cl)(I)(F)(S)C")
       >>> cobalt_index = cobalt_complex.graph.atoms_of_element(utils.ElementType.Co)[0]

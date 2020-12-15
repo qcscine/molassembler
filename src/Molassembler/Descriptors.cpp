@@ -135,7 +135,7 @@ unsigned numRotatableBonds(const Molecule& mol) {
 }
 
 std::vector<unsigned> rankingEquivalentGroups(const Molecule& mol) {
-  PrivateGraph relationshipGraph(mol.graph().N());
+  PrivateGraph relationshipGraph(mol.graph().V());
 
   for(
     const AtomStereopermutator& permutator:
@@ -178,7 +178,7 @@ std::vector<unsigned> rankingEquivalentGroups(const Molecule& mol) {
            * because boost::isomorphism yields out of range values in the index
            * map.
            */
-          if(lhs.subgraph.N() == 1) {
+          if(lhs.subgraph.V() == 1) {
             const AtomIndex source = lhs.indexMap.left.begin()->first;
             const AtomIndex target = rhs.indexMap.left.begin()->first;
             if(!relationshipGraph.edgeOption(source, target)) {
@@ -192,7 +192,7 @@ std::vector<unsigned> rankingEquivalentGroups(const Molecule& mol) {
             throw std::runtime_error("Found no isomorphism for ranking-identical branch subgraphs!");
           }
           const auto isomorphism = isomorphismOption.value();
-          const AtomIndex subgraphN = lhs.subgraph.N();
+          const AtomIndex subgraphN = lhs.subgraph.V();
           for(AtomIndex lhsSubgraphV = 0; lhsSubgraphV < subgraphN; ++lhsSubgraphV) {
             const AtomIndex rhsSubgraphV = isomorphism.at(lhsSubgraphV);
             const AtomIndex source = lhs.indexMap.right.at(lhsSubgraphV);

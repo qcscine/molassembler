@@ -134,40 +134,26 @@ void StereopermutatorList::Impl::propagateVertexRemoval(const AtomIndex removedI
   std::swap(bondStereopermutators, updatedBondPermutators);
 }
 
-void StereopermutatorList::Impl::remove(const AtomIndex index) {
+bool StereopermutatorList::Impl::remove(const AtomIndex index) {
   auto findIter = atomStereopermutators.find(index);
 
   if(findIter != atomStereopermutators.end()) {
     atomStereopermutators.erase(findIter);
-  } else {
-    throw std::logic_error("No such atom stereopermutator found!");
+    return true;
   }
+
+  return false;
 }
 
-void StereopermutatorList::Impl::remove(const BondIndex& edge) {
+bool StereopermutatorList::Impl::remove(const BondIndex& edge) {
   auto findIter = bondStereopermutators.find(edge);
 
   if(findIter != bondStereopermutators.end()) {
     bondStereopermutators.erase(findIter);
-  } else {
-    throw std::logic_error("No such bond stereopermutator found!");
+    return true;
   }
-}
 
-void StereopermutatorList::Impl::try_remove(const AtomIndex index) {
-  auto findIter = atomStereopermutators.find(index);
-
-  if(findIter != atomStereopermutators.end()) {
-    atomStereopermutators.erase(findIter);
-  }
-}
-
-void StereopermutatorList::Impl::try_remove(const BondIndex& edge) {
-  auto findIter = bondStereopermutators.find(edge);
-
-  if(findIter != bondStereopermutators.end()) {
-    bondStereopermutators.erase(findIter);
-  }
+  return false;
 }
 
 AtomStereopermutator& StereopermutatorList::Impl::at(const AtomIndex index) {

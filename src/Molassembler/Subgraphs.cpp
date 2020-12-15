@@ -76,7 +76,7 @@ struct SubgraphCallback {
   bool removeHydrogenPermutations = true;
 
   SubgraphCallback(const Graph& a, const Graph& b, IndexMapVector& mappings)
-    : N {a.N()}, targetGraph(b), mappingsRef(mappings) {}
+    : N {a.V()}, targetGraph(b), mappingsRef(mappings) {}
 
   template<class AbMap>
   IndexMap makeIndexMap(const AbMap& m) {

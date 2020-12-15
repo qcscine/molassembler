@@ -85,9 +85,9 @@ void init_molecule(pybind11::module& m) {
       Initialize a hydrogen molecule
 
       >>> h2 = Molecule()
-      >>> h2.graph.N
+      >>> h2.graph.V
       2
-      >>> h2.graph.B
+      >>> h2.graph.E
       1
     )delim"
   );
@@ -104,9 +104,9 @@ void init_molecule(pybind11::module& m) {
 
       >>> import scine_utilities as utils
       >>> f = Molecule(utils.ElementType.F)
-      >>> f.graph.N
+      >>> f.graph.V
       1
-      >>> f.graph.B
+      >>> f.graph.E
       0
     )delim"
   );
@@ -122,7 +122,7 @@ void init_molecule(pybind11::module& m) {
       >>> # Make H-F
       >>> import scine_utilities as utils
       >>> hf = Molecule(utils.ElementType.H, utils.ElementType.F)
-      >>> hf.graph.N == 2
+      >>> hf.graph.V == 2
       True
     )delim"
   );
@@ -230,6 +230,26 @@ void init_molecule(pybind11::module& m) {
       >>> mol = Molecule() # Default constructor makes H2
       >>> _ = mol.add_atom(utils.ElementType.H, 0) # Make linear H3
       >>> _ = mol.add_bond(1, 2) # Make triangular H3
+    )delim"
+  );
+
+  molecule.def(
+    "add_permutator",
+    &Molecule::addPermutator,
+    pybind11::arg("bond"),
+    pybind11::arg("alignment") = BondStereopermutator::Alignment::Eclipsed,
+    R"delim(
+      Add a BondStereopermutator to the molecule
+
+      .. note:: You can't add AtomStereopermutators to the molecule manually.
+         These are automatically present on non-terminal atoms.
+
+      :param bond: Bond to place the permutator at
+      :param alignment: Alignment with which to construct the permutator
+
+      :returns: A reference to the added stereopermutator
+      :raises RuntimeError: If there is already a permutator present at this
+        bond
     )delim"
   );
 
@@ -405,9 +425,9 @@ void init_molecule(pybind11::module& m) {
       >>> m.graph.can_remove(0) # We can remove a hydrogen from H2
       True
       >>> m.remove_atom(0)
-      >>> m.graph.N # We are left with just a hydrogen atom
+      >>> m.graph.V  # We are left with just a hydrogen atom
       1
-      >>> m.graph.B
+      >>> m.graph.E
       0
     )delim"
   );
@@ -430,21 +450,23 @@ void init_molecule(pybind11::module& m) {
       >>> # In cyclopropane, we can remove a C-C bond without disconnecting the graph
       >>> cyclopropane.graph.can_remove(BondIndex(0, 1))
       True
-      >>> N_before = cyclopropane.graph.N
-      >>> B_before = cyclopropane.graph.B
+      >>> V_before = cyclopropane.graph.V
+      >>> E_before = cyclopropane.graph.E
       >>> cyclopropane.remove_bond(BondIndex(0, 1))
-      >>> N_before - cyclopropane.graph.N # The number of atoms is unchanged
+      >>> V_before - cyclopropane.graph.V # The number of atoms is unchanged
       0
-      >>> B_before - cyclopropane.graph.B # We really only removed a bond
+      >>> E_before - cyclopropane.graph.E # We really only removed a bond
       1
       >>> # Note that now the valence of the carbon atoms where we removed
       >>> # the bond is... funky
       >>> cyclopropane.graph.degree(0)
       3
-      >>> [cyclopropane.graph.bond_type(b) for b in cyclopropane.graph.bonds(0)]
-      [BondType.Single, BondType.Single, BondType.Single]
-      >>> cyclopropane.stereopermutators.option(0).shape
-      Shape.VacantTetrahedron
+      >>> expected_bonds = [BondType.Single, BondType.Single, BondType.Single]
+      >>> g = cyclopropane.graph
+      >>> [g.bond_type(b) for b in g.bonds(0)] == expected_bonds
+      True
+      >>> cyclopropane.stereopermutators.option(0).shape == shapes.Shape.VacantTetrahedron
+      True
     )delim"
   );
 
@@ -457,6 +479,18 @@ void init_molecule(pybind11::module& m) {
       i.e. the removal does not disconnect the graph.
 
       :param bond_index: :class:`BondIndex` of the bond to be removed
+    )delim"
+  );
+
+  molecule.def(
+    "remove_permutator",
+    &Molecule::removePermutator,
+    pybind11::arg("bond_index"),
+    R"delim(
+      Remove a bond stereopermutator from the molecule, if present
+
+      :param bond_index: Bond from which to remove the stereopermutator
+      :returns: Whether a stereopermutator was removed
     )delim"
   );
 
@@ -571,8 +605,8 @@ void init_molecule(pybind11::module& m) {
       >>> mol.canonical_components is None
       True
       >>> _ = mol.canonicalize()
-      >>> mol.canonical_components
-      AtomEnvironmentComponents.All
+      >>> mol.canonical_components == AtomEnvironmentComponents.All
+      True
     )delim"
   );
 
@@ -687,7 +721,7 @@ void init_molecule(pybind11::module& m) {
 
   // Shell integration
   molecule.def(
-    "__repr__",
+    "__str__",
     [](const Molecule& mol) -> std::string {
       std::string repr = "Molecule of elemental composition ";
       repr += Scine::Utils::generateChemicalFormula(mol.graph().elementCollection());
@@ -708,7 +742,7 @@ void init_molecule(pybind11::module& m) {
 
       return repr;
     },
-    "Generate a string representation of the molecule"
+    "Generate a string summary of the molecule components"
   );
 
   /* Direct copying support */

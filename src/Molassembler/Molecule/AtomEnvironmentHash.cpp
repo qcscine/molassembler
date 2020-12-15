@@ -283,7 +283,7 @@ std::vector<WideHashType> generate(
   boost::optional<const StereopermutatorList&> stereopermutators,
   const AtomEnvironmentComponents bitmask
 ) {
-  const unsigned N = inner.N();
+  const unsigned N = inner.V();
   std::vector<WideHashType> hashes(N);
 
 #pragma omp parallel for
@@ -306,10 +306,10 @@ bool identityCompare(
   const StereopermutatorList& bStereopermutators,
   AtomEnvironmentComponents componentBitmask
 ) {
-  assert(aGraph.N() == bGraph.N());
+  assert(aGraph.V() == bGraph.V());
 
   return Temple::all_of(
-    Temple::Adaptors::range(aGraph.N()),
+    Temple::Adaptors::range(aGraph.V()),
     [&](const AtomIndex i) -> WideHashType {
       return atomEnvironment(
         aGraph,

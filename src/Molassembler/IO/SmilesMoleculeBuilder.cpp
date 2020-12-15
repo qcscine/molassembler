@@ -683,7 +683,7 @@ std::vector<Molecule> MoleculeBuilder::interpret() {
   std::vector<PrivateGraph> precursors;
   precursors.resize(M);
 
-  const unsigned N = graph.N();
+  const unsigned N = graph.V();
 
   std::vector<PrivateGraph::Vertex> indexInComponentMap(N);
   // Copy vertices

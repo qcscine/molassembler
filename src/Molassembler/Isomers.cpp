@@ -32,7 +32,7 @@ bool everythingBesidesStereopermutationsSame(const Molecule& a, const Molecule& 
   assert(a.canonicalComponents() == bitmask && b.canonicalComponents() == bitmask);
 
   // Graph basic equality
-  if(a.graph().N() != b.graph().N() || a.graph().B() != b.graph().B()) {
+  if(a.graph().V() != b.graph().V() || a.graph().E() != b.graph().E()) {
     return false;
   }
 

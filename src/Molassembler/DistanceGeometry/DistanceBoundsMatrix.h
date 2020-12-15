@@ -82,7 +82,7 @@ public:
     BoundsMatrix bounds
   ) : matrix_(std::move(bounds)) {
     // Populate the lower bounds if no explicit information is present
-    const AtomIndex N = inner.N();
+    const AtomIndex N = inner.V();
     for(AtomIndex i = 0; i < N - 1; ++i) {
       for(AtomIndex j = i + 1; j < N; ++j) {
         // i < j in all cases -> lower bound is (j, i), upper bound is (i, j)

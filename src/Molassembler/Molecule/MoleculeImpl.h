@@ -32,14 +32,15 @@ struct Molecule::Impl {
   boost::optional<AtomEnvironmentComponents> canonicalComponentsOption_;
 
 /* "Private" helpers */
-  void tryAddAtomStereopermutator_(
+  boost::optional<AtomStereopermutator> makePermutator(
     AtomIndex candidateIndex,
-    StereopermutatorList& stereopermutators
+    const StereopermutatorList& stereopermutators
   ) const;
 
-  void tryAddBondStereopermutator_(
+  boost::optional<BondStereopermutator> makePermutator(
     const BondIndex& bond,
-    StereopermutatorList& stereopermutators
+    const StereopermutatorList& stereopermutators,
+    BondStereopermutator::Alignment alignment = BondStereopermutator::Alignment::Eclipsed
   ) const;
 
   //! Generates a list of stereopermutators based on graph properties alone
@@ -104,6 +105,12 @@ struct Molecule::Impl {
     AtomIndex a,
     AtomIndex b,
     BondType bondType
+  );
+
+  //! @brief Add a new BondStereopermutator to the molecule
+  const BondStereopermutator& addPermutator(
+    const BondIndex& bond,
+    BondStereopermutator::Alignment alignment
   );
 
   //! Applies an index permutation to all member state
@@ -227,6 +234,12 @@ struct Molecule::Impl {
    * involves removing the bond to it.
    */
   void removeBond(AtomIndex a, AtomIndex b);
+
+  /*! @brief Removes the BondStereopermutator on a specified edge, if present
+   *
+   * @returns Whether a permutator was deleted
+   */
+  bool removePermutator(const BondIndex& bond);
 
   //! Changes an existing bond's type
   bool setBondType(

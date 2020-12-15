@@ -142,12 +142,12 @@ BOOST_AUTO_TEST_CASE(EditingCleave, *boost::unit_test::label("Molassembler")) {
   BOOST_REQUIRE_NO_THROW(cleaved = Editing::cleave(caffeine, bridgeEdge));
 
   BOOST_CHECK_MESSAGE(
-    cleaved.first.graph().N() + cleaved.second.graph().N() == caffeine.graph().N(),
+    cleaved.first.graph().V() + cleaved.second.graph().V() == caffeine.graph().V(),
     "Sum of number of vertices of cleaved molecules does not match that of the original molecule"
   );
 
   BOOST_CHECK_MESSAGE(
-    cleaved.first.graph().B() + cleaved.second.graph().B() == caffeine.graph().B() - 1,
+    cleaved.first.graph().E() + cleaved.second.graph().E() == caffeine.graph().E() - 1,
     "Sum of number of bonds of cleaved molecules does not match that of the original molecule minus one"
   );
 }
@@ -194,12 +194,12 @@ BOOST_AUTO_TEST_CASE(EditingInsert, *boost::unit_test::label("Molassembler")) {
   );
 
   BOOST_CHECK_MESSAGE(
-    inserted.graph().N() == biphenyl.graph().N() + pyrimidine.graph().N(),
+    inserted.graph().V() == biphenyl.graph().V() + pyrimidine.graph().V(),
     "Sum of number of vertices of log and wedge does not equal that of result"
   );
 
   BOOST_CHECK_MESSAGE(
-    inserted.graph().B() == biphenyl.graph().B() + pyrimidine.graph().B() + 1,
+    inserted.graph().E() == biphenyl.graph().E() + pyrimidine.graph().E() + 1,
     "Sum of number of edges of log and wedge plus one does not equal that of result"
   );
 }
@@ -224,7 +224,7 @@ BOOST_AUTO_TEST_CASE(EditingSuperpose, *boost::unit_test::label("Molassembler"))
     *methaneHydrogenOption
   );
 
-  BOOST_CHECK(superposition.graph().N() == pyridine.graph().N() + methane.graph().N() - 1);
+  BOOST_CHECK(superposition.graph().V() == pyridine.graph().V() + methane.graph().V() - 1);
 }
 
 BOOST_AUTO_TEST_CASE(EditingSubstitute, *boost::unit_test::label("Molassembler")) {
@@ -294,7 +294,7 @@ BOOST_AUTO_TEST_CASE(EditingConnect, *boost::unit_test::label("Molassembler")) {
     BondType::Single
   );
 
-  BOOST_CHECK(connected.graph().N() == 2 * pyridine.graph().N());
+  BOOST_CHECK(connected.graph().V() == 2 * pyridine.graph().V());
 }
 
 BOOST_AUTO_TEST_CASE(EditingBugfixMesityleneSubstitution, *boost::unit_test::label("Molassembler")) {
@@ -344,7 +344,7 @@ BOOST_AUTO_TEST_CASE(EditingBugfixMesityleneSubstitution, *boost::unit_test::lab
     *mesityleneSubstitutionEdgeOption
   );
 
-  BOOST_CHECK(substituted.graph().N() == mesitylene.graph().N() + nhc.graph().N() - 2);
+  BOOST_CHECK(substituted.graph().V() == mesitylene.graph().V() + nhc.graph().V() - 2);
 }
 
 BOOST_AUTO_TEST_CASE(EditingBugfixHapticLigands, *boost::unit_test::label("Molassembler")) {

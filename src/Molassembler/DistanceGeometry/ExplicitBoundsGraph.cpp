@@ -42,10 +42,10 @@ namespace DistanceGeometry {
 ExplicitBoundsGraph::ExplicitBoundsGraph(
   const PrivateGraph& inner,
   const BoundsMatrix& bounds
-) : graph_ {2 * inner.N()},
+) : graph_ {2 * inner.V()},
     inner_ {inner}
 {
-  const AtomIndex N = inner.N();
+  const AtomIndex N = inner.V();
 
   for(AtomIndex a = 0; a < N; ++a) {
     for(AtomIndex b = a + 1; b < N; ++b) {
@@ -105,10 +105,10 @@ ExplicitBoundsGraph::ExplicitBoundsGraph(
 ExplicitBoundsGraph::ExplicitBoundsGraph(
   const PrivateGraph& inner,
   const DistanceBoundsMatrix& bounds
-) : graph_ {2 * inner.N()},
+) : graph_ {2 * inner.V()},
     inner_ {inner}
 {
-  const VertexDescriptor N = inner.N();
+  const VertexDescriptor N = inner.V();
   for(VertexDescriptor a = 0; a < N; ++a) {
     for(VertexDescriptor b = a + 1; b < N; ++b) {
       const double lower = bounds.lowerBound(a, b);
@@ -287,7 +287,7 @@ const ExplicitBoundsGraph::GraphType& ExplicitBoundsGraph::graph() const {
 }
 
 outcome::result<Eigen::MatrixXd> ExplicitBoundsGraph::makeDistanceBounds() const noexcept {
-  unsigned N = inner_.N();
+  unsigned N = inner_.V();
 
   Eigen::MatrixXd bounds;
   bounds.resize(N, N);
@@ -363,7 +363,7 @@ outcome::result<Eigen::MatrixXd> ExplicitBoundsGraph::makeDistanceMatrix(Random:
 }
 
 outcome::result<Eigen::MatrixXd> ExplicitBoundsGraph::makeDistanceMatrix(Random::Engine& engine, Partiality partiality) noexcept {
-  const unsigned N = inner_.N();
+  const unsigned N = inner_.V();
 
   Eigen::MatrixXd distancesMatrix;
   distancesMatrix.resize(N, N);

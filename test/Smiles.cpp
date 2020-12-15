@@ -56,7 +56,8 @@ BOOST_AUTO_TEST_CASE(SmilesHydrogenFilling, *boost::unit_test::label("Molassembl
     {"C=C", 6}, // C2H4
     {"C#C", 4}, // C2H2
     {"C=O", 4}, // H2CO
-    {"C#N", 3} // HCN
+    {"C#N", 3}, // HCN
+    {"N(C)(C)(C)C", 18}, // HN(Me)4 (tricky one for valence either 3 or 5)
   };
 
   // TODO add more tests for P, S, N (these are the odd ones out): e.g. what is the right smiles for H2SO4?
@@ -65,9 +66,9 @@ BOOST_AUTO_TEST_CASE(SmilesHydrogenFilling, *boost::unit_test::label("Molassembl
     Molecule result;
     BOOST_REQUIRE_NO_THROW(result = expectSingle(IO::Experimental::parseSmiles(pair.first)));
     BOOST_CHECK_MESSAGE(
-      result.graph().N() ==  pair.second,
+      result.graph().V() ==  pair.second,
       "Expected " << pair.second << " atoms for '" << pair.first << "', got "
-      << result.graph().N() << " instead."
+      << result.graph().V() << " instead."
     );
   }
 }
@@ -86,7 +87,7 @@ BOOST_AUTO_TEST_CASE(SmilesClosesRingCycles, *boost::unit_test::label("Molassemb
   for(const auto& pair : pairs) {
     Molecule result;
     BOOST_REQUIRE_NO_THROW(result = expectSingle(IO::Experimental::parseSmiles(pair.first)));
-    BOOST_CHECK_EQUAL(result.graph().B(), pair.second);
+    BOOST_CHECK_EQUAL(result.graph().E(), pair.second);
   }
 }
 
@@ -243,10 +244,10 @@ BOOST_AUTO_TEST_CASE(SmilesWithMultipleMolecules, *boost::unit_test::label("Mola
 
     BOOST_CHECK_EQUAL(results.size(), pair.second.size());
 
-    auto sizes = Temple::sorted(
+    const auto sizes = Temple::sorted(
       Temple::map(
         results,
-        [](const Molecule& m) -> unsigned { return m.graph().N(); }
+        [](const Molecule& m) -> unsigned { return m.graph().V(); }
       )
     );
 

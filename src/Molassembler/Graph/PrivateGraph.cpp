@@ -182,6 +182,58 @@ void PrivateGraph::removeVertex(Vertex a) {
   boost::remove_vertex(a, graph_);
 }
 
+std::unordered_map<PrivateGraph::Vertex, PrivateGraph::Vertex>
+PrivateGraph::merge(
+  const PrivateGraph& other,
+  const std::vector<Vertex>& copyVertices
+) {
+  /* Copy over element types, creating the new vertices, collecting
+   * the new vertex indices
+   */
+  std::unordered_map<Vertex, Vertex> copyVertexTargetIndices;
+  if(copyVertices.empty()) {
+    for(const Vertex vertex : other.vertices()) {
+      copyVertexTargetIndices.insert({
+        vertex,
+        addVertex(other.elementType(vertex))
+      });
+    }
+  } else {
+    for(const Vertex vertexIndex : copyVertices) {
+      copyVertexTargetIndices.insert({
+        vertexIndex,
+        addVertex(other.elementType(vertexIndex))
+      });
+    }
+  }
+
+  for(const PrivateGraph::Edge& e : other.edges()) {
+    const auto findSourceIter = copyVertexTargetIndices.find(
+      other.source(e)
+    );
+
+    const auto findTargetIter = copyVertexTargetIndices.find(
+      other.target(e)
+    );
+
+    /* If both source and target indices are keys in copyVertexTargetIndices,
+     * then we copy the edge
+     */
+    if(
+      findSourceIter != std::end(copyVertexTargetIndices)
+      && findTargetIter != std::end(copyVertexTargetIndices)
+    ) {
+      addEdge(
+        findSourceIter->second,
+        findTargetIter->second,
+        other.bondType(e)
+      );
+    }
+  }
+
+  return copyVertexTargetIndices;
+}
+
 Utils::ElementType& PrivateGraph::elementType(const Vertex a) {
   // Invalidate the cache values
   properties_.invalidate();
@@ -199,12 +251,12 @@ PrivateGraph::BglType& PrivateGraph::bgl() {
 /* Information */
 
 bool PrivateGraph::canRemove(const Vertex a) const {
-  assert(a < N());
+  assert(a < V());
 
   /* A molecule is at least one atom. Conceptually, a molecule should consist
    * of at least two atoms, but this is done for usability.
    */
-  if(N() == 1) {
+  if(V() == 1) {
     return false;
   }
 
@@ -230,12 +282,12 @@ bool PrivateGraph::canRemove(const Edge& edge) const {
 
 /* Information */
 unsigned PrivateGraph::connectedComponents() const {
-  std::vector<unsigned> componentMap(N());
+  std::vector<unsigned> componentMap(V());
   return boost::connected_components(graph_, &componentMap[0]);
 }
 
 unsigned PrivateGraph::connectedComponents(std::vector<unsigned>& componentMap) const {
-  const Vertex size = N();
+  const Vertex size = V();
 
   if(componentMap.size() != size) {
     componentMap.resize(size);
@@ -271,6 +323,19 @@ boost::optional<PrivateGraph::Edge> PrivateGraph::edgeOption(const Vertex a, con
   return boost::none;
 }
 
+Utils::ElementTypeCollection PrivateGraph::elementCollection() const {
+  const Vertex size = V();
+
+  Utils::ElementTypeCollection elements;
+  elements.reserve(size);
+
+  for(AtomIndex i = 0; i < size; ++i) {
+    elements.push_back(elementType(i));
+  }
+
+  return elements;
+}
+
 PrivateGraph::Vertex PrivateGraph::source(const PrivateGraph::Edge& edge) const {
   return boost::source(edge, graph_);
 }
@@ -291,14 +356,22 @@ PrivateGraph::Vertex PrivateGraph::B() const {
   return boost::num_edges(graph_);
 }
 
+PrivateGraph::Vertex PrivateGraph::V() const {
+  return boost::num_vertices(graph_);
+}
+
+unsigned PrivateGraph::E() const {
+  return boost::num_edges(graph_);
+}
+
 boost::optional<std::vector<AtomIndex>> PrivateGraph::modularIsomorphism(
   const PrivateGraph& other,
   const AtomEnvironmentComponents components
 ) const {
-  const unsigned thisNumAtoms = N();
+  const unsigned thisNumAtoms = V();
 
   //! Quick checks
-  if(thisNumAtoms != other.N() || B() != other.B()) {
+  if(thisNumAtoms != other.V() || E() != other.E()) {
     return boost::none;
   }
 
@@ -335,7 +408,7 @@ boost::optional<std::vector<AtomIndex>> PrivateGraph::modularIsomorphism(
 }
 
 bool PrivateGraph::identicalGraph(const PrivateGraph& other) const {
-  assert(N() == other.N() && B() == other.B());
+  assert(V() == other.V() && E() == other.E());
 
   // Make sure topology matches
   return Temple::all_of(
@@ -376,10 +449,10 @@ std::pair<
   // Transform the bitset into a left and right
   std::vector<AtomIndex> left;
   std::vector<AtomIndex> right;
-  left.reserve(N());
-  right.reserve(N());
+  left.reserve(V());
+  right.reserve(V());
 
-  for(AtomIndex i = 0; i < N(); ++i) {
+  for(AtomIndex i = 0; i < V(); ++i) {
     if(bitsetPtr->at(i)) {
       right.push_back(i);
     } else {

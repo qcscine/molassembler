@@ -555,7 +555,7 @@ void SpatialModel::addBondStereopermutatorInformation(
   // Default case: No part of the dihedral is fixed
   Shapes::Vertex firstShapePosition;
   Shapes::Vertex secondShapePosition;
-  double dihedralAngle;
+  double dihedralAngle {};
 
   for(const auto& dihedralTuple : dihedrals) {
     std::tie(firstShapePosition, secondShapePosition, dihedralAngle) = dihedralTuple;
@@ -696,7 +696,7 @@ bool SpatialModel::modelPartiallyFixedBond(
 
     Shapes::Vertex firstShapePosition;
     Shapes::Vertex secondShapePosition;
-    double dihedralAngle;
+    double dihedralAngle {};
 
     for(const auto& dihedralTuple : composite.allPermutations().at(permutation).dihedrals) {
       std::tie(firstShapePosition, secondShapePosition, dihedralAngle) = dihedralTuple;
@@ -1203,7 +1203,7 @@ ChiralConstraint SpatialModel::makeChiralConstraint(
 
 SpatialModel::BoundsMatrix SpatialModel::makePairwiseBounds() const {
   return makePairwiseBounds(
-    molecule_.graph().N(),
+    molecule_.graph().V(),
     constraints_,
     bondBounds_,
     angleBounds_,
@@ -1685,7 +1685,7 @@ void SpatialModel::addDefaultAngles_() {
    * can be modelled and hence angle calculation cannot be completed.
    */
 
-  const AtomIndex N = molecule_.graph().N();
+  const AtomIndex N = molecule_.graph().V();
   for(AtomIndex center = 0; center < N; ++center) {
     Temple::forEach(
       Temple::Adaptors::allPairs(

@@ -99,29 +99,17 @@ struct StereopermutatorList::Impl {
    */
   void propagateVertexRemoval(AtomIndex removedIndex);
 
-  /*! @brief Removes the AtomStereopermutator on a specified index
-   *
-   * @complexity{@math{\Theta(1)}}
-   */
-  void remove(AtomIndex index);
-
-  /*! @brief Removes the BondStereopermutator on a specified edge
-   *
-   * @complexity{@math{\Theta(1)}}
-   */
-  void remove(const BondIndex& edge);
-
   /*! @brief Removes the AtomStereopermutator on a specified index, if present
    *
    * @complexity{@math{\Theta(1)}}
    */
-  void try_remove(AtomIndex index);
+  bool remove(AtomIndex index);
 
   /*! @brief Removes the BondStereopermutator on a specified edge, if present
    *
    * @complexity{@math{\Theta(1)}}
    */
-  void try_remove(const BondIndex& edge);
+  bool remove(const BondIndex& edge);
 //!@}
 
 //!@name Information

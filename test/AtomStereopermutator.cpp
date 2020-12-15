@@ -143,7 +143,7 @@ BOOST_FIXTURE_TEST_CASE(LigandAdditionPropagatedStateSuperposable, LowTemperatur
 
     while(priorMol.graph().degree(0) != Shapes::size(source)) {
       priorMol.addAtom(
-        Utils::ElementInfo::element(priorMol.graph().N()),
+        Utils::ElementInfo::element(priorMol.graph().V()),
         0u,
         BondType::Single
       );
@@ -173,7 +173,7 @@ BOOST_FIXTURE_TEST_CASE(LigandAdditionPropagatedStateSuperposable, LowTemperatur
     auto postMol = priorMol;
     // Transition to a larger shape
     postMol.addAtom(
-      Utils::ElementInfo::element(postMol.graph().N()),
+      Utils::ElementInfo::element(postMol.graph().V()),
       0u,
       BondType::Single
     );
@@ -311,7 +311,7 @@ BOOST_FIXTURE_TEST_CASE(AtomStereopermutatorContinuity, LowTemperatureFixture) {
 
     // Add different substituents until we reach the source size
     while(mol.graph().degree(0) != Shapes::size(source)) {
-      mol.addAtom(substituentElements.at(mol.graph().N() - 2), 0u, BondType::Single);
+      mol.addAtom(substituentElements.at(mol.graph().V() - 2), 0u, BondType::Single);
     }
 
     // Set the starting shape
@@ -332,7 +332,7 @@ BOOST_FIXTURE_TEST_CASE(AtomStereopermutatorContinuity, LowTemperatureFixture) {
 
     // Transition to the target shape
     const AtomIndex lastAddedIndex = mol.addAtom(
-      substituentElements.at(mol.graph().N() - 2),
+      substituentElements.at(mol.graph().V() - 2),
       0u,
       BondType::Single
     );

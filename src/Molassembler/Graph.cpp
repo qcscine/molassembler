@@ -64,16 +64,7 @@ Graph::Graph(PrivateGraph&& inner) : innerPtr_(
 ) {}
 
 Utils::ElementTypeCollection Graph::elementCollection() const {
-  const AtomIndex size = N();
-
-  Utils::ElementTypeCollection elements;
-  elements.reserve(size);
-
-  for(AtomIndex i = 0; i < size; ++i) {
-    elements.push_back(elementType(i));
-  }
-
-  return elements;
+  return inner().elementCollection();
 }
 
 Utils::ElementType Graph::elementType(const AtomIndex a) const {
@@ -81,11 +72,19 @@ Utils::ElementType Graph::elementType(const AtomIndex a) const {
 }
 
 AtomIndex Graph::N() const {
-  return inner().N();
+  return inner().V();
 }
 
 unsigned Graph::B() const {
-  return inner().B();
+  return inner().E();
+}
+
+AtomIndex Graph::V() const {
+  return inner().V();
+}
+
+unsigned Graph::E() const {
+  return inner().E();
 }
 
 boost::optional<std::vector<AtomIndex>> Graph::modularIsomorphism(
@@ -115,6 +114,83 @@ bool Graph::operator == (const Graph& other) const {
   );
 }
 
+AtomIndex Graph::addAtom(Utils::ElementType e, AtomIndex i, BondType type) {
+  if(i >= V()) {
+    throw std::out_of_range("Invalid atom index");
+  }
+
+  if(type == BondType::Eta) {
+    throw std::logic_error("Eta bond types may not be inserted into the graph");
+  }
+
+  AtomIndex newVertex = inner().addVertex(e);
+  inner().addEdge(i, newVertex, type);
+  return newVertex;
+}
+
+BondIndex Graph::addBond(AtomIndex i, AtomIndex j, BondType type) {
+  if(type == BondType::Eta) {
+    throw std::logic_error("Eta bond types may not be inserted into the graph");
+  }
+
+  inner().addEdge(i, j, type);
+  return BondIndex {i, j};
+}
+
+void Graph::setElementType(AtomIndex i, Utils::ElementType type) {
+  if(i >= V()) {
+    throw std::out_of_range("Atom index is out of range");
+  }
+
+  inner().elementType(i) = type;
+}
+
+bool Graph::setBondType(AtomIndex i, AtomIndex j, BondType type) {
+  const AtomIndex size = V();
+  if(i >= size || j >= size) {
+    throw std::out_of_range("Atom index is out of range");
+  }
+
+  if(type == BondType::Eta) {
+    throw std::logic_error(
+      "Do not manually change eta bond types, this dynamism is handled internally"
+    );
+  }
+
+  auto edgeOption = inner().edgeOption(i, j);
+  if(!edgeOption) {
+    addBond(i, j, type);
+    return false;
+  }
+
+  inner().bondType(edgeOption.value()) = type;
+  return true;
+}
+
+void Graph::removeAtom(AtomIndex i) {
+  if(i >= V()) {
+    throw std::out_of_range("Invalid atom index");
+  }
+
+  if(!canRemove(i)) {
+    throw std::logic_error("Bond removal would disconnect the graph");
+  }
+  inner().removeVertex(i);
+}
+
+void Graph::removeBond(const BondIndex& bond) {
+  const auto edgeOption = inner().edgeOption(bond.first, bond.second);
+  if(!edgeOption) {
+    throw std::out_of_range("That bond does not exist!");
+  }
+
+  if(!canRemove(bond)) {
+    throw std::logic_error("Bond removal would disconnect the graph");
+  }
+
+  inner().removeEdge(edgeOption.value());
+}
+
 bool Graph::adjacent(const AtomIndex a, const AtomIndex b) const {
   return static_cast<bool>(
     inner().edgeOption(a, b)
@@ -140,7 +216,7 @@ boost::optional<BondIndex> Graph::bond(const AtomIndex a, const AtomIndex b) con
 }
 
 Utils::BondOrderCollection Graph::bondOrders() const {
-  Utils::BondOrderCollection BOs(inner().N());
+  Utils::BondOrderCollection BOs(inner().V());
 
   for(const auto edge : inner().edges()) {
     BOs.setOrder(

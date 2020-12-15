@@ -12,6 +12,8 @@ and this project adheres to `Semantic Versioning <http://semver.org/spec/v2.0.0.
 Added
 .....
 
+- Molecule: Bond stereopermutator addition and removal functions
+- Graph: Added modifying functions to the interface
 - Graph algorithm: Ranking equivalent groups and ranking distinct atoms
   algorithms exploiting ranking results to classify chemical equivalence.
 - Graph algorithm: Shortest path generator between vertices in the graph
@@ -26,6 +28,8 @@ Added
 Changed
 .......
 
+- Graph and Molecule are now implementations of a common interface for graph
+  information and modification. This interface might be expanded in the future.
 - More colorful graphviz rendering for elements
 - Conan: Better integration with community packages. No longer require full CMake
   from all dependencies but follow conan `packaging philosophy <https://github.com/conan-io/conan-center-index/blob/master/docs/faqs.md#why-are-cmake-findconfig-files-and-pkg-config-files-not-packaged>`_.
@@ -46,6 +50,12 @@ Changed
 
 Deprecated
 ..........
+
+- ``Graph`` properties ``N`` and ``B`` for the number of atoms and the number of
+  bonds have been deprecated in favor of new ``V`` and ``E`` properties in order
+  to match complexity annotations and single-letter object properties
+- ``StereopermutatorList`` method ``try_remove`` is deprecated in favor of
+  ``remove``, which now behaves as ``try_remove`` would (no throwing).
 
 Removed
 .......

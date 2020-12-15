@@ -97,6 +97,13 @@ BondIndex Molecule::addBond(
   return pImpl_->addBond(a, b, bondType);
 }
 
+const BondStereopermutator& Molecule::addPermutator(
+  const BondIndex& bond,
+  BondStereopermutator::Alignment alignment
+) {
+  return pImpl_->addPermutator(bond, alignment);
+}
+
 void Molecule::applyPermutation(const std::vector<AtomIndex>& permutation) {
   pImpl_->applyPermutation(permutation);
 }
@@ -152,6 +159,10 @@ void Molecule::removeBond(
   pImpl_->removeBond(bond.first, bond.second);
 }
 
+bool Molecule::removePermutator(const BondIndex& bond) {
+  return pImpl_->removePermutator(bond);
+}
+
 bool Molecule::setBondType(
   const AtomIndex a,
   const AtomIndex b,
@@ -176,6 +187,46 @@ void Molecule::setShapeAtAtom(
 
 
 /* Information */
+bool Molecule::adjacent(const AtomIndex a, const AtomIndex b) const {
+  return graph().adjacent(a, b);
+}
+
+boost::optional<BondIndex> Molecule::bond(const AtomIndex a, const AtomIndex b) const {
+  return graph().bond(a, b);
+}
+
+BondType Molecule::bondType(const BondIndex& edge) const {
+  return graph().bondType(edge);
+}
+
+bool Molecule::canRemove(const AtomIndex a) const {
+  return graph().canRemove(a);
+}
+
+bool Molecule::canRemove(const BondIndex& edge) const {
+  return graph().canRemove(edge);
+}
+
+const Cycles& Molecule::cycles() const {
+  return graph().cycles();
+}
+
+unsigned Molecule::degree(AtomIndex a) const {
+  return graph().degree(a);
+}
+
+Utils::ElementType Molecule::elementType(AtomIndex a) const {
+  return graph().elementType(a);
+}
+
+AtomIndex Molecule::V() const {
+  return graph().V();
+}
+
+unsigned Molecule::E() const {
+  return graph().E();
+}
+
 boost::optional<AtomEnvironmentComponents> Molecule::canonicalComponents() const {
   return pImpl_->canonicalComponents();
 }

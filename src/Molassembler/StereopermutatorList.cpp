@@ -51,20 +51,20 @@ void StereopermutatorList::propagateVertexRemoval(const AtomIndex removedIndex) 
   impl_->propagateVertexRemoval(removedIndex);
 }
 
-void StereopermutatorList::remove(const AtomIndex index) {
-  impl_->remove(index);
+bool StereopermutatorList::remove(const AtomIndex index) {
+  return impl_->remove(index);
 }
 
-void StereopermutatorList::remove(const BondIndex& edge) {
-  impl_->remove(edge);
+bool StereopermutatorList::remove(const BondIndex& edge) {
+  return impl_->remove(edge);
 }
 
 void StereopermutatorList::try_remove(const AtomIndex index) {
-  impl_->try_remove(index);
+  impl_->remove(index);
 }
 
 void StereopermutatorList::try_remove(const BondIndex& edge) {
-  impl_->try_remove(edge);
+  impl_->remove(edge);
 }
 
 AtomStereopermutator& StereopermutatorList::at(const AtomIndex index) {

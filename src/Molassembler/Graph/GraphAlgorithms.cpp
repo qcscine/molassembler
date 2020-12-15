@@ -95,7 +95,8 @@ std::vector<RankingInformation::Link> siteLinks(
     )
   ) {
     // Figure out which substituent of A and B is part of the cycle
-    AtomIndex aAdjacent, bAdjacent;
+    AtomIndex aAdjacent {};
+    AtomIndex bAdjacent {};
     std::tie(aAdjacent, bAdjacent) = findNeighboringAtoms(
       stereopermutatorA.placement(),
       stereopermutatorB.placement(),
@@ -440,7 +441,7 @@ std::vector<
 }
 
 void updateEtaBonds(PrivateGraph& graph) {
-  const AtomIndex N = graph.N();
+  const AtomIndex N = graph.V();
   for(AtomIndex placement = 0; placement < N; ++placement) {
     // Skip any main group element types, none of these should be eta bonded
     if(AtomInfo::isMainGroupElement(graph.elementType(placement))) {
@@ -473,9 +474,9 @@ void updateEtaBonds(PrivateGraph& graph) {
 }
 
 std::vector<unsigned> distance(AtomIndex a, const PrivateGraph& graph) {
-  assert(a < graph.N());
+  assert(a < graph.V());
 
-  std::vector<unsigned> distances (graph.N(), 0);
+  std::vector<unsigned> distances (graph.V(), 0);
 
   boost::breadth_first_search(
     graph.bgl(),
@@ -491,9 +492,9 @@ std::vector<unsigned> distance(AtomIndex a, const PrivateGraph& graph) {
 }
 
 std::vector<AtomIndex> shortestPaths(AtomIndex a, const PrivateGraph& graph) {
-  assert(a < graph.N());
+  assert(a < graph.V());
 
-  std::vector<AtomIndex> predecessors(graph.N(), 0);
+  std::vector<AtomIndex> predecessors(graph.V(), 0);
 
   boost::breadth_first_search(
     graph.bgl(),
@@ -515,7 +516,7 @@ std::vector<AtomIndex> bfsUniqueDescendants(
   const std::vector<AtomIndex>& descendants,
   const PrivateGraph& graph
 ) {
-  assert(source < graph.N());
+  assert(source < graph.V());
   constexpr AtomIndex unmarked = std::numeric_limits<AtomIndex>::max() - 1;
   constexpr AtomIndex split = std::numeric_limits<AtomIndex>::max();
 
@@ -563,7 +564,7 @@ std::vector<AtomIndex> bfsUniqueDescendants(
     std::reference_wrapper<std::vector<AtomIndex>> componentMembership;
   };
 
-  std::vector<AtomIndex> components(graph.N(), unmarked);
+  std::vector<AtomIndex> components(graph.V(), unmarked);
   components.at(source) = source;
   for(const AtomIndex descendant : descendants) {
     components.at(descendant) = descendant;

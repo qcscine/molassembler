@@ -316,7 +316,7 @@ Cycles::RdlDataPtrs::RdlDataPtrs(
   const bool ignoreEtaBonds
 ) {
   // Initialize a new graph
-  graphPtr = RDL_initNewGraph(sourceGraph.N());
+  graphPtr = RDL_initNewGraph(sourceGraph.V());
 
   if(ignoreEtaBonds) {
     for(const auto edge : sourceGraph.edges()) {
@@ -455,7 +455,7 @@ struct Cycles::UrfIdsCycleIterator::UrfHelper {
     RdlFunc&& RDL_function,
     Args ... args
   ) {
-    unsigned* idsPtr;
+    unsigned* idsPtr {};
 
     // Call the RDL function, allocating memory at idsPtr
     const unsigned idCount = RDL_function(

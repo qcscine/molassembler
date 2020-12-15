@@ -534,7 +534,7 @@ BOOST_AUTO_TEST_CASE(GraphShortestDistancesCorrectness, *boost::unit_test::label
     Molecule sampleMol = IO::read(
       currentFilePath.string()
     );
-    const unsigned N = sampleMol.graph().N();
+    const unsigned N = sampleMol.graph().V();
 
     DistanceGeometry::SpatialModel spatialModel {sampleMol, DistanceGeometry::Configuration {}};
 

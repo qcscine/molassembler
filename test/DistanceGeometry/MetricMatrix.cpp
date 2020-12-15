@@ -186,9 +186,7 @@ BOOST_AUTO_TEST_CASE(MetricMatrixConstructionIsInvariantUnderOrderingSwap, *boos
     };
 
     // choose a random reordering
-    auto reorderSequence = randomReorderingSequence(
-      molecule.graph().N()
-    );
+    auto reorderSequence = randomReorderingSequence(molecule.graph().V());
 
     // get a distances matrix from the bounds
     auto distancesMatrixResult = distanceBounds.makeDistanceMatrix(randomnessEngine());

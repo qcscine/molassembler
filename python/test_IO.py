@@ -17,10 +17,10 @@ def test_LineNotation():
     inchi = "InChI=1S/C8H10N4O2/c1-10-4-9-6-5(10)7(13)12(3)8(14)11(6)2/h4H,1-3H3"
     caffeine_from_smiles = masm.io.LineNotation.from_isomeric_smiles(
         smiles)
-    assert caffeine_from_smiles.graph.N == 24
+    assert caffeine_from_smiles.graph.V == 24
 
     caffeine_from_inchi = masm.io.LineNotation.from_inchi(inchi)
-    assert caffeine_from_inchi.graph.N == 24
+    assert caffeine_from_inchi.graph.V == 24
 
 
 def test_FileIO():
@@ -143,7 +143,7 @@ M  END"""
     splat = masm.io.split("sample.mol")
     assert len(splat) == 1
 
-    assert mol.graph.N == 50
+    assert mol.graph.V == 50
 
     # Clean up
     os.remove("sample.mol")

@@ -5,6 +5,7 @@
  */
 #include "TypeCasters.h"
 #include "pybind11/operators.h"
+#include "pybind11/eval.h"
 
 #include "Molassembler/Cycles.h"
 #include "Molassembler/Graph.h"
@@ -91,9 +92,9 @@ void init_graph(pybind11::module& m) {
       >>> can_remove = lambda a : g.can_remove(a)
       >>> all(map(can_remove, hydrogen_indices))
       True
-      >>> g.N
+      >>> g.V
       8
-      >>> g.B
+      >>> g.E
       7
     )delim"
   );
@@ -109,7 +110,7 @@ void init_graph(pybind11::module& m) {
       >>> ethane = io.experimental.from_smiles("CC")
       >>> ethane.graph.degree(0)
       4
-      >>> [ethane.graph.adjacent(0, a) for a in range(1, ethane.graph.N)]
+      >>> [ethane.graph.adjacent(0, a) for a in range(1, ethane.graph.V)]
       [True, True, True, True, False, False, False]
     )delim"
   );
@@ -158,14 +159,15 @@ void init_graph(pybind11::module& m) {
 
       >>> # Look at some bond orders of an interesting model compound
       >>> compound = io.experimental.from_smiles("[Co]1(C#N)(C#O)C=C1")
-      >>> compound.graph.bond_type(BondIndex(0, 1)) # Co-CN bond
-      BondType.Single
-      >>> compound.graph.bond_type(BondIndex(0, 5)) # Co-C=C bond
-      BondType.Eta
-      >>> compound.graph.bond_type(BondIndex(5, 6)) # C=C bond
-      BondType.Double
-      >>> compound.graph[BondIndex(1, 2)] # C#N bond by bond subsetting
-      BondType.Triple
+      >>> g = compound.graph
+      >>> g.bond_type(BondIndex(0, 1)) == BondType.Single  # Co-CN bond
+      True
+      >>> g.bond_type(BondIndex(0, 5)) == BondType.Eta  # Co-C=C bond
+      True
+      >>> g.bond_type(BondIndex(5, 6)) == BondType.Double  # C=C bond
+      True
+      >>> g[BondIndex(1, 2)] == BondType.Triple  # C#N bond by bond subsetting
+      True
     )delim"
   );
 
@@ -260,8 +262,30 @@ void init_graph(pybind11::module& m) {
     )delim"
   );
 
-  graphClass.def_property_readonly("N", &Graph::N, "The number of atoms in the graph");
-  graphClass.def_property_readonly("B", &Graph::B, "The number of bonds in the graph");
+  graphClass.def_property_readonly(
+    "N",
+    [](const Graph& g) {
+      pybind11::exec(R"delim(
+        import warnings
+        warnings.warn("The 'N' graph property is deprecated in favor of 'V'.", DeprecationWarning)
+      )delim");
+      return g.V();
+    },
+    "The number of atoms in the graph"
+  );
+  graphClass.def_property_readonly("V", &Graph::V, "The number of atoms in the graph");
+  graphClass.def_property_readonly(
+    "B",
+    [](const Graph& g) {
+      pybind11::exec(R"delim(
+        import warnings
+        warnings.warn("The 'B' graph property is deprecated in favor of 'E'.", DeprecationWarning)
+      )delim");
+      return g.E();
+    },
+    "The number of bonds in the graph"
+  );
+  graphClass.def_property_readonly("E", &Graph::E, "The number of bonds in the graph");
 
   graphClass.def(
     "split_along_bridge",
@@ -289,7 +313,7 @@ void init_graph(pybind11::module& m) {
     R"delim(
       Iterate through all valid atom indices of the graph
 
-      Fully equivalent to: ``range(graph.N)``
+      Fully equivalent to: ``range(graph.V)``
     )delim"
   );
 
@@ -357,19 +381,7 @@ void init_graph(pybind11::module& m) {
 
   graphClass.def(
     "add_atom",
-    [](Graph& graph, const AtomIndex i, const Utils::ElementType element, const BondType type) -> AtomIndex {
-      if(i >= graph.N()) {
-        throw std::out_of_range("Invalid atom index");
-      }
-
-      if(type == BondType::Eta) {
-        throw std::logic_error("Eta bond types may not be inserted into the graph");
-      }
-
-      AtomIndex newVertex = graph.inner().addVertex(element);
-      graph.inner().addEdge(i, newVertex, type);
-      return newVertex;
-    },
+    &Graph::addAtom,
     pybind11::arg("bonded_to"),
     pybind11::arg("element"),
     pybind11::arg("bond_type"),
@@ -392,15 +404,7 @@ void init_graph(pybind11::module& m) {
 
   graphClass.def(
     "add_bond",
-    [](Graph& graph, const AtomIndex i, const AtomIndex j, const BondType type) -> BondIndex {
-      if(type == BondType::Eta) {
-        throw std::logic_error("Eta bond types may not be inserted into the graph");
-      }
-
-      PrivateGraph& inner = graph.inner();
-      inner.addEdge(i, j, type);
-      return BondIndex {i, j};
-    },
+    &Graph::addBond,
     pybind11::arg("i"),
     pybind11::arg("j"),
     pybind11::arg("bond_type"),
@@ -418,17 +422,7 @@ void init_graph(pybind11::module& m) {
 
   graphClass.def(
     "remove_atom",
-    [](Graph& graph, const AtomIndex i) -> void {
-      if(i >= graph.N()) {
-        throw std::out_of_range("Invalid atom index");
-      }
-
-      PrivateGraph& inner = graph.inner();
-      if(!graph.canRemove(i)) {
-        throw std::logic_error("Bond removal would disconnect the graph");
-      }
-      inner.removeVertex(i);
-    },
+    &Graph::removeAtom,
     pybind11::arg("atom_index"),
     R"delim(
       Removes a vertex from the graph.
@@ -446,19 +440,7 @@ void init_graph(pybind11::module& m) {
 
   graphClass.def(
     "remove_bond",
-    [](Graph& graph, const BondIndex& bond) -> void {
-      PrivateGraph& inner = graph.inner();
-      const auto edgeOption = inner.edgeOption(bond.first, bond.second);
-      if(!edgeOption) {
-        throw std::out_of_range("That bond does not exist!");
-      }
-
-      if(!graph.canRemove(bond)) {
-        throw std::logic_error("Bond removal would disconnect the graph");
-      }
-
-      inner.removeEdge(edgeOption.value());
-    },
+    &Graph::removeBond,
     pybind11::arg("bond"),
     R"delim(
       Removes a bond from the graph.
@@ -477,7 +459,7 @@ void init_graph(pybind11::module& m) {
       >>> acenaphthylene = io.experimental.from_smiles(acenaphtyhlene_smiles)
       >>> from copy import deepcopy
       >>> graph = deepcopy(acenaphthylene.graph)  # Never modify a molecule's graph in-place
-      >>> graph.B
+      >>> graph.E
       22
       >>> can_remove = [b for b in graph.bonds() if graph.can_remove(b)]
       >>> while len(can_remove) != 0:
@@ -485,7 +467,7 @@ void init_graph(pybind11::module& m) {
       ...     # Have to re-evaluate this!
       ...     can_remove = [b for b in graph.bonds() if graph.can_remove(b)]
       ...
-      >>> graph.B
+      >>> graph.E
       19
     )delim"
   );

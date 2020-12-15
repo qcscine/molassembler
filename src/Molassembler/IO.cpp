@@ -260,7 +260,7 @@ void write(
   const Molecule& molecule,
   const AngstromPositions& angstromWrapper
 ) {
-  assert(molecule.graph().N() == static_cast<AtomIndex>(angstromWrapper.positions.rows()));
+  assert(molecule.graph().V() == static_cast<AtomIndex>(angstromWrapper.positions.rows()));
   auto data = exchangeFormat(molecule, angstromWrapper);
   Utils::ChemicalFileHandler::write(filename, data.first, data.second);
 }
@@ -289,12 +289,12 @@ void write(const std::string& filename, const Molecule& molecule) {
   if(filepath.extension() == ".svg") {
     if(boost::process::search_path("dot").empty()) {
       throw std::runtime_error("Graphviz 'dot' binary not found in PATH");
-    } else {
-      std::ofstream svgfile(filename);
-      svgfile << pipeSvg(molecule);
-      svgfile.close();
-      return;
     }
+
+    std::ofstream svgfile(filename);
+    svgfile << pipeSvg(molecule);
+    svgfile.close();
+    return;
   }
 
   if(filepath.extension() == ".cbor") {

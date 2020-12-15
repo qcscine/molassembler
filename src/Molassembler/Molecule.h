@@ -11,8 +11,10 @@
 #ifndef INCLUDE_MOLASSEMBLER_MOLECULE_H
 #define INCLUDE_MOLASSEMBLER_MOLECULE_H
 
+#include "Molassembler/Graph/GraphInterface.h"
 #include "boost/optional.hpp"
 
+#include "Molassembler/BondStereopermutator.h"
 #include "Molassembler/Options.h"
 
 namespace Scine {
@@ -28,6 +30,7 @@ namespace Molassembler {
 class Graph;
 class StereopermutatorList;
 struct RankingInformation;
+class AtomStereopermutator;
 
 /*!
  * @brief Models a molecule as a graph (connectivity of atoms) and a list of
@@ -70,7 +73,7 @@ struct RankingInformation;
  *   - @math{\Omega} implies that the function grows asympotically at least as fast as (Knuth definition)
  * @endparblock
  */
-class MASM_EXPORT Molecule {
+class MASM_EXPORT Molecule final : public GraphInterface {
 public:
 
 //!@name Static functions
@@ -97,7 +100,7 @@ public:
   Molecule& operator = (Molecule&& rhs) noexcept;
   Molecule(const Molecule& other);
   Molecule& operator = (const Molecule& rhs);
-  ~Molecule();
+  ~Molecule() final;
 
   /*!
    * @brief Default-constructor creates a hydrogen molecule (H2).
@@ -195,7 +198,7 @@ public:
    * @param adjacentTo The atom to which the new atom is to be attached
    * @param bondType The bond type with which the new atom is to be attached
    *
-   * @throws std::out_of_range If adjacentTo is invalid, i.e. >= N()
+   * @throws std::out_of_range If adjacentTo is invalid, i.e. >= V()
    *
    * @note Any molecular edit causes a full re-rank at each non-terminal
    *   atom, and can lead to changes in the list of stereopermutators. Stereopermutators
@@ -209,7 +212,7 @@ public:
     Utils::ElementType elementType,
     AtomIndex adjacentTo,
     BondType bondType = BondType::Single
-  );
+  ) final;
 
   /*!
    * @brief Adds a bond between two existing atoms
@@ -224,7 +227,7 @@ public:
    * @param b The second atom index
    * @param bondType The bond type with which to connect a and b.
    *
-   * @throws std::out_of_range If either atom index is invalid, i.e. >= N()
+   * @throws std::out_of_range If either atom index is invalid, i.e. >= V()
    * @throws std::logic_error If the atom indices match or the edge already
    *   exists.
    *
@@ -240,6 +243,16 @@ public:
     AtomIndex a,
     AtomIndex b,
     BondType bondType = BondType::Single
+  ) final;
+
+  /*! @brief Add a new BondStereopermutator to the molecule
+   *
+   * @returns A reference to the added stereopermutator
+   * @throws If there is already a bond stereopermutator present
+   */
+  const BondStereopermutator& addPermutator(
+    const BondIndex& bond,
+    BondStereopermutator::Alignment alignment = BondStereopermutator::Alignment::Eclipsed
   );
 
   /** @brief Applies an index permutation to the Molecule state
@@ -266,7 +279,7 @@ public:
    *   with a probability according to their sterepermutation's relative
    *   statistical occurence.
    *
-   * @throws std::out_of_range If the atom index is invalid, i.e. >= N(),
+   * @throws std::out_of_range If the atom index is invalid, i.e. >= V(),
    *   there is no stereopermutator at this position or the assignment index is
    *   invalid.
    *
@@ -300,7 +313,7 @@ public:
    *   assigned randomly.
    *
    * @throws std::out_of_range If the BondIndex is invalid (i.e. either atom
-   *   index >= N()), there is no bond stereopermutator at the supplied edge
+   *   index >= V()), there is no bond stereopermutator at the supplied edge
    *   or the assignment index is invalid.
    *
    * @note Any molecular edit causes a full re-rank at each non-terminal
@@ -329,7 +342,7 @@ public:
    * @param engine The PRNG engine to use for random assignment. Defaults to
    *   the library-global random number generator engine
    *
-   * @throws std::out_of_range If the atom index is invalid (i.e. is >= N()) or
+   * @throws std::out_of_range If the atom index is invalid (i.e. is >= V()) or
    *   there is no atom stereopermutator at this bond index.
    *
    * @parblock @note Any molecular edit causes a full re-rank at each non-terminal
@@ -357,7 +370,7 @@ public:
    * @complexity{@math{O(N)} re-rankings and state propagations}
    *
    * @throws std::out_of_range If the bond index is invalid (i.e. either atom
-   *   index is >= N()) or there is no bond stereopermutator at this bond index.
+   *   index is >= V()) or there is no bond stereopermutator at this bond index.
    *
    * @parblock @note Any molecular edit causes a full re-rank at each
    *   non-terminal atom, and can lead to changes in the list of
@@ -413,7 +426,7 @@ public:
    * @complexity{@math{O(N + A + B)} stereopermutator updates, re-rankings and
    * propagations}
    *
-   * @throws std::out_of_range If the supplied index is invalid, i.e. >= N()
+   * @throws std::out_of_range If the supplied index is invalid, i.e. >= V()
    * @throws std::logic_error If removing the atom disconnects the graph
    *   or removes the final atom.
    *
@@ -427,7 +440,7 @@ public:
    *   any stereopermutator state stored external to a Molecule instance and its
    *   members invalidated.
    */
-  void removeAtom(AtomIndex a);
+  void removeAtom(AtomIndex a) final;
 
   /*! @brief Removes a bond from the graph
    *
@@ -439,7 +452,7 @@ public:
    * propagations}
    *
    * @throws std::out_of_range If the supplied bond index is invalid, i.e. either
-   *   atom index >= N() or the specified bond does not exist.
+   *   atom index >= V() or the specified bond does not exist.
    * @throws std::logic_error If graph().canRemove() returns false.
    *
    * @note It is not safe to remove a bond just because one of the involved
@@ -459,7 +472,13 @@ public:
   void removeBond(AtomIndex a, AtomIndex b);
 
   //!@overload
-  void removeBond(const BondIndex& bond);
+  void removeBond(const BondIndex& bond) final;
+
+  /*! @brief Removes the BondStereopermutator on a specified edge, if present
+   *
+   * @returns Whether a permutator was deleted
+   */
+  bool removePermutator(const BondIndex& bond);
 
   /*! @brief Changes a bond type. Returns whether the bond already existed
    *
@@ -474,7 +493,7 @@ public:
    *
    * @return If the bond already existed.
    *
-   * @throws out_of_range If a or b are invalid, i.e. >= N()
+   * @throws out_of_range If a or b are invalid, i.e. >= V()
    * @throws std::logic_error If bondType is specified as BondType::Eta. The
    *   representation of bonding to haptic ligands and its dynamism is handled
    *   internally.
@@ -491,7 +510,7 @@ public:
     AtomIndex a,
     AtomIndex b,
     BondType bondType
-  );
+  ) final;
 
   /*! @brief Changes an existing atom's element type
    *
@@ -502,7 +521,7 @@ public:
    * @param a The atom index of the atom whose element type is to be changed
    * @param elementType The new element type
    *
-   * @throws std::out_of_range If a is invalid >= N()
+   * @throws std::out_of_range If a is invalid >= V()
    *
    * @note Any molecular edit causes a full re-rank at each non-terminal
    *   atom, and can lead to changes in the list of stereopermutators. Stereopermutators
@@ -515,7 +534,7 @@ public:
   void setElementType(
     AtomIndex a,
     Utils::ElementType elementType
-  );
+  ) final;
 
   /*! @brief Sets the local shape at an atom index
    *
@@ -547,6 +566,29 @@ public:
   );
 //!@}
 
+//!@name Graph information interface
+//!@{
+  bool adjacent(AtomIndex a, AtomIndex b) const final;
+
+  boost::optional<BondIndex> bond(AtomIndex a, AtomIndex b) const final;
+
+  BondType bondType(const BondIndex& edge) const final;
+
+  bool canRemove(AtomIndex a) const final;
+
+  bool canRemove(const BondIndex& edge) const final;
+
+  const Cycles& cycles() const final;
+
+  unsigned degree(AtomIndex a) const final;
+
+  Utils::ElementType elementType(AtomIndex a) const final;
+
+  AtomIndex V() const final;
+
+  unsigned E() const final;
+//!@}
+
 //!@name Information
 //!@{
   /*! @brief Get which components of the graph have been used in canonicalization
@@ -575,7 +617,7 @@ public:
    *   ligand sites) which may or may not be the shape with the lowest
    *   energy.
    *
-   * @throws std::out_of_range If the supplied atomic index is >= N()
+   * @throws std::out_of_range If the supplied atomic index is >= V()
    * @throws std::logic_error If the supplied atom is terminal or if the amount
    *   of ligand sites exceeds the size of the largest defined shape.
    *
@@ -687,7 +729,7 @@ public:
    *   molecule considered on its own. It is preferable to supply this if
    *   positional information is present!
    *
-   * @throws std::out_of_range If the supplied atom index is i.e. >= N()
+   * @throws std::out_of_range If the supplied atom index is i.e. >= V()
    *
    * @returns a RankingInformation instance that contains all gathered
    * information.
@@ -795,12 +837,6 @@ private:
    * macro-oriented editing as opposed to the low-level editing provided here
    */
   friend struct Editing;
-
-  /* Allow access to implementation to DirectedConformerGenerator. This class
-   * needs to make additions to the StereopermutatorList that should not be
-   * part of the public interface.
-   */
-  friend class DirectedConformerGenerator;
 };
 
 } // namespace Molassembler

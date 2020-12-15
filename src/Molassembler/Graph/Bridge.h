@@ -12,7 +12,6 @@
 #include "Molassembler/Graph/PrivateGraph.h"
 
 namespace Scine {
-
 namespace Molassembler {
 
 //! Transform BondIndex to PrivateGraph::Edge
@@ -26,7 +25,6 @@ inline BondIndex toOuter(const PrivateGraph::Edge& edge, const PrivateGraph& gra
 }
 
 } // namespace Molassembler
-
 } // namespace Scine
 
 #endif

@@ -125,7 +125,7 @@ struct NautySparseGraph {
      * keep the data afterwards.
      */
 
-    const AtomIndex N = inner.N();
+    const AtomIndex N = inner.V();
     // std::size_t can exceed int
     if(N > static_cast<AtomIndex>(std::numeric_limits<int>::max())) {
       throw std::domain_error("Graph size exceeds canonical labeling algorithm size limits");
@@ -135,8 +135,8 @@ struct NautySparseGraph {
       throw std::invalid_argument("Supplied hashes do not match number of vertices");
     }
 
-    nv = inner.N();
-    nde = 2 * inner.B();
+    nv = inner.V();
+    nde = 2 * inner.E();
     v.reserve(nv);
     d.reserve(nv);
     e.reserve(nde);

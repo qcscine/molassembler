@@ -8,10 +8,7 @@
 #ifndef INCLUDE_MOLASSEMBLER_OUTER_GRAPH_H
 #define INCLUDE_MOLASSEMBLER_OUTER_GRAPH_H
 
-#include "boost/optional/optional_fwd.hpp"
-#include "Utils/Geometry/ElementTypes.h"
-
-#include "Molassembler/Types.h"
+#include "Molassembler/Graph/GraphInterface.h"
 #include "Molassembler/IteratorRange.h"
 
 #include <memory>
@@ -54,7 +51,7 @@ class Cycles;
  * @note This class wraps PrivateGraph so that no Boost Graph types are exposed
  *   to library consumers.
  */
-class MASM_EXPORT Graph {
+class MASM_EXPORT Graph final : public GraphInterface {
 public:
 //!@name Member types
 //!@{
@@ -168,7 +165,7 @@ public:
   Graph& operator = (Graph&& other) noexcept;
   Graph(const Graph& other);
   Graph& operator = (const Graph& other);
-  ~Graph();
+  ~Graph() final;
 //!@{
 
 //!@name Constructors
@@ -178,13 +175,28 @@ public:
   explicit Graph(PrivateGraph&& inner);
 //!@}
 
+//!@name Modification
+//!@{
+  AtomIndex addAtom(Utils::ElementType e, AtomIndex i, BondType type) final;
+
+  BondIndex addBond(AtomIndex i, AtomIndex j, BondType type) final;
+
+  void setElementType(AtomIndex i, Utils::ElementType type) final;
+
+  bool setBondType(AtomIndex i, AtomIndex j, BondType type) final;
+
+  void removeAtom(AtomIndex i) final;
+
+  void removeBond(const BondIndex& bond) final;
+//!@}
+
 //!@name Information
 //!@{
   /*! @brief Returns whether two atoms are bonded
    *
    * @complexity{@math{\Theta(1)}}
    */
-  bool adjacent(AtomIndex a, AtomIndex b) const;
+  bool adjacent(AtomIndex a, AtomIndex b) const final;
   /*! @brief Returns atoms matching an element type
    *
    * @complexity{@math{\Theta(N)}}
@@ -194,7 +206,7 @@ public:
    *
    * @complexity{@math{\Theta(1)}}
    */
-  boost::optional<BondIndex> bond(AtomIndex a, AtomIndex b) const;
+  boost::optional<BondIndex> bond(AtomIndex a, AtomIndex b) const final;
   /*! @brief Generate a BondOrderCollection from the graph
    *
    * @complexity{@math{\Theta(B)}}
@@ -204,7 +216,7 @@ public:
    *
    * @complexity{@math{\Theta(1)}}
    */
-  BondType bondType(const BondIndex& edge) const;
+  BondType bondType(const BondIndex& edge) const final;
   /*! @brief Returns whether an atom can be removed without disconnecting the graph
    *
    * @complexity{@math{O(N)} worst case, if removal data is cached
@@ -212,7 +224,7 @@ public:
    *
    * @note This function is not thread-safe.
    */
-  bool canRemove(AtomIndex a) const;
+  bool canRemove(AtomIndex a) const final;
   /*! @brief Returns whether a bond can be removed without disconnecting the graph
    *
    * @complexity{@math{O(N)} worst case, if removal data is cached
@@ -220,7 +232,7 @@ public:
    *
    * @note This function is not thread-safe.
    */
-  bool canRemove(const BondIndex& edge) const;
+  bool canRemove(const BondIndex& edge) const final;
   /*! @brief Fetch a reference to Cycles
    *
    * @complexity{@math{O(B)} worst case where @math{B} is the number of bonds
@@ -228,12 +240,12 @@ public:
    *
    * @note This function is not thread-safe.
    */
-  const Cycles& cycles() const;
+  const Cycles& cycles() const final;
   /*! @brief Returns the number of bonds incident upon an atom
    *
    * @complexity{@math{\Theta(1)}}
    */
-  unsigned degree(AtomIndex a) const;
+  unsigned degree(AtomIndex a) const final;
   //! @brief Dumps a graphviz representation of the graph
   std::string dumpGraphviz() const;
   /*! @brief Fetch an element collection of all atoms
@@ -245,18 +257,32 @@ public:
    *
    * @complexity{@math{\Theta(1)}}
    */
-  Utils::ElementType elementType(AtomIndex a) const;
+  Utils::ElementType elementType(AtomIndex a) const final;
 
   /*! @brief Number of atoms in the graph
    *
    * @complexity{@math{\Theta(1)}}
    */
+  [[deprecated("Prefer V")]]
   AtomIndex N() const;
+
+  /*! @brief Number of atoms in the graph
+   *
+   * @complexity{@math{\Theta(1)}}
+   */
+  AtomIndex V() const final;
   /*! @brief Number of bonds in the graph
    *
    * @complexity{@math{\Theta(1)}}
    */
+  [[deprecated("Prefer E")]]
   unsigned B() const;
+
+  /*! @brief Number of bonds in the graph
+   *
+   * @complexity{@math{\Theta(1)}}
+   */
+  unsigned E() const final;
 
   /*! @brief Modular isomorphism comparison
    *

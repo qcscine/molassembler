@@ -11,6 +11,8 @@
 #include "boost/graph/adjacency_list.hpp"
 #include "Utils/Geometry/ElementTypes.h"
 
+#include "Utils/Typenames.h"
+
 #include "Molassembler/Cycles.h"
 
 #include <limits>
@@ -167,6 +169,21 @@ public:
    * @warning This invalidates ALL vertex and edge descriptors!
    */
   void removeVertex(Vertex a);
+
+  /**
+   * @brief Copy a vertices and edges into another graph
+   *
+   * @param other The source graph from which to copy
+   * @param copyVertices List of vertices to copy. If empty, copies all
+   *   vertices.
+   *
+   * @return An unordered map of atom indices from other to new atom indices in
+   *   this graph
+   */
+  std::unordered_map<Vertex, Vertex> merge(
+    const PrivateGraph& other,
+    const std::vector<Vertex>& copyVertices = {}
+  );
 //!@}
 
 //!@name Information
@@ -232,6 +249,8 @@ public:
    */
   boost::optional<Edge> edgeOption(Vertex a, Vertex b) const;
 
+  Utils::ElementTypeCollection elementCollection() const;
+
   //! Source of an edge
   Vertex source(const Edge& edge) const;
   //! Target of an edge
@@ -244,9 +263,16 @@ public:
   unsigned degree(Vertex a) const;
 
   //! Number of vertices in the graph
+  [[deprecated("Prefer V")]]
   Vertex N() const;
   //! Number of edges in the graph
+  [[deprecated("Prefer E")]]
   Vertex B() const;
+
+  //! Number of vertices in the graph
+  Vertex V() const;
+  //! Number of edges in the graph
+  unsigned E() const;
 
   /*! @brief Modular isomorphism comparison
    *

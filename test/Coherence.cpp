@@ -87,7 +87,7 @@ BOOST_FIXTURE_TEST_CASE(AtomStereopermutationCGFitCoherence, LowTemperatureFixtu
       BondType::Single
     );
 
-    for(unsigned i = 0; molecule.graph().N() - 1 < Shapes::size(shape); ++i) {
+    for(unsigned i = 0; molecule.graph().V() - 1 < Shapes::size(shape); ++i) {
       molecule.addAtom(
         elements.at(i),
         0,

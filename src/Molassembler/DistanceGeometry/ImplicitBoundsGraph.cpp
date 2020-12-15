@@ -74,7 +74,7 @@ ImplicitBoundsGraph::ImplicitBoundsGraph(
 ) : innerGraphPtr_(&inner), distances_(std::move(bounds)) {
   // Determine the two heaviest element types in the molecule, O(N)
   heaviestAtoms_ = {{Utils::ElementType::H, Utils::ElementType::H}};
-  const VertexDescriptor N = inner.N();
+  const VertexDescriptor N = inner.V();
   for(AtomIndex i = 0; i < N; ++i) {
     auto elementType = inner.elementType(i);
     if(
@@ -231,7 +231,7 @@ outcome::result<Eigen::MatrixXd> ImplicitBoundsGraph::makeDistanceMatrix(Random:
 }
 
 outcome::result<Eigen::MatrixXd> ImplicitBoundsGraph::makeDistanceMatrix(Random::Engine& engine, Partiality partiality) noexcept {
-  const unsigned N = innerGraphPtr_->N();
+  const unsigned N = innerGraphPtr_->V();
 
   std::vector<AtomIndex> indices(N);
   std::iota(
