@@ -78,7 +78,8 @@ private:
   //! Determines the implicit hydrogen count of a valence fill element
   static unsigned valenceFillElementImplicitHydrogenCount(
     int valence,
-    Utils::ElementType e
+    Utils::ElementType e,
+    bool aromatic
   );
 
   /*! Determines the mutual bond type of two bond type optionals
@@ -96,22 +97,29 @@ private:
 
 //!@name Private member functions
 //!@{
-  //! @brief Set shapes according to specified charges and stereo markers
+  //! Set shapes according to specified charges and stereo markers
   void setShapes(
     std::vector<Molecule>& molecules,
     const std::vector<unsigned>& componentMap,
     const std::vector<PrivateGraph::Vertex>& indexInComponentMap
   );
 
-  //! @brief Set atom stereo post-parse and conversion to molecules
+  //! Set atom stereo post-parse and conversion to molecules
   void setAtomStereo(
     std::vector<Molecule>& molecules,
     const std::vector<unsigned>& componentMap,
     const std::vector<PrivateGraph::Vertex>& indexInComponentMap
   );
 
-  //! @brief Set bond stereo post-parse and conversion to molecules
+  //! Set bond stereo post-parse and conversion to molecules
   void setBondStereo(
+    std::vector<Molecule>& molecules,
+    const std::vector<unsigned>& componentMap,
+    const std::vector<PrivateGraph::Vertex>& indexInComponentMap
+  );
+
+  //! Add bond stereopermutators in aromatic cycles
+  void addAromaticBondStereo(
     std::vector<Molecule>& molecules,
     const std::vector<unsigned>& componentMap,
     const std::vector<PrivateGraph::Vertex>& indexInComponentMap

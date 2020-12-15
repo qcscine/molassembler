@@ -9,6 +9,7 @@
 #include "Molassembler/Molecule.h"
 #include "Molassembler/Graph.h"
 #include "Molassembler/IO/SmilesParser.h"
+#include "Molassembler/IO.h"
 
 #include "Molassembler/Temple/Functional.h"
 #include "Molassembler/Temple/Stringify.h"
@@ -182,11 +183,8 @@ BOOST_FIXTURE_TEST_CASE(IdenticalSmiles, LowTemperatureFixture) {
 
   // TODO known failures
   //   {"FC1C[C@](Br)(Cl)CCC1", "[C@]1(Br)(Cl)CCCC(F)C1"}, // Peculiarity with ring closing bond stereo order
-  //   {"c1ccccc1", "C1=CC=CC=C1"}, // Aromatics
-  //   {"c1ccc2CCCc2c1", "C1=CC=CC(CCC2)=C12"},
-  //   {"c1occc1", "C1OC=CC=1"},
-  //   {"c1ccc1", "C1=CC=C1"},
-  //   {"c1c2c3c4cc1.Br2.Cl3.Cl4", "C1=CC(=C(C(=C1)Br)Cl)Cl"}, // Aromatics + dot
+  //   {R"y(F/C=C/1.Br1)y", R"y(F/C=C1.Br\1)y"}, // Funky use of dot
+  //   {"[C@@](O)(Cl)(F)Br", "[C@@](O)(Cl)(F)1.Br1"}, // Funky use of dot
   for(const auto& pair : pairs) {
     Molecule a, b;
     BOOST_REQUIRE_NO_THROW(a = expectSingle(IO::Experimental::parseSmiles(pair.first)));
@@ -197,6 +195,44 @@ BOOST_FIXTURE_TEST_CASE(IdenticalSmiles, LowTemperatureFixture) {
     );
 
     if(a != b) {
+      std::cout << "A: " << a << "\nB:" << b << "\n\n";
+    }
+  }
+}
+
+BOOST_AUTO_TEST_CASE(SimilarSmiles, *boost::unit_test::label("Molassembler")) {
+  const std::vector<std::pair<std::string, std::string>> pairs {
+    {"c1ccccc1", "C1=CC=CC=C1"}, // Benzene
+    {"c1ccc2CCCc2c1", "C1=CC=CC(CCC2)=C12"}, // Indane
+    {"c1occc1", "C1OC=CC=1"}, // Furan
+    {"c1cncnc1", "C1=CN=CN=C1"}, // Pyrimidine
+    {"c1cnccc1", "C1=CN=CC=C1"}, // Pyridine
+    {"c1ccpcc1", "C1=CC=PC=C1"}, // Phosphorine
+    {"n1c3c(cc2c1cccc2)cccc3", "C1=CC=C2C(=C1)C=C3C=CC=CC3=N2"}, // Acridine
+    {"o2cc1ccccc1c2", "C1=CC2=COC=C2C=C1"}, // Isobenzofuran
+    {"n2oc1ccccc1c2", "C1=CC=C2C(=C1)C=NO2"}, // Benzisoxazole
+    {"c1cocn1", "C1=COC=N1"}, // Oxazole
+    {"c1ccc1", "C1=CC=C1"}, // Cyclobutadiene (Not aromatic but valid SMILES)
+    {"c1c2c3c4cc1.Br2.Cl3.Cl4", "C1=CC(=C(C(=C1)Br)Cl)Cl"}, // Aromatics + dot
+  };
+
+  const AtomEnvironmentComponents strictness = (
+    AtomEnvironmentComponents::ElementTypes
+    | AtomEnvironmentComponents::Shapes
+  );
+
+  for(const auto& pair : pairs) {
+    Molecule a, b;
+    BOOST_REQUIRE_NO_THROW(a = expectSingle(IO::Experimental::parseSmiles(pair.first)));
+    BOOST_REQUIRE_NO_THROW(b = expectSingle(IO::Experimental::parseSmiles(pair.second)));
+
+    const bool closeEnough = static_cast<bool>(a.modularIsomorphism(b, strictness));
+    BOOST_CHECK_MESSAGE(
+      closeEnough,
+      "Smiles pair " << pair.first << ", " << pair.second << " did not have same connectivity and shapes as expected"
+    );
+
+    if(!closeEnough) {
       std::cout << "A: " << a << "\nB:" << b << "\n\n";
     }
   }
@@ -228,13 +264,11 @@ BOOST_AUTO_TEST_CASE(SmilesWithMultipleMolecules, *boost::unit_test::label("Mola
   const std::vector<std::pair<std::string, std::vector<unsigned>>> pairs {
     {"[Na+].[Cl-]", {{1, 1}}},
     {"[NH4+].[NH4+].[O-]S(=O)(=O)[S-]", {{5, 5, 5}}},
-    {"C=1CCCCC1.C=1CCCCC1", {{16, 16}}} // Reuse of ring closure numbers
+    {"C=1CCCCC1.C=1CCCCC1", {{16, 16}}}, // Reuse of ring closure numbers
+    {"Oc1ccccc1.NCCO", {{11, 13}}}, // Regular spec of multiple molecules
+    {"c1cc(O.NCCO)ccc1", {{11, 13}}}, // Irregular, but valid
+    {"Oc1cc(.NCCO)ccc1", {{11, 13}}}, // even more irregular, but valid
   };
-
-  // TODO known failures (aromatics)
-  //  {"Oc1ccccc1.NCCO", {{11, 13}}}, // Regular spec of multiple molecules
-  //  {"c1cc(O.NCCO)ccc1", {{11, 13}}}, // Irregular, but valid
-  //  {"Oc1cc(.NCCO)ccc1", {{11, 13}}}, // even more irregular, but valid
 
   // parse, count sizes, order and lex. compare
   for(const auto& pair : pairs) {

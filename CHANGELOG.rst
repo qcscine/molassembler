@@ -47,6 +47,9 @@ Changed
 - SMILES parser
 
   - Parsing errors as part of exception string, not written to stdout
+  - Add partial handling of aromatic atom types in valence filling and bond
+    stereopermutation instation. No kekulization validation yet.
+  - Fix valence filling bug for atom types with multiple valid valences
 
 Deprecated
 ..........

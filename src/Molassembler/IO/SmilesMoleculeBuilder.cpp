@@ -30,6 +30,34 @@
 namespace Scine {
 namespace Molassembler {
 namespace IO {
+namespace {
+
+template<typename ... Ts>
+constexpr unsigned valenceFillHandleDifferences(Ts ... is) {
+  constexpr unsigned N = sizeof...(is);
+  const std::array<int, N> values {is...};
+
+  for(unsigned i = 0; i < N; ++i) {
+    int x = values[i];
+
+    if(x == 0) {
+      return 0;
+    }
+
+    if(x > 0) {
+      return x;
+    }
+  }
+
+  return 0;
+}
+
+static_assert(valenceFillHandleDifferences(-1, 1) == 1, "Nope");
+static_assert(valenceFillHandleDifferences(-1, 0) == 0, "Nope");
+static_assert(valenceFillHandleDifferences(-3, -1) == 0, "Nope");
+static_assert(valenceFillHandleDifferences(-3, -1, 1) == 1, "Nope");
+
+} // namespace
 
 bool MoleculeBuilder::isValenceFillElement(Utils::ElementType e) {
   const unsigned Z = Utils::ElementInfo::Z(e);
@@ -52,11 +80,16 @@ bool MoleculeBuilder::isValenceFillElement(Utils::ElementType e) {
 }
 
 unsigned MoleculeBuilder::valenceFillElementImplicitHydrogenCount(
-  const int valence,
-  Utils::ElementType e
+  int valence,
+  Utils::ElementType e,
+  const bool aromatic
 ) {
   assert(valence >= 0);
   assert(isValenceFillElement(e));
+
+  if(aromatic) {
+    valence += 1;
+  }
 
   /* Quoting from the spec:
    *
@@ -71,24 +104,14 @@ unsigned MoleculeBuilder::valenceFillElementImplicitHydrogenCount(
     case 5: return std::max(0, 3 - valence); // B
     case 6: return std::max(0, 4 - valence); // C
     case 7: { // N
-      return std::min(
-        std::max(0, 3 - valence),
-        std::max(0, 5 - valence)
-      );
+      return valenceFillHandleDifferences(3 - valence, 5 - valence);
     }
     case 8: return std::max(0, 2 - valence); // O
     case 15: { // P
-      return std::min(
-        std::max(0, 3 - valence),
-        std::max(0, 5 - valence)
-      );
+      return valenceFillHandleDifferences(3 - valence, 5 - valence);
     }
     case 16: { // S
-      return std::min({
-        std::max(0, 2 - valence),
-        std::max(0, 4 - valence),
-        std::max(0, 6 - valence)
-      });
+      return valenceFillHandleDifferences(2 - valence, 4 - valence, 6 - valence);
     }
     default: return std::max(0, 1 - valence); // F, Cl, Br, I are the remaining cases
   }
@@ -362,9 +385,31 @@ void MoleculeBuilder::setAtomStereo(
   const std::vector<unsigned>& componentMap,
   const std::vector<PrivateGraph::Vertex>& indexInComponentMap
 ) {
+  // Aromatic shapes are bent and equilateral triangle only
+  const std::map<unsigned, Shapes::Shape> aromaticShapes {
+    {2, Shapes::Shape::Bent},
+    {3, Shapes::Shape::EquilateralTriangle},
+  };
+
   const unsigned N = vertexData.size();
   for(unsigned i = 0; i < N; ++i) {
     const AtomData& atomData = vertexData.at(i);
+
+    // Set aromatic shapes
+    if(atomData.partialElement.aromatic) {
+      Molecule& mol = molecules.at(componentMap.at(i));
+      if(auto permutator = mol.stereopermutators().option(indexInComponentMap.at(i))) {
+        const unsigned size = permutator->getRanking().sites.size();
+        if(aromaticShapes.count(size) == 0) {
+          throw std::logic_error("Atom with " + std::to_string(size) + " substitutents cannot be aromatic");
+        }
+        const Shapes::Shape expectedShape = aromaticShapes.at(size);
+        if(expectedShape != permutator->getShape()) {
+          mol.setShapeAtAtom(indexInComponentMap.at(i), expectedShape);
+        }
+      }
+    }
+
     if(!atomData.chiralOptional) {
       continue;
     }
@@ -513,19 +558,19 @@ void MoleculeBuilder::setBondStereo(
    * repetitions and changes can be our guides to deciding when we have
    * crossed sides of the bond.
    */
-  auto first = [](const auto& tup) { return std::get<0>(tup); };
-  auto second = [](const auto& tup) { return std::get<1>(tup); };
-  auto marker = [](const auto& tup) { return std::get<2>(tup); };
+  using Temple::Functor::first;
+  using Temple::Functor::second;
+  auto marker = Temple::Functor::get<2>();
 
   using Iterator = std::vector<StereoMarkedBondTuple>::const_iterator;
-  Iterator iter = std::cbegin(stereoMarkedBonds);
-  const Iterator end = std::cend(stereoMarkedBonds);
+  auto iter = std::cbegin(stereoMarkedBonds);
+  const auto end = std::cend(stereoMarkedBonds);
 
   while(iter != end) {
     SmilesBondStereo state;
 
-    const PrivateGraph::Vertex A = first(*iter);
-    const PrivateGraph::Vertex B = second(*iter);
+    const PrivateGraph::Vertex A = Temple::Functor::first(*iter);
+    const PrivateGraph::Vertex B = Temple::Functor::second(*iter);
 
     // We assume that all vertices are in the same component
     Molecule& mol = molecules.at(componentMap.at(A));
@@ -537,7 +582,7 @@ void MoleculeBuilder::setBondStereo(
      * they are on the same side of the bond. The overlapping bond must
      * then be the left atom.
      */
-    Iterator explorer = iter + 1;
+    auto explorer = iter + 1;
     if(explorer == end) {
       throw std::runtime_error("Missing right side of stereo-marked double bond");
     }
@@ -739,7 +784,8 @@ std::vector<Molecule> MoleculeBuilder::interpret() {
 
       const unsigned fillCount = valenceFillElementImplicitHydrogenCount(
         currentValence,
-        precursor.elementType(vertexInPrecursor)
+        precursor.elementType(vertexInPrecursor),
+        data.partialElement.aromatic
       );
 
       for(unsigned j = 0; j < fillCount; ++j) {
@@ -762,8 +808,48 @@ std::vector<Molecule> MoleculeBuilder::interpret() {
   setShapes(molecules, componentMap, indexInComponentMap);
   setAtomStereo(molecules, componentMap, indexInComponentMap);
   setBondStereo(molecules, componentMap, indexInComponentMap);
+  addAromaticBondStereo(molecules, componentMap, indexInComponentMap);
 
   return molecules;
+}
+
+void MoleculeBuilder::addAromaticBondStereo(
+  std::vector<Molecule>& molecules,
+  const std::vector<unsigned>& componentMap,
+  const std::vector<PrivateGraph::Vertex>& indexInComponentMap
+) {
+  std::vector<std::unordered_set<AtomIndex>> aromaticAtoms(molecules.size());
+  for(AtomIndex i = 0; i < vertexData.size(); ++i) {
+    const AtomData& data = vertexData.at(i);
+    if(data.partialElement.aromatic) {
+      aromaticAtoms.at(componentMap.at(i)).insert(indexInComponentMap.at(i));
+    }
+  }
+
+  for(unsigned i = 0; i < molecules.size(); ++i) {
+    Molecule& mol = molecules.at(i);
+    const auto& aromatics = aromaticAtoms.at(i);
+
+    for(const auto& cycleEdges : mol.graph().cycles()) {
+      const bool allAromatic = Temple::all_of(
+        cycleEdges,
+        [&](const BondIndex edge) -> bool {
+          return aromatics.count(edge.first) > 0;
+        }
+      );
+
+      if(!allAromatic) {
+        continue;
+      }
+
+      for(const auto& bond : cycleEdges) {
+        auto permutator = mol.stereopermutators().option(bond);
+        if(!permutator) {
+          mol.addPermutator(bond);
+        }
+      }
+    }
+  }
 }
 
 } // namespace IO
