@@ -32,6 +32,6 @@ add_test(
 
 include(LibType)
 determine_lib_type(Boost::unit_test_framework)
-if(${LIB_TYPE} STREQUAL "SHARED_LIBRARY")
+if("${LIB_TYPE}" STREQUAL "SHARED_LIBRARY")
   target_compile_definitions(MolassemblerTests PRIVATE BOOST_ALL_DYN_LINK)
 endif()
