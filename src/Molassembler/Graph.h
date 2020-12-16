@@ -199,7 +199,7 @@ public:
   bool adjacent(AtomIndex a, AtomIndex b) const final;
   /*! @brief Returns atoms matching an element type
    *
-   * @complexity{@math{\Theta(N)}}
+   * @complexity{@math{\Theta(V)}}
    */
   std::vector<AtomIndex> atomsOfElement(Utils::ElementType e) const;
   /*! @brief Optionally fetch the bond index of a possibly non-existent bond
@@ -209,7 +209,7 @@ public:
   boost::optional<BondIndex> bond(AtomIndex a, AtomIndex b) const final;
   /*! @brief Generate a BondOrderCollection from the graph
    *
-   * @complexity{@math{\Theta(B)}}
+   * @complexity{@math{\Theta(E)}}
    */
   Utils::BondOrderCollection bondOrders() const;
   /*! @brief Fetch the bond type at a particular bond
@@ -219,7 +219,7 @@ public:
   BondType bondType(const BondIndex& edge) const final;
   /*! @brief Returns whether an atom can be removed without disconnecting the graph
    *
-   * @complexity{@math{O(N)} worst case, if removal data is cached
+   * @complexity{@math{O(V)} worst case, if removal data is cached
    * @math{\Theta(1)}}
    *
    * @note This function is not thread-safe.
@@ -227,7 +227,7 @@ public:
   bool canRemove(AtomIndex a) const final;
   /*! @brief Returns whether a bond can be removed without disconnecting the graph
    *
-   * @complexity{@math{O(N)} worst case, if removal data is cached
+   * @complexity{@math{O(V)} worst case, if removal data is cached
    * @math{\Theta(1)}}
    *
    * @note This function is not thread-safe.
@@ -235,7 +235,7 @@ public:
   bool canRemove(const BondIndex& edge) const final;
   /*! @brief Fetch a reference to Cycles
    *
-   * @complexity{@math{O(B)} worst case where @math{B} is the number of bonds
+   * @complexity{@math{O(E)} worst case where @math{B} is the number of bonds
    * in cycles, if cycles are cached @math{\Theta(1)}}
    *
    * @note This function is not thread-safe.
@@ -250,7 +250,7 @@ public:
   std::string dumpGraphviz() const;
   /*! @brief Fetch an element collection of all atoms
    *
-   * @complexity{@math{\Theta(N)}}
+   * @complexity{@math{\Theta(V)}}
    */
   Utils::ElementTypeCollection elementCollection() const;
   /*! @brief Fetch the element type of an atom
@@ -296,7 +296,7 @@ public:
 
   /*! @brief Determine which vertices belong to which side of a bridge edge
    *
-   * @complexity{@math{\Theta(N)}}
+   * @complexity{@math{\Theta(V)}}
    *
    * The atoms making up the bond are in the resulting atom lists, too.
    *
@@ -322,20 +322,20 @@ public:
   /*! @brief A begin-end pair of iterators that yield the range of valid atom
    *   indices.
    *
-   * @complexity{@math{\Theta(N)}}
+   * @complexity{@math{\Theta(V)}}
    */
   IteratorRange<AtomIterator> atoms() const;
   /*! @brief A begin-end pair of iterators that yield the range of valid bond
    *   indices
    *
-   * @complexity{@math{\Theta(N)}}
+   * @complexity{@math{\Theta(V)}}
    */
   IteratorRange<BondIterator> bonds() const;
   /*! @brief Fetch iterator pair yielding adjacents of an atom
    *
    * @param a The atom whose adjacents are desired
    *
-   * @complexity{@math{\Theta(N)}}
+   * @complexity{@math{\Theta(V)}}
    * @returns A begin-end pair of iterators that yield adjacent atoms of an atom
    */
   IteratorRange<AdjacencyIterator> adjacents(AtomIndex a) const;
@@ -343,7 +343,7 @@ public:
    *
    * @param a The atom whose incident atoms are desired
    *
-   * @complexity{@math{\Theta(N)}}
+   * @complexity{@math{\Theta(V)}}
    * @returns A begin-end pair of iterators that yield incident bond indices of
    *   an atom
    */

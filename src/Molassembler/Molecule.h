@@ -270,7 +270,7 @@ public:
    * returned by stereopermutators(). The supplied assignment must be either
    * boost::none or smaller than stereopermutatorPtr->numAssignments().
    *
-   * @complexity{@math{O(N)} re-rankings and state propagations}
+   * @complexity{@math{O(V)} re-rankings and state propagations}
    *
    * @param a The atom index at which a stereopermutator is to be assigned.
    * @param assignmentOption The new assignment. The special value boost::none
@@ -304,7 +304,7 @@ public:
    * assignment must be either boost::none or smaller than
    * stereopermutatorPtr->numAssignments().
    *
-   * @complexity{@math{O(N)} re-rankings and state propagations}
+   * @complexity{@math{O(V)} re-rankings and state propagations}
    *
    * @param edge The edge at which a stereopermutator is to be assigned.
    * @param assignmentOption The new assignment. The special value boost::none
@@ -335,7 +335,7 @@ public:
    * This sets the stereopermutator assignment at a specific index, taking relative
    * statistical occurence weights of each stereopermutation into account.
    *
-   * @complexity{@math{O(N)} re-rankings and state propagations}
+   * @complexity{@math{O(V)} re-rankings and state propagations}
    *
    * @param a The atom index at which the atom stereopermutator is to be assigned
    *   randomly
@@ -367,7 +367,7 @@ public:
    * @param engine The PRNG engine to use for random assignment. Defaults to
    *   the library-global random number generator engine
    *
-   * @complexity{@math{O(N)} re-rankings and state propagations}
+   * @complexity{@math{O(V)} re-rankings and state propagations}
    *
    * @throws std::out_of_range If the bond index is invalid (i.e. either atom
    *   index is >= V()) or there is no bond stereopermutator at this bond index.
@@ -423,7 +423,7 @@ public:
    * after checking that removing it is safe, i.e. the removal does not
    * disconnect the graph.
    *
-   * @complexity{@math{O(N + A + B)} stereopermutator updates, re-rankings and
+   * @complexity{@math{O(V + A + B)} stereopermutator updates, re-rankings and
    * propagations}
    *
    * @throws std::out_of_range If the supplied index is invalid, i.e. >= V()
@@ -448,7 +448,7 @@ public:
    * disconnect the graph. An example of bonds that can always be removed are
    * ring-closing bonds, since they never disconnect the molecular graph.
    *
-   * @complexity{@math{O(N + A + B)} stereopermutator updates, re-rankings and
+   * @complexity{@math{O(V + A + B)} stereopermutator updates, re-rankings and
    * propagations}
    *
    * @throws std::out_of_range If the supplied bond index is invalid, i.e. either
@@ -485,7 +485,7 @@ public:
    * Changes the bond type between two atom indices. If the bond does not exist
    * yet, adds the bond.
    *
-   * @complexity{@math{\Theta(N)} re-rankings and propagations}
+   * @complexity{@math{\Theta(V)} re-rankings and propagations}
    *
    * @param a The first index of the bond whose type should be changed
    * @param b The second index of the bond whose type should be changed
@@ -516,7 +516,7 @@ public:
    *
    * Changes the element type of an existing atom.
    *
-   * @complexity{@math{\Theta(N)} re-rankings and propagations}
+   * @complexity{@math{\Theta(V)} re-rankings and propagations}
    *
    * @param a The atom index of the atom whose element type is to be changed
    * @param elementType The new element type
@@ -546,7 +546,7 @@ public:
    * stereopermutators are default-assigned if there is only one possible
    * assignment.
    *
-   * @complexity{@math{\Theta(N)} re-rankings and propagations}
+   * @complexity{@math{\Theta(V)} re-rankings and propagations}
    *
    * @throws std::out_of_range if the supplied atomic index is invalid
    * @throws std::logic_error if the provided shape is a different size than
@@ -746,7 +746,7 @@ public:
   /*! @brief Modular comparison of this Molecule with another, assuming that
    *   both are in a canonical form
    *
-   * @complexity{@math{O(N)}}
+   * @complexity{@math{O(V)}}
    *
    * @param other The other canonical molecule to compare against
    * @param componentBitmask The components of an atom's environment to include

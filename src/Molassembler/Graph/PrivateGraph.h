@@ -286,13 +286,13 @@ public:
 
   /*! @brief Checks whether all edges present in *this are present in @p other
    *
-   * @complexity{@math{O(B)}}
+   * @complexity{@math{O(E)}}
    */
   bool identicalGraph(const PrivateGraph& other) const;
 
   /*! @brief Determine which vertices belong to which side of a bridge edge
    *
-   * @complexity{@math{\Theta(N)}}
+   * @complexity{@math{\Theta(V)}}
    * @note This function is not thread-safe.
    */
   std::pair<
