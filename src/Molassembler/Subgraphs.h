@@ -17,6 +17,7 @@ namespace Molassembler {
 // Forward-declarations
 class Molecule;
 class Graph;
+class PrivateGraph;
 
 namespace Subgraphs {
 
@@ -120,6 +121,13 @@ MASM_EXPORT std::vector<IndexMap> complete(
 MASM_EXPORT std::vector<IndexMap> complete(
   const Molecule& needle,
   const Molecule& haystack,
+  VertexStrictness vertexStrictness = VertexStrictness::ElementType,
+  EdgeStrictness edgeStrictness = EdgeStrictness::Topographic
+);
+
+MASM_NO_EXPORT std::vector<IndexMap> maximum(
+  const PrivateGraph& a,
+  const PrivateGraph& b,
   VertexStrictness vertexStrictness = VertexStrictness::ElementType,
   EdgeStrictness edgeStrictness = EdgeStrictness::Topographic
 );

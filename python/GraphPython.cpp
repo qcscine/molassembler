@@ -581,4 +581,11 @@ void init_graph(pybind11::module& m) {
       [1, 2, 3]
     )delim"
   );
+
+  pybind11::class_<MultiEdits> reactionEditsCls(m, "ReactionEdits");
+
+  reactionEditsCls.def_readonly("distance", &MultiEdits::distance);
+  reactionEditsCls.def_readonly("index_map", &MultiEdits::indexMap);
+
+  m.def("reaction_edits", &reactionEdits);
 }

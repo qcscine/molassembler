@@ -7,6 +7,10 @@
 #include "Molassembler/Graph/PrivateGraph.h"
 
 #include "Molassembler/Molecule/AtomEnvironmentHash.h"
+#include "Molassembler/Molecule/MolGraphWriter.h"
+#include "Molassembler/Temple/Functional.h"
+
+#include "boost/graph/graphviz.hpp"
 #include "boost/graph/isomorphism.hpp"
 #include "boost/graph/graph_utility.hpp"
 #include "boost/graph/breadth_first_search.hpp"
@@ -14,7 +18,6 @@
 #include "boost/graph/connected_components.hpp"
 #include "boost/optional.hpp"
 
-#include "Molassembler/Temple/Functional.h"
 
 namespace Scine {
 namespace Molassembler {
@@ -193,17 +196,17 @@ PrivateGraph::merge(
   std::unordered_map<Vertex, Vertex> copyVertexTargetIndices;
   if(copyVertices.empty()) {
     for(const Vertex vertex : other.vertices()) {
-      copyVertexTargetIndices.insert({
+      copyVertexTargetIndices.emplace(
         vertex,
         addVertex(other.elementType(vertex))
-      });
+      );
     }
   } else {
     for(const Vertex vertexIndex : copyVertices) {
-      copyVertexTargetIndices.insert({
+      copyVertexTargetIndices.emplace(
         vertexIndex,
         addVertex(other.elementType(vertexIndex))
-      });
+      );
     }
   }
 
@@ -346,6 +349,22 @@ PrivateGraph::Vertex PrivateGraph::target(const PrivateGraph::Edge& edge) const 
 
 unsigned PrivateGraph::degree(const PrivateGraph::Vertex a) const {
   return boost::out_degree(a, graph_);
+}
+
+std::string PrivateGraph::graphviz() const {
+  MolGraphWriter propertyWriter(&*this, nullptr);
+
+  std::stringstream graphvizStream;
+
+  boost::write_graphviz(
+    graphvizStream,
+    bgl(),
+    propertyWriter,
+    propertyWriter,
+    propertyWriter
+  );
+
+  return graphvizStream.str();
 }
 
 PrivateGraph::Vertex PrivateGraph::N() const {

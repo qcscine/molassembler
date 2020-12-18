@@ -32,7 +32,7 @@ namespace {
 bool isHydrogenPermutation(
   const IndexMap& a,
   const IndexMap& b,
-  const Graph& right
+  const PrivateGraph& right
 ) {
   /* Left maps are ordered in their first index, so we can
    * sequentially compare elements of the mapping.
@@ -71,11 +71,11 @@ bool isHydrogenPermutation(
 struct SubgraphCallback {
   AtomIndex N;
   using IndexMapVector = std::vector<IndexMap>;
-  const Graph& targetGraph;
+  const PrivateGraph& targetGraph;
   std::reference_wrapper<IndexMapVector> mappingsRef;
   bool removeHydrogenPermutations = true;
 
-  SubgraphCallback(const Graph& a, const Graph& b, IndexMapVector& mappings)
+  SubgraphCallback(const PrivateGraph& a, const PrivateGraph& b, IndexMapVector& mappings)
     : N {a.V()}, targetGraph(b), mappingsRef(mappings) {}
 
   template<class AbMap>
@@ -86,9 +86,7 @@ struct SubgraphCallback {
     for(AtomIndex i = 0; i < N; ++i) {
       AtomIndex t = boost::get(m, i);
       if(t != boost::graph_traits<PrivateGraph::BglType>::null_vertex()) {
-        bimap.insert(
-          IndexMap::value_type(i, t)
-        );
+        bimap.insert(IndexMap::value_type(i, t));
       }
     }
 
@@ -131,10 +129,11 @@ auto underlying(Enum a) {
 struct PartialMolecule {
   using MaybePermutators = boost::optional<const StereopermutatorList&>;
 
-  explicit PartialMolecule(const Molecule& molecule) : graph(molecule.graph()), permutatorsOption(molecule.stereopermutators()) {}
-  explicit PartialMolecule(const Graph& passGraph) : graph(passGraph), permutatorsOption(boost::none) {}
+  explicit PartialMolecule(const Molecule& molecule) : graph(molecule.graph().inner()), permutatorsOption(molecule.stereopermutators()) {}
+  explicit PartialMolecule(const Graph& passGraph) : graph(passGraph.inner()), permutatorsOption(boost::none) {}
+  explicit PartialMolecule(const PrivateGraph& passGraph) : graph(passGraph), permutatorsOption(boost::none) {}
 
-  const Graph& graph;
+  const PrivateGraph& graph;
   MaybePermutators permutatorsOption;
 };
 
@@ -182,7 +181,7 @@ struct EdgeComparator {
   bool operator () (const PrivateGraph::Edge i, const PrivateGraph::Edge j) const {
     if(
       underlying(strictness) >= underlying(EdgeStrictness::BondType)
-      && data.first.graph.inner().bondType(i) != data.second.graph.inner().bondType(j)
+      && data.first.graph.bondType(i) != data.second.graph.bondType(j)
     ) {
       return false;
     }
@@ -208,16 +207,12 @@ std::vector<IndexMap> maximumImpl(
   SubgraphCallback callback {a.graph, b.graph, mappings};
 
   boost::mcgregor_common_subgraphs_maximum_unique(
-    a.graph.inner().bgl(),
-    b.graph.inner().bgl(),
+    a.graph.bgl(),
+    b.graph.bgl(),
     false, // Permit disconnected subgraphs
     callback,
-    boost::vertices_equivalent(
-      VertexComparator {a, b, vertexStrictness}
-    ).
-    edges_equivalent(
-      EdgeComparator {a, b, edgeStrictness}
-    )
+    boost::vertices_equivalent(VertexComparator {a, b, vertexStrictness}).
+    edges_equivalent(EdgeComparator {a, b, edgeStrictness})
   );
 
   return mappings;
@@ -233,10 +228,10 @@ std::vector<IndexMap> completeImpl(
   SubgraphCallback callback {needle.graph, haystack.graph, mappings};
 
   boost::vf2_subgraph_mono(
-    needle.graph.inner().bgl(),
-    haystack.graph.inner().bgl(),
+    needle.graph.bgl(),
+    haystack.graph.bgl(),
     callback,
-    boost::vertex_order_by_mult(needle.graph.inner().bgl()),
+    boost::vertex_order_by_mult(needle.graph.bgl()),
     boost::vertices_equivalent(
       VertexComparator {needle, haystack, vertexStrictness}
     ).edges_equivalent(
@@ -278,8 +273,8 @@ std::vector<IndexMap> complete(
 }
 
 std::vector<IndexMap> maximum(
-  const Graph& a,
-  const Graph& b,
+  const PrivateGraph& a,
+  const PrivateGraph& b,
   const VertexStrictness vertexStrictness,
   const EdgeStrictness edgeStrictness
 ) {
@@ -297,6 +292,15 @@ std::vector<IndexMap> maximum(
     vertexStrictness,
     edgeStrictness
   );
+}
+
+std::vector<IndexMap> maximum(
+  const Graph& a,
+  const Graph& b,
+  const VertexStrictness vertexStrictness,
+  const EdgeStrictness edgeStrictness
+) {
+  return maximum(a.inner(), b.inner(), vertexStrictness, edgeStrictness);
 }
 
 std::vector<IndexMap> maximum(

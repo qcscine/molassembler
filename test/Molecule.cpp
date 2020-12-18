@@ -309,7 +309,7 @@ BOOST_AUTO_TEST_CASE(AtomEnvironmentHashesRegular, *boost::unit_test::label("Mol
 
     auto aWideHashes = Hashes::generate(a.graph().inner(), a.stereopermutators(), AtomEnvironmentComponents::All);
 
-    auto permutation = Temple::iota<AtomIndex>(a.graph().N());
+    auto permutation = Temple::iota<AtomIndex>(a.graph().V());
     Temple::Random::shuffle(permutation, randomnessEngine());
 
     Molecule b = a;
@@ -317,7 +317,7 @@ BOOST_AUTO_TEST_CASE(AtomEnvironmentHashesRegular, *boost::unit_test::label("Mol
 
     auto bWideHashes = Hashes::generate(b.graph().inner(), b.stereopermutators(), AtomEnvironmentComponents::All);
 
-    for(AtomIndex i = 0; i < a.graph().N(); ++i) {
+    for(AtomIndex i = 0; i < a.graph().V(); ++i) {
       BOOST_CHECK_MESSAGE(
         aWideHashes.at(i) == bWideHashes.at(permutation.at(i)),
         "Mismatch: hash(a, " << i << ") = " << aWideHashes.at(i) << " != " << bWideHashes.at(permutation.at(i)) << " = hash(b, " << permutation.at(i) << ")"
@@ -343,7 +343,7 @@ BOOST_AUTO_TEST_CASE(MoleculeCanonicalizationAtomMap, *boost::unit_test::label("
 
     BOOST_CHECK_MESSAGE(
       Temple::all_of(
-        Temple::Adaptors::range(m.graph().N()),
+        Temple::Adaptors::range(m.graph().V()),
         [&](const unsigned oldIndex) -> bool {
           unsigned newIndex = indexMap.at(oldIndex);
           return n.graph().elementType(newIndex) == m.graph().elementType(oldIndex);
@@ -597,7 +597,7 @@ BOOST_AUTO_TEST_CASE(PropagateGraphChangeTests, *boost::unit_test::label("Molass
    */
   auto complex = IO::read("various/propagation-test-case-1.json");
 
-  for(AtomIndex i = 0; i < complex.graph().N(); ++i) {
+  for(AtomIndex i = 0; i < complex.graph().V(); ++i) {
     if(
       complex.graph().elementType(i) == Utils::ElementType::N
       && complex.stereopermutators().option(i)

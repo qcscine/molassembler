@@ -93,26 +93,22 @@ BOOST_AUTO_TEST_CASE(UniqueDescendants, *boost::unit_test::label("Molassembler")
 }
 
 BOOST_AUTO_TEST_CASE(EditDistance, *boost::unit_test::label("Molassembler")) {
+  auto distance = [&](const Molecule& a, const Molecule& b) -> unsigned {
+    return minimalEdits(a.graph(), b.graph()).distance;
+  };
+
   const auto parse = &IO::Experimental::parseSmilesSingleMolecule;
   auto methane = parse("C");
   auto methyl = parse("[CH3]");
-  BOOST_CHECK_EQUAL(
-    editDistance(methane.graph(), methyl.graph()),
-    2
-  );
-  // Must be symmetric
-  BOOST_CHECK_EQUAL(
-    editDistance(methyl.graph(), methane.graph()),
-    2
-  );
-
   auto silane = parse("[SiH4]");
-  BOOST_CHECK_EQUAL(
-    editDistance(silane.graph(), methane.graph()),
-    1
-  );
-  BOOST_CHECK_EQUAL(
-    editDistance(silane.graph(), methyl.graph()),
-    3
-  );
+  BOOST_CHECK_EQUAL(distance(methane, methyl), 2);
+  BOOST_CHECK_EQUAL(distance(silane, methane), 1);
+  BOOST_CHECK_EQUAL(distance(silane, methyl), 3);
+
+  auto propane = parse("CCC");
+  auto propionic_acid = parse("CCC(=O)O");
+  BOOST_CHECK_EQUAL(distance(propane, propionic_acid), 5);
+  BOOST_CHECK_EQUAL(distance(propionic_acid, propane), 5);
+  BOOST_CHECK_EQUAL(distance(propane, propane), 0);
+  BOOST_CHECK_EQUAL(distance(propionic_acid, propionic_acid), 0);
 }

@@ -262,6 +262,8 @@ public:
    */
   unsigned degree(Vertex a) const;
 
+  std::string graphviz() const;
+
   //! Number of vertices in the graph
   [[deprecated("Prefer V")]]
   Vertex N() const;
