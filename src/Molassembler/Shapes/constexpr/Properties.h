@@ -23,6 +23,7 @@
 #include "Molassembler/Temple/constexpr/DynamicSet.h"
 #include "Molassembler/Temple/constexpr/FloatingPointComparison.h"
 #include "Molassembler/Temple/constexpr/Numeric.h"
+#include "Molassembler/Temple/Permutations.h"
 #include "Molassembler/Temple/Cache.h"
 
 namespace Scine {

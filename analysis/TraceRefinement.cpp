@@ -504,7 +504,7 @@ MoleculeDGInformation gatherDGInformation(
 
   if(applyTetrangleSmoothing) {
     /* Add implicit lower and upper bounds */
-    const AtomIndex N = molecule.graph().N();
+    const AtomIndex N = molecule.graph().V();
     for(AtomIndex i = 0; i < N; ++i) {
       for(AtomIndex j = i + 1; j < N; ++j) {
         double& lower = data.bounds(j, i);
@@ -530,7 +530,7 @@ MoleculeDGInformation gatherDGInformation(
   }
 
   if(printBounds) {
-    const AtomIndex N = molecule.graph().N();
+    const AtomIndex N = molecule.graph().V();
     for(AtomIndex i = 0; i < N; ++i) {
       auto iGraphDistances = distance(i, molecule.graph());
 

@@ -19,6 +19,7 @@ void init_modeling(pybind11::module& m);
 void init_molecule(pybind11::module& m);
 void init_options(pybind11::module& m);
 void init_graph(pybind11::module& m);
+void init_graph_algorithms(pybind11::module& m);
 void init_random_engine(pybind11::module& m);
 void init_ranking_information(pybind11::module& m);
 void init_serialization(pybind11::module& m);
@@ -49,6 +50,7 @@ PYBIND11_MODULE(scine_molassembler, m) {
   init_shape_submodule(m);
   init_cycles(m);
   init_graph(m);
+  init_graph_algorithms(m);
   init_ranking_information(m);
   init_atom_stereopermutator(m);
   init_composite(m);

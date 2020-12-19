@@ -93,7 +93,7 @@ struct EditDistanceForest {
     HausdorffHeuristic(
       const PrivateGraph& i,
       const PrivateGraph& j,
-      EditCost& cost
+      const EditCost& cost
     ) : a(i), b(j), costFn(cost) {
       precomputedNodeFunction.resize(a.V(), b.V());
       for(PrivateGraph::Vertex u : a.vertices()) {
@@ -114,7 +114,7 @@ struct EditDistanceForest {
     const PrivateGraph& a;
     const PrivateGraph& b;
     Eigen::MatrixXd precomputedNodeFunction;
-    EditCost& costFn;
+    const EditCost& costFn;
   };
 //!@}
 
@@ -170,13 +170,13 @@ struct EditDistanceForest {
   EditDistanceForest(
     const PrivateGraph& a,
     const PrivateGraph& b,
-    std::unique_ptr<EditCost> costFnPtr,
+    const EditCost& costFnRef,
     const Subgraphs::IndexMap& preconditioningMap
   ) : preconditioning(preconditioningMap),
       bHydrogenComponents(hydrogenComponents(b)),
       queue(QueueComparator(g)),
-      costPtr(std::move(costFnPtr)),
-      heuristic(a, b, *costPtr)
+      costFn(costFnRef),
+      heuristic(a, b, costFn)
   {
     // Initialize the search forest
     std::vector<Vertex> roots;
@@ -192,7 +192,7 @@ struct EditDistanceForest {
         matchedComponents.insert(component);
 
         Vertex newVertex = boost::add_vertex(g);
-        const unsigned cost = costPtr->elementSubstitution(u1ElementType, b.elementType(v));
+        const unsigned cost = costFn.elementSubstitution(u1ElementType, b.elementType(v));
         g[newVertex] = VertexData {
           v,
           cost,
@@ -211,7 +211,7 @@ struct EditDistanceForest {
           addRoot(v);
         }
         Vertex deletion = boost::add_vertex(g);
-        const unsigned cost = costPtr->vertexAlteration();
+        const unsigned cost = costFn.vertexAlteration();
         g[deletion] = VertexData {
           epsilon,
           cost,
@@ -271,7 +271,7 @@ struct EditDistanceForest {
   const Subgraphs::IndexMap& preconditioning;
   std::vector<unsigned> bHydrogenComponents;
   Queue queue;
-  std::unique_ptr<EditCost> costPtr;
+  const EditCost& costFn;
   HausdorffHeuristic heuristic;
   Vertex result;
 //!@}

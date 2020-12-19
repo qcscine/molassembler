@@ -153,16 +153,16 @@ EditDistanceForest::search(const PrivateGraph& a, const PrivateGraph& b) {
           const auto aBondOption = bondTypeOption(i, traversal.depth, a);
           const auto bBondOption = bondTypeOption(*rIter, v, b);
           if(aBondOption && bBondOption) {
-            impliedEdgeCosts += costPtr->bondSubstitution(*aBondOption, *bBondOption);
+            impliedEdgeCosts += costFn.bondSubstitution(*aBondOption, *bBondOption);
           } else if(static_cast<bool>(aBondOption) ^ static_cast<bool>(bBondOption)) {
-            impliedEdgeCosts += costPtr->edgeAlteration();
+            impliedEdgeCosts += costFn.edgeAlteration();
           }
 
           ++i;
         }
         const unsigned cost = (
           g[top].costSum
-          + costPtr->elementSubstitution(ukElementType, b.elementType(v))
+          + costFn.elementSubstitution(ukElementType, b.elementType(v))
           + impliedEdgeCosts
         );
         const Vertex newVertex = addVertex(
@@ -189,10 +189,10 @@ EditDistanceForest::search(const PrivateGraph& a, const PrivateGraph& b) {
           const auto aEdgeOption = a.edgeOption(i, traversal.depth);
           if(aEdgeOption) {
             // If the implied edge exists, it has to be deleted
-            impliedEdgeCosts += costPtr->edgeAlteration();
+            impliedEdgeCosts += costFn.edgeAlteration();
           }
         }
-        const unsigned cost = g[top].costSum + costPtr->vertexAlteration() + impliedEdgeCosts;
+        const unsigned cost = g[top].costSum + costFn.vertexAlteration() + impliedEdgeCosts;
         const Vertex newVertex = addVertex(
           VertexData {
             epsilon,
@@ -215,10 +215,10 @@ EditDistanceForest::search(const PrivateGraph& a, const PrivateGraph& b) {
         for(const PrivateGraph::Vertex w : bVertices) {
           const auto bEdgeOption = b.edgeOption(v, w);
           if(bEdgeOption) {
-            impliedEdgeCosts += costPtr->edgeAlteration();
+            impliedEdgeCosts += costFn.edgeAlteration();
           }
         }
-        const unsigned cost = g[currentForestVertex].costSum + costPtr->vertexAlteration() + impliedEdgeCosts;
+        const unsigned cost = g[currentForestVertex].costSum + costFn.vertexAlteration() + impliedEdgeCosts;
         /* NOTE: No point in estimating here since the final value will be
          * true and no intermediate solutions will be added to the queue, so
          * we skip it

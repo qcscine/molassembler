@@ -237,6 +237,11 @@ PrivateGraph::merge(
   return copyVertexTargetIndices;
 }
 
+bool PrivateGraph::adjacent(const Vertex a, const Vertex b) const {
+  auto edge = boost::edge(a, b, graph_);
+  return edge.second;
+}
+
 Utils::ElementType& PrivateGraph::elementType(const Vertex a) {
   // Invalidate the cache values
   properties_.invalidate();

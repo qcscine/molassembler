@@ -64,7 +64,12 @@ struct MASM_EXPORT PredecessorMap {
 MASM_EXPORT PredecessorMap shortestPaths(AtomIndex source, const Graph& graph);
 
 /**
- * @brief Base class for edit cost functions
+ * @brief Base class for edit cost functors for graph edit distance methods
+ *
+ * This class defines the interface that a cost functor for the family of graph
+ * edit distance methods must implement. Regarding the used terminology:
+ * Alterations are insertion or deletion. Substitutions are changes to existing
+ * parts of the graph.
  */
 struct MASM_EXPORT EditCost {
   virtual ~EditCost() = default;
@@ -79,6 +84,9 @@ struct MASM_EXPORT EditCost {
 /**
  * @brief Fuzzy-matching cost function that prefers element substitutions to
  *   alterations
+ *
+ * Graph edit distances generated with this cost function will prefer
+ * substitutions to alterations, but not strongly.
  */
 struct MASM_EXPORT FuzzyCost : public EditCost {
   unsigned vertexAlteration() const override { return 1; }
@@ -94,6 +102,9 @@ struct MASM_EXPORT FuzzyCost : public EditCost {
 /**
  * @brief Element type conserving cost function, really allowing only edge
  *   alterations
+ *
+ * This cost function conserves element types and prevents vertex deletion.
+ * Perfect for chemical reactions.
  */
 struct MASM_EXPORT ElementsConservedCost : public FuzzyCost {
   unsigned vertexAlteration() const override { return 100; }
@@ -105,38 +116,131 @@ struct MASM_EXPORT ElementsConservedCost : public FuzzyCost {
 /**
  * @brief Result type for single-pair graph edit distance calculation
  */
-struct MASM_EXPORT Edits {
+struct MASM_EXPORT MinimalGraphEdits {
+  //! Flat vertex index map between the graphs
   using IndexMap = std::vector<AtomIndex>;
+
+  //! Type for non-zero cost vertex edits in the result set
+  struct VertexEdit {
+    VertexEdit() = default;
+    VertexEdit(AtomIndex i, AtomIndex j, unsigned c) : first(i), second(j), cost(c) {}
+
+    //! Left graph index (possibly epsilon)
+    AtomIndex first;
+    //! Right graph index (possibly epsilon)
+    AtomIndex second;
+    //! Cost of the edit per the cost function
+    unsigned cost;
+  };
+
+  //! Type for non-zero cost edge edits in the result set
+  struct EdgeEdit {
+    EdgeEdit() = default;
+    EdgeEdit(BondIndex i, BondIndex j, unsigned c) : first(i), second(j), cost(c) {}
+
+    //! Left graph bond index (possibly containing epsilon values)
+    BondIndex first;
+    //! Right graph bond index (possibly containing epsilon values)
+    BondIndex second;
+    //! Cost of the edit per the cost function
+    unsigned cost;
+  };
+
   //! Sentinel value for non-existent vertex
   static constexpr AtomIndex epsilon = std::numeric_limits<AtomIndex>::max();
 
   //! Total distance between graphs according to cost function
   unsigned distance;
+  //! Vertex mapping, possibly including epsilon values
   IndexMap indexMap;
+  //! List of non-zero-cost vertex edits
+  std::vector<VertexEdit> vertexEdits;
+  //! List of non-zero-cost edge edits
+  std::vector<EdgeEdit> edgeEdits;
 };
 
 /**
- * @brief Exact graph edit distance calculation
+ * @brief Graph edit distance calculation
  *
- * Graph edit distance is symmetric, so order of arguments is irrelevant.
+ * A maximum common connected subgraph is used to precondition the exact graph
+ * edit distance algorithm. Otherwise, the exact graph edit distance quickly
+ * becomes intractable past 10 vertices due to combinatorial space explosion
+ * and rapid memory exhaustion.
  *
  * @param a First graph to calculate edit distance for
  * @param b Second graph to calculate edit distance for
- * @param cost Cost function implementation for distance calculation
+ * @param cost Cost functor for graph edits
  *
- * @return Graph edit distance metric
+ * @returns distance, index mapping and non-zero cost edit lists
  */
-Edits minimalEdits(const Graph& a, const Graph& b, std::unique_ptr<EditCost> cost = std::make_unique<FuzzyCost>());
+MASM_EXPORT MinimalGraphEdits minimalEdits(const Graph& a, const Graph& b, const EditCost& cost = FuzzyCost {});
 
-struct MultiEdits {
+//! Aggregate for multiple-graph graph edit distance
+struct MASM_EXPORT MinimalReactionEdits {
+  //! Input component and atom index therein
   using ComponentIndexPair = std::pair<unsigned, AtomIndex>;
-  unsigned distance;
 
+  //! Type for non-zero cost vertex edits in the result set
+  struct VertexEdit {
+    VertexEdit() = default;
+    VertexEdit(ComponentIndexPair i, ComponentIndexPair j, unsigned c)
+      : first(std::move(i)), second(std::move(j)), cost(c) {}
+
+    //! Left graph index and component
+    ComponentIndexPair first;
+    //! Right graph index and component
+    ComponentIndexPair second;
+    //! Cost of the edit per the cost function
+    unsigned cost;
+  };
+
+  //! Type for non-zero cost edge edits in the result set
+  struct EdgeEdit {
+    //! Type for two component and index pairs
+    using ComponentBondIndex = std::pair<ComponentIndexPair, ComponentIndexPair>;
+
+    EdgeEdit() = default;
+    EdgeEdit(ComponentBondIndex i, ComponentBondIndex j, unsigned c)
+      : first(std::move(i)), second(std::move(j)), cost(c) {}
+
+    //! Left bond
+    ComponentBondIndex first;
+    //! Right bond
+    ComponentBondIndex second;
+    //! Cost of the edit per the cost function
+    unsigned cost;
+  };
+
+  //! Minimal edit cost between graphs
+  unsigned distance;
+  //! Vertex and component mapping
   std::unordered_map<ComponentIndexPair, ComponentIndexPair, boost::hash<ComponentIndexPair>> indexMap;
+  //! List of non-zero-cost vertex edits
+  std::vector<VertexEdit> vertexEdits;
+  //! List of non-zero-cost edge edits
+  std::vector<EdgeEdit> edgeEdits;
 };
 
+//! Input type for multiple graphs
 using GraphList = std::vector<std::reference_wrapper<Graph>>;
-MultiEdits reactionEdits(const GraphList& lhs, const GraphList& rhs);
+
+/**
+ * @brief Graph edit distance calculation for reactions
+ *
+ * A maximum common subgraph is used to precondition the exact graph edit
+ * distance algorithm. Otherwise, the exact graph edit distance quickly becomes
+ * intractable past 10 vertices due to combinatorial space explosion and rapid
+ * memory exhaustion.
+ *
+ * @param lhs List of graphs of the left side of the reaction
+ * @param rhs List of graphs of the right side of the reaction
+ *
+ * @throws std::logic_error If the number of atoms in both sides is unequal or
+ * the element composition of both sides is different.
+ *
+ * @returns distance, index mapping and non-zero cost edit lists
+ */
+MASM_EXPORT MinimalReactionEdits reactionEdits(const GraphList& lhsGraphs, const GraphList& rhsGraphs);
 
 } // namespace Molassembler
 } // namespace Scine

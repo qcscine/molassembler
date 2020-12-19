@@ -240,10 +240,7 @@ std::vector<BondInformation> gatherBonds(
     }
   }
 
-  std::sort(
-    bonds.begin(),
-    bonds.end()
-  );
+  Temple::sort(bonds);
 
   return bonds;
 }
@@ -311,16 +308,9 @@ bool identityCompare(
   return Temple::all_of(
     Temple::Adaptors::range(aGraph.V()),
     [&](const AtomIndex i) -> WideHashType {
-      return atomEnvironment(
-        aGraph,
-        aStereopermutators,
-        componentBitmask,
-        i
-      ) == atomEnvironment(
-        bGraph,
-        bStereopermutators,
-        componentBitmask,
-        i
+      return (
+        atomEnvironment(aGraph, aStereopermutators, componentBitmask, i)
+        == atomEnvironment(bGraph, bStereopermutators, componentBitmask, i)
       );
     }
   );
@@ -340,11 +330,7 @@ std::tuple<
   // Generate mapping from hash values to integer-incremented reduction
   for(const auto& hash : boost::range::join(a, b)) {
     if(reductionMapping.count(hash) == 0) {
-      reductionMapping.emplace(
-        hash,
-        counter
-      );
-
+      reductionMapping.emplace(hash, counter);
       ++counter;
     }
   }

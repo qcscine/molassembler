@@ -11,10 +11,7 @@
 #include "Molassembler/Graph/EditDistance.h"
 #include "Molassembler/Temple/Functional.h"
 #include "Molassembler/Subgraphs.h"
-
-// TODO tmp
-#include <fstream>
-#include <iostream>
+#include "Molassembler/Graph/McSplit.h"
 
 /* GraphAlgorithms.h is the public API point for algorithms that act on
  * Graph. In Graph/GraphAlgorithms.h, those algorithms are implemented on
@@ -25,7 +22,7 @@ namespace Scine {
 namespace Molassembler {
 namespace {
 
-using UnorderedIndexMap = std::unordered_map<AtomIndex, MultiEdits::ComponentIndexPair>;
+using UnorderedIndexMap = std::unordered_map<AtomIndex, MinimalReactionEdits::ComponentIndexPair>;
 std::pair<PrivateGraph, UnorderedIndexMap> condense(const GraphList& list) {
   std::pair<PrivateGraph, UnorderedIndexMap> p;
   unsigned component = 0;
@@ -40,19 +37,115 @@ std::pair<PrivateGraph, UnorderedIndexMap> condense(const GraphList& list) {
   return p;
 }
 
-Edits minimalEdits(
+MinimalGraphEdits minimalEdits(
   const PrivateGraph& a,
   const PrivateGraph& b,
-  std::unique_ptr<EditCost> cost,
-  const Subgraphs::IndexMap& preconditioning = {}
+  const EditCost& cost,
+  const bool preconditioningSubgraphConnected
 ) {
-  GraphAlgorithms::EditDistanceForest forest {a, b, std::move(cost), preconditioning};
+  /* Precondition the graph edit distance algorithm with maximum common
+   * subgraph matches
+   *
+   * TODO the McSplit doesn't seem to offer all mcs (just one), and in
+   * principle we need to try all of them and minimize the distance over them.
+   */
+  constexpr bool mcsLabelEdges = true;
+  const auto preconditioning = GraphAlgorithms::McSplit::mcs(
+    a,
+    b,
+    preconditioningSubgraphConnected,
+    mcsLabelEdges
+  );
+  Subgraphs::IndexMap precondition;
+  for(auto p : preconditioning) {
+    precondition.insert(Subgraphs::IndexMap::value_type(p.first, p.second));
+  }
 
-  Edits edits;
+  // Template for minimization over subgraphs:
+  // const auto edits = Temple::accumulate(
+  //   Subgraphs::maximum(lhs.first, rhs.first),
+  //   Edits { std::numeric_limits<unsigned>::max(), {}},
+  //   [&](Edits carry, const auto& preconditioning) -> MinimalGraphEdits {
+  //     std::cout << "MCS precondition size: " << preconditioning.size() << "\n";
+  //     EditForest forest {a, b, cost, precondition};
+  //     const unsigned distance = forest.g[forest.result].costSum;
+
+  //     if(distance < carry.distance) {
+  //       return preconditionedEdits;
+  //     }
+
+  //     return carry;
+  //   }
+  // );
+
+  using EditForest = GraphAlgorithms::EditDistanceForest;
+  EditForest forest {a, b, cost, precondition};
+
+  static_assert(
+    EditForest::epsilon == MinimalGraphEdits::epsilon,
+    "Epsilon values must match between EditDistanceForest and MinimalGraphEdits"
+  );
+  constexpr auto epsilon =  EditForest::epsilon;
+
+  MinimalGraphEdits edits;
   edits.distance = forest.g[forest.result].costSum;
   const auto traversal = forest.traverse(forest.result);
   edits.indexMap = traversal.bVertices;
   std::reverse(std::begin(edits.indexMap), std::end(edits.indexMap));
+
+  // Compute the full list of non-zero cost edits
+  const auto sizes = std::minmax({a.V(), b.V()});
+  const unsigned edgeAlterationCost = cost.edgeAlteration();
+  // Vertices from a
+  for(AtomIndex i = 0; i < sizes.first; ++i) {
+    const AtomIndex j = edits.indexMap[i];
+    if(j == epsilon && cost.vertexAlteration() > 0) {
+      edits.vertexEdits.emplace_back(i, j, cost.vertexAlteration());
+    } else {
+      const unsigned elementCost = cost.elementSubstitution(a.elementType(i), b.elementType(j));
+      if(elementCost > 0) {
+        edits.vertexEdits.emplace_back(i, j, elementCost);
+      }
+    }
+
+    // Implied edges
+    for(AtomIndex k = 0; k < i; ++k) {
+      const AtomIndex l = edits.indexMap.at(k);
+      const auto aBond = EditForest::bondTypeOption(i, k, a);
+      const auto bBond = EditForest::bondTypeOption(j, l, b);
+      if(aBond && bBond) {
+        const unsigned edgeCost = cost.bondSubstitution(*aBond, *bBond);
+        if(edgeCost > 0) {
+          edits.edgeEdits.emplace_back(BondIndex {i, k}, BondIndex {j, l}, edgeCost);
+        }
+      } else if(static_cast<bool>(aBond) ^ static_cast<bool>(bBond)) {
+        if(edgeAlterationCost > 0) {
+          edits.edgeEdits.emplace_back(BondIndex {i, k}, BondIndex {j, l}, edgeAlterationCost);
+        }
+      }
+    }
+  }
+
+  // Extra vertices from b (epsilon -> j)
+  if(edgeAlterationCost != 0) {
+    for(AtomIndex i = sizes.first; i < sizes.second; ++i) {
+      const AtomIndex j = edits.indexMap[i];
+      for(AtomIndex k = 0; k < i; ++k) {
+        const AtomIndex l = edits.indexMap[k];
+        if(l == epsilon) {
+          continue;
+        }
+        if(auto bEdgeOption = b.edgeOption(j, l)) {
+          edits.edgeEdits.emplace_back(
+            BondIndex {epsilon, k < sizes.first ? k : epsilon},
+            BondIndex {j, l},
+            edgeAlterationCost
+          );
+        }
+      }
+    }
+  }
+
   return edits;
 }
 
@@ -93,18 +186,16 @@ std::vector<AtomIndex> PredecessorMap::path(const AtomIndex target) const {
   return pathVertices;
 }
 
-Edits minimalEdits(const Graph& a, const Graph& b, std::unique_ptr<EditCost> cost) {
-  return minimalEdits(a.inner(), b.inner(), std::move(cost));
+constexpr AtomIndex MinimalGraphEdits::epsilon;
+
+MinimalGraphEdits minimalEdits(const Graph& a, const Graph& b, const EditCost& cost) {
+  constexpr bool preconditioningSubgraphConnected = true;
+  return minimalEdits(a.inner(), b.inner(), cost, preconditioningSubgraphConnected);
 }
 
-MultiEdits reactionEdits(const GraphList& lhsGraphs, const GraphList& rhsGraphs) {
+MinimalReactionEdits reactionEdits(const GraphList& lhsGraphs, const GraphList& rhsGraphs) {
   const auto lhs = condense(lhsGraphs);
   const auto rhs = condense(rhsGraphs);
-
-  std::ofstream lhsfile("lhs.dot");
-  lhsfile << lhs.first.graphviz();
-  std::ofstream rhsfile("rhs.dot");
-  rhsfile << rhs.first.graphviz();
 
   // Check preconditions
   auto lhsElements = lhs.first.elementCollection();
@@ -118,30 +209,14 @@ MultiEdits reactionEdits(const GraphList& lhsGraphs, const GraphList& rhsGraphs)
     throw std::logic_error("Element composition of reaction sides different. Playing at alchemy?");
   }
 
-  /* Precondition the graph edit distance algorithm with maximum common
-   * subgraph matches
-   */
-  const auto edits = Temple::accumulate(
-    Subgraphs::maximum(lhs.first, rhs.first),
-    Edits { std::numeric_limits<unsigned>::max(), {}},
-    [&](Edits carry, const auto& preconditioning) -> Edits {
-      std::cout << "MCS precondition size: " << preconditioning.size() << "\n";
-      auto preconditionedEdits = minimalEdits(
-        lhs.first,
-        rhs.first,
-        std::make_unique<ElementsConservedCost>(),
-        preconditioning
-      );
-
-      if(preconditionedEdits.distance < carry.distance) {
-        return preconditionedEdits;
-      }
-
-      return carry;
-    }
+  const auto edits = minimalEdits(
+    lhs.first,
+    rhs.first,
+    ElementsConservedCost {},
+    false
   );
 
-  MultiEdits multi;
+  MinimalReactionEdits multi;
   multi.distance = edits.distance;
 
   const unsigned V = edits.indexMap.size();
@@ -153,6 +228,29 @@ MultiEdits reactionEdits(const GraphList& lhsGraphs, const GraphList& rhsGraphs)
       rhs.second.at(edits.indexMap.at(i))
     );
   }
+
+  multi.vertexEdits = Temple::map(
+    edits.vertexEdits,
+    [&](const auto& edit) -> MinimalReactionEdits::VertexEdit {
+      return {
+        lhs.second.at(edit.first),
+        rhs.second.at(edit.second),
+        edit.cost
+      };
+    }
+  );
+
+  multi.edgeEdits = Temple::map(
+    edits.edgeEdits,
+    [&](const auto& edit) -> MinimalReactionEdits::EdgeEdit {
+      return {
+        {lhs.second.at(edit.first.first), lhs.second.at(edit.first.second)},
+        {rhs.second.at(edit.second.first), rhs.second.at(edit.second.second)},
+        edit.cost
+      };
+    }
+  );
+
   return multi;
 }
 

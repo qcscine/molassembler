@@ -188,6 +188,9 @@ public:
 
 //!@name Information
 //!@{
+  //! Returns whether two vertices are adjacent
+  bool adjacent(Vertex a, Vertex b) const;
+
   /*! @brief Fetches the element type of a vertex
    *
    * @complexity{@math{\Theta(1)}}

@@ -177,7 +177,7 @@ void benchmark(
 
   /* Timings */
   std::cout << std::fixed << std::setprecision(0);
-  std::cout << std::setw(14) << "N" << std::setw(8) << sampleMol.graph().N() << nl;
+  std::cout << std::setw(14) << "V" << std::setw(8) << sampleMol.graph().V() << nl;
 
   std::vector<std::string> names;
   std::vector<double> times;
@@ -220,7 +220,7 @@ void benchmark(
 
   benchmarkFile
     << std::fixed << std::setprecision(0)
-    << sampleMol.graph().N() << ", " << sampleMol.graph().B() << ", "
+    << sampleMol.graph().V() << ", " << sampleMol.graph().E() << ", "
     << std::scientific << std::setprecision(6);
 
   for(unsigned i = 0; i < names.size(); ++i) {

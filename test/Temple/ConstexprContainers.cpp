@@ -22,6 +22,7 @@
 #include "Molassembler/Temple/constexpr/Math.h"
 #include "Molassembler/Temple/constexpr/TupleType.h"
 #include "Molassembler/Temple/constexpr/TupleTypePairs.h"
+#include "Molassembler/Temple/Permutations.h"
 
 #include <iostream>
 
@@ -681,7 +682,7 @@ BOOST_AUTO_TEST_CASE(PermutationIndexTests, *boost::unit_test::label("Temple")) 
   // expect monotonically increasing permutation index on inplaceNextPermutation
   auto index = permutationIndex(a);
 
-  BOOST_CHECK(index == 0);
+  BOOST_CHECK_EQUAL(index, 0);
 
   bool pass = true;
   auto previousIndex = index;
@@ -699,4 +700,29 @@ BOOST_AUTO_TEST_CASE(PermutationIndexTests, *boost::unit_test::label("Temple")) 
     "inPlaceNextPermutation must yield monotonically increasing permutation "
     "index values"
   );
+}
+
+BOOST_AUTO_TEST_CASE(PermutationsTests, *boost::unit_test::label("Temple")) {
+  using T = Temple::Array<unsigned, 4>;
+  Temple::Permutation<T> p(T {0, 1, 3, 2});
+  BOOST_CHECK_EQUAL(p.index(), 1);
+  BOOST_CHECK(p.prev());
+  BOOST_CHECK_EQUAL(p.index(), 0);
+  BOOST_CHECK(p.next());
+  BOOST_CHECK(p.next());
+  BOOST_CHECK_EQUAL(p.index(), 2);
+
+  auto inverse = p.inverse();
+  auto identity = p.apply(inverse.sigma);
+  BOOST_CHECK_EQUAL(Temple::make_permutation(identity).index(), 0);
+
+  using U = std::vector<unsigned>;
+  Temple::Permutation<U> q(4);
+  BOOST_CHECK_EQUAL(q.index(), 0);
+  BOOST_CHECK(q.next());
+  BOOST_CHECK_EQUAL(q.index(), 1);
+
+  auto qInverse = q.inverse();
+  auto qIdentity = q.apply(qInverse.sigma);
+  BOOST_CHECK_EQUAL(Temple::make_permutation(qIdentity).index(), 0);
 }

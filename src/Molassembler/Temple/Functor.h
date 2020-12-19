@@ -124,6 +124,7 @@ constexpr Get<0> first;
 //! @brief Calls std::get<1> on any argument it is invoked with
 constexpr Get<1> second;
 
+// TODO this doesn't curry, it chains
 template<typename UnaryF, typename UnaryG>
 struct Currier {
   Currier(UnaryF&& outer, UnaryG&& inner) : f(outer), g(inner) {}
