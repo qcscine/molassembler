@@ -17,7 +17,11 @@ Added
 - Graph algorithm: Ranking equivalent groups and ranking distinct atoms
   algorithms exploiting ranking results to classify chemical equivalence.
 - Graph algorithm: Shortest path generator between vertices in the graph
-- Graph algorithm: Edit distance
+- Graph algorithm: Edit distance. Algorithm to calculate minimal set of vertex
+  and edge alterations to transform one graph into another. 
+- Graph algorithm: Reaction edit distance. Variation of the graph edit distance
+  algorithm that conserves element types. Also adds an associated function that
+  plots the edits.
 - Conformer deduplication: More ``Relabeler``-related functions
 - Python bindings:
 
@@ -108,6 +112,7 @@ Added
 
 Changed
 .......
+
 - The PRNG Engine is seeded directly instead of a wrapper object that helps
   with generating random numbers. The PRNG engine is part of molassembler's
   public interface instead of the sublibrary temple. The engine is constructed

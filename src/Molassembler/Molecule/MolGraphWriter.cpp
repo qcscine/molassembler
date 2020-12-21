@@ -12,6 +12,7 @@
 #include "Utils/Geometry/ElementInfo.h"
 
 #include "Molassembler/Temple/Stringify.h"
+#include "Molassembler/Temple/Functional.h"
 #include "Molassembler/Shapes/Data.h"
 
 using namespace std::string_literals;
@@ -26,12 +27,6 @@ MolGraphWriter::MolGraphWriter(
 ) : graphPtr(passGraphPtr), stereopermutatorListPtr(passPermutatorListPtr) {}
 
 /* Information */
-Utils::ElementType MolGraphWriter::getElementType(
-  const AtomIndex vertexIndex
-) const {
-  return graphPtr->elementType(vertexIndex);
-}
-
 std::vector<std::string> MolGraphWriter::edgeTooltips(const AtomIndex /* source */, const AtomIndex /* target */) const {
   return {};
 }
@@ -54,106 +49,155 @@ void MolGraphWriter::operator() (std::ostream& os) const {
     << "edge [fontname = \"Arial\"];\n";
 }
 
-// Vertex options
-void MolGraphWriter::operator() (
-  std::ostream& os,
-  const AtomIndex vertexIndex
-) const {
-  const std::string symbolString = Utils::ElementInfo::symbol(
-    graphPtr->elementType(vertexIndex)
-  );
-
-  os << "[";
-
-  // Add element name and index label
-  os << R"(label = ")" << symbolString << vertexIndex << R"(")";
-
-  // Coloring
-  // C++17 if-init
-  auto bgColorFindIter = MolGraphWriter::elementBGColorMap().find(symbolString);
-  if(bgColorFindIter != MolGraphWriter::elementBGColorMap().end()) {
-    os << R"(, fillcolor=")" << bgColorFindIter->second << R"(")";
-  } else { // default
-    os << R"(, fillcolor="white")";
-  }
-
-  auto textColorFindIter = MolGraphWriter::elementTextColorMap().find(symbolString);
-  if(textColorFindIter != MolGraphWriter::elementTextColorMap().end()) {
-    os << R"(, fontcolor=")" << textColorFindIter->second << R"(")";
-  } else { // default
-    os << R"(, fontcolor="orange")";
-  }
-
-  // Font sizing
-  if(symbolString == "H") {
-    os << ", fontsize=10, width=.3, fixedsize=true";
-  }
-
-  // Any angles this atom is the central atom in
-  std::vector<std::string> tooltipStrings {
-  };
+std::map<std::string, std::string> MolGraphWriter::vertexAttributes(const PrivateGraph::Vertex v) const {
+  std::map<std::string, std::string> attributes;
+  attributes.emplace("label", vertexLabel(v));
+  auto colors = fillFontColors(v);
+  attributes.emplace("fillcolor", colors.first);
+  attributes.emplace("fontcolor", colors.second);
 
   if(stereopermutatorListPtr != nullptr) {
-    if(auto stereopermutatorOption = stereopermutatorListPtr->option(vertexIndex)) {
-      auto additionalTooltips = atomStereopermutatorTooltips(*stereopermutatorOption);
-      std::move(
-        std::begin(additionalTooltips),
-        std::end(additionalTooltips),
-        std::back_inserter(tooltipStrings)
-      );
+    if(auto stereopermutatorOption = stereopermutatorListPtr->option(v)) {
+      auto tooltips = atomStereopermutatorTooltips(*stereopermutatorOption);
+      if(!tooltips.empty()) {
+        attributes.emplace("tooltip", Temple::condense(tooltips, "&#10;"s));
+      }
     }
   }
 
-  if(!tooltipStrings.empty()) {
-    os << R"(, tooltip=")"
-      << Temple::condense(tooltipStrings, "&#10;"s)
-      << R"(")";
+  const Utils::ElementType e = graphPtr->elementType(v);
+  if(e == Utils::ElementType::H) {
+    attributes.emplace("fontsize", "10");
+    attributes.emplace("width", ".3");
+    attributes.emplace("fixedsize", "true");
+  }
+  return attributes;
+}
+
+std::pair<std::string, std::string>
+MolGraphWriter::fillFontColors(const PrivateGraph::Vertex v) const {
+  const Utils::ElementType e = graphPtr->elementType(v);
+  const std::string symbolString = Utils::ElementInfo::symbol(e);
+  return {
+    elementBGColorMap().at(symbolString),
+    elementTextColorMap().at(symbolString)
+  };
+}
+
+std::string MolGraphWriter::vertexLabel(const PrivateGraph::Vertex v) const {
+  const Utils::ElementType e = graphPtr->elementType(v);
+
+  // Do not mark element type for hydrogen or carbon, those are commonplace
+  if(e == Utils::ElementType::H || e == Utils::ElementType::C) {
+    return std::to_string(v);
   }
 
-  os << "]";
+  const std::string symbolString = Utils::ElementInfo::symbol(e);
+  return symbolString + std::to_string(v);
+}
+
+// Vertex options
+void MolGraphWriter::operator() (
+  std::ostream& os,
+  const AtomIndex v
+) const {
+  os << "[" << Temple::condense(
+    Temple::map(
+      vertexAttributes(v),
+      [](const auto& strPair) {
+        return strPair.first + "=\"" + strPair.second +"\"";
+      }
+    )
+  ) << "]";
+}
+
+std::map<std::string, std::string> MolGraphWriter::edgeAttributes(const PrivateGraph::Edge& e) const {
+  std::map<std::string, std::string> attributes;
+  attributes.emplace("penwidth", "3");
+
+  const PrivateGraph::Vertex i = graphPtr->source(e);
+  const PrivateGraph::Vertex j = graphPtr->target(e);
+
+  auto tooltips = edgeTooltips(i, j);
+
+  if(stereopermutatorListPtr != nullptr) {
+    if(auto permutator = stereopermutatorListPtr->option(BondIndex {i, j})) {
+      tooltips.push_back(permutator->info());
+    }
+  }
+
+  if(!tooltips.empty()) {
+    attributes.emplace("edgetooltip", Temple::condense(tooltips, "&#10;"s));
+  }
+
+  const std::string color = edgeColor(e);
+  const BondType type = graphPtr->bondType(e);
+  switch(type) {
+    case(BondType::Single): {
+      attributes.emplace("color", color);
+      break;
+    }
+    case(BondType::Double): {
+      attributes.emplace("color", color + ":invis:" + color);
+      break;
+    };
+    case(BondType::Triple): {
+      attributes.emplace("color", color + ":invis:" + color + ":invis:" + color);
+      break;
+    };
+    case(BondType::Quadruple): {
+      attributes.emplace("color", color);
+      attributes.emplace("label", "4");
+      break;
+    };
+    case(BondType::Quintuple): {
+      attributes.emplace("color", color);
+      attributes.emplace("label", "5");
+      break;
+    };
+    case(BondType::Sextuple): {
+      attributes.emplace("color", color);
+      attributes.emplace("label", "6");
+      break;
+    };
+    case(BondType::Eta): {
+      attributes.emplace("color", color);
+      attributes.emplace("style", "dotted");
+      break;
+    };
+  }
+
+  return attributes;
+}
+
+std::string MolGraphWriter::edgeColor(const PrivateGraph::Edge& e) const {
+  if(stereopermutatorListPtr != nullptr) {
+    const BondIndex b {graphPtr->source(e), graphPtr->target(e)};
+    if(auto permutatorOption = stereopermutatorListPtr->option(b)) {
+      if(permutatorOption->numAssignments() > 1) {
+        return "tomato";
+      }
+
+      return "steelblue";
+    }
+  }
+
+  return "black";
 }
 
 // Edge options
 void MolGraphWriter::operator() (
   std::ostream& os,
-  const PrivateGraph::Edge& edgeIndex
+  const PrivateGraph::Edge& e
 ) const {
-  const PrivateGraph& inner = *graphPtr;
-  os << "[";
-
-  // Bond Type display options
-  BondType bondType = inner.bondType(edgeIndex);
-  if(bondTypeDisplayString().count(bondType) != 0) {
-    os << bondTypeDisplayString().at(bondType);
-  }
-
-  os << ", penwidth=3";
-
-  std::vector<std::string> tooltips = edgeTooltips(
-    inner.source(edgeIndex),
-    inner.target(edgeIndex)
-  );
-
-  const BondIndex b {inner.source(edgeIndex), inner.target(edgeIndex)};
-  if(stereopermutatorListPtr != nullptr) {
-    if(auto permutatorOption = stereopermutatorListPtr->option(b)) {
-      if(permutatorOption->numAssignments() > 1) {
-        os << R"(, color="tomato")";
-      } else {
-        os << R"(, color="steelblue")";
+  os << "[" << Temple::condense(
+    Temple::map(
+      edgeAttributes(e),
+      [](const auto& strPair) {
+        return strPair.first + "=\"" + strPair.second +"\"";
       }
-
-      tooltips.push_back(permutatorOption->info());
-    }
-  }
-
-  if(!tooltips.empty()) {
-    os << R"(, edgetooltip=")"
-      << Temple::condense(tooltips, "&#10;"s)
-      << R"(")";
-  }
-
-  os << "]";
+    )
+  ) << "]";
 }
 
 
@@ -385,19 +429,6 @@ const std::map<std::string, std::string>& MolGraphWriter::elementTextColorMap() 
     {"Y", "black"},
     {"Zn", "white"},
     {"Zr", "black"},
-  };
-  return map;
-}
-
-const std::map<BondType, std::string>& MolGraphWriter::bondTypeDisplayString() {
-  static const std::map<BondType, std::string> map {
-    {BondType::Single, R"(color = "black")"},
-    {BondType::Double, R"(color = "black:invis:black")"},
-    {BondType::Triple, R"(color = "black:invis:black:invis:black")"},
-    {BondType::Quadruple, R"(label = "4")"},
-    {BondType::Quintuple, R"(label = "5")"},
-    {BondType::Sextuple, R"(label = "6")"},
-    {BondType::Eta, R"(style = "dotted")"}
   };
   return map;
 }

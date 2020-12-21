@@ -54,7 +54,89 @@ LabeledGraph::LabeledGraph(
   }
 }
 
-bool check_sol(
+//! Calculate the upper bound on matchable vertices
+inline int calculateBound(const std::vector<Bidomain>& domains) {
+  int bound = 0;
+  for (const Bidomain& bd : domains) {
+    bound += std::min(bd.left_len, bd.right_len);
+  }
+  return bound;
+}
+
+//! Find the minimum value in part of a vector
+inline int findMinValue(const std::vector<int>& arr, int start_idx, int len) {
+  // NOTE: len is not always equal to the size of the array
+  int min_v = std::numeric_limits<int>::max();
+  for (int i=0; i<len; i++) {
+    if (arr[start_idx + i] < min_v) {
+      min_v = arr[start_idx + i];
+    }
+  }
+  return min_v;
+}
+
+/* Returns the index of the smallest value in arr that is >w.
+ *
+ * Assumptions:
+ * - such a value exists
+ * - arr contains no duplicates
+ * - arr has no values==INT_MAX
+ */
+inline int indexOfNextSmallest(
+  const std::vector<int>& arr,
+  const int start_idx,
+  const int len,
+  const int w
+) {
+  int idx = -1;
+  int smallest = std::numeric_limits<int>::max();
+  for (int i=0; i<len; i++) {
+    if (arr[start_idx + i]>w && arr[start_idx + i]<smallest) {
+      smallest = arr[start_idx + i];
+      idx = i;
+    }
+  }
+  return idx;
+}
+
+inline void removeVtxFromLeftDomain(
+  std::vector<int>& left,
+  Bidomain& bd,
+  const int v
+) {
+  int i = 0;
+  while(left[bd.l + i] != v) {
+    i++;
+  }
+  std::swap(left[bd.l+i], left[bd.l+bd.left_len-1]);
+  bd.left_len--;
+}
+
+inline void removeBidomain(std::vector<Bidomain>& domains, const int idx) {
+  domains[idx] = std::move(domains[domains.size()-1]);
+  domains.pop_back();
+}
+
+
+// Returns length of left half of array
+inline int partition(
+  std::vector<int>& all_vv,
+  const int start,
+  const int len,
+  const std::vector<unsigned>& adjrow
+) {
+  int i=0;
+  for (int j=0; j < len; j++) {
+    if (adjrow[all_vv[start+j]] > 0) {
+      std::swap(all_vv[start+i], all_vv[start+j]);
+      i++;
+    }
+  }
+  return i;
+}
+
+
+bool checkSolution(
   const LabeledGraph& g0,
   const LabeledGraph& g1,
   const std::vector<VtxPair>& solution
@@ -81,7 +163,7 @@ bool check_sol(
   return true;
 }
 
-int select_bidomain(
+int selectBidomain(
   const std::vector<Bidomain>& domains,
   const std::vector<int>& left,
   int current_matching_size,
@@ -103,10 +185,10 @@ int select_bidomain(
       bd.left_len * bd.right_len;
     if (len < min_size) {
       min_size = len;
-      min_tie_breaker = find_min_value(left, bd.l, bd.left_len);
+      min_tie_breaker = findMinValue(left, bd.l, bd.left_len);
       best = i;
     } else if (len == min_size) {
-      int tie_breaker = find_min_value(left, bd.l, bd.left_len);
+      int tie_breaker = findMinValue(left, bd.l, bd.left_len);
       if (tie_breaker < min_tie_breaker) {
         min_tie_breaker = tie_breaker;
         best = i;
@@ -118,7 +200,7 @@ int select_bidomain(
 
 // Returns length of left half of array
 // multiway is for directed and/or labelled graphs
-std::vector<Bidomain> filter_domains(
+std::vector<Bidomain> filterDomains(
   const std::vector<Bidomain>& d,
   std::vector<int>& left,
   std::vector<int>& right,
@@ -198,37 +280,37 @@ void solve(
     incumbent = current;
   }
 
-  unsigned bound = current.size() + calc_bound(domains);
+  unsigned bound = current.size() + calculateBound(domains);
   if (bound <= incumbent.size() || bound < matching_size_goal) {
     return;
   }
 
-  if (arguments.big_first && incumbent.size()==matching_size_goal) {
+  if (arguments.big_first && incumbent.size() == matching_size_goal) {
     return;
   }
 
-  int bd_idx = select_bidomain(domains, left, current.size(), arguments);
+  int bd_idx = selectBidomain(domains, left, current.size(), arguments);
   // In the MCCS case, there may be nothing to branch on
   if (bd_idx == -1) {
     return;
   }
-  Bidomain &bd = domains[bd_idx];
+  Bidomain& bd = domains[bd_idx];
 
-  int v = find_min_value(left, bd.l, bd.left_len);
-  remove_vtx_from_left_domain(left, domains[bd_idx], v);
+  int v = findMinValue(left, bd.l, bd.left_len);
+  removeVtxFromLeftDomain(left, domains[bd_idx], v);
 
   // Try assigning v to each vertex w in the color class beginning at bd.r
   int w = -1;
   bd.right_len--;
   for (int i=0; i<=bd.right_len; i++) {
-    const int idx = index_of_next_smallest(right, bd.r, bd.right_len+1, w);
+    const int idx = indexOfNextSmallest(right, bd.r, bd.right_len+1, w);
     w = right[bd.r + idx];
 
     // swap w to the end of its colour class
     right[bd.r + idx] = right[bd.r + bd.right_len];
     right[bd.r + bd.right_len] = w;
 
-    auto new_domains = filter_domains(
+    auto new_domains = filterDomains(
       domains, left, right, g0, g1, v, w,
       arguments.edge_labelled
     );
@@ -238,7 +320,7 @@ void solve(
   }
   bd.right_len++;
   if (bd.left_len == 0) {
-    remove_bidomain(domains, bd_idx);
+    removeBidomain(domains, bd_idx);
   }
   solve(g0, g1, incumbent, current, domains, left, right, matching_size_goal, arguments);
 }
@@ -287,6 +369,7 @@ std::vector<VtxPair> mcs(
   std::vector<VtxPair> incumbent;
 
   if (arguments.big_first) {
+    // McSplit ↓
     for (int k=0; k < g0.n; k++) {
       const unsigned goal = g0.n - k;
       auto left_copy = left;
@@ -294,11 +377,12 @@ std::vector<VtxPair> mcs(
       auto domains_copy = domains;
       std::vector<VtxPair> current;
       solve(g0, g1, incumbent, current, domains_copy, left_copy, right_copy, goal, arguments);
-      if (incumbent.size() == goal/* || abort_due_to_timeout */) {
+      if (incumbent.size() == goal) {
         break;
       }
     }
   } else {
+    // Regular McSplit
     std::vector<VtxPair> current;
     solve(g0, g1, incumbent, current, domains, left, right, 1, arguments);
   }
@@ -321,7 +405,7 @@ std::vector<VtxPair> mcs(
   LabeledGraph l1 {g1, labelEdges};
 
   auto mapping = mcs(l0, l1, arguments);
-  assert(check_sol(l0, l1, mapping));
+  assert(checkSolution(l0, l1, mapping));
 
   // Resolve reordering back to original graph vertices
   std::vector<VtxPair> resolved;

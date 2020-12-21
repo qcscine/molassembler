@@ -10,6 +10,8 @@
 #include "Molassembler/Graph/GraphAlgorithms.h"
 #include "Molassembler/Temple/Functional.h"
 
+#include <fstream>
+
 using namespace Scine;
 using namespace Molassembler;
 
@@ -166,7 +168,6 @@ void init_graph_algorithms(pybind11::module& m) {
       :param b: Second graph to calculate edit distance for
     )delim"
   );
-  // TODO example
 
   pybind11::class_<MinimalReactionEdits> reactionEditsCls(
     m,
@@ -249,5 +250,38 @@ void init_graph_algorithms(pybind11::module& m) {
       :returns: distance, index mapping and non-zero cost edit lists
     )delim"
   );
-  // TODO example
+
+  struct ReactionEditSvg { std::string svg; };
+  pybind11::class_<ReactionEditSvg> svgCls(m, "ReactionEditSvg");
+  svgCls.def_property_readonly("svg", [](const ReactionEditSvg& c) { return c.svg; });
+  svgCls.def("_repr_svg_", [](const ReactionEditSvg& c) { return c.svg; });
+  svgCls.def(
+    "write",
+    [](const ReactionEditSvg& c, const std::string& fname) {
+      std::ofstream file(fname);
+      file << c.svg;
+    }
+  );
+
+  m.def(
+    "reaction_edits_svg",
+    [](
+      const GraphList& lhs,
+      const GraphList& rhs,
+      const MinimalReactionEdits& edits
+    ) -> ReactionEditSvg {
+      return { reactionGraphvizSvg(lhs, rhs, edits) };
+    },
+    pybind11::arg("lhs"),
+    pybind11::arg("rhs"),
+    pybind11::arg("reaction_edits"),
+    R"delim(
+      Generate a graphviz representation of changes in a chemical reaction
+
+      Requires the graphviz binaries dot, neato and gvpack to be available in
+      the PATH.
+
+      :raises RuntimeError: If the required graphviz binaries are not found.
+    )delim"
+  );
 }

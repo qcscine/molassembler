@@ -26,15 +26,18 @@ struct MolGraphWriter {
 //!@{
   static const std::map<std::string, std::string>& elementBGColorMap();
   static const std::map<std::string, std::string>& elementTextColorMap();
-  static const std::map<BondType, std::string>& bondTypeDisplayString();
 //!@}
 
-//!@name Members
-//!@{
-  /*! Note: The members are pointers due to the manner in which this object is
-   * passed to boost.
-   */
+/*!@name Members
+ *
+ * Note: The members are pointers due to the manner in which this object is
+ * passed to boost.
+ *
+ *!@{
+ */
+  //! Non-null pointer to private graph
   const PrivateGraph* const graphPtr;
+  //! Maybe pointer to stereopermutator list, maybe nullptr
   const StereopermutatorList* const stereopermutatorListPtr;
 //!@}
 
@@ -46,18 +49,35 @@ struct MolGraphWriter {
   virtual ~MolGraphWriter() = default;
 
   /* Information */
-  Utils::ElementType getElementType(PrivateGraph::Vertex vertexIndex) const;
-
   void operator() (std::ostream& os) const;
-  void operator() (std::ostream& os, PrivateGraph::Vertex vertexIndex) const;
-  void operator() (std::ostream& os, const PrivateGraph::Edge& edgeIndex) const;
+  void operator() (std::ostream& os, PrivateGraph::Vertex v) const;
+  void operator() (std::ostream& os, const PrivateGraph::Edge& e) const;
 
+  /* Display customization */
+  //! All attributes to display for a vertex
+  virtual std::map<std::string, std::string> vertexAttributes(PrivateGraph::Vertex v) const;
+
+  //! Label string for a vertex
+  virtual std::string vertexLabel(PrivateGraph::Vertex v) const;
+
+  //! Fill and font color for a vertex
+  virtual std::pair<std::string, std::string> fillFontColors(PrivateGraph::Vertex v) const;
+
+  //! All attributes to display for an edge
+  virtual std::map<std::string, std::string> edgeAttributes(const PrivateGraph::Edge& e) const;
+
+  //! Display attribute pair for bond type (arbitrary)
+  virtual std::string edgeColor(const PrivateGraph::Edge& e) const;
+
+  //! Tooltips for an edge
   virtual std::vector<std::string> edgeTooltips(AtomIndex source, AtomIndex target) const;
 
+  //! Tooltips for an atom stereopermutator
   virtual std::vector<std::string> atomStereopermutatorTooltips(
     const AtomStereopermutator& permutator
   ) const;
 
+  //! Tooltips for a bond stereopermutator
   virtual std::vector<std::string> bondStereopermutatorTooltips(
     const BondStereopermutator& permutator
   ) const;

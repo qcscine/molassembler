@@ -11,7 +11,15 @@
 #include "Molassembler/Graph/EditDistance.h"
 #include "Molassembler/Temple/Functional.h"
 #include "Molassembler/Subgraphs.h"
+#include "Molassembler/Molecule/MolGraphWriter.h"
 #include "Molassembler/Graph/McSplit.h"
+
+#include "Utils/Geometry/ElementInfo.h"
+
+#include "boost/graph/graphviz.hpp"
+#include "boost/process/child.hpp"
+#include "boost/process/io.hpp"
+#include "boost/process/search_path.hpp"
 
 /* GraphAlgorithms.h is the public API point for algorithms that act on
  * Graph. In Graph/GraphAlgorithms.h, those algorithms are implemented on
@@ -46,7 +54,7 @@ MinimalGraphEdits minimalEdits(
   /* Precondition the graph edit distance algorithm with maximum common
    * subgraph matches
    *
-   * TODO the McSplit doesn't seem to offer all mcs (just one), and in
+   * TODO The McSplit doesn't seem to offer all mcs (just one), and in
    * principle we need to try all of them and minimize the distance over them.
    */
   constexpr bool mcsLabelEdges = true;
@@ -147,6 +155,64 @@ MinimalGraphEdits minimalEdits(
   }
 
   return edits;
+}
+
+struct ReactionGraphWriter : public MolGraphWriter {
+  using ComponentBondIndex = MinimalReactionEdits::EdgeEdit::ComponentBondIndex;
+
+  ReactionGraphWriter(
+    const PrivateGraph* graph,
+    UnorderedIndexMap passIdxMap,
+    const std::vector<ComponentBondIndex>& edits
+  ) : MolGraphWriter(graph, nullptr),
+      idxMap(std::move(passIdxMap)),
+      edgeEdits(std::begin(edits), std::end(edits)) {}
+
+  std::string vertexLabel(const PrivateGraph::Vertex v) const override {
+    const Utils::ElementType e = graphPtr->elementType(v);
+    const auto w = idxMap.at(v).second;
+
+    // Do not mark element type for hydrogen or carbon, those are commonplace
+    if(e == Utils::ElementType::H || e == Utils::ElementType::C) {
+      return std::to_string(w);
+    }
+
+    const std::string symbolString = Utils::ElementInfo::symbol(e);
+    return symbolString + std::to_string(w);
+  }
+
+  std::string edgeColor(const PrivateGraph::Edge& e) const override {
+    const BondIndex b {graphPtr->source(e), graphPtr->target(e)};
+
+    const ComponentBondIndex maybeEdited {
+      idxMap.at(b.first),
+      idxMap.at(b.second)
+    };
+
+    if(edgeEdits.count(maybeEdited) > 0) {
+      return "tomato";
+    }
+
+    return "black";
+  }
+
+  UnorderedIndexMap idxMap;
+  std::set<ComponentBondIndex> edgeEdits;
+};
+
+template<typename T, typename U>
+void extractBoostStream(T& t, U& u) {
+#if BOOST_VERSION >= 107000
+  /* NOTE: This implementation of buffer transfers in boost process has a bug
+   * that isn't fixed before Boost 1.70.
+   */
+  t << u.rdbuf();
+#else
+  // Workaround: cast to a parent class implementing rdbuf() correctly.
+  using BasicIOSReference = std::basic_ios<char, std::char_traits<char>>&;
+  // Feed the results into our ostream
+  t << static_cast<BasicIOSReference>(u).rdbuf();
+#endif
 }
 
 } // namespace
@@ -252,6 +318,110 @@ MinimalReactionEdits reactionEdits(const GraphList& lhsGraphs, const GraphList& 
   );
 
   return multi;
+}
+
+std::string reactionGraphvizSvg(
+  const GraphList& lhsGraphs,
+  const GraphList& rhsGraphs,
+  const MinimalReactionEdits& edits
+) {
+  namespace bp = boost::process;
+  const auto dot = bp::search_path("dot");
+  if(dot.empty()) {
+    throw std::runtime_error("dot graphviz binary not found in PATH");
+  }
+
+  // Preconditions: Find the graphviz binaries we need
+  const auto gvpack = bp::search_path("gvpack");
+  if(gvpack.empty()) {
+    throw std::runtime_error("gvpack graphviz binary not found in PATH");
+  }
+
+  const auto neato = bp::search_path("neato");
+  if(neato.empty()) {
+    throw std::runtime_error("neato graphviz binary not found in PATH");
+  }
+
+  const auto lhs = condense(lhsGraphs);
+  const auto rhs = condense(rhsGraphs);
+
+  const auto lhsEdgeEdits = Temple::map(edits.edgeEdits,
+    [](const auto& edit) { return edit.first; }
+  );
+  ReactionGraphWriter lhsWriter(&lhs.first, lhs.second, lhsEdgeEdits);
+
+  const auto rhsEdgeEdits = Temple::map(edits.edgeEdits,
+    [](const auto& edit) { return edit.second; }
+  );
+  ReactionGraphWriter rhsWriter(&rhs.first, rhs.second, rhsEdgeEdits);
+
+  /* Now for the piping. Need to imitate the following sequence:
+   *
+   *   cat <(dot lhs.dot) <(dot rhs.dot)
+   *   | gvpack -array_uc1 -Glayout=neato 2>/dev/null
+   *   | neato -n2 -Tsvg
+   *
+   */
+  bp::opstream graphs;
+  auto dotGraph = [&](auto& g, auto& writer) {
+    bp::opstream graphInput;
+    bp::ipstream dotOutput;
+    boost::write_graphviz(
+      graphInput,
+      g,
+      writer,
+      writer,
+      writer
+    );
+
+    bp::child dotChild(
+      dot,
+      bp::std_in < graphInput,
+      bp::std_out > dotOutput,
+      bp::std_err > bp::null
+    );
+
+    graphInput.flush();
+    graphInput.pipe().close();
+    dotChild.wait();
+
+    // Reeeally inefficient, but I don't know what I'm doing
+    std::stringstream tmp;
+    extractBoostStream(tmp, dotOutput);
+    graphs << tmp.str();
+  };
+
+  dotGraph(lhs.first.bgl(), lhsWriter);
+  dotGraph(rhs.first.bgl(), rhsWriter);
+
+  bp::ipstream packed_o;
+  bp::opstream packed_i;
+  bp::ipstream svg;
+
+  bp::child pack(
+    gvpack.string() + " -array_uc1 -Glayout=neato",
+    bp::std_in < graphs,
+    bp::std_out > packed_o,
+    bp::std_err > bp::null
+  );
+  graphs.flush();
+  graphs.pipe().close();
+  pack.wait();
+
+  extractBoostStream(packed_i, packed_o);
+  bp::child render(
+    neato.string() + " -n2 -Tsvg",
+    bp::std_in < packed_i,
+    bp::std_out > svg,
+    bp::std_err > bp::null
+  );
+  packed_i.flush();
+  packed_i.pipe().close();
+  render.wait();
+
+  std::stringstream os;
+  extractBoostStream(os, svg);
+  return os.str();
 }
 
 } // namespace Molassembler

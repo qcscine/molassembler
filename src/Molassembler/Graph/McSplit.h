@@ -86,62 +86,28 @@ struct Bidomain {
     right_len(pright_len),
     is_adjacent(adjacent) {};
 
-  // start indices of left and right sets
+  // Starting indices of left and right sets
   int l, r;
   int left_len, right_len;
   bool is_adjacent;
 };
 
-bool check_sol(
+//! Verify a solution of the maximum common subgraph algorithm
+bool checkSolution(
   const LabeledGraph& g0,
   const LabeledGraph& g1,
   const std::vector<VtxPair>& solution
 );
 
-inline int calc_bound(const std::vector<Bidomain>& domains) {
-  int bound = 0;
-  for (const Bidomain& bd : domains) {
-    bound += std::min(bd.left_len, bd.right_len);
-  }
-  return bound;
-}
-
-inline int find_min_value(const std::vector<int>& arr, int start_idx, int len) {
-  int min_v = std::numeric_limits<int>::max();
-  for (int i=0; i<len; i++) {
-    if (arr[start_idx + i] < min_v) {
-      min_v = arr[start_idx + i];
-    }
-  }
-  return min_v;
-}
-
-int select_bidomain(
+int selectBidomain(
   const std::vector<Bidomain>& domains,
   const std::vector<int>& left,
   int current_matching_size,
   const Arguments& arguments
 );
 
-// Returns length of left half of array
-inline int partition(
-  std::vector<int>& all_vv,
-  const int start,
-  const int len,
-  const std::vector<unsigned>& adjrow
-) {
-  int i=0;
-  for (int j=0; j < len; j++) {
-    if (adjrow[all_vv[start+j]] > 0) {
-      std::swap(all_vv[start+i], all_vv[start+j]);
-      i++;
-    }
-  }
-  return i;
-}
-
 // multiway is for directed and/or labelled graphs
-std::vector<Bidomain> filter_domains(
+std::vector<Bidomain> filterDomains(
   const std::vector<Bidomain>& d,
   std::vector<int>& left,
   std::vector<int>& right,
@@ -151,48 +117,6 @@ std::vector<Bidomain> filter_domains(
   int w,
   bool multiway
 );
-
-/* Returns the index of the smallest value in arr that is >w.
- *
- * Assumptions:
- * - such a value exists
- * - arr contains no duplicates
- * - arr has no values==INT_MAX
- */
-inline int index_of_next_smallest(
-  const std::vector<int>& arr,
-  const int start_idx,
-  const int len,
-  const int w
-) {
-  int idx = -1;
-  int smallest = std::numeric_limits<int>::max();
-  for (int i=0; i<len; i++) {
-    if (arr[start_idx + i]>w && arr[start_idx + i]<smallest) {
-      smallest = arr[start_idx + i];
-      idx = i;
-    }
-  }
-  return idx;
-}
-
-inline void remove_vtx_from_left_domain(
-  std::vector<int>& left,
-  Bidomain& bd,
-  const int v
-) {
-  int i = 0;
-  while(left[bd.l + i] != v) {
-    i++;
-  }
-  std::swap(left[bd.l+i], left[bd.l+bd.left_len-1]);
-  bd.left_len--;
-}
-
-inline void remove_bidomain(std::vector<Bidomain>& domains, const int idx) {
-  domains[idx] = std::move(domains[domains.size()-1]);
-  domains.pop_back();
-}
 
 void solve(
   const PrivateGraph& g0,

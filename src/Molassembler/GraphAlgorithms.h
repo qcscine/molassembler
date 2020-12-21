@@ -167,6 +167,10 @@ struct MASM_EXPORT MinimalGraphEdits {
  * becomes intractable past 10 vertices due to combinatorial space explosion
  * and rapid memory exhaustion.
  *
+ * @warning It's not perfect yet, the underlying maximum common subgraph
+ * algorithm doesn't yield all possible maximum subgraphs and hence the set of
+ * edits is only approximately minimal.
+ *
  * @param a First graph to calculate edit distance for
  * @param b Second graph to calculate edit distance for
  * @param cost Cost functor for graph edits
@@ -232,6 +236,10 @@ using GraphList = std::vector<std::reference_wrapper<Graph>>;
  * intractable past 10 vertices due to combinatorial space explosion and rapid
  * memory exhaustion.
  *
+ * @warning It's not perfect yet, the underlying maximum common subgraph
+ * algorithm doesn't yield all possible maximum subgraphs and hence the set of
+ * edits is only approximately minimal.
+ *
  * @param lhs List of graphs of the left side of the reaction
  * @param rhs List of graphs of the right side of the reaction
  *
@@ -241,6 +249,19 @@ using GraphList = std::vector<std::reference_wrapper<Graph>>;
  * @returns distance, index mapping and non-zero cost edit lists
  */
 MASM_EXPORT MinimalReactionEdits reactionEdits(const GraphList& lhsGraphs, const GraphList& rhsGraphs);
+
+/*! Generates a graphviz representation of changes in a chemical reaction
+ *
+ * Requires the graphviz binaries dot, neato and gvpack to be available in the
+ * PATH.
+ *
+ * @throws std::runtime_error If the reqired graphviz binaries are not found.
+ */
+std::string reactionGraphvizSvg(
+  const GraphList& lhs,
+  const GraphList& rhs,
+  const MinimalReactionEdits& edits
+);
 
 } // namespace Molassembler
 } // namespace Scine
