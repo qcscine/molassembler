@@ -102,7 +102,7 @@ MinimalGraphEdits minimalEdits(
   std::reverse(std::begin(edits.indexMap), std::end(edits.indexMap));
 
   // Compute the full list of non-zero cost edits
-  const auto sizes = std::minmax({a.V(), b.V()});
+  const auto sizes = std::make_pair(a.V(), b.V());
   const unsigned edgeAlterationCost = cost.edgeAlteration();
   // Vertices from a
   for(AtomIndex i = 0; i < sizes.first; ++i) {
@@ -138,6 +138,7 @@ MinimalGraphEdits minimalEdits(
   if(edgeAlterationCost != 0) {
     for(AtomIndex i = sizes.first; i < sizes.second; ++i) {
       const AtomIndex j = edits.indexMap[i];
+      assert(j != epsilon);
       for(AtomIndex k = 0; k < i; ++k) {
         const AtomIndex l = edits.indexMap[k];
         if(l == epsilon) {
