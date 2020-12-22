@@ -61,7 +61,6 @@ MinimalGraphEdits minimalEdits(
     preconditioningSubgraphConnected,
     mcsLabelEdges
   );
-  std::cout << "Got " << commonSubgraphs.mappings.size() << " mappings of size " << commonSubgraphs.size << "\n";
   using EditForest = GraphAlgorithms::EditDistanceForest;
   const auto forests = Temple::map(
     commonSubgraphs.mappings,
