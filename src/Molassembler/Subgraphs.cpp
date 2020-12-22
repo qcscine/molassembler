@@ -73,7 +73,6 @@ struct SubgraphCallback {
   using IndexMapVector = std::vector<IndexMap>;
   const PrivateGraph& targetGraph;
   std::reference_wrapper<IndexMapVector> mappingsRef;
-  bool removeHydrogenPermutations = true;
 
   SubgraphCallback(const PrivateGraph& a, const PrivateGraph& b, IndexMapVector& mappings)
     : N {a.V()}, targetGraph(b), mappingsRef(mappings) {}
@@ -98,8 +97,7 @@ struct SubgraphCallback {
     auto indexMap = makeIndexMap(a);
 
     if(
-      removeHydrogenPermutations
-      && Temple::any_of(
+      Temple::any_of(
         mappingsRef.get(),
         [&](const IndexMap& foundMap) -> bool {
           return isHydrogenPermutation(indexMap, foundMap, targetGraph);

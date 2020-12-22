@@ -53,41 +53,30 @@ MinimalGraphEdits minimalEdits(
 ) {
   /* Precondition the graph edit distance algorithm with maximum common
    * subgraph matches
-   *
-   * TODO The McSplit doesn't seem to offer all mcs (just one), and in
-   * principle we need to try all of them and minimize the distance over them.
    */
   constexpr bool mcsLabelEdges = true;
-  const auto preconditioning = GraphAlgorithms::McSplit::mcs(
+  const auto commonSubgraphs = GraphAlgorithms::McSplit::mcs(
     a,
     b,
     preconditioningSubgraphConnected,
     mcsLabelEdges
   );
-  Subgraphs::IndexMap precondition;
-  for(auto p : preconditioning) {
-    precondition.insert(Subgraphs::IndexMap::value_type(p.first, p.second));
-  }
-
-  // Template for minimization over subgraphs:
-  // const auto edits = Temple::accumulate(
-  //   Subgraphs::maximum(lhs.first, rhs.first),
-  //   Edits { std::numeric_limits<unsigned>::max(), {}},
-  //   [&](Edits carry, const auto& preconditioning) -> MinimalGraphEdits {
-  //     std::cout << "MCS precondition size: " << preconditioning.size() << "\n";
-  //     EditForest forest {a, b, cost, precondition};
-  //     const unsigned distance = forest.g[forest.result].costSum;
-
-  //     if(distance < carry.distance) {
-  //       return preconditionedEdits;
-  //     }
-
-  //     return carry;
-  //   }
-  // );
-
+  std::cout << "Got " << commonSubgraphs.mappings.size() << " mappings of size " << commonSubgraphs.size << "\n";
   using EditForest = GraphAlgorithms::EditDistanceForest;
-  EditForest forest {a, b, cost, precondition};
+  const auto forests = Temple::map(
+    commonSubgraphs.mappings,
+    [&](const auto& mapping) { return EditForest {a, b, cost, mapping}; }
+  );
+
+  const auto& forest = *std::min_element(
+    std::begin(forests),
+    std::end(forests),
+    [](const auto& lhs, const auto& rhs) {
+      const unsigned lhsDistance = lhs.g[lhs.result].costSum;
+      const unsigned rhsDistance = rhs.g[rhs.result].costSum;
+      return lhsDistance < rhsDistance;
+    }
+  );
 
   static_assert(
     EditForest::epsilon == MinimalGraphEdits::epsilon,

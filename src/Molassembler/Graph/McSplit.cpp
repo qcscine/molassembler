@@ -7,6 +7,7 @@
 #include "Molassembler/Graph/McSplit.h"
 #include "Molassembler/Molecule/AtomEnvironmentHash.h"
 #include "Molassembler/Temple/Permutations.h"
+#include "Molassembler/Temple/Functional.h"
 
 #include <iostream>
 #include <algorithm>
@@ -139,27 +140,33 @@ inline int partition(
 bool checkSolution(
   const LabeledGraph& g0,
   const LabeledGraph& g1,
-  const std::vector<VtxPair>& solution
+  const AllVertexMappings::Mapping& solution
 ) {
   std::vector<bool> used_left(g0.n, false);
   std::vector<bool> used_right(g1.n, false);
-  for (unsigned i=0; i<solution.size(); i++) {
-    const VtxPair p0 = solution[i];
-    if (used_left[p0.first] || used_right[p0.second]) {
+  const auto end = std::end(solution.left);
+  for(auto i = std::begin(solution.left); i != end; ++i) {
+    const unsigned v = i->first;
+    const unsigned w = i->second;
+    if(used_left[v] || used_right[w]) {
       return false;
     }
-    used_left[p0.first] = true;
-    used_right[p0.second] = true;
-    if (g0.label[p0.first] != g1.label[p0.second]) {
+    used_left[v] = true;
+    used_right[w] = true;
+    if(g0.label[v] != g1.label[w]) {
       return false;
     }
-    for (unsigned j=i+1; j<solution.size(); j++) {
-      VtxPair p1 = solution[j];
-      if (g0.adjmat[p0.first][p1.first] != g1.adjmat[p0.second][p1.second]) {
+
+    auto j = i;
+    for(++j; j != end; ++j) {
+      const unsigned x = j->first;
+      const unsigned y = j->second;
+      if(g0.adjmat[v][x] != g1.adjmat[w][y]) {
         return false;
       }
     }
   }
+
   return true;
 }
 
@@ -265,27 +272,79 @@ std::vector<Bidomain> filterDomains(
   return new_d;
 }
 
+bool AllVertexMappings::isHydrogenPermutation(
+  const Mapping& a,
+  const Mapping& b,
+  const LabeledGraph& g1
+) {
+  /* Left maps are ordered in their first index, so we can
+   * sequentially compare elements of the mapping.
+   *
+   * The idea here is that if the mapping is sequence identical
+   * regarding non-hydrogen elements, then it must be a permutation
+   * thereof. This is much cheaper than using std::is_permutation.
+   */
+  return std::equal(
+    std::begin(a.left),
+    std::end(a.left),
+    std::begin(b.left),
+    std::end(b.left),
+    [&](const auto& firstMap, const auto& secondMap) -> bool {
+      constexpr auto hLabel = static_cast<unsigned>(Utils::ElementType::H);
+      // Ensure left-sequence identical
+      if(firstMap.first != secondMap.first) {
+        return false;
+      }
+
+      /* Do not compare mapped indices if the elements of the mapped vertices
+       * are hydrogen
+       */
+      if(
+        g1.label[firstMap.second] == hLabel
+        && g1.label[secondMap.second] == hLabel
+      ) {
+        return true;
+      }
+
+      // Compare target vertices of the mappings
+      return (firstMap.second == secondMap.second);
+    }
+  );
+}
+
 void solve(
   const LabeledGraph& g0,
   const LabeledGraph& g1,
-  std::vector<VtxPair>& incumbent,
-  std::vector<VtxPair>& current,
+  AllVertexMappings& incumbent,
+  AllVertexMappings::Mapping& current,
   std::vector<Bidomain>& domains,
   std::vector<int>& left,
   std::vector<int>& right,
   const unsigned matching_size_goal,
   const Arguments& arguments
 ) {
-  if (current.size() > incumbent.size()) {
-    incumbent = current;
+  if (current.size() > incumbent.size) {
+    incumbent.mappings = {current};
+    incumbent.size = current.size();
+  } else if(current.size() == incumbent.size) {
+    if(
+      !Temple::any_of(
+        incumbent.mappings,
+        [&](const auto& mapping) -> bool {
+          return AllVertexMappings::isHydrogenPermutation(mapping, current, g1);
+        }
+      )
+    ) {
+      incumbent.mappings.push_back(current);
+    }
   }
 
   unsigned bound = current.size() + calculateBound(domains);
-  if (bound <= incumbent.size() || bound < matching_size_goal) {
+  if (bound < incumbent.size || bound < matching_size_goal) {
     return;
   }
 
-  if (arguments.big_first && incumbent.size() == matching_size_goal) {
+  if (arguments.big_first && incumbent.size == matching_size_goal) {
     return;
   }
 
@@ -314,9 +373,9 @@ void solve(
       domains, left, right, g0, g1, v, w,
       arguments.edge_labelled
     );
-    current.emplace_back(v, w);
+    current.insert(AllVertexMappings::Mapping::value_type(v, w));
     solve(g0, g1, incumbent, current, new_domains, left, right, matching_size_goal, arguments);
-    current.pop_back();
+    current.left.erase(v);
   }
   bd.right_len++;
   if (bd.left_len == 0) {
@@ -325,7 +384,7 @@ void solve(
   solve(g0, g1, incumbent, current, domains, left, right, matching_size_goal, arguments);
 }
 
-std::vector<VtxPair> mcs(
+AllVertexMappings mcs(
   const LabeledGraph& g0,
   const LabeledGraph& g1,
   const Arguments& arguments
@@ -366,7 +425,7 @@ std::vector<VtxPair> mcs(
     domains.emplace_back(start_l, start_r, left_len, right_len, false);
   }
 
-  std::vector<VtxPair> incumbent;
+  AllVertexMappings incumbent;
 
   if (arguments.big_first) {
     // McSplit ↓
@@ -375,22 +434,22 @@ std::vector<VtxPair> mcs(
       auto left_copy = left;
       auto right_copy = right;
       auto domains_copy = domains;
-      std::vector<VtxPair> current;
+      AllVertexMappings::Mapping current;
       solve(g0, g1, incumbent, current, domains_copy, left_copy, right_copy, goal, arguments);
-      if (incumbent.size() == goal) {
+      if (incumbent.size == goal) {
         break;
       }
     }
   } else {
     // Regular McSplit
-    std::vector<VtxPair> current;
+    AllVertexMappings::Mapping current;
     solve(g0, g1, incumbent, current, domains, left, right, 1, arguments);
   }
 
   return incumbent;
 }
 
-std::vector<VtxPair> mcs(
+AllVertexMappings mcs(
   const PrivateGraph& g0,
   const PrivateGraph& g1,
   const bool connected,
@@ -401,21 +460,35 @@ std::vector<VtxPair> mcs(
   arguments.connected = connected;
 
   // Reorder the graphs by vertex degree and label edges
-  LabeledGraph l0 {g0, labelEdges};
-  LabeledGraph l1 {g1, labelEdges};
+  const LabeledGraph l0 {g0, labelEdges};
+  const LabeledGraph l1 {g1, labelEdges};
 
-  auto mapping = mcs(l0, l1, arguments);
-  assert(checkSolution(l0, l1, mapping));
+  const auto allMappings = mcs(l0, l1, arguments);
+  assert(
+    Temple::all_of(
+      allMappings.mappings,
+      [&](const auto& mapping) { return checkSolution(l0, l1, mapping); }
+    )
+  );
 
   // Resolve reordering back to original graph vertices
-  std::vector<VtxPair> resolved;
-  resolved.reserve(mapping.size());
-  for(const VtxPair& p : mapping) {
-    resolved.emplace_back(
-      l0.permutation.at(p.first),
-      l1.permutation.at(p.second)
-    );
-  }
+  AllVertexMappings resolved;
+  resolved.size = allMappings.size;
+  resolved.mappings = Temple::map(
+    allMappings.mappings,
+    [&](const auto& mapping) {
+    AllVertexMappings::Mapping resolvedMapping;
+      for(const auto& p : mapping.left) {
+        resolvedMapping.insert(
+          AllVertexMappings::Mapping::value_type(
+            l0.permutation.at(p.first),
+            l1.permutation.at(p.second)
+          )
+        );
+      }
+      return resolvedMapping;
+    }
+  );
   return resolved;
 }
 

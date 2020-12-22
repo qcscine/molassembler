@@ -166,7 +166,6 @@ struct EditDistanceForest {
     return components;
   }
 //!@}
-
   EditDistanceForest(
     const PrivateGraph& a,
     const PrivateGraph& b,

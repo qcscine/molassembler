@@ -8,6 +8,7 @@
 #define INCLUDE_MOLASSEMBLER_GRAPH_MCSPLIT_H
 
 #include "Molassembler/Graph/PrivateGraph.h"
+#include "boost/bimap.hpp"
 #include <vector>
 
 namespace Scine {
@@ -39,6 +40,12 @@ namespace McSplit {
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  *
+ * Changes:
+ * - Cleanup of unnecessary struct keywords
+ * - Refactoring of global variables
+ * - Addition of const all over the place to better indicate variables
+ * - Alteration of return type and result tracking to yield all subgraphs of
+ *   the maximum size
  */
 
 enum class Heuristic { min_max, min_product };
@@ -118,10 +125,23 @@ std::vector<Bidomain> filterDomains(
   bool multiway
 );
 
+struct AllVertexMappings {
+  using Mapping = boost::bimap<AtomIndex, AtomIndex>;
+
+  unsigned size = 0;
+  std::vector<Mapping> mappings;
+
+  static bool isHydrogenPermutation(
+    const Mapping& a,
+    const Mapping& b,
+    const LabeledGraph& g1
+  );
+};
+
 void solve(
   const PrivateGraph& g0,
   const PrivateGraph& g1,
-  std::vector<VtxPair>& incumbent,
+  AllVertexMappings& incumbent,
   std::vector<VtxPair>& current,
   std::vector<Bidomain>& domains,
   std::vector<int>& left,
@@ -130,7 +150,7 @@ void solve(
   const Arguments& arguments
 );
 
-std::vector<VtxPair> mcs(
+AllVertexMappings mcs(
   const LabeledGraph& g0,
   const LabeledGraph& g1,
   const Arguments& arguments
@@ -145,7 +165,7 @@ std::vector<VtxPair> mcs(
  *
  * @return Vertex pairs in the common subgraph from @p g0 to @g1
  */
-std::vector<VtxPair> mcs(
+AllVertexMappings mcs(
   const PrivateGraph& g0,
   const PrivateGraph& g1,
   bool connected,
