@@ -72,16 +72,6 @@ public:
 private:
 //!@name Static private members
 //!@{
-  //! Checks whether an element type is valence filled
-  static bool isValenceFillElement(Utils::ElementType e);
-
-  //! Determines the implicit hydrogen count of a valence fill element
-  static unsigned valenceFillElementImplicitHydrogenCount(
-    int valence,
-    Utils::ElementType e,
-    bool aromatic
-  );
-
   /*! Determines the mutual bond type of two bond type optionals
    *
    * @throws std::runtime_error If the bond types are mismatched
