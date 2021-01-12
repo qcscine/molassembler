@@ -267,7 +267,7 @@ void benchmark(
   );
 
   // Skip small molecules
-  if(molecule.graph().N() < 10) {
+  if(molecule.graph().V() < 10) {
     std::cout << "Skipping " << filePath.stem().string() << " since it's very small\n";
     return;
   }
@@ -279,7 +279,7 @@ void benchmark(
   /* Timings */
   std::cout << std::fixed << std::setprecision(1);
 
-  std::string nCount = "N = " + std::to_string(molecule.graph().N());
+  std::string nCount = "N = " + std::to_string(molecule.graph().V());
 
   std::cout
     << std::setw(6) << nCount
@@ -336,7 +336,7 @@ void benchmark(
 
   benchmarkFile
     << std::fixed << std::setprecision(0)
-    << molecule.graph().N() << ", " << molecule.graph().B() << ", "
+    << molecule.graph().V() << ", " << molecule.graph().E() << ", "
     << std::scientific << std::setprecision(6);
 
   for(unsigned i = 0; i < functors.size(); ++i) {

@@ -22,6 +22,20 @@ namespace Scine {
 namespace Molassembler {
 namespace IO {
 namespace Experimental {
+namespace {
+
+struct Unity {
+  using key_type = PrivateGraph::Edge;
+  using value_type = double;
+  using reference = double;
+  using category = boost::readable_property_map_tag;
+};
+
+inline double get(const Unity& /* u */, const PrivateGraph::Edge& /* e */) {
+  return 1.0;
+}
+
+} // namespace
 
 AtomIndex spanningTreeRoot(const Molecule& mol) {
   using IndexDistancePair = std::pair<AtomIndex, unsigned>;
@@ -45,6 +59,7 @@ AtomIndex spanningTreeRoot(const Molecule& mol) {
 
 struct Emitter {
   struct RingClosure {
+    RingClosure() = default;
     explicit RingClosure(AtomIndex i) : partner(i) {}
 
     // Bond partner of ring-closing bond
@@ -79,15 +94,6 @@ struct Emitter {
         return carry;
       }
     ).first;
-  }
-
-  static bool organicAliphatic(
-    const Utils::ElementType e,
-    const unsigned hydrogenCount
-  ) {
-    if(!isValenceFillElement(e)) {
-      return false;
-    }
   }
 
   Emitter(const Molecule& mol) : molecule(mol) {
@@ -134,6 +140,11 @@ struct Emitter {
     ) - std::begin(distances);
     longestPath = shortestPaths(suggestedRoot, mol.graph()).path(partner);
 
+    // Pop hydrogen at back of shortest path if subsumed
+    if(subsumedHydrogenAtoms.count(longestPath.back()) > 0) {
+      longestPath.pop_back();
+    }
+
     const PrivateGraph::Vertex V = inner.V();
     std::vector<PrivateGraph::Vertex> predecessors (V);
     boost::prim_minimum_spanning_tree(
@@ -142,7 +153,8 @@ struct Emitter {
         predecessors.begin(),
         boost::get(boost::vertex_index, inner.bgl())
       ),
-      boost::root_vertex(suggestedRoot)
+      boost::root_vertex(suggestedRoot).
+      weight_map(Unity {})
     );
 
     // Can't DFS a predecessor map - need to make an actual tree instead
@@ -175,12 +187,14 @@ struct Emitter {
         addClosure(v, u);
       }
     }
+
+    // TODO Figure out aromatic atoms and bonds
   }
 
   void addClosure(const AtomIndex u, const AtomIndex v) {
     auto listIter = closures.find(u);
     if(listIter == closures.end()) {
-      listIter = closures.emplace_hint(listIter, u);
+      listIter = closures.emplace_hint(listIter, u, 0);
     }
     listIter->second.emplace_back(v);
   }
@@ -200,7 +214,7 @@ struct Emitter {
       hydrogenCount = countIter->second;
     }
 
-    if(!isIsotope) {
+    if(!isIsotope && isValenceFillElement(e)) {
       const bool isAromatic = aromaticAtoms.count(v) > 0;
 
       const int valence = Temple::accumulate(
@@ -251,34 +265,57 @@ struct Emitter {
     return elementStr;
   }
 
+  void writeEdgeType(BondIndex b) {
+    // TODO special case of single bonds between aromatic atoms
+    const BondType type = molecule.bondType(b);
+    if(type == BondType::Double) {
+      smiles += "=";
+    }
+    if(type == BondType::Triple) {
+      smiles += "#";
+    }
+  }
+
   void dfs(const AtomIndex v, std::vector<AtomIndex>::iterator& pathIter) {
     // Write the atom symbol for v
     smiles += atomSymbol(v);
+    // TODO ring closing bonds
+
     /* Are we on the longest path? If so, impose special ordering on dfs
      * that descends along the longest path last.
      */
     if(v == *pathIter) {
       ++pathIter;
+      if(pathIter == std::end(longestPath)) {
+        return;
+      }
       const AtomIndex nextOnLongestPath = *pathIter;
       auto iters = boost::out_edges(v, spanning);
       for(; iters.first != iters.second; ++iters.first) {
         const AtomIndex w = boost::target(*iters.first, spanning);
-        smiles += "(";
         if(w != nextOnLongestPath) {
-          // TODO Write edge type
+          smiles += "(";
+          writeEdgeType(BondIndex {v, w});
           dfs(w, pathIter);
+          smiles += ")";
         }
-        smiles += ")";
       }
-      // TODO write edge type
+      writeEdgeType(BondIndex {v, nextOnLongestPath});
       dfs(nextOnLongestPath, pathIter);
     } else {
-      // TODO need to know which is last so we can add parentheses to all priors
       auto iters = boost::out_edges(v, spanning);
       for(; iters.first != iters.second; ++iters.first) {
+        const bool last = iters.first + 1 != iters.second;
+        if(!last) {
+          smiles += "(";
+        }
+
         const AtomIndex w = boost::target(*iters.first, spanning);
-        // TODO Write edge type
+        writeEdgeType(BondIndex {v, w});
         dfs(w, pathIter);
+        if(!last) {
+          smiles += ")";
+        }
       }
     }
   }
@@ -296,6 +333,7 @@ struct Emitter {
   SpanningTree spanning;
   std::vector<AtomIndex> longestPath;
   std::unordered_set<AtomIndex> aromaticAtoms;
+  // TODO std::unordered_set<BondIndex> aromaticBonds;
   ClosureMap closures;
   std::unordered_map<AtomIndex, unsigned> subsumedHydrogenCount;
   const Molecule& molecule;
@@ -305,7 +343,6 @@ std::string emitSmiles(const Molecule& mol) {
   Emitter emitter(mol);
   return emitter.dfs();
 }
-
 
 } // namespace Experimental
 } // namespace IO

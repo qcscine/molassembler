@@ -9,6 +9,7 @@
 #include "Molassembler/Molecule.h"
 #include "Molassembler/Graph.h"
 #include "Molassembler/IO/SmilesParser.h"
+#include "Molassembler/IO/SmilesEmitter.h"
 #include "Molassembler/IO.h"
 
 #include "Molassembler/Temple/Functional.h"
@@ -289,5 +290,27 @@ BOOST_AUTO_TEST_CASE(SmilesWithMultipleMolecules, *boost::unit_test::label("Mola
       sizes == pair.second,
       "Expected sizes: " << Temple::stringify(pair.second) << ", got " << Temple::stringify(sizes) << " instead for smiles '" << pair.first << "'"
     );
+  }
+}
+
+BOOST_AUTO_TEST_CASE(EmitAliphatic, *boost::unit_test::label("Molassembler")) {
+  const std::vector<std::string> cases {
+    "[H][H]",
+    "C",
+    "CC",
+    "C(C)(C)(C)C",
+    "CN",
+    "CNO"
+  };
+
+  for(const std::string& smiles : cases) {
+    Molecule mol;
+    Molecule mol2;
+    std::string emitted;
+    BOOST_REQUIRE_NO_THROW(mol = expectSingle(IO::Experimental::parseSmiles(smiles)));
+    BOOST_REQUIRE_NO_THROW(emitted = IO::Experimental::emitSmiles(mol));
+    std::cout << smiles << " -> " << emitted << "\n";
+    BOOST_REQUIRE_NO_THROW(mol2 = expectSingle(IO::Experimental::parseSmiles(emitted)));
+    BOOST_CHECK(mol == mol2);
   }
 }

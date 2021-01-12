@@ -178,7 +178,7 @@ int main(int argc, char* argv[]) {
     }
 
     for(const auto& mol : interpretation.molecules) {
-      std::cout << "Interpreted molecule N=" << mol.graph().N() << ": "
+      std::cout << "Interpreted molecule N=" << mol.graph().V() << ": "
         << mol << "\n\n";
     }
 
