@@ -129,7 +129,7 @@ MASM_EXPORT MoleculesResult molecules(
 );
 
 /*! @brief Interpret a molecule from positional information only. Calculates
- *   bond orders using uffBondOrders.
+ *   bond orders using Utils' BondDetector class.
  *
  * @param elements Element type collection
  * @param angstromWrapper Positional information in Angstrom units
@@ -140,10 +140,6 @@ MASM_EXPORT MoleculesResult molecules(
  *
  * @throws invalid_argument If the number of particles in the element
  *   collection and angstrom wrapper do not match.
- *
- * @warning Using UFF bond order calculation is often not even wrong, i.e. so
- *   bad as to be completely unusable. Prefer interpreting using supplied bond
- *   orders from a more advanced calculation.
  *
  * @returns A list of found molecules and an index mapping to each molecule
  */
@@ -185,11 +181,11 @@ MASM_EXPORT MoleculesResult molecules(
 );
 
 /*!
- * @brief Interpret molecules in 3D information.
+ * @brief Interpret molecules from Cartesian coordinates
  *
  * Attempts to interpret (possibly multiple) Molecules from element types and
  * positional information. Bond orders are calculated from atom-pairwise
- * spatial distances using UFF parameters. The bond orders are then discretized
+ * spatial distances by van-der-Waals radii. The bond orders are then discretized
  * into bond types. Connected components within the space are identified and
  * individually instantiated into Molecules. The instantiation behavior of
  * BondStereopermutators in the Molecules can be limited to edges whose bond order
@@ -203,9 +199,6 @@ MASM_EXPORT MoleculesResult molecules(
  *
  * @note Assumes that the provided atom collection's positions are in
  * Bohr units.
- *
- * @warning UFF parameter bond order calculation is very primitive and carries
- *   a high risk of misinterpretation
  */
 MASM_EXPORT MoleculesResult molecules(
   const Utils::AtomCollection& atomCollection,

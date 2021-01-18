@@ -8,8 +8,8 @@
 
 #include "Utils/Geometry/AtomCollection.h"
 #include "Utils/Bonds/BondOrderCollection.h"
+#include "Utils/Bonds/BondDetector.h"
 
-#include "Molassembler/BondOrders.h"
 #include "Molassembler/Detail/Cartesian.h"
 #include "Molassembler/Graph.h"
 #include "Molassembler/Graph/GraphAlgorithms.h"
@@ -531,7 +531,7 @@ MoleculesResult molecules(
   return molecules(
     elements,
     angstromWrapper,
-    uffBondOrders(elements, angstromWrapper),
+    Utils::BondDetector::detectBonds(elements, angstromWrapper.getBohr()),
     discretization,
     stereopermutatorThreshold
   );
@@ -562,7 +562,7 @@ MoleculesResult molecules(
   return molecules(
     atomCollection.getElements(),
     angstromWrapper,
-    uffBondOrders(atomCollection.getElements(), angstromWrapper),
+    Utils::BondDetector::detectBonds(atomCollection.getElements(), angstromWrapper.getBohr()),
     discretization,
     stereopermutatorThreshold
   );

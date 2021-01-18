@@ -89,7 +89,7 @@ Molecule LineNotation::fromFormat(const std::string& lineNotation, const std::st
 
   std::stringstream stream(lineNotation);
   Utils::OpenBabelStreamHandler handler;
-  auto data = handler.read(stream, format);
+  const auto data = handler.read(stream, format);
   auto interpretation = Interpret::molecules(
     data.first,
     data.second,

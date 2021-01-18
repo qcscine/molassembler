@@ -39,6 +39,8 @@ Changed
   from all dependencies but follow conan `packaging philosophy <https://github.com/conan-io/conan-center-index/blob/master/docs/faqs.md#why-are-cmake-findconfig-files-and-pkg-config-files-not-packaged>`_.
 - CMake: option ``MOLASSEMBLER_PARALLELIZE`` is now ``SCINE_PARALLELIZE`` to
   follow SCINE convention.
+- Interpretations without bond orders infer bond orders in binary fashion from
+  Utils' BondDetector instead of from UFF parameters
 - Bond stereopermutator alignment:
   ``BondStereopermutator::Alignment::BetweenEclipsedAndStaggered`` now generates
   the same amount of alignments as

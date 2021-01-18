@@ -142,29 +142,26 @@ RankingInformation::RankedSitesType RankingInformation::rankSites(
 }
 
 void RankingInformation::applyPermutation(const std::vector<AtomIndex>& permutation) {
-  // .substituentRanking is mapped by applying the vertex permutation
+  // substituentRanking is mapped by applying the vertex permutation
   for(auto& group : substituentRanking) {
     for(AtomIndex& atomIndex : group) {
       atomIndex = permutation.at(atomIndex);
     }
   }
-  // .sites too
+  // sites too
   for(auto& group : sites) {
     for(AtomIndex& atomIndex : group) {
       atomIndex = permutation.at(atomIndex);
     }
   }
-  // .siteRanking is unchanged as it is index based into .sites
-  // .links do have to be mapped, though
+  // siteRanking is unchanged as it is index based into .sites
+  // links have to be mapped
   for(Link& link : links) {
     link.applyPermutation(permutation);
   }
 
   // Sort links to re-establish ordering
-  std::sort(
-    std::begin(links),
-    std::end(links)
-  );
+  Temple::sort(links);
 }
 
 SiteIndex RankingInformation::getSiteIndexOf(const AtomIndex i) const {
