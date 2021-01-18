@@ -99,6 +99,26 @@ struct Emitter {
   Emitter(const Molecule& mol) : molecule(mol) {
     const PrivateGraph& inner = mol.graph().inner();
 
+    /* TODO
+     * - The procedure here is faulty! Need to break ring-closing bonds first,
+     *   then figure out the longest path in the resulting graph.
+     * - This might be achieved by
+     *   - MST on the original graph,
+     *   - construct a copy of the graph with all edges in the MST in
+     *     bidirectional form
+     *   - determine the longest path in the graph
+     *   - MST with the root of that longest path
+     *   - Reduce edges to the directionality of the MST
+     *
+     * - Some SMILES normalization issues that could be addressed
+     *   - Avoid making ring-closures on double or triple bonds
+     *     - Maybe weight edges during MST generation by inverse order (single
+     *       is 6, double is 5 etc.). That should encourage marking low-order
+     *       bonds as ring-closures over higher-order bonds.
+     *   - Start on a heteroatom if possible (OCC over CCO)
+     *     - Reverse the longest path if necessary
+     */
+
     /* Figure out the rewriting of hydrogen atoms into heavy atoms labels,
      * implicit or explicit
      */
@@ -266,7 +286,9 @@ struct Emitter {
   }
 
   void writeEdgeType(BondIndex b) {
-    // TODO special case of single bonds between aromatic atoms
+    /* TODO special case of single bonds between aromatic atoms if the bond
+     * isn't aromatic, e.g. in biphenyl c1ccccc1-c2ccccc2
+     */
     const BondType type = molecule.bondType(b);
     if(type == BondType::Double) {
       smiles += "=";
@@ -279,7 +301,41 @@ struct Emitter {
   void dfs(const AtomIndex v, std::vector<AtomIndex>::iterator& pathIter) {
     // Write the atom symbol for v
     smiles += atomSymbol(v);
-    // TODO ring closing bonds
+    // Ring closing bonds
+    auto closuresIter = closures.find(v);
+    if(closuresIter != closures.end()) {
+      for(RingClosure& closure : closuresIter->second) {
+        if(!closure.number) {
+          closure.number = closureIndex;
+
+          // Find matching closure for partner
+          const auto partnerClosuresIter = closures.find(closure.partner);
+          assert(partnerClosuresIter != closures.end());
+          const auto partnerIter = std::find_if(
+            std::begin(partnerClosuresIter->second),
+            std::end(partnerClosuresIter->second),
+            [&](const RingClosure& hay) {
+              return hay.partner == v;
+            }
+          );
+          assert(partnerIter != std::end(partnerClosuresIter->second));
+          assert(!partnerIter->number);
+
+          // Mark partner number
+          partnerIter->number = closureIndex;
+
+          ++closureIndex;
+        }
+
+        assert(closure.number);
+        const unsigned number = closure.number.value();
+        if(number < 10) {
+          smiles += std::to_string(number);
+        } else {
+          smiles += "%" + std::to_string(number);
+        }
+      }
+    }
 
     /* Are we on the longest path? If so, impose special ordering on dfs
      * that descends along the longest path last.
@@ -329,6 +385,7 @@ struct Emitter {
     return smiles;
   }
 
+  unsigned closureIndex = 1;
   std::string smiles;
   SpanningTree spanning;
   std::vector<AtomIndex> longestPath;

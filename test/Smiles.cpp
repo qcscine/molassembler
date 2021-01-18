@@ -298,9 +298,12 @@ BOOST_AUTO_TEST_CASE(EmitAliphatic, *boost::unit_test::label("Molassembler")) {
     "[H][H]",
     "C",
     "CC",
-    "C(C)(C)(C)C",
+    "CC(C)(C)C",
     "CN",
-    "CNO"
+    "CNO",
+    "C1CC1",
+    "C1CCC1",
+    "C1CCCC1"
   };
 
   for(const std::string& smiles : cases) {
