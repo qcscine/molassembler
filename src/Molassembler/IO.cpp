@@ -147,7 +147,7 @@ std::tuple<Utils::AtomCollection, Utils::BondOrderCollection, std::vector<AtomIn
   const Utils::AtomCollection& ac,
   const Utils::BondOrderCollection& bos
 ) {
-  const unsigned N = ac.size();
+  const int N = ac.size();
 
   std::vector<AtomIndex> permutation;
   permutation.resize(N);
@@ -155,7 +155,7 @@ std::tuple<Utils::AtomCollection, Utils::BondOrderCollection, std::vector<AtomIn
   Temple::Random::shuffle(permutation, randomnessEngine());
 
   Utils::AtomCollection permutedAtoms(N);
-  for(unsigned i = 0; i < N; ++i) {
+  for(int i = 0; i < N; ++i) {
     permutedAtoms.setPosition(permutation.at(i), ac.getPosition(i));
     permutedAtoms.setElement(permutation.at(i), ac.getElement(i));
   }
@@ -214,7 +214,7 @@ Molecule read(const std::string& filename) {
   }
 
   // This can throw in lots of cases
-  auto readData = Utils::ChemicalFileHandler::read(filename);
+  const auto readData = Utils::ChemicalFileHandler::read(filename);
 
   Interpret::MoleculesResult interpretation;
   if(readData.second.empty()) {
@@ -242,7 +242,7 @@ std::vector<Molecule> split(const std::string& filename) {
   }
 
   // This can throw in lots of cases
-  auto readData = Utils::ChemicalFileHandler::read(filename);
+  const auto readData = Utils::ChemicalFileHandler::read(filename);
 
   Interpret::MoleculesResult interpretation;
   if(readData.second.empty()) {
@@ -261,7 +261,7 @@ void write(
   const AngstromPositions& angstromWrapper
 ) {
   assert(molecule.graph().V() == static_cast<AtomIndex>(angstromWrapper.positions.rows()));
-  auto data = exchangeFormat(molecule, angstromWrapper);
+  const auto data = exchangeFormat(molecule, angstromWrapper);
   Utils::ChemicalFileHandler::write(filename, data.first, data.second);
 }
 
