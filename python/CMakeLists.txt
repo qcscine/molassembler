@@ -41,11 +41,12 @@ if(PY_PIP)
     ${CMAKE_CURRENT_BINARY_DIR}/scine_molassembler/__init__.py
   )
 
-  # Copy utils and core libraries into the package if utils is shared If utils
+  # Copy utils library into the package if utils is shared. If utils
   # is static, it is subsumed and we don't need to copy it (and since we don't
   # use core, that doesn't get dragged along either). molassembler is always
   # linked statically into the python module, so no need to worry about it
-  get_target_property(_utils_libtype Scine::UtilsOS TYPE)
+  include(TargetLibName)
+  target_lib_type(Scine::UtilsOS _utils_libtype)
   if("${_utils_libtype}" STREQUAL "SHARED_LIBRARY")
     # Overwrite the python module's RPATH to ensure it looks in its directory
     if(APPLE)
@@ -63,13 +64,11 @@ if(PY_PIP)
     # Copy Utils and Core (this works regardless of whether they are imported
     # or build in-tree)
     add_custom_command(TARGET scine_molassembler POST_BUILD
-      COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:Scine::UtilsOS> $<TARGET_FILE:Scine::Core> ${CMAKE_CURRENT_BINARY_DIR}/scine_molassembler
+      COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:Scine::UtilsOS> ${CMAKE_CURRENT_BINARY_DIR}/scine_molassembler
       COMMENT "Copying dependent shared libraries into python package directory"
     )
-    include(TargetLibName)
     target_lib_filename(Scine::UtilsOS _utils_name)
-    target_lib_filename(Scine::Core _core_name)
-    set(molassembler_PY_DEPS ", \"${_utils_name}\", \"${_core_name}\"")
+    set(molassembler_PY_DEPS ", \"${_utils_name}\"")
     unset(_utils_name)
     unset(_core_name)
   endif()
