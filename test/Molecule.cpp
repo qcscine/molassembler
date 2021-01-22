@@ -916,7 +916,3 @@ BOOST_AUTO_TEST_CASE(ShapeClassification, *boost::unit_test::label("Molassembler
   checkAtomStereopermutator(trigbipy, 0, Shapes::Shape::TrigonalBipyramid);
 }
 #endif
-
-BOOST_AUTO_TEST_CASE(ArbitraryFailure) {
-  BOOST_FAIL("Temporary failure just so the test run fails and log gets shown");
-}
