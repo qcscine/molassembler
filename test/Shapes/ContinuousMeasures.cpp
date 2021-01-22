@@ -13,7 +13,11 @@
 #include "Molassembler/Shapes/ContinuousMeasures.h"
 
 #include "Molassembler/Temple/Functional.h"
+#include "Molassembler/Temple/GroupBy.h"
 #include "Molassembler/Temple/Adaptors/Iota.h"
+#include "Molassembler/Temple/Random.h"
+
+#include "Molassembler/Options.h"
 
 #include <iostream>
 #include "Molassembler/Temple/Stringify.h"
@@ -73,24 +77,24 @@ const std::string& pointGroupString(PointGroup group) {
 }
 
 BOOST_AUTO_TEST_CASE(PointGroupMeasures, *boost::unit_test::label("Shapes")) {
-  unsigned shapesTestedCount = 0;
-  unsigned shapesPassCount = 0;
+  unsigned shapesFailureCount = 0;
 
-  for(const Shape shape : allShapes) {
 #ifndef NDEBUG
-    // Skip sizes greater 4 in debug builds
-    if(size(shape) > 4) {
-      continue;
-    }
+  constexpr unsigned shapeSizeLimit = 4;
+#else
+  constexpr unsigned shapeSizeLimit = 8;
 #endif
 
-    // Even release builds bow out here
-    if(size(shape) > 8) {
+  const auto groupedShapes = Temple::groupByMapping(allShapes, &size);
+  for(const auto& shapeGroup : groupedShapes) {
+    const unsigned shapesSize = size(shapeGroup.front());
+
+    if(shapesSize > shapeSizeLimit) {
       continue;
     }
 
-    auto positions = addOrigin(coordinates(shape));
-    // distort(positions);
+    const Shape shape = Temple::Random::pick(shapeGroup, randomnessEngine());
+    const auto positions = addOrigin(coordinates(shape));
     auto normalized = Continuous::normalize(positions);
 
     // Add a random coordinate transformation
@@ -102,12 +106,7 @@ BOOST_AUTO_TEST_CASE(PointGroupMeasures, *boost::unit_test::label("Shapes")) {
       reorientAsymmetricTop(normalized);
     }
 
-    const double pgCSM = Continuous::pointGroup(
-      normalized,
-      pointGroup(shape)
-    );
-
-    ++shapesTestedCount;
+    const double pgCSM = Continuous::pointGroup(normalized, pointGroup(shape));
 
     if(pgCSM >= 0.01) {
       BOOST_TEST_MESSAGE(
@@ -115,13 +114,12 @@ BOOST_AUTO_TEST_CASE(PointGroupMeasures, *boost::unit_test::label("Shapes")) {
         << ") < 0.01 for " << Shapes::name(shape)
         << "shape, got " << pgCSM << " (top is " << topName(top) << ")"
       );
-    } else {
-      ++shapesPassCount;
+      ++shapesFailureCount;
     }
   }
 
   BOOST_CHECK_MESSAGE(
-    shapesTestedCount - shapesPassCount <= 1,
+    shapesFailureCount <= 1,
     "A single shape continuous symmetry measure is allowed to fail in the tests, but not multiple."
   );
 }
@@ -547,61 +545,49 @@ BOOST_AUTO_TEST_CASE(ShapeMeasuresAlternateAlgorithm, *boost::unit_test::label("
   }
 }
 
-BOOST_AUTO_TEST_CASE(ShapeMeasuresHeuristics, *boost::unit_test::label("Shapes")) {
+// Only run this test in optimized builds
 #ifdef NDEBUG
-  constexpr unsigned testingShapeSizeLimit = 7;
-#else
-  constexpr unsigned testingShapeSizeLimit = 5;
-#endif
-
+BOOST_AUTO_TEST_CASE(ShapeMeasuresHeuristics, *boost::unit_test::label("Shapes")) {
   constexpr unsigned repeats = 5;
 
-  for(const Shape shape : allShapes) {
-    // Cannot use heuristics on fewer than five vertices
-    if(size(shape) < 4) {
-      continue;
-    }
+  const Shape shape = Shape::PentagonalBipyramid;
 
-    if(size(shape) > testingShapeSizeLimit) {
-      continue;
-    }
+  auto shapeCoordinates = Continuous::normalize(
+    addOrigin(coordinates(shape))
+  );
 
-    auto shapeCoordinates = Continuous::normalize(
-      addOrigin(coordinates(shape))
-    );
+  for(unsigned i = 1; i < 6; ++i) {
+    const double distortionNorm = 0.1 * i;
 
-    for(unsigned i = 1; i < 6; ++i) {
-      const double distortionNorm = 0.1 * i;
+    std::vector<double> referenceValues;
+    std::vector<double> errors;
+    for(unsigned j = 0; j < repeats; ++j) {
+      auto distorted = shapeCoordinates;
+      distort(distorted, distortionNorm);
+      distorted = Continuous::normalize(distorted);
 
-      std::vector<double> referenceValues;
-      std::vector<double> errors;
-      for(unsigned j = 0; j < repeats; ++j) {
-        auto distorted = shapeCoordinates;
-        distort(distorted, distortionNorm);
-        distorted = Continuous::normalize(distorted);
+      const double alternate = Continuous::shapeAlternateImplementation(distorted, shape).measure;
+      referenceValues.push_back(alternate);
+      const double heuristic = Continuous::shapeHeuristics(distorted, shape).measure;
+      const double error = std::fabs(alternate - heuristic);
 
-        const double alternate = Continuous::shapeAlternateImplementation(distorted, shape).measure;
-        referenceValues.push_back(alternate);
-        const double heuristic = Continuous::shapeHeuristics(distorted, shape).measure;
-        const double error = std::fabs(alternate - heuristic);
-
-        if(error > 1e-2) {
-          std::cout << "Error " << error << " for shape " << name(shape) << " and distortion " << distortionNorm << "\n";
-        }
-        errors.push_back(std::fabs(alternate - heuristic));
+      if(error > 1e-2) {
+        std::cout << "Error " << error << " for shape " << name(shape) << " and distortion " << distortionNorm << "\n";
       }
-
-      const double referenceAverage = Temple::accumulate(referenceValues, 0.0, std::plus<>()) / repeats;
-      const double errorAverage = Temple::accumulate(errors, 0.0, std::plus<>()) / repeats;
-      BOOST_CHECK_MESSAGE(
-        errorAverage < 0.01 * referenceAverage,
-        "Expected error average below 1% of reference value average, but mu(error) = "
-        << errorAverage << " >= 0.01 * " << referenceAverage << " = "
-        << (0.01 * referenceAverage) << " for shape " << name(shape) << " and distortion norm " << distortionNorm
-      );
+      errors.push_back(std::fabs(alternate - heuristic));
     }
+
+    const double referenceAverage = Temple::accumulate(referenceValues, 0.0, std::plus<>()) / repeats;
+    const double errorAverage = Temple::accumulate(errors, 0.0, std::plus<>()) / repeats;
+    BOOST_CHECK_MESSAGE(
+      errorAverage < 0.01 * referenceAverage,
+      "Expected error average below 1% of reference value average, but mu(error) = "
+      << errorAverage << " >= 0.01 * " << referenceAverage << " = "
+      << (0.01 * referenceAverage) << " for shape " << name(shape) << " and distortion norm " << distortionNorm
+    );
   }
 }
+#endif
 
 BOOST_AUTO_TEST_CASE(MinimumDistortionConstants, *boost::unit_test::label("Shapes")) {
   /* NOTES
