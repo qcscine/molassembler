@@ -406,10 +406,17 @@ BOOST_AUTO_TEST_CASE(OctahedralCaseWithoutTransRemoval, *boost::unit_test::label
 }
 
 BOOST_AUTO_TEST_CASE(numUnlinkedStereopermutationsTest, *boost::unit_test::label("Stereopermutations")) {
+#ifdef NDEBUG
+  constexpr unsigned sizeLimit = 8;
+#else
+  constexpr unsigned sizeLimit = 6;
+#endif
+
+
   // Crosscheck number of unlinked stereopermutations with shapes
   for(const Shapes::Shape shape : Shapes::allShapes) {
     const unsigned S = Shapes::size(shape);
-    if(S > 8) {
+    if(S > sizeLimit) {
       continue;
     }
 

@@ -504,44 +504,38 @@ BOOST_AUTO_TEST_CASE(ShapeMeasuresYieldForwardPermutation, *boost::unit_test::la
 
 BOOST_AUTO_TEST_CASE(ShapeMeasuresAlternateAlgorithm, *boost::unit_test::label("Shapes")) {
 #ifdef NDEBUG
-  constexpr unsigned testingShapeSizeLimit = 7;
+  const Shape shape = Shape::PentagonalBipyramid;
 #else
-  constexpr unsigned testingShapeSizeLimit = 5;
+  const Shape shape = Shape::SquarePyramid;
 #endif
 
-  for(const Shape shape : allShapes) {
-    if(size(shape) > testingShapeSizeLimit) {
-      continue;
-    }
+  auto shapeCoordinates = Continuous::normalize(
+    addOrigin(coordinates(shape))
+  );
+  const double unrotated = Continuous::shapeAlternateImplementation(shapeCoordinates, shape).measure;
+  BOOST_CHECK_MESSAGE(
+    unrotated < 1e-10,
+    "Expected CShM < 1e-10 for unrotated coordinates of " << name(shape) << ", but got " << unrotated
+  );
+  randomlyRotate(shapeCoordinates);
+  const double rotated = Continuous::shapeAlternateImplementation(shapeCoordinates, shape).measure;
+  BOOST_CHECK_MESSAGE(
+    rotated < 0.1,
+    "Expected CShM < 1e-2 for rotated coordinates of " << name(shape) << ", but got " << rotated
+  );
 
-    auto shapeCoordinates = Continuous::normalize(
-      addOrigin(coordinates(shape))
-    );
-    const double unrotated = Continuous::shapeAlternateImplementation(shapeCoordinates, shape).measure;
-    BOOST_CHECK_MESSAGE(
-      unrotated < 1e-10,
-      "Expected CShM < 1e-10 for unrotated coordinates of " << name(shape) << ", but got " << unrotated
-    );
-    randomlyRotate(shapeCoordinates);
-    const double rotated = Continuous::shapeAlternateImplementation(shapeCoordinates, shape).measure;
-    BOOST_CHECK_MESSAGE(
-      rotated < 0.1,
-      "Expected CShM < 1e-2 for rotated coordinates of " << name(shape) << ", but got " << rotated
-    );
+  for(unsigned i = 1; i < 5; ++i) {
+    const double distortionNorm = 0.1 * i;
+    auto distorted = shapeCoordinates;
+    distort(distorted, distortionNorm);
+    distorted = Continuous::normalize(distorted);
 
-    for(unsigned i = 1; i < 5; ++i) {
-      const double distortionNorm = 0.1 * i;
-      auto distorted = shapeCoordinates;
-      distort(distorted, distortionNorm);
-      distorted = Continuous::normalize(distorted);
-
-      const double faithful = Continuous::shapeFaithfulPaperImplementation(
-        distorted,
-        shape
-      ).measure;
-      const double alternate = Continuous::shapeAlternateImplementation(distorted, shape).measure;
-      BOOST_CHECK_CLOSE(faithful, alternate, 1);
-    }
+    const double faithful = Continuous::shapeFaithfulPaperImplementation(
+      distorted,
+      shape
+    ).measure;
+    const double alternate = Continuous::shapeAlternateImplementation(distorted, shape).measure;
+    BOOST_CHECK_CLOSE(faithful, alternate, 1);
   }
 }
 
@@ -619,10 +613,12 @@ BOOST_AUTO_TEST_CASE(MinimumDistortionConstants, *boost::unit_test::label("Shape
 
     // NOTE: All of the below that are commented out are missing the required shapes
 
+#ifdef NDEBUG
     {Shape::Octahedron, Shape::TrigonalPrism, 4.091}, // OC-6, TPR-6
     {Shape::Octahedron, Shape::PentagonalPyramid, 5.517}, // OC-6, PPY-6
 //    {Shape::Octahedron, Shape::Hexagon, 5.774}, // OC-6, HP-6
     {Shape::TrigonalPrism, Shape::PentagonalPyramid, 4.125}, // TPR-6, PPY-6
+#endif
 //    {Shape::TrigonalPrism, Shape::Hexagon, 5.803}, // TPR-6, HP-6
 //    {Shape::PentagonalPyramid, Shape::Hexagon, 5.352}, // PPY-6, HP-6
 
