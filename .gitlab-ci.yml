@@ -16,26 +16,16 @@ include:
   - project: 'scine/development-utils'
     file: '/ci/jobs.yml'
 
-conan-gcc:
-  extends:
-    - .gcc
-    - .conan_create
-
-conan-clang:
-  extends:
-    - .clang
-    - .conan_create
-
-conan-coverage:
-  extends: .conan_coverage
-
-pypi-cp36:
-  extends: .pypi
+stages:
+  - quality
+  - build
 
 license:
+  stage: quality
   extends: .license
 
 complexity:
+  stage: quality
   extends: .gcc
   before_script:
     - echo "Skip before_script"
@@ -59,21 +49,45 @@ complexity:
     paths: [src/lizard.html]
 
 
+conan-gcc:
+  stage: build
+  extends:
+    - .gcc
+    - .conan_create
+
+conan-clang:
+  stage: build
+  extends:
+    - .clang
+    - .conan_create
+
+conan-coverage:
+  stage: build
+  extends: .conan_coverage
+
+pypi-cp36:
+  stage: build
+  extends: .pypi
+
+
 # Additional builds on master
 # Additional python ABIs
 pypi-cp37:
+  stage: build
   extends: .manylinux
   only: [master]
   variables:
     PYABI: cp37-cp37m
 
 pypi-cp38:
+  stage: build
   extends: .manylinux
   only: [master]
   variables:
     PYABI: cp38-cp38
 
 pypi-cp39:
+  stage: build
   extends: .manylinux
   only: [master]
   variables:
@@ -81,6 +95,7 @@ pypi-cp39:
 
 # CMake-only build
 cmake-only:
+  stage: build
   extends:
     - .gcc
     - .cmake_release
