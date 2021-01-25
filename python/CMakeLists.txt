@@ -20,13 +20,40 @@ if(NOT PY_PYTEST)
   cmessage(WARNING "Python module will not be tested since the python module 'pytest' could not be found.")
 endif()
 
+# Utils-OS dependency
+if(scine-utils-os_BINARY_DIR)
+  set(UTILS_PYTHONPATH ${scine-utils-os_BINARY_DIR}/src/Utils)
+else()
+  find_python_module(scine_utilities)
+  if(PY_SCINE_UTILITIES)
+    set(UTILS_PYTHONPATH ${PY_SCINE_UTILITIES})
+  else()
+    cmessage(FATAL_ERROR "scine_utilities python dependency could not be found")
+  endif()
+endif()
+
 # Python tests
 if(SCINE_BUILD_TESTS AND PY_PYTEST)
   add_test(
-    NAME MASMPythonBindings
+    NAME MasmPythonBindings
     COMMAND ${PYTHON_EXECUTABLE} -B -m pytest ${CMAKE_CURRENT_SOURCE_DIR} --junitxml=${CMAKE_CURRENT_BINARY_DIR}/pytest_report.xml
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
   )
+  set_tests_properties(MasmPythonBindings PROPERTIES
+    ENVIRONMENT PYTHONPATH=${UTILS_PYTHONPATH}:$ENV{PYTHONPATH}
+  )
+endif()
+
+# Stubs
+find_python_module(pybind11_stubgen)
+if(PY_PYBIND11_STUBGEN)
+  add_custom_command(TARGET scine_molassembler POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E env PYTHONPATH=${UTILS_PYTHONPATH}:$ENV{PYTHONPATH} ${PYTHON_EXECUTABLE} -m pybind11_stubgen -o . --root-module-suffix \"\" --no-setup-py --bare-numpy-ndarray scine_molassembler
+    COMMENT "Generating python package typechecking stubs with pybind11-stubgen"
+    BYPRODUCTS ${CMAKE_CURRENT_BINARY_DIR}/scine_molassembler/__init__.pyi
+  )
+else()
+  message(STATUS "Not generating typechecking stubs for python package as pybind11-stubgen was not found")
 endif()
 
 # Installation of the python module with pip

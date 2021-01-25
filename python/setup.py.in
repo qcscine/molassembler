@@ -1,4 +1,7 @@
 import setuptools
+from typing import Dict, List
+from pathlib import Path
+import os
 
 markdown_description = """
 # Molassembler library
@@ -22,6 +25,36 @@ class EmptyListWithLength(list):
         return 1
 
 
+def find_stubs(package_name: str) -> List[str]:
+    """ Find typing stub files in the package directory """
+    stubs = []
+    for root, dirs, files in os.walk(package_name):
+        for file in files:
+            if not file.endswith(".pyi"):
+                continue
+
+            path = os.path.join(root, file)
+            stubs.append(path.replace(package_name + os.sep, '', 1))
+    return stubs
+
+
+def collect_data(pkg_name: str) -> Dict[str, List[str]]:
+    """ Generates the package_data dict with stubs (if present) """
+    package_data = {pkg_name: filelist}
+
+    # Handle possibility of typing stubs present
+    stubs = find_stubs(pkg_name)
+    if len(stubs) > 0:
+        # Typing marker file for PEP 561
+        typed_filename = "py.typed"
+        typed_file = Path(".") / pkg_name / typed_filename
+        typed_file.touch()
+        package_data[pkg_name].extend(stubs)
+        package_data[pkg_name].append(typed_filename)
+
+    return package_data
+
+
 # Define the setup
 setuptools.setup(
     name="scine_molassembler",
@@ -33,7 +66,7 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     url="https://scine.ethz.ch/download/molassembler",
     packages=["scine_molassembler"],
-    package_data={"scine_molassembler": filelist},
+    package_data=collect_data("scine_molassembler"),
     classifiers=[
         "Programming Language :: Python :: 3",
         "Programming Language :: C++",

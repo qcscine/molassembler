@@ -438,6 +438,18 @@ void init_directed_conformer_generator(pybind11::module& m) {
     )delim"
   );
 
+  pybind11::class_<DirectedConformerGenerator::Relabeler> relabeler(
+    dirConfGen,
+    "Relabeler",
+    R"delim(
+      Functionality for relabeling decision lists of minimized structures
+
+      Determines dihedral bins from true dihedral distributions of minimized
+      structures and generates bin membership lists for all processed
+      structures.
+    )delim"
+  );
+
   dirConfGen.def(
     "relabeler",
     &DirectedConformerGenerator::relabeler,
@@ -454,18 +466,6 @@ void init_directed_conformer_generator(pybind11::module& m) {
     "bin_bounds",
     &DirectedConformerGenerator::binBounds,
     "Relabels a decision list into integer bounds of its stereopermutation bin"
-  );
-
-  pybind11::class_<DirectedConformerGenerator::Relabeler> relabeler(
-    dirConfGen,
-    "Relabeler",
-    R"delim(
-      Functionality for relabeling decision lists of minimized structures
-
-      Determines dihedral bins from true dihedral distributions of minimized
-      structures and generates bin membership lists for all processed
-      structures.
-    )delim"
   );
 
   relabeler.def_static(

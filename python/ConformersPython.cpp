@@ -91,7 +91,7 @@ void init_configuration(pybind11::module& dg) {
   );
 
   configuration.def(
-    "__repr__",
+    "__str__",
     [](pybind11::object settings) -> std::string {
       const std::vector<std::string> members {
         "partiality",
