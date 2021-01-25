@@ -177,6 +177,7 @@ struct Emitter {
 
     // Figure out the longest path in the acyclic graph
     const AtomIndex suggestedRoot = root(mol);
+    std::fill(std::begin(predecessors), std::end(predecessors), suggestedRoot);
     std::vector<unsigned> distances(inner.V(), 0);
     boost::breadth_first_search(
       spanning,
@@ -190,13 +191,16 @@ struct Emitter {
         )
       )
     );
+
     const AtomIndex partner = std::max_element(
       std::begin(distances),
       std::end(distances)
     ) - std::begin(distances);
     longestPath = PredecessorMap {predecessors}.path(partner);
 
-    // Now for the second minimum spanning tree calculation to figure out the directionality of the tree
+    /* Now for the second minimum spanning tree calculation to figure out the
+     * directionality of the tree
+     */
     boost::prim_minimum_spanning_tree(
       inner.bgl(),
       boost::make_iterator_property_map(
@@ -207,9 +211,7 @@ struct Emitter {
       weight_map(Unity {})
     );
 
-    // Can't DFS a predecessor map - need to make an actual tree instead
-    spanning = SpanningTree(V);
-    // Add edges from predecessor list
+    // Impose directionality of the MST on the graph
     for(PrivateGraph::Vertex v = 0; v < V; ++v) {
       const PrivateGraph::Vertex predecessor = predecessors.at(v);
       // Skip unreachable vertices and the root
@@ -217,25 +219,7 @@ struct Emitter {
         continue;
       }
 
-      // Skip subsumed hydrogen atoms
-      if(subsumedHydrogenAtoms.count(v) > 0) {
-        continue;
-      }
-
-      boost::add_edge(predecessor, v, spanning);
-    }
-
-    /* Figure out ring-closing bonds from predecessor list: If neither of the
-     * bonds vertices has the other atom as its predecessor, it is not in the
-     * minimum spanning tree and represents a ring closure
-     */
-    for(const auto& bond : inner.edges()) {
-      const PrivateGraph::Vertex u = inner.source(bond);
-      const PrivateGraph::Vertex v = inner.target(bond);
-      if(predecessors.at(u) != v && predecessors.at(v) != u) {
-        addClosure(u, v);
-        addClosure(v, u);
-      }
+      boost::remove_edge(v, predecessor, spanning);
     }
 
     // TODO Figure out aromatic atoms and bonds

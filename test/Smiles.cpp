@@ -312,8 +312,9 @@ BOOST_AUTO_TEST_CASE(EmitAliphatic, *boost::unit_test::label("Molassembler")) {
     std::string emitted;
     BOOST_REQUIRE_NO_THROW(mol = expectSingle(IO::Experimental::parseSmiles(smiles)));
     BOOST_REQUIRE_NO_THROW(emitted = IO::Experimental::emitSmiles(mol));
-    std::cout << smiles << " -> " << emitted << "\n";
-    BOOST_REQUIRE_NO_THROW(mol2 = expectSingle(IO::Experimental::parseSmiles(emitted)));
-    BOOST_CHECK(mol == mol2);
+    BOOST_TEST_CONTEXT(smiles << " -> " << emitted) {
+      BOOST_REQUIRE_NO_THROW(mol2 = expectSingle(IO::Experimental::parseSmiles(emitted)));
+      BOOST_CHECK(mol == mol2);
+    }
   }
 }
