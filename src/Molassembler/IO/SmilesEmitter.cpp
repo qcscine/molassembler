@@ -7,6 +7,7 @@
 #include "Molassembler/IO/SmilesEmitter.h"
 
 #include "Molassembler/IO/SmilesCommon.h"
+#include "Molassembler/Modeling/BondDistance.h"
 #include "Molassembler/Molecule.h"
 #include "Molassembler/Graph.h"
 #include "Molassembler/Graph/PrivateGraph.h"
@@ -35,27 +36,25 @@ inline double get(const Unity& /* u */, const PrivateGraph::Edge& /* e */) {
   return 1.0;
 }
 
-} // namespace
+struct InverseBondOrder {
+  using key_type = PrivateGraph::Edge;
+  using value_type = double;
+  using reference = double;
+  using category = boost::readable_property_map_tag;
 
-AtomIndex spanningTreeRoot(const Molecule& mol) {
-  using IndexDistancePair = std::pair<AtomIndex, unsigned>;
-  return Temple::accumulate(
-    mol.graph().atoms(),
-    IndexDistancePair {0, 0},
-    [&](const IndexDistancePair& carry, const AtomIndex i) -> IndexDistancePair {
-      const auto distances = distance(i, mol.graph());
-      const unsigned maxDistance = *std::max_element(
-        std::begin(distances),
-        std::end(distances)
-      );
-      if(maxDistance > carry.second) {
-        return std::make_pair(i, maxDistance);
-      }
+  explicit InverseBondOrder(const PrivateGraph& g) : graphRef(g) {}
 
-      return carry;
-    }
-  ).first;
+  std::reference_wrapper<const PrivateGraph> graphRef;
+};
+
+inline double get(const InverseBondOrder& u, const PrivateGraph::Edge& e) {
+  const PrivateGraph& g = u.graphRef.get();
+  const BondType type = g.bondType(e);
+  const double order = Bond::bondOrderMap.at(static_cast<unsigned>(type));
+  return 7 - order;
 }
+
+} // namespace
 
 struct Emitter {
   struct RingClosure {
@@ -75,26 +74,6 @@ struct Emitter {
     boost::vecS,
     boost::bidirectionalS
   >;
-
-  static AtomIndex root(const Molecule& mol) {
-    using IndexDistancePair = std::pair<AtomIndex, unsigned>;
-    return Temple::accumulate(
-      mol.graph().atoms(),
-      IndexDistancePair {0, 0},
-      [&](const IndexDistancePair& carry, const AtomIndex i) -> IndexDistancePair {
-        const auto distances = distance(i, mol.graph());
-        const unsigned maxDistance = *std::max_element(
-          std::begin(distances),
-          std::end(distances)
-        );
-        if(maxDistance > carry.second) {
-          return std::make_pair(i, maxDistance);
-        }
-
-        return carry;
-      }
-    ).first;
-  }
 
   Emitter(const Molecule& mol) : molecule(mol) {
     const PrivateGraph& inner = mol.graph().inner();
@@ -147,26 +126,77 @@ struct Emitter {
       }
     }
 
-    AtomIndex suggestedRoot = root(mol);
-    const auto findIter = subsumedHydrogenAtoms.find(suggestedRoot);
-    if(findIter != std::end(subsumedHydrogenAtoms)) {
-      suggestedRoot = findIter->second;
+    /* TODO maybe need to place the root vertex of this MST at the 'centroid'
+     * of the graph, i.e. the vertex with the lowest average distance to all
+     * other vertices? Unsure of the influence of this arbitrary choice here.
+     */
+    const PrivateGraph::Vertex V = inner.V();
+    std::vector<PrivateGraph::Vertex> predecessors (V);
+    boost::prim_minimum_spanning_tree(
+      inner.bgl(),
+      boost::make_iterator_property_map(
+        predecessors.begin(),
+        boost::get(boost::vertex_index, inner.bgl())
+      ),
+      boost::root_vertex(0).
+      weight_map(InverseBondOrder {inner})
+    );
+
+    spanning = SpanningTree(V);
+
+    // Add edges from predecessor list, but bidirectional!
+    for(const PrivateGraph::Vertex v : inner.vertices()) {
+      const PrivateGraph::Vertex predecessor = predecessors.at(v);
+
+      // Skip unreachable vertices and the root
+      if(predecessor == v) {
+        continue;
+      }
+
+      // Skip subsumed hydrogen atoms
+      if(subsumedHydrogenAtoms.count(v) > 0) {
+        continue;
+      }
+
+      boost::add_edge(predecessor, v, spanning);
+      boost::add_edge(v, predecessor, spanning);
     }
 
-    const auto distances = distance(suggestedRoot, mol.graph());
+    /* Figure out ring-closing bonds from predecessor list: If neither of the
+     * bonds vertices has the other atom as its predecessor, it is not in the
+     * minimum spanning tree and represents a ring closure
+     */
+    for(const auto& bond : inner.edges()) {
+      const PrivateGraph::Vertex u = inner.source(bond);
+      const PrivateGraph::Vertex v = inner.target(bond);
+      if(predecessors.at(u) != v && predecessors.at(v) != u) {
+        addClosure(u, v);
+        addClosure(v, u);
+      }
+    }
+
+    // Figure out the longest path in the acyclic graph
+    const AtomIndex suggestedRoot = root(mol);
+    std::vector<unsigned> distances(inner.V(), 0);
+    boost::breadth_first_search(
+      spanning,
+      suggestedRoot,
+      boost::visitor(
+        boost::make_bfs_visitor(
+          std::make_pair(
+            boost::record_distances(&distances[0], boost::on_tree_edge {}),
+            boost::record_predecessors(&predecessors[0], boost::on_tree_edge {})
+          )
+        )
+      )
+    );
     const AtomIndex partner = std::max_element(
       std::begin(distances),
       std::end(distances)
     ) - std::begin(distances);
-    longestPath = shortestPaths(suggestedRoot, mol.graph()).path(partner);
+    longestPath = PredecessorMap {predecessors}.path(partner);
 
-    // Pop hydrogen at back of shortest path if subsumed
-    if(subsumedHydrogenAtoms.count(longestPath.back()) > 0) {
-      longestPath.pop_back();
-    }
-
-    const PrivateGraph::Vertex V = inner.V();
-    std::vector<PrivateGraph::Vertex> predecessors (V);
+    // Now for the second minimum spanning tree calculation to figure out the directionality of the tree
     boost::prim_minimum_spanning_tree(
       inner.bgl(),
       boost::make_iterator_property_map(
@@ -209,6 +239,43 @@ struct Emitter {
     }
 
     // TODO Figure out aromatic atoms and bonds
+  }
+
+  std::vector<unsigned> distance(AtomIndex a) const {
+    std::vector<unsigned> distances(boost::num_vertices(spanning), 0);
+
+    boost::breadth_first_search(
+      spanning,
+      a,
+      boost::visitor(
+        boost::make_bfs_visitor(
+          boost::record_distances(&distances[0], boost::on_tree_edge {})
+        )
+      )
+    );
+
+    return distances;
+  }
+
+  AtomIndex root(const Molecule& mol) const {
+    using IndexDistancePair = std::pair<AtomIndex, unsigned>;
+    return Temple::accumulate(
+      mol.graph().atoms(),
+      IndexDistancePair {0, 0},
+      [&](const IndexDistancePair& carry, const AtomIndex i) -> IndexDistancePair {
+        const auto distances = distance(i);
+        const unsigned maxDistance = *std::max_element(
+          std::begin(distances),
+          std::end(distances)
+        );
+
+        if(maxDistance > carry.second) {
+          return std::make_pair(i, maxDistance);
+        }
+
+        return carry;
+      }
+    ).first;
   }
 
   void addClosure(const AtomIndex u, const AtomIndex v) {

@@ -501,7 +501,7 @@ std::vector<AtomIndex> shortestPaths(AtomIndex a, const PrivateGraph& graph) {
     a,
     boost::visitor(
       boost::make_bfs_visitor(
-        boost::record_predecessors(&predecessors[0], boost::on_tree_edge())
+        boost::record_predecessors(&predecessors[0], boost::on_tree_edge {})
       )
     )
   );
