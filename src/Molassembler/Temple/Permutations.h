@@ -294,6 +294,28 @@ struct Permutation {
 
   constexpr explicit Permutation(Container p) : sigma(std::move(p)) {}
 
+  constexpr Permutation(const unsigned N, unsigned i) : sigma(N) {
+    Container factorials(N);
+    factorials.at(0) = 1;
+    for(unsigned k = 1; k < N; ++k) {
+      factorials.at(k) = factorials.at(k - 1) * k;
+    }
+
+    for(unsigned k = 0; k < N; ++k) {
+      const unsigned fac = factorials.at(N - 1 - k);
+      sigma.at(k) = i / fac;
+      i %= fac;
+    }
+
+    for(int k = static_cast<int>(N) - 1; k > 0; --k) {
+      for(int j = k - 1; j >= 0; --j) {
+        if(sigma.at(j) <= sigma.at(k)) {
+          ++sigma.at(k);
+        }
+      }
+    }
+  }
+
   constexpr bool next() {
     return inPlaceNextPermutation(sigma);
   }

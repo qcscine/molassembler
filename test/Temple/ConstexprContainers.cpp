@@ -725,4 +725,10 @@ BOOST_AUTO_TEST_CASE(PermutationsTests, *boost::unit_test::label("Temple")) {
   auto qInverse = q.inverse();
   auto qIdentity = q.apply(qInverse.sigma);
   BOOST_CHECK_EQUAL(Temple::make_permutation(qIdentity).index(), 0);
+
+  Temple::Permutation<U> r(4, 2);
+  BOOST_CHECK_EQUAL(r.index(), 2);
+
+  Temple::Permutation<U> s(10, 1001);
+  BOOST_CHECK_EQUAL(s.index(), 1001);
 }
