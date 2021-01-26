@@ -85,28 +85,12 @@ struct Emitter {
     boost::bidirectionalS
   >;
 
+  static bool heteroatom(const Utils::ElementType e) {
+    return e != Utils::ElementType::H && e != Utils::ElementType::C;
+  }
+
   Emitter(const Molecule& mol) : molecule(mol) {
     const PrivateGraph& inner = mol.graph().inner();
-
-    /* TODO
-     * - The procedure here is faulty! Need to break ring-closing bonds first,
-     *   then figure out the longest path in the resulting graph.
-     * - This might be achieved by
-     *   - MST on the original graph,
-     *   - construct a copy of the graph with all edges in the MST in
-     *     bidirectional form
-     *   - determine the longest path in the graph
-     *   - MST with the root of that longest path
-     *   - Reduce edges to the directionality of the MST
-     *
-     * - Some SMILES normalization issues that could be addressed
-     *   - Avoid making ring-closures on double or triple bonds
-     *     - Maybe weight edges during MST generation by inverse order (single
-     *       is 6, double is 5 etc.). That should encourage marking low-order
-     *       bonds as ring-closures over higher-order bonds.
-     *   - Start on a heteroatom if possible (OCC over CCO)
-     *     - Reverse the longest path if necessary
-     */
 
     /* Figure out the rewriting of hydrogen atoms into heavy atoms labels,
      * implicit or explicit
@@ -186,7 +170,7 @@ struct Emitter {
     }
 
     // Figure out the longest path in the acyclic graph
-    const AtomIndex suggestedRoot = root(mol);
+    AtomIndex suggestedRoot = root(mol);
     std::fill(std::begin(predecessors), std::end(predecessors), suggestedRoot);
     std::vector<unsigned> distances(inner.V(), 0);
     boost::breadth_first_search(
@@ -202,11 +186,20 @@ struct Emitter {
       )
     );
 
-    const AtomIndex partner = std::max_element(
+    AtomIndex partner = std::max_element(
       std::begin(distances),
       std::end(distances)
     ) - std::begin(distances);
     longestPath = PredecessorMap {predecessors}.path(partner);
+
+    // Smiles normalization: Begin on a heteroatom, if possible
+    if(
+      heteroatom(molecule.graph().elementType(partner))
+      && !heteroatom(molecule.graph().elementType(suggestedRoot))
+    ) {
+      std::swap(suggestedRoot, partner);
+      std::reverse(std::begin(longestPath), std::end(longestPath));
+    }
 
     /* Now for the second minimum spanning tree calculation to figure out the
      * directionality of the tree
