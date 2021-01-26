@@ -12,6 +12,7 @@
 #include "Molassembler/Graph.h"
 #include "Molassembler/Graph/PrivateGraph.h"
 #include "Molassembler/GraphAlgorithms.h"
+#include "Molassembler/StereopermutatorList.h"
 
 #include "Molassembler/Temple/Functional.h"
 #include "Utils/Geometry/ElementInfo.h"
@@ -61,7 +62,30 @@ inline double get(const InverseBondOrder& u, const PrivateGraph::Edge& e) {
   const PrivateGraph& g = u.graphRef.get();
   const BondType type = g.bondType(e);
   const double order = Bond::bondOrderMap.at(static_cast<unsigned>(type));
-  return 7 - order;
+  const unsigned inverseOrder = 7 - order;
+
+  /* Weight edges by the graph degree (of heavy atoms only) to incentivize ring
+   * closures at fulcrums of the heavy atom graph. Important for normalization
+   * of e.g. biphenyl.
+   */
+  auto heavyDegree = [&](const AtomIndex i) -> unsigned {
+    return Temple::accumulate(
+      g.adjacents(i),
+      0U,
+      [&](const unsigned carry, const AtomIndex j) -> unsigned {
+        if(
+          g.elementType(j) == Utils::ElementType::H
+          && g.degree(j) == 1
+        ) {
+          return carry;
+        }
+
+        return carry + 1;
+      }
+    );
+  };
+
+  return inverseOrder + heavyDegree(g.source(e)) + heavyDegree(g.target(e));
 }
 
 } // namespace
@@ -92,8 +116,8 @@ struct Emitter {
   Emitter(const Molecule& mol) : molecule(mol) {
     const PrivateGraph& inner = mol.graph().inner();
 
-    /* Figure out the rewriting of hydrogen atoms into heavy atoms labels,
-     * implicit or explicit
+    /* Find terminal hydrogen atoms that can be rewritten into heavy atom
+     * labels, implicit or explicit
      */
     std::unordered_map<AtomIndex, AtomIndex> subsumedHydrogenAtoms;
     for(const AtomIndex i : inner.vertices()) {
@@ -225,7 +249,47 @@ struct Emitter {
       boost::remove_edge(v, predecessor, spanning);
     }
 
-    // TODO Figure out aromatic atoms and bonds
+    markAromaticAtoms();
+  }
+
+  void markAromaticAtoms() {
+    const std::unordered_set<Shapes::Shape> flatShapes {
+      Shapes::Shape::Bent,
+      Shapes::Shape::EquilateralTriangle
+    };
+
+    for(const auto& cycleEdges : molecule.graph().cycles()) {
+      const bool permutatorsEverywhere = Temple::all_of(
+        cycleEdges,
+        [&](const BondIndex& bond) -> bool {
+          return static_cast<bool>(molecule.stereopermutators().option(bond));
+        }
+      );
+      if(!permutatorsEverywhere) {
+        continue;
+      }
+      auto cycleAtoms = makeRingIndexSequence(cycleEdges);
+      const bool flat = Temple::all_of(
+        cycleAtoms,
+        [&](const AtomIndex i) -> bool {
+          auto permutator = molecule.stereopermutators().option(i);
+          if(!permutator) {
+            return false;
+          }
+          return flatShapes.count(permutator->getShape()) > 0;
+        }
+      );
+      if(!flat) {
+        continue;
+      }
+
+      for(const AtomIndex i : cycleAtoms) {
+        aromaticAtoms.insert(i);
+      }
+      for(const BondIndex& b : cycleEdges) {
+        aromaticBonds.insert(b);
+      }
+    }
   }
 
   std::vector<unsigned> distance(AtomIndex a) const {
@@ -342,15 +406,25 @@ struct Emitter {
   }
 
   void writeEdgeType(BondIndex b) {
-    /* TODO special case of single bonds between aromatic atoms if the bond
-     * isn't aromatic, e.g. in biphenyl c1ccccc1-c2ccccc2
-     */
-    const BondType type = molecule.bondType(b);
-    if(type == BondType::Double) {
-      smiles += "=";
-    }
-    if(type == BondType::Triple) {
-      smiles += "#";
+    switch(molecule.bondType(b)) {
+      case BondType::Single: {
+        /* Single bond order isn't generally written, except if it's a bond
+         * between aromatic atoms that isn't aromatic itself, e.g. in biphenyl
+         * c1ccccc1-c2ccccc2
+         */
+        if(
+          aromaticAtoms.count(b.first) > 0
+          && aromaticAtoms.count(b.second) > 0
+          && aromaticBonds.count(b) == 0
+        ) {
+          smiles += "-";
+        }
+        break;
+      }
+      case BondType::Double: { smiles += "="; break; }
+      case BondType::Triple: { smiles += "#"; break; }
+      // NOTE: Eta and bond orders four through six aren't explicitly written
+      default: break;
     }
   }
 
@@ -446,7 +520,7 @@ struct Emitter {
   SpanningTree spanning;
   std::vector<AtomIndex> longestPath;
   std::unordered_set<AtomIndex> aromaticAtoms;
-  // TODO std::unordered_set<BondIndex> aromaticBonds;
+  std::unordered_set<BondIndex, boost::hash<BondIndex>> aromaticBonds;
   ClosureMap closures;
   std::unordered_map<AtomIndex, unsigned> subsumedHydrogenCount;
   const Molecule& molecule;
