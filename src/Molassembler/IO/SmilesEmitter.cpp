@@ -17,6 +17,11 @@
 #include "Utils/Geometry/ElementInfo.h"
 #include "boost/graph/prim_minimum_spanning_tree.hpp"
 
+// #include <fstream>
+// #include "boost/graph/graphviz.hpp"
+// #include "Molassembler/Temple/Stringify.h"
+// #include <iostream>
+
 #include <unordered_set>
 
 namespace Scine {
@@ -26,13 +31,18 @@ namespace Experimental {
 namespace {
 
 struct Unity {
-  using key_type = PrivateGraph::Edge;
+  using G = boost::adjacency_list<
+    boost::vecS,
+    boost::vecS,
+    boost::bidirectionalS
+  >;
+  using key_type = typename G::edge_descriptor;
   using value_type = double;
   using reference = double;
   using category = boost::readable_property_map_tag;
 };
 
-inline double get(const Unity& /* u */, const PrivateGraph::Edge& /* e */) {
+inline double get(const Unity& /* u */, const Unity::key_type& /* e */) {
   return 1.0;
 }
 
@@ -202,7 +212,7 @@ struct Emitter {
      * directionality of the tree
      */
     boost::prim_minimum_spanning_tree(
-      inner.bgl(),
+      spanning,
       boost::make_iterator_property_map(
         predecessors.begin(),
         boost::get(boost::vertex_index, inner.bgl())
@@ -299,7 +309,9 @@ struct Emitter {
             return count;
           }
 
-          return count + 1;
+          const BondType type = molecule.graph().bondType(BondIndex {v, i});
+          const int order = Bond::bondOrderMap.at(static_cast<unsigned>(type));
+          return count + order;
         }
       );
 
