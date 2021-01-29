@@ -155,7 +155,7 @@ BOOST_AUTO_TEST_CASE(RejectInvalidSmiles, *boost::unit_test::label("Molassembler
  * bipyramidal smiles (these are considered achiral in the high temperature
  * approximation)
  */
-BOOST_FIXTURE_TEST_CASE(IdenticalSmiles, LowTemperatureFixture) {
+BOOST_FIXTURE_TEST_CASE(IdenticalSmiles, LowTemperatureFixture, *boost::unit_test::label("Molassembler")) {
   const std::vector<std::pair<std::string, std::string>> pairs {
     {"C", "[CH4]"}, // Implicit hydrogens
     {"[H][CH2][H]", "[H]C([H])([H])[H]"},
@@ -293,7 +293,7 @@ BOOST_AUTO_TEST_CASE(SmilesWithMultipleMolecules, *boost::unit_test::label("Mola
   }
 }
 
-BOOST_AUTO_TEST_CASE(EmitSmiles, *boost::unit_test::label("Molassembler")) {
+BOOST_FIXTURE_TEST_CASE(EmitSmiles, LowTemperatureFixture, *boost::unit_test::label("Molassembler")) {
   const std::vector<std::string> cases {
     "[H][H]",
     "C",
@@ -309,7 +309,11 @@ BOOST_AUTO_TEST_CASE(EmitSmiles, *boost::unit_test::label("Molassembler")) {
     "C1CCCC1",
     "C1=CC=CC=C1",
     "c1ccccc1",
-    "c1ccccc1-c2ccccc2"
+    "c1ccccc1-c2ccccc2",
+    "N[C@H](O)C",
+    "S[As@TB1](F)(Cl)(Br)N",
+    "S[Co@OH5](F)(I)(Cl)(C)Br",
+    "Cl[Co@OH19](C)(I)(F)(S)Br"
   };
 
   for(const std::string& smiles : cases) {
@@ -318,7 +322,7 @@ BOOST_AUTO_TEST_CASE(EmitSmiles, *boost::unit_test::label("Molassembler")) {
     std::string emitted;
     BOOST_REQUIRE_NO_THROW(mol = expectSingle(IO::Experimental::parseSmiles(smiles)));
     BOOST_REQUIRE_NO_THROW(emitted = IO::Experimental::emitSmiles(mol));
-    std::cout << smiles << " -> " << emitted << "\n";
+    // std::cout << smiles << " -> " << emitted << "\n";
     BOOST_TEST_CONTEXT(smiles << " -> " << emitted) {
       BOOST_REQUIRE_NO_THROW(mol2 = expectSingle(IO::Experimental::parseSmiles(emitted)));
       BOOST_CHECK(mol == mol2);

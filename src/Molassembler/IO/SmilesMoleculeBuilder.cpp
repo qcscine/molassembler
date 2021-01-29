@@ -60,24 +60,24 @@ BondType MoleculeBuilder::mutualBondType(
   return a.value();
 }
 
-Shapes::Vertex operator "" _v(unsigned long long v) {
+inline Shapes::Vertex operator "" _v(unsigned long long v) {
   return Shapes::Vertex(v);
 }
 
 std::vector<Shapes::Vertex> MoleculeBuilder::shapeMap(const ChiralData& chiralData) {
-  if(chiralData.shape == Shapes::Shape::Tetrahedron) {
-    switch(chiralData.chiralIndex) {
+  switch(chiralData.shape) {
+    case Shapes::Shape::Tetrahedron: switch(chiralData.chiralIndex) {
       case 1: return {{0_v, 1_v, 2_v, 3_v}}; // @, TH1
       case 2: return {{0_v, 1_v, 3_v, 2_v}}; // @@, TH2
+      default: throw std::out_of_range("No such stereo index for tetrahedron");
     }
-  } else if(chiralData.shape == Shapes::Shape::Square) {
-    switch(chiralData.chiralIndex) {
+    case Shapes::Shape::Square: switch(chiralData.chiralIndex) {
       case 1: return {{0_v, 1_v, 2_v, 3_v}}; // SP1 = U
       case 2: return {{0_v, 2_v, 3_v, 1_v}}; // SP2 = 4
       case 3: return {{3_v, 2_v, 0_v, 1_v}}; // SP3 = Z
+      default: throw std::out_of_range("No such stereo index for square");
     }
-  } else if(chiralData.shape == Shapes::Shape::TrigonalBipyramid) {
-    switch(chiralData.chiralIndex) {
+    case Shapes::Shape::TrigonalBipyramid: switch(chiralData.chiralIndex) {
       case  1: return {{1_v, 2_v, 3_v, 0_v, 4_v}}; // TB1 = a, e, @
       case  2: return {{1_v, 3_v, 2_v, 0_v, 4_v}}; // TB2 = a, e, @@
       case  3: return {{1_v, 2_v, 4_v, 0_v, 3_v}}; // TB3 = a, d, @
@@ -98,9 +98,10 @@ std::vector<Shapes::Vertex> MoleculeBuilder::shapeMap(const ChiralData& chiralDa
       case 18: return {{0_v, 2_v, 1_v, 3_v, 4_v}}; // TB18 = d, e, @@
       case 19: return {{0_v, 4_v, 1_v, 2_v, 3_v}}; // TB19 = c, d, @@
       case 20: return {{0_v, 3_v, 1_v, 2_v, 4_v}}; // TB20 = c, e, @@
+
+      default: throw std::out_of_range("No such stereo index for trigonal bipyramid");
     }
-  } else if(chiralData.shape == Shapes::Shape::Octahedron) {
-    switch(chiralData.chiralIndex) {
+    case Shapes::Shape::Octahedron: switch(chiralData.chiralIndex) {
       /* Look along an axis, what remains is a square with a winding. So
        * square shapes are reused with definitions of square shapes and windings
        */
@@ -142,10 +143,11 @@ std::vector<Shapes::Vertex> MoleculeBuilder::shapeMap(const ChiralData& chiralDa
       case 21: return {{1_v, 4_v, 3_v, 5_v, 0_v, 2_v}}; // OH21 = a, c, 4, @@
       case 28: return {{5_v, 3_v, 4_v, 2_v, 0_v, 1_v}}; // OH28 = a, b, 4, @
       case 27: return {{2_v, 4_v, 3_v, 5_v, 0_v, 1_v}}; // OH27 = a, b, 4, @@
-    }
-  }
 
-  throw std::logic_error("Invalid combination of shape and chiral index!");
+      default: throw std::out_of_range("No such stereo index for octahedron");
+    }
+    default: throw std::out_of_range("No shape map for selected shape");
+  }
 }
 
 void MoleculeBuilder::addAtom(const AtomData& atom) {

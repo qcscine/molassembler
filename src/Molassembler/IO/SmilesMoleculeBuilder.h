@@ -74,6 +74,9 @@ private:
 //!@{
   /*! Determines the mutual bond type of two bond type optionals
    *
+   * For simplification of ring closure double-checking, where the ring-closure
+   * bond type may or may not be specified at either or both markers.
+   *
    * @throws std::runtime_error If the bond types are mismatched
    */
   static BondType mutualBondType(
@@ -81,7 +84,11 @@ private:
     const boost::optional<BondType>& b
   );
 
-  //! Fetches a map to help with the atom chiral markers
+  /*! Fetches a map to help with the atom chiral markers
+   *
+   * Maps the order in which substituents were specified in the SMILES onto
+   * shape vertices. Note that there is rotational freedom to these.
+   */
   static std::vector<Shapes::Vertex> shapeMap(const ChiralData& chiralData);
 //!@}
 

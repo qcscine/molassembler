@@ -13,8 +13,10 @@
 #include "Molassembler/Graph/PrivateGraph.h"
 #include "Molassembler/GraphAlgorithms.h"
 #include "Molassembler/StereopermutatorList.h"
+#include "Molassembler/Shapes/Properties.h"
 
 #include "Molassembler/Temple/Functional.h"
+#include "Molassembler/Temple/Permutations.h"
 #include "Utils/Geometry/ElementInfo.h"
 #include "boost/graph/prim_minimum_spanning_tree.hpp"
 
@@ -86,6 +88,112 @@ inline double get(const InverseBondOrder& u, const PrivateGraph::Edge& e) {
   };
 
   return inverseOrder + heavyDegree(g.source(e)) + heavyDegree(g.target(e));
+}
+
+const std::unordered_map<unsigned, unsigned>& smilesStereodescriptorShapeMap(
+  const Shapes::Shape shape
+) {
+  switch(shape) {
+    case Shapes::Shape::Tetrahedron: {
+      static std::unordered_map<unsigned, unsigned> tetrahedronMap {
+        {0, 1},
+        {1, 2},
+      };
+      return tetrahedronMap;
+    }
+    case Shapes::Shape::Square: {
+      static std::unordered_map<unsigned, unsigned> squareMap {
+        {0, 1},
+        {3, 2},
+        {22, 3}
+      };
+      return squareMap;
+    }
+    case Shapes::Shape::TrigonalBipyramid: {
+      static std::unordered_map<unsigned, unsigned> trigBipyramidMap {
+        {32, 1},
+        {38, 2},
+        {34, 3},
+        {44, 4},
+        {40, 5},
+        {46, 6},
+        {64, 7},
+        {70, 8},
+        {8, 9},
+        {10, 10},
+        {14, 11},
+        {20, 12},
+        {16, 13},
+        {22, 14},
+        {2, 15},
+        {4, 16},
+        {0, 17},
+        {6, 18},
+        {18, 19},
+        {12, 20},
+      };
+      return trigBipyramidMap;
+    }
+    case Shapes::Shape::Octahedron: {
+      static std::unordered_map<unsigned, unsigned> octahedronMap {
+        {152, 1},
+        {566, 2},
+        {154, 3},
+        {158, 4},
+        {164, 5},
+        {160, 6},
+        {166, 7},
+        {176, 8},
+        {178, 9},
+        {542, 10},
+        {662, 11},
+        {202, 12},
+        {668, 13},
+        {446, 14},
+        {470, 15},
+        {686, 16},
+        {590, 17},
+        {710, 18},
+        {184, 19},
+        {190, 20},
+        {208, 21},
+        {692, 22},
+        {596, 23},
+        {716, 24},
+        {304, 25},
+        {310, 26},
+        {328, 27},
+        {694, 28},
+        {598, 29},
+        {718, 30},
+      };
+      return octahedronMap;
+    }
+    default: throw std::out_of_range("No shape map for selected shape");
+  }
+}
+
+
+unsigned smilesStereodescriptor(
+  const Shapes::Shape shape,
+  const std::vector<Shapes::Vertex>& order
+) {
+  const auto allRotations = Shapes::Properties::generateAllRotations(
+    shape,
+    order
+  );
+  std::unordered_set<unsigned> permutationIndices;
+  for(const auto& indices : allRotations) {
+    permutationIndices.insert(Temple::permutationIndex(indices));
+  }
+
+  for(const auto& pair : smilesStereodescriptorShapeMap(shape)) {
+    if(permutationIndices.count(pair.first) > 0) {
+      return pair.second;
+    }
+  }
+
+  throw std::out_of_range("No smiles stereodescriptor found!");
 }
 
 } // namespace
@@ -337,7 +445,27 @@ struct Emitter {
     listIter->second.emplace_back(v);
   }
 
-  std::string atomSymbol(const AtomIndex v) const {
+  bool isSmilesStereogenic(const AtomIndex v) const {
+    auto permutator = molecule.stereopermutators().option(v);
+    if(!permutator) {
+      return false;
+    }
+    switch(permutator->getShape()) {
+      // These are the only shapes that smiles has descriptors for
+      case Shapes::Shape::Tetrahedron:
+      case Shapes::Shape::Square:
+      case Shapes::Shape::TrigonalBipyramid:
+      case Shapes::Shape::Octahedron:
+        return permutator->numAssignments() > 1;
+      default:
+        return false;
+    }
+  }
+
+  std::string atomSymbol(
+    const AtomIndex v,
+    const std::vector<AtomIndex>& descendantOrder
+  ) const {
     /* Decide whether to emit either
      * - an aliphatic organic symbol
      * - an aromatic organic symbol
@@ -352,7 +480,9 @@ struct Emitter {
       hydrogenCount = countIter->second;
     }
 
-    if(!isIsotope && isValenceFillElement(e)) {
+    const bool isStereogenic = isSmilesStereogenic(v);
+
+    if(!isIsotope && !isStereogenic && isValenceFillElement(e)) {
       const bool isAromatic = aromaticAtoms.count(v) > 0;
 
       const int valence = Temple::accumulate(
@@ -392,14 +522,82 @@ struct Emitter {
       }
     }
 
-    // Bracket atom fallback
+    // Bracket atom
     std::string elementStr = "[";
     if(isIsotope) {
       elementStr += std::to_string(Utils::ElementInfo::A(e));
     }
     elementStr += Utils::ElementInfo::symbol(e);
-    if(hydrogenCount > 0) {
+    if(isStereogenic) {
+      auto permutator = molecule.stereopermutators().option(v);
+      std::vector<SiteIndex> siteSequence;
+      /* - Use the shape map to place the substituent order index of the smiles
+       *   at the shape vertices (via the site indices), taking extra care of
+       *   hydrogen counts (which are ordered first in the smiles sequence)
+       * - Generate all rotations of that permutation and find a smiles
+       *   stereodescriptor for that shape that matches
+       */
+      if(hydrogenCount > 0) {
+        SiteIndex i {0};
+        for(const auto& siteIndices : permutator->getRanking().sites) {
+          if(siteIndices.size() == 1) {
+            const AtomIndex siteAtom = siteIndices.front();
+            if(
+              molecule.graph().elementType(siteAtom) == Utils::ElementType::H
+              && molecule.graph().degree(siteAtom) == 1
+            ) {
+              siteSequence.push_back(i);
+            }
+          }
+          ++i;
+        }
+      }
+      for(auto iters = boost::in_edges(v, spanning); iters.first != iters.second; ++iters.first) {
+        const AtomIndex parent = boost::source(*iters.first, spanning);
+        siteSequence.push_back(permutator->getRanking().getSiteIndexOf(parent));
+      }
+      for(const AtomIndex i : descendantOrder) {
+        siteSequence.push_back(permutator->getRanking().getSiteIndexOf(i));
+      }
+
+      const auto orderAtShapeVertices = Temple::map(
+        siteSequence,
+        [&](const SiteIndex i) -> Shapes::Vertex {
+          return permutator->getShapePositionMap().at(i);
+        }
+      );
+
+      const unsigned stereodescriptor = smilesStereodescriptor(
+        permutator->getShape(),
+        Shapes::Properties::inverseRotation(orderAtShapeVertices)
+      );
+
+      switch(permutator->getShape()) {
+        case Shapes::Shape::Tetrahedron: {
+          for(unsigned i = 0; i < stereodescriptor; ++i) {
+            elementStr += "@";
+          }
+          break;
+        }
+        case Shapes::Shape::Square: {
+          elementStr += "@SP" + std::to_string(stereodescriptor);
+          break;
+        }
+        case Shapes::Shape::TrigonalBipyramid: {
+          elementStr += "@TB" + std::to_string(stereodescriptor);
+          break;
+        }
+        case Shapes::Shape::Octahedron: {
+          elementStr += "@OH" + std::to_string(stereodescriptor);
+          break;
+        }
+        default: std::exit(1); // Unreachable by precondition of isStereogenic
+      }
+    }
+    if(hydrogenCount > 1) {
       elementStr += "H" + std::to_string(hydrogenCount);
+    } else if(hydrogenCount == 1) {
+      elementStr += "H";
     }
     elementStr += "]";
     return elementStr;
@@ -429,8 +627,27 @@ struct Emitter {
   }
 
   void dfs(const AtomIndex v, std::vector<AtomIndex>::iterator& pathIter) {
+    // Determine the order of the substituents indicated by the MST
+    std::vector<AtomIndex> descendantOrder;
+    for(auto iters = boost::out_edges(v, spanning); iters.first != iters.second; ++iters.first) {
+      descendantOrder.push_back(boost::target(*iters.first, spanning));
+    }
+    const bool onMainBranch = (v == *pathIter);
+    if(onMainBranch) {
+      // Impose requirement that the main branch is descended onto last
+      ++pathIter;
+      if(pathIter != std::end(longestPath)) {
+        const auto nextMainBranchAtom = std::find(
+          std::rbegin(descendantOrder),
+          std::rend(descendantOrder),
+          *pathIter
+        );
+        std::iter_swap(nextMainBranchAtom, std::rbegin(descendantOrder));
+      }
+    }
+
     // Write the atom symbol for v
-    smiles += atomSymbol(v);
+    smiles += atomSymbol(v, descendantOrder);
     // Ring closing bonds
     auto closuresIter = closures.find(v);
     if(closuresIter != closures.end()) {
@@ -467,41 +684,16 @@ struct Emitter {
       }
     }
 
-    /* Are we on the longest path? If so, impose special ordering on dfs
-     * that descends along the longest path last.
-     */
-    if(v == *pathIter) {
-      ++pathIter;
-      if(pathIter == std::end(longestPath)) {
-        return;
+    // Descend into substituents
+    for(const AtomIndex w : descendantOrder) {
+      const bool last = (w == descendantOrder.back());
+      if(!last) {
+        smiles += "(";
       }
-      const AtomIndex nextOnLongestPath = *pathIter;
-      auto iters = boost::out_edges(v, spanning);
-      for(; iters.first != iters.second; ++iters.first) {
-        const AtomIndex w = boost::target(*iters.first, spanning);
-        if(w != nextOnLongestPath) {
-          smiles += "(";
-          writeEdgeType(BondIndex {v, w});
-          dfs(w, pathIter);
-          smiles += ")";
-        }
-      }
-      writeEdgeType(BondIndex {v, nextOnLongestPath});
-      dfs(nextOnLongestPath, pathIter);
-    } else {
-      auto iters = boost::out_edges(v, spanning);
-      for(; iters.first != iters.second; ++iters.first) {
-        const bool last = iters.first + 1 != iters.second;
-        if(!last) {
-          smiles += "(";
-        }
-
-        const AtomIndex w = boost::target(*iters.first, spanning);
-        writeEdgeType(BondIndex {v, w});
-        dfs(w, pathIter);
-        if(!last) {
-          smiles += ")";
-        }
+      writeEdgeType(BondIndex {v, w});
+      dfs(w, pathIter);
+      if(!last) {
+        smiles += ")";
       }
     }
   }
