@@ -529,70 +529,7 @@ struct Emitter {
     }
     elementStr += Utils::ElementInfo::symbol(e);
     if(isStereogenic) {
-      auto permutator = molecule.stereopermutators().option(v);
-      std::vector<SiteIndex> siteSequence;
-      /* - Use the shape map to place the substituent order index of the smiles
-       *   at the shape vertices (via the site indices), taking extra care of
-       *   hydrogen counts (which are ordered first in the smiles sequence)
-       * - Generate all rotations of that permutation and find a smiles
-       *   stereodescriptor for that shape that matches
-       */
-      if(hydrogenCount > 0) {
-        SiteIndex i {0};
-        for(const auto& siteIndices : permutator->getRanking().sites) {
-          if(siteIndices.size() == 1) {
-            const AtomIndex siteAtom = siteIndices.front();
-            if(
-              molecule.graph().elementType(siteAtom) == Utils::ElementType::H
-              && molecule.graph().degree(siteAtom) == 1
-            ) {
-              siteSequence.push_back(i);
-            }
-          }
-          ++i;
-        }
-      }
-      for(auto iters = boost::in_edges(v, spanning); iters.first != iters.second; ++iters.first) {
-        const AtomIndex parent = boost::source(*iters.first, spanning);
-        siteSequence.push_back(permutator->getRanking().getSiteIndexOf(parent));
-      }
-      for(const AtomIndex i : descendantOrder) {
-        siteSequence.push_back(permutator->getRanking().getSiteIndexOf(i));
-      }
-
-      const auto orderAtShapeVertices = Temple::map(
-        siteSequence,
-        [&](const SiteIndex i) -> Shapes::Vertex {
-          return permutator->getShapePositionMap().at(i);
-        }
-      );
-
-      const unsigned stereodescriptor = smilesStereodescriptor(
-        permutator->getShape(),
-        Shapes::Properties::inverseRotation(orderAtShapeVertices)
-      );
-
-      switch(permutator->getShape()) {
-        case Shapes::Shape::Tetrahedron: {
-          for(unsigned i = 0; i < stereodescriptor; ++i) {
-            elementStr += "@";
-          }
-          break;
-        }
-        case Shapes::Shape::Square: {
-          elementStr += "@SP" + std::to_string(stereodescriptor);
-          break;
-        }
-        case Shapes::Shape::TrigonalBipyramid: {
-          elementStr += "@TB" + std::to_string(stereodescriptor);
-          break;
-        }
-        case Shapes::Shape::Octahedron: {
-          elementStr += "@OH" + std::to_string(stereodescriptor);
-          break;
-        }
-        default: std::exit(1); // Unreachable by precondition of isStereogenic
-      }
+      elementStr += atomStereodescriptor(v, descendantOrder);
     }
     if(hydrogenCount > 1) {
       elementStr += "H" + std::to_string(hydrogenCount);
@@ -601,6 +538,79 @@ struct Emitter {
     }
     elementStr += "]";
     return elementStr;
+  }
+
+  std::string atomStereodescriptor(
+    const AtomIndex v,
+    const std::vector<AtomIndex>& descendantOrder
+  ) const {
+    unsigned hydrogenCount = 0;
+    const auto countIter = subsumedHydrogenCount.find(v);
+    if(countIter != subsumedHydrogenCount.end()) {
+      hydrogenCount = countIter->second;
+    }
+
+    auto permutator = molecule.stereopermutators().option(v);
+    std::vector<SiteIndex> siteSequence;
+    /* - Use the shape map to place the substituent order index of the smiles
+     *   at the shape vertices (via the site indices), taking extra care of
+     *   hydrogen counts (which are ordered first in the smiles sequence)
+     * - Generate all rotations of that permutation and find a smiles
+     *   stereodescriptor for that shape that matches
+     */
+    if(hydrogenCount > 0) {
+      SiteIndex i {0};
+      for(const auto& siteIndices : permutator->getRanking().sites) {
+        if(siteIndices.size() == 1) {
+          const AtomIndex siteAtom = siteIndices.front();
+          if(
+            molecule.graph().elementType(siteAtom) == Utils::ElementType::H
+            && molecule.graph().degree(siteAtom) == 1
+          ) {
+            siteSequence.push_back(i);
+          }
+        }
+        ++i;
+      }
+    }
+    for(auto iters = boost::in_edges(v, spanning); iters.first != iters.second; ++iters.first) {
+      const AtomIndex parent = boost::source(*iters.first, spanning);
+      siteSequence.push_back(permutator->getRanking().getSiteIndexOf(parent));
+    }
+    for(const AtomIndex i : descendantOrder) {
+      siteSequence.push_back(permutator->getRanking().getSiteIndexOf(i));
+    }
+
+    const auto orderAtShapeVertices = Temple::map(
+      siteSequence,
+      [&](const SiteIndex i) -> Shapes::Vertex {
+        return permutator->getShapePositionMap().at(i);
+      }
+    );
+
+    const unsigned stereodescriptor = smilesStereodescriptor(
+      permutator->getShape(),
+      Shapes::Properties::inverseRotation(orderAtShapeVertices)
+    );
+
+    switch(permutator->getShape()) {
+      case Shapes::Shape::Tetrahedron: {
+        if(stereodescriptor == 1) {
+          return "@";
+        }
+        return "@@";
+      }
+      case Shapes::Shape::Square: {
+        return "@SP" + std::to_string(stereodescriptor);
+      }
+      case Shapes::Shape::TrigonalBipyramid: {
+        return "@TB" + std::to_string(stereodescriptor);
+      }
+      case Shapes::Shape::Octahedron: {
+        return "@OH" + std::to_string(stereodescriptor);
+      }
+      default: std::exit(1); // Unreachable by precondition of isStereogenic
+    }
   }
 
   void writeEdgeType(BondIndex b) {
