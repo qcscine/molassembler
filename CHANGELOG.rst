@@ -23,6 +23,7 @@ Added
   algorithm that conserves element types. Also adds an associated function that
   plots the edits.
 - Conformer deduplication: More ``Relabeler``-related functions
+- Experimental SMILES emitter: ``IO/SmilesEmitter.h``
 - Python bindings:
 
   - Added modifying functions to ``Graph``
