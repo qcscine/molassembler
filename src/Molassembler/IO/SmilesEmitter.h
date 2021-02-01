@@ -18,6 +18,15 @@ class Molecule;
 namespace IO {
 namespace Experimental {
 
+/**
+ * @brief Generate smiles string for molecule
+ *
+ * @warning This is a lossy serialization format! The openSMILES standard does
+ * not contain stereodescriptors for shapes other than the tetrahedron, square,
+ * trigonal bipyramid and octahedron. Generated smiles containing stereocenters
+ * with other shapes will not contain stereodescriptors for these centers.
+ *
+ */
 MASM_EXPORT std::string emitSmiles(const Molecule& mol);
 
 } // namespace Experimental

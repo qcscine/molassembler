@@ -20,10 +20,10 @@
 #include "Utils/Geometry/ElementInfo.h"
 #include "boost/graph/prim_minimum_spanning_tree.hpp"
 
-// #include <fstream>
-// #include "boost/graph/graphviz.hpp"
-// #include "Molassembler/Temple/Stringify.h"
-// #include <iostream>
+#include <fstream>
+#include "boost/graph/graphviz.hpp"
+#include "Molassembler/Temple/Stringify.h"
+#include <iostream>
 
 #include <unordered_set>
 
@@ -33,13 +33,32 @@ namespace IO {
 namespace Experimental {
 namespace {
 
+struct RingClosure {
+  RingClosure() = default;
+  explicit RingClosure(AtomIndex i) : partner(i) {}
+
+  // Bond partner of ring-closing bond
+  AtomIndex partner;
+  // Marked number in depth-first traversal
+  boost::optional<unsigned> number;
+};
+
+struct VertexProperties {
+  unsigned rank = 0;
+  bool aromatic = false;
+  unsigned subsumedHydrogens = 0;
+  std::vector<RingClosure> closures;
+};
+
+using SpanningTree = boost::adjacency_list<
+  boost::vecS,
+  boost::vecS,
+  boost::bidirectionalS,
+  VertexProperties
+>;
+
 struct Unity {
-  using G = boost::adjacency_list<
-    boost::vecS,
-    boost::vecS,
-    boost::bidirectionalS
-  >;
-  using key_type = typename G::edge_descriptor;
+  using key_type = typename SpanningTree::edge_descriptor;
   using value_type = double;
   using reference = double;
   using category = boost::readable_property_map_tag;
@@ -199,60 +218,29 @@ unsigned smilesStereodescriptor(
 } // namespace
 
 struct Emitter {
-  struct RingClosure {
-    RingClosure() = default;
-    explicit RingClosure(AtomIndex i) : partner(i) {}
-
-    // Bond partner of ring-closing bond
-    AtomIndex partner;
-    // Marked number in depth-first traversal
-    boost::optional<unsigned> number;
-  };
-
-  using ClosureMap = std::unordered_map<AtomIndex, std::vector<RingClosure>>;
-
-  using SpanningTree = boost::adjacency_list<
-    boost::vecS,
-    boost::vecS,
-    boost::bidirectionalS
-  >;
-
   static bool heteroatom(const Utils::ElementType e) {
     return e != Utils::ElementType::H && e != Utils::ElementType::C;
   }
 
-  Emitter(const Molecule& mol) : molecule(mol) {
+  Emitter(const Molecule& mol) : spanning(mol.V()), molecule(mol) {
+    /* Plan:
+     * - Find a minimum spanning tree while weighting edges according to their
+     *   inverse bond order and sum of endpoint heavy atom degrees to find a
+     *   suitable acyclization of the molecular graph for the smiles
+     * - Find the longest path within that acyclic graph
+     * - Find a minimum spanning tree starting at the root of the longest path
+     *   and reduce edges from the (bidirectional acyclic) graph to fit that
+     *   tree
+     *
+     * Details:
+     * - Subsumed hydrogen atoms are disconnected in the construction of the
+     *   initial bidirectional graph mimicking the molecule
+     * - Record ring closures after acyclization
+     */
+    auto subsumption = markSubsumedHydrogens();
     const PrivateGraph& inner = mol.graph().inner();
 
-    /* Find terminal hydrogen atoms that can be rewritten into heavy atom
-     * labels, implicit or explicit
-     */
-    std::unordered_map<AtomIndex, AtomIndex> subsumedHydrogenAtoms;
-    for(const AtomIndex i : inner.vertices()) {
-      if(
-        inner.elementType(i) == Utils::ElementType::H
-        && inner.degree(i) == 1
-      ) {
-        for(const AtomIndex j : inner.adjacents(i)) {
-          // Cannot subsume the terminal hydrogen in another hydrogen atom
-          if(inner.elementType(j) != Utils::ElementType::H) {
-            subsumedHydrogenAtoms.emplace(i, j);
-          }
-        }
-      }
-    }
-
-    // Rewrite subsumption mapping into hydrogen counts at the target vertex
-    for(const auto& iterPair : subsumedHydrogenAtoms) {
-      auto findIter = subsumedHydrogenCount.find(iterPair.second);
-      if(findIter == subsumedHydrogenCount.end()) {
-        subsumedHydrogenCount.emplace_hint(findIter, iterPair.second, 1);
-      } else {
-        ++findIter->second;
-      }
-    }
-
-    /* TODO maybe need to place the root vertex of this MST at the 'centroid'
+    /* TODO maybe should place the root vertex of this MST at the 'centroid'
      * of the graph, i.e. the vertex with the lowest average distance to all
      * other vertices? Unsure of the influence of this arbitrary choice here.
      */
@@ -268,8 +256,6 @@ struct Emitter {
       weight_map(InverseBondOrder {inner})
     );
 
-    spanning = SpanningTree(V);
-
     // Add edges from predecessor list, but bidirectional!
     for(const PrivateGraph::Vertex v : inner.vertices()) {
       const PrivateGraph::Vertex predecessor = predecessors.at(v);
@@ -280,7 +266,7 @@ struct Emitter {
       }
 
       // Skip subsumed hydrogen atoms
-      if(subsumedHydrogenAtoms.count(v) > 0) {
+      if(subsumption.count(v) > 0) {
         continue;
       }
 
@@ -296,15 +282,81 @@ struct Emitter {
       const PrivateGraph::Vertex u = inner.source(bond);
       const PrivateGraph::Vertex v = inner.target(bond);
       if(predecessors.at(u) != v && predecessors.at(v) != u) {
-        addClosure(u, v);
-        addClosure(v, u);
+        spanning[u].closures.emplace_back(v);
+        spanning[v].closures.emplace_back(u);
       }
     }
 
-    // Figure out the longest path in the acyclic graph
-    AtomIndex suggestedRoot = root(mol);
-    std::fill(std::begin(predecessors), std::end(predecessors), suggestedRoot);
-    std::vector<unsigned> distances(inner.V(), 0);
+    longestPath = findMainBranch();
+    const AtomIndex root = longestPath.front();
+
+    /* Now for the second minimum spanning tree calculation to figure out the
+     * directionality of the tree
+     */
+    boost::prim_minimum_spanning_tree(
+      spanning,
+      boost::make_iterator_property_map(
+        predecessors.begin(),
+        boost::get(boost::vertex_index, inner.bgl())
+      ),
+      boost::root_vertex(root).
+      weight_map(Unity {})
+    );
+
+    // Impose directionality of the MST on the graph
+    for(PrivateGraph::Vertex v = 0; v < V; ++v) {
+      const PrivateGraph::Vertex predecessor = predecessors.at(v);
+      // Skip unreachable vertices and the root
+      if(predecessor == v) {
+        continue;
+      }
+
+      boost::remove_edge(v, predecessor, spanning);
+    }
+
+    recordVertexRank(root);
+    markAromaticAtoms();
+
+    std::ofstream mst("mst.dot");
+    boost::write_graphviz(mst, spanning);
+  }
+
+  std::unordered_map<AtomIndex, AtomIndex> markSubsumedHydrogens() {
+    std::unordered_map<AtomIndex, AtomIndex> result;
+
+    const PrivateGraph& inner = molecule.graph().inner();
+
+    /* Find terminal hydrogen atoms that can be rewritten into heavy atom
+     * labels, implicit or explicit
+     */
+    for(const AtomIndex i : inner.vertices()) {
+      if(
+        inner.elementType(i) != Utils::ElementType::H
+        || inner.degree(i) != 1
+      ) {
+        continue;
+      }
+
+      for(const AtomIndex j : inner.adjacents(i)) {
+        // Cannot subsume the terminal hydrogen in another hydrogen atom
+        if(inner.elementType(j) == Utils::ElementType::H) {
+          continue;
+        }
+
+        result.emplace(i, j);
+        ++spanning[j].subsumedHydrogens;
+      }
+    }
+
+    return result;
+  }
+
+  // Figure out the longest path in the acyclic graph
+  std::vector<AtomIndex> findMainBranch() const {
+    const unsigned V = molecule.V();
+    AtomIndex suggestedRoot = guessRoot();
+    std::vector<AtomIndex> predecessors(V, suggestedRoot);
+    std::vector<unsigned> distances(V, 0);
     boost::breadth_first_search(
       spanning,
       suggestedRoot,
@@ -322,42 +374,35 @@ struct Emitter {
       std::begin(distances),
       std::end(distances)
     ) - std::begin(distances);
-    longestPath = PredecessorMap {predecessors}.path(partner);
+    auto path = PredecessorMap {predecessors}.path(partner);
 
-    // Smiles normalization: Begin on a heteroatom, if possible
+    // Normalization: Begin on a heteroatom, if possible
     if(
       heteroatom(molecule.graph().elementType(partner))
       && !heteroatom(molecule.graph().elementType(suggestedRoot))
     ) {
       std::swap(suggestedRoot, partner);
-      std::reverse(std::begin(longestPath), std::end(longestPath));
+      std::reverse(std::begin(path), std::end(path));
     }
 
-    /* Now for the second minimum spanning tree calculation to figure out the
-     * directionality of the tree
-     */
-    boost::prim_minimum_spanning_tree(
-      spanning,
-      boost::make_iterator_property_map(
-        predecessors.begin(),
-        boost::get(boost::vertex_index, inner.bgl())
-      ),
-      boost::root_vertex(suggestedRoot).
-      weight_map(Unity {})
-    );
+    return path;
+  }
 
-    // Impose directionality of the MST on the graph
-    for(PrivateGraph::Vertex v = 0; v < V; ++v) {
-      const PrivateGraph::Vertex predecessor = predecessors.at(v);
-      // Skip unreachable vertices and the root
-      if(predecessor == v) {
-        continue;
-      }
-
-      boost::remove_edge(v, predecessor, spanning);
+  /* Record the number of descendants of each vertex in the spanning tree
+   * as the internal rank property (we'll use this in descent ordering later
+   * for more normalized smiles).
+   */
+  void recordVertexRank(AtomIndex i) {
+    // Do a non-tail-recursive DFS-like traversal
+    for(
+      auto iters = boost::out_edges(i, spanning);
+      iters.first != iters.second;
+      ++iters.first
+    ) {
+      const AtomIndex child = boost::target(*iters.first, spanning);
+      recordVertexRank(child);
+      spanning[i].rank += 1 + spanning[child].rank;
     }
-
-    markAromaticAtoms();
   }
 
   void markAromaticAtoms() {
@@ -392,7 +437,7 @@ struct Emitter {
       }
 
       for(const AtomIndex i : cycleAtoms) {
-        aromaticAtoms.insert(i);
+        spanning[i].aromatic = true;
       }
       for(const BondIndex& b : cycleEdges) {
         aromaticBonds.insert(b);
@@ -416,12 +461,15 @@ struct Emitter {
     return distances;
   }
 
-  AtomIndex root(const Molecule& mol) const {
+  AtomIndex guessRoot() const {
     using IndexDistancePair = std::pair<AtomIndex, unsigned>;
     return Temple::accumulate(
-      mol.graph().atoms(),
+      molecule.graph().atoms(),
       IndexDistancePair {0, 0},
       [&](const IndexDistancePair& carry, const AtomIndex i) -> IndexDistancePair {
+        /* NOTE: We're using distances in the acyclic graph here, not distances
+         * in the (possibly cyclic) molecule
+         */
         const auto distances = distance(i);
         const unsigned maxDistance = *std::max_element(
           std::begin(distances),
@@ -435,14 +483,6 @@ struct Emitter {
         return carry;
       }
     ).first;
-  }
-
-  void addClosure(const AtomIndex u, const AtomIndex v) {
-    auto listIter = closures.find(u);
-    if(listIter == closures.end()) {
-      listIter = closures.emplace_hint(listIter, u, 0);
-    }
-    listIter->second.emplace_back(v);
   }
 
   bool isSmilesStereogenic(const AtomIndex v) const {
@@ -474,16 +514,12 @@ struct Emitter {
      */
     const Utils::ElementType e = molecule.elementType(v);
     const bool isIsotope = Utils::ElementInfo::base(e) != e;
-    unsigned hydrogenCount = 0;
-    const auto countIter = subsumedHydrogenCount.find(v);
-    if(countIter != subsumedHydrogenCount.end()) {
-      hydrogenCount = countIter->second;
-    }
+    const unsigned hydrogenCount = spanning[v].subsumedHydrogens;
 
     const bool isStereogenic = isSmilesStereogenic(v);
 
     if(!isIsotope && !isStereogenic && isValenceFillElement(e)) {
-      const bool isAromatic = aromaticAtoms.count(v) > 0;
+      const bool isAromatic = spanning[v].aromatic;
 
       const int valence = Temple::accumulate(
         molecule.graph().adjacents(v),
@@ -544,21 +580,17 @@ struct Emitter {
     const AtomIndex v,
     const std::vector<AtomIndex>& descendantOrder
   ) const {
-    unsigned hydrogenCount = 0;
-    const auto countIter = subsumedHydrogenCount.find(v);
-    if(countIter != subsumedHydrogenCount.end()) {
-      hydrogenCount = countIter->second;
-    }
-
     auto permutator = molecule.stereopermutators().option(v);
-    std::vector<SiteIndex> siteSequence;
+    assert(permutator);
     /* - Use the shape map to place the substituent order index of the smiles
      *   at the shape vertices (via the site indices), taking extra care of
      *   hydrogen counts (which are ordered first in the smiles sequence)
      * - Generate all rotations of that permutation and find a smiles
      *   stereodescriptor for that shape that matches
      */
-    if(hydrogenCount > 0) {
+    std::vector<SiteIndex> siteSequence;
+    if(spanning[v].subsumedHydrogens > 0) {
+      // Subsumed hydrogens are placed first in the ordering (SMILES rules)
       SiteIndex i {0};
       for(const auto& siteIndices : permutator->getRanking().sites) {
         if(siteIndices.size() == 1) {
@@ -609,7 +641,10 @@ struct Emitter {
       case Shapes::Shape::Octahedron: {
         return "@OH" + std::to_string(stereodescriptor);
       }
-      default: std::exit(1); // Unreachable by precondition of isStereogenic
+      default: {
+        std::cerr << "Precondition violation for smiles emitter atom stereodescriptor! Exiting.\n";
+        std::exit(1); // Unreachable by precondition of isStereogenic
+      }
     }
   }
 
@@ -621,8 +656,8 @@ struct Emitter {
          * c1ccccc1-c2ccccc2
          */
         if(
-          aromaticAtoms.count(b.first) > 0
-          && aromaticAtoms.count(b.second) > 0
+          spanning[b.first].aromatic
+          && spanning[b.second].aromatic
           && aromaticBonds.count(b) == 0
         ) {
           smiles += "-";
@@ -636,61 +671,87 @@ struct Emitter {
     }
   }
 
-  void dfs(const AtomIndex v, std::vector<AtomIndex>::iterator& pathIter) {
-    // Determine the order of the substituents indicated by the MST
-    std::vector<AtomIndex> descendantOrder;
-    for(auto iters = boost::out_edges(v, spanning); iters.first != iters.second; ++iters.first) {
-      descendantOrder.push_back(boost::target(*iters.first, spanning));
-    }
-    const bool onMainBranch = (v == *pathIter);
-    if(onMainBranch) {
-      // Impose requirement that the main branch is descended onto last
-      ++pathIter;
-      if(pathIter != std::end(longestPath)) {
-        const auto nextMainBranchAtom = std::find(
-          std::rbegin(descendantOrder),
-          std::rend(descendantOrder),
-          *pathIter
-        );
-        std::iter_swap(nextMainBranchAtom, std::rbegin(descendantOrder));
+  /* Sort descendant vertices by increasing number of descendants, ensuring
+   * a continuation of the longest path is always last.
+   *
+   * TODO check if the additional conditions regarding the main branch are
+   * actually necessary. In principle, it could be guaranteed that the longest
+   * path is last by virtue of being the longest path (i.e. the path with the
+   * most descendants). It might not be stable against multiple longest paths,
+   * though.
+   */
+  std::vector<AtomIndex> descendants(
+    const AtomIndex v,
+    const std::vector<AtomIndex>::iterator& pathIter
+  ) const {
+    const auto nextOnMainBranch = [&]() -> boost::optional<AtomIndex> {
+      if(v != *pathIter) {
+        return boost::none;
       }
+
+      const auto nextIter = pathIter + 1;
+      if(nextIter == std::end(longestPath)) {
+        return boost::none;
+      }
+
+      return *nextIter;
+    }();
+
+    std::vector<AtomIndex> vertices;
+    for(auto iters = boost::out_edges(v, spanning); iters.first != iters.second; ++iters.first) {
+      vertices.push_back(boost::target(*iters.first, spanning));
     }
 
-    // Write the atom symbol for v
+    Temple::sort(
+      vertices,
+      [&](const AtomIndex i, const AtomIndex j) -> bool {
+        if(i == nextOnMainBranch) {
+          return false;
+        }
+
+        if(j == nextOnMainBranch) {
+          return true;
+        }
+
+        return spanning[i].rank < spanning[j].rank;
+      }
+    );
+
+    return vertices;
+  }
+
+  void dfs(const AtomIndex v, std::vector<AtomIndex>::iterator& pathIter) {
+    auto descendantOrder = descendants(v, pathIter);
     smiles += atomSymbol(v, descendantOrder);
     // Ring closing bonds
-    auto closuresIter = closures.find(v);
-    if(closuresIter != closures.end()) {
-      for(RingClosure& closure : closuresIter->second) {
-        if(!closure.number) {
-          closure.number = closureIndex;
+    for(RingClosure& closure : spanning[v].closures) {
+      if(!closure.number) {
+        closure.number = closureIndex;
 
-          // Find matching closure for partner
-          const auto partnerClosuresIter = closures.find(closure.partner);
-          assert(partnerClosuresIter != closures.end());
-          const auto partnerIter = std::find_if(
-            std::begin(partnerClosuresIter->second),
-            std::end(partnerClosuresIter->second),
-            [&](const RingClosure& hay) {
-              return hay.partner == v;
-            }
-          );
-          assert(partnerIter != std::end(partnerClosuresIter->second));
-          assert(!partnerIter->number);
+        // Find matching closure for partner
+        auto& partnerClosures = spanning[closure.partner].closures;
+        auto partnerIter = std::find_if(
+          std::begin(partnerClosures),
+          std::end(partnerClosures),
+          [&](const RingClosure& hay) {
+            return hay.partner == v;
+          }
+        );
+        assert(partnerIter != std::end(partnerClosures));
+        assert(!partnerIter->number);
 
-          // Mark partner number
-          partnerIter->number = closureIndex;
+        // Mark partner number
+        partnerIter->number = closureIndex;
 
-          ++closureIndex;
-        }
+        ++closureIndex;
+      }
 
-        assert(closure.number);
-        const unsigned number = closure.number.value();
-        if(number < 10) {
-          smiles += std::to_string(number);
-        } else {
-          smiles += "%" + std::to_string(number);
-        }
+      assert(closure.number);
+      const unsigned number = closure.number.value();
+      if(number < 10) {
+        smiles += std::to_string(number);
+      } else {
+        smiles += "%" + std::to_string(number);
       }
     }
 
@@ -721,10 +782,10 @@ struct Emitter {
   std::string smiles;
   SpanningTree spanning;
   std::vector<AtomIndex> longestPath;
-  std::unordered_set<AtomIndex> aromaticAtoms;
+  /* NOTE: This cannot be a spanning-tree edge property since aromatic ring
+   * closures are not edges in the tree
+   */
   std::unordered_set<BondIndex, boost::hash<BondIndex>> aromaticBonds;
-  ClosureMap closures;
-  std::unordered_map<AtomIndex, unsigned> subsumedHydrogenCount;
   const Molecule& molecule;
 };
 
