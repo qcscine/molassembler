@@ -313,7 +313,10 @@ BOOST_FIXTURE_TEST_CASE(EmitSmiles, LowTemperatureFixture, *boost::unit_test::la
     "N[C@H](O)C",
     "S[As@TB1](F)(Cl)(Br)N",
     "S[Co@OH5](F)(I)(Cl)(C)Br",
-    "Cl[Co@OH19](C)(I)(F)(S)Br"
+    "Cl[Co@OH19](C)(I)(F)(S)Br",
+    "F/C(CC)=C/F",
+    "F/C=C/F",
+    R"y(F\C=C/F)y"
   };
 
   for(const std::string& smiles : cases) {

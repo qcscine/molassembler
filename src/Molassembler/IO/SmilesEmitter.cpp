@@ -89,7 +89,7 @@ inline double get(const InverseBondOrder& u, const PrivateGraph::Edge& e) {
    * closures at fulcrums of the heavy atom graph. Important for normalization
    * of e.g. biphenyl.
    */
-  auto heavyDegree = [&](const AtomIndex i) -> unsigned {
+  const auto heavyDegree = [&](const AtomIndex i) -> unsigned {
     return Temple::accumulate(
       g.adjacents(i),
       0U,
@@ -218,6 +218,9 @@ unsigned smilesStereodescriptor(
 } // namespace
 
 struct Emitter {
+  //! Bond stereo markers in smiles
+  enum class BondStereo { Forward, Backward };
+
   static bool heteroatom(const Utils::ElementType e) {
     return e != Utils::ElementType::H && e != Utils::ElementType::C;
   }
@@ -316,9 +319,7 @@ struct Emitter {
 
     recordVertexRank(root);
     markAromaticAtoms();
-
-    std::ofstream mst("mst.dot");
-    boost::write_graphviz(mst, spanning);
+    markBondStereo();
   }
 
   std::unordered_map<AtomIndex, AtomIndex> markSubsumedHydrogens() {
@@ -441,6 +442,90 @@ struct Emitter {
       }
       for(const BondIndex& b : cycleEdges) {
         aromaticBonds.insert(b);
+      }
+    }
+  }
+
+  void markBondStereo() {
+    for(
+      const BondStereopermutator& permutator:
+      molecule.stereopermutators().bondStereopermutators()
+    ) {
+      const BondIndex& bond = permutator.placement();
+
+      if(
+        permutator.numAssignments() < 2
+        || molecule.bondType(bond) != BondType::Double
+        || aromaticBonds.count(bond) > 0
+      ) {
+        continue;
+      }
+
+      const auto orderedPlacement = [&]() {
+        const auto forwardEdge = boost::edge(bond.first, bond.second, spanning);
+        if(forwardEdge.second) {
+          return std::make_pair(bond.first, bond.second);
+        }
+        return std::make_pair(bond.second, bond.first);
+      }();
+
+      const AtomIndex front = parent(orderedPlacement.first);
+
+      if(molecule.bondType(BondIndex {front, orderedPlacement.first}) != BondType::Single) {
+        continue;
+      }
+
+      auto pathIter = std::find(
+        std::begin(longestPath),
+        std::end(longestPath),
+        orderedPlacement.second
+      );
+      if(pathIter == std::end(longestPath)) {
+        pathIter = std::begin(longestPath);
+      }
+      const AtomIndex back = descendants(orderedPlacement.second, pathIter).back();
+
+      if(molecule.bondType(BondIndex {orderedPlacement.second, back}) != BondType::Single) {
+        continue;
+      }
+
+      const auto permutators = Temple::map(
+        orderedPlacement,
+        [&](const AtomIndex i) {
+          return molecule.stereopermutators().option(i);
+        }
+      );
+
+      const auto allowedShape = [](const Shapes::Shape shape) -> bool {
+        return (
+          shape == Shapes::Shape::Bent
+          || shape == Shapes::Shape::EquilateralTriangle
+        );
+      };
+
+      if(
+        !permutators.first || !permutators.second
+        || !allowedShape(permutators.first->getShape())
+        || !allowedShape(permutators.second->getShape())
+      ) {
+        continue;
+      }
+
+      const double dihedral = permutator.dihedral(
+        permutators.first.value(),
+        permutators.first->getRanking().getSiteIndexOf(front),
+        permutators.second.value(),
+        permutators.second->getRanking().getSiteIndexOf(back)
+      );
+
+
+      bondStereoMarkers.emplace(orderedPlacement.first, BondStereo::Forward);
+      if(std::fabs(dihedral) < 1e-2) {
+        // Front and back are Z to one another
+        bondStereoMarkers.emplace(back, BondStereo::Backward);
+      } else {
+        // Front and back are E to one another
+        bondStereoMarkers.emplace(back, BondStereo::Forward);
       }
     }
   }
@@ -648,20 +733,36 @@ struct Emitter {
     }
   }
 
-  void writeEdgeType(BondIndex b) {
-    switch(molecule.bondType(b)) {
+  void writeEdgeType(const AtomIndex v, const AtomIndex w) {
+    const BondIndex bond {v, w};
+    switch(molecule.bondType(bond)) {
       case BondType::Single: {
-        /* Single bond order isn't generally written, except if it's a bond
-         * between aromatic atoms that isn't aromatic itself, e.g. in biphenyl
-         * c1ccccc1-c2ccccc2
+        /* Bond between aromatic atoms that isn't aromatic itself,
+         * e.g. in biphenyl c1ccccc1-c2ccccc2
          */
         if(
-          spanning[b.first].aromatic
-          && spanning[b.second].aromatic
-          && aromaticBonds.count(b) == 0
+          spanning[v].aromatic
+          && spanning[w].aromatic
+          && aromaticBonds.count(bond) == 0
         ) {
           smiles += "-";
         }
+
+        /* Double bond stereo markers */
+        const auto markerIter = bondStereoMarkers.find(w);
+        if(markerIter != std::end(bondStereoMarkers)) {
+          switch(markerIter->second) {
+            case BondStereo::Forward: {
+              smiles += "/";
+              break;
+            }
+            case BondStereo::Backward: {
+              smiles += "\\";
+              break;
+            }
+          }
+        }
+
         break;
       }
       case BondType::Double: { smiles += "="; break; }
@@ -761,12 +862,18 @@ struct Emitter {
       if(!last) {
         smiles += "(";
       }
-      writeEdgeType(BondIndex {v, w});
+      writeEdgeType(v, w);
       dfs(w, pathIter);
       if(!last) {
         smiles += ")";
       }
     }
+  }
+
+  AtomIndex parent(const AtomIndex v) const {
+    auto iters = boost::in_edges(v, spanning);
+    assert(iters.first != iters.second);
+    return boost::source(*iters.first, spanning);
   }
 
   std::string dfs() {
@@ -786,6 +893,7 @@ struct Emitter {
    * closures are not edges in the tree
    */
   std::unordered_set<BondIndex, boost::hash<BondIndex>> aromaticBonds;
+  std::unordered_map<AtomIndex, BondStereo> bondStereoMarkers;
   const Molecule& molecule;
 };
 

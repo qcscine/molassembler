@@ -26,6 +26,11 @@ namespace Experimental {
  * trigonal bipyramid and octahedron. Generated smiles containing stereocenters
  * with other shapes will not contain stereodescriptors for these centers.
  *
+ * @note Missing normalization: Aromaticity detection in kekulized graph to aromatic
+ * atom types.
+ *
+ * @returns A (partially) normalized openSMILES-standard compliant smiles
+ *   string.
  */
 MASM_EXPORT std::string emitSmiles(const Molecule& mol);
 
