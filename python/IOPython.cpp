@@ -8,6 +8,7 @@
 
 #include "Molassembler/IO.h"
 #include "Molassembler/IO/SmilesParser.h"
+#include "Molassembler/IO/SmilesEmitter.h"
 #include "Molassembler/Molecule.h"
 
 #include "Utils/Typenames.h"
@@ -20,7 +21,14 @@ void init_io(pybind11::module& m) {
   io.doc() = R"(IO Submodule)";
 
   auto experimental = io.def_submodule("experimental");
-  experimental.doc() = R"(Experimental IO submodule)";
+  experimental.doc() = R"(
+    Experimental
+    ------------
+
+    :note: Functions in this module are unstable and should be used with
+      caution. Check your results. Upon stabilization, functions will be
+      deprecated and move to a different module.
+  )";
 
   experimental.def(
     "from_smiles_multiple",
@@ -31,20 +39,20 @@ void init_io(pybind11::module& m) {
 
       The smiles parser is implemented according to the OpenSMILES spec. It
       supports the following features:
+
       - Arbitrarily many molecules in a string
-      - Isotope markers (as long as they exist in Utils::ElementType)
+      - Isotope markers
       - Valence filling of the organic subset
-      - Set shapes from VSEPR using (possibly) supplied charge
+      - Set shapes from VSEPR
       - Ring closures
       - Stereo markers
         - Double bond
-        - Tetrahedral (@ / @@ / @TH1 / @TH2)
-        - Square planar (@SP1 - @SP3)
-        - Trigonal bipyramidal (@TB1 - @TB20)
-        - Octahedral (@OH1 - @OH30)
+        - Tetrahedral
+        - Square planar
+        - Trigonal bipyramidal
+        - Octahedral
 
       :param smiles_str: A smiles string containing possibly multiple molecules
-      :rtype: List[scine_molassembler.Molecule]
 
       >>> methane_and_ammonia = from_smiles_multiple("C.[NH4+]")
       >>> len(methane_and_ammonia) == 2
@@ -61,20 +69,19 @@ void init_io(pybind11::module& m) {
 
       The smiles parser is implemented according to the OpenSMILES spec. It
       supports the following features:
-      - Arbitrarily many molecules in a string
-      - Isotope markers (as long as they exist in Utils::ElementType)
+
+      - Isotope markers
       - Valence filling of the organic subset
-      - Set shapes from VSEPR using (possibly) supplied charge
-      - Ring closures
+      - Set local shapes from VSEPR
+      - Ring closures (and concatenation between dot-separated components)
       - Stereo markers
         - Double bond
-        - Tetrahedral (@ / @@ / @TH1 / @TH2)
-        - Square planar (@SP1 - @SP3)
-        - Trigonal bipyramidal (@TB1 - @TB20)
-        - Octahedral (@OH1 - @OH30)
+        - Tetrahedral
+        - Square planar
+        - Trigonal bipyramidal
+        - Octahedral
 
       :param smiles_str: A smiles string containing a single molecule
-      :rtype: scine_molassembler.Molecule
 
       >>> import scine_utilities as utils
       >>> methane = from_smiles("C")
@@ -90,11 +97,40 @@ void init_io(pybind11::module& m) {
     )delim"
   );
 
+  experimental.def(
+    "emit_smiles",
+    &IO::Experimental::emitSmiles,
+    pybind11::arg("molecule"),
+    R"delim(
+      Generate a smiles string for a molecule
+
+      :param molecule: Molecule to generate smiles string for
+      :returns: A (partially) normalized openSMILES-standard compliant
+        smiles string.
+
+      :warning: This is a lossy serialization format! The openSMILES
+        standard does not contain stereodescriptors for shapes other than
+        the tetrahedron, square, trigonal bipyramid and octahedron.
+        Generated smiles containing stereocenters with other shapes will
+        not contain stereodescriptors for these centers.
+
+      :note: Missing normalization: Aromaticity detection in kekulized
+        graph to aromatic atom types.
+
+      >>> biphenyl = from_smiles("c1ccccc1-c2ccccc2")
+      >>> emit_smiles(biphenyl)
+      "c1ccccc1-c2ccccc2"
+    )delim"
+  );
+
   /* Line notations */
   pybind11::class_<IO::LineNotation> lineNotation(
     io,
     "LineNotation",
-    "Generates :class:`Molecule` instances from line notations of molecules"
+    R"delim(
+      Generates :class:`Molecule` instances from line notations of molecules
+      via OpenBabel, if found in the runtime path.
+    )delim"
   );
 
   lineNotation.def_property_readonly_static(
