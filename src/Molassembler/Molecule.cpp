@@ -185,6 +185,10 @@ void Molecule::setShapeAtAtom(
   pImpl_->setShapeAtAtom(a, shape);
 }
 
+void Molecule::thermalizeStereopermutator(const AtomIndex a, const bool thermalization) {
+  pImpl_->thermalizeStereopermutator(a, thermalization);
+}
+
 
 /* Information */
 bool Molecule::adjacent(const AtomIndex a, const AtomIndex b) const {

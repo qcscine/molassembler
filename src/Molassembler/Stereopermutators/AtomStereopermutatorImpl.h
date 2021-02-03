@@ -134,6 +134,9 @@ public:
     const Graph& graph
   );
 
+  //! Unconditionally alter the thermalization of stereopermutations
+  void thermalize(bool thermalization);
+
 /* Information */
   //! Returns the angle between two site indices in the idealized shape
   double angle(SiteIndex i, SiteIndex j) const;
@@ -189,6 +192,10 @@ public:
    * @throws std::runtime_error If the stereopermutator is unassigned
    */
   std::vector<std::vector<SiteIndex>> siteGroups() const;
+
+  inline bool thermalized() const {
+    return thermalized_;
+  }
 
   /*!
    * @brief Returns the underlying AbstractStereopermutation
@@ -265,7 +272,6 @@ private:
 };
 
 } // namespace Molassembler
-
 } // namespace Scine
 
 #endif

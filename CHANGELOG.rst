@@ -13,6 +13,7 @@ Added
 .....
 
 - Molecule: Bond stereopermutator addition and removal functions
+- Molecule: Manual atom stereopermutator thermalization control
 - Graph: Added modifying functions to the interface
 - Graph algorithm: Ranking equivalent groups and ranking distinct atoms
   algorithms exploiting ranking results to classify chemical equivalence.

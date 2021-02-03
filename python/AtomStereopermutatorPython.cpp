@@ -161,6 +161,12 @@ void init_atom_stereopermutator(pybind11::module& m) {
   );
 
   atomStereopermutator.def_property_readonly(
+    "thermalized",
+    &AtomStereopermutator::thermalized,
+    "Whether the stereopermutations are thermalized"
+  );
+
+  atomStereopermutator.def_property_readonly(
     "num_assignments",
     &AtomStereopermutator::numAssignments,
     "The number of feasible assignments. See index_of_permutation."

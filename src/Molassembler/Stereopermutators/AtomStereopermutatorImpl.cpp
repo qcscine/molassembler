@@ -988,5 +988,9 @@ void AtomStereopermutator::Impl::setShape(
   assign(boost::none);
 }
 
+void AtomStereopermutator::Impl::thermalize(const bool thermalization) {
+  thermalized_ = thermalization;
+}
+
 } // namespace Molassembler
 } // namespace Scine

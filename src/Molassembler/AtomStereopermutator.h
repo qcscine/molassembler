@@ -242,6 +242,9 @@ public:
     Shapes::Shape shape,
     const Graph& graph
   );
+
+  //! Unconditionally thermalize the stereopermutations
+  void thermalize(bool thermalization = true);
 //!@}
 
 //!@name Observers
@@ -326,6 +329,9 @@ public:
    * @throws std::runtime_error If the stereopermutator is unassigned
    */
   std::vector<std::vector<SiteIndex>> siteGroups() const;
+
+  //! Returns whether the stereopermutations are thermalized
+  bool thermalized() const;
 
   /*! @brief Returns the underlying feasible stereopermutations object
    *

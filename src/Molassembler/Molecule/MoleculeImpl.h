@@ -273,6 +273,9 @@ struct Molecule::Impl {
     AtomIndex a,
     Shapes::Shape shape
   );
+
+  //! Alters thermalization state of an atom stereopermutator
+  void thermalizeStereopermutator(AtomIndex a, bool thermalization);
 //!@}
 
 //!@name Information

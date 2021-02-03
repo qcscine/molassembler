@@ -563,6 +563,24 @@ void init_molecule(pybind11::module& m) {
     )delim"
   );
 
+  molecule.def(
+    "thermalize_stereopermutator",
+    &Molecule::thermalizeStereopermutator,
+    pybind11::arg("atom_index"),
+    pybind11::arg("thermalization") = true,
+    R"delim(
+      Change the thermalization at an atom stereopermutator
+
+      Alters the thermalization of stereopermutations at an atom
+      stereopermutator.
+
+      :param atom_index: Atom whose atom stereopermutator's thermalization to
+        change
+      :param thermalization: New status of thermalization to set
+    )delim"
+  );
+
+
   /* Information */
   molecule.def(
     "dump_graphviz",

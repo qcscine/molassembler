@@ -564,6 +564,18 @@ public:
     AtomIndex a,
     Shapes::Shape shape
   );
+
+  /*! @brief Change the thermalization of an atom stereopermutator
+   *
+   * Enables or disables the thermalization of the stereopermutations of an
+   * atom stereopermutator. When enabled, a stereopermutator is no longer
+   * a stereocenter and has only a single assignment. In conformer generation,
+   * a particular stereopermutation is chosen at random.
+   *
+   * @throws std::out_of_range if the supplied atom index is invalid or
+   *   there is no atom stereopermutator at that atom
+   */
+  void thermalizeStereopermutator(AtomIndex a, bool thermalization = true);
 //!@}
 
 //!@name Graph information interface

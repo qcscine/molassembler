@@ -89,6 +89,10 @@ void AtomStereopermutator::setShape(
   pImpl_->setShape(shape, graph);
 }
 
+void AtomStereopermutator::thermalize(const bool thermalization) {
+  pImpl_->thermalize(thermalization);
+}
+
 /* Information */
 double AtomStereopermutator::angle(
   const SiteIndex i,
@@ -124,6 +128,10 @@ std::string AtomStereopermutator::rankInfo() const {
 
 std::vector<std::vector<SiteIndex>> AtomStereopermutator::siteGroups() const {
   return pImpl_->siteGroups();
+}
+
+bool AtomStereopermutator::thermalized() const {
+  return pImpl_->thermalized();
 }
 
 const Stereopermutators::Abstract& AtomStereopermutator::getAbstract() const {

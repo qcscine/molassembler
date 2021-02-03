@@ -860,6 +860,35 @@ void Molecule::Impl::setShapeAtAtom(
   canonicalComponentsOption_ = boost::none;
 }
 
+void Molecule::Impl::thermalizeStereopermutator(
+  const AtomIndex a,
+  const bool thermalization
+) {
+  if(!isValidIndex_(a)) {
+    throw std::out_of_range("Supplied atom index is invalid!");
+  }
+
+  auto stereopermutatorOption = stereopermutators_.option(a);
+
+  if(!stereopermutatorOption) {
+    throw std::out_of_range("No stereopermutator at this index!");
+  }
+
+  stereopermutatorOption->thermalize(thermalization);
+
+  if(thermalization) {
+    /* Remove any adjacent bond stereopermutators since both constituting atom
+     * stereopermutators must be assigned
+     */
+    for(BondIndex bond : adjacencies_.bonds(a)) {
+      stereopermutators_.remove(bond);
+    }
+  }
+
+  propagateGraphChange_();
+  canonicalComponentsOption_ = boost::none;
+}
+
 /* Information */
 boost::optional<AtomEnvironmentComponents> Molecule::Impl::canonicalComponents() const {
   return canonicalComponentsOption_;
