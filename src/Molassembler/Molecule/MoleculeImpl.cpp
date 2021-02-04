@@ -960,7 +960,7 @@ const Graph& Molecule::Impl::graph() const {
 
 std::size_t Molecule::Impl::hash() const {
   if(canonicalComponentsOption_ == boost::none) {
-    throw std::logic_error("Trying to hash an uncanonical molecule.");
+    throw std::logic_error("Trying to hash a non-canonical molecule.");
   }
 
   auto hashes = Hashes::generate(
