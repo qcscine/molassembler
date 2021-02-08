@@ -63,26 +63,6 @@ void init_bond_stereopermutator(pybind11::module& m) {
     "Offset exactly halfway between eclipsed and staggered alignments"
   );
 
-  bondStereopermutator.def(
-    pybind11::init(
-      [](
-        const Molecule& mol,
-        const BondIndex& edge,
-        const BondStereopermutator::Alignment align
-      ) {
-        return BondStereopermutator {
-          mol.graph().inner(),
-          mol.stereopermutators(),
-          edge,
-          align
-        };
-      }
-    ),
-    pybind11::arg("molecule"),
-    pybind11::arg("placement"),
-    pybind11::arg("alignment") = BondStereopermutator::Alignment::Eclipsed
-  );
-
   pybind11::enum_<BondStereopermutator::FittingMode> fittingMode(
     bondStereopermutator,
     "FittingMode",

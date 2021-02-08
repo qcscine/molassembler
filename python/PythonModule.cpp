@@ -39,8 +39,12 @@ PYBIND11_MODULE(scine_molassembler, m) {
        :toctree:
   )";
 
-  // Requires other modules to function properly
-  auto utils = pybind11::module::import("scine_utilities");
+  // Needs scine_utilities for type annotations in the pybind docstrings
+  try {
+    pybind11::module::import("scine_utilities");
+  } catch(pybind11::error_already_set& e) {
+    // Didn't manage? That's fine, the module works without, too.
+  }
 
   // Order is important here, do not reorder
   init_version(m);
@@ -69,5 +73,9 @@ PYBIND11_MODULE(scine_molassembler, m) {
   /* Needed to avoid an exception at exit because of GIL and parallelization
    * shenanigans in DirectedConformerGenerator's enumerate functions
    */
-  pybind11::module::import("threading");
+  try {
+    pybind11::module::import("threading");
+  } catch(pybind11::error_already_set& e) {
+    // Already imported? That's okay
+  }
 }

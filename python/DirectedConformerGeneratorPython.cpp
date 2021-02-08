@@ -3,7 +3,7 @@
  *   Copyright ETH Zurich, Laboratory of Physical Chemistry, Reiher Group.
  *   See LICENSE.txt for details.
  */
-#include "TypeCasters.h"
+#include "Utils/Pybind.h"
 #include "pybind11/eigen.h"
 #include "pybind11/functional.h"
 
@@ -211,7 +211,7 @@ void init_directed_conformer_generator(pybind11::module& m) {
       );
     },
     pybind11::arg("decision_list"),
-    pybind11::arg("configuration") = DistanceGeometry::Configuration {},
+    Scine::Utils::Arg("configuration") = DistanceGeometry::Configuration {},
     R"delim(
       Try to generate a conformer for a particular decision list.
 
@@ -238,7 +238,7 @@ void init_directed_conformer_generator(pybind11::module& m) {
     },
     pybind11::arg("decision_list"),
     pybind11::arg("seed"),
-    pybind11::arg("configuration") = DistanceGeometry::Configuration {},
+    Scine::Utils::Arg("configuration") = DistanceGeometry::Configuration {},
     R"delim(
       Try to generate a conformer for a particular decision list.
 
@@ -366,7 +366,7 @@ void init_directed_conformer_generator(pybind11::module& m) {
   );
 
   enumerationSettings.def(
-    "__repr__",
+    "__str__",
     [](pybind11::object settings) -> std::string {
       const std::vector<std::string> members {
         "dihedral_retries",
@@ -391,7 +391,7 @@ void init_directed_conformer_generator(pybind11::module& m) {
     &DirectedConformerGenerator::enumerate,
     pybind11::arg("callback"),
     pybind11::arg("seed"),
-    pybind11::arg("settings") = DirectedConformerGenerator::EnumerationSettings {},
+    Scine::Utils::Arg("settings") = DirectedConformerGenerator::EnumerationSettings {},
     pybind11::call_guard<pybind11::gil_scoped_release>(),
     R"delim(
       Enumerate all conformers of the captured molecule
@@ -416,7 +416,7 @@ void init_directed_conformer_generator(pybind11::module& m) {
     "enumerate_random",
     &DirectedConformerGenerator::enumerateRandom,
     pybind11::arg("callback"),
-    pybind11::arg("settings") = DirectedConformerGenerator::EnumerationSettings {},
+    Scine::Utils::Arg("settings") = DirectedConformerGenerator::EnumerationSettings {},
     pybind11::call_guard<pybind11::gil_scoped_release>(),
     R"delim(
       Enumerate all conformers of the captured molecule

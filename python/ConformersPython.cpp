@@ -3,7 +3,7 @@
  *   Copyright ETH Zurich, Laboratory of Physical Chemistry, Reiher Group.
  *   See LICENSE.txt for details.
  */
-#include "TypeCasters.h"
+#include "Utils/Pybind.h"
 #include "pybind11/eigen.h"
 
 #include "Molassembler/Conformers.h"
@@ -296,7 +296,7 @@ void init_conformers(pybind11::module& m) {
     },
     pybind11::arg("molecule"),
     pybind11::arg("num_structures"),
-    pybind11::arg("configuration") = DistanceGeometry::Configuration {},
+    Utils::Arg("configuration") = DistanceGeometry::Configuration {},
     R"delim(
       Generate a set of 3D positions for a molecule.
 
@@ -350,7 +350,7 @@ void init_conformers(pybind11::module& m) {
     pybind11::arg("molecule"),
     pybind11::arg("num_structures"),
     pybind11::arg("seed"),
-    pybind11::arg("configuration") = DistanceGeometry::Configuration {},
+    Utils::Arg("configuration") = DistanceGeometry::Configuration {},
     R"delim(
       Generate a set of 3D positions for a molecule.
 
@@ -395,7 +395,7 @@ void init_conformers(pybind11::module& m) {
       return variantCast(generateRandomConformation(molecule, config));
     },
     pybind11::arg("molecule"),
-    pybind11::arg("configuration") = DistanceGeometry::Configuration {},
+    Utils::Arg("configuration") = DistanceGeometry::Configuration {},
     R"delim(
       Generate 3D positions for a molecule.
 
@@ -440,7 +440,7 @@ void init_conformers(pybind11::module& m) {
     },
     pybind11::arg("molecule"),
     pybind11::arg("seed"),
-    pybind11::arg("configuration") = DistanceGeometry::Configuration {},
+    Utils::Arg("configuration") = DistanceGeometry::Configuration {},
     R"delim(
       Generate 3D positions for a molecule.
 
