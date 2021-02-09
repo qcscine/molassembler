@@ -28,8 +28,8 @@ Added
 - Python bindings:
 
   - Added modifying functions to ``Graph``
-  - Direct copying support for ``Molecule`` (``__copy__`` and ``__deepcopy__``)
-    instead of indirect via pickling
+  - Direct copying support for ``Molecule`` instead of via pickling
+  - Added build-time generation of typing stubs with pybind11-stubgen
 
 Changed
 .......
@@ -59,6 +59,12 @@ Changed
     stereopermutation instation. No kekulization validation yet.
   - Fix valence filling bug for atom types with multiple valid valences
 
+- Python bindings
+
+  - Altered name of ``ChiralStatePreservation`` enum member from ``None`` to
+    ``DoNotPreserve`` (the former is a reserved keyword)
+  - Better automatic type signature annotations in docstrings
+
 Deprecated
 ..........
 
@@ -67,9 +73,6 @@ Deprecated
   to match complexity annotations and single-letter object properties
 - ``StereopermutatorList`` method ``try_remove`` is deprecated in favor of
   ``remove``, which now behaves as ``try_remove`` would (no throwing).
-
-Removed
-.......
 
 Fixed
 .....
