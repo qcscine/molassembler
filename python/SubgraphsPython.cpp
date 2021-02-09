@@ -76,10 +76,10 @@ void init_bimap(pybind11::module& m) {
     )delim"
   );
 
-  bimap.def_readonly("left", &Subgraphs::IndexMap::left, "Access stored relationships from the left");
   init_bimap_side<Subgraphs::IndexMap::left_map>(bimap, "Left");
-  bimap.def_readonly("right", &Subgraphs::IndexMap::right, "Access stored relationships from the right");
+  bimap.def_readonly("left", &Subgraphs::IndexMap::left, "Access stored relationships from the left");
   init_bimap_side<Subgraphs::IndexMap::right_map>(bimap, "Right");
+  bimap.def_readonly("right", &Subgraphs::IndexMap::right, "Access stored relationships from the right");
 
   bimap.def("__len__", &Subgraphs::IndexMap::size);
 }

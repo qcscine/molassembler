@@ -26,7 +26,7 @@ void init_options(pybind11::module& m) {
       best mappings, permitting chiral state propagation in all cases.
     )delim"
   ).value(
-    "None",
+    "DoNotPreserve",
     ChiralStatePreservation::None,
     R"delim(
       Don't try to preserve chiral state. Changes at stereopermutators always

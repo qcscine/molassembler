@@ -3,7 +3,7 @@
  *   Copyright ETH Zurich, Laboratory of Physical Chemistry, Reiher Group.
  *   See LICENSE.txt for details.
  */
-#include "TypeCasters.h"
+#include "Utils/Pybind.h"
 #include "pybind11/operators.h"
 
 #include "Molassembler/Molecule.h"
@@ -237,7 +237,7 @@ void init_molecule(pybind11::module& m) {
     "add_permutator",
     &Molecule::addPermutator,
     pybind11::arg("bond"),
-    pybind11::arg("alignment") = BondStereopermutator::Alignment::Eclipsed,
+    Scine::Utils::Arg("alignment") = BondStereopermutator::Alignment::Eclipsed,
     R"delim(
       Add a BondStereopermutator to the molecule
 

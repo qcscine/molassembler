@@ -6,79 +6,12 @@
 #include "TypeCasters.h"
 #include "pybind11/operators.h"
 
-void init_ranking_information(pybind11::module& m) {
-  using namespace Scine::Molassembler;
+using namespace Scine::Molassembler;
 
-  pybind11::class_<RankingInformation> rankingInformation(
-    m,
-    "RankingInformation",
-    R"delim(
-      Ranking data of substituents around a central vertex
+namespace {
 
-      >>> # Model compound with a haptically bonded ethene
-      >>> compound_smiles = "[Co]1(C#O)(C#O)(C#O)(C#O)(C#O)C=C1"
-      >>> compound = io.experimental.from_smiles(compound_smiles)
-      >>> cobalt_index = 0
-      >>> p = compound.stereopermutators.option(cobalt_index)
-      >>> is_haptic_site = lambda s: len(s) > 1
-      >>> any(map(is_haptic_site, p.ranking.sites))
-      True
-      >>> # There are no links for this, none of the sites are interconnected
-      >>> len(p.ranking.links)
-      0
-      >>> # All of the sites are ranked equally save for the haptic site
-      >>> p.ranking.ranked_sites
-      [[0, 1, 2, 3, 4], [5]]
-      >>> p.ranking.sites[5] # The constituting atom indices of the haptic site
-      [11, 12]
-      >>> p.ranking.site_index_of_atom(12) # Look up atom indices
-      5
-      >>> p.ranking.rank_index_of_site(1) # Get ranking position of a site
-      0
-    )delim"
-  );
-
-  rankingInformation.def_readonly(
-    "ranked_substituents",
-    &RankingInformation::substituentRanking,
-    "Sorted substituents grouped by ascending priority"
-  );
-
-  rankingInformation.def_readonly(
-    "sites",
-    &RankingInformation::sites,
-    "An unordered nested list of atom indices that constitute binding sites"
-  );
-
-  rankingInformation.def_readonly(
-    "ranked_sites",
-    &RankingInformation::siteRanking,
-    "An ordered nested list of indices into the sites member"
-  );
-
-  rankingInformation.def_readonly(
-    "links",
-    &RankingInformation::links,
-    "An ordered list of :class:`RankingInformation.Link` on all links between binding sites"
-  );
-
-  rankingInformation.def(
-    "site_index_of_atom",
-    &RankingInformation::getSiteIndexOf,
-    pybind11::arg("atom_index"),
-    "Fetch the site index of an atom index"
-  );
-
-  rankingInformation.def(
-    "rank_index_of_site",
-    &RankingInformation::getRankedIndexOfSite,
-    pybind11::arg("site_index"),
-    "Fetch the position of a site within the site ranking"
-  );
-
-  rankingInformation.def(pybind11::self == pybind11::self);
-  rankingInformation.def(pybind11::self != pybind11::self);
-
+template<typename T>
+void init_link(T& rankingInformation) {
   pybind11::class_<RankingInformation::Link> link(
     rankingInformation,
     "Link",
@@ -132,4 +65,81 @@ void init_ranking_information(pybind11::module& m) {
   link.def(pybind11::self == pybind11::self);
   link.def(pybind11::self != pybind11::self);
   link.def(pybind11::self < pybind11::self);
+}
+
+} // namespace
+
+void init_ranking_information(pybind11::module& m) {
+  pybind11::class_<RankingInformation> rankingInformation(
+    m,
+    "RankingInformation",
+    R"delim(
+      Ranking data of substituents around a central vertex
+
+      >>> # Model compound with a haptically bonded ethene
+      >>> compound_smiles = "[Co]1(C#O)(C#O)(C#O)(C#O)(C#O)C=C1"
+      >>> compound = io.experimental.from_smiles(compound_smiles)
+      >>> cobalt_index = 0
+      >>> p = compound.stereopermutators.option(cobalt_index)
+      >>> is_haptic_site = lambda s: len(s) > 1
+      >>> any(map(is_haptic_site, p.ranking.sites))
+      True
+      >>> # There are no links for this, none of the sites are interconnected
+      >>> len(p.ranking.links)
+      0
+      >>> # All of the sites are ranked equally save for the haptic site
+      >>> p.ranking.ranked_sites
+      [[0, 1, 2, 3, 4], [5]]
+      >>> p.ranking.sites[5] # The constituting atom indices of the haptic site
+      [11, 12]
+      >>> p.ranking.site_index_of_atom(12) # Look up atom indices
+      5
+      >>> p.ranking.rank_index_of_site(1) # Get ranking position of a site
+      0
+    )delim"
+  );
+
+  init_link(rankingInformation);
+
+  rankingInformation.def_readonly(
+    "ranked_substituents",
+    &RankingInformation::substituentRanking,
+    "Sorted substituents grouped by ascending priority"
+  );
+
+  rankingInformation.def_readonly(
+    "sites",
+    &RankingInformation::sites,
+    "An unordered nested list of atom indices that constitute binding sites"
+  );
+
+  rankingInformation.def_readonly(
+    "ranked_sites",
+    &RankingInformation::siteRanking,
+    "An ordered nested list of indices into the sites member"
+  );
+
+  rankingInformation.def_readonly(
+    "links",
+    &RankingInformation::links,
+    "An ordered list of :class:`RankingInformation.Link` on all links between binding sites"
+  );
+
+  rankingInformation.def(
+    "site_index_of_atom",
+    &RankingInformation::getSiteIndexOf,
+    pybind11::arg("atom_index"),
+    "Fetch the site index of an atom index"
+  );
+
+  rankingInformation.def(
+    "rank_index_of_site",
+    &RankingInformation::getRankedIndexOfSite,
+    pybind11::arg("site_index"),
+    "Fetch the position of a site within the site ranking"
+  );
+
+  rankingInformation.def(pybind11::self == pybind11::self);
+  rankingInformation.def(pybind11::self != pybind11::self);
+
 }

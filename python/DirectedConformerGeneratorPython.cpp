@@ -22,6 +22,44 @@ using ConformerVariantType = boost::variant<
 >;
 extern ConformerVariantType variantCast(outcome::result<Scine::Utils::PositionCollection>);
 
+template<typename T>
+void init_dihedral_info(T& relabeler) {
+  pybind11::class_<DirectedConformerGenerator::Relabeler::DihedralInfo> dihedralInfo(
+    relabeler,
+    "DihedralInfo"
+  );
+
+  dihedralInfo.def_readonly(
+    "i_set",
+    &DirectedConformerGenerator::Relabeler::DihedralInfo::is,
+    "First atom index set for the dihedral"
+  );
+
+  dihedralInfo.def_readonly(
+    "j",
+    &DirectedConformerGenerator::Relabeler::DihedralInfo::j,
+    "Second atom index of the dihedral"
+  );
+
+  dihedralInfo.def_readonly(
+    "k",
+    &DirectedConformerGenerator::Relabeler::DihedralInfo::k,
+    "Third atom index of the dihedral"
+  );
+
+  dihedralInfo.def_readonly(
+    "l_set",
+    &DirectedConformerGenerator::Relabeler::DihedralInfo::ls,
+    "Fourth atom index set for the dihedral"
+  );
+
+  dihedralInfo.def_readonly(
+    "symmetry_order",
+    &DirectedConformerGenerator::Relabeler::DihedralInfo::symmetryOrder,
+    "Rotational symmetry order of the dihedral"
+  );
+}
+
 void init_directed_conformer_generator(pybind11::module& m) {
   pybind11::class_<DirectedConformerGenerator> dirConfGen(
     m,
@@ -89,7 +127,7 @@ void init_directed_conformer_generator(pybind11::module& m) {
     &DirectedConformerGenerator::considerBond,
     pybind11::arg("bond_index"),
     pybind11::arg("molecule"),
-    pybind11::arg("alignment") = BondStereopermutator::Alignment::Staggered,
+    Scine::Utils::Arg("alignment") = BondStereopermutator::Alignment::Staggered,
     R"delim(
       Decide whether to consider a bond's dihedral for directed conformer
       generation or not. Returns either an IgnoreReason or an unowned
@@ -122,7 +160,7 @@ void init_directed_conformer_generator(pybind11::module& m) {
   dirConfGen.def(
     pybind11::init<Molecule, BondStereopermutator::Alignment, const DirectedConformerGenerator::BondList&>(),
     pybind11::arg("molecule"),
-    pybind11::arg("alignment") = BondStereopermutator::Alignment::Staggered,
+    Scine::Utils::Arg("alignment") = BondStereopermutator::Alignment::Staggered,
     pybind11::arg("bonds_to_consider") = std::vector<BondIndex> {},
     R"delim(
       Construct a generator for a particular molecule.
@@ -270,7 +308,7 @@ void init_directed_conformer_generator(pybind11::module& m) {
       pybind11::const_
     ),
     pybind11::arg("atom_collection"),
-    pybind11::arg("fitting_mode") = BondStereopermutator::FittingMode::Nearest,
+    Scine::Utils::Arg("fitting_mode") = BondStereopermutator::FittingMode::Nearest,
     R"delim(
       Infer a decision list for the relevant bonds from positions.
 
@@ -302,7 +340,7 @@ void init_directed_conformer_generator(pybind11::module& m) {
       pybind11::const_
     ),
     pybind11::arg("positions"),
-    pybind11::arg("fitting_mode") = BondStereopermutator::FittingMode::Nearest,
+    Scine::Utils::Arg("fitting_mode") = BondStereopermutator::FittingMode::Nearest,
     R"delim(
       Infer a decision list for the relevant bonds from positions.
 
@@ -591,6 +629,8 @@ void init_directed_conformer_generator(pybind11::module& m) {
       :param bins: Bin intervals for all observed bonds (see bins function)
     )delim"
   );
+
+  init_dihedral_info(relabeler);
 
   relabeler.def_readonly(
     "sequences",

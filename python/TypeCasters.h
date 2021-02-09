@@ -34,7 +34,7 @@ struct type_caster<boost::optional<T>> : optional_caster<boost::optional<T>> {};
 /* Type caster for SiteIndex <-> number */
 template<>
 struct type_caster<Scine::Molassembler::SiteIndex> {
-  PYBIND11_TYPE_CASTER(Scine::Molassembler::SiteIndex, _("SiteIndex"));
+  PYBIND11_TYPE_CASTER(Scine::Molassembler::SiteIndex, _("int"));
 
   bool load(handle src, bool) {
     PyObject* source = src.ptr();
@@ -66,7 +66,7 @@ struct type_caster<Scine::Molassembler::SiteIndex> {
 
 template<>
 struct type_caster<Scine::Molassembler::Shapes::Vertex> {
-  PYBIND11_TYPE_CASTER(Scine::Molassembler::Shapes::Vertex, _("Vertex"));
+  PYBIND11_TYPE_CASTER(Scine::Molassembler::Shapes::Vertex, _("int"));
 
   bool load(handle src, bool) {
     PyObject* source = src.ptr();
