@@ -20,7 +20,6 @@
 #include <vector>
 
 namespace Scine {
-
 namespace Molassembler {
 
 //! Information on particular element types
@@ -67,7 +66,7 @@ private:
  * molecular mechanics and molecular dynamics simulations." Journal of the
  * American chemical society 114.25 (1992): 10024-10035.
  */
-extern const std::array<double, 110> bondRadii;
+const std::array<double, 110>& bondRadii();
 
 double bondRadius(Utils::ElementType elementType);
 
@@ -82,7 +81,7 @@ double bondRadius(Utils::ElementType elementType);
  *   Configuration Irregularities, Chem Phys Lett 362, 5-6, August 2002
  *   http://dx.doi.org/10.1016/S0009-2614(02)00919-3
  */
-extern const std::array<ElementInfo, 110> elementData;
+const std::array<ElementInfo, 110>& elementData();
 
 bool isMainGroupElement(Utils::ElementType elementType);
 
@@ -98,9 +97,7 @@ unsigned dElectronCount(Utils::ElementType elementType);
 double vdwRadius(Utils::ElementType elementType);
 
 } // namespace AtomInfo
-
 } // namespace Molassembler
-
 } // namespace Scine
 
 #endif

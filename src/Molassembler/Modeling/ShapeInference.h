@@ -54,11 +54,11 @@ struct BindingSite {
   ) : L(passL), X(passX), elements(std::move(passElements)), bondType(passBondType) {}
 };
 
-/*! @brief Mapping of bond type to a floating-point weight
+/*! @brief Map bond type to a floating-point weight
  *
  * @todo Eta bonds have weight 0, is this a good idea?
  */
-extern const std::map<BondType, double> bondWeights;
+double bondWeight(BondType bond);
 
 /** @brief Calculates the formal charge on a main group-element atom.
  *

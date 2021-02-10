@@ -20,15 +20,17 @@ namespace Scine {
 namespace Molassembler {
 namespace ShapeInference {
 
-const std::map<BondType, double> bondWeights {
-  {BondType::Single, 1.0},
-  {BondType::Double, 2.0},
-  {BondType::Triple, 3.0},
-  {BondType::Quadruple, 4.0},
-  {BondType::Quintuple, 5.0},
-  {BondType::Sextuple, 6.0},
-  {BondType::Eta, 0.0}
-};
+double bondWeight(const BondType bond) {
+  switch(bond) {
+    case BondType::Single: return 1.0;
+    case BondType::Double: return 2.0;
+    case BondType::Triple: return 3.0;
+    case BondType::Quadruple: return 4.0;
+    case BondType::Quintuple: return 5.0;
+    case BondType::Sextuple: return 6.0;
+    default: return 0.0;
+  }
+}
 
 boost::optional<Shapes::Shape> vsepr(
   const Utils::ElementType centerAtomType,
@@ -83,7 +85,7 @@ boost::optional<Shapes::Shape> vsepr(
         sites.end(),
         0.0,
         [](const double carry, const auto& ligand) -> double {
-          return carry + bondWeights.at(ligand.bondType);
+          return carry + bondWeight(ligand.bondType);
         }
       )
     ) / 2.0
@@ -208,14 +210,14 @@ int formalCharge(
   int formalCharge = 0;
 
   if(AtomInfo::isMainGroupElement(graph.elementType(index))) {
-    int valenceElectrons = AtomInfo::elementData.at(
+    int valenceElectrons = AtomInfo::elementData().at(
       Utils::ElementInfo::Z(graph.elementType(index))
     ).valenceElectrons();
 
     for(const AtomIndex adjacent : graph.adjacents(index)) {
-      valenceElectrons -= bondWeights.at(
-        graph.bondType(
-          *graph.bond(index, adjacent)
+      valenceElectrons -= static_cast<int>(
+        bondWeight(
+          graph.bondType(*graph.bond(index, adjacent))
         )
       );
     }
