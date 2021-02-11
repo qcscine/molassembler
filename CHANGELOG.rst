@@ -74,6 +74,12 @@ Deprecated
 - ``StereopermutatorList`` method ``try_remove`` is deprecated in favor of
   ``remove``, which now behaves as ``try_remove`` would (no throwing).
 
+Removed
+.......
+
+- Several constant global data variables in the private API have been replaced
+  with stateless functions or function-local caches.
+
 Fixed
 .....
 
