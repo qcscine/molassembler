@@ -3,6 +3,8 @@
  *   Copyright ETH Zurich, Laboratory of Physical Chemistry, Reiher Group.
  *   See LICENSE.txt for details.
  */
+#ifndef INCLUDE_MOLASSEMBLER_GRAPH_EDIT_DISTANCE_H
+#define INCLUDE_MOLASSEMBLER_GRAPH_EDIT_DISTANCE_H
 
 #include "Molassembler/GraphAlgorithms.h"
 #include "Molassembler/Graph/PrivateGraph.h"
@@ -279,3 +281,5 @@ struct EditDistanceForest {
 } // namespace GraphAlgorithms
 } // namespace Molassembler
 } // namespace Scine
+
+#endif

@@ -22,7 +22,7 @@
 namespace Scine {
 namespace Molassembler {
 namespace Shapes {
-namespace concepts {
+namespace Concepts {
 
 /**
  * @brief Concept checking class for symmetry classes
@@ -97,7 +97,7 @@ constexpr bool isIotaPermutation(const T& indices) {
 }
 
 template<typename T>
-constexpr bool all_of(const T& t) {
+constexpr bool array_all_of(const T& t) {
   for(unsigned i = 0; i < t.size(); ++i) {
     if(!t[i]) {
       return false;
@@ -113,7 +113,7 @@ constexpr bool allRotationsValid(std::index_sequence<Inds ...> /* inds */) {
   Temple::Array<bool, numRotations> valid {
     isIotaPermutation(T::rotations[Inds])...
   };
-  return all_of(valid);
+  return array_all_of(valid);
 }
 
 template<typename T>
@@ -133,7 +133,7 @@ constexpr bool allVectorsNormalized(std::index_sequence<Inds ...> /* inds */) {
   Temple::Array<bool, T::size> valid {
     (Temple::Math::abs(T::coordinates[Inds].norm() - 1) < 1e-6)...
   };
-  return all_of(valid);
+  return array_all_of(valid);
 }
 
 template<typename T>
@@ -141,14 +141,14 @@ struct ValidCoordinates : std::integral_constant<bool,
   allVectorsNormalized<T>(std::make_index_sequence<T::size> {})
 > {};
 
-} // namespace concepts
+} // namespace Concepts
 
 namespace Data {
 
 /* Static property correctness checking */
 
 static_assert(
-  Temple::Tuples::allOf<allShapeDataTypes, concepts::ShapeClass>(),
+  Temple::Tuples::allOf<allShapeDataTypes, Concepts::ShapeClass>(),
   "Not all shape data types fulfill the ShapeClass concept"
 );
 
@@ -158,17 +158,17 @@ static_assert(
 );
 
 static_assert(
-  Temple::Tuples::allOf<allShapeDataTypes, concepts::ValidRotations>(),
+  Temple::Tuples::allOf<allShapeDataTypes, Concepts::ValidRotations>(),
   "Not all shape data types' rotations are valid"
 );
 
 static_assert(
-  Temple::Tuples::allOf<allShapeDataTypes, concepts::ValidMirror>(),
+  Temple::Tuples::allOf<allShapeDataTypes, Concepts::ValidMirror>(),
   "Not all shape data types' mirrors are valid"
 );
 
 static_assert(
-  Temple::Tuples::allOf<allShapeDataTypes, concepts::ValidCoordinates>(),
+  Temple::Tuples::allOf<allShapeDataTypes, Concepts::ValidCoordinates>(),
   "Not all shape data types' coordinates are valid"
 );
 

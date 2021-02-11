@@ -5,6 +5,8 @@
  * @brief For transformations between coordinate systems
  */
 
+#ifndef INCLUDE_MOLASSEMBLER_SHAPES_COORDINATE_SYSTEM_TRANSFORMATION_H
+#define INCLUDE_MOLASSEMBLER_SHAPES_COORDINATE_SYSTEM_TRANSFORMATION_H
 #include <Eigen/Geometry>
 #include <Eigen/Core>
 
@@ -60,3 +62,5 @@ MASM_EXPORT Eigen::Matrix3d rotationMatrix(const CoordinateSystem& a, const Coor
 } // namespace Shapes
 } // namespace Molassembler
 } // namespace Scine
+
+#endif

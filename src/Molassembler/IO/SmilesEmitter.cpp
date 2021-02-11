@@ -31,7 +31,6 @@ namespace Scine {
 namespace Molassembler {
 namespace IO {
 namespace Experimental {
-namespace {
 
 struct RingClosure {
   RingClosure() = default;
@@ -56,6 +55,8 @@ using SpanningTree = boost::adjacency_list<
   boost::bidirectionalS,
   VertexProperties
 >;
+
+namespace {
 
 struct Unity {
   using key_type = typename SpanningTree::edge_descriptor;

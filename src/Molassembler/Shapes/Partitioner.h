@@ -8,6 +8,9 @@
  * necessities in dependencies
  */
 
+#ifndef INCLUDE_MOLASSEMBLER_SHAPES_PARTITIONER_H
+#define INCLUDE_MOLASSEMBLER_SHAPES_PARTITIONER_H
+
 #include <vector>
 #include "Molassembler/Export.h"
 
@@ -94,3 +97,5 @@ private:
 } // namespace Shapes
 } // namespace Molassembler
 } // namespace Scine
+
+#endif

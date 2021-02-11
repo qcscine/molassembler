@@ -14,6 +14,9 @@
  *   73(2), 129–174. https://doi.org/10.1007/BF02592101
  */
 
+#ifndef INCLUDE_MOLASSEMBLER_GRAPH_BOOST_GOR1_H
+#define INCLUDE_MOLASSEMBLER_GRAPH_BOOST_GOR1_H
+
 #include <stack>
 #include <limits>
 
@@ -21,7 +24,6 @@
 #include "boost/graph/graph_concepts.hpp"
 
 namespace boost {
-
 namespace detail {
 
 /*!
@@ -335,3 +337,5 @@ bool gor1_simplified_shortest_paths(
 
 
 } // namespace boost
+
+#endif
