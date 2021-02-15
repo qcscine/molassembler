@@ -50,10 +50,6 @@ class MolassemblerConan(ScineConan):
         "nauty/2.7r1"
     ]
     cmake_name = "Molassembler"
-    cmake_definitions = {
-        "CMAKE_UNITY_BUILD": "ON",
-        "CMAKE_UNITY_BUILD_BATCH_SIZE": 16
-    }
 
     def package_info(self):
         super().package_info()
