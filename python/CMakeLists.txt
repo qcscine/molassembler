@@ -27,7 +27,7 @@ else()
   find_python_module(scine_utilities)
   if(PY_SCINE_UTILITIES)
     set(UTILS_PYTHONPATH ${PY_SCINE_UTILITIES})
-  else
+  else()
     cmessage(WARNING "Utils python module not found. Cannot test python module or generate stubs")
   endif()
 endif()
