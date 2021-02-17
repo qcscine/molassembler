@@ -27,13 +27,13 @@ else()
   find_python_module(scine_utilities)
   if(PY_SCINE_UTILITIES)
     set(UTILS_PYTHONPATH ${PY_SCINE_UTILITIES})
-  else()
-    cmessage(FATAL_ERROR "scine_utilities python dependency could not be found")
+  else
+    cmessage(WARNING "Utils python module not found. Cannot test python module or generate stubs")
   endif()
 endif()
 
 # Python tests
-if(SCINE_BUILD_TESTS AND PY_PYTEST)
+if(SCINE_BUILD_TESTS AND PY_PYTEST AND UTILS_PYTHONPATH)
   add_test(
     NAME MasmPythonBindings
     COMMAND ${PYTHON_EXECUTABLE} -B -m pytest ${CMAKE_CURRENT_SOURCE_DIR} --junitxml=${CMAKE_CURRENT_BINARY_DIR}/pytest_report.xml
@@ -46,13 +46,13 @@ endif()
 
 # Stubs
 find_python_module(pybind11_stubgen)
-if(PY_PYBIND11_STUBGEN)
+if(PY_PYBIND11_STUBGEN AND UTILS_PYTHONPATH)
   add_custom_command(TARGET scine_molassembler POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E env PYTHONPATH=${UTILS_PYTHONPATH}:$ENV{PYTHONPATH} ${PYTHON_EXECUTABLE} -m pybind11_stubgen -o . --root-module-suffix \"\" --no-setup-py --bare-numpy-ndarray scine_molassembler
     COMMENT "Generating python package typechecking stubs with pybind11-stubgen"
     BYPRODUCTS ${CMAKE_CURRENT_BINARY_DIR}/scine_molassembler/__init__.pyi
   )
-else()
+elseif(UTILS_PYTHONPATH)
   message(STATUS "Not generating typechecking stubs for python package as pybind11-stubgen was not found")
 endif()
 
