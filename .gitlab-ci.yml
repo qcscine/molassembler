@@ -61,6 +61,12 @@ conan-clang:
     - .clang
     - .conan_create
 
+conan-centos:
+  stage: build
+  extends:
+    - .centos
+    - .conan_create
+
 conan-coverage:
   stage: build
   extends: .conan_coverage
