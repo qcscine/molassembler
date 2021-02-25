@@ -26,8 +26,6 @@
 #include "Molassembler/Temple/Optionals.h"
 #include "Molassembler/Temple/Functional.h"
 
-#include <iostream>
-
 namespace Scine {
 namespace Molassembler {
 namespace IO {
@@ -345,7 +343,7 @@ void MoleculeBuilder::setAtomStereo(
     }
     const AtomStereopermutator& permutator = *stereopermutatorOptional;
     if(permutator.numAssignments() < 2) {
-      std::cerr << "Warning: Smiles contains a stereo marker for a non-stereogenic " << Shapes::name(chiralData.shape) << " shape center\n";
+      // Smiles contains a stereo marker for a non-stereogenic center. Ignore!
       continue;
     }
 
@@ -612,21 +610,19 @@ void MoleculeBuilder::setBondStereo(
     );
     assert(molBondOption);
 
-    if(auto stereopermutatorOption = mol.stereopermutators().option(molBondOption.value())) {
-      if(stereopermutatorOption->numAssignments() == 2) {
-        mol.assignStereopermutator(
-          molBondOption.value(),
-          state.findAssignment(
-            *stereopermutatorOption,
-            mol,
-            indexInComponentMap
-          )
-        );
-      } else {
-        std::cerr << "Warning: Smiles contains stereo markers for non-stereogenic double bond\n";
-      }
-    } else {
-      std::cerr << "Warning: Smiles contains stereo markers for non-stereogenic double bond\n";
+    /* Make sure the stereocenter is even stereogenic. Stereo-markers for
+     * non-stereogenic double bonds are silently ignored this way.
+     */
+    auto stereopermutatorOption = mol.stereopermutators().option(molBondOption.value());
+    if(stereopermutatorOption && stereopermutatorOption->numAssignments() == 2) {
+      mol.assignStereopermutator(
+        molBondOption.value(),
+        state.findAssignment(
+          *stereopermutatorOption,
+          mol,
+          indexInComponentMap
+        )
+      );
     }
 
     // Advance the iterator
