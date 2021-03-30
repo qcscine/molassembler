@@ -135,13 +135,13 @@ struct chiral_subset_ : qi::symbols<char, ChiralData> {
 struct bond_ : qi::symbols<char, BondData> {
   bond_() {
     add
-      ("-", {BondType::Single, boost::none, boost::none})
-      ("=", {BondType::Double, boost::none, boost::none})
-      ("#", {BondType::Triple, boost::none, boost::none})
-      ("$", {BondType::Quadruple, boost::none, boost::none})
-      (":", {BondType::Single, boost::none, boost::none})  // TODO actually aromatic
-      ("/", {BondType::Single, BondData::StereoMarker::Forward, boost::none})
-      ("\\", {BondType::Single, BondData::StereoMarker::Backward, boost::none});
+      ("-", {SmilesBondType::Single, boost::none})
+      ("=", {SmilesBondType::Double, boost::none})
+      ("#", {SmilesBondType::Triple, boost::none})
+      ("$", {SmilesBondType::Quadruple, boost::none})
+      (":", {SmilesBondType::Aromatic, boost::none})
+      ("/", {SmilesBondType::Forward, boost::none})
+      ("\\", {SmilesBondType::Backward, boost::none});
   }
 } const bond;
 
@@ -245,8 +245,8 @@ struct openSMILES : qi::grammar<Iterator> {
     bond = symbols::bond[_val = _1];
     // Bond info and a ring closure
     ringbond = -bond[_val = _1] >> (
-      digits<1>()[at_c<2>(_val) = _1]
-      | (lit("%") >> digits<2>()[at_c<2>(_val) = _1])
+      digits<1>()[at_c<1>(_val) = _1]
+      | (lit("%") >> digits<2>()[at_c<1>(_val) = _1])
     );
     // Branching atom: atom and any ring bonds with their entire branches
     branched_atom = atom[addAtom] >> *(ringbond[addRingClosure]) >> *branch;
@@ -369,7 +369,7 @@ std::vector<Molecule> parseSmiles(const std::string& smiles) {
   bool result = qi::parse(iter, end, parser);
 
   if(result && iter == end) {
-    return parser.builder.interpret();
+    return parser.builder.interpret(smiles);
   }
 
   throw std::runtime_error("Parsing failure: " + parser.error);

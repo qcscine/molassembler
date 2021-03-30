@@ -12,6 +12,8 @@
 #include "Molassembler/IO/SmilesParseData.h"
 #include "Molassembler/Graph/PrivateGraph.h"
 #include "boost/variant.hpp"
+#include "boost/bimap.hpp"
+#include "boost/graph/subgraph.hpp"
 #include <stack>
 
 namespace Scine {
@@ -27,9 +29,69 @@ class Molecule;
 
 namespace IO {
 
+struct PiSubgraph {
+  using BaseGraph = boost::adjacency_list<
+    boost::vecS,
+    boost::vecS,
+    boost::undirectedS,
+    boost::no_property,
+    boost::property<boost::edge_index_t, int>
+  >;
+  using Graph = boost::subgraph<BaseGraph>;
+  using Vertex = typename BaseGraph::vertex_descriptor;
+  using Edge = typename BaseGraph::edge_descriptor;
+  using IndexMap = boost::bimap<Vertex, Vertex>;
+
+  static bool hasUnpairedElectrons(Vertex i, int charge, const PrivateGraph& g);
+
+  static bool permittedElementType(Utils::ElementType e) {
+    switch(Utils::ElementInfo::base(e)) {
+      case Utils::ElementType::C:
+      case Utils::ElementType::N:
+      case Utils::ElementType::O:
+      case Utils::ElementType::S:
+      case Utils::ElementType::P:
+      case Utils::ElementType::As:
+      case Utils::ElementType::Sb:
+      case Utils::ElementType::Se:
+      case Utils::ElementType::Te: {
+        return true;
+      }
+      default:
+        return false;
+    }
+  }
+
+  PiSubgraph() = default;
+
+  PiSubgraph(
+    const std::vector<PrivateGraph::Edge>& edges,
+    const std::vector<AtomData>& atoms,
+    const PrivateGraph& g
+  );
+
+  Vertex findOrAdd(Vertex i) {
+    const auto iter = index.left.find(i);
+    if(iter == index.left.end()) {
+      const Vertex a = boost::add_vertex(graph);
+      index.insert(IndexMap::relation(i, a));
+      return a;
+    }
+    return iter->second;
+  }
+
+  bool match() const;
+
+  Graph graph;
+  IndexMap index;
+  std::vector<Vertex> omissible;
+};
+
 /**
- * @brief Semantic interpreter of the smiles grammar, constructs molecules
- *   from the data accrued by the parser
+ * @brief Semantic interpreter of the smiles grammar
+ *
+ * Constructs possibly disconnected graph during parsing, then constructs
+ * molecules from accrued data and inference where necessary.
  */
 class MoleculeBuilder {
 public:
@@ -39,7 +101,7 @@ public:
    *
    * Adds an atom with the last set bond information.
    */
-  void addAtom(const AtomData& atom);
+  void addAtom(AtomData atom);
 
   //! @brief Parsing trigger on encountering a ring closure marker
   void addRingClosure(const BondData& bond);
@@ -57,7 +119,7 @@ public:
 
   //! @brief Parsing trigger on finding a dot (molecule separator) in place of a bond
   inline void setNextAtomUnbonded() {
-    lastBondData = SimpleLastBondData::Unbonded;
+    lastBondData = boost::none;
   }
 
   //! @brief Parsing trigger on encountering non-default bond information
@@ -67,7 +129,7 @@ public:
 //!@}
 
   //! @brief Interpret the collected graph as (possibly multiple molecules)
-  std::vector<Molecule> interpret();
+  std::vector<Molecule> interpret(const std::string& smiles);
 
 private:
 //!@name Static private members
@@ -94,6 +156,13 @@ private:
 
 //!@name Private member functions
 //!@{
+  //! Determine valence-incremented atoms by aromatics in each component
+  std::unordered_set<PrivateGraph::Vertex> matchAromatics(
+    std::vector<PrivateGraph>& precursors,
+    const std::vector<unsigned>& componentMap,
+    const std::vector<PrivateGraph::Vertex>& indexInComponentMap
+  ) const;
+
   //! Set shapes according to specified charges and stereo markers
   void setShapes(
     std::vector<Molecule>& molecules,
@@ -105,14 +174,16 @@ private:
   void setAtomStereo(
     std::vector<Molecule>& molecules,
     const std::vector<unsigned>& componentMap,
-    const std::vector<PrivateGraph::Vertex>& indexInComponentMap
+    const std::vector<PrivateGraph::Vertex>& indexInComponentMap,
+    const std::string& smiles
   );
 
   //! Set bond stereo post-parse and conversion to molecules
   void setBondStereo(
     std::vector<Molecule>& molecules,
     const std::vector<unsigned>& componentMap,
-    const std::vector<PrivateGraph::Vertex>& indexInComponentMap
+    const std::vector<PrivateGraph::Vertex>& indexInComponentMap,
+    const std::string& smiles
   );
 
   //! Add bond stereopermutators in aromatic cycles
@@ -125,13 +196,8 @@ private:
 
 //!@name Private member data
 //!@{
-  enum class SimpleLastBondData {
-    Unbonded,
-    Unspecified
-  };
-
   //! State for last stored bond data
-  boost::variant<SimpleLastBondData, BondData> lastBondData = SimpleLastBondData::Unbonded;
+  boost::optional<BondData> lastBondData;
 
   //! Possibly disconnected tracking graph
   PrivateGraph graph;
@@ -140,8 +206,11 @@ private:
   std::stack<PrivateGraph::Vertex> vertexStack;
 
   //! Storage for bonds marked with stereo indicators ("/" and "\")
-  using StereoMarkedBondTuple = std::tuple<PrivateGraph::Vertex, PrivateGraph::Vertex, BondData::StereoMarker>;
+  using StereoMarkedBondTuple = std::tuple<PrivateGraph::Vertex, PrivateGraph::Vertex, SmilesBondType>;
   std::vector<StereoMarkedBondTuple> stereoMarkedBonds;
+
+  //! Storage for pi-subgraph edges
+  std::vector<PrivateGraph::Edge> piSubgraphEdges;
 
   //! Storage for ring closure bond indicators
   std::unordered_map<

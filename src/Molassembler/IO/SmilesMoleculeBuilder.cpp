@@ -26,9 +26,73 @@
 #include "Molassembler/Temple/Optionals.h"
 #include "Molassembler/Temple/Functional.h"
 
+#include "boost/graph/max_cardinality_matching.hpp"
+
+#include <iostream>
+#include <fstream>
+
 namespace Scine {
 namespace Molassembler {
 namespace IO {
+
+PiSubgraph::PiSubgraph(
+  const std::vector<PrivateGraph::Edge>& edges,
+  const std::vector<AtomData>& atoms,
+  const PrivateGraph& g
+) {
+  std::unordered_map<PrivateGraph::Vertex, bool> viability;
+
+  // Pruning done while creating the subgraph
+  auto viable = [&](const PrivateGraph::Vertex i) -> bool {
+    const auto cached = viability.find(i);
+    if(cached != viability.end()) {
+      return cached->second;
+    }
+
+    const Utils::ElementType e = g.elementType(i);
+    const bool isViable = (
+      permittedElementType(e)
+      && hasUnpairedElectrons(i, atoms.at(i).chargeOptional.value_or(0), g)
+    );
+    viability.emplace(i, isViable);
+    return isViable;
+  };
+
+  for(const PrivateGraph::Edge e : edges) {
+    const Vertex i = g.source(e);
+    const Vertex j = g.target(e);
+
+    if(!viable(i) || !viable(j)) {
+      continue;
+    }
+
+    const Vertex a = findOrAdd(i);
+    const Vertex b = findOrAdd(j);
+
+    boost::add_edge(a, b, graph);
+  }
+}
+
+bool PiSubgraph::hasUnpairedElectrons(
+  const Vertex i,
+  const int charge,
+  const PrivateGraph& g
+) {
+  const Utils::ElementType e = g.elementType(i);
+  const int electrons = Utils::ElementInfo::valElectrons(e);
+  const int valence = vertexValence(i, g);
+  return (electrons - valence - charge) > 0;
+}
+
+bool PiSubgraph::match() const {
+  const unsigned V = boost::num_vertices(graph);
+  std::vector<PrivateGraph::Vertex> mate(V);
+  const bool success = boost::checked_edmonds_maximum_cardinality_matching(graph, &mate[0]);
+  assert(success);
+  const unsigned matchingSize = boost::matching_size(graph, &mate[0]);
+  std::cout << "Matching size: " << matchingSize << ", pi subgraph size: " << V << "\n";
+  return matchingSize == V;
+}
 
 BondType MoleculeBuilder::mutualBondType(
   const boost::optional<BondType>& a,
@@ -148,40 +212,38 @@ std::vector<Shapes::Vertex> MoleculeBuilder::shapeMap(const ChiralData& chiralDa
   }
 }
 
-void MoleculeBuilder::addAtom(const AtomData& atom) {
-  PrivateGraph::Vertex newVertex = graph.addVertex(atom.getElement());
+void MoleculeBuilder::addAtom(AtomData atom) {
+  const PrivateGraph::Vertex newVertex = graph.addVertex(atom.getElement());
 
   if(atom.partialElement.Z == 1 && atom.hCount && atom.hCount.value() != 0) {
     throw std::runtime_error("Hydrogen atoms cannot have hydrogen counts!");
   }
 
-  vertexData.push_back(atom);
-
-  if(lastBondData.which() == 0) {
-    auto data = boost::get<SimpleLastBondData>(lastBondData);
-    if(data == SimpleLastBondData::Unspecified) {
-      assert(!vertexStack.empty());
-      graph.addEdge(
-        vertexStack.top(),
-        newVertex,
-        BondType::Single
-      );
-    }
-  } else {
+  if(lastBondData) {
     assert(!vertexStack.empty());
-    auto data = boost::get<BondData>(lastBondData);
-    graph.addEdge(
-      vertexStack.top(),
-      newVertex,
-      data.type.value_or(BondType::Single)
+    const PrivateGraph::Vertex parent = vertexStack.top();
+    const BondData& bond = lastBondData.value();
+
+    // Add edge to graph
+    const BondType type = Temple::Optionals::map(bond.type, BondData::toBondType).value_or(BondType::Single);
+    graph.addEdge(parent, newVertex, type);
+
+    const bool inferredAromaticBond = (
+      !bond.type
+      && atom.partialElement.aromatic
+      && vertexData.at(parent).partialElement.aromatic
     );
 
+    if(inferredAromaticBond || bond.type == SmilesBondType::Aromatic) {
+      piSubgraphEdges.push_back(graph.edge(parent, newVertex));
+    }
+
     // Store stereo-marked bonds for later
-    if(data.ezStereo) {
+    if(bond.type == SmilesBondType::Forward || bond.type == SmilesBondType::Backward) {
       stereoMarkedBonds.emplace_back(
-        vertexStack.top(),
+        parent,
         newVertex,
-        data.ezStereo.value()
+        bond.type.value()
       );
     }
   }
@@ -192,25 +254,27 @@ void MoleculeBuilder::addAtom(const AtomData& atom) {
     vertexStack.top() = newVertex;
   }
 
-  lastBondData = SimpleLastBondData::Unspecified;
+  vertexData.push_back(std::move(atom));
+  lastBondData = BondData {};
 }
 
 void MoleculeBuilder::addRingClosure(const BondData& bond) {
   assert(bond.ringNumber);
+  const auto maybeBondType = Temple::Optionals::map(bond.type, BondData::toBondType);
   const unsigned key = bond.ringNumber.value();
-  auto findIter = ringClosures.find(key);
+  const auto findIter = ringClosures.find(key);
   if(findIter == std::end(ringClosures)) {
     // Add the entry to the map for later
     ringClosures.emplace_hint(
       findIter,
       std::piecewise_construct,
       std::make_tuple(key),
-      std::make_tuple(vertexStack.top(), bond.type)
+      std::make_tuple(vertexStack.top(), maybeBondType)
     );
   } else {
     // Add the edge to the graph now and remove the map entry
-    PrivateGraph::Vertex a = findIter->second.first;
-    PrivateGraph::Vertex b = vertexStack.top();
+    const PrivateGraph::Vertex a = findIter->second.first;
+    const PrivateGraph::Vertex b = vertexStack.top();
 
     if(a == b) {
       throw std::runtime_error("Same-atom ring-closing bond!");
@@ -221,14 +285,24 @@ void MoleculeBuilder::addRingClosure(const BondData& bond) {
     }
 
     // Ensure the specified bond types match (this fn can throw)
-    const BondType type = mutualBondType(
+    const BondType mutualType = mutualBondType(
       findIter->second.second,
-      bond.type
+      maybeBondType
     );
 
-    graph.addEdge(a, b, type);
+    graph.addEdge(a, b, mutualType);
 
-    // Remove the entry from the map
+    const bool inferredAromaticBond = (
+      !findIter->second.second
+      && !bond.type
+      && vertexData.at(a).partialElement.aromatic
+      && vertexData.at(b).partialElement.aromatic
+    );
+    if(inferredAromaticBond || bond.type == SmilesBondType::Aromatic) {
+      piSubgraphEdges.push_back(graph.edge(a, b));
+    }
+
+    // Remove the entry from the map, freeing up the index
     ringClosures.erase(findIter);
   }
 }
@@ -276,13 +350,13 @@ void MoleculeBuilder::setShapes(
         continue;
       }
 
-      auto modelArgs = ShapeInference::reduceToSiteInformation(
+      const auto modelArgs = ShapeInference::reduceToSiteInformation(
         mol.graph(),
         atomIndex,
         stereoOption->getRanking()
       );
 
-      auto shapeOption = ShapeInference::vsepr(
+      const auto shapeOption = ShapeInference::vsepr(
         mol.graph().elementType(atomIndex),
         modelArgs,
         *atomData.chargeOptional
@@ -298,7 +372,8 @@ void MoleculeBuilder::setShapes(
 void MoleculeBuilder::setAtomStereo(
   std::vector<Molecule>& molecules,
   const std::vector<unsigned>& componentMap,
-  const std::vector<PrivateGraph::Vertex>& indexInComponentMap
+  const std::vector<PrivateGraph::Vertex>& indexInComponentMap,
+  const std::string& smiles
 ) {
   // Aromatic shapes are bent and equilateral triangle only
   const std::map<unsigned, Shapes::Shape> aromaticShapes {
@@ -316,7 +391,7 @@ void MoleculeBuilder::setAtomStereo(
       if(auto permutator = mol.stereopermutators().option(indexInComponentMap.at(i))) {
         const unsigned size = permutator->getRanking().sites.size();
         if(aromaticShapes.count(size) == 0) {
-          throw std::logic_error("Atom with " + std::to_string(size) + " substitutents cannot be aromatic");
+          throw std::logic_error("Atom " + std::to_string(permutator->placement()) + " with " + std::to_string(size) + " substitutents cannot be aromatic");
         }
         const Shapes::Shape expectedShape = aromaticShapes.at(size);
         if(expectedShape != permutator->getShape()) {
@@ -343,7 +418,7 @@ void MoleculeBuilder::setAtomStereo(
     }
     const AtomStereopermutator& permutator = *stereopermutatorOptional;
     if(permutator.numAssignments() < 2) {
-      // Smiles contains a stereo marker for a non-stereogenic center. Ignore!
+      std::cerr << "Warning: Smiles '" << smiles << "' contains a stereo marker for a non-stereogenic " << Shapes::name(chiralData.shape) << " shape center on atom " << permutator.placement() << "\n";
       continue;
     }
 
@@ -433,7 +508,8 @@ void MoleculeBuilder::setAtomStereo(
 void MoleculeBuilder::setBondStereo(
   std::vector<Molecule>& molecules,
   const std::vector<unsigned>& componentMap,
-  const std::vector<PrivateGraph::Vertex>& indexInComponentMap
+  const std::vector<PrivateGraph::Vertex>& indexInComponentMap,
+  const std::string& smiles
 ) {
   /* Setting the bond stereo from the forward and backward markers is tricky
    * for several reasons.
@@ -572,7 +648,7 @@ void MoleculeBuilder::setBondStereo(
        * - second of the marker is left and backward: F\C -> first is up
        */
       const bool firstIsLeft = (first(*leftMarker) == state.left.value());
-      const bool markerIsForward = (marker(*leftMarker) == BondData::StereoMarker::Forward);
+      const bool markerIsForward = (marker(*leftMarker) == SmilesBondType::Forward);
       const bool up = (firstIsLeft == markerIsForward);
       const PrivateGraph::Vertex which = (firstIsLeft ? second(*leftMarker) : first(*leftMarker));
 
@@ -590,7 +666,7 @@ void MoleculeBuilder::setBondStereo(
     }
     for(const Iterator& rightMarker : rightMarkers) {
       assert(first(*rightMarker) == state.right);
-      if(marker(*rightMarker) == BondData::StereoMarker::Forward) {
+      if(marker(*rightMarker) == SmilesBondType::Forward) {
         if(state.upOfRight) {
           throw std::runtime_error("Both markers right of double bond indicate 'up' directionality");
         }
@@ -610,19 +686,21 @@ void MoleculeBuilder::setBondStereo(
     );
     assert(molBondOption);
 
-    /* Make sure the stereocenter is even stereogenic. Stereo-markers for
-     * non-stereogenic double bonds are silently ignored this way.
-     */
-    auto stereopermutatorOption = mol.stereopermutators().option(molBondOption.value());
-    if(stereopermutatorOption && stereopermutatorOption->numAssignments() == 2) {
-      mol.assignStereopermutator(
-        molBondOption.value(),
-        state.findAssignment(
-          *stereopermutatorOption,
-          mol,
-          indexInComponentMap
-        )
-      );
+    if(auto stereopermutatorOption = mol.stereopermutators().option(molBondOption.value())) {
+      if(stereopermutatorOption->numAssignments() == 2) {
+        mol.assignStereopermutator(
+          molBondOption.value(),
+          state.findAssignment(
+            *stereopermutatorOption,
+            mol,
+            indexInComponentMap
+          )
+        );
+      } else {
+        std::cerr << "Warning: Smiles '" << smiles << "' contains stereo markers for non-stereogenic double bond\n";
+      }
+    } else {
+      std::cerr << "Warning: Smiles '" << smiles << "' contains stereo markers for non-stereogenic double bond\n";
     }
 
     // Advance the iterator
@@ -630,7 +708,7 @@ void MoleculeBuilder::setBondStereo(
   }
 }
 
-std::vector<Molecule> MoleculeBuilder::interpret() {
+std::vector<Molecule> MoleculeBuilder::interpret(const std::string& smiles) {
   if(!ringClosures.empty()) {
     throw std::runtime_error("Unmatched ring closure markers remain!");
   }
@@ -671,6 +749,8 @@ std::vector<Molecule> MoleculeBuilder::interpret() {
     GraphAlgorithms::updateEtaBonds(precursor);
   }
 
+  const auto aromaticityIncrements = matchAromatics(precursors, componentMap, indexInComponentMap);
+
   /* Valence fill organic subset in each precursor */
   assert(vertexData.size() == N);
   for(unsigned i = 0; i < N; ++i) {
@@ -685,24 +765,15 @@ std::vector<Molecule> MoleculeBuilder::interpret() {
         precursor.addEdge(vertexInPrecursor, newHydrogenVertex, BondType::Single);
       }
     } else if(!data.atomBracket && isValenceFillElement(precursor.elementType(vertexInPrecursor))) {
-      // Figure out current valence.
-      int currentValence = 0;
-      for(const PrivateGraph::Edge edge : precursor.edges(vertexInPrecursor)) {
-        currentValence += Bond::bondOrderMap.at(
-          static_cast<unsigned>(
-            precursor.bondType(edge)
-          )
-        );
-      }
-
+      const int currentValence = vertexValence(vertexInPrecursor, precursor);
+      const int adjustedValence = vertexIsMatched(i) ? currentValence + 1 : currentValence;
       const unsigned fillCount = valenceFillElementImplicitHydrogenCount(
-        currentValence,
-        precursor.elementType(vertexInPrecursor),
-        data.partialElement.aromatic
+        adjustedValence,
+        precursor.elementType(vertexInPrecursor)
       );
 
       for(unsigned j = 0; j < fillCount; ++j) {
-        PrivateGraph::Vertex newHydrogenVertex = precursor.addVertex(Utils::ElementType::H);
+        const PrivateGraph::Vertex newHydrogenVertex = precursor.addVertex(Utils::ElementType::H);
         precursor.addEdge(vertexInPrecursor, newHydrogenVertex, BondType::Single);
       }
     }
@@ -719,11 +790,126 @@ std::vector<Molecule> MoleculeBuilder::interpret() {
 
   /* Stereo routines */
   setShapes(molecules, componentMap, indexInComponentMap);
-  setAtomStereo(molecules, componentMap, indexInComponentMap);
-  setBondStereo(molecules, componentMap, indexInComponentMap);
+  setAtomStereo(molecules, componentMap, indexInComponentMap, smiles);
+  setBondStereo(molecules, componentMap, indexInComponentMap, smiles);
   addAromaticBondStereo(molecules, componentMap, indexInComponentMap);
 
   return molecules;
+}
+
+std::unordered_set<PrivateGraph::Vertex> MoleculeBuilder::matchAromatics(
+  std::vector<PrivateGraph>& precursors,
+  const std::vector<unsigned>& componentMap,
+  const std::vector<PrivateGraph::Vertex>& indexInComponentMap
+) const {
+  std::unordered_set<PrivateGraph::Vertex> matchedVertices;
+
+  const unsigned P = precursors.size();
+  std::vector<
+    std::vector<unsigned>
+  > invertedComponentMap(P);
+  const unsigned N = vertexData.size();
+  for(unsigned i = 0; i < N; ++i) {
+    invertedComponentMap.at(componentMap.at(i)).push_back(i);
+  }
+
+  // Group piSubgraphEdges by the component they're in
+  std::vector<std::vector<PrivateGraph::Edge>> componentPiSubgraphEdges(P);
+  for(const auto& edge : piSubgraphEdges) {
+    const unsigned componentIndex = componentMap.at(graph.source(edge));
+    const auto& precursor = precursors.at(componentIndex);
+    componentPiSubgraphEdges.at(componentIndex).push_back(
+      precursor.edge(
+        indexInComponentMap.at(graph.source(edge)),
+        indexInComponentMap.at(graph.target(edge))
+      )
+    );
+  }
+
+  // Construct a pi subgraph for each connected component precursor
+  for(unsigned p = 0; p < P; ++p) {
+    auto& precursor = precursors.at(p);
+    PiSubgraph subgraph;
+    std::unordered_map<PrivateGraph::Vertex, bool> viability;
+
+    const auto viable = [&](const PrivateGraph::Vertex i) -> bool {
+      const auto cached = viability.find(i);
+      if(cached != viability.end()) {
+        return cached->second;
+      }
+
+      const PrivateGraph::Vertex j = invertedComponentMap.at(p).at(i);
+      const AtomData& atomData = vertexData.at(j);
+      const Utils::ElementType e = precursor.elementType(i);
+      /* Do not add:
+       * - double or triple bond-adjacent atoms
+       *   - unless neutral nitrogen with three neighbors or sulphur with four
+       *     (note neutral nitrogen and sulphur can be valence filled and are hence omissible)
+       * - carbon ions with three neighbors
+       *   - ions must be indicated with bracket atoms and are hence not valence filled
+       * - N, P, As, Sb
+       *   - with three neighbors
+       *   - or with two neighbors and negative charge (bracket atom)
+       * - O, S, Se, Te with two neighbors
+       *
+       * Optionally omissible:
+       */
+      const bool multipleOrderAdjacent = Temple::any_of(
+        precursor.edges(i),
+        [&](const PrivateGraph::Edge e) -> bool {
+          const BondType b = precursor.bondType(e);
+          return b == BondType::Double || b == BondType::Triple;
+        }
+      );
+      const bool isThreeNeighborCarbonIon = (
+        Utils::ElementInfo::base(e) == Utils::ElementType::C
+        && Temple::Optionals::map(
+          atomData.chargeOptional,
+          [](int x) { return std::abs(x); }
+        ) == 1
+        && precursor.degree(i) == 3
+      );
+      const bool isViable = (
+        PiSubgraph::permittedElementType(e)
+        && PiSubgraph::hasUnpairedElectrons(
+          i,
+          atomData.chargeOptional.value_or(0),
+          precursor
+        )
+      );
+
+      viability.emplace(i, isViable);
+      return isViable;
+    };
+
+    for(const auto& edge : componentPiSubgraphEdges.at(p)) {
+      const PrivateGraph::Vertex i = precursor.source(edge);
+      const PrivateGraph::Vertex j = precursor.target(edge);
+
+      if(!viable(i) || !viable(j)) {
+        continue;
+      }
+
+      const auto a = subgraph.findOrAdd(i);
+      const auto b = subgraph.findOrAdd(j);
+
+      boost::add_edge(a, b, subgraph.graph);
+    }
+
+    // Find omissible atoms
+    for(const auto& indexPair : subgraph.index.left) {
+      /* - Carbon ions with three neighbors (ions must be atom brackets and
+       *   hence aren't valence-filled, so no variability regarding)
+       */
+      const Utils::ElementType e = precursor.elementType(indexPair.first);
+      const PrivateGraph::Vertex graphIndex = invertedComponentMap.at(p).at(indexPair.first);
+      if(
+        Utils::ElementInfo::base(e) == Utils::ElementType::C
+      ) {
+
+      }
+    }
+  }
 }
 
 void MoleculeBuilder::addAromaticBondStereo(

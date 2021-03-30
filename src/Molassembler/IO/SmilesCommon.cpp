@@ -5,6 +5,7 @@
  */
 
 #include "Molassembler/IO/SmilesCommon.h"
+#include "Molassembler/Modeling/BondDistance.h"
 #include <cassert>
 
 namespace Scine {
@@ -40,36 +41,39 @@ static_assert(valenceFillHandleDifferences(-3, -1, 1) == 1, "Nope");
 } // namespace
 
 bool isValenceFillElement(const Utils::ElementType e) {
-  const unsigned Z = Utils::ElementInfo::Z(e);
-  if(5 <= Z && Z <= 9) {
-    // B, C, N, O, F
-    return true;
+  switch(e) {
+    case Utils::ElementType::B:
+    case Utils::ElementType::C:
+    case Utils::ElementType::N:
+    case Utils::ElementType::O:
+    case Utils::ElementType::F:
+    case Utils::ElementType::P:
+    case Utils::ElementType::S:
+    case Utils::ElementType::Cl:
+    case Utils::ElementType::Br:
+    case Utils::ElementType::I:
+      return true;
+    default:
+      return false;
   }
+}
 
-  if(15 <= Z && Z <= 17) {
-    // P, S, Cl
-    return true;
+int vertexValence(const PrivateGraph::Vertex i, const PrivateGraph& g) {
+  int valence = 0;
+  for(const PrivateGraph::Edge edge : g.edges(i)) {
+    valence += Bond::bondOrderMap.at(
+      static_cast<unsigned>(g.bondType(edge))
+    );
   }
-
-  if(Z == 35 || Z == 53) {
-    // Br, I
-    return true;
-  }
-
-  return false;
+  return valence;
 }
 
 unsigned valenceFillElementImplicitHydrogenCount(
   int valence,
-  Utils::ElementType e,
-  const bool aromatic
+  Utils::ElementType e
 ) {
   assert(valence >= 0);
   assert(isValenceFillElement(e));
-
-  if(aromatic) {
-    valence += 1;
-  }
 
   /* Quoting from the spec:
    *

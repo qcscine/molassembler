@@ -8,6 +8,7 @@
 #define INCLUDE_MOLASSEMBLER_IO_SMILES_COMMON_H
 
 #include "Utils/Geometry/ElementInfo.h"
+#include "Molassembler/Graph/PrivateGraph.h"
 
 namespace Scine {
 namespace Molassembler {
@@ -15,10 +16,11 @@ namespace IO {
 
 bool isValenceFillElement(Utils::ElementType e);
 
+int vertexValence(PrivateGraph::Vertex i, const PrivateGraph& g);
+
 unsigned valenceFillElementImplicitHydrogenCount(
   int valence,
-  Utils::ElementType e,
-  bool aromatic
+  Utils::ElementType e
 );
 
 } // namespace IO

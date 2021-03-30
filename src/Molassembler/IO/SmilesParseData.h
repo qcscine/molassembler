@@ -60,11 +60,36 @@ struct AtomData {
   }
 };
 
-struct BondData {
-  enum class StereoMarker {Forward, Backward};
+enum class SmilesBondType {
+  Single,
+  Double,
+  Triple,
+  Quadruple,
+  Aromatic,
+  Forward,
+  Backward
+};
 
-  boost::optional<BondType> type;
-  boost::optional<StereoMarker> ezStereo;
+struct BondData {
+  static BondType toBondType(SmilesBondType b) {
+    switch(b) {
+      case SmilesBondType::Single:
+      case SmilesBondType::Aromatic:
+      case SmilesBondType::Forward:
+      case SmilesBondType::Backward:
+        return BondType::Single;
+      case SmilesBondType::Double:
+        return BondType::Double;
+      case SmilesBondType::Triple:
+        return BondType::Triple;
+      case SmilesBondType::Quadruple:
+        return BondType::Quadruple;
+      default:
+        assert(false);
+    }
+  }
+
+  boost::optional<SmilesBondType> type;
   boost::optional<unsigned> ringNumber;
 };
 
@@ -97,7 +122,6 @@ BOOST_FUSION_ADAPT_STRUCT(
 BOOST_FUSION_ADAPT_STRUCT(
   Scine::Molassembler::IO::BondData,
   (boost::optional<Scine::Molassembler::BondType>, type),
-  (boost::optional<Scine::Molassembler::IO::BondData::StereoMarker>, ezStereo)
   (boost::optional<unsigned>, ringNumber)
 )
 

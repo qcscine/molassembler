@@ -624,10 +624,13 @@ struct Emitter {
         }
       );
 
+      // TODO need to kekulize here too, this doesn't quite work!
+
+      const int aromaticityCompensatedValence = isAromatic ? valence + 1 : valence;
+
       const unsigned valenceFill = valenceFillElementImplicitHydrogenCount(
-        valence,
-        e,
-        isAromatic
+        aromaticityCompensatedValence,
+        e
       );
 
       if(valenceFill == hydrogenCount) {
