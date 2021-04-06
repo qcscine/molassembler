@@ -222,6 +222,7 @@ BOOST_AUTO_TEST_CASE(SimilarSmiles, *boost::unit_test::label("Molassembler")) {
     | AtomEnvironmentComponents::Shapes
   );
 
+  unsigned failure = 0;
   for(const auto& pair : pairs) {
     Molecule a, b;
     BOOST_REQUIRE_NO_THROW(a = expectSingle(IO::Experimental::parseSmiles(pair.first)));
@@ -234,7 +235,11 @@ BOOST_AUTO_TEST_CASE(SimilarSmiles, *boost::unit_test::label("Molassembler")) {
     );
 
     if(!closeEnough) {
-      std::cout << "A: " << a << "\nB:" << b << "\n\n";
+      std::string filenamePrefix = "similar-smiles-" + std::to_string(failure);
+      std::cout << "Check the files starting with '" << filenamePrefix << "'\n";
+      IO::write(filenamePrefix + "-a.svg", a);
+      IO::write(filenamePrefix + "-b.svg", b);
+      ++failure;
     }
   }
 }
@@ -325,7 +330,6 @@ BOOST_FIXTURE_TEST_CASE(EmitSmiles, LowTemperatureFixture, *boost::unit_test::la
     std::string emitted;
     BOOST_REQUIRE_NO_THROW(mol = expectSingle(IO::Experimental::parseSmiles(smiles)));
     BOOST_REQUIRE_NO_THROW(emitted = IO::Experimental::emitSmiles(mol));
-    // std::cout << smiles << " -> " << emitted << "\n";
     BOOST_TEST_CONTEXT(smiles << " -> " << emitted) {
       BOOST_REQUIRE_NO_THROW(mol2 = expectSingle(IO::Experimental::parseSmiles(emitted)));
       BOOST_CHECK(mol == mol2);

@@ -9,6 +9,7 @@
 #define INCLUDE_MOLASSEMBLER_TEMPLE_ADAPTORS_H
 
 #include "Molassembler/Temple/Adaptors/AllPairs.h"
+#include "Molassembler/Temple/Adaptors/Combinations.h"
 #include "Molassembler/Temple/Adaptors/CyclicFrame.h"
 #include "Molassembler/Temple/Adaptors/Enumerate.h"
 #include "Molassembler/Temple/Adaptors/Filter.h"

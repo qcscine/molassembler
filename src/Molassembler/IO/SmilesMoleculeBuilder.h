@@ -41,6 +41,7 @@ struct PiSubgraph {
   using Vertex = typename BaseGraph::vertex_descriptor;
   using Edge = typename BaseGraph::edge_descriptor;
   using IndexMap = boost::bimap<Vertex, Vertex>;
+  using VertexSet = std::unordered_set<Vertex>;
 
   static bool hasUnpairedElectrons(Vertex i, int charge, const PrivateGraph& g);
 
@@ -62,6 +63,17 @@ struct PiSubgraph {
     }
   }
 
+  struct ViableOmissible {
+    bool viable;
+    bool omissible;
+  };
+
+  static ViableOmissible viableOmissible(
+    Vertex i,
+    const PrivateGraph& component,
+    const AtomData& atomData
+  );
+
   PiSubgraph() = default;
 
   PiSubgraph(
@@ -80,11 +92,14 @@ struct PiSubgraph {
     return iter->second;
   }
 
-  bool match() const;
+  /* NOTE: non-const because creating subgraphs mutates the parent subgraph
+   * instances
+   */
+  boost::optional<VertexSet> match();
 
   Graph graph;
   IndexMap index;
-  std::vector<Vertex> omissible;
+  VertexSet omissible;
 };
 
 /**

@@ -84,20 +84,21 @@ unsigned valenceFillElementImplicitHydrogenCount(
    * difference between that sum and the next highest known valence.
    */
 
-  switch(Utils::ElementInfo::Z(e)) {
-    case 5: return std::max(0, 3 - valence); // B
-    case 6: return std::max(0, 4 - valence); // C
-    case 7: { // N
+  switch(Utils::ElementInfo::base(e)) {
+    case Utils::ElementType::B: return std::max(0, 3 - valence);
+    case Utils::ElementType::C: return std::max(0, 4 - valence);
+    case Utils::ElementType::N: {
       return valenceFillHandleDifferences(3 - valence, 5 - valence);
     }
-    case 8: return std::max(0, 2 - valence); // O
-    case 15: { // P
+    case Utils::ElementType::O: return std::max(0, 2 - valence);
+    case Utils::ElementType::P: {
       return valenceFillHandleDifferences(3 - valence, 5 - valence);
     }
-    case 16: { // S
+    case Utils::ElementType::S: {
       return valenceFillHandleDifferences(2 - valence, 4 - valence, 6 - valence);
     }
-    default: return std::max(0, 1 - valence); // F, Cl, Br, I are the remaining cases
+    // F, Cl, Br, I are the remaining cases, handled identically
+    default: return std::max(0, 1 - valence);
   }
 }
 

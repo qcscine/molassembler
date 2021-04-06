@@ -349,16 +349,33 @@ BOOST_AUTO_TEST_CASE(FilterAdaptorTests, *boost::unit_test::label("Temple")) {
     filterDistance == 1,
     "Filter of 1,2,3 applying is_even isn't length one, but " << filterDistance
   );
+}
 
-  // BOOST_CHECK_MESSAGE(
-  //   Temple::sum(
-  //     Temple::map(
-  //       Temple::Adaptors::allPairs(
-  //         Temple::Adaptors::filter(std::vector<unsigned> {1, 2, 3, 4, 5}, [](const unsigned x) -> bool {return x < 4;})
-  //       ),
-  //       std::plus<>{}
-  //     )
-  //   ) == 3U + 4U + 5U,
-  //   "AllPairs and filter do not work together!"
-  // );
+BOOST_AUTO_TEST_CASE(CombinationsTests, *boost::unit_test::label("Temple")) {
+  const std::vector<unsigned> nums {{1, 2, 3}};
+
+  const auto singletonsCount = iteratorDistance(
+    Temple::Adaptors::combinations(nums, 1)
+  );
+  BOOST_CHECK_EQUAL(singletonsCount, 3);
+
+  const auto pairsCount = iteratorDistance(
+    Temple::Adaptors::combinations(nums, 1)
+  );
+  BOOST_CHECK_EQUAL(pairsCount, 3);
+
+  const auto emptyRangePairsCount = iteratorDistance(
+    Temple::Adaptors::combinations(std::vector<unsigned> {}, 2)
+  );
+  BOOST_CHECK_EQUAL(emptyRangePairsCount, 0);
+
+  const auto pairSum = Temple::sum(
+    Temple::map(
+      Temple::Adaptors::combinations(nums, 2),
+      [](const auto& pairAsVector) -> unsigned {
+        return Temple::sum(pairAsVector);
+      }
+    )
+  );
+  BOOST_CHECK_EQUAL(pairSum, 3 + 4 + 5);
 }
