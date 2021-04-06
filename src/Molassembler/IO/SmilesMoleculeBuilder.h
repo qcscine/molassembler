@@ -29,7 +29,19 @@ class Molecule;
 
 namespace IO {
 
+/**
+ * @brief Class to help validate aromatic subgraphs in parsed smiles strings
+ *
+ * Atoms marked aromatic in a SMILES string must form a valid pi subgraph.
+ * Also, a perfect matching of the pi subgraph must be found that indicates
+ * which vertices of the system receive incremented formal valences so that
+ * hydrogen filling can proceed correctly.
+ *
+ * This class is here to help with both.
+ */
 struct PiSubgraph {
+//!@name Types
+//!@{
   using BaseGraph = boost::adjacency_list<
     boost::vecS,
     boost::vecS,
@@ -42,11 +54,18 @@ struct PiSubgraph {
   using Edge = typename BaseGraph::edge_descriptor;
   using IndexMap = boost::bimap<Vertex, Vertex>;
   using VertexSet = std::unordered_set<Vertex>;
+//!@}
 
+//!@name Static predicates
   static bool hasUnpairedElectrons(Vertex i, int charge, const PrivateGraph& g);
 
+  /*! @brief Decide whether an element type is allowed to be in the pi subgraph
+   *
+   * @param e The element type for which to decide basic eligibility
+   * @pre e Must be an element type base
+   */
   static bool permittedElementType(Utils::ElementType e) {
-    switch(Utils::ElementInfo::base(e)) {
+    switch(e) {
       case Utils::ElementType::C:
       case Utils::ElementType::N:
       case Utils::ElementType::O:
@@ -63,25 +82,67 @@ struct PiSubgraph {
     }
   }
 
-  struct ViableOmissible {
-    bool viable;
+  //! Data struct for eligibleOmissible()
+  struct EligibleOmissible {
+    //! Should be added to the pi subgraph
+    bool eligible;
+    //! Can be omitted from the pi subgraph to find a perfect matching
     bool omissible;
   };
 
-  static ViableOmissible viableOmissible(
+  /*! @brief Determine viability and omissibility of a vertex in a pi subgraph
+   *
+   * Vertices that are marked aromatic in a SMILES string may not be eligible
+   * for perfect matching, i.e. marking an adjacent edge as a double bond in
+   * finding an alternating sequence of single and double bonds. For instance,
+   * a neutral nitrogen atom with three neighbors is not viable for addition to
+   * the subgraph. If the nitrogen atom is neutral and has two neighbors, it is
+   * viable for addition but optionally omissible, since the missing valence
+   * can be filled by hydrogen filling. It can, but does need to have an
+   * adjacent edge marked as a double bond.
+   *
+   * @param i Vertex index of the atom within the component graph
+   * @param component The graph of the smiles component
+   * @param atomData The parsed atom data from the SMILES string
+   */
+  static EligibleOmissible eligibleOmissible(
     Vertex i,
     const PrivateGraph& component,
     const AtomData& atomData
   );
 
-  PiSubgraph() = default;
-
-  PiSubgraph(
-    const std::vector<PrivateGraph::Edge>& edges,
-    const std::vector<AtomData>& atoms,
-    const PrivateGraph& g
+  static boost::optional<EligibleOmissible> multipleOrderAdjacent(
+    Vertex i,
+    const PrivateGraph& component,
+    const AtomData& atomData,
+    const boost::optional<unsigned>& neighborCount
   );
 
+  static boost::optional<EligibleOmissible> threeNeighborChargedCarbon(
+    Vertex i,
+    const PrivateGraph& component,
+    const AtomData& atomData,
+    const boost::optional<unsigned>& neighborCount
+  );
+
+  static boost::optional<EligibleOmissible> neutralTrivalents(
+    Vertex i,
+    const PrivateGraph& component,
+    const AtomData& atomData,
+    const boost::optional<unsigned>& neighborCount
+  );
+
+  static boost::optional<EligibleOmissible> neutralDivalents(
+    Vertex i,
+    const PrivateGraph& component,
+    const AtomData& atomData,
+    const boost::optional<unsigned>& neighborCount
+  );
+//!@}
+
+//!@name Modification
+//!@{
+  //! Find a precursor vertex's subgraph index, inserting it if not present
   Vertex findOrAdd(Vertex i) {
     const auto iter = index.left.find(i);
     if(iter == index.left.end()) {
@@ -92,14 +153,24 @@ struct PiSubgraph {
     return iter->second;
   }
 
-  /* NOTE: non-const because creating subgraphs mutates the parent subgraph
-   * instances
+  /* Find a perfect matching of the subgraph, considering optionally omissible
+   * vertices.
+   *
+   * @note This is non-const because creating subgraphs mutates the parent
+   * subgraph instances
    */
   boost::optional<VertexSet> match();
+//!@}
 
+//!@name Data
+//!@{
+  //! Subgraph data structure
   Graph graph;
+  //! Index mapping from precursor to subgraph vertex index
   IndexMap index;
+  //! Set of omissible subgraph vertices
   VertexSet omissible;
+//!@}
 };
 
 /**

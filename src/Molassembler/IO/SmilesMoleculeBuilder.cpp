@@ -36,44 +36,6 @@ namespace Scine {
 namespace Molassembler {
 namespace IO {
 
-PiSubgraph::PiSubgraph(
-  const std::vector<PrivateGraph::Edge>& edges,
-  const std::vector<AtomData>& atoms,
-  const PrivateGraph& g
-) {
-  std::unordered_map<PrivateGraph::Vertex, bool> viability;
-
-  // Pruning done while creating the subgraph
-  auto viable = [&](const PrivateGraph::Vertex i) -> bool {
-    const auto cached = viability.find(i);
-    if(cached != viability.end()) {
-      return cached->second;
-    }
-
-    const Utils::ElementType e = g.elementType(i);
-    const bool isViable = (
-      permittedElementType(e)
-      && hasUnpairedElectrons(i, atoms.at(i).chargeOptional.value_or(0), g)
-    );
-    viability.emplace(i, isViable);
-    return isViable;
-  };
-
-  for(const PrivateGraph::Edge e : edges) {
-    const Vertex i = g.source(e);
-    const Vertex j = g.target(e);
-
-    if(!viable(i) || !viable(j)) {
-      continue;
-    }
-
-    const Vertex a = findOrAdd(i);
-    const Vertex b = findOrAdd(j);
-
-    boost::add_edge(a, b, graph);
-  }
-}
-
 bool PiSubgraph::hasUnpairedElectrons(
   const Vertex i,
   const int charge,
@@ -85,12 +47,138 @@ bool PiSubgraph::hasUnpairedElectrons(
   return (electrons - valence - charge) > 0;
 }
 
-PiSubgraph::ViableOmissible PiSubgraph::viableOmissible(
+boost::optional<PiSubgraph::EligibleOmissible> PiSubgraph::multipleOrderAdjacent(
+  Vertex i,
+  const PrivateGraph& component,
+  const AtomData& atomData,
+  const boost::optional<unsigned>& neighborCount
+) {
+  const Utils::ElementType e = Utils::ElementInfo::base(component.elementType(i));
+
+  const bool isMultipleOrderAdjacent = Temple::any_of(
+    component.edges(i),
+    [&](const PrivateGraph::Edge edge) -> bool {
+      const BondType b = component.bondType(edge);
+      return b == BondType::Double || b == BondType::Triple;
+    }
+  );
+
+  if(!isMultipleOrderAdjacent) {
+    return boost::none;
+  }
+
+  // Exceptions!
+  const bool threeNeighborPositiveNitrogen = (
+    e == Utils::ElementType::N
+    && atomData.chargeOptional == 1
+    && neighborCount == 3U
+  );
+  const bool unchargedSulfur = (
+    e == Utils::ElementType::S
+    && !atomData.chargeOptional
+  );
+
+  if(!threeNeighborPositiveNitrogen && !unchargedSulfur) {
+    // Neither exception applies, so non-eligible and non-omissible
+    return EligibleOmissible {false, false};
+  }
+
+  if(unchargedSulfur) {
+    /* Sulfur is valence-filled, so as long as the neighbor count isn't
+     * fixed or is exactly four, it's eligible. It's omissible only if the
+     * neighbor count is variable.
+     */
+    return EligibleOmissible {
+      !neighborCount || neighborCount == 4U,
+      !neighborCount
+    };
+  }
+
+  // Three-neighbor positive nitrogen is the remaining case
+  return EligibleOmissible {true, false};
+}
+
+boost::optional<PiSubgraph::EligibleOmissible> PiSubgraph::threeNeighborChargedCarbon(
+  Vertex i,
+  const PrivateGraph& component,
+  const AtomData& atomData,
+  const boost::optional<unsigned>& neighborCount
+) {
+  if(
+    Utils::ElementInfo::base(component.elementType(i)) == Utils::ElementType::C
+    && Temple::Optionals::map(
+      atomData.chargeOptional,
+      [](int x) { return std::abs(x); }
+    ) == 1
+    && neighborCount == 3U
+  ) {
+    return EligibleOmissible {false, false};
+  }
+
+  return boost::none;
+}
+
+boost::optional<PiSubgraph::EligibleOmissible> PiSubgraph::neutralTrivalents(
+  Vertex i,
+  const PrivateGraph& component,
+  const AtomData& atomData,
+  const boost::optional<unsigned>& neighborCount
+) {
+  const Utils::ElementType e = Utils::ElementInfo::base(component.elementType(i));
+  const bool rightElementType = (
+    e == Utils::ElementType::N
+    || e == Utils::ElementType::P
+    || e == Utils::ElementType::As
+    || e == Utils::ElementType::Sb
+  );
+
+  if(!rightElementType) {
+    return boost::none;
+  }
+
+  const bool twoNeighborNegativeTrivalents = (
+    atomData.chargeOptional == -1
+    && neighborCount == 2U
+  );
+  if(twoNeighborNegativeTrivalents) {
+    return EligibleOmissible {false, false};
+  }
+  if(!atomData.chargeOptional) {
+    // Eligible if three neighbors or fillable to three neighbors
+    return EligibleOmissible {neighborCount < 3U, !neighborCount};
+  }
+
+  return boost::none;
+}
+
+boost::optional<PiSubgraph::EligibleOmissible> PiSubgraph::neutralDivalents(
+  Vertex i,
+  const PrivateGraph& component,
+  const AtomData& /* atomData */,
+  const boost::optional<unsigned>& neighborCount
+) {
+  const Utils::ElementType e = Utils::ElementInfo::base(component.elementType(i));
+
+  const bool rightElementType = (
+    e == Utils::ElementType::O
+    || e == Utils::ElementType::S
+    || e == Utils::ElementType::Se
+    || e == Utils::ElementType::Te
+  );
+
+  if(rightElementType) {
+    return EligibleOmissible {neighborCount < 2U, !neighborCount};
+  }
+
+  return boost::none;
+}
+
+PiSubgraph::EligibleOmissible PiSubgraph::eligibleOmissible(
   const Vertex i,
   const PrivateGraph& component,
   const AtomData& atomData
 ) {
-  const Utils::ElementType e = component.elementType(i);
+  const Utils::ElementType e = Utils::ElementInfo::base(component.elementType(i));
 
   if(!PiSubgraph::permittedElementType(e)) {
     return {false, false};
@@ -108,15 +196,8 @@ PiSubgraph::ViableOmissible PiSubgraph::viableOmissible(
    * - O, S, Se, Te with two neighbors
    *
    * Optionally omissible:
-   * - Every viable atom where valence filling could reach the neighbors requirement
+   * - Every eligible atom where valence filling could reach the neighbors requirement
    */
-  const bool multipleOrderAdjacent = Temple::any_of(
-    component.edges(i),
-    [&](const PrivateGraph::Edge edge) -> bool {
-      const BondType b = component.bondType(edge);
-      return b == BondType::Double || b == BondType::Triple;
-    }
-  );
   const auto neighborCount = [&]() -> boost::optional<unsigned> {
     if(atomData.atomBracket || !isValenceFillElement(e)) {
       return component.degree(i) + atomData.hCount.value_or(0);
@@ -137,75 +218,20 @@ PiSubgraph::ViableOmissible PiSubgraph::viableOmissible(
     return boost::none;
   }();
 
-  if(multipleOrderAdjacent) {
-    const bool threeNeighborPositiveNitrogen = (
-      e == Utils::ElementType::N
-      && atomData.chargeOptional == 1
-      && neighborCount == 3U
-    );
-    const bool unchargedSulfur = (
-      e == Utils::ElementType::S
-      && !atomData.chargeOptional
-    );
-
-    if(!threeNeighborPositiveNitrogen && !unchargedSulfur) {
-      // Neither exception appplies, so non-viable and non-omissible
-      return {false, false};
-    }
-
-    if(unchargedSulfur) {
-      /* Sulfur is valence-filled, so as long as the neighbor count isn't
-       * fixed or is exactly four, it's viable. It's omissible only if the
-       * neighbor count is variable.
-       */
-      return {!neighborCount || neighborCount == 4U, !neighborCount};
-    }
-
-    // Three-neighbor positive nitrogen is the remaining case
-    return {true, false};
+  if(auto opt = multipleOrderAdjacent(i, component, atomData, neighborCount)) {
+    return opt.value();
   }
 
-  const bool threeNeighborChargedCarbon = (
-    Utils::ElementInfo::base(e) == Utils::ElementType::C
-    && Temple::Optionals::map(
-      atomData.chargeOptional,
-      [](int x) { return std::abs(x); }
-    ) == 1
-    && neighborCount == 3U
-  );
-  if(threeNeighborChargedCarbon) {
-    return {false, false};
+  if(auto opt = threeNeighborChargedCarbon(i, component, atomData, neighborCount)) {
+    return opt.value();
   }
 
-  const bool trivalentWhenNeutral = (
-    e == Utils::ElementType::N
-    || e == Utils::ElementType::P
-    || e == Utils::ElementType::As
-    || e == Utils::ElementType::Sb
-  );
-
-  if(trivalentWhenNeutral) {
-    const bool twoNeighborNegativeTrivalents = (
-      atomData.chargeOptional == -1
-      && neighborCount == 2U
-    );
-    if(twoNeighborNegativeTrivalents) {
-      return {false, false};
-    }
-    if(!atomData.chargeOptional) {
-      // Viable if three neighbors or fillable to three neighbors
-      return {neighborCount < 3U, !neighborCount};
-    }
+  if(auto opt = neutralTrivalents(i, component, atomData, neighborCount)) {
+    return opt.value();
   }
 
-  const bool divalentWhenNeutral = (
-    e == Utils::ElementType::O
-    || e == Utils::ElementType::S
-    || e == Utils::ElementType::Se
-    || e == Utils::ElementType::Te
-  );
-  if(divalentWhenNeutral) {
-    return {neighborCount < 2U, !neighborCount};
+  if(auto opt = neutralDivalents(i, component, atomData, neighborCount)) {
+    return opt.value();
   }
 
   return {true, false};
@@ -1006,8 +1032,8 @@ std::unordered_set<PrivateGraph::Vertex> MoleculeBuilder::matchAromatics(
      * omissibility check for vertices to avoid repeating work.
      */
 
-    std::unordered_map<PrivateGraph::Vertex, PiSubgraph::ViableOmissible> viabilityOmissibilityCache;
-    const auto memoizedViableOmissible = [&](const PrivateGraph::Vertex i) -> PiSubgraph::ViableOmissible {
+    std::unordered_map<PrivateGraph::Vertex, PiSubgraph::EligibleOmissible> viabilityOmissibilityCache;
+    const auto memoizedViableOmissible = [&](const PrivateGraph::Vertex i) -> PiSubgraph::EligibleOmissible {
       const auto cached = viabilityOmissibilityCache.find(i);
       if(cached != viabilityOmissibilityCache.end()) {
         return cached->second;
@@ -1016,12 +1042,12 @@ std::unordered_set<PrivateGraph::Vertex> MoleculeBuilder::matchAromatics(
       const PrivateGraph::Vertex j = invertedComponentMap.at(p).at(i);
       const AtomData& atomData = vertexData.at(j);
 
-      const auto viableOmissible = PiSubgraph::viableOmissible(i, precursor, atomData);
+      const auto viableOmissible = PiSubgraph::eligibleOmissible(i, precursor, atomData);
       viabilityOmissibilityCache.emplace(i, viableOmissible);
       return viableOmissible;
     };
 
-    // Make a pi subgraph with all viable edges
+    // Make a pi subgraph with all eligible edges
     for(const auto& edge : componentPiSubgraphEdges.at(p)) {
       const PrivateGraph::Vertex i = precursor.source(edge);
       const PrivateGraph::Vertex j = precursor.target(edge);
@@ -1029,7 +1055,7 @@ std::unordered_set<PrivateGraph::Vertex> MoleculeBuilder::matchAromatics(
       const auto iViableOmissible = memoizedViableOmissible(i);
       const auto jViableOmissible = memoizedViableOmissible(j);
 
-      if(!iViableOmissible.viable || !jViableOmissible.viable) {
+      if(!iViableOmissible.eligible || !jViableOmissible.eligible) {
         continue;
       }
 
