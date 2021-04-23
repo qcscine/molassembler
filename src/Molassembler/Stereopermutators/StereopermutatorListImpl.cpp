@@ -63,25 +63,12 @@ void StereopermutatorList::Impl::applyPermutation(const std::vector<AtomIndex>& 
 
   auto applyPermutationAndMoveAtomStereopermutator = [&](AtomStereopermutator& permutator) -> void {
     permutator.applyPermutation(permutation);
-#pragma omp critical(applyPermutationAtomMapMutation)
-    {
-      const AtomIndex placement = permutator.placement();
-      newAtomMap.emplace(placement, std::move(permutator));
-    }
+    const AtomIndex placement = permutator.placement();
+    newAtomMap.emplace(placement, std::move(permutator));
   };
 
-#pragma omp parallel
-  {
-#pragma omp single
-    {
-      for(auto& mapPair : atomStereopermutators) {
-        AtomStereopermutator& permutator = mapPair.second;
-#pragma omp task
-        {
-          applyPermutationAndMoveAtomStereopermutator(permutator);
-        }
-      }
-    }
+  for(auto& mapPair : atomStereopermutators) {
+    applyPermutationAndMoveAtomStereopermutator(mapPair.second);
   }
   std::swap(newAtomMap, atomStereopermutators);
 
