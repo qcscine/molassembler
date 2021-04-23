@@ -12,6 +12,7 @@
 #include "Molassembler/Detail/Cartesian.h"
 
 #include "Molassembler/Stereopermutation/Composites.h"
+#include "Molassembler/Stereopermutators/FeasiblePermutations.h"
 #include "Molassembler/Temple/Adaptors/Zip.h"
 #include "Molassembler/Temple/Adaptors/SequentialPairs.h"
 #include "Molassembler/Temple/Functional.h"
@@ -402,7 +403,11 @@ DirectedConformerGenerator::Impl::getDecisionList(
     molecule_.stereopermutators().atomStereopermutators()
   ) {
     AtomStereopermutator refitted = stereopermutator;
-    auto shapeMap = refitted.fit(molecule_.graph(), angstromPositions);
+    auto shapeMap = refitted.fit(
+      angstromPositions,
+      Stereopermutators::Feasible::Functor(molecule_.graph()),
+      AtomStereopermutator::thermalizationFunctor(molecule_.graph())
+    );
     if(refitted.getShape() != stereopermutator.getShape()) {
       const std::string error = (
         Shapes::name(refitted.getShape())
@@ -446,17 +451,17 @@ DirectedConformerGenerator::Impl::getDecisionList(
         );
       }
 
-      const auto fittingReferences = Temple::map(
-        bondIndex,
-        [&](const AtomIndex v) -> BondStereopermutator::FittingReferences {
+      BondStereopermutator stereopermutator = stereoOption.value();
+
+      const auto fittingReferences = stereopermutator.composite().orientations().map(
+        [&](const auto& orientation) -> BondStereopermutator::FittingReferences {
           return {
-            molecule_.stereopermutators().at(v),
-            shapeMaps.at(v)
+            molecule_.stereopermutators().at(orientation.identifier),
+            shapeMaps.at(orientation.identifier)
           };
         }
       );
 
-      BondStereopermutator stereopermutator = stereoOption.value();
       stereopermutator.fit(angstromPositions, fittingReferences, fitting);
       return stereopermutator.assigned().value_or(unknownDecision);
     }

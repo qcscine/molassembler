@@ -64,11 +64,31 @@ void BondStereopermutator::applyPermutation(const std::vector<AtomIndex>& permut
 }
 
 void BondStereopermutator::fit(
+  const SitePositionsPair& sitePositions,
+  std::pair<FittingReferences, FittingReferences> fittingReferences,
+  const FittingMode mode
+) {
+  pImpl_->fit(sitePositions, std::move(fittingReferences), mode);
+}
+
+void BondStereopermutator::fit(
   const AngstromPositions& angstromWrapper,
   std::pair<FittingReferences, FittingReferences> fittingReferences,
   const FittingMode mode
 ) {
-  pImpl_->fit(angstromWrapper, std::move(fittingReferences), mode);
+  const auto sitePositions = composite().orientations().map(
+    [&](const auto& orientation) -> SitePositions {
+      const AtomStereopermutator& p = [&]() {
+        if(orientation.identifier == fittingReferences.first.stereopermutator.placement()) {
+          return fittingReferences.first.stereopermutator;
+        }
+
+        return fittingReferences.second.stereopermutator;
+      }();
+      return p.sitePositions(angstromWrapper);
+    }
+  );
+  pImpl_->fit(sitePositions, std::move(fittingReferences), mode);
 }
 
 void BondStereopermutator::propagateGraphChange(
@@ -94,6 +114,14 @@ boost::optional<unsigned> BondStereopermutator::assigned() const {
 
 const Stereopermutations::Composite& BondStereopermutator::composite() const {
   return pImpl_->composite();
+}
+
+std::pair<AtomIndex, AtomIndex> BondStereopermutator::compositeAlignment() const {
+  return composite().orientations().map(
+    [](const auto& orientation) -> AtomIndex {
+      return orientation.identifier;
+    }
+  );
 }
 
 double BondStereopermutator::dihedral(

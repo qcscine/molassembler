@@ -8,6 +8,7 @@
 
 #include "Molassembler/Shapes/Data.h"
 #include "boost/range/adaptor/map.hpp"
+#include "Molassembler/Stereopermutators/FeasiblePermutations.h"
 #include "Utils/Typenames.h"
 #include "nlohmann/json.hpp"
 
@@ -511,11 +512,12 @@ Molecule deserialize(const nlohmann::json& m) {
       Shapes::Shape shape = Shapes::allShapes.at(j["s"]);
       AtomIndex placement = j["c"];
 
-      auto stereopermutator = AtomStereopermutator {
-        graph,
-        shape,
+      AtomStereopermutator stereopermutator {
         placement,
-        j["r"].get<RankingInformation>()
+        shape,
+        j["r"].get<RankingInformation>(),
+        Stereopermutators::Feasible::Functor(graph),
+        AtomStereopermutator::thermalizationFunctor(graph)
       };
 
       // Assign if present
@@ -544,7 +546,7 @@ Molecule deserialize(const nlohmann::json& m) {
         alignment = j["al"].get<BondStereopermutator::Alignment>();
       }
 
-      auto stereopermutator = BondStereopermutator {
+      BondStereopermutator stereopermutator {
         graph.inner(),
         stereopermutators,
         molEdge,

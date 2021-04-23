@@ -27,15 +27,6 @@ namespace Molassembler {
 namespace Interpret {
 namespace {
 
-Utils::PositionCollection paste(const std::vector<Utils::Position>& positions) {
-  const unsigned N = positions.size();
-  auto matrix = Utils::PositionCollection(N, 3);
-  for(unsigned i = 0; i < N; ++i) {
-    matrix.row(i) = positions.at(i);
-  }
-  return matrix;
-}
-
 double vectorAngle(const Eigen::Vector3d& a, const Eigen::Vector3d& b) {
   return std::acos(
     a.dot(b) / (
@@ -50,30 +41,31 @@ struct HapticPlaneGeometry {
 };
 
 HapticPlaneGeometry hapticPlaneGeometry(
-  const std::vector<Utils::Position>& positions,
+  const AngstromPositions& wrapper,
   const AtomIndex v,
   const std::vector<AtomIndex>& site
 ) {
+  const auto& positions = wrapper.positions;
   const unsigned siteSize = site.size();
 
   assert(siteSize >= 1 && "Passed hapticPlaneGeometry a non-haptic site!");
 
   Eigen::Vector3d siteCentroid = Eigen::Vector3d::Zero();
   for(AtomIndex siteAtom : site) {
-    siteCentroid += positions.at(siteAtom);
+    siteCentroid += positions.row(siteAtom);
   }
   siteCentroid /= siteSize;
 
   if(siteSize == 2) {
     const double frontAngle = Cartesian::angle(
-      positions.at(v),
+      positions.row(v),
       siteCentroid,
-      positions.at(site.front())
+      positions.row(site.front())
     );
     const double backAngle = Cartesian::angle(
-      positions.at(v),
+      positions.row(v),
       siteCentroid,
-      positions.at(site.back())
+      positions.row(site.back())
     );
 
     return HapticPlaneGeometry {
@@ -82,11 +74,11 @@ HapticPlaneGeometry hapticPlaneGeometry(
     };
   }
 
-  const Eigen::Vector3d centroidAxis = siteCentroid - positions.at(v).transpose();
+  const Eigen::Vector3d centroidAxis = siteCentroid - positions.row(v).transpose();
 
   Utils::PositionCollection hapticAtoms(siteSize, 3);
   for(unsigned i = 0; i < siteSize; ++i) {
-    hapticAtoms.row(i) = positions.at(site.at(i));
+    hapticAtoms.row(i) = positions.row(site.at(i));
   }
   const auto plane = Cartesian::planeOfBestFit(hapticAtoms);
   const double firstAngle = vectorAngle(plane.normal(), centroidAxis);
@@ -99,7 +91,7 @@ HapticPlaneGeometry hapticPlaneGeometry(
 
 boost::optional<double> minimumClassificationProbability(
   const PrivateGraph& graph,
-  const std::vector<Utils::Position>& positions,
+  const AngstromPositions& angstromPositions,
   const AtomIndex v
 ) {
   auto sites = GraphAlgorithms::sites(graph, v);
@@ -107,16 +99,18 @@ boost::optional<double> minimumClassificationProbability(
     return boost::none;
   }
 
+  const auto& positions = angstromPositions.positions;
+
   const unsigned S = sites.size();
   Eigen::Matrix<double, 3, Eigen::Dynamic> sitePositions(3, S + 1);
   for(unsigned i = 0; i < S; ++i) {
     Eigen::Vector3d averagePosition = Eigen::Vector3d::Zero();
     for(unsigned j : sites[i]) {
-      averagePosition += positions.at(j);
+      averagePosition += positions.row(j);
     }
     sitePositions.col(i) = averagePosition / sites[i].size();
   }
-  sitePositions.col(S) = positions.at(v);
+  sitePositions.col(S) = positions.row(v);
 
   auto normalizedPositions = Shapes::Continuous::normalize(sitePositions);
 
@@ -157,7 +151,7 @@ struct BestRemovals {
 
 boost::optional<BestRemovals> bestRemovalFromHapticSite(
   const PrivateGraph& graph,
-  const std::vector<Utils::Position>& positions,
+  const AngstromPositions& positions,
   const AtomIndex v,
   const std::vector<std::vector<AtomIndex>>& sites,
   const unsigned hapticSiteIndex
@@ -241,10 +235,7 @@ boost::optional<BestRemovals> bestRemovalFromHapticSite(
 } // namespace
 
 std::vector<std::vector<unsigned>> ComponentMap::invert() const {
-  const unsigned nComponents = *std::max_element(
-    std::begin(map),
-    std::end(map)
-  ) + 1;
+  const unsigned nComponents = countComponents();
 
   std::vector<
     std::vector<unsigned>
@@ -261,10 +252,7 @@ std::vector<std::vector<unsigned>> ComponentMap::invert() const {
 std::vector<Utils::AtomCollection> ComponentMap::apply(
   const Utils::AtomCollection& atomCollection
 ) const {
-  const unsigned nComponents = *std::max_element(
-    std::begin(map),
-    std::end(map)
-  ) + 1;
+  const unsigned nComponents = countComponents();
   std::vector<unsigned> componentSizes(nComponents, 0);
   for(unsigned i : map) {
     componentSizes.at(i) += 1;
@@ -277,8 +265,9 @@ std::vector<Utils::AtomCollection> ComponentMap::apply(
   );
   std::vector<unsigned> collectionSizeCount(nComponents, 0);
 
-  for(unsigned i = 0; i < map.size(); ++i) {
-    unsigned moleculeIndex = map.at(i);
+  const unsigned N = map.size();
+  for(unsigned i = 0; i < N; ++i) {
+    const unsigned moleculeIndex = map.at(i);
     Utils::AtomCollection& collection = collections.at(moleculeIndex);
     unsigned& collectionSize = collectionSizeCount.at(moleculeIndex);
     collection.setElement(
@@ -293,6 +282,76 @@ std::vector<Utils::AtomCollection> ComponentMap::apply(
   }
 
   return collections;
+}
+
+unsigned ComponentMap::countComponents() const {
+  assert(!map.empty());
+  return *std::max_element(
+    std::begin(map),
+    std::end(map)
+  ) + 1;
+}
+
+std::vector<AngstromPositions> ComponentMap::apply(
+  const AngstromPositions& positions
+) const {
+  const unsigned nComponents = countComponents();
+  std::vector<unsigned> componentSizes(nComponents, 0);
+  for(unsigned i : map) {
+    componentSizes.at(i) += 1;
+  }
+
+  /* Allocate the component position objects */
+  std::vector<AngstromPositions> collections = Temple::map(
+    componentSizes,
+    [](const unsigned size) { return AngstromPositions(size); }
+  );
+  std::vector<unsigned> collectionSizeCount(nComponents, 0);
+
+  const unsigned N = map.size();
+  for(unsigned i = 0; i < N; ++i) {
+    const unsigned moleculeIndex = map.at(i);
+    AngstromPositions& componentPositions = collections.at(moleculeIndex);
+    unsigned& collectionSize = collectionSizeCount.at(moleculeIndex);
+    componentPositions.positions.row(collectionSize) = positions.positions.row(i);
+    ++collectionSize;
+  }
+
+  return collections;
+}
+
+std::vector<PeriodicBoundaryDuplicates> ComponentMap::apply(
+  const std::unordered_set<unsigned>& uninterestingAtoms,
+  const std::unordered_map<unsigned, unsigned>& ghostAtomMap
+) const {
+  const unsigned nComponents = countComponents();
+  std::vector<PeriodicBoundaryDuplicates> containers(nComponents);
+
+  std::vector<unsigned long> indicesInComponent (nComponents, 0);
+  const unsigned N = size();
+  for(unsigned i = 0; i < N; ++i) {
+    const unsigned component = map.at(i);
+    unsigned long& indexInComponent = indicesInComponent.at(component);
+    PeriodicBoundaryDuplicates& componentContainers = containers.at(component);
+
+    if(uninterestingAtoms.count(i) > 0) {
+      componentContainers.uninterestingAtoms.insert(indexInComponent);
+    }
+
+    const auto ghostAtomMapIter = ghostAtomMap.find(i);
+    if(ghostAtomMapIter != std::end(ghostAtomMap)) {
+      auto transformedMappedIndex = apply(ghostAtomMapIter->second);
+      assert(transformedMappedIndex.component == component);
+      componentContainers.ghostAtomMap.emplace(
+        indexInComponent,
+        transformedMappedIndex.atomIndex
+      );
+    }
+
+    ++indexInComponent;
+  }
+
+  return containers;
 }
 
 ComponentMap::ComponentIndexPair ComponentMap::apply(const unsigned index) const {
@@ -324,7 +383,7 @@ unsigned ComponentMap::invert(const ComponentIndexPair& pair) const {
 
 struct MoleculeParts {
   PrivateGraph graph;
-  std::vector<Utils::Position> angstromPositions;
+  AngstromPositions positions;
   boost::optional<
     std::vector<BondIndex>
   > bondStereopermutatorCandidatesOptional;
@@ -415,12 +474,8 @@ Parts construeParts(
   // Map from original index to component index
   std::vector<PrivateGraph::Vertex> indexInComponentMap (N);
 
-  /* Maybe
-   * - filtered_graph using predicate of componentMap number
-   * - copy_graph to new Graph keeping element types and bond orders
-   *
-   * - alternately, must keep a map of atomcollection index to precursor index
-   *   and new precursor atom index in order to transfer edges too
+  /* Must keep a map of atom collection index to precursor index and new
+   * precursor atom index in order to transfer edges too
    */
 
   for(unsigned i = 0; i < N; ++i) {
@@ -429,19 +484,14 @@ Parts construeParts(
     );
 
     // Add a new vertex with element information
-    PrivateGraph::Vertex newIndex = precursor.graph.addVertex(elements.at(i));
+    const PrivateGraph::Vertex newIndex = precursor.graph.addVertex(elements.at(i));
 
     // Save new index in precursor graph
     indexInComponentMap.at(i) = newIndex;
 
-    if(angstromWrapper.positions.row(i).norm() <= 1e-14) {
+    if(angstromWrapper.positions.row(i).norm() <= 1e-8) {
       parts.nZeroLengthPositions += 1;
     }
-
-    // Copy over position information
-    precursor.angstromPositions.emplace_back(
-      angstromWrapper.positions.row(i)
-    );
   }
 
   // Copy over edges and bond orders
@@ -473,6 +523,12 @@ Parts construeParts(
     }
   }
 
+  // Split angstrom atom positions and store in precursors
+  auto splitPositions = parts.componentMap.apply(angstromWrapper);
+  for(unsigned i = 0; i < numComponents; ++i) {
+    parts.precursors.at(i).positions = std::move(splitPositions.at(i));
+  }
+
   return parts;
 }
 
@@ -491,7 +547,6 @@ MoleculesResult molecules(
     stereopermutatorThreshold
   );
 
-  // Collect results
   MoleculesResult result;
 
   /* Transform precursors into Molecules. Positions may only be used if there
@@ -504,7 +559,7 @@ MoleculesResult molecules(
     for(auto& precursor : parts.precursors) {
       result.molecules.emplace_back(
         Graph {std::move(precursor.graph)},
-        AngstromPositions(paste(precursor.angstromPositions), LengthUnit::Angstrom),
+        precursor.positions,
         precursor.bondStereopermutatorCandidatesOptional
       );
     }
@@ -562,10 +617,52 @@ MoleculesResult molecules(
   return molecules(
     atomCollection.getElements(),
     angstromWrapper,
-    Utils::BondDetector::detectBonds(atomCollection.getElements(), angstromWrapper.getBohr()),
+    Utils::BondDetector::detectBonds(atomCollection),
     discretization,
     stereopermutatorThreshold
   );
+}
+
+/* Periodic variation of molecule instantiation */
+MoleculesResult molecules(
+  const Utils::AtomCollection& atoms,
+  const Utils::BondOrderCollection& periodicBonds,
+  const std::unordered_set<unsigned>& uninterestingAtoms,
+  const std::unordered_map<unsigned, unsigned>& ghostAtomMap,
+  const BondDiscretizationOption discretization,
+  const boost::optional<double>& stereopermutatorThreshold
+) {
+  const AngstromPositions angstroms {atoms.getPositions(), LengthUnit::Bohr};
+
+  Parts parts = construeParts(
+    atoms.getElements(),
+    angstroms,
+    periodicBonds,
+    discretization,
+    stereopermutatorThreshold
+  );
+
+  // Refuse to deal with missing coordinates
+  if(parts.nZeroLengthPositions > 1) {
+    throw std::runtime_error("Found multiple coordinates of length zero. Please provide atom positions!");
+  }
+
+  const auto periodicContainers = parts.componentMap.apply(uninterestingAtoms, ghostAtomMap);
+
+  MoleculesResult result;
+  result.molecules.reserve(parts.precursors.size());
+  const unsigned N = parts.precursors.size();
+  for(unsigned i = 0; i < N; ++i) {
+    auto& precursor = parts.precursors.at(i);
+    result.molecules.emplace_back(
+      Graph {std::move(precursor.graph)},
+      precursor.positions,
+      precursor.bondStereopermutatorCandidatesOptional,
+      periodicContainers.at(i)
+    );
+  }
+
+  return result;
 }
 
 GraphsResult graphs(
@@ -628,7 +725,7 @@ std::vector<FalsePositive> uncertainBonds(
       /* Detect high uncertainty shape classifications. Adjacent pairs with high
        * uncertainties are candidates for false positives.
        */
-      auto classificationUncertainty = minimumClassificationProbability(part.graph, part.angstromPositions, v);
+      auto classificationUncertainty = minimumClassificationProbability(part.graph, part.positions, v);
       if(classificationUncertainty && *classificationUncertainty >= 0.5) {
         sketchyClassifications.emplace_back(v, *classificationUncertainty);
       }
@@ -705,7 +802,7 @@ std::vector<FalsePositive> badHapticLigandBonds(
           continue;
         }
 
-        const auto geometry = hapticPlaneGeometry(part.angstromPositions, v, site);
+        const auto geometry = hapticPlaneGeometry(part.positions, v, site);
 
         // Less than 30° and a good plane fit indicate the haptic site is fine
         if(geometry.angle < M_PI / 6 && geometry.rmsd < 0.2) {
@@ -715,12 +812,12 @@ std::vector<FalsePositive> badHapticLigandBonds(
         if(siteSize == 2) {
           // Suggest the vertex further from the center
           const double frontDistance = (
-            part.angstromPositions.at(v)
-            - part.angstromPositions.at(site.front())
+            part.positions.positions.row(v)
+            - part.positions.positions.row(site.front())
           ).norm();
           const double backDistance = (
-            part.angstromPositions.at(v)
-            - part.angstromPositions.at(site.back())
+            part.positions.positions.row(v)
+            - part.positions.positions.row(site.back())
           ).norm();
           const AtomIndex toRemove = frontDistance < backDistance ? site.back() : site.front();
           addFalsePositive(
@@ -735,7 +832,7 @@ std::vector<FalsePositive> badHapticLigandBonds(
         } else {
           const auto suggestedRemovalOption = bestRemovalFromHapticSite(
             part.graph,
-            part.angstromPositions,
+            part.positions,
             v,
             sites,
             siteIndex

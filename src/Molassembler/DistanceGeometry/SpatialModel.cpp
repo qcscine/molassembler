@@ -158,6 +158,15 @@ SpatialModel::SpatialModel(
     "0 < x < 0.1"
   );
 
+  // Populate local spatial models for atom stereopermutators
+  for(const auto& permutator : molecule.stereopermutators().atomStereopermutators()) {
+    localModels_.emplace(
+      std::piecewise_construct,
+      std::forward_as_tuple(permutator.placement()),
+      std::forward_as_tuple(permutator.placement(), permutator.getRanking(), molecule.graph().inner())
+    );
+  }
+
   // Add all information pertaining to fixed positions immediately
   Temple::forEach(
     Temple::Adaptors::allPairs(configuration.fixedPositions),
@@ -281,7 +290,6 @@ void SpatialModel::addAtomStereopermutatorInformation(
   const std::unordered_map<AtomIndex, Utils::Position>& fixedAngstromPositions,
   const bool forceChiralConstraintEmission
 ) {
-  const auto& feasiblePermutations = permutator.getFeasible();
   const auto& ranking = permutator.getRanking();
   const AtomIndex centerAtom = permutator.placement();
 
@@ -319,8 +327,10 @@ void SpatialModel::addAtomStereopermutatorInformation(
     );
   }
 
+  const auto& permutatorModel = localModels_.at(permutator.placement());
+
   /* Intra-site modelling / Between atoms within each site */
-  for(unsigned long siteI = 0; siteI < feasiblePermutations.siteDistances.size(); ++siteI) {
+  for(unsigned long siteI = 0; siteI < permutatorModel.siteDistances.size(); ++siteI) {
     /* Set the distance to the center:
      * If no cone information is present, do not correct the distance to the
      * site using the cone angle
@@ -329,11 +339,11 @@ void SpatialModel::addAtomStereopermutatorInformation(
      * SpatialModel beforehand. Try removing this block below and see if that
      * causes any issues.
      */
-    if(!feasiblePermutations.coneAngles.at(siteI)) {
+    if(!permutatorModel.coneAngles.at(siteI)) {
       for(const AtomIndex i : ranking.sites.at(siteI)) {
         setBondBoundsIfEmpty(
           orderedSequence(i, centerAtom),
-          feasiblePermutations.siteDistances.at(siteI)
+          permutatorModel.siteDistances.at(siteI)
         );
       }
 
@@ -378,11 +388,11 @@ void SpatialModel::addAtomStereopermutatorInformation(
        * Cone height is feasiblePermutations.siteDistance, cone angle is
        * feasiblePermutations.coneAngle
        */
-      const ValueBounds& coneAngleBounds = feasiblePermutations.coneAngles.at(siteI).value();
+      const ValueBounds& coneAngleBounds = permutatorModel.coneAngles.at(siteI).value();
 
       const ValueBounds hypotenuseBounds {
-        feasiblePermutations.siteDistances.at(siteI).lower / std::cos(coneAngleBounds.upper),
-        feasiblePermutations.siteDistances.at(siteI).upper / std::cos(coneAngleBounds.lower)
+        permutatorModel.siteDistances.at(siteI).lower / std::cos(coneAngleBounds.upper),
+        permutatorModel.siteDistances.at(siteI).upper / std::cos(coneAngleBounds.lower)
       };
 
       // Set bond distance for each site member to hypotenuse bounds
@@ -425,12 +435,12 @@ void SpatialModel::addAtomStereopermutatorInformation(
    */
   const unsigned siteCount = ranking.sites.size();
   for(SiteIndex i {0}; i < siteCount - 1; ++i) {
-    if(!feasiblePermutations.coneAngles.at(i)) {
+    if(!permutatorModel.coneAngles.at(i)) {
       continue;
     }
 
     for(SiteIndex j {i + 1}; j < siteCount; ++j) {
-      if(!feasiblePermutations.coneAngles.at(j)) {
+      if(!permutatorModel.coneAngles.at(j)) {
         continue;
       }
 
@@ -468,6 +478,7 @@ void SpatialModel::addAtomStereopermutatorInformation(
               orderedSequence(x, centerAtom, y),
               modelSiteAngleBounds(
                 permutator,
+                permutatorModel,
                 {i, j},
                 looseningMultiplier,
                 graph
@@ -484,8 +495,8 @@ void SpatialModel::addAtomStereopermutatorInformation(
     const AtomStereopermutator::MinimalChiralConstraint& minimalConstraint :
     permutator.minimalChiralConstraints(forceChiralConstraintEmission)
   ) {
-    chiralConstraints_.emplace_back(
-      makeChiralConstraint(minimalConstraint, permutator, looseningMultiplier)
+    chiralConstraints_.push_back(
+      makeChiralConstraint(minimalConstraint, permutator, permutatorModel, looseningMultiplier)
     );
   }
 
@@ -563,8 +574,8 @@ void SpatialModel::addBondStereopermutatorInformation(
     const SiteIndex iAtFirst = atomPermutators.first.getShapePositionMap().indexOf(firstShapePosition);
     const SiteIndex lAtSecond = atomPermutators.second.getShapePositionMap().indexOf(secondShapePosition);
 
-    const auto& coneAngleIOption = atomPermutators.first.getFeasible().coneAngles.at(iAtFirst);
-    const auto& coneAngleLOption = atomPermutators.second.getFeasible().coneAngles.at(lAtSecond);
+    const auto& coneAngleIOption = localModels_.at(atomPermutators.first.placement()).coneAngles.at(iAtFirst);
+    const auto& coneAngleLOption = localModels_.at(atomPermutators.second.placement()).coneAngles.at(lAtSecond);
 
     // Do not emit chiral constraints if cone angles are unknown
     if(!coneAngleIOption || !coneAngleLOption) {
@@ -915,7 +926,7 @@ double SpatialModel::siteCentralAngle(
    * index and the specified two monoatomic sites.
    */
   // Find cycles that contain the central index and its two monoatomic sites
-  std::vector<BondIndex> prospectiveCycleEdges {
+  const std::vector<BondIndex> prospectiveCycleEdges {
     BondIndex {
       placement,
       ranking.sites.at(sites.first).front()
@@ -926,7 +937,7 @@ double SpatialModel::siteCentralAngle(
     }
   };
 
-  auto cycleRange = inner.cycles().containing(prospectiveCycleEdges);
+  const auto cycleRange = inner.cycles().containing(prospectiveCycleEdges);
 
   // If the range is zero-length, there are no cycles with both edges!
   if(cycleRange.begin() == cycleRange.end()) {
@@ -953,7 +964,7 @@ double SpatialModel::siteCentralAngle(
    * is fully determined by the bond lengths
    */
   if(smallestCycleSize == 3) {
-    BondIndex lastEdge {
+    const BondIndex lastEdge {
       ranking.sites.at(sites.first).front(),
       ranking.sites.at(sites.second).front()
     };
@@ -1016,13 +1027,12 @@ double SpatialModel::siteCentralAngle(
 
 ValueBounds SpatialModel::modelSiteAngleBounds(
   const AtomStereopermutator& permutator,
+  const Stereopermutators::LocalSpatialModel& localModel,
   const std::pair<SiteIndex, SiteIndex>& sites,
   const double looseningMultiplier,
   const PrivateGraph& inner
 ) {
   assert(permutator.assigned());
-
-  const Stereopermutators::Feasible& feasiblePermutations = permutator.getFeasible();
 
   /* The idealized shape angles are modified by the upper (!) cone angles
    * at each site, not split between lower and upper.
@@ -1038,8 +1048,8 @@ ValueBounds SpatialModel::modelSiteAngleBounds(
     variance *= looseningMultiplier;
 
     // Additional terms are the upper(!) cone angles!
-    variance += feasiblePermutations.coneAngles.at(sites.first).value().upper;
-    variance += feasiblePermutations.coneAngles.at(sites.second).value().upper;
+    variance += localModel.coneAngles.at(sites.first).value().upper;
+    variance += localModel.coneAngles.at(sites.second).value().upper;
 
     return variance;
   }();
@@ -1053,9 +1063,9 @@ ValueBounds SpatialModel::modelSiteAngleBounds(
 ChiralConstraint SpatialModel::makeChiralConstraint(
   const AtomStereopermutator::MinimalChiralConstraint& minimalConstraint,
   const AtomStereopermutator& permutator,
+  const Stereopermutators::LocalSpatialModel& localModel,
   const double looseningMultiplier
 ) {
-  const auto& feasiblePermutations = permutator.getFeasible();
   const auto& ranking = permutator.getRanking();
   const AtomIndex centerAtom = permutator.placement();
 
@@ -1106,13 +1116,13 @@ ChiralConstraint SpatialModel::makeChiralConstraint(
   for(unsigned i = 0; i < 4; ++i) {
     const auto iBoundsOption = Temple::Optionals::map(
       minimalConstraint.at(i),
-      Temple::Functor::at(feasiblePermutations.siteDistances)
+      Temple::Functor::at(localModel.siteDistances)
     );
 
     for(unsigned j = i + 1; j < 4; ++j) {
       const auto jBoundsOption = Temple::Optionals::map(
         minimalConstraint.at(j),
-        Temple::Functor::at(feasiblePermutations.siteDistances)
+        Temple::Functor::at(localModel.siteDistances)
       );
 
       ValueBounds oneThreeDistanceBounds;
@@ -1411,7 +1421,7 @@ std::vector<BondIndex> SpatialModel::cycleConsistingOfExactly(
 boost::optional<ValueBounds> SpatialModel::coneAngle(
   const std::vector<AtomIndex>& baseConstituents,
   const ValueBounds& coneHeightBounds,
-  const Graph& graph
+  const PrivateGraph& graph
 ) {
   /* Have to decide cone base radius in order to calculate this. There are some
    * simple cases to get out of the way first:
@@ -1426,7 +1436,7 @@ boost::optional<ValueBounds> SpatialModel::coneAngle(
     double radius = modelDistance(
       baseConstituents.front(),
       baseConstituents.back(),
-      graph.inner()
+      graph
     ) / 2;
 
     // Angle gets smaller if height bigger or cone base radius smaller
@@ -1447,7 +1457,7 @@ boost::optional<ValueBounds> SpatialModel::coneAngle(
   }
 
   // Now it gets tricky. The base constituents may be part of a cycle or not
-  auto cycleEdges = cycleConsistingOfExactly(baseConstituents, graph.inner());
+  auto cycleEdges = cycleConsistingOfExactly(baseConstituents, graph);
 
   // The return value of cycleConsistingOfExactly is nullable
   if(!cycleEdges.empty()) {
@@ -1461,7 +1471,7 @@ boost::optional<ValueBounds> SpatialModel::coneAngle(
     auto distances = Temple::map(
       Temple::Adaptors::cyclicFrame<2>(ringIndexSequence),
       [&](const AtomIndex i, const AtomIndex j) -> double {
-        return modelDistance(i, j, graph.inner());
+        return modelDistance(i, j, graph);
       }
     );
 
@@ -1528,7 +1538,7 @@ double SpatialModel::spiroCrossAngle(const double alpha, const double beta) {
 ValueBounds SpatialModel::siteDistanceFromCenter(
   const std::vector<AtomIndex>& siteAtomList,
   const AtomIndex placement,
-  const Graph& graph
+  const PrivateGraph& graph
 ) {
   assert(!siteAtomList.empty());
 
@@ -1538,7 +1548,7 @@ ValueBounds SpatialModel::siteDistanceFromCenter(
       return modelDistance(
         siteAtomList.front(),
         placement,
-        graph.inner()
+        graph
       );
     }
 
@@ -1547,11 +1557,7 @@ ValueBounds SpatialModel::siteDistanceFromCenter(
       Temple::Adaptors::transform(
         siteAtomList,
         [&](AtomIndex atomIndex) -> double {
-          return modelDistance(
-            atomIndex,
-            placement,
-            graph.inner()
-          );
+          return modelDistance(atomIndex, placement, graph);
         }
       )
     );

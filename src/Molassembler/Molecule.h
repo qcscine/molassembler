@@ -31,6 +31,7 @@ class Graph;
 class StereopermutatorList;
 struct RankingInformation;
 class AtomStereopermutator;
+struct PeriodicBoundaryDuplicates;
 
 /*!
  * @brief Models a molecule as a graph (connectivity of atoms) and a list of
@@ -166,6 +167,15 @@ public:
     const boost::optional<
       std::vector<BondIndex>
     >& bondStereopermutatorCandidatesOptional = boost::none
+  );
+
+  MASM_NO_EXPORT Molecule(
+    Graph graph,
+    const AngstromPositions& positions,
+    const boost::optional<
+      std::vector<BondIndex>
+    >& bondStereopermutatorCandidatesOptional,
+    const PeriodicBoundaryDuplicates& boundaries
   );
 
   /*! @brief Construct a molecule from underlying data fragments

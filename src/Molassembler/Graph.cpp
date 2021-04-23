@@ -170,7 +170,7 @@ void Graph::removeAtom(AtomIndex i) {
   }
 
   if(!canRemove(i)) {
-    throw std::logic_error("Bond removal would disconnect the graph");
+    throw std::logic_error("Atom removal would disconnect the graph");
   }
   inner().removeVertex(i);
 }

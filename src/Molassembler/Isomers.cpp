@@ -307,47 +307,17 @@ Molecule enantiomer(const Molecule& a) {
     );
 
     // Apply the mirror
-    auto mirrored = currentStereopermutation.applyPermutation(mirrorPermutation);
+    const auto mirrored = currentStereopermutation.applyPermutation(mirrorPermutation);
 
-    // Find an existing permutation that is superposable with the mirror permutation
-    const auto& permutationsList = permutator.getAbstract().permutations.list;
-    auto matchingPermutationIter = std::find_if(
-      std::begin(permutationsList),
-      std::end(permutationsList),
-      [&](const auto& permutation) -> bool {
-        return Stereopermutations::rotationallySuperimposable(
-          permutation,
-          mirrored,
-          permutator.getShape()
-        );
-      }
+    const auto matchingAssignment = Stereopermutators::Feasible::findRotationallySuperposableAssignment(
+      currentStereopermutation,
+      permutator.getShape(),
+      permutator.getAbstract(),
+      permutator.getFeasible()
     );
 
-    // If we cannot find a matching stereopermutation, then unassign
-    if(matchingPermutationIter == std::end(permutationsList)) {
-      permutator.assign(boost::none);
-      continue;
-    }
-
-    // Now we have a stereopermutation index, but we need an assignment index
-    unsigned stereopermutationIndex = matchingPermutationIter - std::begin(permutationsList);
-
-    const auto& feasiblePermutations = permutator.getFeasible().indices;
-
-    auto assignmentIter = std::find(
-      std::begin(feasiblePermutations),
-      std::end(feasiblePermutations),
-      stereopermutationIndex
-    );
-
-    // If the found permutation is infeasible, then unassign
-    if(assignmentIter == std::end(feasiblePermutations)) {
-      permutator.assign(boost::none);
-      continue;
-    }
-
-    // Otherwise, we can assign it with the found permutation
-    permutator.assign(assignmentIter - std::begin(feasiblePermutations));
+    // NOTE: This unassigns the stereopermutator if no matching assignment was found
+    permutator.assign(matchingAssignment);
   }
 
   /* Construct a new molecule by copying the graph and moving in the altered

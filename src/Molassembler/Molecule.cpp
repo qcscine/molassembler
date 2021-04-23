@@ -70,6 +70,22 @@ Molecule::Molecule(
 
 Molecule::Molecule(
   Graph graph,
+  const AngstromPositions& positions,
+  const boost::optional<
+    std::vector<BondIndex>
+  >& bondStereopermutatorCandidatesOptional,
+  const PeriodicBoundaryDuplicates& boundaries
+) : pImpl_(
+  std::make_unique<Impl>(
+    std::move(graph),
+    positions,
+    bondStereopermutatorCandidatesOptional,
+    boundaries
+  )
+) {}
+
+Molecule::Molecule(
+  Graph graph,
   StereopermutatorList stereopermutators,
   boost::optional<AtomEnvironmentComponents> canonicalComponentsOption
 ) : pImpl_(

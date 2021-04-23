@@ -63,6 +63,19 @@ auto flatMap(const OptionalType<T>& optional, UnaryFunction&& function) {
   return OptionalU {};
 }
 
+template<class Map, typename Key>
+auto mapFind(const Map& map, const Key& key) {
+  using Value = decltype(std::declval<Map>().begin()->second);
+  using OptionalValue = boost::optional<Value>;
+
+  const auto iter = map.find(key);
+  if(iter != std::end(map)) {
+    return OptionalValue(iter->second);
+  }
+
+  return OptionalValue(boost::none);
+}
+
 } // namespace Optionals
 } // namespace Temple
 } // namespace Molassembler

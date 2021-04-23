@@ -36,7 +36,7 @@
 
 #include "Utils/Geometry/ElementInfo.h"
 #include "Utils/Geometry/AtomCollection.h"
-#include "Utils/Geometry/PeriodicSystem.h"
+// #include "Utils/Geometry/PeriodicSystem.h"
 #include "Utils/Bonds/BondOrderCollection.h"
 #include "Utils/IO/ChemicalFileFormats/ChemicalFileHandler.h"
 
@@ -879,82 +879,101 @@ BOOST_AUTO_TEST_CASE(EtaBondDynamism, *boost::unit_test::label("Molassembler")) 
   BOOST_CHECK(mol.graph().bondType(BondIndex {0, 1}) == BondType::Single);
 }
 
-BOOST_AUTO_TEST_CASE(Periodic1d, *boost::unit_test::label("Molassembler")) {
-  /*
-   *  h | H H         H | h
-   *  small h represent image atoms
-   */
-  auto elements = Utils::ElementTypeCollection{Utils::ElementType::H, Utils::ElementType::H, Utils::ElementType::H};
-  Utils::PositionCollection positions = Eigen::MatrixX3d::Zero(3, 3);
-  positions(1, 0) = 1.0;
-  positions(2, 0) = 9.0;
-  auto h3 = Utils::AtomCollection(elements, positions);
-  auto pbc = Utils::PeriodicBoundaries(Eigen::Matrix3d::Identity() * 10.0);
-  std::unordered_set<unsigned> solidStateIndices = {};
+// BOOST_AUTO_TEST_CASE(Periodic1d, *boost::unit_test::label("Molassembler")) {
+//   /*
+//    *  h | H H         H | h
+//    *  small h represent image atoms
+//    */
+//   auto elements = Utils::ElementTypeCollection{Utils::ElementType::H, Utils::ElementType::H, Utils::ElementType::H};
+//   Utils::PositionCollection positions = Eigen::MatrixX3d::Zero(3, 3);
+//   positions(1, 0) = 1.0;
+//   positions(2, 0) = 9.0;
+//   auto h3 = Utils::AtomCollection(elements, positions);
+//   auto pbc = Utils::PeriodicBoundaries(Eigen::Matrix3d::Identity() * 10.0);
+//   std::unordered_set<unsigned> solidStateIndices = {};
+//
+//   auto ps = Utils::PeriodicSystem(pbc, h3, solidStateIndices);
+//   auto data = ps.getDataForMolassemblerInterpretation();
+//   auto atoms = std::get<0>(data);
+//   auto bonds = std::get<1>(data);
+//   auto unimportant = std::get<2>(data);
+//   auto map = std::get<3>(data);
+//   BOOST_CHECK(atoms.size() == 5);
+//   BOOST_CHECK(bonds.getSystemSize() == 5);
+//   BOOST_CHECK(unimportant.size() == solidStateIndices.size());
+//   BOOST_CHECK(map.size() == 2);
+//
+//   /* TODO
+//    * - interpret call and test comparison with h3Molecule
+//    * - serialize and deserialize, though it doesn't do much here since there
+//    *   are no unimportant atoms
+//    */
+//   const auto h3Molecule = IO::Experimental::parseSmilesSingleMolecule("[H]-[H]-[H]");
+// }
 
-  auto ps = Utils::PeriodicSystem(pbc, h3, solidStateIndices);
-  auto data = ps.getDataForMolassemblerInterpretation();
-  auto atoms = std::get<0>(data);
-  auto bonds = std::get<1>(data);
-  auto unimportant = std::get<2>(data);
-  auto map = std::get<3>(data);
-  BOOST_CHECK(atoms.size() == 5);
-  BOOST_CHECK(bonds.getSystemSize() == 5);
-  BOOST_CHECK(unimportant.size() == solidStateIndices.size());
-  BOOST_CHECK(map.size() == 2);
-}
-
-BOOST_AUTO_TEST_CASE(Periodic2d, *boost::unit_test::label("Molassembler")) {
-  auto elements = Utils::ElementTypeCollection{};
-  const int n = 8;
-  for (int i = 0; i < n; ++i) {
-    elements.push_back(Utils::ElementType::H);
-  }
-  Utils::PositionCollection positions = Eigen::MatrixX3d::Zero(8, 3);
-  // clang-format off
-  positions << 0.0, 0.0, 0.0, //
-               1.0, 0.0, 0.0, //            h - h - h
-               0.5, 0.5, 0.0, //          h | H   H |
-               0.0, 1.0, 0.0, //            H   H   h
-               1.0, 1.0, 0.0, //          h | H   H |
-               1.5, 0.5, 0.0, //            H - H - h
-               0.5, 1.5, 0.0, //          h   h   h
-               1.5, 1.5, 0.0; //
-  // clang-format on
-  std::unordered_set<unsigned> solid = {0, 1, 2, 3, 4, 5, 6, 7};
-  auto pbc = Utils::PeriodicBoundaries(Eigen::Matrix3d::Identity() * 2.0);
-  auto ps = Utils::PeriodicSystem(pbc, elements, positions, solid);
-  auto data = ps.getDataForMolassemblerInterpretation();
-  auto atoms = std::get<0>(data);
-  auto bonds = std::get<1>(data);
-  auto unimportant = std::get<2>(data);
-  auto map = std::get<3>(data);
-  BOOST_CHECK(atoms.size() == 18);
-  BOOST_CHECK(bonds.getSystemSize() == 18);
-  BOOST_CHECK(unimportant.size() == solid.size());
-  BOOST_CHECK(map.size() == 10);
-}
-
-void checkAtomStereopermutator(
-  const Molecule& m,
-  const AtomIndex i,
-  const Shapes::Shape shape
-) {
-  BOOST_CHECK_MESSAGE(
-    Temple::Optionals::map(
-      m.stereopermutators().option(i),
-      [&](const AtomStereopermutator& permutator) {
-        return permutator.getShape() == shape;
-      }
-    ).value_or(false),
-    Temple::Optionals::map(
-      m.stereopermutators().option(i),
-      [&](const AtomStereopermutator& permutator) {
-        return Shapes::name(permutator.getShape());
-      }
-    ).value_or("No") << " atom stereopermutator on " << i << ", expected a(n) " << Shapes::name(shape) << " stereopermutator"
-  );
-}
+// BOOST_AUTO_TEST_CASE(Periodic2d, *boost::unit_test::label("Molassembler")) {
+//   auto elements = Utils::ElementTypeCollection{};
+//   const int n = 8;
+//   for (int i = 0; i < n; ++i) {
+//     elements.push_back(Utils::ElementType::H);
+//   }
+//   Utils::PositionCollection positions = Eigen::MatrixX3d::Zero(8, 3);
+//   // clang-format off
+//   positions << 0.0, 0.0, 0.0, //
+//                1.0, 0.0, 0.0, //            h - h - h
+//                0.5, 0.5, 0.0, //          h | H   H |
+//                0.0, 1.0, 0.0, //            H   H   h
+//                1.0, 1.0, 0.0, //          h | H   H |
+//                1.5, 0.5, 0.0, //            H - H - h
+//                0.5, 1.5, 0.0, //          h   h   h
+//                1.5, 1.5, 0.0; //
+//   // clang-format on
+//   std::unordered_set<unsigned> solid = {0, 1, 2, 3, 4, 5, 6, 7};
+//   auto pbc = Utils::PeriodicBoundaries(Eigen::Matrix3d::Identity() * 2.0);
+//   auto ps = Utils::PeriodicSystem(pbc, elements, positions, solid);
+//   auto data = ps.getDataForMolassemblerInterpretation();
+//   auto atoms = std::get<0>(data);
+//   auto bonds = std::get<1>(data);
+//   auto unimportant = std::get<2>(data);
+//   auto map = std::get<3>(data);
+//   BOOST_CHECK(atoms.size() == 18);
+//   BOOST_CHECK(bonds.getSystemSize() == 18);
+//   BOOST_CHECK(unimportant.size() == solid.size());
+//   BOOST_CHECK(map.size() == 10);
+//
+//   /* TODO
+//    *
+//    * All hydrogen atoms of the resulting molecule should have four graph
+//    * neighbors. They're marked unimportant here, so no shapes or stereo, but
+//    * you can compare graph isomorphisms.
+//    *
+//    * - interpret call and test.
+//    * - serialize and deserialize, though it doesn't do much here since there
+//    *   are no unimportant atoms
+//    *
+//    */
+// }
+//
+// void checkAtomStereopermutator(
+//   const Molecule& m,
+//   const AtomIndex i,
+//   const Shapes::Shape shape
+// ) {
+//   BOOST_CHECK_MESSAGE(
+//     Temple::Optionals::map(
+//       m.stereopermutators().option(i),
+//       [&](const AtomStereopermutator& permutator) {
+//         return permutator.getShape() == shape;
+//       }
+//     ).value_or(false),
+//     Temple::Optionals::map(
+//       m.stereopermutators().option(i),
+//       [&](const AtomStereopermutator& permutator) {
+//         return Shapes::name(permutator.getShape());
+//       }
+//     ).value_or("No") << " atom stereopermutator on " << i << ", expected a(n) " << Shapes::name(shape) << " stereopermutator"
+//   );
+// }
 
 #ifdef NDEBUG
 BOOST_AUTO_TEST_CASE(ShapeClassification, *boost::unit_test::label("Molassembler")) {

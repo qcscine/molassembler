@@ -850,7 +850,7 @@ void BondStereopermutator::Impl::applyPermutation(const std::vector<AtomIndex>& 
 }
 
 void BondStereopermutator::Impl::fit(
-  const AngstromPositions& angstromWrapper,
+  const SitePositionsPair& sitePositions,
   std::pair<FittingReferences, FittingReferences> fittingReferences,
   const FittingMode mode
 ) {
@@ -874,25 +874,6 @@ void BondStereopermutator::Impl::fit(
     ),
     composite_.alignment()
   };
-
-  auto makeSitePositions = [&angstromWrapper](const AtomStereopermutator& permutator) -> auto {
-    const unsigned S = permutator.getRanking().sites.size();
-    assert(S == Shapes::size(permutator.getShape()));
-    Eigen::Matrix<double, 3, Eigen::Dynamic> sitePositions(3, S);
-    for(unsigned i = 0; i < S; ++i) {
-      sitePositions.col(i) = Cartesian::averagePosition(
-        angstromWrapper.positions,
-        permutator.getRanking().sites.at(i)
-      );
-    }
-    return sitePositions;
-  };
-
-  // For all atoms making up a site, decide on the spatial average position
-  const auto sitePositions = Temple::map(
-    alignedReferences,
-    [&](const auto& ref) { return makeSitePositions(ref.stereopermutator); }
-  );
 
   std::pair<Shapes::Vertex, Shapes::Vertex> shapeVertices;
   double dihedralAngle;
@@ -946,8 +927,8 @@ void BondStereopermutator::Impl::fit(
 
       const double measuredDihedral = Cartesian::dihedral(
         sitePositions.first.col(siteIndices.first),
-        angstromWrapper.positions.row(alignedReferences.first.stereopermutator.placement()),
-        angstromWrapper.positions.row(alignedReferences.second.stereopermutator.placement()),
+        sitePositions.first.rightCols<1>(),
+        sitePositions.second.rightCols<1>(),
         sitePositions.second.col(siteIndices.second)
       );
 
@@ -1003,7 +984,7 @@ void BondStereopermutator::Impl::propagateGraphChange(
   const StereopermutatorList& permutators
 ) {
   const RankingInformation& oldRanking = std::get<0>(oldPermutatorState);
-  const AtomStereopermutator::ShapeMap& oldShapeMap = std::get<3>(oldPermutatorState);
+  const AtomStereopermutator::ShapeMap& oldShapeMap = std::get<1>(oldPermutatorState);
 
   // We assume that the supplied permutators (or their state) were assigned
   assert(!oldShapeMap.empty());

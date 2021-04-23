@@ -80,13 +80,21 @@ class MASM_EXPORT AtomStereopermutator {
 public:
   using ShapeMap = Temple::StrongIndexFlatMap<SiteIndex, Shapes::Vertex>;
 
-  //! Old state dumped upon propagation
-  using PropagatedState = std::tuple<
-    RankingInformation,
-    Stereopermutators::Abstract,
-    Stereopermutators::Feasible,
-    ShapeMap
+  using SiteCentroids = Eigen::Matrix<double, 3, Eigen::Dynamic>;
+
+  using ThermalizationPredicate = std::function<bool(AtomIndex, Shapes::Shape, const RankingInformation&)>;
+
+  using FeasiblesGenerator = std::function<
+    std::vector<unsigned>(
+      const Stereopermutators::Abstract& abstract,
+      Shapes::Shape shape,
+      AtomIndex placement,
+      const RankingInformation& ranking
+    )
   >;
+
+  //! Old state dumped upon propagation
+  using PropagatedState = std::tuple<RankingInformation, ShapeMap>;
 
   /*!
    * @brief Site index sequence defining a chiral constraint. If a site index
@@ -118,11 +126,38 @@ public:
    *
    * @post The stereopermutator is unassigned
    */
+  [[deprecated("Prefer constructor without graph argument")]]
   AtomStereopermutator(
     const Graph& graph,
     Shapes::Shape shape,
     AtomIndex centerAtom,
     RankingInformation ranking
+  );
+
+  /*! @brief Construct an AtomStereopermutator
+   *
+   * @param centerAtom The atom index within the molecule that is the center of
+   *   the local idealized shape
+   * @param shape The local idealized shape to model. Typically the
+   *   result of Molecule's inferShape.
+   * @param ranking The ranking of the central atom's substituents and ligand
+   *   sites. Typically the result of Molecule's rankPriority.
+   * @param feasibility A functor for determining which abstract permutations
+   *   are feasible.
+   * @param thermalization A functor for deciding whether the stereopermutator
+   *   is thermalized and all stereopermutations coalesce.
+   *
+   * @complexity{@math{L\cdot S!} where @math{L} is the number of links and
+   * @math{S} is the size of @p shape}
+   *
+   * @post The stereopermutator is unassigned
+   */
+  AtomStereopermutator(
+    AtomIndex centerAtom,
+    Shapes::Shape shape,
+    RankingInformation ranking,
+    const FeasiblesGenerator& feasibility = {},
+    const ThermalizationPredicate& thermalization = {}
   );
 //!@}
 
@@ -144,6 +179,22 @@ public:
    * @throws std::logic_error If there are no smaller shapes
    */
   static Shapes::Shape down(Shapes::Shape shape, Shapes::Vertex removedVertex);
+//!@}
+
+//!@name Statics
+//!@{
+  static bool thermalized(
+    AtomIndex centerAtom,
+    Shapes::Shape shape,
+    const RankingInformation& ranking,
+    const Graph& graph
+  );
+
+  static auto thermalizationFunctor(const Graph& g) {
+    return [&g](AtomIndex centerAtom, Shapes::Shape shape, const RankingInformation& ranking) {
+      return AtomStereopermutator::thermalized(centerAtom, shape, ranking, g);
+    };
+  }
 //!@}
 
 //!@name Modifiers
@@ -194,13 +245,41 @@ public:
    * for a statistical argument is too expensive, and the shape whose
    * continuous shape measure is lowest is chosen instead.
    *
-   * @param graph The molecule's graph which this permutator helps model
+   * @param centroids Spatial centroids of each site in the contained ranking,
+   *   and the position of the central index last
+   * @returns A mapping of site indices to shape vertices if a
+   *   stereopermutation could be found, None otherwise
+   *
+   * @complexity{@math{\Theta(S!)}}
+   */
+  boost::optional<ShapeMap> fit(
+    const SiteCentroids& centroids,
+    const FeasiblesGenerator& feasibility = {},
+    const ThermalizationPredicate& thermalization = {}
+  );
+
+  /*! @brief Determine the shape and assignment realized in positions
+   *
+   * The shape and assignment are determined from Cartesian coordinates by the
+   * probability that the continuous shape measure with respect to an idealized
+   * shape is least likely to be drawn from a sample of randomly generated
+   * vertex positions. For shapes with many vertices, generating enough samples
+   * for a statistical argument is too expensive, and the shape whose
+   * continuous shape measure is lowest is chosen instead.
+   *
    * @param angstromWrapper The wrapped positions
    * @returns A mapping of site indices to shape vertices if a
    *   stereopermutation could be found, None otherwise
    *
    * @complexity{@math{\Theta(S!)}}
    */
+  boost::optional<ShapeMap> fit(
+    const AngstromPositions& wrapper,
+    const FeasiblesGenerator& feasibility = {},
+    const ThermalizationPredicate& thermalization = {}
+  );
+
+  [[deprecated("Prefer graph-less alternative parameters")]]
   boost::optional<ShapeMap> fit(
     const Graph& graph,
     const AngstromPositions& angstromWrapper
@@ -216,9 +295,10 @@ public:
    * @math{S} is the size of @p shape}
    */
   MASM_NO_EXPORT boost::optional<PropagatedState> propagate(
-    const Graph& graph,
     RankingInformation newRanking,
-    boost::optional<Shapes::Shape> shapeOption
+    boost::optional<Shapes::Shape> shapeOption,
+    const FeasiblesGenerator& feasibility = {},
+    const ThermalizationPredicate& thermalization = {}
   );
 
   /*! @brief Adapts atom indices in the internal state to the removal of an atom
@@ -238,6 +318,13 @@ public:
    * @todo Consider trying to propagate within same shape size
    * @post The permutator is unassigned (chiral state is discarded)
    */
+  void setShape(
+    Shapes::Shape shape,
+    const FeasiblesGenerator& feasibility = {},
+    const ThermalizationPredicate& thermalization = {}
+  );
+
+  [[deprecated("Prefer graph-less alternative parameters")]]
   void setShape(
     Shapes::Shape shape,
     const Graph& graph
@@ -330,6 +417,12 @@ public:
    */
   std::vector<std::vector<SiteIndex>> siteGroups() const;
 
+  //! Generate site centroid positions from a whole-molecule set of positions
+  SiteCentroids sitePositions(
+    const AngstromPositions& wrapper,
+    const std::vector<std::pair<AtomIndex, AtomIndex>>& substitutions = {}
+  ) const;
+
   //! Returns whether the stereopermutations are thermalized
   bool thermalized() const;
 
@@ -340,12 +433,12 @@ public:
    */
   MASM_NO_EXPORT const Stereopermutators::Abstract& getAbstract() const;
 
-  /*!  @brief Returns the underlying feasible stereopermutations object
+  /*!  @brief Returns the feasible stereopermutation indices
    *
    * @complexity{@math{\Theta(1)}}
    * @note This is library-internal and not part of the public API
    */
-  MASM_NO_EXPORT const Stereopermutators::Feasible& getFeasible() const;
+  MASM_NO_EXPORT const std::vector<unsigned>& getFeasible() const;
 
   /*! @brief Returns the underlying ranking
    *

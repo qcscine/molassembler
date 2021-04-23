@@ -16,10 +16,37 @@
 
 namespace Scine {
 namespace Molassembler {
+
+struct PrivateGraph;
+
 namespace Stereopermutators {
 
 // Forward-declarations
 struct Abstract;
+
+struct LocalSpatialModel {
+//!@name Types
+//!@{
+  using ConeAngleType = std::vector<
+    boost::optional<DistanceGeometry::ValueBounds>
+  >;
+//!@}
+
+  LocalSpatialModel(
+    AtomIndex placement,
+    const RankingInformation& ranking,
+    const PrivateGraph& graph
+  );
+
+//!@name Data
+//!@{
+  //! Mapping from site index to modeled site plane distance
+  std::vector<DistanceGeometry::ValueBounds> siteDistances;
+
+  //! Mapping from site index to cone angle optional
+  ConeAngleType coneAngles;
+//!@}
+};
 
 struct Feasible {
 //!@name Public types
@@ -65,46 +92,50 @@ struct Feasible {
     Shapes::Shape shape,
     const Graph& graph
   );
-//!@}
 
-//!@name Constructors
-//!@{
-  //! Empty initializer, all data members are null objects
-  Feasible() = default;
+  struct Functor {
+    explicit Functor(const Graph& g) : graph(g) {}
 
-  /**
-   * @brief Determines the subset of stereopermutations that are feasible in
-   *   three dimensions
-   *
-   * @param abstractPermutations The set of abstract stereopermutations
-   * @param shape The underlying shape of the stereopermutator
-   * @param placement the atom index of the stereopermutator
-   * @param ranking Ranking object indicating chemical differences between
-   *   sites and substituents
-   * @param graph The graph being modeled
-   *
-   * @complexity{@math{\Theta(P\cdot L)} where @math{P} is the number of
-   * abstract stereopermutations and @math{L} is the number of links}
-   */
-  Feasible(
-    const Abstract& abstractPermutations,
+    /**
+     * @brief Determines the subset of stereopermutations that are feasible in
+     *   three dimensions
+     *
+     * @param abstractPermutations The set of abstract stereopermutations
+     * @param shape The underlying shape of the stereopermutator
+     * @param placement the atom index of the stereopermutator
+     * @param ranking Ranking object indicating chemical differences between
+     *   sites and substituents
+     * @param graph The graph being modeled
+     *
+     * @complexity{@math{\Theta(P\cdot L)} where @math{P} is the number of
+     * abstract stereopermutations and @math{L} is the number of links}
+     */
+    std::vector<unsigned> operator() (
+      const Abstract& abstract,
+      Shapes::Shape shape,
+      AtomIndex placement,
+      const RankingInformation& ranking
+    ) const;
+
+    const Graph& graph;
+  };
+
+  struct Unchecked {
+    std::vector<unsigned> operator() (
+      const Abstract& abstract,
+      Shapes::Shape shape,
+      AtomIndex placement,
+      const RankingInformation& ranking
+    ) const;
+  };
+
+  //! Find a rotationally superposable assignment to a permutation
+  static boost::optional<unsigned> findRotationallySuperposableAssignment(
+    const Stereopermutations::Stereopermutation& permutation,
     Shapes::Shape shape,
-    AtomIndex placement,
-    const RankingInformation& ranking,
-    const Graph& graph
+    const Abstract& abstract,
+    const std::vector<unsigned>& feasibles
   );
-//!@}
-
-//!@name Data members
-//!@{
-  //! Mapping from site index to modeled site plane distance
-  std::vector<DistanceGeometry::ValueBounds> siteDistances;
-
-  //! Mapping from site index to cone angle optional
-  ConeAngleType coneAngles;
-
-  //! Vector of permutation indices that are feasible
-  std::vector<unsigned> indices;
 //!@}
 };
 

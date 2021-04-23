@@ -172,9 +172,10 @@ std::pair<Molecule, Molecule> Editing::cleave(const Molecule& a, const BondIndex
 
       // Notify the stereopermutator to remove the placeholder
       stereopermutatorOption->propagate(
-        molecule.pImpl_->adjacencies_,
         std::move(localRanking),
-        shapeOption
+        shapeOption,
+        Stereopermutators::Feasible::Functor(molecule.graph()),
+        AtomStereopermutator::thermalizationFunctor(molecule.graph())
       );
 
       // Default-assign if possible
@@ -298,9 +299,10 @@ Molecule Editing::insert(
       }
 
       permutatorOption->propagate(
-        log.pImpl_->adjacencies_,
         std::move(localRanking),
-        shapeOption
+        shapeOption,
+        Stereopermutators::Feasible::Functor(log.graph()),
+        AtomStereopermutator::thermalizationFunctor(log.graph())
       );
 
       // Default assign if possible
@@ -404,9 +406,10 @@ Molecule Editing::superpose(
       }
 
       topPermutatorOption->propagate(
-        top.pImpl_->adjacencies_,
         std::move(localRanking),
-        shapeOption
+        shapeOption,
+        Stereopermutators::Feasible::Functor(top.graph()),
+        AtomStereopermutator::thermalizationFunctor(top.graph())
       );
 
       // Default assign if possible

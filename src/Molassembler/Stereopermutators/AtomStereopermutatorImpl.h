@@ -27,9 +27,6 @@ struct ShapeTransitionGroup;
 
 class AtomStereopermutator::Impl : public Temple::Crtp::LexicographicComparable<Impl> {
 public:
-/* Typedefs */
-  using StereopermutationType = Stereopermutations::Stereopermutation;
-
 //!@name Static functions
 //!@{
   /*!
@@ -58,10 +55,10 @@ public:
 
   //! @brief Whether the stereopermutations interconvert rapidly at selected temp
   static bool thermalized(
-    const Graph& graph,
     AtomIndex centerAtom,
     Shapes::Shape shape,
-    const RankingInformation& ranking
+    const RankingInformation& ranking,
+    const Graph& graph
   );
 //!@}
 
@@ -79,6 +76,14 @@ public:
     Shapes::Shape shape,
     AtomIndex centerAtom,
     RankingInformation ranking
+  );
+
+  Impl(
+    AtomIndex centerAtom,
+    Shapes::Shape shape,
+    RankingInformation ranking,
+    const FeasiblesGenerator& feasibility,
+    const ThermalizationPredicate& thermalization
   );
 
 /* Modification */
@@ -107,8 +112,9 @@ public:
    * shapes.
    */
   boost::optional<ShapeMap> fit(
-    const Graph& graph,
-    const AngstromPositions& angstromWrapper
+    const SiteCentroids& centroids,
+    const FeasiblesGenerator& feasibility,
+    const ThermalizationPredicate& thermalization
   );
 
   /*!
@@ -117,9 +123,10 @@ public:
    * stereopermutator and if so, which assignment corresponds to the previous one.
    */
   boost::optional<PropagatedState> propagate(
-    const Graph& graph,
     RankingInformation newRanking,
-    boost::optional<Shapes::Shape> shapeOption
+    boost::optional<Shapes::Shape> shapeOption,
+    const FeasiblesGenerator& feasibility,
+    const ThermalizationPredicate& thermalization
   );
 
   /*!
@@ -131,7 +138,8 @@ public:
   //! If the shape is changed, we must adapt
   void setShape(
     Shapes::Shape shape,
-    const Graph& graph
+    const FeasiblesGenerator& feasibility,
+    const ThermalizationPredicate& thermalization
   );
 
   //! Unconditionally alter the thermalization of stereopermutations
@@ -193,6 +201,12 @@ public:
    */
   std::vector<std::vector<SiteIndex>> siteGroups() const;
 
+  //! Generate site centroid positions from a whole-molecule set of positions
+  SiteCentroids sitePositions(
+    const AngstromPositions& wrapper,
+    const std::vector<std::pair<AtomIndex, AtomIndex>>& substitutions = {}
+  ) const;
+
   inline bool thermalized() const {
     return thermalized_;
   }
@@ -203,11 +217,8 @@ public:
    */
   const Stereopermutators::Abstract& getAbstract() const;
 
-  /*!
-   * @brief Returns the underlying FeasibleStereopermutation
-   * @note This is library-internal and not part of the public API
-   */
-  const Stereopermutators::Feasible& getFeasible() const;
+  //! Returns the list of feasible abstract permutations
+  const std::vector<unsigned>& getFeasible() const;
 
   //! Returns the underlying ranking
   const RankingInformation& getRanking() const;
@@ -258,8 +269,8 @@ private:
   //! Abstract stereopermutations and intermediate state
   Stereopermutators::Abstract abstract_;
 
-  //! Models abstract stereopermutations and decides three-dimensional feasibility
-  Stereopermutators::Feasible feasible_;
+  //! List of abstract permutation indices that are feasible in three dimensions
+  std::vector<unsigned> feasibles_;
 
   //! The current state of assignment (if or not, and if so, which)
   boost::optional<unsigned> assignmentOption_;

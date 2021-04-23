@@ -685,7 +685,7 @@ void MoleculeBuilder::setAtomStereo(
     );
 
     auto soughtRotations = Stereopermutations::generateAllRotations(soughtStereopermutation, chiralData.shape);
-    const auto& assignables = permutator.getFeasible().indices;
+    const auto& assignables = permutator.getFeasible();
     auto assignmentIter = Temple::find_if(
       assignables,
       [&](const unsigned stereopermutationIndex) -> bool {

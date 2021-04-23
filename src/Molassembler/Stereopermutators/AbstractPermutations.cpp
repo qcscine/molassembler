@@ -6,6 +6,7 @@
 #include "Molassembler/Stereopermutators/AbstractPermutations.h"
 
 #include "Molassembler/Temple/Functional.h"
+#include "boost/optional.hpp"
 
 #include <algorithm>
 #include <cassert>

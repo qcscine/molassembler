@@ -26,6 +26,9 @@
 #include "Molassembler/Options.h"
 #include "Molassembler/Stereopermutators/AbstractPermutations.h"
 #include "Molassembler/Stereopermutators/FeasiblePermutations.h"
+#include "Molassembler/Stereopermutation/Composites.h"
+
+#include "Molassembler/Temple/Optionals.h"
 
 namespace Scine {
 namespace Molassembler {
@@ -47,35 +50,61 @@ Utils::AtomCollection Molecule::Impl::applyCanonicalizationMap(
 
 boost::optional<AtomStereopermutator> Molecule::Impl::makePermutator(
   AtomIndex candidateIndex,
-  const StereopermutatorList& stereopermutators
+  const StereopermutatorList& stereopermutators,
+  const boost::optional<AngstromPositions>& maybePositions,
+  const boost::optional<SubstitutionsGenerator::SubstitutionMap>& maybeSubstitutions
 ) const {
   // If there is already an atom stereopermutator on this index, stop
   if(stereopermutators.option(candidateIndex)) {
     return boost::none;
   }
 
-  RankingInformation localRanking = rankPriority(candidateIndex);
+  RankingInformation ranking = rankPriority(candidateIndex, {}, maybePositions);
 
   // Only non-terminal atoms may have permutators
-  if(localRanking.sites.size() <= 1) {
+  const unsigned S = ranking.sites.size();
+  if(S <= 1) {
     return boost::none;
   }
 
-  Shapes::Shape shape = inferShape(candidateIndex, localRanking).value_or_eval(
-    [&]() {return ShapeInference::firstOfSize(localRanking.sites.size());}
-  );
+  const Shapes::Shape shape = [&]() {
+    if(maybePositions) {
+      /* If positions are present, then the shape will be fitted, not inferred,
+       * so the shape in construction is of little consequence
+       */
+      return ShapeInference::firstOfSize(S);
+    }
 
+    return inferShape(candidateIndex, ranking).value_or_eval(
+      [&]() {return ShapeInference::firstOfSize(S);}
+    );
+  }();
 
-  // Construct a Stereopermutator here
+  const Stereopermutators::Feasible::Functor feasibilityFunctor {adjacencies_};
+  const auto thermalizationFunctor = AtomStereopermutator::thermalizationFunctor(adjacencies_);
+
   AtomStereopermutator permutator {
-    adjacencies_,
-    shape,
     candidateIndex,
-    std::move(localRanking)
+    shape,
+    std::move(ranking),
+    feasibilityFunctor,
+    thermalizationFunctor
   };
 
-  // Default assign the stereocenter if there is only one possible assignment
-  if(permutator.numAssignments() == 1) {
+  if(maybePositions) {
+    const auto substitutions = Temple::Optionals::flatMap(
+      maybeSubstitutions,
+      [&](const auto& map) {
+        return Temple::Optionals::mapFind(map, candidateIndex);
+      }
+    ).value_or(SubstitutionsGenerator::SubstitutionList {});
+
+    const auto siteCentroids = permutator.sitePositions(
+      maybePositions.value(),
+      substitutions
+    );
+    permutator.fit(siteCentroids, feasibilityFunctor, thermalizationFunctor);
+  } else if(permutator.numAssignments() == 1) {
     permutator.assign(0);
   }
 
@@ -85,6 +114,8 @@ boost::optional<AtomStereopermutator> Molecule::Impl::makePermutator(
 boost::optional<BondStereopermutator> Molecule::Impl::makePermutator(
   const BondIndex& bond,
   const StereopermutatorList& stereopermutators,
+  const boost::optional<AngstromPositions>& maybePositions,
+  const boost::optional<SubstitutionsGenerator::SubstitutionMap>& maybeSubstitutions,
   const BondStereopermutator::Alignment alignment
 ) const {
   // If there is already a bond stereopermutator on this edge, stop
@@ -92,24 +123,26 @@ boost::optional<BondStereopermutator> Molecule::Impl::makePermutator(
     return boost::none;
   }
 
-  AtomIndex source = bond.first;
-  AtomIndex target = bond.second;
+  const auto permutatorOptions = Temple::map(
+    bond,
+    [&](const AtomIndex side) {
+      return stereopermutators.option(side);
+    }
+  );
 
-  auto sourceAtomStereopermutatorOption = stereopermutators.option(source);
-  auto targetAtomStereopermutatorOption = stereopermutators.option(target);
+  const auto existAndAssigned = Temple::map(
+    permutatorOptions,
+    [](const auto& permutatorOption) -> bool {
+      return permutatorOption && permutatorOption->assigned() != boost::none;
+    }
+  );
 
-  // There need to be assigned stereopermutators on both vertices
-  if(
-    !sourceAtomStereopermutatorOption
-    || !targetAtomStereopermutatorOption
-    || sourceAtomStereopermutatorOption->assigned() == boost::none
-    || targetAtomStereopermutatorOption->assigned() == boost::none
-  ) {
+  if(!existAndAssigned.first || !existAndAssigned.second) {
     return boost::none;
   }
 
   // Construct a Stereopermutator here
-  BondStereopermutator newStereopermutator {
+  BondStereopermutator permutator {
     adjacencies_.inner(),
     stereopermutators,
     bond,
@@ -117,11 +150,39 @@ boost::optional<BondStereopermutator> Molecule::Impl::makePermutator(
   };
 
   // Default-assign single-assignment bond stereopermutators
-  if(newStereopermutator.numAssignments() == 1) {
-    newStereopermutator.assign(0);
+  if(maybePositions) {
+    const auto fittingRefs = Temple::map(
+      permutatorOptions,
+      [&](const auto& permutatorOption) -> BondStereopermutator::FittingReferences {
+        return {
+          permutatorOption.value(),
+          permutatorOption->getShapePositionMap()
+        };
+      }
+    );
+
+    const auto sitePositions = permutator.composite().orientations().map(
+      [&](const auto& orientation) -> AtomStereopermutator::SiteCentroids {
+        const auto substitutions = Temple::Optionals::flatMap(
+          maybeSubstitutions,
+          [&](const auto& map) {
+            return Temple::Optionals::mapFind(map, orientation.identifier);
+          }
+        ).value_or(SubstitutionsGenerator::SubstitutionList {});
+
+        return stereopermutators.at(orientation.identifier).sitePositions(
+          maybePositions.value(),
+          substitutions
+        );
+      }
+    );
+
+    permutator.fit(sitePositions, fittingRefs);
+  } else if(permutator.numAssignments() == 1) {
+    permutator.assign(0);
   }
 
-  return newStereopermutator;
+  return permutator;
 }
 
 StereopermutatorList Molecule::Impl::detectStereopermutators_() const {
@@ -134,24 +195,20 @@ StereopermutatorList Molecule::Impl::detectStereopermutators_() const {
   adjacencies_.inner().populateProperties();
 #endif
 
-  // Find AtomStereopermutators
-  for(
-    AtomIndex candidateIndex = 0;
-    candidateIndex < graph().V();
-    ++candidateIndex
-  ) {
-    if(auto permutator = makePermutator(candidateIndex, stereopermutatorList)) {
+  for(const AtomIndex candidate : graph().atoms()) {
+    if(auto permutator = makePermutator(candidate, stereopermutatorList)) {
       stereopermutatorList.add(std::move(permutator.value()));
     }
   }
 
-  // Find BondStereopermutators
   for(BondIndex bond : graph().bonds()) {
-    if(isGraphBasedBondStereopermutatorCandidate_(graph().bondType(bond))) {
-      if(auto permutator = makePermutator(bond, stereopermutatorList)) {
-        if(permutator->numStereopermutations() > 1) {
-          stereopermutatorList.add(std::move(permutator.value()));
-        }
+    if(!isGraphBasedBondStereopermutatorCandidate_(graph().bondType(bond))) {
+      continue;
+    }
+
+    if(auto permutator = makePermutator(bond, stereopermutatorList)) {
+      if(permutator->numStereopermutations() > 1) {
+        stereopermutatorList.add(std::move(permutator.value()));
       }
     }
   }
@@ -237,9 +294,10 @@ void Molecule::Impl::propagateGraphChange_() {
 
       // Propagate the state
       auto oldAtomStereopermutatorStateOption = stereopermutatorOption->propagate(
-        adjacencies_,
         std::move(localRanking),
-        newShapeOption
+        newShapeOption,
+        Stereopermutators::Feasible::Functor(adjacencies_),
+        AtomStereopermutator::thermalizationFunctor(adjacencies_)
       );
 
       /* If the modified stereopermutator has only one assignment and is
@@ -294,11 +352,13 @@ void Molecule::Impl::propagateGraphChange_() {
 
   // Look for new bond stereopermutators
   for(BondIndex bond : graph().bonds()) {
-    if(isGraphBasedBondStereopermutatorCandidate_(graph().bondType(bond))) {
-      if(auto permutator = makePermutator(bond, stereopermutators_)) {
-        if(permutator->numStereopermutations() > 1) {
-          stereopermutators_.add(std::move(permutator.value()));
-        }
+    if(!isGraphBasedBondStereopermutatorCandidate_(graph().bondType(bond))) {
+      continue;
+    }
+
+    if(auto permutator = makePermutator(bond, stereopermutators_)) {
+      if(permutator->numStereopermutations() > 1) {
+        stereopermutators_.add(std::move(permutator.value()));
       }
     }
   }
@@ -340,13 +400,22 @@ Molecule::Impl::Impl(
   const AngstromPositions& positions,
   const boost::optional<
     std::vector<BondIndex>
-  >& bondStereopermutatorCandidatesOptional
+  >& bondStereopermutatorCandidatesOptional,
+  const boost::optional<PeriodicBoundaryDuplicates>& periodics
 ) : adjacencies_(std::move(graph))
 {
+  const auto maybeSubstitutions = Temple::Optionals::map(
+    periodics,
+    [&](const PeriodicBoundaryDuplicates& some) {
+      return SubstitutionsGenerator::removeGhosts(adjacencies_, some);
+    }
+  );
+
   GraphAlgorithms::updateEtaBonds(adjacencies_.inner());
   stereopermutators_ = inferStereopermutatorsFromPositions(
     positions,
-    bondStereopermutatorCandidatesOptional
+    bondStereopermutatorCandidatesOptional,
+    maybeSubstitutions
   );
   ensureModelInvariants_();
 }
@@ -421,7 +490,7 @@ const BondStereopermutator& Molecule::Impl::addPermutator(
   const BondIndex& bond,
   BondStereopermutator::Alignment alignment
 ) {
-  auto permutator = makePermutator(bond, stereopermutators_, alignment);
+  auto permutator = makePermutator(bond, stereopermutators_, boost::none, boost::none, alignment);
   if(!permutator) {
     throw std::logic_error("Violated preconditions for permutator addition");
   }
@@ -648,9 +717,10 @@ void Molecule::Impl::removeAtom(const AtomIndex a) {
     }
 
     const auto propagatedState = stereopermutatorOption->propagate(
-      adjacencies_,
       std::move(localRanking),
-      newShapeOption
+      newShapeOption,
+      Stereopermutators::Feasible::Functor(adjacencies_),
+      AtomStereopermutator::thermalizationFunctor(adjacencies_)
     );
 
     for(const BondIndex edge : adjacencies_.bonds(indexToUpdate)) {
@@ -711,9 +781,10 @@ void Molecule::Impl::removeBond(const AtomIndex a, const AtomIndex b) {
       }
 
       stereopermutatorOption->propagate(
-        adjacencies_,
         std::move(localRanking),
-        newShapeOption
+        newShapeOption,
+        Stereopermutators::Feasible::Functor(adjacencies_),
+        AtomStereopermutator::thermalizationFunctor(adjacencies_)
       );
     }
 
@@ -812,11 +883,12 @@ void Molecule::Impl::setShapeAtAtom(
     }
 
     // Add the stereopermutator irrespective of how many assignments it has
-    auto newStereopermutator = AtomStereopermutator {
-      adjacencies_,
-      shape,
+    AtomStereopermutator newStereopermutator {
       a,
-      std::move(localRanking)
+      shape,
+      std::move(localRanking),
+      Stereopermutators::Feasible::Functor(adjacencies_),
+      AtomStereopermutator::thermalizationFunctor(adjacencies_)
     };
 
     // Default-assign stereopermutators with only one assignment
@@ -846,7 +918,11 @@ void Molecule::Impl::setShapeAtAtom(
     return;
   }
 
-  stereopermutatorOption->setShape(shape, adjacencies_);
+  stereopermutatorOption->setShape(
+    shape,
+    Stereopermutators::Feasible::Functor(adjacencies_),
+    AtomStereopermutator::thermalizationFunctor(adjacencies_)
+  );
   if(stereopermutatorOption->numAssignments() == 1) {
     stereopermutatorOption->assign(0);
   }
@@ -995,86 +1071,34 @@ const StereopermutatorList& Molecule::Impl::stereopermutators() const {
 }
 
 StereopermutatorList Molecule::Impl::inferStereopermutatorsFromPositions(
-  const AngstromPositions& angstromWrapper,
+  const AngstromPositions& wrapper,
   const boost::optional<
     std::vector<BondIndex>
-  >& explicitBondStereopermutatorCandidatesOption
+  >& explicitBondStereopermutatorCandidatesOption,
+  const boost::optional<SubstitutionsGenerator::SubstitutionMap>& substitutions
 ) const {
-  const AtomIndex size = graph().V();
   StereopermutatorList stereopermutators;
 
-  for(AtomIndex vertex = 0; vertex < size; vertex++) {
-    RankingInformation localRanking = rankPriority(vertex, {}, angstromWrapper);
-
-    // Skip terminal atoms
-    if(localRanking.sites.size() <= 1) {
-      continue;
+  for(const AtomIndex vertex : graph().atoms()) {
+    if(auto permutator = makePermutator(vertex, stereopermutators, wrapper, substitutions)) {
+      stereopermutators.add(std::move(permutator.value()));
     }
-
-    Shapes::Shape dummyShape = ShapeInference::firstOfSize(localRanking.sites.size());
-
-    // Construct it
-    AtomStereopermutator stereopermutator {
-      adjacencies_,
-      dummyShape,
-      vertex,
-      std::move(localRanking)
-    };
-
-    stereopermutator.fit(adjacencies_, angstromWrapper);
-    stereopermutators.add(std::move(stereopermutator));
   }
 
-  auto tryInstantiateBondStereopermutator = [&](const BondIndex& bondIndex) -> void {
-    // TODO this is suspiciously close to tryAddBondStereopermutator_
-    const auto stereopermutatorOptions = Temple::map(
-      bondIndex,
-      [&](const AtomIndex v) { return stereopermutators.option(v); }
-    );
+  const auto tryInstantiateBondStereopermutator = [&](const BondIndex& bond) {
+    auto permutator = makePermutator(bond, stereopermutators, wrapper, substitutions);
 
-    // There need to be assigned stereopermutators on both vertices
-    const auto existAndAssigned = Temple::map(
-      stereopermutatorOptions,
-      [](const auto& opt) -> bool {
-        return opt && opt->assigned() != boost::none;
-      }
-    );
-
-    if(!existAndAssigned.first || !existAndAssigned.second) {
-      return;
-    }
-
-    // Construct a Stereopermutator here
-    BondStereopermutator newStereopermutator {
-      adjacencies_.inner(),
-      stereopermutators,
-      bondIndex
-    };
-
-    // Generate references for call to BondStereopermutator::fit
-    const auto fittingReferences = Temple::map(
-      stereopermutatorOptions,
-      [&](const auto& opt) -> BondStereopermutator::FittingReferences {
-        return {
-          opt.value(),
-          opt->getShapePositionMap()
-        };
-      }
-    );
-    newStereopermutator.fit(angstromWrapper, fittingReferences);
-
-    if(newStereopermutator.assigned() != boost::none) {
-      stereopermutators.add(std::move(newStereopermutator));
+    if(permutator && permutator->assigned() != boost::none) {
+      stereopermutators.add(std::move(permutator.value()));
     }
   };
 
-  // Is there an explicit list of bonds on which to try BondStereopermutator instantiation?
   if(explicitBondStereopermutatorCandidatesOption) {
     for(const BondIndex& bondIndex : *explicitBondStereopermutatorCandidatesOption) {
       tryInstantiateBondStereopermutator(bondIndex);
     }
   } else {
-    // Every multiple-order bond is a candidate
+    // Every multiple-order bond type is a candidate
     for(const BondIndex& bondIndex : graph().bonds()) {
       if(isGraphBasedBondStereopermutatorCandidate_(graph().bondType(bondIndex))) {
         tryInstantiateBondStereopermutator(bondIndex);
@@ -1090,7 +1114,7 @@ StereopermutatorList Molecule::Impl::inferStereopermutatorsFromPositions(
 
     const auto& cycleIndices = makeRingIndexSequence(cycleBonds);
     const double rmsPlaneDeviation = Cartesian::planeOfBestFitRmsd(
-      angstromWrapper.positions,
+      wrapper.positions,
       cycleIndices
     );
 

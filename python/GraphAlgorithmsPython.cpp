@@ -3,7 +3,7 @@
  *   Copyright ETH Zurich, Laboratory of Physical Chemistry, Reiher Group.
  *   See LICENSE.txt for details.
  */
-#include "TypeCasters.h"
+#include "Utils/Pybind.h"
 
 #include "Molassembler/Graph.h"
 #include "Molassembler/GraphAlgorithms.h"
@@ -79,6 +79,35 @@ void init_graph_algorithms(pybind11::module& m) {
   );
 
   // TODO documentation here, and in C++ parts
+  pybind11::class_<EditCost> editCost(
+    m,
+    "EditCost",
+    R"delim(
+      Cost functor for graph edit distance calculations.
+    )delim"
+  );
+
+  pybind11::class_<FuzzyCost, EditCost> fuzzyCost(
+    m,
+    "FuzzyCost",
+    R"delim(
+      Cost functor for fuzzy graph edit distances. All costs (vertex and edge
+      alteration, element substitution and bond order substitution) are
+      unitary.
+    )delim"
+  );
+  fuzzyCost.def(pybind11::init<>());
+
+  pybind11::class_<ElementsConservedCost, EditCost> elementsConservedCost(
+    m,
+    "ElementsConservedCost",
+    R"delim(
+      Cost functor for graph edit distances conserving element types. Edge
+      alteration and bond order substitution costs are unitary, but vertex
+      alteration and element substitution are of cost 100.
+    )delim"
+  );
+  elementsConservedCost.def(pybind11::init<>());
 
   pybind11::class_<MinimalGraphEdits> editsCls(
     m,
@@ -145,11 +174,10 @@ void init_graph_algorithms(pybind11::module& m) {
   );
   m.def(
     "minimal_edits",
-    [](const Graph& a, const Graph& b) {
-      return minimalEdits(a, b);
-    },
+    &minimalEdits,
     pybind11::arg("a"),
     pybind11::arg("b"),
+    Utils::Arg("cost") = FuzzyCost {},
     R"delim(
       Minimal graph edits
 
@@ -166,6 +194,8 @@ void init_graph_algorithms(pybind11::module& m) {
 
       :param a: First graph to calculate edit distance for
       :param b: Second graph to calculate edit distance for
+      :param cost: Cost function for minimal edits. Defaults to FuzzyCost.
+        Alternative is ElementsConservedCost.
     )delim"
   );
 

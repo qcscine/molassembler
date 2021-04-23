@@ -101,7 +101,7 @@ struct BondStereopermutator::Impl : public Temple::Crtp::LexicographicComparable
   void applyPermutation(const std::vector<AtomIndex>& permutation);
 
   void fit(
-    const AngstromPositions& angstromWrapper,
+    const SitePositionsPair& sitePositions,
     std::pair<FittingReferences, FittingReferences> fittingReferences,
     FittingMode mode
   );

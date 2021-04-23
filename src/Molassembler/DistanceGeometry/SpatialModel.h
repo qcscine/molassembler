@@ -23,6 +23,7 @@
 #include "Molassembler/Graph.h"
 #include "Molassembler/StereopermutatorList.h"
 #include "Molassembler/AtomStereopermutator.h"
+#include "Molassembler/Stereopermutators/FeasiblePermutations.h"
 
 #include <unordered_map>
 
@@ -138,7 +139,7 @@ public:
   static boost::optional<ValueBounds> coneAngle(
     const std::vector<AtomIndex>& baseConstituents,
     const ValueBounds& coneHeightBounds,
-    const Graph& graph
+    const PrivateGraph& graph
   );
 
   /** @brief Calculates the cross angle between opposite cycle atoms in a spirocenter
@@ -167,7 +168,7 @@ public:
   static ValueBounds siteDistanceFromCenter(
     const std::vector<AtomIndex>& siteAtomList,
     AtomIndex placement,
-    const Graph& graph
+    const PrivateGraph& graph
   );
 
   /** @brief Yields central value plus/minus some absolute variance bounds
@@ -265,6 +266,7 @@ public:
    */
   static ValueBounds modelSiteAngleBounds(
     const AtomStereopermutator& permutator,
+    const Stereopermutators::LocalSpatialModel& localModel,
     const std::pair<SiteIndex, SiteIndex>& sites,
     double looseningMultiplier,
     const PrivateGraph& inner
@@ -286,6 +288,7 @@ public:
   static ChiralConstraint makeChiralConstraint(
     const AtomStereopermutator::MinimalChiralConstraint& minimalConstraint,
     const AtomStereopermutator& permutator,
+    const Stereopermutators::LocalSpatialModel& localModel,
     double looseningMultiplier
   );
 
@@ -497,6 +500,9 @@ public:
 private:
   // Molecule closure
   const Molecule& molecule_;
+
+  //! Local models of atom stereopermutators
+  std::unordered_map<AtomIndex, Stereopermutators::LocalSpatialModel> localModels_;
 
   //! Constraints by fixed positions
   BoundsMapType<2> constraints_;

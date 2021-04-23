@@ -70,6 +70,9 @@ public:
     //! Choose whichever assignment best represents the geometry directly
     Nearest
   };
+
+  using SitePositions = Eigen::Matrix<double, 3, Eigen::Dynamic>;
+  using SitePositionsPair = std::pair<SitePositions, SitePositions>;
 //!@}
 
 //!@name Static members
@@ -188,13 +191,20 @@ public:
    *
    * @complexity{@math{\Theta(P)} where @math{P} is the number of permutations}
    *
-   * @param angstromWrapper The positional information to extract the assignment
-   *   from
+   * @param sitePositions The site positions of each constuting atom
+   *   stereopermutator, following the same ordering as compositeAlignment()
    * @param fittingReferences Pair of FittingReferences to constituting atom
    *   stereopermutators (order is irrelevant)
    * @param mode Mode altering the assignment of stereopermutations depending
    *   on geometric closeness to the idealized minimum
    */
+  void fit(
+    const SitePositionsPair& sitePositions,
+    std::pair<FittingReferences, FittingReferences> fittingReferences,
+    FittingMode mode = FittingMode::Thresholded
+  );
+
+  //! @overload
   void fit(
     const AngstromPositions& angstromWrapper,
     std::pair<FittingReferences, FittingReferences> fittingReferences,
@@ -248,6 +258,9 @@ public:
    * @complexity{@math{\Theta(1)}}
    */
   const Stereopermutations::Composite& composite() const;
+
+  //! The atom identifier alignment of the permutational composite
+  std::pair<AtomIndex, AtomIndex> compositeAlignment() const;
 
   /*! @brief Angle between sites at stereopermutators in the current assignment
    *

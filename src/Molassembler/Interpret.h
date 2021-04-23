@@ -12,9 +12,8 @@
 #define INCLUDE_MOLASSEMBLER_INTERPRET_H
 
 #include "Molassembler/Export.h"
+#include "Molassembler/PeriodicBoundaries.h"
 #include "boost/optional.hpp"
-#include <vector>
-
 
 namespace Scine {
 namespace Utils {
@@ -30,7 +29,6 @@ namespace Molassembler {
 
 // Forward-declarations
 class Molecule;
-class Graph;
 class AngstromPositions;
 
 //! @brief Given Cartesian coordinates, construct graphs or molecules
@@ -78,8 +76,17 @@ struct MASM_EXPORT ComponentMap {
    */
   std::vector<Utils::AtomCollection> apply(const Utils::AtomCollection& atomCollection) const;
 
+  MASM_NO_EXPORT std::vector<AngstromPositions> apply(const AngstromPositions& positions) const;
+
+  MASM_NO_EXPORT std::vector<PeriodicBoundaryDuplicates> apply(
+    const std::unordered_set<unsigned>& uninterestingAtoms,
+    const std::unordered_map<unsigned, unsigned>& ghostAtomMap
+  ) const;
+
   //! Size of the map
   inline unsigned size() const { return map.size(); }
+
+  unsigned countComponents() const;
 
 //!@name Iterators
 //!@{
@@ -176,6 +183,43 @@ MASM_EXPORT MoleculesResult molecules(
 MASM_EXPORT MoleculesResult molecules(
   const Utils::AtomCollection& atomCollection,
   const Utils::BondOrderCollection& bondOrders,
+  BondDiscretizationOption discretization = BondDiscretizationOption::Binary,
+  const boost::optional<double>& stereopermutatorThreshold = 1.4
+);
+
+/**
+ * @brief Interpret molecules of a periodic system
+ *
+ * Interpret molecules into a simplified representation of structures with
+ * periodic boundary conditions.
+ *
+ * @param atoms Atom collection with ghost atoms
+ * @param periodicBonds Bond orders including extra bonds to ghost atoms
+ * @param uninterestingAtoms List of atoms for which to skip shape
+ *   classification and stereopermutator instantiation.
+ * @param ghostAtomMap Map from ghost atom indices to their base atom
+ * @param discretization Decide how bond orders are discretized into bond types
+ * @param stereopermutatorThreshold If specified, limits the
+ *   instantiation of BondStereopermutators onto edges whose fractional bond orders
+ *   exceed the provided threshold. If this is not desired, specify boost::none.
+ *
+ * @pre Ghost atom indices must be a separate group of higher indices than both
+ *   interesting and uninteresting atoms.
+ *
+ * @throws std::invalid_argument If the number of particles in the atom
+ *   collection and bond order collection do not match.
+ *
+ * @parblock @note Assumes that the provided atom collection's positions are in
+ * Bohr units @endparblock
+ *
+ * @parblock @note Any molecules interpreted with uninteresting atoms cannot be
+ * passed to conformer generation routines. @endparblock
+ */
+MASM_EXPORT MoleculesResult molecules(
+  const Utils::AtomCollection& atoms,
+  const Utils::BondOrderCollection& periodicBonds,
+  const std::unordered_set<unsigned>& uninterestingAtoms,
+  const std::unordered_map<unsigned, unsigned>& ghostAtomMap,
   BondDiscretizationOption discretization = BondDiscretizationOption::Binary,
   const boost::optional<double>& stereopermutatorThreshold = 1.4
 );
@@ -282,7 +326,7 @@ struct FalsePositive {
  * overlapping indices. If suggested bonds overlap, remove only that bond with
  * the higher probabiltiy.
  */
-std::vector<FalsePositive> uncertainBonds(
+MASM_EXPORT std::vector<FalsePositive> uncertainBonds(
   const Utils::AtomCollection& atomCollection,
   const Utils::BondOrderCollection& bondOrders
 );
@@ -301,7 +345,7 @@ std::vector<FalsePositive> uncertainBonds(
  * reasonable, you will need to iteratively call this function and alter
  * suggested bond orders.
  */
-std::vector<FalsePositive> badHapticLigandBonds(
+MASM_EXPORT std::vector<FalsePositive> badHapticLigandBonds(
   const Utils::AtomCollection& atomCollection,
   const Utils::BondOrderCollection& bondOrders
 );
@@ -311,7 +355,7 @@ std::vector<FalsePositive> badHapticLigandBonds(
  * @warning Pretty darn conservative implementation, removes only a single bond
  * from each false positive detection function call each iteration.
  */
-Utils::BondOrderCollection removeFalsePositives(
+MASM_EXPORT Utils::BondOrderCollection removeFalsePositives(
   const Utils::AtomCollection& atoms,
   Utils::BondOrderCollection bonds
 );

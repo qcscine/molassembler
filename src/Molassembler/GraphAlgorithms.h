@@ -167,10 +167,6 @@ struct MASM_EXPORT MinimalGraphEdits {
  * becomes intractable past 10 vertices due to combinatorial space explosion
  * and rapid memory exhaustion.
  *
- * @warning It's not perfect yet, the underlying maximum common subgraph
- * algorithm doesn't yield all possible maximum subgraphs and hence the set of
- * edits is only approximately minimal.
- *
  * @param a First graph to calculate edit distance for
  * @param b Second graph to calculate edit distance for
  * @param cost Cost functor for graph edits

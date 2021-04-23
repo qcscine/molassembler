@@ -162,7 +162,7 @@ void init_atom_stereopermutator(pybind11::module& m) {
 
   atomStereopermutator.def_property_readonly(
     "thermalized",
-    &AtomStereopermutator::thermalized,
+    pybind11::overload_cast<AtomIndex, Shapes::Shape, const RankingInformation&, const Graph&>(&AtomStereopermutator::thermalized),
     "Whether the stereopermutations are thermalized"
   );
 

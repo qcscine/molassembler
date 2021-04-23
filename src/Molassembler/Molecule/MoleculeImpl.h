@@ -12,6 +12,7 @@
 
 #include "Molassembler/Graph.h"
 #include "Molassembler/Graph/PrivateGraph.h"
+#include "Molassembler/PeriodicBoundaries.h"
 #include "Molassembler/StereopermutatorList.h"
 #include "Utils/Geometry/AtomCollection.h"
 
@@ -34,12 +35,16 @@ struct Molecule::Impl {
 /* "Private" helpers */
   boost::optional<AtomStereopermutator> makePermutator(
     AtomIndex candidateIndex,
-    const StereopermutatorList& stereopermutators
+    const StereopermutatorList& stereopermutators,
+    const boost::optional<AngstromPositions>& maybePositions = boost::none,
+    const boost::optional<SubstitutionsGenerator::SubstitutionMap>& maybeSubstitutions = boost::none
   ) const;
 
   boost::optional<BondStereopermutator> makePermutator(
     const BondIndex& bond,
     const StereopermutatorList& stereopermutators,
+    const boost::optional<AngstromPositions>& maybePositions = boost::none,
+    const boost::optional<SubstitutionsGenerator::SubstitutionMap>& maybeSubstitutions = boost::none,
     BondStereopermutator::Alignment alignment = BondStereopermutator::Alignment::Eclipsed
   ) const;
 
@@ -80,7 +85,8 @@ struct Molecule::Impl {
     const AngstromPositions& positions,
     const boost::optional<
       std::vector<BondIndex>
-    >& bondStereopermutatorCandidatesOptional = boost::none
+    >& bondStereopermutatorCandidatesOptional = boost::none,
+    const boost::optional<PeriodicBoundaryDuplicates>& periodics = boost::none
   );
 
   //! Graph and stereopermutators constructor
@@ -309,7 +315,8 @@ struct Molecule::Impl {
     const AngstromPositions& angstromWrapper,
     const boost::optional<
       std::vector<BondIndex>
-    >& explicitBondStereopermutatorCandidatesOption = boost::none
+    >& explicitBondStereopermutatorCandidatesOption = boost::none,
+    const boost::optional<SubstitutionsGenerator::SubstitutionMap>& substitutions = boost::none
   ) const;
 
   //! Compares two canonical instances with one another

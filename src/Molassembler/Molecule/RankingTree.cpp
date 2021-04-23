@@ -33,7 +33,6 @@
 namespace Scine {
 namespace Molassembler {
 
-// Must declare constexpr static member without definition!
 constexpr decltype(RankingTree::rootIndex) RankingTree::rootIndex;
 
 //! Helper class to write a graphviz representation of the generated tree
@@ -74,7 +73,7 @@ public:
       )
     );
 
-    bool hasStereopermutator = baseRef_.tree_[vertexIndex].stereopermutatorOption.operator bool();
+    const bool hasStereopermutator = baseRef_.tree_[vertexIndex].stereopermutatorOption.operator bool();
 
     os << "["
       << R"(label=")" << vertexIndex << "-" << symbolString
@@ -254,10 +253,10 @@ public:
      * all comparisons below are reversed.
      */
 
-    auto BondStereopermutatorOptionalA = base_.tree_[a].stereopermutatorOption;
-    auto BondStereopermutatorOptionalB = base_.tree_[b].stereopermutatorOption;
+    const auto& bondStereopermutatorOptionalA = base_.tree_[a].stereopermutatorOption;
+    const auto& bondStereopermutatorOptionalB = base_.tree_[b].stereopermutatorOption;
 
-    if(!BondStereopermutatorOptionalA && !BondStereopermutatorOptionalB) {
+    if(!bondStereopermutatorOptionalA && !bondStereopermutatorOptionalB) {
       /* This does not invalidate the program, it just means that all
        * uninstantiated BondStereopermutators are equal, and no relative ordering
        * is provided.
@@ -265,27 +264,27 @@ public:
       return false;
     }
 
-    if(BondStereopermutatorOptionalA && !BondStereopermutatorOptionalB) {
+    if(bondStereopermutatorOptionalA && !bondStereopermutatorOptionalB) {
       return true;
     }
 
-    if(!BondStereopermutatorOptionalA && BondStereopermutatorOptionalB) {
+    if(!bondStereopermutatorOptionalA && bondStereopermutatorOptionalB) {
       return false;
     }
 
     // Now we know both actually have a stereopermutatorPtr
-    const auto& BondStereopermutatorA = BondStereopermutatorOptionalA.value();
-    const auto& BondStereopermutatorB = BondStereopermutatorOptionalB.value();
+    const auto& bondStereopermutatorA = bondStereopermutatorOptionalA.value();
+    const auto& bondStereopermutatorB = bondStereopermutatorOptionalB.value();
 
     /* Reverse everything below for descending sorting and exploit tuple's
      * lexicographical-like comparator
      */
     return std::make_tuple(
-      BondStereopermutatorB.numStereopermutations(),
-      BondStereopermutatorB.indexOfPermutation()
+      bondStereopermutatorB.numStereopermutations(),
+      bondStereopermutatorB.indexOfPermutation()
     ) < std::make_tuple(
-      BondStereopermutatorA.numStereopermutations(),
-      BondStereopermutatorA.indexOfPermutation()
+      bondStereopermutatorA.numStereopermutations(),
+      bondStereopermutatorA.indexOfPermutation()
     );
   }
 };
@@ -315,8 +314,8 @@ public:
      */
     template<typename T, typename U>
     bool operator() (const T& a, const U& b) const {
-      auto aDepth = base_.mixedDepth_(a);
-      auto bDepth = base_.mixedDepth_(b);
+      const unsigned aDepth = base_.mixedDepth_(a);
+      const unsigned bDepth = base_.mixedDepth_(b);
 
       if(aDepth < bDepth) {
         return true;
@@ -344,8 +343,8 @@ public:
       }
 
       // Now we know both actually have an instantiated stereopermutator
-      const auto& StereopermutatorA = aOption.value();
-      const auto& StereopermutatorB = bOption.value();
+      const auto& stereopermutatorA = aOption.value();
+      const auto& stereopermutatorB = bOption.value();
 
       /* We only want to know whether they differ in stereogenicity, i.e.
        * whether one is stereogenic while the other isn't. In effect, this
@@ -362,8 +361,8 @@ public:
        * This is valid for both atom and bond stereopermutators
        */
       return (
-        (StereopermutatorA.numStereopermutations() > 1)
-        > (StereopermutatorB.numStereopermutations() > 1)
+        (stereopermutatorA.numStereopermutations() > 1)
+        > (stereopermutatorB.numStereopermutations() > 1)
       );
     }
   };
@@ -877,11 +876,15 @@ void RankingTree::applySequenceRules_(
     }
 
     // Instantiate a AtomStereopermutator here!
+    const Stereopermutators::Feasible::Functor feasibilityFunctor {graph_};
+    const auto thermalizationFunctor = AtomStereopermutator::thermalizationFunctor(graph_);
+
     AtomStereopermutator newStereopermutator {
-      graph_,
-      localShape,
       molSourceIndex,
-      centerRanking
+      localShape,
+      centerRanking,
+      feasibilityFunctor,
+      thermalizationFunctor
     };
 
     /* Find an assignment (and maybe a better shape) */
@@ -890,7 +893,11 @@ void RankingTree::applySequenceRules_(
        * therefore not wise to default-assign newStereopermutator if positions
        * are available.
        */
-      newStereopermutator.fit(graph_, positionsOption.value());
+      newStereopermutator.fit(
+        positionsOption.value(),
+        feasibilityFunctor,
+        thermalizationFunctor
+      );
     } else if(newStereopermutator.numAssignments() == 1) {
       // Default assign the stereopermutator for particularly simple cases
       newStereopermutator.assign(0);
@@ -905,7 +912,8 @@ void RankingTree::applySequenceRules_(
          */
         newStereopermutator.setShape(
           existingStereopermutatorOption->getShape(),
-          graph_
+          feasibilityFunctor,
+          thermalizationFunctor
         );
         newStereopermutator.assign(existingStereopermutatorOption->assigned());
       } else {
@@ -914,9 +922,18 @@ void RankingTree::applySequenceRules_(
          */
         try {
           AtomStereopermutator permutatorCopy = *existingStereopermutatorOption;
-          permutatorCopy.propagate(graph_, centerRanking, localShape);
+          permutatorCopy.propagate(
+            centerRanking,
+            localShape,
+            feasibilityFunctor,
+            thermalizationFunctor
+          );
           if(permutatorCopy.assigned()) {
-            newStereopermutator.setShape(permutatorCopy.getShape(), graph_);
+            newStereopermutator.setShape(
+              permutatorCopy.getShape(),
+              feasibilityFunctor,
+              thermalizationFunctor
+            );
             newStereopermutator.assign(permutatorCopy.assigned());
           }
         } catch(...) {}
@@ -932,7 +949,7 @@ void RankingTree::applySequenceRules_(
       tree_[targetIndex].stereopermutatorOption = std::move(newStereopermutator);
     }
 
-    if /*C++17 constexpr */ (buildTypeIsDebug) {
+    if /* C++17 constexpr */ (buildTypeIsDebug) {
       if(Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0) {
         writeGraphvizFiles_({
           adaptedMolGraphviz_,
@@ -1036,6 +1053,7 @@ void RankingTree::applySequenceRules_(
             const std::pair<const AtomStereopermutator&, const AtomStereopermutator&> permutators {
               sourcePermutator, targetPermutator
             };
+
             const auto fittingReferences = Temple::map(
               permutators,
               [&](const auto& perm) -> BondStereopermutator::FittingReferences {

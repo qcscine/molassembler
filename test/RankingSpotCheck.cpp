@@ -126,17 +126,12 @@ bool isStereogenic(
   const Molecule& molecule,
   AtomIndex i
 ) {
-  auto stereopermutatorOption = molecule.stereopermutators().option(i);
-
-  if(!stereopermutatorOption) {
-    return false;
-  }
-
-  if(stereopermutatorOption->numStereopermutations() <= 1) {
-    return false;
-  }
-
-  return true;
+  return Temple::Optionals::map(
+    molecule.stereopermutators().option(i),
+    [&](const auto& permutator) -> bool {
+      return permutator.numStereopermutations() > 1;
+    }
+  ).value_or(false);
 }
 
 std::string getPathString(const std::string& fileName) {

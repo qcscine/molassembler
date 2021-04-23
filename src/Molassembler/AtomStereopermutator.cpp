@@ -26,6 +26,22 @@ AtomStereopermutator::AtomStereopermutator(
   )
 ) {}
 
+AtomStereopermutator::AtomStereopermutator(
+    AtomIndex centerAtom,
+    Shapes::Shape shape,
+    RankingInformation ranking,
+    const FeasiblesGenerator& feasibility,
+    const ThermalizationPredicate& thermalization
+) : pImpl_(
+  std::make_unique<Impl>(
+    centerAtom,
+    shape,
+    std::move(ranking),
+    feasibility,
+    thermalization
+  )
+) {}
+
 AtomStereopermutator::AtomStereopermutator(AtomStereopermutator&& other) noexcept = default;
 AtomStereopermutator& AtomStereopermutator::operator = (AtomStereopermutator&& other) noexcept = default;
 
@@ -47,6 +63,15 @@ Shapes::Shape AtomStereopermutator::down(const Shapes::Shape shape, const Shapes
   return Impl::down(shape, removedVertex);
 }
 
+bool AtomStereopermutator::thermalized(
+  AtomIndex centerAtom,
+  Shapes::Shape shape,
+  const RankingInformation& ranking,
+  const Graph& graph
+) {
+  return Impl::thermalized(centerAtom, shape, ranking, graph);
+}
+
 void AtomStereopermutator::assign(boost::optional<unsigned> assignment) {
   pImpl_->assign(std::move(assignment));
 }
@@ -60,21 +85,43 @@ void AtomStereopermutator::applyPermutation(const std::vector<AtomIndex>& permut
 }
 
 boost::optional<AtomStereopermutator::ShapeMap> AtomStereopermutator::fit(
+  const SiteCentroids& centroids,
+  const FeasiblesGenerator& feasibility,
+  const ThermalizationPredicate& thermalization
+) {
+  return pImpl_->fit(centroids, feasibility, thermalization);
+}
+
+boost::optional<AtomStereopermutator::ShapeMap> AtomStereopermutator::fit(
+  const AngstromPositions& wrapper,
+  const FeasiblesGenerator& feasibility,
+  const ThermalizationPredicate& thermalization
+) {
+  return pImpl_->fit(sitePositions(wrapper), feasibility, thermalization);
+}
+
+boost::optional<AtomStereopermutator::ShapeMap> AtomStereopermutator::fit(
   const Graph& graph,
   const AngstromPositions& angstromWrapper
 ) {
-  return pImpl_->fit(graph, angstromWrapper);
+  return fit(
+    angstromWrapper,
+    Stereopermutators::Feasible::Functor(graph),
+    thermalizationFunctor(graph)
+  );
 }
 
 boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::propagate(
-  const Graph& graph,
   RankingInformation newRanking,
-  boost::optional<Shapes::Shape> shapeOption
+  boost::optional<Shapes::Shape> shapeOption,
+  const FeasiblesGenerator& feasibility,
+  const ThermalizationPredicate& thermalization
 ) {
   return pImpl_->propagate(
-    graph,
     std::move(newRanking),
-    std::move(shapeOption)
+    std::move(shapeOption),
+    feasibility,
+    thermalization
   );
 }
 
@@ -86,7 +133,19 @@ void AtomStereopermutator::setShape(
   const Shapes::Shape shape,
   const Graph& graph
 ) {
-  pImpl_->setShape(shape, graph);
+  pImpl_->setShape(
+    shape,
+    Stereopermutators::Feasible::Functor(graph),
+    thermalizationFunctor(graph)
+  );
+}
+
+void AtomStereopermutator::setShape(
+  const Shapes::Shape shape,
+  const FeasiblesGenerator& feasibility,
+  const ThermalizationPredicate& thermalization
+) {
+  pImpl_->setShape(shape, feasibility, thermalization);
 }
 
 void AtomStereopermutator::thermalize(const bool thermalization) {
@@ -130,6 +189,13 @@ std::vector<std::vector<SiteIndex>> AtomStereopermutator::siteGroups() const {
   return pImpl_->siteGroups();
 }
 
+AtomStereopermutator::SiteCentroids AtomStereopermutator::sitePositions(
+  const AngstromPositions& wrapper,
+  const std::vector<std::pair<AtomIndex, AtomIndex>>& substitutions
+) const {
+  return pImpl_->sitePositions(wrapper, substitutions);
+}
+
 bool AtomStereopermutator::thermalized() const {
   return pImpl_->thermalized();
 }
@@ -138,7 +204,7 @@ const Stereopermutators::Abstract& AtomStereopermutator::getAbstract() const {
   return pImpl_->getAbstract();
 }
 
-const Stereopermutators::Feasible& AtomStereopermutator::getFeasible() const {
+const std::vector<unsigned>& AtomStereopermutator::getFeasible() const {
   return pImpl_->getFeasible();
 }
 

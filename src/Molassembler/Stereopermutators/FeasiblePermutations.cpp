@@ -41,7 +41,7 @@ bool Feasible::linkPossiblyFeasible(
   const DistanceGeometry::ValueBounds siteIConeAngle = cones.at(link.sites.first).value();
   const DistanceGeometry::ValueBounds siteJConeAngle = cones.at(link.sites.second).value();
 
-  const double symmetryAngle = DistanceGeometry::SpatialModel::siteCentralAngle(
+  const double shapeAngle = DistanceGeometry::SpatialModel::siteCentralAngle(
     placement,
     shape,
     ranking,
@@ -76,7 +76,7 @@ bool Feasible::linkPossiblyFeasible(
         link.cycleSequence[2],
         graph.inner()
       ),
-      symmetryAngle,
+      shapeAngle,
       AtomInfo::bondRadius(graph.elementType(placement))
     );
   }
@@ -89,7 +89,7 @@ bool Feasible::linkPossiblyFeasible(
    */
   const double alpha = std::max(
     0.0,
-    symmetryAngle - siteIConeAngle.upper - siteJConeAngle.upper
+    shapeAngle - siteIConeAngle.upper - siteJConeAngle.upper
   );
 
   /* We need to respect the graph as ground truth. If a cycle is of size
@@ -181,7 +181,7 @@ bool Feasible::possiblyFeasible(
       }
 
       // siteCentralAngle yields undistorted symmetry angles for haptic sites
-      const double symmetryAngle = DistanceGeometry::SpatialModel::siteCentralAngle(
+      const double shapeAngle = DistanceGeometry::SpatialModel::siteCentralAngle(
         placement,
         shape,
         ranking,
@@ -196,7 +196,7 @@ bool Feasible::possiblyFeasible(
        */
       if(
         (
-          symmetryAngle
+          shapeAngle
           - coneAngles.at(siteI).value().lower
           - coneAngles.at(siteJ).value().lower
         ) < 0
@@ -227,12 +227,93 @@ bool Feasible::possiblyFeasible(
   );
 }
 
-Feasible::Feasible(
-  const Abstract& abstractPermutations,
+std::vector<unsigned> Feasible::Functor::operator() (
+  const Abstract& abstract,
+  Shapes::Shape shape,
+  AtomIndex placement,
+  const RankingInformation& ranking
+) const {
+  const unsigned P = abstract.permutations.list.size();
+
+  // Determine which permutations are feasible and which aren't
+  const bool hapticSitesExist = Temple::any_of(
+    ranking.sites,
+    [](const auto& siteAtoms) -> bool {
+      return siteAtoms.size() > 1;
+    }
+  );
+  if(ranking.links.empty() && !hapticSitesExist) {
+    return Temple::iota<unsigned>(P);
+  }
+
+  const LocalSpatialModel spatial {
+    placement,
+    ranking,
+    graph.inner()
+  };
+  std::vector<unsigned> indices;
+  indices.reserve(P);
+  for(unsigned i = 0; i < P; ++i) {
+    if(
+      possiblyFeasible(
+        abstract.permutations.list.at(i),
+        placement,
+        abstract.canonicalSites,
+        spatial.coneAngles,
+        ranking,
+        shape,
+        graph
+      )
+    ) {
+      indices.push_back(i);
+    }
+  }
+  indices.shrink_to_fit();
+
+  return indices;
+}
+
+std::vector<unsigned> Feasible::Unchecked::operator() (
+  const Abstract& abstract,
+  Shapes::Shape /* shape */,
+  AtomIndex /* placement */,
+  const RankingInformation& /* ranking */
+) const {
+  const unsigned P = abstract.permutations.list.size();
+  return Temple::iota<unsigned>(P);
+}
+
+boost::optional<unsigned> Feasible::findRotationallySuperposableAssignment(
+  const Stereopermutations::Stereopermutation& permutation,
   const Shapes::Shape shape,
+  const Abstract& abstract,
+  const std::vector<unsigned>& feasibles
+) {
+  const auto trialRotations = Stereopermutations::generateAllRotations(permutation, shape);
+  const auto feasiblesIter = Temple::find_if(
+    feasibles,
+    [&](const unsigned feasible) -> bool {
+      const auto rotationalMatchIter = Temple::find(
+        trialRotations,
+        abstract.permutations.list.at(feasible)
+      );
+      return rotationalMatchIter != std::end(trialRotations);
+    }
+  );
+  if(feasiblesIter == std::end(feasibles)) {
+    return boost::none;
+  }
+
+  /* Return the index within the list of feasibles (assignment), not the
+   * abstract stereopermutation index
+   */
+  return feasiblesIter - std::begin(feasibles);
+}
+
+LocalSpatialModel::LocalSpatialModel(
   const AtomIndex placement,
   const RankingInformation& ranking,
-  const Graph& graph
+  const PrivateGraph& graph
 ) {
   using ModelType = DistanceGeometry::SpatialModel;
 
@@ -257,46 +338,6 @@ Feasible::Feasible(
         graph
       )
     );
-  }
-
-  // Determine which permutations are feasible and which aren't
-  const unsigned P = abstractPermutations.permutations.list.size();
-  if(
-    // Links are present
-    !ranking.links.empty()
-    // OR there are haptic sites
-    || Temple::sum(
-      Temple::Adaptors::transform(
-        ranking.sites,
-        [](const auto& siteAtomsList) -> unsigned {
-          if(siteAtomsList.size() == 1) {
-            return 0;
-          }
-
-          return 1;
-        }
-      )
-    ) > 0
-  ) {
-    indices.reserve(P);
-    for(unsigned i = 0; i < P; ++i) {
-      if(
-        possiblyFeasible(
-          abstractPermutations.permutations.list.at(i),
-          placement,
-          abstractPermutations.canonicalSites,
-          coneAngles,
-          ranking,
-          shape,
-          graph
-        )
-      ) {
-        indices.push_back(i);
-      }
-    }
-    indices.shrink_to_fit();
-  } else {
-    indices = Temple::iota<unsigned>(P);
   }
 }
 
