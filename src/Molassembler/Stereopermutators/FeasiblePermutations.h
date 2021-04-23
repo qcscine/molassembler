@@ -17,7 +17,7 @@
 namespace Scine {
 namespace Molassembler {
 
-struct PrivateGraph;
+class PrivateGraph;
 
 namespace Stereopermutators {
 

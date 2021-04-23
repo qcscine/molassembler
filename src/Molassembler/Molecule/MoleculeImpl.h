@@ -316,6 +316,7 @@ struct Molecule::Impl {
     const boost::optional<
       std::vector<BondIndex>
     >& explicitBondStereopermutatorCandidatesOption = boost::none,
+    boost::optional<const std::unordered_set<AtomIndex>&> uninteresting = boost::none,
     const boost::optional<SubstitutionsGenerator::SubstitutionMap>& substitutions = boost::none
   ) const;
 

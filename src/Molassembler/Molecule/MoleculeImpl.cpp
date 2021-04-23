@@ -411,10 +411,16 @@ Molecule::Impl::Impl(
     }
   );
 
+  const auto maybeUninteresting = Temple::Optionals::map(
+    periodics,
+    [](const auto& p) -> const auto& { return p.uninterestingAtoms; }
+  );
+
   GraphAlgorithms::updateEtaBonds(adjacencies_.inner());
   stereopermutators_ = inferStereopermutatorsFromPositions(
     positions,
     bondStereopermutatorCandidatesOptional,
+    maybeUninteresting,
     maybeSubstitutions
   );
   ensureModelInvariants_();
@@ -1075,11 +1081,16 @@ StereopermutatorList Molecule::Impl::inferStereopermutatorsFromPositions(
   const boost::optional<
     std::vector<BondIndex>
   >& explicitBondStereopermutatorCandidatesOption,
+  boost::optional<const std::unordered_set<AtomIndex>&> uninteresting,
   const boost::optional<SubstitutionsGenerator::SubstitutionMap>& substitutions
 ) const {
   StereopermutatorList stereopermutators;
 
   for(const AtomIndex vertex : graph().atoms()) {
+    if(uninteresting && uninteresting->count(vertex) > 0) {
+      continue;
+    }
+
     if(auto permutator = makePermutator(vertex, stereopermutators, wrapper, substitutions)) {
       stereopermutators.add(std::move(permutator.value()));
     }
