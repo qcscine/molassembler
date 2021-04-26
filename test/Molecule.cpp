@@ -909,8 +909,9 @@ BOOST_AUTO_TEST_CASE(Periodic1d, *boost::unit_test::label("Molassembler")) {
 
   const auto& interpretedMol = interpreted.molecules.front();
   const auto h3Molecule = IO::Experimental::parseSmilesSingleMolecule("[H]1-[H]-[H]1");
+  auto strictness = AtomEnvironmentComponents::ElementTypes | AtomEnvironmentComponents::BondOrders;
   BOOST_CHECK(h3Molecule.stereopermutators().at(1).getShape() == Shapes::Shape::Line);
-  BOOST_CHECK(interpretedMol == h3Molecule);
+  BOOST_CHECK(interpretedMol.modularIsomorphism(h3Molecule, strictness));
 }
 
 BOOST_AUTO_TEST_CASE(Periodic2d, *boost::unit_test::label("Molassembler")) {
@@ -967,9 +968,8 @@ BOOST_AUTO_TEST_CASE(Periodic2d, *boost::unit_test::label("Molassembler")) {
 }
 
 BOOST_AUTO_TEST_CASE(Periodic3d, *boost::unit_test::label("Molassembler")) {
-  boost::filesystem::path filePath("data/inorganics/heterogeneous");
+  boost::filesystem::path filePath("inorganics/heterogeneous");
   filePath /= "cu_butyl.xyz";
-  std::cout << filePath.string() << std::endl;
   auto fileContent = Utils::ChemicalFileHandler::read(filePath.string());
   auto atoms = fileContent.first;
   BOOST_CHECK(atoms.size() == 40);
@@ -994,8 +994,15 @@ BOOST_AUTO_TEST_CASE(Periodic3d, *boost::unit_test::label("Molassembler")) {
   BOOST_CHECK(map.size() == nSurfaceImages + nMoleculeImages);
 
   // One molecule is interpreted
-  const auto interpreted = Interpret::molecules(atoms, bonds, unimportant, map);
+  const auto interpreted = Interpret::molecules(atomsWithImages, bonds, unimportant, map);
   BOOST_CHECK_EQUAL(interpreted.molecules.size(), 1);
+  if(interpreted.molecules.size() > 1) {
+    unsigned i = 0;
+    for(const Molecule& m : interpreted.molecules) {
+      IO::write("periodic-" + std::to_string(i) + ".svg", m);
+      ++i;
+    }
+  }
 
   // Compositional topographical checks
   auto interpretedMol = interpreted.molecules.front();
@@ -1009,7 +1016,7 @@ BOOST_AUTO_TEST_CASE(Periodic3d, *boost::unit_test::label("Molassembler")) {
   BOOST_CHECK_EQUAL(interpretedMol.E(),  nEdges);
 
   // No stereopermutators on unimportant atoms
-  BOOST_CHECK(interpretedMol.stereopermutators().size() == 13);
+  BOOST_CHECK_EQUAL(interpretedMol.stereopermutators().size(), 13);
 
   // Can be safely canonicalized and serialized/deserialized
   BOOST_CHECK_NO_THROW(interpretedMol.canonicalize());

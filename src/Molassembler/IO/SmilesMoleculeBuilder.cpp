@@ -244,7 +244,9 @@ boost::optional<PiSubgraph::VertexSet> PiSubgraph::match() {
     const unsigned S = boost::num_vertices(g);
     std::vector<PrivateGraph::Vertex> mate(S);
     const bool success = boost::checked_edmonds_maximum_cardinality_matching(g, &mate[0]);
-    assert(success);
+    if(!success) {
+      return false;
+    }
     const unsigned matchingSize = boost::matching_size(g, &mate[0]);
     return 2 * matchingSize == S;
   };

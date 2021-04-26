@@ -85,7 +85,7 @@ struct BondData {
       case SmilesBondType::Quadruple:
         return BondType::Quadruple;
       default:
-        assert(false);
+        throw std::logic_error("Unhandled bond type");
     }
   }
 

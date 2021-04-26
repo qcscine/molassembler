@@ -25,6 +25,9 @@ Added
   plots the edits.
 - Conformer deduplication: More ``Relabeler``-related functions
 - Experimental SMILES emitter: ``IO/SmilesEmitter.h``
+- Limited support for periodic boundary conditions via Utils::PeriodicSystem.
+  Periodic systems can be interpreted, canonicalized and serialized, but not
+  conformer generated. Ranking across boundaries is yet unsupported.
 - Python bindings:
 
   - Added modifying functions to ``Graph``
