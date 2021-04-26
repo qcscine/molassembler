@@ -882,15 +882,15 @@ BOOST_AUTO_TEST_CASE(EtaBondDynamism, *boost::unit_test::label("Molassembler")) 
 
 BOOST_AUTO_TEST_CASE(Periodic1d, *boost::unit_test::label("Molassembler")) {
   /*
-   *  h | H H         H | h
+   *  h | H H H | h
    *  small h represent image atoms
    */
   auto elements = Utils::ElementTypeCollection{Utils::ElementType::H, Utils::ElementType::H, Utils::ElementType::H};
   Utils::PositionCollection positions = Eigen::MatrixX3d::Zero(3, 3);
   positions(1, 0) = 1.0;
-  positions(2, 0) = 9.0;
+  positions(2, 0) = 2.0;
   auto h3 = Utils::AtomCollection(elements, positions);
-  auto pbc = Utils::PeriodicBoundaries(Eigen::Matrix3d::Identity() * 10.0);
+  auto pbc = Utils::PeriodicBoundaries(Eigen::Matrix3d::Identity() * 3.0);
   std::unordered_set<unsigned> solidStateIndices = {};
 
   auto ps = Utils::PeriodicSystem(pbc, h3, solidStateIndices);
@@ -908,7 +908,7 @@ BOOST_AUTO_TEST_CASE(Periodic1d, *boost::unit_test::label("Molassembler")) {
   BOOST_CHECK_EQUAL(interpreted.molecules.size(), 1);
 
   const auto& interpretedMol = interpreted.molecules.front();
-  const auto h3Molecule = IO::Experimental::parseSmilesSingleMolecule("[H]-[H]-[H]");
+  const auto h3Molecule = IO::Experimental::parseSmilesSingleMolecule("[H]1-[H]-[H]1");
   BOOST_CHECK(h3Molecule.stereopermutators().at(1).getShape() == Shapes::Shape::Line);
   BOOST_CHECK(interpretedMol == h3Molecule);
 }
@@ -954,6 +954,62 @@ BOOST_AUTO_TEST_CASE(Periodic2d, *boost::unit_test::label("Molassembler")) {
 
   // No stereopermutators on unimportant atoms
   BOOST_CHECK(interpretedMol.stereopermutators().empty());
+
+  // Can be safely canonicalized and serialized/deserialized
+  BOOST_CHECK_NO_THROW(interpretedMol.canonicalize());
+
+  std::string json;
+  Molecule decoded;
+
+  BOOST_CHECK_NO_THROW(json = JsonSerialization(interpretedMol));
+  BOOST_CHECK_NO_THROW(decoded = JsonSerialization(json));
+  BOOST_CHECK(interpretedMol == decoded);
+}
+
+BOOST_AUTO_TEST_CASE(Periodic3d, *boost::unit_test::label("Molassembler")) {
+  boost::filesystem::path filePath("data/inorganics/heterogeneous");
+  filePath /= "cu_butyl.xyz";
+  std::cout << filePath.string() << std::endl;
+  auto fileContent = Utils::ChemicalFileHandler::read(filePath.string());
+  auto atoms = fileContent.first;
+  BOOST_CHECK(atoms.size() == 40);
+  auto pbc = Utils::PeriodicBoundaries(
+    "14.516605,14.516605,71.116552,90.000000,90.000000,120.000000");
+  std::unordered_set<unsigned> solidStateIndices;
+  for(unsigned i = 0; i < 27; ++i) {
+    solidStateIndices.insert(i);
+  }
+  auto ps = Utils::PeriodicSystem(pbc, atoms, solidStateIndices);
+  auto data = ps.getDataForMolassemblerInterpretation();
+  auto atomsWithImages = std::get<0>(data);
+  auto bonds = std::get<1>(data);
+  auto unimportant = std::get<2>(data);
+  auto map = std::get<3>(data);
+  const int nSurfaceImages = 3 * 14;
+  const int nMoleculeImages = 8;
+  const int nExpectedAtomsWithImages = atoms.size() + nSurfaceImages + nMoleculeImages;
+  BOOST_CHECK(atomsWithImages.size() == nExpectedAtomsWithImages);
+  BOOST_CHECK(bonds.getSystemSize() == nExpectedAtomsWithImages);
+  BOOST_CHECK(unimportant.size() == 27);
+  BOOST_CHECK(map.size() == nSurfaceImages + nMoleculeImages);
+
+  // One molecule is interpreted
+  const auto interpreted = Interpret::molecules(atoms, bonds, unimportant, map);
+  BOOST_CHECK_EQUAL(interpreted.molecules.size(), 1);
+
+  // Compositional topographical checks
+  auto interpretedMol = interpreted.molecules.front();
+  BOOST_CHECK_EQUAL(interpretedMol.V(), 40);
+  int nSlabBonds =
+    9 * 9 + // bottom layer
+    9 * 12 + // middle layer
+    9 * 9; // top layer without adsorbant bond
+  int nEdges = nSlabBonds / 2; // remove double counting
+  nEdges += 13; // adsorbant edges with edge to slab
+  BOOST_CHECK_EQUAL(interpretedMol.E(),  nEdges);
+
+  // No stereopermutators on unimportant atoms
+  BOOST_CHECK(interpretedMol.stereopermutators().size() == 13);
 
   // Can be safely canonicalized and serialized/deserialized
   BOOST_CHECK_NO_THROW(interpretedMol.canonicalize());
