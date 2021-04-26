@@ -1016,7 +1016,7 @@ BOOST_AUTO_TEST_CASE(Periodic3d, *boost::unit_test::label("Molassembler")) {
   BOOST_CHECK_EQUAL(interpretedMol.E(),  nEdges);
 
   // No stereopermutators on unimportant atoms
-  BOOST_CHECK_EQUAL(interpretedMol.stereopermutators().size(), 13);
+  BOOST_CHECK_EQUAL(interpretedMol.stereopermutators().size(), 4); // non-terminal molecular atoms
 
   // Can be safely canonicalized and serialized/deserialized
   BOOST_CHECK_NO_THROW(interpretedMol.canonicalize());
