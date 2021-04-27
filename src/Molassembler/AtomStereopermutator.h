@@ -78,12 +78,16 @@ struct ChiralConstraint;
  */
 class MASM_EXPORT AtomStereopermutator {
 public:
+  //! Mapping between site indices of a ranking and vertices of a shape
   using ShapeMap = Temple::StrongIndexFlatMap<SiteIndex, Shapes::Vertex>;
 
+  //! Spatial positions of the centroids of sites
   using SiteCentroids = Eigen::Matrix<double, 3, Eigen::Dynamic>;
 
+  //! Predicate to decide whether an atom stereopermutator is thermalized
   using ThermalizationPredicate = std::function<bool(AtomIndex, Shapes::Shape, const RankingInformation&)>;
 
+  //! Generator function to list spatially feasible permutation indices
   using FeasiblesGenerator = std::function<
     std::vector<unsigned>(
       const Stereopermutators::Abstract& abstract,
@@ -183,6 +187,20 @@ public:
 
 //!@name Statics
 //!@{
+  /*! @brief Decide whether stereopermutations are thermalized based on the graph
+   *
+   * If Options::Thermalization::pyramidalInversion is set, considers
+   * asymmetric pyramidal nitrogen atom centers a stereocenter only if part of a
+   * cycle of size 4 or smaller.
+   *
+   * If Options::Thermalization::berryPseudorotation is set, the shape is a
+   * trigonal bipyramid and there are no links between sites,
+   * stereopermutations are thermalized.
+   *
+   * If Options::Thermalization::bartellMechanism is set, the shape is a
+   * pentagonal bipyramid and there are no links between sites,
+   * stereopermutations are thermalized.
+   */
   static bool thermalized(
     AtomIndex centerAtom,
     Shapes::Shape shape,
@@ -190,6 +208,7 @@ public:
     const Graph& graph
   );
 
+  //! Binds a graph instance into a functor invoking thermalized
   static auto thermalizationFunctor(const Graph& g) {
     return [&g](AtomIndex centerAtom, Shapes::Shape shape, const RankingInformation& ranking) {
       return AtomStereopermutator::thermalized(centerAtom, shape, ranking, g);

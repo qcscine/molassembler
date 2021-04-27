@@ -63,6 +63,14 @@ auto flatMap(const OptionalType<T>& optional, UnaryFunction&& function) {
   return OptionalU {};
 }
 
+/**
+ * @brief Partial function to find a value from a key in a map.
+ *
+ * @param map The map to search
+ * @param key The key to look for
+ *
+ * @return The value wrapped in an optional if found, boost::none otherwise.
+ */
 template<class Map, typename Key>
 auto mapFind(const Map& map, const Key& key) {
   using Value = decltype(std::declval<Map>().begin()->second);

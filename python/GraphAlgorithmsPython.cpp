@@ -78,12 +78,11 @@ void init_graph_algorithms(pybind11::module& m) {
     )delim"
   );
 
-  // TODO documentation here, and in C++ parts
   pybind11::class_<EditCost> editCost(
     m,
     "EditCost",
     R"delim(
-      Cost functor for graph edit distance calculations.
+      Base class of a cost functor for graph edit distance calculations.
     )delim"
   );
 

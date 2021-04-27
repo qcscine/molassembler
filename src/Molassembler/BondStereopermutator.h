@@ -71,7 +71,9 @@ public:
     Nearest
   };
 
+  //! Spatial centroids of atom stereopermutator site atoms
   using SitePositions = Eigen::Matrix<double, 3, Eigen::Dynamic>;
+  //! Spatial centroids of two atom stereopermutators' site atoms
   using SitePositionsPair = std::pair<SitePositions, SitePositions>;
 //!@}
 
