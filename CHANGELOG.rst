@@ -6,28 +6,33 @@ All notable changes to this project will be documented in this file.
 The format is based on `Keep a Changelog <http://keepachangelog.com/en/1.0.0/>`_
 and this project adheres to `Semantic Versioning <http://semver.org/spec/v2.0.0.html>`_.
 
-1.1.0 [in progress]
--------------------
+1.1.0
+-----
 
 Added
 .....
 
-- Molecule: Bond stereopermutator addition and removal functions
-- Molecule: Manual atom stereopermutator thermalization control
-- Graph: Added modifying functions to the interface
-- Graph algorithm: Ranking equivalent groups and ranking distinct atoms
-  algorithms exploiting ranking results to classify chemical equivalence.
-- Graph algorithm: Shortest path generator between vertices in the graph
-- Graph algorithm: Edit distance. Algorithm to calculate minimal set of vertex
-  and edge alterations to transform one graph into another. 
-- Graph algorithm: Reaction edit distance. Variation of the graph edit distance
-  algorithm that conserves element types. Also adds an associated function that
-  plots the edits.
+- ``Molecule``: 
+  - Bond stereopermutator addition and removal functions
+  - Manual atom stereopermutator thermalization control
+- ``Graph``: Added modifying functions to the interface for stand-alone class use
+- Graph algorithms 
+
+  - Ranking equivalent groups and ranking distinct atoms algorithms exploiting
+    ranking results to classify chemical equivalence.
+  - Shortest path generator between vertices in the graph
+  - Edit distance. Algorithm to calculate minimal set of vertex and edge
+    alterations to transform one graph into another. 
+  - Reaction edit distance. Variation of the graph edit distance algorithm that
+    conserves element types. Also adds an associated function that plots the
+    edits.
+
 - Conformer deduplication: More ``Relabeler``-related functions
 - Experimental SMILES emitter: ``IO/SmilesEmitter.h``
-- Limited support for periodic boundary conditions via Utils::PeriodicSystem.
-  Periodic systems can be interpreted, canonicalized and serialized, but not
-  conformer generated. Ranking across boundaries is yet unsupported.
+- Limited support for periodic boundary conditions via
+  ``Utils::PeriodicSystem``. Periodic systems can be interpreted, canonicalized
+  and serialized, but not conformer generated. Ranking across boundaries is yet
+  unsupported.
 - Python bindings:
 
   - Added modifying functions to ``Graph``
@@ -58,7 +63,7 @@ Changed
 - SMILES parser
 
   - Parsing errors as part of exception string, not written to stdout
-  - Add perfect matching of aromatic subgraphs, error reporting
+  - Perfect matching of aromatic subgraphs, error reporting
   - Fix valence filling bug for atom types with multiple valid valences
 
 - Python bindings
@@ -75,6 +80,9 @@ Deprecated
   to match complexity annotations and single-letter object properties
 - ``StereopermutatorList`` method ``try_remove`` is deprecated in favor of
   ``remove``, which now behaves as ``try_remove`` would (no throwing).
+- Several ``AtomStereopermutator`` methods have been deprecated in favor of
+  refactors with other function arguments not tightly coupled to the ``Graph``
+  class, permitting stand-alone class use
 
 Removed
 .......
@@ -86,7 +94,7 @@ Fixed
 .....
 
 - Conformer generation: Removed an incorrect check for non-terminal vertices
-  without an atom stereopermutator
+  without an atom stereopermutator failing in some haptic cases
 - Permutator propagation: 
 
   - Fixed missing propagation of atom stereopermutator placement and re-keying
@@ -95,6 +103,8 @@ Fixed
 
 - Directed conformer generation: Fixed incorrect precondition check with
   unassigned stereopermutators
+- Python bindings' ``interpret.interpret`` has been renamed to an
+  ``interpret.molecules`` overload as originally intended.
 
 
 
