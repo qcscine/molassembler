@@ -60,7 +60,11 @@ SubstitutionsGenerator::removeGhosts(
       return i == j + 1;
     }
   );
-  if(!sequentialGroup || ghosts.front() != graph.V() - 1) {
+  const bool largestGhostIsV = (
+    ghosts.empty()
+    || ghosts.front() == graph.V() - 1
+  );
+  if(!sequentialGroup || !largestGhostIsV) {
     throw std::runtime_error("Violated pbc precondition that ghost atoms must be a contiguous block of atom indices larger than all others");
   }
 
