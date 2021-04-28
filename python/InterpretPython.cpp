@@ -294,7 +294,7 @@ void init_interpret(pybind11::module& m) {
   );
 
   interpretSubmodule.def(
-    "interpret",
+    "molecules",
     pybind11::overload_cast<
       const AtomCollection&,
       Interpret::BondDiscretizationOption,
@@ -309,7 +309,7 @@ void init_interpret(pybind11::module& m) {
 
       Attempts to interpret (possibly multiple) Molecules from element types
       and positional information. Bond orders are calculated from atom-pairwise
-      spatial distances using UFF parameters. The bond orders are then
+      spatial distances by Utils::BondDetector. The bond orders are then
       discretized into bond types. Connected components within the space are
       identified and individually instantiated into Molecules. The
       instantiation behavior of BondStereopermutators in the Molecules can be
@@ -324,6 +324,54 @@ void init_interpret(pybind11::module& m) {
     )delim"
   );
 
+  interpretSubmodule.def(
+    "molecules",
+    pybind11::overload_cast<
+      const AtomCollection&,
+      const BondOrderCollection&,
+      const std::unordered_set<unsigned>&,
+      const std::unordered_map<unsigned, unsigned>&,
+      Interpret::BondDiscretizationOption,
+      const boost::optional<double>&
+    >(&Interpret::molecules),
+    pybind11::arg("atom_collection"),
+    pybind11::arg("bond_orders"),
+    pybind11::arg("uninteresting_atoms"),
+    pybind11::arg("ghost_atom_map"),
+    pybind11::arg("discretization"),
+    pybind11::arg("stereopermutator_bond_order_threshold") = 1.4,
+    R"delim(
+      Interpret molecules of a periodic system
+
+      Attempts to interpret (possibly multiple) Molecules in a periodic system.
+      The bond orders are discretized into bond types.
+      Connected components within the space are identified and individually
+      instantiated into Molecules. The instantiation behavior of
+      BondStereopermutators in the Molecules can be limited to edges whose bond
+      order exceeds a particular value.
+
+      :param atom_collection: Element types and positional information in Bohr
+        units with ghost atoms
+      :param bond_orders: Bond orders including extra bonds to ghost atoms
+      :param uninteresting_atoms: List of atoms for which to skip shape
+        classification and stereopermutator instantiation
+      :param ghost_atom_map: Map from ghost atom indices to their base atom
+        indices
+      :param discretization: How bond fractional orders are to be discretized
+      :param stereopermutator_bond_order_threshold: If specified, limits the
+        instantiation of BondStereopermutators onto edges whose fractional bond orders
+        exceed the provided threshold. If ``None``, BondStereopermutators are
+        instantiated at all bonds.
+
+      :raises ValueError: If the number of particles in the atom collection and
+        bond order collections do not match
+
+      .. warning:: Ranking across periodic boundaries is incorrect
+
+      .. note:: Any molecules interpreted with uninteresting atoms cannot be
+         passed to conformer generation routines
+    )delim"
+  );
 
   pybind11::class_<Interpret::GraphsResult> graphsResult(
     interpretSubmodule,

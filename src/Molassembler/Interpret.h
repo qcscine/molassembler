@@ -214,6 +214,9 @@ MASM_EXPORT MoleculesResult molecules(
  *
  * @parblock @note Any molecules interpreted with uninteresting atoms cannot be
  * passed to conformer generation routines. @endparblock
+ *
+ * @parblock @warning Ranking across periodic boundaries is incorrect.
+ * @endparblock
  */
 MASM_EXPORT MoleculesResult molecules(
   const Utils::AtomCollection& atoms,
