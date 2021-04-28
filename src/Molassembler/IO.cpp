@@ -270,10 +270,13 @@ void write(
   const Molecule& molecule,
   const Utils::PositionCollection& positions
 ) {
-  auto data = exchangeFormat(molecule, positions);
-
-  // TODO Utils throws if bond information is supplied but the required format doesnt store it. Where to fix?
-  Utils::ChemicalFileHandler::write(filename, data.first, data.second);
+  const auto data = exchangeFormat(molecule, positions);
+  const boost::filesystem::path filepath {filename};
+  if(filepath.extension() == ".xyz") {
+    Utils::ChemicalFileHandler::write(filename, data.first);
+  } else {
+    Utils::ChemicalFileHandler::write(filename, data.first, data.second);
+  }
 }
 
 void write(const std::string& filename, const Molecule& molecule) {
