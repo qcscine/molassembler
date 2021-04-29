@@ -662,6 +662,19 @@ MoleculesResult molecules(
     );
   }
 
+  // Copy the component map, removing ghost atoms
+  if(ghostAtomMap.empty()) {
+    result.componentMap = std::move(parts.componentMap);
+  } else {
+    for(unsigned i = 0; i < parts.componentMap.size(); ++i) {
+      if(ghostAtomMap.count(i) > 0) {
+        break;
+      }
+
+      result.componentMap.map.push_back(parts.componentMap.map.at(i));
+    }
+  }
+
   return result;
 }
 
