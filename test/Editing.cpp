@@ -13,6 +13,8 @@
 #include "Molassembler/Molecule.h"
 #include "Molassembler/Graph.h"
 #include "Molassembler/Subgraphs.h"
+#include "Molassembler/StereopermutatorList.h"
+#include "Molassembler/Temple/Functional.h"
 
 /* SMILES for molecules imported here
  * - caffeine: "CN1C=NC2=C1C(=O)N(C(=O)N2C)C"
@@ -150,6 +152,24 @@ BOOST_AUTO_TEST_CASE(EditingCleave, *boost::unit_test::label("Molassembler")) {
     cleaved.first.graph().E() + cleaved.second.graph().E() == caffeine.graph().E() - 1,
     "Sum of number of bonds of cleaved molecules does not match that of the original molecule minus one"
   );
+
+  const Molecule haptic = IO::read("inorganics/haptic/05.mol");
+  const AtomIndex iron = 0;
+  BOOST_REQUIRE(haptic.graph().elementType(iron) == Utils::ElementType::Fe);
+  const auto& permutator = haptic.stereopermutators().at(0);
+  const auto& sites = permutator.getRanking().sites;
+  const auto findIter = Temple::find_if(
+    sites,
+    [&](const auto& site) -> bool {
+      return site.size() > 1;
+    }
+  );
+  BOOST_REQUIRE(findIter != std::end(sites));
+  const unsigned siteIndex = findIter - std::begin(sites);
+  const Editing::AtomSitePair atomSitePair {iron, SiteIndex {siteIndex}};
+
+  BOOST_REQUIRE_NO_THROW(cleaved = Editing::cleave(haptic, atomSitePair));
+  BOOST_CHECK_EQUAL(cleaved.second.graph().V(), 12);
 }
 
 BOOST_AUTO_TEST_CASE(EditingInsert, *boost::unit_test::label("Molassembler")) {

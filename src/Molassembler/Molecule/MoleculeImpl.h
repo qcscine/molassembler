@@ -28,10 +28,6 @@ struct Molecule::Impl {
   //! Returns whether an edge is double, triple or higher bond order
   static bool isGraphBasedBondStereopermutatorCandidate_(BondType bondType);
 
-  Graph adjacencies_;
-  StereopermutatorList stereopermutators_;
-  boost::optional<AtomEnvironmentComponents> canonicalComponentsOption_;
-
 /* "Private" helpers */
   boost::optional<AtomStereopermutator> makePermutator(
     AtomIndex candidateIndex,
@@ -348,6 +344,13 @@ struct Molecule::Impl {
   bool operator == (const Impl& other) const;
   //! Negates @see operator ==
   bool operator != (const Impl& other) const;
+//!@}
+
+//!@name Data
+//!@{
+  Graph adjacencies_;
+  StereopermutatorList stereopermutators_;
+  boost::optional<AtomEnvironmentComponents> canonicalComponentsOption_;
 //!@}
 };
 

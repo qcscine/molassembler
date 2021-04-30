@@ -274,6 +274,18 @@ const StereopermutatorList& Molecule::stereopermutators() const {
   return pImpl_->stereopermutators();
 }
 
+StereopermutatorList& Molecule::stereopermutators(unsafe_tag_t /* tag */) {
+  return pImpl_->stereopermutators_;
+}
+
+Graph& Molecule::graph(unsafe_tag_t /* tag */) {
+  return pImpl_->adjacencies_;
+}
+
+void Molecule::propagate(unsafe_tag_t /* tag */) {
+  pImpl_->propagateGraphChange_();
+}
+
 StereopermutatorList Molecule::inferStereopermutatorsFromPositions(
   const AngstromPositions& angstromWrapper,
   const boost::optional<

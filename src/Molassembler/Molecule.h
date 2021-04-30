@@ -588,6 +588,15 @@ public:
   void thermalizeStereopermutator(AtomIndex a, bool thermalization = true);
 //!@}
 
+//!@name Unsafe, no propagation on mutation interface. Here be dragons!
+//!@{
+  struct MASM_NO_EXPORT unsafe_tag_t {};
+  static constexpr unsafe_tag_t unsafe_tag {};
+  MASM_NO_EXPORT StereopermutatorList& stereopermutators(unsafe_tag_t /* tag */);
+  MASM_NO_EXPORT Graph& graph(unsafe_tag_t /* tag */);
+  MASM_NO_EXPORT void propagate(unsafe_tag_t /* tag */);
+//!@}
+
 //!@name Graph information interface
 //!@{
   bool adjacent(AtomIndex a, AtomIndex b) const final;
@@ -854,11 +863,6 @@ private:
   //! Private implementation member
   struct Impl;
   std::unique_ptr<Impl> pImpl_;
-
-  /* Allow access to implementation to editor class that enables more
-   * macro-oriented editing as opposed to the low-level editing provided here
-   */
-  friend struct Editing;
 };
 
 } // namespace Molassembler

@@ -93,31 +93,20 @@ void transferStereopermutators(
   }
 }
 
-} // namespace
-
-std::pair<Molecule, Molecule> Editing::cleave(const Molecule& a, const BondIndex bridge) {
-  if(a.graph().canRemove(bridge)) {
-    throw std::logic_error(
-      "The supplied bond can be removed without disconnecting the graph. It is "
-      "not a suitable edge to cleave a molecule in two."
-    );
-  }
-
-  const AtomIndex N = a.graph().V();
-
-  // Discover which vertices belong to which component after cleaving
-  auto sides = a.graph().inner().splitAlongBridge(
-    toInner(bridge, a.graph().inner())
-  );
-
-  // Ensure both sides will fulfill preconditions to be a molecule (at least one atom)
-  assert(!sides.first.empty() && !sides.second.empty());
+std::pair<Molecule, Molecule> cleaveImpl(
+  const Molecule& a,
+  const AtomIndex left,
+  const std::vector<AtomIndex>& right,
+  const std::vector<AtomIndex>& leftSide,
+  const std::vector<AtomIndex>& rightSide
+) {
+  const AtomIndex V = a.graph().V();
 
   // Construct separate OuterGraphs for each component of the disconnected graph
   std::pair<PrivateGraph, PrivateGraph> graphs;
-  auto vertexMappings = std::make_pair(
-    graphs.first.merge(a.graph().inner(), sides.first),
-    graphs.second.merge(a.graph().inner(), sides.second)
+  const auto vertexMappings = std::make_pair(
+    graphs.first.merge(a.graph().inner(), leftSide),
+    graphs.second.merge(a.graph().inner(), rightSide)
   );
 
   /* Copy stereopermutators, adapting internal state according to index
@@ -128,13 +117,13 @@ std::pair<Molecule, Molecule> Editing::cleave(const Molecule& a, const BondIndex
     a.stereopermutators(),
     stereopermutatorLists.first,
     vertexMappings.first,
-    N
+    V
   );
   transferStereopermutators(
     a.stereopermutators(),
     stereopermutatorLists.second,
     vertexMappings.second,
-    N
+    V
   );
 
   // Make molecules out of the components
@@ -156,12 +145,12 @@ std::pair<Molecule, Molecule> Editing::cleave(const Molecule& a, const BondIndex
     Molecule& molecule,
     const AtomIndex notifyIndex
   ) {
-    if(auto stereopermutatorOption = molecule.pImpl_->stereopermutators_.option(notifyIndex)) {
+    if(auto stereopermutatorOption = molecule.stereopermutators(Molecule::unsafe_tag).option(notifyIndex)) {
       auto localRanking = molecule.rankPriority(notifyIndex);
 
       // In case the central atom becomes terminal, just drop the stereopermutator
       if(localRanking.sites.size() <= 1) {
-        molecule.pImpl_->stereopermutators_.remove(notifyIndex);
+        molecule.stereopermutators(Molecule::unsafe_tag).remove(notifyIndex);
         return;
       }
 
@@ -192,29 +181,83 @@ std::pair<Molecule, Molecule> Editing::cleave(const Molecule& a, const BondIndex
        */
       for(const BondIndex bond : molecule.graph().bonds(notifyIndex)) {
         if(molecule.stereopermutators().option(bond)) {
-          molecule.pImpl_->stereopermutators_.remove(bond);
+          molecule.stereopermutators(Molecule::unsafe_tag).remove(bond);
         }
       }
     }
 
     // Rerank everywhere and update all stereopermutators
-    molecule.pImpl_->propagateGraphChange_();
+    molecule.propagate(Molecule::unsafe_tag);
   };
+
+  for(const AtomIndex i : right) {
+    if(a.graph().bondType(BondIndex {left, i}) != BondType::Eta) {
+      fixEdgeAndPropagate(
+        molecules.second,
+        vertexMappings.second.at(i)
+      );
+    }
+  }
 
   fixEdgeAndPropagate(
     molecules.first,
-    vertexMappings.first.at(bridge.first)
-  );
-
-  fixEdgeAndPropagate(
-    molecules.second,
-    vertexMappings.second.at(bridge.second)
+    vertexMappings.first.at(left)
   );
 
   return molecules;
 }
 
-Molecule Editing::insert(
+} // namespace
+
+namespace Editing {
+
+std::pair<Molecule, Molecule> cleave(const Molecule& a, const BondIndex bridge) {
+  if(a.graph().canRemove(bridge)) {
+    throw std::logic_error(
+      "The supplied bond can be removed without disconnecting the graph. It is "
+      "not a suitable edge to cleave a molecule in two."
+    );
+  }
+
+  // Discover which vertices belong to which component after cleaving
+  const auto sides = a.graph().inner().splitAlongBridge(
+    toInner(bridge, a.graph().inner())
+  );
+
+  assert(!sides.first.empty() && !sides.second.empty());
+  return cleaveImpl(
+    a,
+    bridge.first,
+    std::vector<AtomIndex>(1, bridge.second),
+    sides.first,
+    sides.second
+  );
+}
+
+std::pair<Molecule, Molecule> cleave(
+  const Molecule& a,
+  const AtomSitePair site
+) {
+  auto maybePermutator = a.stereopermutators().option(site.first);
+  if(!maybePermutator) {
+    throw std::invalid_argument("No stereopermutator on specified atom");
+  }
+  const auto& siteAtoms = maybePermutator->getRanking().sites.at(site.second);
+  const auto sides = a.graph().inner().splitAlongBridge(
+    site.first,
+    siteAtoms
+  );
+  assert(!sides.first.empty() && !sides.second.empty());
+  return cleaveImpl(
+    a,
+    site.first,
+    siteAtoms,
+    sides.first,
+    sides.second
+  );
+}
+
+Molecule insert(
   Molecule log,
   const Molecule& wedge,
   const BondIndex logBond,
@@ -229,7 +272,7 @@ Molecule Editing::insert(
    *   internal state
    * - Call notifyGraphChange and return log
    */
-  PrivateGraph& logInner = log.pImpl_->adjacencies_.inner();
+  PrivateGraph& logInner = log.graph(Molecule::unsafe_tag).inner();
 
   // Copy all vertices from wedge into log
   auto vertexMapping = logInner.merge(wedge.graph().inner());
@@ -253,7 +296,7 @@ Molecule Editing::insert(
   );
 
   // Copy in stereopermutators from wedge
-  StereopermutatorList& logStereopermutators = log.pImpl_->stereopermutators_;
+  StereopermutatorList& logStereopermutators = log.stereopermutators(Molecule::unsafe_tag);
 
   transferStereopermutators(
     wedge.stereopermutators(),
@@ -331,11 +374,11 @@ Molecule Editing::insert(
   );
 
   // Rerank everywhere and return
-  log.pImpl_->propagateGraphChange_();
+  log.propagate(Molecule::unsafe_tag);
   return log;
 }
 
-Molecule Editing::superpose(
+Molecule superpose(
   Molecule top,
   const Molecule& bottom,
   const AtomIndex topAtom,
@@ -354,7 +397,7 @@ Molecule Editing::superpose(
     bottomAtom + 1
   );
 
-  PrivateGraph& topInner = top.pImpl_->adjacencies_.inner();
+  PrivateGraph& topInner = top.graph(Molecule::unsafe_tag).inner();
 
   auto vertexMapping = topInner.merge(
     bottom.graph().inner(),
@@ -369,7 +412,7 @@ Molecule Editing::superpose(
    */
 
   // Copy in stereopermutators from bottom, including ones placed on bottomAtom
-  StereopermutatorList& topStereopermutators = top.pImpl_->stereopermutators_;
+  StereopermutatorList& topStereopermutators = top.stereopermutators(Molecule::unsafe_tag);
   vertexMapping[bottomAtom] = topAtom;
   transferStereopermutators(
     bottom.stereopermutators(),
@@ -424,11 +467,11 @@ Molecule Editing::superpose(
   }
 
   // Rerank everywhere and return
-  top.pImpl_->propagateGraphChange_();
+  top.propagate(Molecule::unsafe_tag);
   return top;
 }
 
-Molecule Editing::substitute(
+Molecule substitute(
   const Molecule& left,
   const Molecule& right,
   const BondIndex leftBond,
@@ -547,19 +590,19 @@ Molecule Editing::substitute(
   };
 
   // Rerank everywhere and return
-  compound.pImpl_->propagateGraphChange_();
+  compound.propagate(Molecule::unsafe_tag);
   return compound;
 }
 
-Molecule Editing::connect(
+Molecule connect(
   Molecule a,
   const Molecule& b,
   const AtomIndex aConnectAtom,
   const AtomIndex bConnectAtom,
   const BondType bondType
 ) {
-  PrivateGraph& aInnerGraph = a.pImpl_->adjacencies_.inner();
-  StereopermutatorList& aStereopermutators = a.pImpl_->stereopermutators_;
+  PrivateGraph& aInnerGraph = a.graph(Molecule::unsafe_tag).inner();
+  StereopermutatorList& aStereopermutators = a.stereopermutators(Molecule::unsafe_tag);
 
   // Copy b's graph into a
   auto vertexMapping = aInnerGraph.merge(b.graph().inner());
@@ -578,14 +621,14 @@ Molecule Editing::connect(
   return a;
 }
 
-Molecule Editing::addLigand(
+Molecule addLigand(
   Molecule a,
   const Molecule& ligand,
   AtomIndex complexatingAtom,
   const std::vector<AtomIndex>& ligandBindingAtoms
 ) {
-  PrivateGraph& aInnerGraph = a.pImpl_->adjacencies_.inner();
-  StereopermutatorList& aStereopermutators = a.pImpl_->stereopermutators_;
+  PrivateGraph& aInnerGraph = a.graph(Molecule::unsafe_tag).inner();
+  StereopermutatorList& aStereopermutators = a.stereopermutators(Molecule::unsafe_tag);
 
   auto vertexMapping = aInnerGraph.merge(ligand.graph().inner());
 
@@ -604,5 +647,6 @@ Molecule Editing::addLigand(
   return a;
 }
 
+} // namespace Editing
 } // namespace Molassembler
 } // namespace Scine

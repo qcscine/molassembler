@@ -28,43 +28,55 @@ struct BridgeSplittingBFSVisitor {
   using Graph = PrivateGraph::BglType;
   using Vertex = PrivateGraph::Vertex;
   using Edge = PrivateGraph::Edge;
-
-  AtomIndex left, right;
   using BitsetPtr = std::shared_ptr<
     std::vector<bool>
   >;
 
-  BitsetPtr bitsetPtr;
-
   BridgeSplittingBFSVisitor() = default;
-  BridgeSplittingBFSVisitor(Edge b, const Graph& graph, BitsetPtr ptr)
-    : left(boost::source(b, graph)),
-      right(boost::target(b, graph)),
-      bitsetPtr(std::move(ptr))
-  {
+
+  BridgeSplittingBFSVisitor(
+    AtomIndex left,
+    const std::vector<AtomIndex>& site,
+    const Graph& graph,
+    BitsetPtr ptr
+  ) : bitsetPtr(std::move(ptr)) {
+    initialized = site;
+    initialized.push_back(left);
     *bitsetPtr = std::vector<bool>(boost::num_vertices(graph), false);
-    bitsetPtr->at(right) = true;
+    for(const AtomIndex i : site) {
+      bitsetPtr->at(i) = true;
+    }
   }
+
+  BridgeSplittingBFSVisitor(Edge b, const Graph& graph, BitsetPtr ptr)
+    : BridgeSplittingBFSVisitor(
+      boost::source(b, graph),
+      std::vector<AtomIndex> {1, boost::target(b, graph)},
+      graph,
+      std::move(ptr)
+    ) {}
 
   void initialize_vertex(Vertex /* v */, const Graph& /* g */) {}
   void discover_vertex(Vertex /* v */, const Graph& /* g */) {}
   void examine_vertex(Vertex /* v */, const Graph& /* g */) {}
   void finish_vertex(Vertex /* v */, const Graph& /* g */) {}
   void examine_edge(const Edge& /* e */, const Graph& /* g */) {}
-
-  void tree_edge(const Edge& e, const Graph& g) {
-    Vertex target = boost::target(e, g);
-    if(target != left) {
-      // Copy the source bitset value to the target
-      bitsetPtr->at(target) = bitsetPtr->at(
-        boost::source(e, g)
-      );
-    }
-  }
-
   void non_tree_edge(const Edge& /* e */, const Graph& /* g */) {}
   void gray_target(const Edge& /* e */, const Graph& /* g */) {}
   void black_target(const Edge& /* e */, const Graph& /* g */) {}
+
+  void tree_edge(const Edge& e, const Graph& g) {
+    const Vertex target = boost::target(e, g);
+    // Need to make sure not to overwrite the preset values
+    if(!Temple::makeContainsPredicate(initialized)(target)) {
+      // Copy the source bitset value to the target
+      const Vertex source = boost::source(e, g);
+      bitsetPtr->at(target) = bitsetPtr->at(source);
+    }
+  }
+
+  std::vector<AtomIndex> initialized;
+  BitsetPtr bitsetPtr;
 };
 
 } // namespace
@@ -438,9 +450,9 @@ bool PrivateGraph::identicalGraph(const PrivateGraph& other) const {
   return Temple::all_of(
     edges(),
     [&](const Edge& edge) -> bool {
-      Edge correspondingEdge;
       bool edgeExists;
-      std::tie(correspondingEdge, edgeExists) = boost::edge(
+
+      std::tie(std::ignore, edgeExists) = boost::edge(
         boost::source(edge, graph_),
         boost::target(edge, graph_),
         other.graph_
@@ -455,41 +467,76 @@ std::pair<
   std::vector<AtomIndex>,
   std::vector<AtomIndex>
 > PrivateGraph::splitAlongBridge(Edge bridge) const {
-  if(removalSafetyData().bridges.count(bridge) == 0) {
-    throw std::invalid_argument("The supplied edge is not a bridge edge");
+  return splitAlongBridge(
+    source(bridge),
+    std::vector<AtomIndex>(1, target(bridge))
+  );
+}
+
+std::pair<
+  std::vector<AtomIndex>,
+  std::vector<AtomIndex>
+> PrivateGraph::splitAlongBridge(AtomIndex left, const std::vector<AtomIndex>& right) const {
+  // Can't really check that it's truly a bridge edge since there's a bunch of edges
+  if(right.empty()) {
+    throw std::invalid_argument("The atom set on the right may not be empty");
   }
 
-  auto bitsetPtr = std::make_shared<
-    std::vector<bool>
-  >();
-  BridgeSplittingBFSVisitor visitor(bridge, graph_, bitsetPtr);
+  if(right.size() == 1) {
+    const auto maybeEdge = edgeOption(left, right.front());
+    if(!maybeEdge) {
+      throw std::invalid_argument("Left and right atom are not connected");
+    }
+    if(removalSafetyData().bridges.count(maybeEdge.value()) == 0) {
+      throw std::invalid_argument("The supplied edge is not a bridge edge");
+    }
+  } else {
+    /* Can't really check if the edges are truly collectively a bridge edge
+     * without making a copy of the graph to check
+     */
+    if(
+      Temple::any_of(
+        right,
+        [&](const AtomIndex r) -> bool {
+          const auto maybeEdge = edgeOption(left, r);
+          return !maybeEdge || bondType(maybeEdge.value()) != BondType::Eta;
+        }
+      )
+    ) {
+      throw std::invalid_argument("Right atom set is not a haptic site of the left atom");
+    }
+  }
+
+  auto bitsetPtr = std::make_shared<std::vector<bool>>();
+  BridgeSplittingBFSVisitor visitor(left, right, graph_, bitsetPtr);
 
   boost::breadth_first_search(
     graph_,
-    target(bridge),
+    right.front(),
     boost::visitor(visitor)
   );
 
   // Transform the bitset into a left and right
-  std::vector<AtomIndex> left;
-  std::vector<AtomIndex> right;
-  left.reserve(V());
-  right.reserve(V());
+  std::vector<AtomIndex> lefts;
+  std::vector<AtomIndex> rights;
+  const unsigned size = V();
+  lefts.reserve(size);
+  rights.reserve(size);
 
-  for(AtomIndex i = 0; i < V(); ++i) {
+  for(AtomIndex i = 0; i < size; ++i) {
     if(bitsetPtr->at(i)) {
-      right.push_back(i);
+      rights.push_back(i);
     } else {
-      left.push_back(i);
+      lefts.push_back(i);
     }
   }
 
-  left.shrink_to_fit();
-  right.shrink_to_fit();
+  lefts.shrink_to_fit();
+  rights.shrink_to_fit();
 
   return std::make_pair(
-    std::move(left),
-    std::move(right)
+    std::move(lefts),
+    std::move(rights)
   );
 }
 

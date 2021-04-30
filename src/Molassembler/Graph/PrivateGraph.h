@@ -304,6 +304,12 @@ public:
     std::vector<AtomIndex>,
     std::vector<AtomIndex>
   > splitAlongBridge(Edge bridge) const;
+
+  //! @brief Determine which vertices belong to which side of a bridge edge
+  std::pair<
+    std::vector<AtomIndex>,
+    std::vector<AtomIndex>
+  > splitAlongBridge(AtomIndex left, const std::vector<AtomIndex>& right) const;
 //!@}
 
 /*!
