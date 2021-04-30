@@ -19,6 +19,14 @@
 namespace Scine {
 namespace Molassembler {
 namespace Hashes {
+namespace {
+
+template<typename Enum>
+auto underlying(Enum value) {
+  return static_cast<std::underlying_type_t<Enum>>(value);
+}
+
+} // namespace
 
 BondInformation::BondInformation(
   BondType passBondType,
@@ -51,9 +59,7 @@ WideHashType BondInformation::hash() const {
       /* The bond type underlying value has to be incremented because otherwise
        * Single is the same as None
        */
-      static_cast<
-        std::underlying_type_t<BondType>
-      >(bondType) + 1
+      underlying(bondType) + 1
     ) << bondTypeBits
   );
 
@@ -131,8 +137,7 @@ WideHashType hash(
   // First 16 bits of the number are from the element type
   WideHashType value;
   if(bitmask & AtomEnvironmentComponents::ElementTypes) {
-    using ElementTypeUnderlying = std::underlying_type<Utils::ElementType>::type;
-    value = static_cast<WideHashType>(static_cast<ElementTypeUnderlying>(elementType));
+    value = underlying(elementType);
   } else {
     value = 0;
   }
@@ -170,7 +175,7 @@ WideHashType hash(
     /* We add shape information on non-terminal atoms. There are currently
      * 30 shapes, plus None is 31, which fits into 5 bits (2^5 = 32)
      */
-    value += (WideHashType(shapeOptional.value()) + 1) << (elementTypeBits + bondsHashSectionWidth);
+    value += (WideHashType(underlying(shapeOptional.value())) + 1) << (elementTypeBits + bondsHashSectionWidth);
 
     if(bitmask & AtomEnvironmentComponents::Stereopermutations) {
       /* The remaining space (128 - (16 + 72 + 5) = 35 bits) is used for the
