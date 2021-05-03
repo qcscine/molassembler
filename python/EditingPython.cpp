@@ -20,7 +20,7 @@ void init_editing(pybind11::module& m) {
 
   editing.def(
     "cleave",
-    &Editing::cleave,
+    pybind11::overload_cast<const Molecule&, BondIndex>(&Editing::cleave),
     pybind11::arg("molecule"),
     pybind11::arg("bridge"),
     R"delim(
@@ -39,6 +39,26 @@ void init_editing(pybind11::module& m) {
       >>> a = Molecule() # Makes H2
       >>> bond_index = a.addAtom(0, utils.ElementType.H) # Make linear H3
       >>> cleaved = editing.cleave(a, bond_index) # Split into H2 and H
+    )delim"
+  );
+
+  editing.def(
+    "cleave",
+    pybind11::overload_cast<const Molecule&, Editing::AtomSitePair>(&Editing::cleave),
+    pybind11::arg("molecule"),
+    pybind11::arg("haptic_site"),
+    R"delim(
+      Cleave a molecule in two along a haptic site.
+
+      Bridge bonds are edges in the graph that whose removal splits the graph
+      into two connected components. Any bonds in a cycle, for instance, are
+      not bridge bonds.
+
+      :param molecule: Molecule to cleave
+      :param haptic_site: Atom and site index pair indicating the haptic site
+        to cleave
+      :return: A pair of molecules. The first always contains the atom
+        indicated by ``haptic_site``.
     )delim"
   );
 
