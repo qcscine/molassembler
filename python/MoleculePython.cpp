@@ -590,7 +590,7 @@ void init_molecule(pybind11::module& m) {
 
   molecule.def_property_readonly(
     "graph",
-    &Molecule::graph,
+    pybind11::overload_cast<>(&Molecule::graph, pybind11::const_),
     R"delim(
       Read only access to the graph representation
 
@@ -600,7 +600,7 @@ void init_molecule(pybind11::module& m) {
 
   molecule.def_property_readonly(
     "stereopermutators",
-    &Molecule::stereopermutators,
+    pybind11::overload_cast<>(&Molecule::stereopermutators, pybind11::const_),
     R"delim(
       Read only access to the list of stereopermutators
 
