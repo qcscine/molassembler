@@ -53,7 +53,10 @@ std::string pipeSvg(const Scine::Molassembler::Molecule& m) {
   ips.pipe().close();
 
   // Wait for the child process to exit
-  childProcess.wait();
+  const bool success = childProcess.wait_for(std::chrono::seconds {5});
+  if(!success) {
+    throw std::runtime_error("Graphviz render took more than 5 seconds! Perhaps your graph is too convoluted to render");
+  }
 
   std::stringstream stderrStream;
 #if BOOST_VERSION >= 107000
