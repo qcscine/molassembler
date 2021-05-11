@@ -21,7 +21,7 @@ macro(import_nauty)
           DESTINATION ${CMAKE_CURRENT_BINARY_DIR}
         )
         download_file(
-          "http://pallini.di.uniroma1.it/nauty27r1.tar.gz"
+          "https://scine.ethz.ch/static/download/nauty27r1.tar.gz"
           ${CMAKE_CURRENT_BINARY_DIR}/nauty27r1.tar.gz
         )
         # Unpack the archive and remove it
