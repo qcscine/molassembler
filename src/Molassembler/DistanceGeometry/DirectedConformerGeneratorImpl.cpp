@@ -226,7 +226,8 @@ DirectedConformerGenerator::Impl::Impl(
   const auto processBond = [&](const BondIndex& bond) {
     const auto variant = considerBond(bond, molecule_, alignment_);
     if(variant.type() == typeid(BondStereopermutator)) {
-      molecule_.addPermutator(bond, alignment_);
+      BondStereopermutator permutator = boost::get<BondStereopermutator>(variant);
+      molecule_.stereopermutators(Molecule::unsafe_tag).add(std::move(permutator));
       relevantBonds_.push_back(bond);
     }
   };
