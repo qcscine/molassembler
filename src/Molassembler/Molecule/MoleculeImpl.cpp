@@ -279,10 +279,10 @@ void Molecule::Impl::propagateGraphChange_() {
       }
 
       // Are there adjacent bond stereopermutators?
-      std::vector<BondIndex> adjacentBondStereopermutators;
+      std::vector<BondIndex> adjacentStereopermutatorBonds;
       for(BondIndex bond : adjacencies_.bonds(vertex)) {
         if(stereopermutators_.option(bond)) {
-          adjacentBondStereopermutators.push_back(std::move(bond));
+          adjacentStereopermutatorBonds.push_back(std::move(bond));
         }
       }
 
@@ -317,7 +317,7 @@ void Molecule::Impl::propagateGraphChange_() {
        * assigned.
        */
       if(!stereopermutatorOption->assigned()) {
-        for(const BondIndex& bond : adjacentBondStereopermutators) {
+        for(const BondIndex& bond : adjacentStereopermutatorBonds) {
           stereopermutators_.remove(bond);
         }
 
@@ -333,7 +333,7 @@ void Molecule::Impl::propagateGraphChange_() {
        * are removed, since this may cause another re-rank!
        */
       if(oldAtomStereopermutatorStateOption) {
-        for(const BondIndex& bond : adjacentBondStereopermutators) {
+        for(const BondIndex& bond : adjacentStereopermutatorBonds) {
           stereopermutators_.option(bond)->propagateGraphChange(
             *oldAtomStereopermutatorStateOption,
             *stereopermutatorOption,
@@ -351,7 +351,11 @@ void Molecule::Impl::propagateGraphChange_() {
   }
 
   // Look for new bond stereopermutators
-  for(BondIndex bond : graph().bonds()) {
+  for(const BondIndex bond : graph().bonds()) {
+    if(stereopermutators_.option(bond)) {
+      continue;
+    }
+
     if(!isGraphBasedBondStereopermutatorCandidate_(graph().bondType(bond))) {
       continue;
     }
@@ -494,15 +498,15 @@ BondIndex Molecule::Impl::addBond(
 
 const BondStereopermutator& Molecule::Impl::addPermutator(
   const BondIndex& bond,
-  BondStereopermutator::Alignment alignment
+  const BondStereopermutator::Alignment alignment
 ) {
   auto permutator = makePermutator(bond, stereopermutators_, boost::none, boost::none, alignment);
   if(!permutator) {
     throw std::logic_error("Violated preconditions for permutator addition");
   }
-  const auto& pRef = stereopermutators_.add(std::move(permutator.value()));
+  stereopermutators_.add(std::move(permutator.value()));
   propagateGraphChange_();
-  return pRef;
+  return stereopermutators_.at(bond);
 }
 
 void Molecule::Impl::applyPermutation(const std::vector<AtomIndex>& permutation) {
