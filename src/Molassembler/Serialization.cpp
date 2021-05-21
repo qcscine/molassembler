@@ -583,20 +583,8 @@ struct JsonSerialization::Impl {
     }
   }
 
-  Impl(
-    const BinaryType& binary,
-    const BinaryFormat format
-  ) {
-    if(format == BinaryFormat::CBOR) {
-      serialization = nlohmann::json::from_cbor(binary);
-    } else if(format == BinaryFormat::BSON) {
-      serialization = nlohmann::json::from_bson(binary);
-    } else if(format == BinaryFormat::MsgPack) {
-      serialization = nlohmann::json::from_msgpack(binary);
-    } else if(format == BinaryFormat::UBJSON) {
-      serialization = nlohmann::json::from_ubjson(binary);
-    }
-  }
+  Impl(const BinaryType& binary, const BinaryFormat format)
+    : serialization(fromBinary(binary, format)) {}
 
   operator std::string() const {
     return serialization.dump();
@@ -606,24 +594,24 @@ struct JsonSerialization::Impl {
     return deserialize(serialization);
   }
 
+  static nlohmann::json fromBinary(const BinaryType& binary, const BinaryFormat format) {
+    switch(format) {
+      case BinaryFormat::CBOR: return nlohmann::json::from_cbor(binary);
+      case BinaryFormat::BSON: return nlohmann::json::from_bson(binary);
+      case BinaryFormat::MsgPack: return nlohmann::json::from_msgpack(binary);
+      case BinaryFormat::UBJSON: return nlohmann::json::from_ubjson(binary);
+      default: throw std::runtime_error("Unknown binary format!");
+    }
+  }
+
   BinaryType toBinary(const BinaryFormat format) const {
-    if(format == BinaryFormat::CBOR) {
-      return nlohmann::json::to_cbor(serialization);
+    switch(format) {
+      case BinaryFormat::CBOR: return nlohmann::json::to_cbor(serialization);
+      case BinaryFormat::BSON: return nlohmann::json::to_bson(serialization);
+      case BinaryFormat::MsgPack: return nlohmann::json::to_msgpack(serialization);
+      case BinaryFormat::UBJSON: return nlohmann::json::to_ubjson(serialization);
+      default: return {};
     }
-
-    if(format == BinaryFormat::BSON) {
-      return nlohmann::json::to_bson(serialization);
-    }
-
-    if(format == BinaryFormat::MsgPack) {
-      return nlohmann::json::to_msgpack(serialization);
-    }
-
-    if(format == BinaryFormat::UBJSON) {
-      return nlohmann::json::to_ubjson(serialization);
-    }
-
-    return {};
   }
 
   void standardize() {
