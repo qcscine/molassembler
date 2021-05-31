@@ -300,16 +300,6 @@ void Molecule::Impl::propagateGraphChange_() {
         AtomStereopermutator::thermalizationFunctor(adjacencies_)
       );
 
-      /* If the modified stereopermutator has only one assignment and is
-       * unassigned due to the graph change, default-assign it
-       */
-      if(
-        stereopermutatorOption->numAssignments() == 1
-        && stereopermutatorOption->assigned() == boost::none
-      ) {
-        stereopermutatorOption->assign(0);
-      }
-
       /* If the chiral state for this atom stereopermutator was not successfully
        * propagated or it is now unassigned, then bond stereopermutators sharing
        * this atom stereopermutator must be removed. Bond stereopermutators can
@@ -334,7 +324,7 @@ void Molecule::Impl::propagateGraphChange_() {
        */
       if(oldAtomStereopermutatorStateOption) {
         for(const BondIndex& bond : adjacentStereopermutatorBonds) {
-          stereopermutators_.option(bond)->propagateGraphChange(
+          stereopermutators_.at(bond).propagateGraphChange(
             *oldAtomStereopermutatorStateOption,
             *stereopermutatorOption,
             inner,
@@ -342,21 +332,18 @@ void Molecule::Impl::propagateGraphChange_() {
           );
         }
       }
-    } else {
+    } else if(auto permutator = makePermutator(vertex, stereopermutators_)) {
       // There is no atom stereopermutator on this vertex, so try to add one
-      if(auto permutator = makePermutator(vertex, stereopermutators_)) {
-        stereopermutators_.add(std::move(*permutator));
-      }
+      stereopermutators_.add(std::move(*permutator));
     }
   }
 
   // Look for new bond stereopermutators
   for(const BondIndex bond : graph().bonds()) {
-    if(stereopermutators_.option(bond)) {
-      continue;
-    }
-
-    if(!isGraphBasedBondStereopermutatorCandidate_(graph().bondType(bond))) {
+    if(
+      stereopermutators_.option(bond)
+      || !isGraphBasedBondStereopermutatorCandidate_(graph().bondType(bond))
+    ) {
       continue;
     }
 
