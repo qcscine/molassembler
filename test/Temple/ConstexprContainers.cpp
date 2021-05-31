@@ -703,32 +703,41 @@ BOOST_AUTO_TEST_CASE(PermutationIndexTests, *boost::unit_test::label("Temple")) 
 }
 
 BOOST_AUTO_TEST_CASE(PermutationsTests, *boost::unit_test::label("Temple")) {
-  using T = Temple::Array<unsigned, 4>;
-  Temple::Permutation<T> p(T {0, 1, 3, 2});
+  using Array = Temple::Array<unsigned, 4>;
+  Temple::Permutation<Array> p(Array {0, 1, 3, 2});
   BOOST_CHECK_EQUAL(p.index(), 1);
+
+  // Applying it to a vector of other objects yields properly permuted elements
+  const std::vector<int> nums {{10, -3, 4, -1}};
+  const std::vector<int> permutedNums = p.apply(nums);
+  const std::vector<int> expected {{10, -3, -1, 4}};
+  BOOST_CHECK(permutedNums == expected);
+
+  // Applying an ordering permutation yields an ordered vector
+  const auto ordered = Temple::Permutation<Array>::ordering(nums).apply(nums);
+  BOOST_CHECK(std::is_sorted(std::begin(ordered), std::end(ordered)));
+
+  // Move forward and backward through permutations
   BOOST_CHECK(p.prev());
   BOOST_CHECK_EQUAL(p.index(), 0);
   BOOST_CHECK(p.next());
   BOOST_CHECK(p.next());
   BOOST_CHECK_EQUAL(p.index(), 2);
 
-  auto inverse = p.inverse();
-  auto identity = p.apply(inverse.sigma);
-  BOOST_CHECK_EQUAL(Temple::make_permutation(identity).index(), 0);
+  // Applying the inverse yields an identity permutation
+  BOOST_CHECK_EQUAL(p.compose(p.inverse()).index(), 0);
 
-  using U = std::vector<unsigned>;
-  Temple::Permutation<U> q(4);
+  using Vector = std::vector<unsigned>;
+  Temple::Permutation<Vector> q(4);
   BOOST_CHECK_EQUAL(q.index(), 0);
   BOOST_CHECK(q.next());
   BOOST_CHECK_EQUAL(q.index(), 1);
 
-  auto qInverse = q.inverse();
-  auto qIdentity = q.apply(qInverse.sigma);
-  BOOST_CHECK_EQUAL(Temple::make_permutation(qIdentity).index(), 0);
+  BOOST_CHECK_EQUAL(q.compose(q.inverse()).index(), 0);
 
-  Temple::Permutation<U> r(4, 2);
+  Temple::Permutation<Vector> r(4, 2);
   BOOST_CHECK_EQUAL(r.index(), 2);
 
-  Temple::Permutation<U> s(10, 1001);
+  Temple::Permutation<Vector> s(10, 1001);
   BOOST_CHECK_EQUAL(s.index(), 1001);
 }

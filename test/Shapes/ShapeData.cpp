@@ -29,6 +29,14 @@
 using namespace Scine::Molassembler;
 using namespace Shapes;
 
+namespace {
+
+inline Shapes::Vertex operator "" _v(unsigned long long v) {
+  return Shapes::Vertex(v);
+}
+
+} // namespace
+
 template<typename EnumType>
 constexpr inline auto underlying(const EnumType e) {
   return static_cast<std::underlying_type_t<EnumType>>(e);
@@ -767,4 +775,13 @@ BOOST_AUTO_TEST_CASE(DimensionalityProperty, *boost::unit_test::label("Shapes"))
   BOOST_CHECK(!threeDimensional(Shape::Pentagon));
   BOOST_CHECK(!threeDimensional(Shape::Hexagon));
   BOOST_CHECK(threeDimensional(Shape::Icosahedron));
+}
+
+BOOST_AUTO_TEST_CASE(IndexMappingApplication, *boost::unit_test::label("Shapes")) {
+  {
+    const std::vector<Vertex> mapping {{2_v, 0_v, 1_v}};
+    const auto applied = Properties::applyIndexMapping(Shape::T, mapping);
+    const auto expected = std::vector<Vertex> {{1_v, 2_v, 0_v}};
+    BOOST_CHECK(applied == expected);
+  }
 }

@@ -50,7 +50,7 @@ namespace {
 Shapes::Shape pickTransition(
   const Shapes::Shape shape,
   const unsigned T,
-  const boost::optional<Shapes::Vertex>& removedVertexOptional
+  const boost::optional<Shapes::Vertex>& maybeRemovedVertex
 ) {
   boost::optional<Shapes::Properties::ShapeTransitionGroup> bestTransition;
   std::vector<Shapes::Shape> propositions;
@@ -80,7 +80,7 @@ Shapes::Shape pickTransition(
       continue;
     }
 
-    if(auto transitionOptional = Shapes::getMapping(shape, propositionalShape, removedVertexOptional)) {
+    if(auto transitionOptional = Shapes::getMapping(shape, propositionalShape, maybeRemovedVertex)) {
       if(transitionOptional->indexMappings.empty()) {
         continue;
       }
@@ -519,13 +519,13 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
     return boost::none;
   }
 
-  const int siteCountChange = static_cast<int>(newRanking.sites.size() - ranking_.sites.size());
+  const int siteCountChange = static_cast<int>(newRanking.sites.size()) - static_cast<int>(ranking_.sites.size());
   // Complain if more than one site is changed either way
   if(std::abs(siteCountChange) > 1) {
-    throw std::logic_error("propagateGraphChange should only ever handle a single site addition or removal at once");
+    throw std::logic_error("propagate should only ever have to handle a single site addition or removal at once");
   }
 
-  auto siteMapping = SiteMapping::from(ranking_, newRanking);
+  const auto siteMapping = SiteMapping::from(ranking_, newRanking);
 
   /* Decide the new shape */
   const Shapes::Shape newShape = shapeOption.value_or_eval(
@@ -542,7 +542,7 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
       assert(siteMapping.changedSite);
 
       /* We can only figure out a mapping if the stereocenter is assigned
-       * since otherwise cache_.symmetryPositionMap is empty and the shape
+       * since otherwise symmetryPositionMap_ is empty and the shape
        * vertex being removed is a necessary argument to down.
        */
       if(assignmentOption_) {
@@ -552,10 +552,7 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
         );
       }
 
-      // Just return the most symmetric symmetry of the target size
-      return Shapes::Properties::mostSymmetric(
-        newRanking.sites.size()
-      );
+      return Shapes::Properties::mostSymmetric(newRanking.sites.size());
     }
   );
 
@@ -583,7 +580,8 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
    * ABCDEF. There will be multiple ways to split A to F!
    */
   if(assignmentOption_ && numStereopermutations() > 1) {
-    const auto removedVertexOptional = Temple::Optionals::flatMap(
+    // Convert a possibly removed site index into the corresponding removed shape vertex
+    const auto maybeRemovedVertex = Temple::Optionals::flatMap(
       siteMapping.changedSite,
       [this, siteCountChange](const SiteIndex changedSite) -> boost::optional<Shapes::Vertex> {
         if(siteCountChange == -1) {
@@ -594,16 +592,20 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
       }
     );
 
+    // Decide on a suitable shape-to-shape vertex mapping satisfying options
     const auto shapeMapping = Temple::Optionals::flatMap(
-      Shapes::getMapping(shape_, newShape, removedVertexOptional),
+      Shapes::getMapping(shape_, newShape, maybeRemovedVertex),
       [](const auto& mapping) {
         return selectTransitionMapping(mapping, Options::chiralStatePreservation);
       }
     );
 
+    // Turn the shape mapping into an site index occupation of shape vertices
     const auto appliedShapeMapping = Temple::Optionals::map(
       shapeMapping,
       [&](const std::vector<Shapes::Vertex>& vertexMap) {
+        // TODO somewhat unsure about this if. Seems like this should by done in
+        // any case regardless of the site count change
         if(siteCountChange == +1) {
           return Shapes::Properties::applyIndexMapping(newShape, vertexMap);
         }
@@ -640,7 +642,7 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
         Temple::map(
           oldSiteIndicesAtNewVertices,
           [&](const SiteIndex oldSite) -> SiteIndex {
-            auto findIter = siteMapping.map.find(oldSite);
+            const auto findIter = siteMapping.map.find(oldSite);
 
             if(findIter != std::end(siteMapping.map)) {
               return findIter->second;
@@ -666,10 +668,16 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
         sitesAtNewShapeVertices
       );
 
+      using Permutation = Temple::Permutation<std::vector<Shapes::Vertex>>;
+      const auto vertexLinks = Stereopermutations::Stereopermutation::permuteLinks(
+        newAbstract.selfReferentialLinks,
+        Permutation::ordering(newStereopermutationCharacters).inverse().sigma
+      );
+
       // Create a new assignment with those characters
       const auto trialStereopermutation = Stereopermutations::Stereopermutation(
         newStereopermutationCharacters,
-        newAbstract.selfReferentialLinks
+        vertexLinks
       );
 
       newAssignmentOption = Stereopermutators::Feasible::findRotationallySuperposableAssignment(

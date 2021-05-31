@@ -345,7 +345,7 @@ void Molecule::Impl::propagateGraphChange_() {
     } else {
       // There is no atom stereopermutator on this vertex, so try to add one
       if(auto permutator = makePermutator(vertex, stereopermutators_)) {
-        stereopermutators_.add(std::move(permutator.value()));
+        stereopermutators_.add(std::move(*permutator));
       }
     }
   }
@@ -362,7 +362,7 @@ void Molecule::Impl::propagateGraphChange_() {
 
     if(auto permutator = makePermutator(bond, stereopermutators_)) {
       if(permutator->numStereopermutations() > 1) {
-        stereopermutators_.add(std::move(permutator.value()));
+        stereopermutators_.add(std::move(*permutator));
       }
     }
   }

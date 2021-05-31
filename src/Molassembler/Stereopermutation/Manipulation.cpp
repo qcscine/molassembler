@@ -35,13 +35,13 @@ inline unsigned gcd(const std::vector<unsigned>& c) {
   return result;
 }
 
-} // namespace
-
 inline void checkArguments(const Stereopermutation& s, const Shapes::Shape shape) {
   if(s.characters.size() != Shapes::size(shape)) {
     throw std::invalid_argument("Stereopermutation character count does not match shape size");
   }
 }
+
+} // namespace
 
 std::vector<Stereopermutation> generateAllRotations(Stereopermutation s, const Shapes::Shape shape) {
   checkArguments(s, shape);
@@ -138,7 +138,7 @@ Uniques uniques(
     }
   }
 
-  auto minElement = [](const auto& c) {
+  const auto minElement = [](const auto& c) {
     assert(!c.empty());
     return *std::min_element(std::begin(c), std::end(c));
   };
@@ -146,12 +146,14 @@ Uniques uniques(
   // Generate all rotations of the base stereopermutation
   auto rotations = generateAllRotations(stereopermutation, shape);
 
-  // The lowest rotation of the passed stereopermutation is the first unique stereopermutation
+  // The lowest rotation of the passed stereopermutation is the first unique
+  // stereopermutation
   Uniques unordered;
   unordered.list.push_back(minElement(rotations));
   unordered.weights.push_back(1);
 
-  // Map of rotations to the index in the unordered so we can forward matches to those weight counters
+  // Map of rotations to the index in the unordered so we can forward matches
+  // to those weight counters
   std::unordered_map<Stereopermutation, unsigned, boost::hash<Stereopermutation>> rotationCounterMap;
   for(const auto& rotation : rotations) {
     rotationCounterMap.emplace(rotation, 0);
@@ -165,7 +167,7 @@ Uniques uniques(
     }
 
     // Is the current stereopermutation not contained within the set of rotations?
-    auto findIter = rotationCounterMap.find(stereopermutation);
+    const auto findIter = rotationCounterMap.find(stereopermutation);
     if(findIter == std::end(rotationCounterMap)) {
       // If so, it is a unique stereopermutation, generate all rotations
       rotations = generateAllRotations(stereopermutation, shape);
@@ -183,24 +185,17 @@ Uniques uniques(
     }
   }
 
-  // Discover an ordering permutation
-  const unsigned C = unordered.list.size();
-  const std::vector<unsigned> order = Temple::sorted(
-    Temple::iota<unsigned>(C),
-    [&](const unsigned i, const unsigned j) -> bool {
-      return unordered.list.at(i) < unordered.list.at(j);
-    }
-  );
+  using IndexVector = std::vector<unsigned>;
+  using Permutation = Temple::Permutation<IndexVector>;
+  const auto ordering = Permutation::ordering(unordered.list);
 
   // Order the uniques using the discovered ordering permutation
-  Uniques ordered;
-  ordered.list.reserve(C);
-  ordered.weights.resize(C);
+  Uniques ordered {
+    ordering.apply(unordered.list),
+    ordering.apply(unordered.weights)
+  };
 
-  for(unsigned i = 0; i < C; ++i) {
-    ordered.list.push_back(std::move(unordered.list.at(order.at(i))));
-    ordered.weights.at(i) = unordered.weights.at(order.at(i));
-  }
+  assert(std::is_sorted(std::begin(ordered.list), std::end(ordered.list)));
 
   // Divide the weights by their gcd
   const unsigned d = gcd(ordered.weights);

@@ -85,24 +85,21 @@ typename Stereopermutation::OrderedLinks Stereopermutation::permuteLinks(
 std::string Stereopermutation::toString() const {
   std::stringstream out;
 
-  out << "chars {";
-  for(unsigned i = 0; i < characters.size(); i++) {
-    out << characters[i];
-    if(i != characters.size() - 1) {
-      out << ", ";
-    }
+  out << "chars '";
+  for(const char character : characters) {
+    out << character;
   }
-  out << "}, links {";
+  out << "', links [";
 
   unsigned pairs = links.size();
   for(const auto& pair: links) {
-    out << "[" << pair.first << ", " << pair.second << "]";
+    out << "(" << pair.first << ", " << pair.second << ")";
     if(--pairs != 0) {
       out << ", ";
     }
   }
 
-  out << "}";
+  out << "]";
 
   return out.str();
 }
@@ -119,28 +116,6 @@ Stereopermutation Stereopermutation::applyPermutation(const Shapes::Permutation&
     permuteCharacters(characters, permutation),
     permuteLinks(links, permutation)
   };
-}
-
-std::map<
-  char,
-  std::vector<unsigned>
-> Stereopermutation::getCharMap() const {
-  std::map<
-    char,
-    std::vector<unsigned>
-  > returnMap;
-
-  for(unsigned i = 0; i < characters.size(); i++) {
-    const char columnChar = characters[i];
-    // C++17 insert_or_update
-    if(returnMap.count(columnChar) == 0) {
-      returnMap[columnChar] = {i};
-    } else {
-      returnMap[columnChar].push_back(i);
-    }
-  }
-
-  return returnMap;
 }
 
 std::size_t hash_value(const Stereopermutation& assignment) {

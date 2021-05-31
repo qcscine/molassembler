@@ -85,11 +85,8 @@ struct MASM_EXPORT Uniques {
  * E.g. M (A-A)_3 generates a trans-trans-trans stereopermutation, which is
  * extremely hard to find actual ligands for that work.
  *
- * The satisfiability of stereopermutation must be checked before trying to
- * embed structures with completely nonsensical constraints. Perhaps restrict
- * A-A ligands with bridge length 4 (chelating atoms included), maybe even up
- * to 6 to cis arrangements. Xantphos (with bridge length 7) is the smallest
- * trans-spanning ligand mentioned in Wikipedia.
+ * The satisfiability of a stereopermutation must be checked before trying to
+ * embed structures with completely nonsensical constraints.
  *
  * @complexity{@math{O(S!)} where @math{S} is the size of the involved symmetry}
  */

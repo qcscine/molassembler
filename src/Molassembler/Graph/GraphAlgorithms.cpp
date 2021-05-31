@@ -331,7 +331,7 @@ std::vector<
   std::vector<AtomIndex>
 > sites(
   const PrivateGraph& graph,
-  AtomIndex placement,
+  const AtomIndex placement,
   const std::vector<AtomIndex>& excludeAdjacents
 ) {
   if(AtomInfo::isMainGroupElement(graph.elementType(placement))) {
@@ -382,6 +382,10 @@ std::vector<
       }
     }
 
+    for(auto& site : adjacents) {
+      Temple::sort(site);
+    }
+    Temple::sort(adjacents);
     return adjacents;
   }
 
@@ -436,6 +440,7 @@ std::vector<
   for(auto& ligand : groupedLigands) {
     Temple::sort(ligand);
   }
+  Temple::sort(groupedLigands);
 
   return groupedLigands;
 }

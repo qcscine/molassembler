@@ -65,10 +65,6 @@ boost::optional<const Properties::ShapeTransitionGroup&> getMapping(
   const Shape b,
   const boost::optional<Vertex>& removedIndexOption
 ) {
-  if(a == b) {
-    return boost::none;
-  }
-
   using Key = typename decltype(mappingsCache)::key_type;
 
   const Key key {a, b, removedIndexOption};
@@ -80,64 +76,12 @@ boost::optional<const Properties::ShapeTransitionGroup&> getMapping(
   int sizeDiff = static_cast<int>(Shapes::size(b)) - static_cast<int>(Shapes::size(a));
 
   if(sizeDiff == 1 || sizeDiff == 0) {
-#ifdef USE_CONSTEXPR_TRANSITION_MAPPINGS
-    /* Is the desired mapping in the generated list of mappings?
-     * It can be that allMappings contains only a limited set of mappings!
-     *
-     * WARNING: this assumes that the enum containing the names of symmetries has
-     * the same order as the tuple specifying all (or some) symmetry data types
-     * used at compile-time to generate allMappings
-     */
-    auto& constexprOption = allMappings.at(
-      std::min(
-        static_cast<unsigned>(a),
-        static_cast<unsigned>(b)
-      ),
-      std::max(
-        static_cast<unsigned>(a),
-        static_cast<unsigned>(b)
-      )
-    );
-
-    if(constexprOption.hasValue()) {
-      const auto& constexprMappings = constexprOption.value();
-
-      Properties::ShapeTransitionGroup stlResult;
-      stlResult.indexMappings = Temple::map(
-        Temple::toSTL(constexprMappings.mappings),
-        [&](const auto& indexList) -> std::vector<Vertex> {
-          std::vector<Vertex> v;
-          for(unsigned i : indexList) {
-            v.emplace_back(i);
-          }
-          return v;
-        }
-      );
-
-      stlResult.angularDistortion = constexprMappings.angularDistortion;
-      stlResult.chiralDistortion = constexprMappings.chiralDistortion;
-
-      mappingsCache.add(
-        key,
-        stlResult
-      );
-    } else {
-      // Calculate dynamically (relevant for targets of size 9 and higher)
-      mappingsCache.add(
-        key,
-        Properties::selectBestTransitionMappings(
-          Properties::shapeTransitionMappings(a, b)
-        )
-      );
-    }
-#else
     mappingsCache.add(
       key,
       Properties::selectBestTransitionMappings(
         Properties::shapeTransitionMappings(a, b)
       )
     );
-#endif
   } else if(sizeDiff == -1 && removedIndexOption) {
     // Deletion case (always dynamic)
     mappingsCache.add(

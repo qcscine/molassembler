@@ -459,7 +459,7 @@ std::vector<Vertex> applyIndexMapping(
   /* Creates the list of indices in the target shape. Why is this necessary?
    *
    * E.g. An index mapping from linear to T-shaped. The individual
-   * shape-internal numbering schemes are shown for the shape positions.
+   * shape-internal vertex numbering schemes are indicated.
    *
    *  1  –▶  0
    *  |      |
@@ -468,9 +468,9 @@ std::vector<Vertex> applyIndexMapping(
    *  0  –▶  2                pos. 2 in Tshaped
    *                                 |  ┌– Line pos. 1 to pos. 0 in Tshaped
    *                                 |  |  ┌– This position is new
-   * This mapping is represented as {2, 0, 1}.
+   * The mapping is represented as {2, 0, 1}.
    *
-   * This function writes the indices of original mapping into the target
+   * This function writes the indices of the original mapping into the target
    * shape's indexing scheme.
    *
    * For this example, this returns {1, 2, 0}:
@@ -599,15 +599,12 @@ std::vector<DistortionInfo> shapeTransitionMappings(
        */
       auto allRotations = generateAllRotations(
         to,
-        applyIndexMapping(
-          to,
-          indexMapping
-        )
+        applyIndexMapping(to, indexMapping)
       );
 
       encounteredShapeMappings.insert(
-        allRotations.begin(),
-        allRotations.end()
+        std::make_move_iterator(allRotations.begin()),
+        std::make_move_iterator(allRotations.end())
       );
     }
   } while (std::next_permutation(indexMapping.begin(), indexMapping.end()));
@@ -633,7 +630,10 @@ std::vector<DistortionInfo> ligandLossTransitionMappings(
    * The deleted index is added to the end. The lowest permutation of the mapping
    * from the smaller to the larger shape is then:
    *
-   * 1, 2, ..., (pos - 1), (pos + 1), ..., (from_size - 1), pos
+   * 0, 1, ..., (pos - 1), (pos + 1), ..., (from_size - 1), pos
+   *
+   * NOTE: pos simply isn't added to the mapping (the distortion component
+   * calculating functions tolerate this), simplifying the permutation
    */
   std::vector<Vertex> indexMapping = Temple::variadic::concatenate(
     Temple::iota<Vertex>(positionInSourceShape),
@@ -644,6 +644,8 @@ std::vector<DistortionInfo> ligandLossTransitionMappings(
    * save that to and from are swapped in all occasions
    * and that std::next_permutation is only called on the subset excluding the
    * last position (the one that is added / deleted).
+   *
+   * AAAND there's no applyTransitionMapping for some reason
    */
 
   std::vector<DistortionInfo> distortions;
@@ -663,8 +665,8 @@ std::vector<DistortionInfo> ligandLossTransitionMappings(
       auto allRotations = generateAllRotations(to, indexMapping);
 
       encounteredShapeMappings.insert(
-        allRotations.begin(),
-        allRotations.end()
+        std::make_move_iterator(allRotations.begin()),
+        std::make_move_iterator(allRotations.end())
       );
     }
   } while (std::next_permutation(indexMapping.begin(), indexMapping.end()));

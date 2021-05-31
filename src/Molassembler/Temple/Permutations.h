@@ -9,6 +9,7 @@
 #define INCLUDE_MOLASSEMBLER_TEMPLE_PERMUTATIONS_H
 
 #include <algorithm>
+#include <stdexcept>
 
 namespace Scine {
 namespace Molassembler {
@@ -275,25 +276,32 @@ bool nextCombinationPermutation(
  *
  * @tparam Container implementing begin/end, at and size methods. If these
  * methods of the container are constexpr, then this class is constexpr.
+ *
+ * The permutation itself represented in one-line 'notation'. E.g. a vector
+ * containing the indices 0, 3, 2, 1 represents the permutation with p(0) = 0,
+ * p(1) = 3, p(2) = 2 and p(3) = 1.
  */
 template<typename Container>
 struct Permutation {
   using T = std::decay_t<decltype(std::declval<Container>().at(0))>;
   static_assert(
-    std::is_integral<T>::value,
-    "Permutation container must have integral value type"
+    std::is_convertible<T, unsigned>::value,
+    "Permutation container value type must be convertible to an integral type"
   );
 
   constexpr Permutation() = default;
 
+  //! Construct the identity permutation of size N
   constexpr explicit Permutation(unsigned N) : sigma(N) {
     for(unsigned i = 0; i < N; ++i) {
       sigma.at(i) = i;
     }
   }
 
+  //! Construct a permutation from data
   constexpr explicit Permutation(Container p) : sigma(std::move(p)) {}
 
+  //! Construct the i-th permutation of size N
   constexpr Permutation(const unsigned N, unsigned i) : sigma(N) {
     Container factorials(N);
     factorials.at(0) = 1;
@@ -314,6 +322,20 @@ struct Permutation {
         }
       }
     }
+  }
+
+  //! Discover on ordering permutation of an unordered container
+  template<typename OtherContainer>
+  static constexpr Permutation ordering(const OtherContainer& unordered) {
+    Permutation p(unordered.size());
+    std::sort(
+      std::begin(p.sigma),
+      std::end(p.sigma),
+      [&](const auto i, const auto j) {
+        return unordered.at(i) < unordered.at(j);
+      }
+    );
+    return p;
   }
 
   constexpr bool next() {
@@ -341,16 +363,30 @@ struct Permutation {
     return sigma.at(i);
   }
 
+  constexpr auto operator() (const std::size_t i) const -> decltype(auto) {
+    return sigma.at(i);
+  }
+
   template<typename OtherContainer>
-  constexpr OtherContainer apply(OtherContainer other) const {
+  constexpr OtherContainer apply(const OtherContainer& other) const {
     const unsigned size = other.size();
     OtherContainer result(size);
     for(std::size_t i = 0; i < size; ++i) {
-      result.at(i) = sigma.at(other.at(i));
+      result.at(i) = other.at(sigma.at(i));
     }
     return result;
   }
 
+  /*! @brief Compose two permutations
+   *
+   * The resulting permutation of this composition applies @p other first, then
+   * @p this.
+   */
+  constexpr Permutation compose(const Permutation& other) const {
+    return Permutation {apply(other.sigma)};
+  }
+
+  //! The permutation in 'one-line' representation
   Container sigma;
 };
 

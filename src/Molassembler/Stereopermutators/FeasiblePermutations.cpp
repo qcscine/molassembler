@@ -289,15 +289,16 @@ boost::optional<unsigned> Feasible::findRotationallySuperposableAssignment(
   const Abstract& abstract,
   const std::vector<unsigned>& feasibles
 ) {
+  /* NOTE: Assumes that abstract permutations are all the min element of their
+   * rotational set (see Stereopermutations::uniques).
+   */
   const auto trialRotations = Stereopermutations::generateAllRotations(permutation, shape);
+  const auto trialMinRotation = *std::min_element(std::begin(trialRotations), std::end(trialRotations));
   const auto feasiblesIter = Temple::find_if(
     feasibles,
     [&](const unsigned feasible) -> bool {
-      const auto rotationalMatchIter = Temple::find(
-        trialRotations,
-        abstract.permutations.list.at(feasible)
-      );
-      return rotationalMatchIter != std::end(trialRotations);
+      const auto& feasiblePermutation = abstract.permutations.list.at(feasible);
+      return feasiblePermutation == trialMinRotation;
     }
   );
   if(feasiblesIter == std::end(feasibles)) {

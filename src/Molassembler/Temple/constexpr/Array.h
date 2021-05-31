@@ -334,6 +334,22 @@ public:
       return baseRef_[position_];
     }
 
+    PURITY_WEAK constexpr bool operator < (const iterator& other) const noexcept {
+      return position_ < other.position_;
+    }
+
+    PURITY_WEAK constexpr bool operator <= (const iterator& other) const noexcept {
+      return position_ <= other.position_;
+    }
+
+    PURITY_WEAK constexpr bool operator > (const iterator& other) const noexcept {
+      return position_ > other.position_;
+    }
+
+    PURITY_WEAK constexpr bool operator >= (const iterator& other) const noexcept {
+      return position_ >= other.position_;
+    }
+
   private:
     Array& baseRef_;
     std::size_t position_;

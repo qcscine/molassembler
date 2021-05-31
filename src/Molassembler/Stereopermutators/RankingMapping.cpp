@@ -156,7 +156,7 @@ SiteMapping SiteMapping::from(
   unsigned bestDistance = calculateDistance(permutation);
 
   while(std::next_permutation(std::begin(permutation), std::end(permutation))) {
-    unsigned distance = calculateDistance(permutation);
+    const unsigned distance = calculateDistance(permutation);
     if(distance < bestDistance) {
       bestPermutation = permutation;
       bestDistance = distance;

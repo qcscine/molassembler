@@ -13,8 +13,6 @@
 
 #include "Molassembler/Shapes/Data.h"
 
-#include <map>
-
 namespace Scine {
 namespace Molassembler {
 
@@ -74,8 +72,8 @@ public:
 
 //!@name Special member functions
 //!@{
-  // Do not default instantiate
-  Stereopermutation() = delete;
+  //! Empty default-init (invalid state)
+  Stereopermutation() = default;
   /*!
    * @brief Construct an Stereopermutation from a list of ligand characters and
    *   a list of bonded indices referencing the ligand characters.
@@ -97,12 +95,6 @@ public:
    * @complexity{@math{O(N + L)}}
    */
   Stereopermutation applyPermutation(const Shapes::Permutation& permutation) const;
-
-  //!@brief Gets a map of ligand symbol character to shape vertex positions
-  std::map<
-    char,
-    std::vector<unsigned>
-  > getCharMap() const;
 
   //! A string for display
   std::string toString() const;
