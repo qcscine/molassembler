@@ -208,9 +208,7 @@ struct adl_serializer<Scine::Molassembler::Graph> {
     auto& elements = j["Z"];
 
     for(const auto vertexIndex : inner.vertices()) {
-      elements.push_back(
-        inner.elementType(vertexIndex)
-      );
+      elements.push_back(inner.elementType(vertexIndex));
     }
 
 
@@ -223,19 +221,13 @@ struct adl_serializer<Scine::Molassembler::Graph> {
     ) {
       json e = json::array();
       e.push_back(
-        static_cast<int>(
-          inner.source(edgeDescriptor)
-        )
+        static_cast<int>(inner.source(edgeDescriptor))
       );
       e.push_back(
-        static_cast<int>(
-          inner.target(edgeDescriptor)
-        )
+        static_cast<int>(inner.target(edgeDescriptor))
       );
       e.push_back(
-        static_cast<int>(
-          inner.bondType(edgeDescriptor)
-        )
+        static_cast<int>(inner.bondType(edgeDescriptor))
       );
 
       edges.push_back(std::move(e));
@@ -255,9 +247,7 @@ struct adl_serializer<Scine::Molassembler::Graph> {
       inner.addEdge(
         edgeJSON.at(0),
         edgeJSON.at(1),
-        static_cast<Scine::Molassembler::BondType>(
-          edgeJSON.at(2)
-        )
+        static_cast<Scine::Molassembler::BondType>(edgeJSON.at(2))
       );
     }
 
@@ -309,57 +299,57 @@ void standardizeAtomStereopermutatorRepresentation(nlohmann::json& permutator) {
     Temple::sort(subList);
   }
 
-  // Sort ligands' sub-lists
+  // Sort sites' sub-lists
   assert(ranking.count("l") > 0);
-  json& ligands = ranking.at("l");
-  assert(ligands.is_array());
-  for(json& subList : ligands) {
+  json& sites = ranking.at("l");
+  assert(sites.is_array());
+  for(json& subList : sites) {
     assert(subList.is_array());
     Temple::sort(subList);
   }
 
-  /* Sort ligands lists lexicographically (and their ranking
+  /* Sort site index lists lexicographically (and their ranking
    * simultaneously), since they are index-connected
    */
   assert(ranking.count("lr") > 0);
-  json& ligandsRanking = ranking.at("lr");
-  assert(ligandsRanking.is_array());
+  json& sitesRanking = ranking.at("lr");
+  assert(sitesRanking.is_array());
 
-  json unsortedLigands = ligands;
-  Temple::sort(ligands);
+  json unsortedSites = sites;
+  Temple::sort(sites);
 
-  auto newLigandIndex = [&](unsigned oldLigandIndex) -> unsigned {
-    const auto& ligandIndices = unsortedLigands.at(oldLigandIndex);
-    auto findIter = Temple::find(ligands, ligandIndices);
-    assert(findIter != std::end(ligands));
-    return findIter - std::begin(ligands);
+  auto newSiteIndex = [&](unsigned oldSiteIndex) -> unsigned {
+    const auto& siteIndices = unsortedSites.at(oldSiteIndex);
+    auto findIter = Temple::find(sites, siteIndices);
+    assert(findIter != std::end(sites));
+    return findIter - std::begin(sites);
   };
 
-  // Changing ligands means ligandsRanking has to be adapted
-  for(json& equallyRankedLigandsList : ligandsRanking) {
+  // Changing sites means sitesRanking has to be adapted
+  for(json& equallyRankedLigandsList : sitesRanking) {
     for(json& oldLigandIndexJSON : equallyRankedLigandsList) {
-      oldLigandIndexJSON = newLigandIndex(oldLigandIndexJSON.get<unsigned>());
+      oldLigandIndexJSON = newSiteIndex(oldLigandIndexJSON.get<unsigned>());
     }
 
     // Sort the sub list, too
     Temple::sort(equallyRankedLigandsList);
   }
 
-  // Changing ligands also means that links' ligand indices have to be adapted
+  // Changing sites also means that links' site indices have to be adapted
   if(ranking.count("lnk") > 0) {
     json& links = ranking.at("lnk");
     assert(links.is_array() && !links.empty());
     for(json& link : links) {
       assert(link.count("p") > 0);
-      json& ligandIndexPair = link.at("p");
-      assert(ligandIndexPair.is_array() && ligandIndexPair.size() == 2);
+      json& siteIndexPair = link.at("p");
+      assert(siteIndexPair.is_array() && siteIndexPair.size() == 2);
 
-      ligandIndexPair[0] = newLigandIndex(ligandIndexPair[0].get<unsigned>());
-      ligandIndexPair[1] = newLigandIndex(ligandIndexPair[1].get<unsigned>());
+      siteIndexPair[0] = newSiteIndex(siteIndexPair[0].get<unsigned>());
+      siteIndexPair[1] = newSiteIndex(siteIndexPair[1].get<unsigned>());
 
       // Reorder the pair
-      if(ligandIndexPair[0] > ligandIndexPair[1]) {
-        std::swap(ligandIndexPair[0], ligandIndexPair[1]);
+      if(siteIndexPair[0] > siteIndexPair[1]) {
+        std::swap(siteIndexPair[0], siteIndexPair[1]);
       }
     }
 
