@@ -13,7 +13,6 @@
 
 #include "Molassembler/Shapes/Shapes.h"
 #include "Molassembler/Shapes/PointGroups.h"
-#include "Molassembler/Shapes/constexpr/CompileTimeOptions.h"
 #include "Molassembler/Shapes/constexpr/AngleLookup.h"
 
 namespace Scine {
@@ -410,14 +409,6 @@ struct Seesaw {
     {{3, 2, 1, 0}} // C2
   }};
 
-#ifdef USE_ALTERNATE_TETRAHEDRA
-  static constexpr std::array<
-    std::array<unsigned, 4>,
-    1
-  > tetrahedra {{
-    {{0, 1, 2, 3}}
-  }};
-#else // Regular
   static constexpr std::array<
     std::array<unsigned, 4>,
     2
@@ -425,7 +416,6 @@ struct Seesaw {
     {{0, ORIGIN_PLACEHOLDER, 1, 2}},
     {{ORIGIN_PLACEHOLDER, 3, 1, 2}},
   }};
-#endif
 
   static constexpr std::array<unsigned, 4> mirror {{0, 2, 1, 3}};
 };
@@ -538,15 +528,6 @@ struct SquarePyramid {
     {{3, 0, 1, 2, 4}} // C4
   }};
 
-#ifdef USE_ALTERNATE_TETRAHEDRA
-  static constexpr std::array<
-    std::array<unsigned, 4>,
-    2
-  > tetrahedra {{
-    {{0, 1, 4, 2}},
-    {{0, 3, 2, 4}}
-  }};
-#else // Regular
   static constexpr std::array<
     std::array<unsigned, 4>,
     4
@@ -556,7 +537,6 @@ struct SquarePyramid {
     {{2, 3, 4, ORIGIN_PLACEHOLDER}},
     {{3, 0, 4, ORIGIN_PLACEHOLDER}}
   }};
-#endif
 
   static constexpr std::array<unsigned, 5> mirror {{1, 0, 3, 2, 4}};
 };
@@ -741,17 +721,6 @@ struct Octahedron {
     {{4, 1, 5, 3, 2, 0}} // horizontal C4'
   }};
 
-#ifdef USE_ALTERNATE_TETRAHEDRA
-  static constexpr std::array<
-    std::array<unsigned, 4>,
-    4
-  > tetrahedra {{
-    {{3, 0, 4, 5}},
-    {{0, 1, 4, 5}},
-    {{1, 2, 4, 5}},
-    {{2, 3, 4, 5}}
-  }};
-#else // Regular
   static constexpr std::array<
     std::array<unsigned, 4>,
     8
@@ -765,7 +734,6 @@ struct Octahedron {
     {{1, 2, ORIGIN_PLACEHOLDER, 5}},
     {{2, 3, ORIGIN_PLACEHOLDER, 5}}
   }};
-#endif
   static constexpr std::array<unsigned, 6> mirror {{1, 0, 3, 2, 4, 5}};
 };
 
@@ -884,16 +852,6 @@ struct PentagonalPyramid {
     {{4, 0, 1, 2, 3, 5}} // C5 axial
   }};
 
-#ifdef USE_ALTERNATE_TETRAHEDRA
-  static constexpr std::array<
-    std::array<unsigned, 4>,
-    3
-  > tetrahedra {{
-    {{0, 1, 5, 2}},
-    {{2, 3, 5, 4}},
-    {{4, 5, ORIGIN_PLACEHOLDER, 0}}
-  }};
-#else // Regular
   static constexpr std::array<
     std::array<unsigned, 4>,
     5
@@ -904,7 +862,6 @@ struct PentagonalPyramid {
     {{3, ORIGIN_PLACEHOLDER, 4, 5}},
     {{4, ORIGIN_PLACEHOLDER, 0, 5}}
   }};
-#endif
   static constexpr std::array<unsigned, 6> mirror {{0, 4, 3, 2, 1, 5}};
 };
 
@@ -1006,18 +963,6 @@ struct PentagonalBipyramid {
     {{1, 0, 4, 3, 2, 6, 5}} // C2 equatorial on 3
   }};
 
-#ifdef USE_ALTERNATE_TETRAHEDRA
-  static constexpr std::array<
-    std::array<unsigned, 4>,
-    5
-  > tetrahedra {{
-      {{0, 1, 5, 6}},
-      {{1, 2, 5, 6}},
-      {{2, 3, 5, 6}},
-      {{3, 4, 5, 6}},
-      {{4, 0, 5, 6}}
-  }};
-#else // Regular
   static constexpr std::array<
     std::array<unsigned, 4>,
     10
@@ -1033,7 +978,6 @@ struct PentagonalBipyramid {
     {{3, 4, ORIGIN_PLACEHOLDER, 6}},
     {{4, 0, ORIGIN_PLACEHOLDER, 6}}
   }};
-#endif
   static constexpr std::array<unsigned, 7> mirror {{0, 4, 3, 2, 1, 5, 6}};
 };
 

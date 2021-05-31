@@ -35,37 +35,14 @@ double maximumAngle(const Shape shape) {
   ).second;
 }
 
-#ifdef USE_CONSTEXPR_TRANSITION_MAPPINGS
-template<typename ShapeSource, typename ShapeTarget>
-struct mappingCalculationFunctor {
-  static constexpr auto value() {
-    return ConstexprProperties::calculateMapping<ShapeSource, ShapeTarget>();
-  }
-};
-
-// Calculate the symmetryMapping for all possible combinations of symmetries
-constexpr Temple::UpperTriangularMatrix<
-  Temple::Optional<ConstexprProperties::MappingsReturnType>,
-  nShapes * (nShapes - 1) / 2
-> allMappings = Temple::makeUpperTriangularMatrix(
-  Temple::Tuples::mapAllPairs<
-    Data::allShapeDataTypes,
-    mappingCalculationFunctor
-  >()
-);
-#endif
-
-Temple::MinimalCache<
-  std::tuple<Shape, Shape, boost::optional<unsigned>>,
-  Properties::ShapeTransitionGroup
-> mappingsCache;
 
 boost::optional<const Properties::ShapeTransitionGroup&> getMapping(
   const Shape a,
   const Shape b,
   const boost::optional<Vertex>& removedIndexOption
 ) {
-  using Key = typename decltype(mappingsCache)::key_type;
+  using Key = std::tuple<Shape, Shape, boost::optional<unsigned>>;
+  static Temple::MinimalCache<Key, Properties::ShapeTransitionGroup> mappingsCache;
 
   const Key key {a, b, removedIndexOption};
 
@@ -95,44 +72,16 @@ boost::optional<const Properties::ShapeTransitionGroup&> getMapping(
   return mappingsCache.getOption(key);
 }
 
-#ifdef USE_CONSTEXPR_HAS_MULTIPLE_UNLINKED_STEREOPERMUTATIONS
-template<typename Symmetry>
-struct makeAllHasUnlinkedStereopermutationsFunctor {
-  static constexpr auto value() {
-    Temple::DynamicArray<bool, ConstexprProperties::maxShapeSize> nums;
-
-    /* Value for 0 is equal to value for 1, so calculate one less. When all
-     * are equal, there is obviously only one stereopermutation, so there is no
-     * need to calculate.
-     */
-    for(unsigned i = 0; i < Shapes::size - 1; ++i) {
-      nums.push_back(
-        ConstexprProperties::hasMultipleUnlinkedStereopermutations<Symmetry>(i + 1)
-      );
-    }
-
-    return nums;
-  }
-};
-
-constexpr Temple::Array<
-  Temple::DynamicArray<bool, ConstexprProperties::maxShapeSize>,
-  nShapes
-> allHasMultipleUnlinkedStereopermutations = Temple::Tuples::map<
-  Data::allShapeDataTypes,
-  makeAllHasUnlinkedStereopermutationsFunctor
->();
-#endif
-
-Temple::MinimalCache<
-  Shape,
-  std::vector<bool>
-> hasMultipleUnlinkedCache;
 
 bool hasMultipleUnlinkedStereopermutations(
   const Shape shape,
   unsigned nIdenticalLigands
 ) {
+  static Temple::MinimalCache<
+    Shape,
+    std::vector<bool>
+  > hasMultipleUnlinkedCache;
+
   if(nIdenticalLigands == Shapes::size(shape)) {
     return false;
   }
@@ -146,21 +95,6 @@ bool hasMultipleUnlinkedStereopermutations(
     return hasMultipleUnlinkedCache.get(shape).at(nIdenticalLigands - 1);
   }
 
-#ifdef USE_CONSTEXPR_HAS_MULTIPLE_UNLINKED_STEREOPERMUTATIONS
-  // Generate the cache element from constexpr non-STL data
-  const auto& dynArrRef = allHasMultipleUnlinkedStereopermutations.at(
-    static_cast<unsigned>(shape)
-  );
-
-  auto stlMapped = Temple::toSTL(dynArrRef);
-
-  hasMultipleUnlinkedCache.add(
-    shape,
-    stlMapped
-  );
-
-  return stlMapped.at(nIdenticalLigands - 1);
-#else
   // Generate the cache element using dynamic properties
   std::vector<bool> unlinkedStereopermutations;
   for(unsigned i = 0; i < Shapes::size(shape) - 1; ++i) {
@@ -178,7 +112,6 @@ bool hasMultipleUnlinkedStereopermutations(
   );
 
   return unlinkedStereopermutations.at(nIdenticalLigands - 1);
-#endif
 }
 
 } // namespace Shapes

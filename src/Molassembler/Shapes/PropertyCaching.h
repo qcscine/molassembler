@@ -48,31 +48,6 @@ constexpr double smallestAngle [[gnu::unused]]
   ConstexprProperties::minAngleFunctor
 >();
 
-#ifdef USE_CONSTEXPR_TRANSITION_MAPPINGS
-/*! @brief 0, +1 symmetry transition mappings calculated at compile-time
- *
- * A strictly upper triangular matrix of mapping optionals. Only transitions
- * between symmetries of equivalent or increasing sizes are populated, all
- * other are Nones.
- *
- * @complexity{@math{\Theta(S!)} where @math{S} is the size of the largest symmetry}
- */
-extern const Temple::UpperTriangularMatrix<
-  Temple::Optional<ConstexprProperties::MappingsReturnType>,
-  nShapes * (nShapes - 1) / 2
-> allMappings;
-#endif
-
-/* Dynamic access to constexpr data */
-/*! @brief Cache for on-the-fly generated mappings between symmetries
- *
- * Accesses allMappings if it was generated.
- */
-extern Temple::MinimalCache<
-  std::tuple<Shape, Shape, boost::optional<unsigned>>,
-  Properties::ShapeTransitionGroup
-> mappingsCache;
-
 /*! @brief Cached access to mappings. Populates the cache from constexpr if generated.
  *
  * @complexity{@math{\Theta(S!)} where @math{S} is the size of the symmetry if
@@ -91,26 +66,6 @@ boost::optional<const Properties::ShapeTransitionGroup&> getMapping(
   Shape b,
   const boost::optional<Vertex>& removedIndexOption = boost::none
 );
-
-#ifdef USE_CONSTEXPR_HAS_MULTIPLE_UNLINKED_STEREOPERMUTATIONS
-/*! @brief All precomputed values for hasMultipleUnlinkedStereopermutations
- *
- * Precomputes the value of hasMultipleUnlinkedStereopermutations for all
- * symmetries if enabled.
- *
- * @complexity{@math{\Theta(S!)} where @math{S} is the size of the largest symmetry}
- */
-extern const Temple::Array<
-  Temple::DynamicArray<bool, ConstexprProperties::maxShapeSize>,
-  nShapes
-> allHasMultipleUnlinkedStereopermutations;
-#endif
-
-//! Run-time cache
-extern Temple::MinimalCache<
-  Shape,
-  std::vector<bool>
-> hasMultipleUnlinkedCache;
 
 /*! @brief Cached access to multiple unlinked values
  *

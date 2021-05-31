@@ -89,6 +89,10 @@ Removed
 
 - Several constant global data variables in the private API have been replaced
   with stateless functions or function-local caches.
+- Constexpr shape property generation: It was clang-only and provided no
+  tangible performance benefits. Best code is no code. Got rid of a few global
+  variables in the process.
+
 
 Fixed
 .....
@@ -100,11 +104,15 @@ Fixed
   - Fixed missing propagation of atom stereopermutator placement and re-keying
     the atom stereopermutator map in StereopermutatorList
   - Add missing propagation of bond stereopermutator state on vertex removal
+  - Trial stereopermutation vertex links weren't permuted along with the site
+    indices
 
 - Directed conformer generation: Fixed incorrect precondition check with
   unassigned stereopermutators
 - Python bindings' ``interpret.interpret`` has been renamed to an
   ``interpret.molecules`` overload as originally intended.
+- Shape mapping generator between the same two shapes did not return the
+  identity mapping
 
 
 

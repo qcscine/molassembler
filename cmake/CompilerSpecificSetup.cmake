@@ -70,7 +70,7 @@ else()
     OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "AppleClang"
   )
     list(APPEND MOLASSEMBLER_CXX_FLAGS
-      -fconstexpr-steps=1999999999
+      -fconstexpr-steps=100000000
       -fconstexpr-backtrace-limit=0
     )
   endif()
