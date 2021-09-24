@@ -284,12 +284,12 @@ void init_interpret(pybind11::module& m) {
       >>> bond_orders = utils.BondOrderCollection(4)
       >>> bond_orders.set_order(0, 1, 1.0)
       >>> bond_orders.set_order(2, 3, 1.0)
-      >>> discretization = BondDiscretization.RoundToNearest
-      >>> result = interpret(atoms, bond_orders, discretization)
+      >>> discretization = interpret.BondDiscretization.RoundToNearest
+      >>> result = interpret.molecules(atoms, bond_orders, discretization)
       >>> assert len(result.molecules) == 2
       >>> hydrogen = Molecule()
       >>> assert all([m == hydrogen for m in result.molecules])
-      >>> assert result.component_map == [0, 0, 1, 1]
+      >>> assert str(result.component_map) == '[0, 0, 1, 1]'
     )delim"
   );
 
