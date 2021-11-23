@@ -50,9 +50,9 @@ This library requires the C++14 standard.
 
 Dependencies:
 
-- `SCINE Utilities <https://github.com/qcscine/utilities>`_ (BSD-3 license) >= 3.0.0
+- `SCINE Utilities <https://github.com/qcscine/utilities>`_ (BSD-3 license) >= 4.0.0
 - `Boost <https://www.boost.org/>`_ (Boost license) >= 1.65 (lowest tested, prefer newest)
-- `Eigen <http://eigen.tuxfamily.org>`_ (MPL 2.0 license) >= 3.3.2
+- `Eigen <http://eigen.tuxfamily.org>`_ (MPL 2.0 license) >= 3.3.2, < 3.4.0
 - `RingDecomposerLib <https://github.com/rareylab/RingDecomposerLib>`_ [1]_ (BSD-3 license): Unique Ring Family [2]_ cycle detection
 - `Outcome <https://github.com/ned14/outcome>`_ single-header (Boost license): Enforce error handling requirement in type system
 - `JSON For Modern C++ <https://github.com/nlohmann/json>`_ (MIT license): JSON serialization
@@ -109,7 +109,7 @@ No dependencies must be preinstalled, and you do not need to download the
 sources. To install/build with Conan::
 
     conan remote add scine https://scine-artifactory.ethz.ch/artifactory/api/conan/public
-    conan install -r scine --build=missing scine_molassembler/1.0.0@scine/stable
+    conan install -r scine --build=missing scine_molassembler/1.1.0@scine/stable
 
 Should you want python bindings, add ``-o scine_molassembler:python=True`` before
 the last argument.
@@ -131,9 +131,9 @@ If ``doxygen`` is found, the C++ library documentation is built. If the Python
 bindings are built and the ``sphinx`` Python module is available, the Python
 binding documentation is generated too.
 
-.. _C++ library: https://scine.ethz.ch/static/download/documentation/molassembler/v1.0.0/cpp/index.html
+.. _C++ library: https://scine.ethz.ch/static/download/documentation/molassembler/v1.1.0/cpp/index.html
 
-.. _Python bindings: https://scine.ethz.ch/static/download/documentation/molassembler/v1.0.0/py/index.html
+.. _Python bindings: https://scine.ethz.ch/static/download/documentation/molassembler/v1.1.0/py/index.html
 
 References
 ----------
