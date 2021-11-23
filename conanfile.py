@@ -45,7 +45,7 @@ class MolassemblerConan(ScineConan):
         "CMakeLists.txt",
     ]
     requires = [
-        "scine_utilities/[~=3.0.0]",
+        "scine_utilities/[~=4.0.0]",
         "RingDecomposerLib/1.1.3",
         "nauty/2.7r1"
     ]
