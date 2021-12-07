@@ -1,0 +1,90 @@
+---
+
+variables:
+  GIT_SUBMODULE_STRATEGY: recursive
+  GIT_DEPTH: 1
+  CONAN_CREATE_OPTIONS: >-
+    -o scine_molassembler:python=True
+    -o scine_molassembler:tests=True
+  CONAN_PYPI_OPTIONS: >-
+    -o scine_molassembler:python=True
+    -o scine_utilities:shared=False
+    -o scine_molassembler:shared=False
+  GCOVR_OPTIONS: "-r src/ -u --object-directory=build/src/"
+
+include:
+  - project: 'scine/development-utils'
+    file: '/ci/jobs.yml'
+
+conan-gcc:
+  extends:
+    - .gcc
+    - .conan_create
+
+conan-clang:
+  extends:
+    - .clang
+    - .conan_create
+
+conan-coverage:
+  extends: .conan_coverage
+
+pypi-cp36:
+  extends: .pypi
+
+license:
+  extends: .license
+
+complexity:
+  extends: .gcc
+  before_script:
+    - echo "Skip before_script"
+  script:
+    - python3 -m pip install lizard jinja2
+    - export PATH=$PATH:/home/ciuser/.local/bin
+    - cd src
+    - >-
+      lizard -l cpp -m
+      -T nloc=100
+      -T cyclomatic_complexity=15
+      -T parameter_count=5
+      -o lizard.html
+    - >-
+      lizard -l cpp -m
+      -w -s cyclomatic_complexity
+      -T cyclomatic_complexity=20
+      -W ../.whitelizard.txt
+  artifacts:
+    expire_in: 1 day
+    paths: [src/lizard.html]
+
+
+# Additional builds on master
+# Additional python ABIs
+pypi-cp37:
+  extends: .manylinux
+  only: [master]
+  variables:
+    PYABI: cp37-cp37m
+
+pypi-cp38:
+  extends: .manylinux
+  only: [master]
+  variables:
+    PYABI: cp38-cp38
+
+# scipy build for 3.9 fails in the CI because numpy doesn't have a package!
+# pypi-cp39:
+#   extends: .manylinux
+#   only: [master]
+#   variables:
+#     PYABI: cp39-cp39
+
+# CMake-only build
+cmake-only:
+  extends:
+    - .gcc
+    - .cmake_release
+  only: [master]
+  variables:
+    CMAKE_OPTIONS: "-DSCINE_BUILD_PYTHON_BINDINGS=ON"
