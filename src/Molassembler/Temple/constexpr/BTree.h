@@ -44,7 +44,7 @@ PURITY_STRONG constexpr size_t maxNodesInTree(const size_t height, const size_t 
  *
  * @complexity{@math{\Theta(1)}}
  */
-PURITY_STRONG constexpr size_t minHeight(const size_t numValues, const size_t minDegree) {
+PURITY_STRONG constexpr std::size_t minHeight(const std::size_t numValues, const std::size_t minDegree) {
   return Math::ceil(
     Math::log(
       static_cast<double>(numValues + 1),

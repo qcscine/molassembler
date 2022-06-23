@@ -155,4 +155,23 @@ void init_serialization(pybind11::module& m) {
     pybind11::arg("binary_format"),
     "Serialize a molecule into a binary format"
   );
+
+  serialization.def_static(
+    "equal_molecules",
+    &JsonSerialization::base64EqualMolecules,
+    pybind11::arg("string_a"),
+    pybind11::arg("string_b"),
+    pybind11::arg("binary_format") = JsonSerialization::BinaryFormat::CBOR,
+    "Compare the molecules given by the string representation."
+    );
+
+  serialization.def_static(
+    "equal_decision_lists",
+    &JsonSerialization::equalDecisionLists,
+    pybind11::arg("string_a"),
+    pybind11::arg("string_b"),
+    "Compare the decision lists given as strings. For each of the decision list elements,"
+    "the symmetry number has to be identical and the angle has to be within the interval"
+    "of the corresponding other decision list entry."
+  );
 }

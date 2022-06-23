@@ -673,11 +673,12 @@ void MoleculeBuilder::setAtomStereo(
 
     /* Transfer the sorted sites onto shape vertices */
     auto vertexMap = Shapes::Properties::inverseRotation(shapeMap(chiralData));
-    SiteToShapeVertexMap siteToShapeVertexMap; // SiteIndex -> Shapes::Vertex
-    siteToShapeVertexMap.resize(S);
+
+    std::vector<Shapes::Vertex> siteToShapeVertex(S);
     for(unsigned j = 0; j < S; ++j) {
-      siteToShapeVertexMap.at(sortedSites.at(j)) = vertexMap.at(j);
+      siteToShapeVertex.at(sortedSites.at(j)) = vertexMap.at(j);
     }
+    auto siteToShapeVertexMap = SiteToShapeVertexMap::from(siteToShapeVertex);
 
     /* Create a stereopermutation and look for it in the list of feasibles */
     auto soughtStereopermutation = stereopermutationFromSiteToShapeVertexMap(

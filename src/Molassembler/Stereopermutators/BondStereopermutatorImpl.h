@@ -162,7 +162,7 @@ private:
   boost::optional<unsigned> assignment_;
 
   //! Yields abstract site characters at their shape positions
-  static std::vector<char> charifyRankedSites_(
+  static Stereopermutations::Stereopermutation::Occupation makeOccupation_(
     const RankingInformation::RankedSitesType& sitesRanking,
     const AtomStereopermutator::ShapeMap& shapeVertexMap
   );

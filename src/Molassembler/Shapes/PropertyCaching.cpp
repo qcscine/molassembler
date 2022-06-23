@@ -14,25 +14,19 @@ namespace Scine {
 namespace Molassembler {
 namespace Shapes {
 
-constexpr Temple::Array<std::pair<double, double>, nShapes> symmetryAngleBounds = Temple::Tuples::map<
+constexpr Temple::Array<std::pair<double, double>, nShapes> shapeAngleBounds = Temple::Tuples::map<
   Data::allShapeDataTypes,
   ConstexprProperties::AngleBoundsFunctor
 >();
 
 double minimumAngle(const Shape shape) {
-  return symmetryAngleBounds.at(
-    static_cast<
-      std::underlying_type_t<Shape>
-    >(shape)
-  ).first;
+  using Underlying = std::underlying_type_t<Shape>;
+  return shapeAngleBounds.at(static_cast<Underlying>(shape)).first;
 }
 
 double maximumAngle(const Shape shape) {
-  return symmetryAngleBounds.at(
-    static_cast<
-      std::underlying_type_t<Shape>
-    >(shape)
-  ).second;
+  using Underlying = std::underlying_type_t<Shape>;
+  return shapeAngleBounds.at(static_cast<Underlying>(shape)).second;
 }
 
 
@@ -77,10 +71,7 @@ bool hasMultipleUnlinkedStereopermutations(
   const Shape shape,
   unsigned nIdenticalLigands
 ) {
-  static Temple::MinimalCache<
-    Shape,
-    std::vector<bool>
-  > hasMultipleUnlinkedCache;
+  static Temple::MinimalCache<Shape, std::vector<bool>> hasMultipleUnlinkedCache;
 
   if(nIdenticalLigands == Shapes::size(shape)) {
     return false;
@@ -106,10 +97,7 @@ bool hasMultipleUnlinkedStereopermutations(
     );
   }
 
-  hasMultipleUnlinkedCache.add(
-    shape,
-    unlinkedStereopermutations
-  );
+  hasMultipleUnlinkedCache.add(shape, unlinkedStereopermutations);
 
   return unlinkedStereopermutations.at(nIdenticalLigands - 1);
 }

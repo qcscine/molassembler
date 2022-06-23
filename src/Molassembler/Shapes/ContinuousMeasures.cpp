@@ -1260,7 +1260,7 @@ NarrowType shapeHeuristicsNarrow(
   Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> costs (V, V);
   for(Vertex i {0}; i < V; ++i) {
     for(Vertex j {0}; j < V; ++j) {
-      costs(i, j) = (
+      costs(static_cast<unsigned>(i), static_cast<unsigned>(j)) = (
         stator.col(freeLeftVertices.at(i))
         - rotor.col(freeRightVertices.at(j))
       ).squaredNorm();
@@ -1278,7 +1278,7 @@ NarrowType shapeHeuristicsNarrow(
   do {
     double cost = 0.0;
     for(Vertex i {0}; i < V; ++i) {
-      cost += costs(i, subPermutation.at(i));
+      cost += costs(static_cast<unsigned>(i), static_cast<unsigned>(subPermutation.at(i)));
     }
 
     if(cost < minimalCost) {

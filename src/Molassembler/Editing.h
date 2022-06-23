@@ -8,6 +8,7 @@
 #define INCLUDE_MOLASSEMBLER_EDITING_H
 
 #include "Molassembler/RankingInformation.h"
+#include "Molassembler/Molecule.h"
 #include <tuple>
 
 namespace Scine {
@@ -31,8 +32,16 @@ using AtomSitePair = std::pair<AtomIndex, SiteIndex>;
  * @returns A pair of molecules, ordered corresponding to the bond's atoms'
  *   position in the supplied bond index (i.e. .first contains the atom at
  *   bridge.first)
+ *
+ * @todo Alter return type to Cleaved for next major version
  */
 std::pair<Molecule, Molecule> cleave(const Molecule& a, BondIndex bridge);
+
+struct Cleaved {
+  Molecule first;
+  Molecule second;
+  std::vector<std::pair<unsigned, AtomIndex>> componentMap;
+};
 
 /*! @brief Splits a molecule at a haptic site
  *
@@ -49,7 +58,7 @@ std::pair<Molecule, Molecule> cleave(const Molecule& a, BondIndex bridge);
  *   specified atom.
  *
  */
-std::pair<Molecule, Molecule> cleave(const Molecule& a, AtomSitePair hapticSite);
+Cleaved cleave(const Molecule& a, AtomSitePair hapticSite);
 
 /** @brief Inserts a molecule into a bond of another molecule
  *

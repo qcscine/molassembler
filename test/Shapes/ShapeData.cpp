@@ -254,38 +254,6 @@ BOOST_AUTO_TEST_CASE(TetrahedraDefinitionIndicesUnique, *boost::unit_test::label
   }
 }
 
-BOOST_AUTO_TEST_CASE(SmallestAngleValueCorrect, *boost::unit_test::label("Shapes")) {
-  auto shapeSmallestAngle = [](const Shape shape) -> double {
-    return Temple::accumulate(
-      Temple::Adaptors::allPairs(
-        Temple::iota<Vertex>(Vertex(size(shape)))
-      ),
-      M_PI,
-      [shape](const double currentSmallest, const auto& vertexPair) {
-        return std::min(
-          currentSmallest,
-          Temple::invoke(angleFunction(shape), vertexPair)
-        );
-      }
-    );
-  };
-
-  const double comparisonSmallestAngle = Temple::min(
-    Temple::map(allShapes, shapeSmallestAngle)
-  );
-
-  BOOST_CHECK(0 < smallestAngle && smallestAngle < M_PI);
-  BOOST_CHECK_MESSAGE(
-    std::fabs(
-      smallestAngle - comparisonSmallestAngle
-    ) < 1e-4,
-    "The constant smallest angle set by the library is NOT the smallest "
-    << "returned angle within the library. Current value of smallestAngle: "
-    << smallestAngle
-    << ", true smallest angle:" << comparisonSmallestAngle
-  );
-}
-
 template<class ShapeClass>
 struct RotationGenerationTest {
   static bool value() {

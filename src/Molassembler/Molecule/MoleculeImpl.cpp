@@ -1121,7 +1121,7 @@ StereopermutatorList Molecule::Impl::inferStereopermutatorsFromPositions(
     );
 
     // Threshold for planarity
-    constexpr double flatRmsPlaneDeviation = 0.05;
+    constexpr double flatRmsPlaneDeviation = 0.07;
     if(rmsPlaneDeviation <= flatRmsPlaneDeviation) {
       for(const BondIndex& bond : cycleBonds) {
         if(!stereopermutators.option(bond)) {

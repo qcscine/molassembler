@@ -42,6 +42,7 @@ struct RingClosure {
   boost::optional<unsigned> number;
 };
 
+// Vertex data of atoms in the spanning tree
 struct VertexProperties {
   unsigned rank = 0;
   bool aromatic = false;
@@ -49,6 +50,7 @@ struct VertexProperties {
   std::vector<RingClosure> closures;
 };
 
+// Data type for representing the molecular graph broken down into a DAG
 using SpanningTree = boost::adjacency_list<
   boost::vecS,
   boost::vecS,
@@ -58,6 +60,7 @@ using SpanningTree = boost::adjacency_list<
 
 namespace {
 
+// Dummy weight map for use with Prim's minimum spanning tree algorithm
 struct Unity {
   using key_type = typename SpanningTree::edge_descriptor;
   using value_type = double;
@@ -65,10 +68,14 @@ struct Unity {
   using category = boost::readable_property_map_tag;
 };
 
+// Equally weight all edges in Prim's MST
 inline double get(const Unity& /* u */, const Unity::key_type& /* e */) {
   return 1.0;
 }
 
+/* Weight map type for use with Prim's MST to bias customize spanning tree
+ * generation towards SMILES purposes
+ */
 struct InverseBondOrder {
   using key_type = PrivateGraph::Edge;
   using value_type = double;
@@ -80,6 +87,10 @@ struct InverseBondOrder {
   std::reference_wrapper<const PrivateGraph> graphRef;
 };
 
+/* Associated get function for InverseBondOrder, weighting:
+ * - edges inversely proportional to the bond order
+ * - heavy edge endpoint atoms proportional to their connectivity
+ */
 inline double get(const InverseBondOrder& u, const PrivateGraph::Edge& e) {
   const PrivateGraph& g = u.graphRef.get();
   const BondType type = g.bondType(e);
@@ -110,6 +121,9 @@ inline double get(const InverseBondOrder& u, const PrivateGraph::Edge& e) {
   return inverseOrder + heavyDegree(g.source(e)) + heavyDegree(g.target(e));
 }
 
+/* Returns references to static maps between permutation indices of
+ * a vertex ordering for particular shapes to smiles stereodescriptor indices
+ */
 const std::unordered_map<unsigned, unsigned>& smilesStereodescriptorShapeMap(
   const Shapes::Shape shape
 ) {
@@ -193,15 +207,12 @@ const std::unordered_map<unsigned, unsigned>& smilesStereodescriptorShapeMap(
   }
 }
 
-
+// Returns the smiles stereodescriptor matching a shape's vertex ordering
 unsigned smilesStereodescriptor(
   const Shapes::Shape shape,
   const std::vector<Shapes::Vertex>& order
 ) {
-  const auto allRotations = Shapes::Properties::generateAllRotations(
-    shape,
-    order
-  );
+  const auto allRotations = Shapes::Properties::generateAllRotations(shape, order);
   std::unordered_set<unsigned> permutationIndices;
   for(const auto& indices : allRotations) {
     permutationIndices.insert(Temple::permutationIndex(indices));
@@ -218,10 +229,12 @@ unsigned smilesStereodescriptor(
 
 } // namespace
 
+// Helper struct performing smiles string construction
 struct Emitter {
   //! Bond stereo markers in smiles
   enum class BondStereo { Forward, Backward };
 
+  // SMILES has its own definition of what constitutes a heteroatom
   static bool heteroatom(const Utils::ElementType e) {
     return e != Utils::ElementType::H && e != Utils::ElementType::C;
   }
@@ -279,7 +292,7 @@ struct Emitter {
     }
 
     /* Figure out ring-closing bonds from predecessor list: If neither of the
-     * bonds vertices has the other atom as its predecessor, it is not in the
+     * bonds' vertices has the other atom as its predecessor, it is not in the
      * minimum spanning tree and represents a ring closure
      */
     for(const auto& bond : inner.edges()) {
@@ -295,7 +308,7 @@ struct Emitter {
     const AtomIndex root = longestPath.front();
 
     /* Now for the second minimum spanning tree calculation to figure out the
-     * directionality of the tree
+     * directionality of the tree.
      */
     boost::prim_minimum_spanning_tree(
       spanning,
@@ -323,6 +336,12 @@ struct Emitter {
     markBondStereo();
   }
 
+  /* Finds and marks hydrogen atoms that can be subsumed into heavy atom labels
+   *
+   * Returns a map from hydrogen atoms to their heavy atom to be subsumed into.
+   * Increments the heavy atom vertex property counting the number of subsumed
+   * hydrogen atoms.
+   */
   std::unordered_map<AtomIndex, AtomIndex> markSubsumedHydrogens() {
     std::unordered_map<AtomIndex, AtomIndex> result;
 
@@ -407,6 +426,7 @@ struct Emitter {
     }
   }
 
+  // Set aromatic vertex properties of aromatic atoms
   void markAromaticAtoms() {
     const std::unordered_set<Shapes::Shape> flatShapes {
       Shapes::Shape::Bent,
@@ -447,90 +467,96 @@ struct Emitter {
     }
   }
 
-  void markBondStereo() {
-    for(
-      const BondStereopermutator& permutator:
-      molecule.stereopermutators().bondStereopermutators()
+  // Sets smiles descriptors on graph vertices for E/Z stereocenters
+  void markBondStereo(const BondStereopermutator& permutator) {
+    const BondIndex& bond = permutator.placement();
+
+    if(
+      permutator.numAssignments() < 2
+      || molecule.bondType(bond) != BondType::Double
+      || aromaticBonds.count(bond) > 0
     ) {
-      const BondIndex& bond = permutator.placement();
+      return;
+    }
 
-      if(
-        permutator.numAssignments() < 2
-        || molecule.bondType(bond) != BondType::Double
-        || aromaticBonds.count(bond) > 0
-      ) {
-        continue;
+    const auto orderedPlacement = [&]() {
+      const auto forwardEdge = boost::edge(bond.first, bond.second, spanning);
+      if(forwardEdge.second) {
+        return std::make_pair(bond.first, bond.second);
       }
+      return std::make_pair(bond.second, bond.first);
+    }();
 
-      const auto orderedPlacement = [&]() {
-        const auto forwardEdge = boost::edge(bond.first, bond.second, spanning);
-        if(forwardEdge.second) {
-          return std::make_pair(bond.first, bond.second);
-        }
-        return std::make_pair(bond.second, bond.first);
-      }();
+    const AtomIndex front = parent(orderedPlacement.first);
 
-      const AtomIndex front = parent(orderedPlacement.first);
+    if(molecule.bondType(BondIndex {front, orderedPlacement.first}) != BondType::Single) {
+      return;
+    }
 
-      if(molecule.bondType(BondIndex {front, orderedPlacement.first}) != BondType::Single) {
-        continue;
+    auto pathIter = std::find(
+      std::begin(longestPath),
+      std::end(longestPath),
+      orderedPlacement.second
+    );
+    if(pathIter == std::end(longestPath)) {
+      pathIter = std::begin(longestPath);
+    }
+    const AtomIndex back = descendants(orderedPlacement.second, pathIter).back();
+
+    if(molecule.bondType(BondIndex {orderedPlacement.second, back}) != BondType::Single) {
+      return;
+    }
+
+    const auto permutators = Temple::map(
+      orderedPlacement,
+      [&](const AtomIndex i) {
+        return molecule.stereopermutators().option(i);
       }
+    );
 
-      auto pathIter = std::find(
-        std::begin(longestPath),
-        std::end(longestPath),
-        orderedPlacement.second
+    const auto allowedShape = [](const Shapes::Shape shape) -> bool {
+      return (
+        shape == Shapes::Shape::Bent
+        || shape == Shapes::Shape::EquilateralTriangle
       );
-      if(pathIter == std::end(longestPath)) {
-        pathIter = std::begin(longestPath);
-      }
-      const AtomIndex back = descendants(orderedPlacement.second, pathIter).back();
+    };
 
-      if(molecule.bondType(BondIndex {orderedPlacement.second, back}) != BondType::Single) {
-        continue;
-      }
+    if(
+      !permutators.first || !permutators.second
+      || !allowedShape(permutators.first->getShape())
+      || !allowedShape(permutators.second->getShape())
+    ) {
+      return;
+    }
 
-      const auto permutators = Temple::map(
-        orderedPlacement,
-        [&](const AtomIndex i) {
-          return molecule.stereopermutators().option(i);
-        }
-      );
-
-      const auto allowedShape = [](const Shapes::Shape shape) -> bool {
-        return (
-          shape == Shapes::Shape::Bent
-          || shape == Shapes::Shape::EquilateralTriangle
-        );
-      };
-
-      if(
-        !permutators.first || !permutators.second
-        || !allowedShape(permutators.first->getShape())
-        || !allowedShape(permutators.second->getShape())
-      ) {
-        continue;
-      }
-
-      const double dihedral = permutator.dihedral(
-        permutators.first.value(),
-        permutators.first->getRanking().getSiteIndexOf(front),
-        permutators.second.value(),
-        permutators.second->getRanking().getSiteIndexOf(back)
-      );
+    const double dihedral = permutator.dihedral(
+      permutators.first.value(),
+      permutators.first->getRanking().getSiteIndexOf(front),
+      permutators.second.value(),
+      permutators.second->getRanking().getSiteIndexOf(back)
+    );
 
 
-      bondStereoMarkers.emplace(orderedPlacement.first, BondStereo::Forward);
-      if(std::fabs(dihedral) < 1e-2) {
-        // Front and back are Z to one another
-        bondStereoMarkers.emplace(back, BondStereo::Backward);
-      } else {
-        // Front and back are E to one another
-        bondStereoMarkers.emplace(back, BondStereo::Forward);
-      }
+    bondStereoMarkers.emplace(orderedPlacement.first, BondStereo::Forward);
+    if(std::fabs(dihedral) < 1e-2) {
+      // Front and back are Z to one another
+      bondStereoMarkers.emplace(back, BondStereo::Backward);
+    } else {
+      // Front and back are E to one another
+      bondStereoMarkers.emplace(back, BondStereo::Forward);
     }
   }
 
+  void markBondStereo() {
+    for(
+      const BondStereopermutator& permutator :
+      molecule.stereopermutators().bondStereopermutators()
+    ) {
+      markBondStereo(permutator);
+    }
+  }
+
+  // Returns a flat map of distances to the argument vertex of the spanning tree
   std::vector<unsigned> distance(AtomIndex a) const {
     std::vector<unsigned> distances(boost::num_vertices(spanning), 0);
 
@@ -547,6 +573,7 @@ struct Emitter {
     return distances;
   }
 
+  // Guesses a possibly useful root of the MST by maximizing graph distance
   AtomIndex guessRoot() const {
     using IndexDistancePair = std::pair<AtomIndex, unsigned>;
     return Temple::accumulate(
@@ -588,15 +615,17 @@ struct Emitter {
     }
   }
 
+  // Construct the smiles representation of an atom
   std::string atomSymbol(
     const AtomIndex v,
     const std::vector<AtomIndex>& descendantOrder
   ) const {
     /* Decide whether to emit either
+     *
      * - an aliphatic organic symbol
      * - an aromatic organic symbol
-     * - a bracket atom
-     *   - Necessary if isotopic or non-standard hydrogen count
+     * - or a bracket atom
+     *   - This is necessary if isotopic or non-standard hydrogen count
      */
     const Utils::ElementType e = molecule.elementType(v);
     const bool isIsotope = Utils::ElementInfo::base(e) != e;
@@ -609,7 +638,7 @@ struct Emitter {
 
       const int valence = Temple::accumulate(
         molecule.graph().adjacents(v),
-        0U,
+        0,
         [&](const int count, const AtomIndex i) -> int {
           if(
             molecule.graph().elementType(i) == Utils::ElementType::H
@@ -634,6 +663,7 @@ struct Emitter {
       );
 
       if(valenceFill == hydrogenCount) {
+        // We can emit an aliphatic or aromatic organic symbol
         std::string symbol = Utils::ElementInfo::symbol(e);
         if(isAromatic) {
           std::transform(
@@ -647,7 +677,7 @@ struct Emitter {
       }
     }
 
-    // Bracket atom
+    // Otherwise, bracket atom it is
     std::string elementStr = "[";
     if(isIsotope) {
       elementStr += std::to_string(Utils::ElementInfo::A(e));
@@ -677,13 +707,14 @@ struct Emitter {
      * - Generate all rotations of that permutation and find a smiles
      *   stereodescriptor for that shape that matches
      */
+    const auto& ranking = permutator->getRanking();
     std::vector<SiteIndex> siteSequence;
     if(spanning[v].subsumedHydrogens > 0) {
       // Subsumed hydrogens are placed first in the ordering (SMILES rules)
       SiteIndex i {0};
-      for(const auto& siteIndices : permutator->getRanking().sites) {
-        if(siteIndices.size() == 1) {
-          const AtomIndex siteAtom = siteIndices.front();
+      for(const auto& siteAtoms : ranking.sites) {
+        if(siteAtoms.size() == 1) {
+          const AtomIndex siteAtom = siteAtoms.front();
           if(
             molecule.graph().elementType(siteAtom) == Utils::ElementType::H
             && molecule.graph().degree(siteAtom) == 1
@@ -694,19 +725,25 @@ struct Emitter {
         ++i;
       }
     }
+    // Parent node
     for(auto iters = boost::in_edges(v, spanning); iters.first != iters.second; ++iters.first) {
       const AtomIndex parent = boost::source(*iters.first, spanning);
-      siteSequence.push_back(permutator->getRanking().getSiteIndexOf(parent));
+      siteSequence.push_back(ranking.getSiteIndexOf(parent));
     }
+    // Ring closures (part of string after atom symbol)
+    for(const RingClosure& closure : spanning[v].closures) {
+      siteSequence.push_back(ranking.getSiteIndexOf(closure.partner));
+    }
+    // Descendants (explored later in DFS)
     for(const AtomIndex i : descendantOrder) {
-      siteSequence.push_back(permutator->getRanking().getSiteIndexOf(i));
+      siteSequence.push_back(ranking.getSiteIndexOf(i));
     }
+
+    assert(siteSequence.size() == Shapes::size(permutator->getShape()));
 
     const auto orderAtShapeVertices = Temple::map(
       siteSequence,
-      [&](const SiteIndex i) -> Shapes::Vertex {
-        return permutator->getShapePositionMap().at(i);
-      }
+      Temple::Functor::at(permutator->getShapePositionMap())
     );
 
     const unsigned stereodescriptor = smilesStereodescriptor(
@@ -777,7 +814,7 @@ struct Emitter {
   }
 
   /* Sort descendant vertices by increasing number of descendants, ensuring
-   * a continuation of the longest path is always last.
+   * the continuation of the longest path is always last.
    *
    * TODO check if the additional conditions regarding the main branch are
    * actually necessary. In principle, it could be guaranteed that the longest
@@ -826,16 +863,16 @@ struct Emitter {
   }
 
   void dfs(const AtomIndex v, std::vector<AtomIndex>::iterator& pathIter) {
-    auto descendantOrder = descendants(v, pathIter);
+    const auto descendantOrder = descendants(v, pathIter);
     smiles += atomSymbol(v, descendantOrder);
-    // Ring closing bonds
+    // Assign ring closing bonds numbers
     for(RingClosure& closure : spanning[v].closures) {
       if(!closure.number) {
         closure.number = closureIndex;
 
         // Find matching closure for partner
         auto& partnerClosures = spanning[closure.partner].closures;
-        auto partnerIter = std::find_if(
+        const auto partnerIter = std::find_if(
           std::begin(partnerClosures),
           std::end(partnerClosures),
           [&](const RingClosure& hay) {
@@ -845,7 +882,7 @@ struct Emitter {
         assert(partnerIter != std::end(partnerClosures));
         assert(!partnerIter->number);
 
-        // Mark partner number
+        // Mark partner's number too
         partnerIter->number = closureIndex;
 
         ++closureIndex;

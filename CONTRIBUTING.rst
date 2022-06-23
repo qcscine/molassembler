@@ -18,22 +18,8 @@ and/or issues on GitHub.
 Please note that contributing a small change does in no way mean that you will
 be added to the author list of a future paper and/or Zenodo entry!
 
-Main Contributors
------------------
-
-Almost all contributions to SCINE in general and this repository in specific come
-from members of the Reiher research group.
-
-Further Contributors
---------------------
-
-So far, no one else has contributed to this repository
-
-Contribution Guidelines
------------------------
-
-Code style
-..........
+Code Style
+-----------
 
 Molassembler follows SCINE code style conventions.
 
@@ -53,7 +39,7 @@ contain large amounts of values.
 Any integers where subtracting is expected should be signed. If unsigned values
 are used in subtractions, ``static_cast`` them beforehand!
 
-C++ style
+C++ Style
 .........
 
 Try to follow the C++ Core Guidelines.
@@ -63,3 +49,14 @@ Formatting
 
 Unenforced, follows my own idiosyncratic formatting style that I think
 clang-format doesn't support. I try to keep the code 80-char wide.
+
+Main Contributors
+-----------------
+
+Almost all contributions to SCINE in general and this repository in specific come
+from members of the Reiher research group.
+
+Further Contributors
+--------------------
+
+So far, no one else has contributed to this repository.

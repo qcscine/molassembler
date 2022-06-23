@@ -479,78 +479,12 @@ public:
 
 private:
 //!@name Contribution implementations
-//!@{
-  /*!
-   * @brief Adds distance error and gradient contributions (non-SIMD)
-   */
-  template<class Visitor, bool dependent = SIMD, std::enable_if_t<!dependent, int>...>
-  void distanceContributionsImpl(
-    const VectorType& positions,
-    FloatType& error,
-    Eigen::Ref<VectorType> gradient,
-    Visitor&& visitor
-  ) const {
-    assert(positions.size() == gradient.size());
-    const unsigned N = positions.size() / dimensionality;
-
-    for(unsigned linearIndex = 0, i = 0; i < N - 1; ++i) {
-      for(unsigned j = i + 1; j < N; ++j, ++linearIndex) {
-        const FloatType lowerBoundSquared = lowerDistanceBoundsSquared(linearIndex);
-        const FloatType upperBoundSquared = upperDistanceBoundsSquared(linearIndex);
-        assert(lowerBoundSquared <= upperBoundSquared);
-
-        // For both
-        const FullDimensionalVector positionDifference = (
-          positions.template segment<dimensionality>(dimensionality * i)
-          - positions.template segment<dimensionality>(dimensionality * j)
-        );
-
-        const FloatType squareDistance = positionDifference.squaredNorm();
-
-        // Upper term
-        const FloatType upperTerm = squareDistance / upperBoundSquared - 1;
-
-        if(upperTerm > 0) {
-          const FloatType value = upperTerm * upperTerm;
-          error += value;
-          visitor.distanceTerm(i, j, value);
-
-          const FullDimensionalVector f = 4 * positionDifference * upperTerm / upperBoundSquared;
-
-          gradient.template segment<dimensionality>(dimensionality * i) += f;
-          gradient.template segment<dimensionality>(dimensionality * j) -= f;
-        } else {
-          // Lower term is only possible if the upper term does not contribute
-          const FloatType quotient = lowerBoundSquared + squareDistance;
-          const FloatType lowerTerm = 2 * lowerBoundSquared / quotient - 1;
-
-          if(lowerTerm > 0) {
-            const FloatType value = lowerTerm * lowerTerm;
-            error += value;
-            visitor.distanceTerm(i, j, value);
-
-            const FullDimensionalVector g = 8 * lowerBoundSquared * positionDifference * lowerTerm / (
-              quotient * quotient
-            );
-
-            /* We use -= because the lower term needs the position vector
-             * difference (j - i), so we reuse positionDifference and just subtract
-             * from the gradient instead of adding to it
-             */
-            gradient.template segment<dimensionality>(dimensionality * i) -= g;
-            gradient.template segment<dimensionality>(dimensionality * j) += g;
-          } else {
-            visitor.distanceTerm(i, j, 0.0);
-          }
-        }
-      }
-    }
-  }
+#if SIMD
 
   /*!
    * @brief SIMD implementation of distance contributions
    */
-  template<class Visitor, bool dependent = SIMD, std::enable_if_t<dependent, int>...>
+  template<class Visitor>
   void distanceContributionsImpl(
     const VectorType& positions,
     FloatType& error,
@@ -692,6 +626,75 @@ private:
       iOffset += crossTerms;
     }
   }
+#else
+//!@{
+  /*!
+   * @brief Adds distance error and gradient contributions (non-SIMD)
+   */
+  template<class Visitor>
+  void distanceContributionsImpl(
+    const VectorType& positions,
+    FloatType& error,
+    Eigen::Ref<VectorType> gradient,
+    Visitor&& visitor
+  ) const {
+    assert(positions.size() == gradient.size());
+    const unsigned N = positions.size() / dimensionality;
+
+    for(unsigned linearIndex = 0, i = 0; i < N - 1; ++i) {
+      for(unsigned j = i + 1; j < N; ++j, ++linearIndex) {
+        const FloatType lowerBoundSquared = lowerDistanceBoundsSquared(linearIndex);
+        const FloatType upperBoundSquared = upperDistanceBoundsSquared(linearIndex);
+        assert(lowerBoundSquared <= upperBoundSquared);
+
+        // For both
+        const FullDimensionalVector positionDifference = (
+          positions.template segment<dimensionality>(dimensionality * i)
+          - positions.template segment<dimensionality>(dimensionality * j)
+        );
+
+        const FloatType squareDistance = positionDifference.squaredNorm();
+
+        // Upper term
+        const FloatType upperTerm = squareDistance / upperBoundSquared - 1;
+
+        if(upperTerm > 0) {
+          const FloatType value = upperTerm * upperTerm;
+          error += value;
+          visitor.distanceTerm(i, j, value);
+
+          const FullDimensionalVector f = 4 * positionDifference * upperTerm / upperBoundSquared;
+
+          gradient.template segment<dimensionality>(dimensionality * i) += f;
+          gradient.template segment<dimensionality>(dimensionality * j) -= f;
+        } else {
+          // Lower term is only possible if the upper term does not contribute
+          const FloatType quotient = lowerBoundSquared + squareDistance;
+          const FloatType lowerTerm = 2 * lowerBoundSquared / quotient - 1;
+
+          if(lowerTerm > 0) {
+            const FloatType value = lowerTerm * lowerTerm;
+            error += value;
+            visitor.distanceTerm(i, j, value);
+
+            const FullDimensionalVector g = 8 * lowerBoundSquared * positionDifference * lowerTerm / (
+              quotient * quotient
+            );
+
+            /* We use -= because the lower term needs the position vector
+             * difference (j - i), so we reuse positionDifference and just subtract
+             * from the gradient instead of adding to it
+             */
+            gradient.template segment<dimensionality>(dimensionality * i) -= g;
+            gradient.template segment<dimensionality>(dimensionality * j) += g;
+          } else {
+            visitor.distanceTerm(i, j, 0.0);
+          }
+        }
+      }
+    }
+  }
+#endif
 
   /*!
    * @brief Adds chiral error and gradient contributions

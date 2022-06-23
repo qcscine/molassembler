@@ -11,6 +11,7 @@ void init_composite(pybind11::module& m);
 void init_conformers(pybind11::module& m);
 void init_cycles(pybind11::module& m);
 void init_descriptors(pybind11::module& m);
+void init_detail(pybind11::module& m);
 void init_directed_conformer_generator(pybind11::module& m);
 void init_editing(pybind11::module& m);
 void init_interpret(pybind11::module& m);
@@ -70,6 +71,7 @@ PYBIND11_MODULE(scine_molassembler, m) {
   init_conformers(m);
   init_directed_conformer_generator(m);
   init_modeling(m);
+  init_detail(m);
   /* Needed to avoid an exception at exit because of GIL and parallelization
    * shenanigans in DirectedConformerGenerator's enumerate functions
    */

@@ -94,6 +94,20 @@ public:
 //!@{
   static std::string base64Encode(const BinaryType& binary);
   static BinaryType base64Decode(const std::string& base64String);
+  /**
+   * @brief Compare two molecules encoded as base64 strings.
+   * @return True if both strings encode the same molecule(s).
+   */
+  static bool base64EqualMolecules(const std::string& stringA, const std::string& stringB,
+                                   BinaryFormat binaryFormat = BinaryFormat::CBOR);
+  /**
+   * @brief Compare two decision lists encoded as strings.
+   *
+   * The string format is expected to be\n
+   *    "(-100, -95, -90, 1):(10, 15, 20, 4);(1, 6, 11, 1)" \n
+   * Multiple molecules have to be separated by ";".
+   */
+  static bool equalDecisionLists(const std::string& listStringA, const std::string& listStringB);
 //!@}
 
 //!@name Special member functions
@@ -152,6 +166,10 @@ public:
 private:
   struct Impl;
   std::unique_ptr<Impl> pImpl_;
+  static std::vector<std::tuple<int, int, int, int> > unpackDecisionListString(const std::string& listString);
+  static std::tuple<int, int, int, int> canonicalizeDecisionListElement(const std::tuple<int, int, int, int>& decisionListElement);
+  static bool equalVersions(const std::vector<unsigned> versionA, const std::vector<unsigned> versionB);
+  static std::vector<std::string> splitBase64StringIntoMoleculeStrings(std::string base64String);
 };
 
 } // namespace Molassembler

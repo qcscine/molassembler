@@ -6,6 +6,20 @@ All notable changes to this project will be documented in this file.
 The format is based on `Keep a Changelog <http://keepachangelog.com/en/1.0.0/>`_
 and this project adheres to `Semantic Versioning <http://semver.org/spec/v2.0.0.html>`_.
 
+1.2.0
+-----
+
+Changed
+.......
+
+- Increase flatness threshold for rings (from 0.05 to 0.07)
+
+Fixed
+.....
+
+- Symmetry reduced dihedral calculation in conformer and decision list generation
+- Decision list: random atom choice in dihedral representation, now: fixed choice
+
 1.1.0
 -----
 
@@ -55,8 +69,14 @@ Changed
   ``BondStereopermutator::Alignment::BetweenEclipsedAndStaggered`` now generates
   the same amount of alignments as
   ``BondStereopermutator::Alignment::Eclipsed``, not twice as many.
+- Auxiliary library ``Stereopermutations``
+
+  - Refactor ``Stereopermutation``'s abstract characters to a strong index type,
+    ``Rank``. Also affects ``Composite``
+
 - Auxiliary library ``Temple``
 
+  - Adds a permutation type, and a closely related strong index permutation
   - Refactor ``map`` to be able to apply it to tuples and arrays, too.
   - Clean up ``ContainerTraits.h``
 
@@ -71,6 +91,12 @@ Changed
   - Altered name of ``ChiralStatePreservation`` enum member from ``None`` to
     ``DoNotPreserve`` (the former is a reserved keyword)
   - Better automatic type signature annotations in docstrings
+
+- Mostly internal refactors with strong indexes for more type safety handling
+  permutations mapping ``SiteIndex``, ``Stereopermutation::Rank`` and
+  ``Shapes::Vertex``. Sole exception: The exposed
+  C++ ``AtomStereopermutator::ShapeMap`` type, though the API for the previous
+  and current type are nearly identical.
 
 Deprecated
 ..........

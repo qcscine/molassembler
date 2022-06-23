@@ -180,16 +180,36 @@ DirectedConformerGenerator::Relabeler::Relabeler(
     const auto& left = mol.stereopermutators().at(leftPlacement);
     const auto& right = mol.stereopermutators().at(rightPlacement);
 
-    const auto& dominantDihedralTuple = composite.allPermutations().at(0).dihedrals.front();
-    const SiteIndex leftSite = left.getShapePositionMap().indexOf(std::get<0>(dominantDihedralTuple));
-    const SiteIndex rightSite = right.getShapePositionMap().indexOf(std::get<1>(dominantDihedralTuple));
+    mol.rankPriority(leftPlacement);
+    mol.rankPriority(rightPlacement);
+
+    const auto& dihedrals = composite.allPermutations().at(0).dihedrals;
+    SiteIndex dominantLeft;
+    SiteIndex dominantRight;
+    unsigned maxLeftRanking = std::numeric_limits<unsigned>::max();
+    unsigned maxRightRanking = std::numeric_limits<unsigned>::max();
+    for(const auto& dihedral : dihedrals) {
+      const SiteIndex leftSite = left.getShapePositionMap().indexOf(std::get<0>(dihedral));
+      const SiteIndex rightSite = right.getShapePositionMap().indexOf(std::get<1>(dihedral));
+      const auto leftRanking = left.getRanking().getRankedIndexOfSite(leftSite);
+      const auto rightRanking = right.getRanking().getRankedIndexOfSite(rightSite);
+
+      const bool betterLeft = (leftRanking < maxLeftRanking && rightRanking <= maxRightRanking);
+      const bool betterRight = (leftRanking <= maxLeftRanking && rightRanking < maxRightRanking);
+      if(betterLeft || betterRight) {
+        dominantLeft = leftSite;
+        dominantRight = rightSite;
+        maxLeftRanking = leftRanking;
+        maxRightRanking = rightRanking;
+      }
+    }
 
     sequences.push_back(
       DihedralInfo {
-        left.getRanking().sites.at(leftSite),
+        left.getRanking().sites.at(dominantLeft),
         leftPlacement,
         rightPlacement,
-        right.getRanking().sites.at(rightSite),
+        right.getRanking().sites.at(dominantRight),
         composite.rotationalAxisSymmetryOrder()
       }
     );
@@ -213,12 +233,12 @@ std::vector<double> DirectedConformerGenerator::Relabeler::add(
 
       // Reduce by rotational symmetry if present
       if(sequence.symmetryOrder > 1) {
-        dihedral = Cartesian::signedDihedralAngle(
-          std::fmod(
-            Cartesian::positiveDihedralAngle(dihedral),
-            2 * M_PI / sequence.symmetryOrder
-          )
+        const double tmp = 2 * M_PI / sequence.symmetryOrder;
+        const double radians = std::fmod(
+          Cartesian::positiveDihedralAngle(dihedral),
+          tmp
         );
+        dihedral = radians - std::floor((radians + tmp / 2.0) / tmp) * tmp;
       }
 
       return dihedral;

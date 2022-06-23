@@ -31,21 +31,21 @@ RankingInformation::RankedSitesType Abstract::canonicalize(
 }
 
 // Transform canonical ranked sites to canonical characters
-std::vector<char> Abstract::transferToSymbolicCharacters(
+Stereopermutations::Stereopermutation::Occupation
+Abstract::transferToOccupation(
   const RankingInformation::RankedSitesType& canonicalSites
 ) {
-  std::vector<char> characters;
-
-  char currentChar = 'A';
+  std::vector<unsigned> rank;
+  unsigned currentRank = 0;
   for(const auto& equalPrioritySet : canonicalSites) {
     for(unsigned i = 0; i < equalPrioritySet.size(); ++i) {
-      characters.push_back(currentChar);
+      rank.push_back(currentRank);
     }
 
-    ++currentChar;
+    ++currentRank;
   }
 
-  return characters;
+  return Stereopermutations::Stereopermutation::Occupation {std::move(rank)};
 }
 
 Stereopermutations::Stereopermutation::OrderedLinks
@@ -62,7 +62,7 @@ Abstract::selfReferentialTransform(
     throw std::out_of_range("Links are invalid");
   }
 
-  auto getRankedVertex = [&canonicalSites](const SiteIndex site) -> Shapes::Vertex {
+  const auto getRankedVertex = [&canonicalSites](const SiteIndex site) -> Shapes::Vertex {
     Shapes::Vertex vertex(0);
     for(const auto& equalSitesSet : canonicalSites) {
       for(const SiteIndex& rankedSiteIndex : equalSitesSet) {
@@ -77,73 +77,77 @@ Abstract::selfReferentialTransform(
     throw std::logic_error("Site index not found in ranked sites");
   };
 
+  using Link = Stereopermutations::Stereopermutation::Link;
+
   return Temple::sorted(
     Temple::map(
       rankingLinks,
-      [&](const auto& link) -> Stereopermutations::Stereopermutation::Link {
-        auto firstVertex = getRankedVertex(link.sites.first);
-        auto secondVertex = getRankedVertex(link.sites.second);
+      [&](const auto& siteLink) -> Link {
+        Link vertexLink {
+          getRankedVertex(siteLink.sites.first),
+          getRankedVertex(siteLink.sites.second)
+        };
 
-        if(firstVertex > secondVertex) {
-          std::swap(firstVertex, secondVertex);
+        if(vertexLink.first > vertexLink.second) {
+          std::swap(vertexLink.first, vertexLink.second);
         }
 
-        if(firstVertex == secondVertex) {
+        if(vertexLink.first == vertexLink.second) {
           throw std::runtime_error("Got same ranked vertex");
         }
 
-        return {firstVertex, secondVertex};
+        return vertexLink;
       }
     )
   );
 }
 
-std::vector<char> Abstract::makeStereopermutationCharacters(
+Stereopermutations::Stereopermutation::Occupation
+Abstract::makeOccupation(
   const RankingInformation::RankedSitesType& canonicalSites,
-  const std::vector<char>& canonicalStereopermutationCharacters,
-  const Temple::StrongIndexFlatMap<Shapes::Vertex, SiteIndex>& sitesAtShapeVertices
+  const Stereopermutations::Stereopermutation::Occupation& canonicalOccupation,
+  const Temple::StrongIndexPermutation<Shapes::Vertex, SiteIndex>& sitesAtShapeVertices
 ) {
   // Replace the site indices by their new ranking characters
-  std::vector<SiteIndex> flattenedIndices;
+  std::vector<SiteIndex> flattenedSiteIndices;
   for(const auto& equalPrioritySet : canonicalSites) {
     for(const auto& index : equalPrioritySet) {
-      flattenedIndices.push_back(index);
+      flattenedSiteIndices.push_back(index);
     }
   }
 
-  std::vector<char> newStereopermutationCharacters;
+  std::vector<unsigned> occupation;
 
-  for(const SiteIndex siteIndex : sitesAtShapeVertices) {
+  for(const auto keyValuePair : sitesAtShapeVertices) {
     const auto findIter = std::find(
-      std::begin(flattenedIndices),
-      std::end(flattenedIndices),
-      siteIndex
+      std::begin(flattenedSiteIndices),
+      std::end(flattenedSiteIndices),
+      keyValuePair.second
     );
 
-    assert(findIter != std::end(flattenedIndices));
+    assert(findIter != std::end(flattenedSiteIndices));
 
-    newStereopermutationCharacters.push_back(
-      canonicalStereopermutationCharacters.at(
-        findIter - flattenedIndices.begin()
+    occupation.push_back(
+      canonicalOccupation.at(
+        Shapes::Vertex {
+          static_cast<unsigned>(findIter - flattenedSiteIndices.begin())
+        }
       )
     );
   }
 
-  return newStereopermutationCharacters;
+  return Stereopermutations::Stereopermutation::Occupation {occupation};
 }
 
 Abstract::Abstract(
   const RankingInformation& ranking,
   const Shapes::Shape shape
 ) : canonicalSites(canonicalize(ranking.siteRanking)),
-    symbolicCharacters(transferToSymbolicCharacters(canonicalSites)),
+    occupation(transferToOccupation(canonicalSites)),
     selfReferentialLinks(selfReferentialTransform(ranking.links, canonicalSites)),
     permutations(
       Stereopermutations::uniques(
-        Stereopermutations::Stereopermutation {
-          symbolicCharacters,
-          selfReferentialLinks
-        },
+        Stereopermutations::Stereopermutation {occupation, selfReferentialLinks},
         shape,
         false
       )

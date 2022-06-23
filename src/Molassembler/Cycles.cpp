@@ -839,6 +839,7 @@ std::vector<AtomIndex> makeRingIndexSequence(
   // firstEdgeIter is now invalid!
 
   while(!edgeDescriptors.empty()) {
+    bool found = false;
     for(
       auto edgeIter = edgeDescriptors.begin();
       edgeIter != edgeDescriptors.end();
@@ -849,6 +850,7 @@ std::vector<AtomIndex> makeRingIndexSequence(
           edgeIter->second
         );
         edgeDescriptors.erase(edgeIter);
+        found = true;
         break;
       }
 
@@ -857,8 +859,12 @@ std::vector<AtomIndex> makeRingIndexSequence(
           edgeIter->first
         );
         edgeDescriptors.erase(edgeIter);
+        found = true;
         break;
       }
+    }
+    if (!found) {
+      throw std::runtime_error("Wrongly identified a cycle, aborting ring indexing");
     }
   }
   /* Now indexSequence should contain the entire sequence, but the first

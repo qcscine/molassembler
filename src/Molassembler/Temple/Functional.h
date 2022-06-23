@@ -364,6 +364,24 @@ auto find_if(const Container& container, UnaryPredicate&& predicate) {
   );
 }
 
+template<class Container, typename T>
+std::size_t index(const Container& container, const T& needle) {
+  const auto iter = find(container, needle);
+  if(iter == std::end(container)) {
+    throw std::out_of_range("Needle not in the haystack");
+  }
+  return iter - std::begin(container);
+}
+
+template<class Container, typename UnaryPredicate>
+std::size_t index_if(const Container& container, UnaryPredicate&& predicate) {
+  const auto iter = find_if(container, predicate);
+  if(iter == std::end(container)) {
+    throw std::out_of_range("Needle not in the haystack");
+  }
+  return iter - std::begin(container);
+}
+
 //! @brief vector iota shorthand
 template<typename T>
 std::vector<T> iota(unsigned upperBound) {

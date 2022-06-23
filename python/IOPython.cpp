@@ -54,7 +54,7 @@ void init_io(pybind11::module& m) {
 
       :param smiles_str: A smiles string containing possibly multiple molecules
 
-      >>> methane_and_ammonia = from_smiles_multiple("C.[NH4+]")
+      >>> methane_and_ammonia = io.experimental.from_smiles_multiple("C.[NH4+]")
       >>> len(methane_and_ammonia) == 2
       True
     )delim"
@@ -84,10 +84,10 @@ void init_io(pybind11::module& m) {
       :param smiles_str: A smiles string containing a single molecule
 
       >>> import scine_utilities as utils
-      >>> methane = from_smiles("C")
-      >>> methane.graph.V == 4
-      True
-      >>> cobalt_complex = from_smiles("Br[Co@OH12](Cl)(I)(F)(S)C")
+      >>> methane = io.experimental.from_smiles("C")
+      >>> methane.graph.V
+      5
+      >>> cobalt_complex = io.experimental.from_smiles("Br[Co@OH12](Cl)(I)(F)(S)C")
       >>> cobalt_index = cobalt_complex.graph.atoms_of_element(utils.ElementType.Co)[0]
       >>> permutator = cobalt_complex.stereopermutators.option(cobalt_index)
       >>> permutator is not None
@@ -117,9 +117,9 @@ void init_io(pybind11::module& m) {
       :note: Missing normalization: Aromaticity detection in kekulized
         graph to aromatic atom types.
 
-      >>> biphenyl = from_smiles("c1ccccc1-c2ccccc2")
-      >>> emit_smiles(biphenyl)
-      "c1ccccc1-c2ccccc2"
+      >>> biphenyl = io.experimental.from_smiles("c1ccccc1-c2ccccc2")
+      >>> io.experimental.emit_smiles(biphenyl)
+      'c1ccccc1-c2ccccc2'
     )delim"
   );
 

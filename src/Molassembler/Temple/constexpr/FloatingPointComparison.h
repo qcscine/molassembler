@@ -76,10 +76,8 @@ PURITY_STRONG constexpr std::enable_if_t<
     && a != - std::numeric_limits<T>::infinity()
     && b != std::numeric_limits<T>::infinity()
     && b != - std::numeric_limits<T>::infinity()
-    && a != std::numeric_limits<T>::quiet_NaN()
-    && b != std::numeric_limits<T>::quiet_NaN()
-    && a != std::numeric_limits<T>::signaling_NaN()
-    && b != std::numeric_limits<T>::signaling_NaN()
+    && a == a // not NaN
+    && b == b // not NaN
   )) {
     throw "isCloseRelativeOrAbsolute cannot handle infinities or NaNs!";
   }
@@ -151,8 +149,7 @@ public:
     assert(
       absoluteTolerance > 0
       && absoluteTolerance != std::numeric_limits<T>::infinity()
-      && absoluteTolerance != std::numeric_limits<T>::quiet_NaN()
-      && absoluteTolerance != std::numeric_limits<T>::signaling_NaN()
+      && absoluteTolerance == absoluteTolerance // not NaN
     );
   }
 

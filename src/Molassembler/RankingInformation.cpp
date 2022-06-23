@@ -187,7 +187,7 @@ SiteIndex RankingInformation::getSiteIndexOf(const AtomIndex i) const {
 }
 
 unsigned RankingInformation::getRankedIndexOfSite(const SiteIndex i) const {
-  auto findIter = Temple::find_if(
+  const auto findIter = Temple::find_if(
     siteRanking,
     [&](const auto& equallyRankedSiteIndices) -> bool {
       return Temple::any_of(
@@ -200,7 +200,7 @@ unsigned RankingInformation::getRankedIndexOfSite(const SiteIndex i) const {
   );
 
   if(findIter == std::end(siteRanking)) {
-    throw std::out_of_range("Specified ligand index is not ranked.");
+    throw std::out_of_range("Specified site index is not ranked.");
   }
 
   return findIter - std::begin(siteRanking);

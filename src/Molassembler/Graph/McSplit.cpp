@@ -39,7 +39,7 @@ LabeledGraph::LabeledGraph(
     [&](int a, int b) { return degrees[a] > degrees[b]; }
   );
 
-  auto inverse = Temple::make_permutation(permutation).inverse();
+  auto inverse = Temple::Permutation::from(permutation).inverse();
 
   for(const PrivateGraph::Edge edge : g.edges()) {
     add_edge(

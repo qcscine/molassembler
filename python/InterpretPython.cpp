@@ -66,9 +66,9 @@ void init_component_map(T& interpretSubmodule) {
       Returns an object like a named tuple of the component and new index after
       transformation by the map
 
-      >>> m = ComponentMap([0, 1, 1, 0, 1])
+      >>> m = interpret.ComponentMap([0, 1, 1, 0, 1])
       >>> m.apply(0)
-      (component=0, index=0)
+      (component=0, atom_index=0)
     )delim"
   );
 
@@ -79,7 +79,7 @@ void init_component_map(T& interpretSubmodule) {
     R"delim(
       Invert a ComponentIndexPair to the original index
 
-      >>> m = ComponentMap([0, 1, 1, 0, 1])
+      >>> m = interpret.ComponentMap([0, 1, 1, 0, 1])
       >>> pair = m.apply(0)
       >>> m.invert(pair)
       0
@@ -141,7 +141,7 @@ void init_component_map(T& interpretSubmodule) {
       :returns: A nested list that contains the original indices for each
         component.
 
-      >>> m = ComponentMap([0, 1, 1, 0, 1]) # 0->0, 1->1, 2->1, etc.
+      >>> m = interpret.ComponentMap([0, 1, 1, 0, 1]) # 0->0, 1->1, 2->1, etc.
       >>> m.invert()
       [[0, 3], [1, 2, 4]]
     )delim"
@@ -289,7 +289,8 @@ void init_interpret(pybind11::module& m) {
       >>> assert len(result.molecules) == 2
       >>> hydrogen = Molecule()
       >>> assert all([m == hydrogen for m in result.molecules])
-      >>> assert str(result.component_map) == '[0, 0, 1, 1]'
+      >>> result.component_map
+      [0, 0, 1, 1]
     )delim"
   );
 

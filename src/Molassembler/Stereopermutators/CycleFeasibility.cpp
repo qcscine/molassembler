@@ -33,7 +33,8 @@ bool distanceToBaseContradictsGraph(
 
   // std::cout << distance << " <= " << singleBondDistance << " -> " << (distance <= singleBondDistance) << "\n";
 
-  return distance <= singleBondDistance;
+  const double difference = distance - singleBondDistance;
+  return difference < 1e-10;
 }
 
 bool modelContradictsGraph(

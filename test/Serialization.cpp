@@ -21,6 +21,7 @@
 #include "Utils/Geometry/AtomCollection.h"
 #include "Utils/Bonds/BondOrderCollection.h"
 #include "Utils/IO/ChemicalFileFormats/ChemicalFileHandler.h"
+#include "nlohmann/json.hpp"
 
 using namespace Scine;
 using namespace Molassembler;
@@ -125,4 +126,69 @@ BOOST_AUTO_TEST_CASE(MoleculeCanonicalSerialization, *boost::unit_test::label("M
       << aSerialization << "\n\n" << bSerialization << "\n\n\n"
     );
   }
+}
+
+// Comparison of graphs with different Molassembler versions.
+BOOST_AUTO_TEST_CASE(StringGraphComparison, *boost::unit_test::label("Molassembler")) {
+  std::string graphA = "pGFhh6RhYQBhYwphcqNhbIKBCIELYmxygoEAgQFhc4KBCIELYXMBpGFhAGFjC2Fyo2Fsg4EJgQqBEGJscoOBAoEBgQBhc4OBEIEKgQlhcwKkYWEAYWMMYXKkYWyDgQeBD4EQY2xua4GiYXCCAQJjc2VxhQwPDg0QYmxyg4EAgQGBAmFzg4EHgQ+BEGFzA6RhYQBhYw1hcqRhbISBA4EEgQ6BEGNsbmuBomFwggIDY3NlcYUNDg8MEGJscoOCAAGBAoEDYXODggMEgQ6BEGFzBaRhYQBhYw5hcqRhbISBAYECgQ2BD2NsbmuBomFwggIDY3NlcYUODRAMD2JscoOCAAGBAoEDYXODggECgQ2BD2FzBaRhYQBhYw9hcqRhbISBBYEGgQyBDmNsbmuBomFwggIDY3NlcYUPDBANDmJscoOCAAGBA4ECYXODggUGgQ6BDGFzBaRhYQBhYxBhcqRhbISBAIELgQyBDWNsbmuBomFwggIDY3NlcYUQDA8ODWJscoSBAIEDgQGBAmFzhIEAgQ2BC4EMYXMFYWMPYWeiYUWRgwAQAIMBDgCDAg4AgwMNAIMEDQCDBQ8AgwYPAIMHDACDCAoAgwkLAIMKCwCDCxAAgwwPAIMMEACDDQ4Agw0QAIMODwBhWpEBAQEBAQEBAQEICAYHBgYGBmF2gwEBAA==";
+  std::string graphB = "pGFhg6RhYQBhYwdhcqNhbIOBBYEGgQlibHKDgQCBAoEBYXODgQWBCYEGYXMCpGFhAGFjCGFyo2FshIECgQOBBIEJYmxygoMAAQKBA2FzgoMCAwSBCWFzBaRhYQBhYwlhcqNhbISBAIEBgQeBCGJscoOCAAGBA4ECYXODggABgQiBB2FzBWFjD2FnomFFiYMACQCDAQkAgwIIAIMDCACDBAgAgwUHAIMGBwCDBwkAgwgJAGFaigEBAQEBAQgGBgZhdoMBAQA=";
+  std::string graphC = "pGFhg6RhYQBhYwdhcqNhbIOBBYEGgQlibHKDgQCBAoEBYXODgQWBCYEGYXMCpGFhAGFjCGFyo2FshIECgQOBBIEJYmxygoMAAQKBA2FzgoMCAwSBCWFzBaRhYQBhYwlhcqNhbISBAIEBgQeBCGJscoOCAAGBA4ECYXODggABgQiBB2FzBWFjD2FnomFFiYMACQCDAQkAgwIIAIMDCACDBAgAgwUHAIMGBwCDBwkAgwgJAGFaigEBAQEBAQgGBgZhdoMBAgA=;pGFhh6RhYQBhYwphcqNhbIKBCIELYmxygoEAgQFhc4KBCIELYXMBpGFhAGFjC2Fyo2Fsg4EJgQqBEGJscoOBAoEBgQBhc4OBEIEKgQlhcwKkYWEAYWMMYXKkYWyDgQeBD4EQY2xua4GiYXCCAQJjc2VxhQwPDg0QYmxyg4EAgQGBAmFzg4EHgQ+BEGFzA6RhYQBhYw1hcqRhbISBA4EEgQ6BEGNsbmuBomFwggIDY3NlcYUNDg8MEGJscoOCAAGBAoEDYXODggMEgQ6BEGFzBaRhYQBhYw5hcqRhbISBAYECgQ2BD2NsbmuBomFwggIDY3NlcYUODRAMD2JscoOCAAGBAoEDYXODggECgQ2BD2FzBaRhYQBhYw9hcqRhbISBBYEGgQyBDmNsbmuBomFwggIDY3NlcYUPDBANDmJscoOCAAGBA4ECYXODggUGgQ6BDGFzBaRhYQBhYxBhcqRhbISBAIELgQyBDWNsbmuBomFwggIDY3NlcYUQDA8ODWJscoSBAIEDgQGBAmFzhIEAgQ2BC4EMYXMFYWMPYWeiYUWRgwAQAIMBDgCDAg4AgwMNAIMEDQCDBQ8AgwYPAIMHDACDCAoAgwkLAIMKCwCDCxAAgwwPAIMMEACDDQ4Agw0QAIMODwBhWpEBAQEBAQEBAQEICAYHBgYGBmF2gwECAA==";
+  std::string graphD = "pGFhg6RhYQBhYwdhcqNhbIOBBYEGgQlibHKDgQCBAoEBYXODgQWBCYEGYXMCpGFhAGFjCGFyo2FshIECgQOBBIEJYmxygoMAAQKBA2FzgoMCAwSBCWFzBaRhYQBhYwlhcqNhbISBAIEBgQeBCGJscoOCAAGBA4ECYXODggABgQiBB2FzBWFjD2FnomFFiYMACQCDAQkAgwIIAIMDCACDBAgAgwUHAIMGBwCDBwkAgwgJAGFaigEBAQEBAQgGBgZhdoMBAQA=;pGFhh6RhYQBhYwphcqNhbIKBCIELYmxygoEAgQFhc4KBCIELYXMBpGFhAGFjC2Fyo2Fsg4EJgQqBEGJscoOBAoEBgQBhc4OBEIEKgQlhcwKkYWEAYWMMYXKkYWyDgQeBD4EQY2xua4GiYXCCAQJjc2VxhQwPDg0QYmxyg4EAgQGBAmFzg4EHgQ+BEGFzA6RhYQBhYw1hcqRhbISBA4EEgQ6BEGNsbmuBomFwggIDY3NlcYUNDg8MEGJscoOCAAGBAoEDYXODggMEgQ6BEGFzBaRhYQBhYw5hcqRhbISBAYECgQ2BD2NsbmuBomFwggIDY3NlcYUODRAMD2JscoOCAAGBAoEDYXODggECgQ2BD2FzBaRhYQBhYw9hcqRhbISBBYEGgQyBDmNsbmuBomFwggIDY3NlcYUPDBANDmJscoOCAAGBA4ECYXODggUGgQ6BDGFzBaRhYQBhYxBhcqRhbISBAIELgQyBDWNsbmuBomFwggIDY3NlcYUQDA8ODWJscoSBAIEDgQGBAmFzhIEAgQ2BC4EMYXMFYWMPYWeiYUWRgwAQAIMBDgCDAg4AgwMNAIMEDQCDBQ8AgwYPAIMHDACDCAoAgwkLAIMKCwCDCxAAgwwPAIMMEACDDQ4Agw0QAIMODwBhWpEBAQEBAQEBAQEICAYHBgYGBmF2gwEBAA==";
+  std::string invalidGraph = "some;stuff;may;break;...";
+
+  BOOST_CHECK(JsonSerialization::base64EqualMolecules(graphA, graphA));
+  BOOST_CHECK(not JsonSerialization::base64EqualMolecules(graphA, graphB));
+  BOOST_CHECK(not JsonSerialization::base64EqualMolecules(graphA, graphC));
+  BOOST_CHECK(not JsonSerialization::base64EqualMolecules(graphA, graphD));
+  BOOST_CHECK(not JsonSerialization::base64EqualMolecules(graphB, graphC));
+  BOOST_CHECK(not JsonSerialization::base64EqualMolecules(graphB, graphD));
+  BOOST_CHECK(JsonSerialization::base64EqualMolecules(graphC, graphC));
+  BOOST_CHECK(JsonSerialization::base64EqualMolecules(graphC, graphD));
+  BOOST_CHECK(JsonSerialization::base64EqualMolecules(graphD, graphC));
+  BOOST_CHECK_THROW(JsonSerialization::base64EqualMolecules(invalidGraph, invalidGraph), nlohmann::detail::parse_error);
+}
+
+BOOST_AUTO_TEST_CASE(DecisionListComparison, *boost::unit_test::label("Molassembler")) {
+  std::string listA = "(52, 57, 63, 1):(54, 60, 65, 3)";
+  std::string listB = "(1, 7, 12, 1):(-165, -159, -154, 1)";
+  std::string listC = ";(70, 76, 81, 2)";
+  std::string listD = "(1, 7, 12, 1):(-165, -159, -154, 1);(70, 76, 81, 2)";
+  std::string listE = "(1, 7, 12, 1):(-165, -159, -154, 1);;(70, 76, 81, 2)";
+  std::string listF = "(173, 178, -177, 1)";
+  std::string listG = "(174, 179, -176, 1)";
+  std::string listH = "(174,179,-177,1)";
+  std::string listI = "(177,-179,-174,1)";
+  std::string invalidList = "(52, 57, 1):(54, 60, 65, 3)";
+  BOOST_CHECK(JsonSerialization::equalDecisionLists(listA, listA));
+  BOOST_CHECK(JsonSerialization::equalDecisionLists(listB, listB));
+  BOOST_CHECK(not JsonSerialization::equalDecisionLists(listA, listB));
+  BOOST_CHECK(not JsonSerialization::equalDecisionLists(listB, listA));
+  BOOST_CHECK(JsonSerialization::equalDecisionLists(listC, listC));
+  BOOST_CHECK(not JsonSerialization::equalDecisionLists(listB, listD));
+  BOOST_CHECK(JsonSerialization::equalDecisionLists(listD, listD));
+  BOOST_CHECK(not JsonSerialization::equalDecisionLists(listE, listD));
+  BOOST_CHECK(JsonSerialization::equalDecisionLists(listF, listG));
+  BOOST_CHECK(JsonSerialization::equalDecisionLists(listG, listF));
+  BOOST_CHECK(JsonSerialization::equalDecisionLists(listH, listI));
+  BOOST_CHECK(JsonSerialization::equalDecisionLists(listI, listH));
+  BOOST_CHECK_THROW(
+    JsonSerialization::equalDecisionLists(invalidList, listA), std::runtime_error);
+
+  // Check close intervals.
+  std::string listAa = "(49, 54, 59, 1):(59, 64, 69, 3)";
+  BOOST_CHECK(JsonSerialization::equalDecisionLists(listAa, listA));
+  BOOST_CHECK(JsonSerialization::equalDecisionLists(listA, listAa));
+
+  // Check changing symmetry number.
+  std::string listAb = "(49, 54, 59, 2):(59, 64, 69, 3)";
+  BOOST_CHECK(not JsonSerialization::equalDecisionLists(listAb, listAa));
+
+  // Check symmetry shifted angles
+  std::string listAc = "(229, 234, 239, 2):(59, 64, 69, 3)";
+  BOOST_CHECK(JsonSerialization::equalDecisionLists(listAb, listAc));
+  std::string listAd = "(-131, -126, -121, 2):(179, 184, 189, 3)";
+  BOOST_CHECK(JsonSerialization::equalDecisionLists(listAb, listAd));
+  BOOST_CHECK(JsonSerialization::equalDecisionLists(listAc, listAd));
+  BOOST_CHECK(not JsonSerialization::equalDecisionLists(listAa, listAd));
+  BOOST_CHECK(not JsonSerialization::equalDecisionLists(listAa, listAc));
 }

@@ -83,7 +83,7 @@ double planeRmsd(
   const std::vector<AtomIndex>& indices
 );
 
-/*! @brief Fits a plane to indices and calculates its rms deviation
+/*! @brief Fits a plane to indices and calculates its RMS deviation
  *
  * @param positions Full set of positions
  * @param indices Positions to plane fit

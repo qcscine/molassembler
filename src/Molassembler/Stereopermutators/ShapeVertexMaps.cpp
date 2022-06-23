@@ -45,7 +45,7 @@ struct VertexColor {
     : stereopermutationPtr(&s) {}
 
   inline unsigned operator() (const Vertex i) const {
-    return stereopermutationPtr->characters.at(i) - 'A';
+    return stereopermutationPtr->occupation.at(Shapes::Vertex {static_cast<unsigned>(i)});
   }
 };
 
@@ -123,14 +123,14 @@ SiteToShapeVertexMap siteToShapeVertexMap(
   const std::vector<RankingInformation::Link>& siteLinks
 ) {
   const bool linksExist = (!stereopermutation.links.empty() || !siteLinks.empty());
-  const bool mappingIsBijective = (canonicalSites.size() == stereopermutation.characters.size());
+  const bool mappingIsBijective = (canonicalSites.size() == stereopermutation.occupation.size());
 
   if(linksExist && !mappingIsBijective) {
     if(stereopermutation.links.size() != siteLinks.size()) {
       throw std::logic_error("Mismatched stereoperm and site link sizes");
     }
 
-    const unsigned S = stereopermutation.characters.size();
+    const unsigned S = stereopermutation.occupation.size();
     PlainGraphType siteGraph(S);
     for(const auto& siteLink : siteLinks) {
       boost::add_edge(siteLink.sites.first, siteLink.sites.second, siteGraph);
@@ -191,22 +191,22 @@ SiteToShapeVertexMap siteToShapeVertexMap(
       throw std::logic_error("Isomorphism index map contains out of bounds vertex indices");
     }
 
-    return SiteToShapeVertexMap(
+    return SiteToShapeVertexMap::from(
       Temple::map(indexMap, [](auto&& i) { return Shapes::Vertex(i); })
     );
   }
 
   // If there are no links, this is a little easier
   constexpr Shapes::Vertex placeholder(std::numeric_limits<unsigned>::max());
-  const unsigned S = stereopermutation.characters.size();
+  const unsigned S = stereopermutation.occupation.size();
   std::vector<Shapes::Vertex> map(S, placeholder);
   /* Maps from site indices to the ranking character (that we can compare with
    * in the stereopermutation characters) by searching for it in the
    * canonicalSites.
    */
-  std::vector<char> siteRankingCharacters = Temple::map(
+  std::vector<Stereopermutations::Rank> siteRanks = Temple::map(
     Temple::iota<SiteIndex>(S),
-    [&](SiteIndex site) -> char {
+    [&](SiteIndex site) -> Stereopermutations::Rank {
       const auto findIter = Temple::find_if(
         canonicalSites,
         [&](const auto& equallyRankedSites) -> bool {
@@ -218,18 +218,20 @@ SiteToShapeVertexMap siteToShapeVertexMap(
         throw std::logic_error("Could not find site in canonicalSites");
       }
 
-      return 'A' + (findIter - std::begin(canonicalSites));
+      return Stereopermutations::Rank {
+        static_cast<Stereopermutations::Rank::value_type>(findIter - std::begin(canonicalSites))
+      };
     }
   );
 
   auto firstAvailableVertex = [&](const SiteIndex site) -> Shapes::Vertex {
-    const char siteRankedCharacter = siteRankingCharacters.at(site);
-    for(unsigned i = 0; i < S; ++i) {
+    const auto siteRankedCharacter = siteRanks.at(site);
+    for(Shapes::Vertex i {0}; i < S; ++i) {
       if(
-        stereopermutation.characters.at(i) == siteRankedCharacter
-        && Temple::find(map, Shapes::Vertex(i)) == std::end(map)
+        stereopermutation.occupation.at(i) == siteRankedCharacter
+        && Temple::find(map, i) == std::end(map)
       ) {
-        return Shapes::Vertex(i);
+        return Shapes::Vertex {i};
       }
     }
 
@@ -242,15 +244,15 @@ SiteToShapeVertexMap siteToShapeVertexMap(
     }
   }
 
-  return SiteToShapeVertexMap(map);
+  return SiteToShapeVertexMap::from(map);
 }
 
-Temple::StrongIndexFlatMap<Shapes::Vertex, SiteIndex> shapeVertexToSiteIndexMap(
+Temple::StrongIndexPermutation<Shapes::Vertex, SiteIndex> shapeVertexToSiteIndexMap(
   const Stereopermutations::Stereopermutation& stereopermutation,
   const RankingInformation::RankedSitesType& canonicalSites,
   const std::vector<RankingInformation::Link>& siteLinks
 ) {
-  return siteToShapeVertexMap(stereopermutation, canonicalSites, siteLinks).invert();
+  return siteToShapeVertexMap(stereopermutation, canonicalSites, siteLinks).inverse();
 }
 
 Stereopermutations::Stereopermutation stereopermutationFromSiteToShapeVertexMap(
@@ -267,26 +269,19 @@ Stereopermutations::Stereopermutation stereopermutationFromSiteToShapeVertexMap(
    * From that we should be able to construct a Stereopermutation.
    */
   const unsigned S = siteToShapeVertexMap.size();
-  std::vector<char> characters(S);
-  for(SiteIndex siteIndex {0}; siteIndex < S; ++siteIndex) {
-    auto findIter = std::find_if(
-      std::begin(canonicalSites),
-      std::end(canonicalSites),
-      [siteIndex](const auto& equalSet) -> bool {
-        return std::find(
-          std::begin(equalSet),
-          std::end(equalSet),
-          siteIndex
-        ) != std::end(equalSet);
-      }
-    );
+  std::vector<unsigned> occupation = Temple::map(
+    Temple::iota<SiteIndex>(S),
+    [&](const SiteIndex siteIndex) -> unsigned {
+      return Temple::index_if(
+        canonicalSites,
+        [siteIndex](const auto& equalSet) -> bool {
+          return Temple::makeContainsPredicate(equalSet)(siteIndex);
+        }
+      );
+    }
+  );
 
-    assert(findIter != std::end(canonicalSites));
-    unsigned canonicalSetIndex = findIter - std::begin(canonicalSites);
-    characters.at(
-      siteToShapeVertexMap.at(siteIndex)
-    ) = ('A' + canonicalSetIndex);
-  }
+  occupation = siteToShapeVertexMap.permutation.apply(occupation);
 
   // Now for the links.
   Stereopermutations::Stereopermutation::OrderedLinks selfReferentialLinks;
@@ -297,7 +292,10 @@ Stereopermutations::Stereopermutation stereopermutationFromSiteToShapeVertexMap(
     );
   }
 
-  return Stereopermutations::Stereopermutation {characters, selfReferentialLinks};
+  return Stereopermutations::Stereopermutation {
+    Stereopermutations::Stereopermutation::Occupation {occupation},
+    selfReferentialLinks
+  };
 }
 
 } // namespace Molassembler

@@ -43,7 +43,7 @@ struct Abstract {
   );
 
   /*!
-   * @brief Condense site ranking information into canonical characters for
+   * @brief Condense site ranking information into abstract rank indices for
    *   symbolic computation
    *
    * Use the output of canonicalize here as input:
@@ -53,16 +53,17 @@ struct Abstract {
    * Example:
    * @verbatim
    * rankedSites = {5, 8}, {3}, {1, 2, 4}
-   * canonical = canonicalize(rankedSites = {1, 2, 4}, {5, 8}, {3}
-   * transferToSymbolicCharacetrs(canonical) = A, A, A, B, B, C
+   * canonical = canonicalize(rankedSites) = {1, 2, 4}, {5, 8}, {3}
+   * transferToOccupation(canonical) = {0, 0, 0, 1, 1, 2}
+   *                                (= AAABBC)
    * @endverbatim
    */
-  static std::vector<char> transferToSymbolicCharacters(
+  static Stereopermutations::Stereopermutation::Occupation transferToOccupation(
     const RankingInformation::RankedSitesType& canonicalSites
   );
 
   /*!
-   * @brief Make site-index based links self-referential within canonical sites
+   * @brief Make site-index based links shape-vertex self-referential
    *
    * @complexity{@math{\Theta(L)}}
    *
@@ -87,10 +88,10 @@ struct Abstract {
    *
    * @complexity{@math{O(S^2)} worst case}
    */
-  static std::vector<char> makeStereopermutationCharacters(
+  static Stereopermutations::Stereopermutation::Occupation makeOccupation(
     const RankingInformation::RankedSitesType& canonicalSites,
-    const std::vector<char>& canonicalStereopermutationCharacters,
-    const Temple::StrongIndexFlatMap<Shapes::Vertex, SiteIndex>& sitesAtShapeVertices
+    const Stereopermutations::Stereopermutation::Occupation& canonicalOccupation,
+    const Temple::StrongIndexPermutation<Shapes::Vertex, SiteIndex>& sitesAtShapeVertices
   );
 //!@}
 
@@ -120,8 +121,8 @@ struct Abstract {
   //! Stably resorted (by set size) site ranking
   RankingInformation::RankedSitesType canonicalSites;
 
-  //! Character representation of bonding case
-  std::vector<char> symbolicCharacters;
+  //! Abstract representation of bonding case
+  Stereopermutations::Stereopermutation::Occupation occupation;
 
   //! Self-referential representation of links
   Stereopermutations::Stereopermutation::OrderedLinks selfReferentialLinks;

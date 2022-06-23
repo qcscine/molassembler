@@ -326,10 +326,10 @@ void init_conformers(pybind11::module& m) {
 
       >>> # Generate a conformational ensemble
       >>> butane = io.experimental.from_smiles("CCCC")
-      >>> results = generate_random_ensemble(butane, 10)
+      >>> results = dg.generate_random_ensemble(butane, 10)
       >>> # Each element in the list can be either a string or a positions matrix
       >>> # So let's see how many failed:
-      >>> sum([1 if isinstance(r, Error) else 0 for r in results])
+      >>> sum([1 if isinstance(r, dg.Error) else 0 for r in results])
       0
     )delim"
   );
@@ -378,10 +378,10 @@ void init_conformers(pybind11::module& m) {
       >>> # Generate a conformational ensemble
       >>> butane = io.experimental.from_smiles("CCCC")
       >>> seed = 1010
-      >>> results = generate_ensemble(butane, 10, seed)
+      >>> results = dg.generate_ensemble(butane, 10, seed)
       >>> # Each element in the list can be either a string or a positions matrix
       >>> # So let's see how many failed:
-      >>> sum([1 if isinstance(r, Error) else 0 for r in results])
+      >>> sum([1 if isinstance(r, dg.Error) else 0 for r in results])
       0
     )delim"
   );
@@ -419,8 +419,8 @@ void init_conformers(pybind11::module& m) {
 
       >>> # Generate a single conformation
       >>> mol = io.experimental.from_smiles("N[C@](Br)(O)F")
-      >>> conformation = generate_random_conformation(mol)
-      >>> isinstance(conformation, Error) # Did the conformer generation fail?
+      >>> conformation = dg.generate_random_conformation(mol)
+      >>> isinstance(conformation, dg.Error) # Did the conformer generation fail?
       False
       >>> type(conformation) # Successful results have matrix type:
       <class 'numpy.ndarray'>
@@ -463,8 +463,8 @@ void init_conformers(pybind11::module& m) {
 
       >>> # Generate a single conformation
       >>> mol = io.experimental.from_smiles("N[C@](Br)(O)F")
-      >>> conformation = generate_conformation(mol, 110)
-      >>> isinstance(conformation, Error) # Did the conformer generation fail?
+      >>> conformation = dg.generate_conformation(mol, 110)
+      >>> isinstance(conformation, dg.Error) # Did the conformer generation fail?
       False
       >>> type(conformation) # Successful results have matrix type:
       <class 'numpy.ndarray'>

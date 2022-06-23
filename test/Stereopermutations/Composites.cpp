@@ -95,10 +95,9 @@ BOOST_AUTO_TEST_CASE(OrientationStateTests, *boost::unit_test::label("Stereoperm
       continue;
     }
 
-    std::vector<char> maximumAsymmetricCase (S);
-    for(unsigned i = 0; i < S; ++i) {
-      maximumAsymmetricCase.at(i) = 'A' + i;
-    }
+    const auto maximumAsymmetricCase = Stereopermutation::Occupation {
+      Temple::iota<unsigned>(S)
+    };
 
     for(Shapes::Vertex i {0}; i < S; ++i ) {
       BOOST_CHECK_MESSAGE(
@@ -124,23 +123,17 @@ BOOST_AUTO_TEST_CASE(CompositePermutationCounts, *boost::unit_test::label("Stere
     Composite::Alignment alignment = Composite::Alignment::Eclipsed;
 
     operator Composite() const {
-      auto chars = Temple::map(characters,
-        [](const auto& str) -> std::vector<char> {
-          return {str.begin(), str.end()};
-        }
-      );
-
       return Composite {
         Composite::OrientationState {
           shapes.first,
           vertices.first,
-          chars.first,
+          Stereopermutation::occupationFromChars(characters.first),
           leftIdentifier
         },
         Composite::OrientationState {
           shapes.second,
           vertices.second,
-          chars.second,
+          Stereopermutation::occupationFromChars(characters.second),
           rightIdentifier
         },
         alignment
@@ -348,13 +341,13 @@ BOOST_AUTO_TEST_CASE(CompositeAlignment, *boost::unit_test::label("Stereopermuta
     Composite::OrientationState {
       Shapes::Shape::Tetrahedron,
       0_v,
-      {'A', 'B', 'C', 'D'},
+      Stereopermutation::occupationFromChars("ABCD"),
       leftIdentifier
     },
     Composite::OrientationState {
       Shapes::Shape::Tetrahedron,
       0_v,
-      {'A', 'B', 'C', 'D'},
+      Stereopermutation::occupationFromChars("ABCD"),
       rightIdentifier
     },
     Composite::Alignment::Staggered
@@ -366,13 +359,13 @@ BOOST_AUTO_TEST_CASE(CompositeAlignment, *boost::unit_test::label("Stereopermuta
     Composite::OrientationState {
       Shapes::Shape::Bent,
       0_v,
-      {'A', 'B'},
+      Stereopermutation::occupationFromChars("AB"),
       leftIdentifier
     },
     Composite::OrientationState {
       Shapes::Shape::SquarePyramid,
       0_v,
-      {'A', 'B', 'C', 'D', 'E'},
+      Stereopermutation::occupationFromChars("ABCDE"),
       rightIdentifier
     },
     Composite::Alignment::Staggered
@@ -384,13 +377,13 @@ BOOST_AUTO_TEST_CASE(CompositeAlignment, *boost::unit_test::label("Stereopermuta
     Composite::OrientationState {
       Shapes::Shape::Octahedron,
       4_v,
-      {'A', 'B', 'C', 'D', 'E', 'F'},
+      Stereopermutation::occupationFromChars("ABCDEF"),
       leftIdentifier
     },
     Composite::OrientationState {
       Shapes::Shape::Octahedron,
       2_v,
-      {'A', 'B', 'C', 'D', 'E', 'F'},
+      Stereopermutation::occupationFromChars("ABCDEF"),
       rightIdentifier
     }
   };
@@ -412,10 +405,10 @@ BOOST_AUTO_TEST_CASE(CompositeHomomorphisms, *boost::unit_test::label("Stereoper
         [&](const auto& permutation) {
           return Temple::map(
             permutation.dihedrals,
-            [&](Shapes::Vertex i, Shapes::Vertex j, double dihedral) -> std::tuple<char, char, double> {
+            [&](Shapes::Vertex i, Shapes::Vertex j, double dihedral) -> std::tuple<Rank, Rank, double> {
               return std::make_tuple(
-                composite.orientations().first.characters.at(i),
-                composite.orientations().second.characters.at(j),
+                composite.orientations().first.occupation.at(i),
+                composite.orientations().second.occupation.at(j),
                 dihedral
               );
             }
@@ -454,13 +447,13 @@ BOOST_AUTO_TEST_CASE(CompositeHomomorphisms, *boost::unit_test::label("Stereoper
     Composite::OrientationState {
       Shapes::Shape::VacantTetrahedron,
       2_v,
-      {{'A', 'A', 'B'}},
+      Stereopermutation::occupationFromChars("AAB"),
       leftIdentifier
     },
     Composite::OrientationState {
       Shapes::Shape::Tetrahedron,
       3_v,
-      {{'A', 'A', 'B', 'C'}},
+      Stereopermutation::occupationFromChars("AABC"),
       rightIdentifier
     }
   };
@@ -469,7 +462,7 @@ BOOST_AUTO_TEST_CASE(CompositeHomomorphisms, *boost::unit_test::label("Stereoper
     Composite::OrientationState {
       Shapes::Shape::VacantTetrahedron,
       0_v,
-      {{'B', 'A', 'A'}},
+      Stereopermutation::occupationFromChars("BAA"),
       leftIdentifier
     },
     base.orientations().second
@@ -483,7 +476,7 @@ BOOST_AUTO_TEST_CASE(CompositeHomomorphisms, *boost::unit_test::label("Stereoper
     Composite::OrientationState {
       Shapes::Shape::Tetrahedron,
       1_v,
-      {{'B', 'C', 'A', 'A'}},
+      Stereopermutation::occupationFromChars("BCAA"),
       rightIdentifier
     }
   };
@@ -500,13 +493,13 @@ BOOST_AUTO_TEST_CASE(CompositeCombinedAlignments, *boost::unit_test::label("Ster
     Composite::OrientationState {
       Shapes::Shape::Bent,
       0_v,
-      {{'A', 'B'}},
+      Stereopermutation::occupationFromChars("AB"),
       leftIdentifier
     },
     Composite::OrientationState {
       Shapes::Shape::Bent,
       0_v,
-      {{'A', 'B'}},
+      Stereopermutation::occupationFromChars("AB"),
       rightIdentifier
     },
     Composite::Alignment::Eclipsed
@@ -554,13 +547,13 @@ BOOST_AUTO_TEST_CASE(CompositeCombinedAlignments, *boost::unit_test::label("Ster
     Composite::OrientationState {
       Shapes::Shape::Tetrahedron,
       0_v,
-      {{'A', 'B', 'C', 'D'}},
+      Stereopermutation::occupationFromChars("ABCD"),
       leftIdentifier
     },
     Composite::OrientationState {
       Shapes::Shape::Tetrahedron,
       0_v,
-      {{'A', 'B', 'C', 'D'}},
+      Stereopermutation::occupationFromChars("ABCD"),
       rightIdentifier
     },
     Composite::Alignment::EclipsedAndStaggered
@@ -587,13 +580,13 @@ BOOST_AUTO_TEST_CASE(CompositeCombinedAlignments, *boost::unit_test::label("Ster
     Composite::OrientationState {
       Shapes::Shape::EquilateralTriangle,
       0_v,
-      {{'A', 'B', 'C'}},
+      Stereopermutation::occupationFromChars("ABC"),
       leftIdentifier
     },
     Composite::OrientationState {
       Shapes::Shape::Tetrahedron,
       0_v,
-      {{'A', 'B', 'C', 'D'}},
+      Stereopermutation::occupationFromChars("ABCD"),
       rightIdentifier
     },
     Composite::Alignment::EclipsedAndStaggered

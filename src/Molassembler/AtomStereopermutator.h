@@ -19,7 +19,7 @@
 
 #include "Molassembler/RankingInformation.h"
 #include "Molassembler/Shapes/Data.h"
-#include "Molassembler/Temple/StrongIndexMap.h"
+#include "Molassembler/Temple/StrongIndexPermutation.h"
 
 #include <array>
 #include <memory>
@@ -79,7 +79,7 @@ struct ChiralConstraint;
 class MASM_EXPORT AtomStereopermutator {
 public:
   //! Mapping between site indices of a ranking and vertices of a shape
-  using ShapeMap = Temple::StrongIndexFlatMap<SiteIndex, Shapes::Vertex>;
+  using ShapeMap = Temple::StrongIndexPermutation<SiteIndex, Shapes::Vertex>;
 
   //! Spatial positions of the centroids of sites
   using SiteCentroids = Eigen::Matrix<double, 3, Eigen::Dynamic>;

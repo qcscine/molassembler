@@ -32,8 +32,8 @@ Features
 - Molecules can be canonicalized for fast isomorphism tests. Canonicalization
   can be customized to use subsets of the available information for vertex
   coloring if desired.
-- Ranking algorithms are nearly fully IUPAC Blue Book 2013 compliant, extended
-  to larger symmetries.
+- Ranking algorithms are nearly fully IUPAC Blue Book 2013 compliant,
+  generalized to larger coordination polyhedra.
 - Stochastic conformer generation with Distance Geometry
 - Directed conformer generation through enumeration of rotamers
 
@@ -50,9 +50,9 @@ This library requires the C++14 standard.
 
 Dependencies:
 
-- `SCINE Utilities <https://github.com/qcscine/utilities>`_ (BSD-3 license) >= 4.0.0
+- `SCINE Utilities <https://github.com/qcscine/utilities>`_ (BSD-3 license) >= 3.0.0
 - `Boost <https://www.boost.org/>`_ (Boost license) >= 1.65 (lowest tested, prefer newest)
-- `Eigen <http://eigen.tuxfamily.org>`_ (MPL 2.0 license) >= 3.3.2, < 3.4.0
+- `Eigen <http://eigen.tuxfamily.org>`_ (MPL 2.0 license) >= 3.3.2
 - `RingDecomposerLib <https://github.com/rareylab/RingDecomposerLib>`_ [1]_ (BSD-3 license): Unique Ring Family [2]_ cycle detection
 - `Outcome <https://github.com/ned14/outcome>`_ single-header (Boost license): Enforce error handling requirement in type system
 - `JSON For Modern C++ <https://github.com/nlohmann/json>`_ (MIT license): JSON serialization
@@ -72,7 +72,7 @@ How to Cite
 -----------
 
 When publishing results obtained with Molassembler, please cite the
-corresponding release as archived on Zenodo.
+corresponding release as archived on `Zenodo <https://doi.org/10.5281/zenodo.4293554>`_.
 
 In addition, we kindly request you cite the following article when using
 Molassembler:
@@ -93,13 +93,14 @@ libraries can be available, but are downloaded dynamically if missing.
 
 Clone the repository, then enter the following commands::
 
+    git submodule update --init
     mkdir build-release
     cd build-release
     cmake -DCMAKE_BUILD_TYPE=Release ..
     make
 
 You may want to peruse the CMake options to disable building the tests or
-activating the python binding builds. Run ``cmake -L ..`` to list options
+activating the Python binding builds. Run ``cmake -L ..`` to list options
 affecting the build. Look for options with the ``SCINE_`` prefix.
 
 Conan
@@ -109,15 +110,15 @@ No dependencies must be preinstalled, and you do not need to download the
 sources. To install/build with Conan::
 
     conan remote add scine https://scine-artifactory.ethz.ch/artifactory/api/conan/public
-    conan install -r scine --build=missing scine_molassembler/1.1.0@scine/stable
+    conan install -r scine --build=missing scine_molassembler/1.2.0@
 
-Should you want python bindings, add ``-o scine_molassembler:python=True`` before
+Should you want Python bindings, add ``-o scine_molassembler:python=True`` before
 the last argument.
 
 PyPI
 ....
 
-``manylinux`` packages of the python bindings are available from PyPI and can be
+``manylinux`` packages of thie Python bindings are available from PyPI and can be
 installed with::
 
     python3 -m pip install scine_molassembler
@@ -131,9 +132,9 @@ If ``doxygen`` is found, the C++ library documentation is built. If the Python
 bindings are built and the ``sphinx`` Python module is available, the Python
 binding documentation is generated too.
 
-.. _C++ library: https://scine.ethz.ch/static/download/documentation/molassembler/v1.1.0/cpp/index.html
+.. _C++ library: https://scine.ethz.ch/static/download/documentation/molassembler/v1.2.0/cpp/index.html
 
-.. _Python bindings: https://scine.ethz.ch/static/download/documentation/molassembler/v1.1.0/py/index.html
+.. _Python bindings: https://scine.ethz.ch/static/download/documentation/molassembler/v1.2.0/py/index.html
 
 References
 ----------

@@ -21,13 +21,13 @@ void init_shape_submodule(pybind11::module& m) {
     R"delim(
       Enumeration of recognizable polyhedral shapes
 
-      >>> all_shapes = Shape.__members__.values() # Full list of shapes
-      >>> Shape.SquareAntiprism in all_shapes
+      >>> all_shapes = shapes.Shape.__members__.values() # Full list of shapes
+      >>> shapes.Shape.SquareAntiprism in all_shapes
       True
-      >>> Shape.__members__["TrigonalPrism"] # String lookup
-      Shape.TrigonalPrism
-      >>> str(Shape.TrigonalPrism) # displayable string
-      "trigonal prism"
+      >>> shapes.Shape.__members__["TrigonalPrism"] # String lookup by enum name
+      <Shape.TrigonalPrism: 13>
+      >>> str(shapes.Shape.TrigonalPrism) # displayable string
+      'trigonal prism'
     )delim",
     pybind11::arithmetic()
   );
@@ -70,13 +70,14 @@ void init_shape_submodule(pybind11::module& m) {
     &Shapes::nameFromString,
     pybind11::arg("name_str"),
     R"delim(
-      Fetch a shape name from its string representation
+      Fetch a shape name from its string representation. Case and
+      whitespace-sensitive.
 
-      >>> s = Shape.CappedSquareAntiprism
+      >>> s = shapes.Shape.CappedSquareAntiprism
       >>> str(s)
-      "capped square antiprism"
-      >>> name_from_str(str(s))
-      Shape.CappedSquareAntiprism
+      'capped square antiprism'
+      >>> shapes.name_from_str(str(s)) == s
+      True
     )delim"
   );
 
@@ -87,11 +88,11 @@ void init_shape_submodule(pybind11::module& m) {
     R"delim(
       Number of vertices of a shape. Does not include a centroid.
 
-      >>> size(Shape.Line)
+      >>> shapes.size(shapes.Shape.Line)
       2
-      >>> size(Shape.Octahedron)
+      >>> shapes.size(shapes.Shape.Octahedron)
       6
-      >>> size(Shape.Cuboctahedron)
+      >>> shapes.size(shapes.Shape.Cuboctahedron)
       12
     )delim"
   );

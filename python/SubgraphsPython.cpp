@@ -67,7 +67,7 @@ void init_bimap(pybind11::module& m) {
 
       >>> neopentane = io.experimental.from_smiles("CC(C)(C)C")
       >>> methyl = io.experimental.from_smiles("[CH3]")
-      >>> matches = complete(methyl, neopentane)
+      >>> matches = subgraphs.complete(methyl, neopentane)
       >>> first_match = matches[0]
       >>> list(first_match.left)  # Mapping from methyl indices to neopentane
       [(0, 0), (1, 5), (2, 6), (3, 7)]

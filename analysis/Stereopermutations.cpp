@@ -107,13 +107,6 @@ int main(int argc, char* argv[]) {
       return 0;
     }
 
-    std::vector<char> charVec;
-    std::copy(
-      chars.begin(),
-      chars.end(),
-      std::back_inserter(charVec)
-    );
-
     // Validate links (if present)
     Stereopermutation::OrderedLinks links;
     if(options_variables_map.count("links") != 0) {
@@ -169,7 +162,7 @@ int main(int argc, char* argv[]) {
     }
 
     // Generate the assignment
-    Stereopermutation base {charVec, links};
+    Stereopermutation base {Stereopermutation::occupationFromChars(chars), links};
 
     auto unique = uniques(base, shape, false);
 

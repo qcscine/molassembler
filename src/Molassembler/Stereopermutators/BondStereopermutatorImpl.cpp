@@ -142,24 +142,28 @@ auto zipMapPair(
 
 } // namespace
 
-std::vector<char> BondStereopermutator::Impl::charifyRankedSites_(
+Stereopermutations::Stereopermutation::Occupation
+BondStereopermutator::Impl::makeOccupation_(
   const RankingInformation::RankedSitesType& sitesRanking,
   const AtomStereopermutator::ShapeMap& shapeVertexMap
 ) {
-  std::vector<char> characters (shapeVertexMap.size());
+  std::vector<Stereopermutations::Rank> siteRank (
+    shapeVertexMap.size(),
+    Stereopermutations::Rank {0}
+  );
 
-  char currentChar = 'A';
+  Stereopermutations::Rank currentRank {0};
   for(const auto& equalPrioritySet : sitesRanking) {
     for(const auto& siteIndex : equalPrioritySet) {
-      characters.at(
-        shapeVertexMap.at(siteIndex)
-      ) = currentChar;
+      siteRank.at(siteIndex) = currentRank;
     }
 
-    ++currentChar;
+    ++currentRank;
   }
 
-  return characters;
+  using StrongSiteRankMap = Temple::StrongIndexPermutation<SiteIndex, Stereopermutations::Rank>;
+
+  return shapeVertexMap.inverse().compose(StrongSiteRankMap::from(siteRank));
 }
 
 const Stereopermutations::Composite& BondStereopermutator::Impl::composite() const {
@@ -245,7 +249,7 @@ BondStereopermutator::Impl::makeOrientationState_(
         attachedStereopermutator.placement()
       )
     ),
-    charifyRankedSites_(
+    makeOccupation_(
       focalStereopermutator.getRanking().siteRanking,
       focalShapeMap
     ),
@@ -987,7 +991,7 @@ void BondStereopermutator::Impl::propagateGraphChange(
   const AtomStereopermutator::ShapeMap& oldShapeMap = std::get<1>(oldPermutatorState);
 
   // We assume that the supplied permutators (or their state) were assigned
-  assert(!oldShapeMap.empty());
+  assert(oldShapeMap.size() > 0);
   assert(newPermutator.assigned());
 
   /* We assume the old and new shapes are of the same size (i.e. this is
@@ -1022,7 +1026,7 @@ void BondStereopermutator::Impl::propagateGraphChange(
         unchangedOrientation.identifier
       )
     ),
-    charifyRankedSites_(
+    makeOccupation_(
       newPermutator.getRanking().siteRanking,
       newPermutator.getShapePositionMap()
     ),

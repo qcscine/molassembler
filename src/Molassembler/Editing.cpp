@@ -93,7 +93,7 @@ void transferStereopermutators(
   }
 }
 
-std::pair<Molecule, Molecule> cleaveImpl(
+Editing::Cleaved cleaveImpl(
   const Molecule& a,
   const AtomIndex left,
   const std::vector<AtomIndex>& right,
@@ -127,7 +127,7 @@ std::pair<Molecule, Molecule> cleaveImpl(
   );
 
   // Make molecules out of the components
-  auto molecules = std::make_pair<Molecule, Molecule>(
+  Editing::Cleaved cleaved {
     Molecule(
       Graph(std::move(graphs.first)),
       std::move(stereopermutatorLists.first)
@@ -135,8 +135,24 @@ std::pair<Molecule, Molecule> cleaveImpl(
     Molecule(
       Graph(std::move(graphs.second)),
       std::move(stereopermutatorLists.second)
-    )
-  );
+    ),
+    {}
+  };
+
+  // Write the component map
+  cleaved.componentMap.resize(V);
+  for(const auto& firstComponentPair : vertexMappings.first) {
+    cleaved.componentMap.at(firstComponentPair.first) = std::make_pair(
+      0,
+      firstComponentPair.second
+    );
+  }
+  for(const auto& secondComponentPair : vertexMappings.second) {
+    cleaved.componentMap.at(secondComponentPair.first) = std::make_pair(
+      1,
+      secondComponentPair.second
+    );
+  }
 
   /* Follow a procedure similar to Molecule::Impl::removeBond to get valid
    * state after removal:
@@ -193,18 +209,18 @@ std::pair<Molecule, Molecule> cleaveImpl(
   for(const AtomIndex i : right) {
     if(a.graph().bondType(BondIndex {left, i}) != BondType::Eta) {
       fixEdgeAndPropagate(
-        molecules.second,
+        cleaved.second,
         vertexMappings.second.at(i)
       );
     }
   }
 
   fixEdgeAndPropagate(
-    molecules.first,
+    cleaved.first,
     vertexMappings.first.at(left)
   );
 
-  return molecules;
+  return cleaved;
 }
 
 } // namespace
@@ -225,16 +241,20 @@ std::pair<Molecule, Molecule> cleave(const Molecule& a, const BondIndex bridge) 
   );
 
   assert(!sides.first.empty() && !sides.second.empty());
-  return cleaveImpl(
+  Cleaved cleaved = cleaveImpl(
     a,
     bridge.first,
     std::vector<AtomIndex>(1, bridge.second),
     sides.first,
     sides.second
   );
+  return std::make_pair(
+    std::move(cleaved.first),
+    std::move(cleaved.second)
+  );
 }
 
-std::pair<Molecule, Molecule> cleave(
+Cleaved cleave(
   const Molecule& a,
   const AtomSitePair site
 ) {

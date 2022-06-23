@@ -37,9 +37,32 @@ void init_editing(pybind11::module& m) {
 
       >>> import scine_utilities as utils
       >>> a = Molecule() # Makes H2
-      >>> bond_index = a.addAtom(0, utils.ElementType.H) # Make linear H3
-      >>> cleaved = editing.cleave(a, bond_index) # Split into H2 and H
+      >>> new_atom = a.add_atom(utils.ElementType.H, 0) # Make linear H3
+      >>> cleaved = editing.cleave(a, BondIndex(0, new_atom)) # Split back
     )delim"
+  );
+
+  pybind11::class_<Editing::Cleaved> cleaved {
+    editing,
+    "Cleaved",
+    R"delim(
+      Return type of a cleave operation along a haptic site.
+    )delim"
+  };
+
+  cleaved.def_readonly(
+    "first",
+    &Editing::Cleaved::first
+  );
+
+  cleaved.def_readonly(
+    "second",
+    &Editing::Cleaved::second
+  );
+
+  cleaved.def_readonly(
+    "component_map",
+    &Editing::Cleaved::componentMap
   );
 
   editing.def(
@@ -57,8 +80,8 @@ void init_editing(pybind11::module& m) {
       :param molecule: Molecule to cleave
       :param haptic_site: Atom and site index pair indicating the haptic site
         to cleave
-      :return: A pair of molecules. The first always contains the atom
-        indicated by ``haptic_site``.
+      :return: A pair of molecules and a component map. The first molecule
+        always contains the atom indicated by ``haptic_site``.
     )delim"
   );
 

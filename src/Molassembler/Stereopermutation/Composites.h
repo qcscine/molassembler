@@ -14,6 +14,7 @@
 
 #include "Molassembler/Shapes/Shapes.h"
 #include "Molassembler/Shapes/Data.h"
+#include "Molassembler/Stereopermutation/Stereopermutation.h"
 #include "Molassembler/Temple/OrderedPair.h"
 #include "Molassembler/Temple/constexpr/FloatingPointComparison.h"
 
@@ -36,7 +37,7 @@ public:
 //!@{
   //! A group of shape vertices at an angle from the fused position
   struct AngleGroup {
-    //! The angle this group is placed at from the fused position
+    //! The angle from this vertex group to the fused position in radians
     double angle;
     //! The shape vertices making up this group
     std::vector<Shapes::Vertex> vertices;
@@ -57,8 +58,8 @@ public:
     Shapes::Shape shape;
     //! The shape vertex of the local shape that the other is fused at
     Shapes::Vertex fusedVertex;
-    //! Abstract ranking-characters of the sites at their shape vertices
-    std::vector<char> characters;
+    //! Ranking occupation of shape vertices of this shape
+    Stereopermutation::Occupation occupation;
     /*!
      * @brief An identifier to the shape source
      *
@@ -72,7 +73,7 @@ public:
     OrientationState(
       Shapes::Shape passShape,
       Shapes::Vertex passFusedVertex,
-      std::vector<char> passCharacters,
+      Stereopermutation::Occupation passOccupation,
       std::size_t passIdentifier
     );
 
@@ -80,7 +81,7 @@ public:
      *
      * @complexity{@math{\Theta(N)}}
      */
-    std::vector<char> applyCharacterRotation(const std::vector<Shapes::Vertex>& rotation) const;
+    Stereopermutation::Occupation rotateOccupation(const std::vector<Shapes::Vertex>& rotation) const;
 
     /*! @brief Smallest shape vertex from the same group as the fused position
      *
@@ -138,7 +139,7 @@ public:
       return std::make_tuple(
         shape,
         reducedVertex,
-        applyCharacterRotation(findReductionMapping(reducedVertex))
+        rotateOccupation(findReductionMapping(reducedVertex))
       );
     }
   };

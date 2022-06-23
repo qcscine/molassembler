@@ -36,7 +36,7 @@ inline unsigned gcd(const std::vector<unsigned>& c) {
 }
 
 inline void checkArguments(const Stereopermutation& s, const Shapes::Shape shape) {
-  if(s.characters.size() != Shapes::size(shape)) {
+  if(s.occupation.size() != Shapes::size(shape)) {
     throw std::invalid_argument("Stereopermutation character count does not match shape size");
   }
 }
@@ -185,9 +185,7 @@ Uniques uniques(
     }
   }
 
-  using IndexVector = std::vector<unsigned>;
-  using Permutation = Temple::Permutation<IndexVector>;
-  const auto ordering = Permutation::ordering(unordered.list);
+  const auto ordering = Temple::Permutation::ordering(unordered.list);
 
   // Order the uniques using the discovered ordering permutation
   Uniques ordered {

@@ -85,9 +85,13 @@ constexpr Traits::enableIfFloatingWithReturn<T, T> toRadians(T inDegrees) noexce
 template<typename T>
 constexpr Traits::enableIfFloatingWithReturn<T, T> toDegrees(T inRadians) noexcept;
 
-//! Ceiling function
+//! module function for arbitrary types
+template<typename T, typename U>
+constexpr Traits::enableIfFloatingWithReturn<T, T> fmod(T value, U divider) noexcept;
+
+//! Ceiling function, no overflow check
 template<typename T>
-constexpr Traits::enableIfFloatingWithReturn<T, int> ceil(T value) noexcept;
+constexpr Traits::enableIfFloatingWithReturn<T, long> ceil(T value) noexcept;
 
 //! Floor function
 template<typename T>
@@ -257,10 +261,26 @@ PURITY_STRONG constexpr Traits::enableIfFloatingWithReturn<T, T> toDegrees(const
   return 180 * inRadians / M_PI;
 }
 
+template<typename T, typename U>
+PURITY_STRONG constexpr Traits::enableIfFloatingWithReturn<T, T>  fmod(const T value, const U divider) noexcept {
+ T remainder = value;
+ while (divider < remainder) {
+   remainder -= divider;
+ }
+ return remainder;
+}
+
 template<typename T>
-PURITY_STRONG constexpr Traits::enableIfFloatingWithReturn<T, int> ceil(const T value) noexcept {
-  // Truncate to an int
-  const auto truncated = static_cast<int>(value);
+PURITY_STRONG constexpr Traits::enableIfFloatingWithReturn<T, long> ceil(const T value) noexcept {
+  // Truncate to an integer
+  const auto truncated = static_cast<long>(value);
+
+  // we first check if the given floating point number is actually an integer 
+  // this avoids rounding mistakes, occuring with some compilers
+  const double eps = 1e-12;
+  if (fmod(value, 1) < eps && abs(truncated - value) < eps) { 
+    return truncated;
+  }
 
   if(truncated < value) {
     return truncated + 1;

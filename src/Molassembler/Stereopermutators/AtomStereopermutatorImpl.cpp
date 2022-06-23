@@ -382,20 +382,18 @@ void AtomStereopermutator::Impl::assign(boost::optional<unsigned> assignment) {
   // Store new assignment
   assignmentOption_ = std::move(assignment);
 
-  /* save a mapping of next neighbor indices to symmetry positions after
-   * assigning (AtomIndex -> unsigned).
+  /* save a mapping of site indices to shape vertices after
+   * assigning (SiteIndex -> Shapes::Vertex).
    */
   if(assignmentOption_) {
     shapePositionMap_ = siteToShapeVertexMap(
       abstract_.permutations.list.at(
-        feasibles_.at(
-          assignmentOption_.value()
-        )
+        feasibles_.at(assignmentOption_.value())
       ),
       abstract_.canonicalSites,
       ranking_.links
     );
-  } else { // Wipe the map
+  } else {
     shapePositionMap_.clear();
   }
 }
@@ -422,7 +420,7 @@ void AtomStereopermutator::Impl::assign(std::vector<Shapes::Vertex> vertexMappin
    * check each feasible permutation?
    */
   const auto soughtStereopermutation = stereopermutationFromSiteToShapeVertexMap(
-    SiteToShapeVertexMap {vertexMapping},
+    SiteToShapeVertexMap::from(vertexMapping),
     ranking_.links,
     abstract_.canonicalSites
   );
@@ -436,7 +434,7 @@ void AtomStereopermutator::Impl::assign(std::vector<Shapes::Vertex> vertexMappin
 
   if(newAssignment) {
     assignmentOption_ = *newAssignment;
-    shapePositionMap_ = ShapeMap {vertexMapping};
+    shapePositionMap_ = ShapeMap::from(vertexMapping);
   }
 }
 
@@ -618,11 +616,11 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
       const auto& shapeMappingValue = appliedShapeMapping.value();
 
       // Use shape map of current assignment to place old site indices at old shape vertices
-      using InvertedMap = Temple::StrongIndexFlatMap<Shapes::Vertex, SiteIndex>;
-      const InvertedMap oldSiteIndicesAtOldVertices = shapePositionMap_.invert();
+      using InvertedMap = Temple::StrongIndexPermutation<Shapes::Vertex, SiteIndex>;
+      const InvertedMap oldSiteIndicesAtOldVertices = shapePositionMap_.inverse();
 
       // Use shape mapping if available to transfer old vertices to new vertices
-      const InvertedMap oldSiteIndicesAtNewVertices = InvertedMap(
+      const InvertedMap oldSiteIndicesAtNewVertices = InvertedMap::from(
         Temple::map(
           Temple::iota<Shapes::Vertex>(Shapes::size(newShape)),
           [&](const Shapes::Vertex newVertex) -> SiteIndex {
@@ -638,10 +636,11 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
       );
 
       // Use site mapping to transfer old site indices to new site indices
-      const InvertedMap sitesAtNewShapeVertices = InvertedMap(
+      const InvertedMap sitesAtNewShapeVertices = InvertedMap::from(
         Temple::map(
           oldSiteIndicesAtNewVertices,
-          [&](const SiteIndex oldSite) -> SiteIndex {
+          [&](const auto keyValuePair) -> SiteIndex {
+            const auto oldSite = keyValuePair.second;
             const auto findIter = siteMapping.map.find(oldSite);
 
             if(findIter != std::end(siteMapping.map)) {
@@ -657,26 +656,28 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
       assert(
         Temple::all_of(
           sitesAtNewShapeVertices,
-          [newShape](const SiteIndex i) { return i < Shapes::size(newShape); }
+          [newShape](const auto vertexSitePair) { return vertexSitePair.second < Shapes::size(newShape); }
         )
       );
 
       // Replace the site indices by their new ranking characters
-      const auto newStereopermutationCharacters = Stereopermutators::Abstract::makeStereopermutationCharacters(
+      const auto newOccupation = Stereopermutators::Abstract::makeOccupation(
         newAbstract.canonicalSites,
-        newAbstract.symbolicCharacters,
+        newAbstract.occupation,
         sitesAtNewShapeVertices
       );
 
-      using Permutation = Temple::Permutation<std::vector<Shapes::Vertex>>;
       const auto vertexLinks = Stereopermutations::Stereopermutation::permuteLinks(
         newAbstract.selfReferentialLinks,
-        Permutation::ordering(newStereopermutationCharacters).inverse().sigma
+        Temple::map(
+          Temple::Permutation::ordering(newOccupation.permutation).inverse().sigma,
+          [](const unsigned i) { return Shapes::Vertex {i}; }
+        )
       );
 
       // Create a new assignment with those characters
       const auto trialStereopermutation = Stereopermutations::Stereopermutation(
-        newStereopermutationCharacters,
+        newOccupation,
         vertexLinks
       );
 
@@ -813,7 +814,7 @@ AtomStereopermutator::Impl::fit(
   }
 
   matchingMapping.pop_back();
-  return ShapeMap(matchingMapping);
+  return ShapeMap::from(matchingMapping);
 }
 
 /* Information */
@@ -886,7 +887,7 @@ AtomStereopermutator::Impl::minimalChiralConstraints(const bool enforce) const {
     /* Invert neighborSymmetryPositionMap_, we need a mapping of
      *  (vertex in shape) -> site index
      */
-    const auto invertedShapeMap = shapePositionMap_.invert();
+    const auto invertedShapeMap = shapePositionMap_.inverse();
 
     return Temple::map(
       Shapes::tetrahedra(shape_),
@@ -910,12 +911,11 @@ AtomStereopermutator::Impl::minimalChiralConstraints(const bool enforce) const {
 std::string AtomStereopermutator::Impl::info() const {
   std::string returnString = std::to_string(centerAtom_) + ": "s + Shapes::name(shape_) +", "s;
 
-  const auto& characters = abstract_.symbolicCharacters;
-  std::copy(
-    characters.begin(),
-    characters.end(),
-    std::back_inserter(returnString)
-  );
+  std::string characters;
+  for(const auto& pair : abstract_.occupation) {
+    characters += static_cast<char>('A' + pair.second);
+  }
+  returnString += characters;
 
   for(const auto& link : abstract_.selfReferentialLinks) {
     returnString += ", "s + characters.at(link.first) + "-"s + characters.at(link.second);

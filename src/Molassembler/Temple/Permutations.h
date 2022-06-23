@@ -8,7 +8,10 @@
 #ifndef INCLUDE_MOLASSEMBLER_TEMPLE_PERMUTATIONS_H
 #define INCLUDE_MOLASSEMBLER_TEMPLE_PERMUTATIONS_H
 
+#include "Molassembler/Temple/Traits.h"
+#include "Molassembler/Temple/OperatorSuppliers.h"
 #include <algorithm>
+#include <tuple>
 #include <stdexcept>
 
 namespace Scine {
@@ -267,7 +270,7 @@ bool nextCombinationPermutation(
 }
 
 /**
- * @brief Constexpr-compatible container-abstracted permutation
+ * @brief Container-abstracted permutation
  *
  * Permutations contain only non-negative integers, with each number up less
  * than its length used once. This class can be used only to represent
@@ -281,36 +284,32 @@ bool nextCombinationPermutation(
  * containing the indices 0, 3, 2, 1 represents the permutation with p(0) = 0,
  * p(1) = 3, p(2) = 2 and p(3) = 1.
  */
-template<typename Container>
-struct Permutation {
-  using T = std::decay_t<decltype(std::declval<Container>().at(0))>;
-  static_assert(
-    std::is_convertible<T, unsigned>::value,
-    "Permutation container value type must be convertible to an integral type"
-  );
+struct Permutation : public Crtp::LexicographicComparable<Permutation> {
+  using Sigma = std::vector<unsigned>;
 
-  constexpr Permutation() = default;
+  Permutation() = default;
 
-  //! Construct the identity permutation of size N
-  constexpr explicit Permutation(unsigned N) : sigma(N) {
-    for(unsigned i = 0; i < N; ++i) {
-      sigma.at(i) = i;
+  // Construct from data (unchecked)
+  explicit Permutation(Sigma p) : sigma(std::move(p)) {}
+
+  template<typename T, std::enable_if_t<std::is_convertible<T, unsigned>::value, int>* = nullptr>
+  explicit Permutation(std::initializer_list<T> vs) {
+    sigma.reserve(vs.size());
+    for(auto v : vs) {
+      sigma.push_back(v);
     }
   }
 
-  //! Construct a permutation from data
-  constexpr explicit Permutation(Container p) : sigma(std::move(p)) {}
-
   //! Construct the i-th permutation of size N
-  constexpr Permutation(const unsigned N, unsigned i) : sigma(N) {
-    Container factorials(N);
+  Permutation(const std::size_t N, std::size_t i) : sigma(N) {
+    std::vector<std::size_t> factorials(N);
     factorials.at(0) = 1;
-    for(unsigned k = 1; k < N; ++k) {
+    for(std::size_t k = 1; k < N; ++k) {
       factorials.at(k) = factorials.at(k - 1) * k;
     }
 
-    for(unsigned k = 0; k < N; ++k) {
-      const unsigned fac = factorials.at(N - 1 - k);
+    for(std::size_t k = 0; k < N; ++k) {
+      const std::size_t fac = factorials.at(N - 1 - k);
       sigma.at(k) = i / fac;
       i %= fac;
     }
@@ -324,10 +323,39 @@ struct Permutation {
     }
   }
 
+  //! Construct the identity permutation of size N
+  static Permutation identity(unsigned N) {
+    Sigma sigma;
+    sigma.resize(N);
+    for(unsigned i = 0; i < N; ++i) {
+      sigma.at(i) = i;
+    }
+    return Permutation {std::move(sigma)};
+  }
+
+  //! Construct a permutation from data (unchecked!)
+  template<typename Container>
+  static std::enable_if_t<!std::is_same<Container, Sigma>::value, Permutation> from(const Container& p) {
+    static_assert(
+      std::is_convertible<Traits::getValueType<Container>, unsigned>::value,
+      "Value type of container must be convertible to unsigned!"
+    );
+    Sigma sigma;
+    for(auto v : p) {
+      sigma.emplace_back(static_cast<unsigned>(v));
+    }
+    return Permutation {std::move(sigma)};
+  }
+
+  template<typename Container>
+  static std::enable_if_t<std::is_same<std::decay_t<Container>, Sigma>::value, Permutation> from(Container&& p) {
+    return Permutation {std::forward<Container>(p)};
+  }
+
   //! Discover on ordering permutation of an unordered container
   template<typename OtherContainer>
-  static constexpr Permutation ordering(const OtherContainer& unordered) {
-    Permutation p(unordered.size());
+  static Permutation ordering(const OtherContainer& unordered) {
+    Permutation p = Permutation::identity(unordered.size());
     std::sort(
       std::begin(p.sigma),
       std::end(p.sigma),
@@ -335,65 +363,102 @@ struct Permutation {
         return unordered.at(i) < unordered.at(j);
       }
     );
-    return p;
+    return p.inverse();
   }
 
-  constexpr bool next() {
+  bool next() {
     return inPlaceNextPermutation(sigma);
   }
 
-  constexpr bool prev() {
+  bool prev() {
     return inPlacePreviousPermutation(sigma);
   }
 
-  constexpr std::size_t index() const {
+  unsigned index() const {
     return permutationIndex(sigma);
   }
 
-  constexpr Permutation inverse() const {
-    auto inverted = sigma;
-    const unsigned size = inverted.size();
-    for(unsigned i = 0; i < size; ++i) {
-      inverted.at(sigma.at(i)) = i;
+  unsigned indexOf(unsigned v) const {
+    const auto begin = std::begin(sigma);
+    const auto end = std::end(sigma);
+    const auto findIter = std::find(begin, end, v);
+
+    if(findIter == end) {
+      throw std::out_of_range("Item not found");
     }
-    return Permutation(inverted);
+
+    return findIter - begin;
   }
 
-  constexpr auto at(const std::size_t i) const -> decltype(auto) {
+  Permutation inverse() const {
+    const unsigned size = sigma.size();
+    Sigma inv;
+    inv.resize(size);
+    for(unsigned i = 0; i < size; ++i) {
+      inv.at(sigma.at(i)) = i;
+    }
+    return Permutation {inv};
+  }
+
+  auto at(const unsigned i) const -> decltype(auto) {
     return sigma.at(i);
   }
 
-  constexpr auto operator() (const std::size_t i) const -> decltype(auto) {
+  auto operator() (const unsigned i) const -> decltype(auto) {
     return sigma.at(i);
   }
 
+  void push() {
+    sigma.push_back(sigma.size());
+  }
+
+  void clear() {
+    sigma.clear();
+  }
+
+  unsigned size() const {
+    return sigma.size();
+  }
+
+  /**
+   * @brief Applies a permutation to the elements of a container by index
+   *
+   * @param other The container to be permuted
+   *
+   * @example
+   */
   template<typename OtherContainer>
-  constexpr OtherContainer apply(const OtherContainer& other) const {
-    const unsigned size = other.size();
-    OtherContainer result(size);
-    for(std::size_t i = 0; i < size; ++i) {
-      result.at(i) = other.at(sigma.at(i));
+  OtherContainer apply(const OtherContainer& other) const {
+    const unsigned otherSize = other.size();
+    if(otherSize > size()) {
+      throw std::invalid_argument("Container of elements to apply permutation to larger than permutation itself");
+    }
+    OtherContainer result(otherSize);
+    for(unsigned i = 0; i < otherSize; ++i) {
+      result.at(sigma.at(i)) = other.at(i);
     }
     return result;
   }
 
   /*! @brief Compose two permutations
    *
-   * The resulting permutation of this composition applies @p other first, then
-   * @p this.
+   * The resulting permutation of this composition applies @p this first, then
+   * @p other. Note that composition is not commutative!
    */
-  constexpr Permutation compose(const Permutation& other) const {
-    return Permutation {apply(other.sigma)};
+  Permutation compose(const Permutation& other) const {
+    if(size() != other.size()) {
+      throw std::invalid_argument("Mismatched permutation sizes!");
+    }
+    return Permutation::from(inverse().apply(other.sigma));
+  }
+
+  auto tie() const {
+    return std::tie(sigma);
   }
 
   //! The permutation in 'one-line' representation
-  Container sigma;
+  Sigma sigma;
 };
-
-template<typename Container>
-Permutation<Container> make_permutation(Container p) {
-  return Permutation<Container>(std::move(p));
-}
 
 } // namespace Temple
 } // namespace Molassembler

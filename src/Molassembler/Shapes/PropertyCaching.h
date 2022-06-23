@@ -15,8 +15,8 @@ namespace Scine {
 namespace Molassembler {
 namespace Shapes {
 
-//! Precomputed min and max angle values in radians for all symmetries
-extern const Temple::Array<std::pair<double, double>, nShapes> symmetryAngleBounds;
+//! Precomputed min and max angle values in radians for all shapes
+extern const Temple::Array<std::pair<double, double>, nShapes> shapeAngleBounds;
 
 /*! @brief Calculate the minimum angle in a symmetry
  *
@@ -34,19 +34,6 @@ MASM_EXPORT double minimumAngle(Shape shape);
  * @complexity{@math{\Theta(S^2)}}
  */
 MASM_EXPORT double maximumAngle(Shape shape);
-
-/* Derived stored constexpr data */
-/*! @brief The smallest angle between ligands in all symmetries
- *
- * Stores the smallest angle between symmetry positions across all symmetries
- *
- * @complexity{@math{\Theta(NS^2)} where @math{N} is the number of largest symmetries and @math{S} is the size of the largest symmetry}
- */
-constexpr double smallestAngle [[gnu::unused]]
-= Temple::Tuples::unpackToFunction<
-  Data::allShapeDataTypes,
-  ConstexprProperties::minAngleFunctor
->();
 
 /*! @brief Cached access to mappings. Populates the cache from constexpr if generated.
  *

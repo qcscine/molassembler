@@ -13,7 +13,7 @@
 %%
 % Book metadata
 \title[SCINE Molassembler manual]{User Manual \vskip 0.5em
-{\setlength{\parindent}{0pt} \Huge SCINE Molassembler 1.1.0}}
+{\setlength{\parindent}{0pt} \Huge SCINE Molassembler 1.2.0}}
 \author[The SCINE Molassembler Developers]{The SCINE Molassembler Developers:
 \newline \noindent Jan-Grimo Sobez and Markus Reiher}
 \publisher{ETH Z\"urich}
@@ -296,7 +296,7 @@ value in bold face:
 The base command to install \textsc{Molassembler} is:
 
 \begin{Verbatim}
-conan install scine_molassembler/1.1.0@
+conan install scine_molassembler/1.2.0@
 \end{Verbatim}
 
 Changes to default options can be supplied right after \texttt{conan install}
@@ -305,7 +305,7 @@ with \texttt{-o scine\_molassembler:<option>=<value>}.
 For instance, if you want Python bindings, your install command will be:
 
 \begin{Verbatim}
-conan install -o scine_molassembler:python=True scine_molassembler/1.1.0@
+conan install -o scine_molassembler:python=True scine_molassembler/1.2.0@
 \end{Verbatim}
 
 Conan will proceed to identify your operating system, architecture and compiler.
@@ -323,7 +323,7 @@ In order to compile \textsc{Molassembler} from source, you will need:
     7.3.0, \texttt{clang}~$\ge$~4, \texttt{MinGW-w64}, etc.}
   \item \texttt{cmake} $\ge$ 3.9.0
   \item the \texttt{Boost} libraries $\ge$ 1.65.0
- i \item the \texttt{Eigen} library $\ge$ 3.3.2, $<$ 3.4.0
+  \item the \texttt{Eigen} library $\ge$ 3.3.2
 \end{itemize}
 
 Check your package manager for the relevant packages. For Ubuntu, for instance,
@@ -388,7 +388,6 @@ distributed along or downloaded at configure time:
   \item RingDecomposerLib~\cite{Flachsenberg2017, Kolodzik2012} 
   \item nauty~\cite{McKay2014}
   \item JSON For Modern C++~\cite{Lohmann2013} 
-%TODO: Update citation for Utils
   \item SCINE Utilities~\cite{Brunken2019}
 \end{itemize}
 
@@ -396,7 +395,7 @@ distributed along or downloaded at configure time:
 \chapter{Using the C++ library}
 
 \textsc{Molassembler} provides a
-\href{https://scine.ethz.ch/static/download/documentation/molassembler/v1.1.0/cpp}{\texttt{Doxygen}
+\href{https://scine.ethz.ch/static/download/documentation/molassembler/v1.2.0/cpp}{\texttt{Doxygen}
 technical
 documentation}\footnote{\texttt{scine.ethz.ch/download/molassembler}}
 which documents the available functions in detail and also provides an overview
@@ -437,7 +436,7 @@ the Python module in the environment variable \texttt{PYTHONPATH},
 \textit{e.g.}, you might need to run the command 
 
 \begin{Verbatim} 
-export PYTHONPATH=$PYTHONPATH:<install directory>/lib64/python<version>/site-packages
+export PYTHONPATH=$PYTHONPATH:<install directory>/lib/python<version>/site-packages 
 \end{Verbatim} 
 
 where \texttt{<version>} is the Python version you are using (\textit{e.g.},
@@ -445,7 +444,7 @@ where \texttt{<version>} is the Python version you are using (\textit{e.g.},
 \textsc{Molassembler}. Now you can simply import the module and use it just
 like any other Python module. All functionality available in the Python module
 is
-\href{https://scine.ethz.ch/static/download/documentation/molassembler/v1.1.0/py}{documented with
+\href{https://scine.ethz.ch/static/download/documentation/molassembler/v1.2.0/py}{documented with
 examples}\footnote{\texttt{scine.ethz.ch/download/molassembler}}. You can
 interactively explore the available functionality in an interactive Python shell
 using the \texttt{help} and \texttt{dir} Python functions:

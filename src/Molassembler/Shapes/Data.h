@@ -27,8 +27,9 @@ namespace Scine {
 namespace Molassembler {
 namespace Shapes {
 
-//! @brief Index of a shape vertex
+//! Helper tag to differentiate index types for a shape vertex
 struct vertex_index_tag;
+//! @brief Index of a shape vertex
 using Vertex = Temple::StrongIndex<vertex_index_tag, unsigned>;
 
 //! @brief Representation of a shape vertex permutation

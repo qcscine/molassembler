@@ -32,38 +32,32 @@ struct InequalityFromEquality {
 //! Supplies all operators from an implemented less-than operator
 template <typename T>
 struct AllOperatorsFromLessThan {
-  static constexpr const T& getDerived(const AllOperatorsFromLessThan& base) {
+  static constexpr const T& derived(const AllOperatorsFromLessThan& base) {
     return static_cast<const T&>(base);
   }
 
   constexpr bool operator == (const AllOperatorsFromLessThan& other) const {
-    const T& lhs = getDerived(*this), rhs = getDerived(other);
-
+    const T& lhs = derived(*this);
+    const T& rhs = derived(other);
     return !(lhs < rhs) && !(rhs < lhs);
   }
 
   constexpr bool operator != (const AllOperatorsFromLessThan& other) const {
-    const T& lhs = getDerived(*this), rhs = getDerived(other);
-
+    const T& lhs = derived(*this);
+    const T& rhs = derived(other);
     return (lhs < rhs) || (rhs < lhs);
   }
 
   constexpr bool operator > (const AllOperatorsFromLessThan& other) const {
-    const T& lhs = getDerived(*this), rhs = getDerived(other);
-
-    return rhs < lhs;
+    return derived(other) < derived(*this);
   }
 
   constexpr bool operator <= (const AllOperatorsFromLessThan& other) const {
-    const T& lhs = getDerived(*this), rhs = getDerived(other);
-
-    return !(rhs < lhs);
+    return !(derived(other) < derived(*this));
   }
 
   constexpr bool operator >= (const AllOperatorsFromLessThan& other) const {
-    const T& lhs = getDerived(*this), rhs = getDerived(other);
-
-    return !(lhs < rhs);
+    return !(derived(*this) < derived(other));
   }
 };
 
@@ -82,32 +76,32 @@ struct AllOperatorsFromLessThan {
  */
 template<typename T>
 struct LexicographicComparable {
-  static constexpr const T& getDerived(const LexicographicComparable& base) {
+  static constexpr const T& derived(const LexicographicComparable& base) {
     return static_cast<const T&>(base);
   }
 
   constexpr bool operator == (const LexicographicComparable& other) const {
-    return getDerived(*this).tie() == getDerived(other).tie();
+    return derived(*this).tie() == derived(other).tie();
   }
 
   constexpr bool operator != (const LexicographicComparable& other) const {
-    return getDerived(*this).tie() != getDerived(other).tie();
+    return derived(*this).tie() != derived(other).tie();
   }
 
   constexpr bool operator < (const LexicographicComparable& other) const {
-    return getDerived(*this).tie() < getDerived(other).tie();
+    return derived(*this).tie() < derived(other).tie();
   }
 
   constexpr bool operator <= (const LexicographicComparable& other) const {
-    return getDerived(*this).tie() <= getDerived(other).tie();
+    return derived(*this).tie() <= derived(other).tie();
   }
 
   constexpr bool operator > (const LexicographicComparable& other) const {
-    return getDerived(*this).tie() > getDerived(other).tie();
+    return derived(*this).tie() > derived(other).tie();
   }
 
   constexpr bool operator >= (const LexicographicComparable& other) const {
-    return getDerived(*this).tie() >= getDerived(other).tie();
+    return derived(*this).tie() >= derived(other).tie();
   }
 };
 

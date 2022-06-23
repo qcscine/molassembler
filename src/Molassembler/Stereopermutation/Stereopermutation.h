@@ -12,12 +12,18 @@
 #define INCLUDE_MOLASSEMBLER_STEREOPERMUTATIONS_STEREOPERMUTATION_H
 
 #include "Molassembler/Shapes/Data.h"
+#include "Molassembler/Temple/StrongIndexPermutation.h"
 
 namespace Scine {
 namespace Molassembler {
 
 //! @brief Data classes for permutational spatial arrangement modeling
 namespace Stereopermutations {
+
+//! Helper tag to differentiate index types for site rank
+struct rank_tag;
+//! Ranked index of a site
+using Rank = Temple::StrongIndex<rank_tag, unsigned>;
 
 /*! @brief Represent abstract stereopermutation around atom center
  *
@@ -31,8 +37,8 @@ class MASM_EXPORT Stereopermutation : public Temple::Crtp::LexicographicComparab
 public:
 //!@name Member types
 //!@{
-  //! Character occupations
-  using CharacterOccupation = std::vector<char>;
+  //! Ranked site occupation
+  using Occupation = Temple::StrongIndexPermutation<Shapes::Vertex, Rank>;
 
   //! Type used to represent a link between shape vertices
   using Link = std::pair<Shapes::Vertex, Shapes::Vertex>;
@@ -47,10 +53,12 @@ public:
    *
    * @complexity{@math{\Theta(N)}}
    */
-  static CharacterOccupation permuteCharacters(
-    const CharacterOccupation& characters,
+  static Occupation permuteOccupation(
+    const Occupation& occupation,
     const Shapes::Permutation& permutation
   );
+
+  static Occupation occupationFromChars(const std::string& chars);
 
   /*! @brief Rotate links
    *
@@ -64,9 +72,9 @@ public:
 
 //!@name Member data
 //!@{
-  //! Abstract representation of ranked substituents
-  CharacterOccupation characters;
-  //! Links between characters
+  //! Occupation of shape vertices by site rank
+  Occupation occupation;
+  //! Links between shape vertices
   OrderedLinks links;
 //!@}
 
@@ -75,15 +83,14 @@ public:
   //! Empty default-init (invalid state)
   Stereopermutation() = default;
   /*!
-   * @brief Construct an Stereopermutation from a list of ligand characters and
-   *   a list of bonded indices referencing the ligand characters.
+   * @brief Construct an Stereopermutation from an occupation and a
+   *   a list of bonded shape vertices
    *
-   * @param passCharacters A vector of chars signifying abstract ligands.
-   * @param passLinks A vector of pairs. Describes which ligand characters
-   *  are bonded to one another.
+   * @param passOccupation An occupation of shape vertices by site rankings
+   * @param passLinks A vector of shape vertex pairs denoting links
    */
   Stereopermutation(
-    CharacterOccupation passCharacters,
+    Occupation passOccupation,
     OrderedLinks passLinks = {}
   );
 //!@}
@@ -104,7 +111,7 @@ public:
 //!@{
   //! Yields members tied to tuple for crtp operator suppliers
   inline auto tie() const {
-    return std::tie(characters, links);
+    return std::tie(occupation, links);
   }
 //!@}
 };

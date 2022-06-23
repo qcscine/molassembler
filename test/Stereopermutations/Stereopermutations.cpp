@@ -38,6 +38,10 @@ std::ostream& operator << (std::ostream& os, const std::vector<T>& vector) {
   return os;
 }
 
+Rank operator "" _r(unsigned long long i) {
+  return Rank(i);
+}
+
 Shapes::Vertex operator "" _v(unsigned long long v) {
   return Shapes::Vertex(v);
 }
@@ -50,21 +54,27 @@ BOOST_AUTO_TEST_CASE(StereopermutationInstantiation, *boost::unit_test::label("S
       continue;
     }
 
-    Stereopermutation testStereopermutation(std::vector<char>(S, 'A'));
+    Stereopermutation testStereopermutation {
+      Stereopermutation::Occupation {std::vector<unsigned>(S, 0)}
+    };
   }
+}
+
+inline auto makeOccupation(const std::string& str) {
+  return Stereopermutation::occupationFromChars(str);
 }
 
 BOOST_AUTO_TEST_CASE(StereopermutationRotation, *boost::unit_test::label("Stereopermutations")) {
   // Octahedron ship-screw like cis-cis-cis
   const Stereopermutation asymm {
-    {'A', 'B', 'C', 'D', 'E', 'F'},
+    makeOccupation("ABCDEF"),
     {{0_v, 1_v}, {2_v, 4_v}, {3_v, 5_v}}
   };
 
   std::vector<Shapes::Vertex> C4z {{3_v, 0_v, 1_v, 2_v, 4_v, 5_v}};
 
   const Stereopermutation expected {
-    {'D', 'A', 'B', 'C', 'E', 'F'},
+    makeOccupation("DABCEF"),
     {{0_v, 5_v}, {1_v, 2_v}, {3_v, 4_v}}
   };
 
@@ -79,24 +89,24 @@ BOOST_AUTO_TEST_CASE(StereopermutationRotation, *boost::unit_test::label("Stereo
 
 BOOST_AUTO_TEST_CASE(RotationCorrectness, *boost::unit_test::label("Stereopermutations")) {
   Stereopermutation testCase {
-    {'A', 'A', 'C', 'D', 'B', 'B'},
+    makeOccupation("AACDBB"),
     {{0_v, 5_v}, {1_v, 4_v}}
   };
 
-  auto isAorB = [](const char& test) -> bool {
-    return (test == 'A' || test == 'B');
+  auto isAorB = [](const Rank& rank) -> bool {
+    return (rank == 0 || rank == 1);
   };
 
   const auto allRotations = generateAllRotations(testCase, Shapes::Shape::Octahedron);
-  // Make sure the links still refer to A or B characters
+  // Make sure the links still refer to A and B 'characters'
   for(const auto& rotation : allRotations) {
     BOOST_CHECK(
       Temple::all_of(
         rotation.links,
         [&](const auto& link) -> bool {
           return (
-            isAorB(rotation.characters.at(link.first))
-            && isAorB(rotation.characters.at(link.second))
+            isAorB(rotation.occupation.at(link.first))
+            && isAorB(rotation.occupation.at(link.second))
           );
         }
       )
@@ -106,7 +116,7 @@ BOOST_AUTO_TEST_CASE(RotationCorrectness, *boost::unit_test::label("Stereopermut
 
 BOOST_AUTO_TEST_CASE(OctahedralSymmetryCorrectness, *boost::unit_test::label("Stereopermutations")) {
   Stereopermutation octahedralInstance(
-    {'A', 'B', 'C', 'D', 'E', 'F'}
+    makeOccupation("ABCDEF")
   );
 
   BOOST_CHECK_EQUAL(
@@ -117,11 +127,11 @@ BOOST_AUTO_TEST_CASE(OctahedralSymmetryCorrectness, *boost::unit_test::label("St
 
 BOOST_AUTO_TEST_CASE(BugfixTests, *boost::unit_test::label("Stereopermutations")) {
   Stereopermutation a {
-    {'A', 'A', 'A', 'B', 'B', 'B'},
+    makeOccupation("AAABBB"),
     {{2_v, 3_v}, {1_v, 4_v}, {0_v, 5_v}}
   };
   Stereopermutation b {
-    {'A', 'A', 'B', 'A', 'B', 'B'},
+    makeOccupation("AABABB"),
     {{3_v, 5_v}, {1_v, 2_v}, {0_v, 4_v}}
   };
 
@@ -135,11 +145,11 @@ BOOST_AUTO_TEST_CASE(BugfixTests, *boost::unit_test::label("Stereopermutations")
    * reordered op pairs. Will evaluate == but also < w/ current impl.
    */
   Stereopermutation c {
-    {'A', 'A', 'A', 'B', 'B', 'B'},
+    makeOccupation("AAABBB"),
     {{2_v, 3_v}, {1_v, 4_v}, {0_v, 5_v}}
   };
   Stereopermutation d {
-    {'A', 'A', 'A', 'B', 'B', 'B'},
+    makeOccupation("AAABBB"),
     {{1_v, 4_v}, {2_v, 3_v}, {0_v, 5_v}}
   };
 
@@ -148,13 +158,13 @@ BOOST_AUTO_TEST_CASE(BugfixTests, *boost::unit_test::label("Stereopermutations")
   BOOST_CHECK(rotationallySuperimposable(d, c, Shapes::Shape::Octahedron));
 }
 
-using Characters = Stereopermutation::CharacterOccupation;
+using Occupation = Stereopermutation::Occupation;
 using PairSet = std::vector<
   std::pair<unsigned, unsigned>
 >;
 
 struct TestCase {
-  Characters characters;
+  Occupation occupation;
   PairSet pairs;
   unsigned expectedUnique;
 };
@@ -178,7 +188,7 @@ void runTestsWithCounts(
   for(const auto& testCase: testCases) {
     // instantiate
     const Stereopermutation stereopermutation {
-      testCase.characters,
+      testCase.occupation,
       makeLinks(testCase.pairs)
     };
 
@@ -205,31 +215,11 @@ BOOST_AUTO_TEST_CASE(MonodentateTetrahedral, *boost::unit_test::label("Stereoper
   runTestsWithCounts(
     Shapes::Shape::Tetrahedron,
     {
-      { // AAAA
-        Characters(4, 'A'),
-        {},
-        1
-      },
-      { // A3B
-        Characters({'A', 'A', 'A', 'B'}),
-        {},
-        1
-      },
-      { // A2B2
-        Characters({'A', 'A', 'B', 'B'}),
-        {},
-        1
-      },
-      { // A2BC
-        Characters({'A', 'A', 'B', 'C'}),
-        {},
-        1
-      },
-      { // ABCD
-        Characters({'A', 'B', 'C', 'D'}),
-        {},
-        2
-      },
+      {makeOccupation("AAAA"), {}, 1},
+      {makeOccupation("AAAB"), {}, 1},
+      {makeOccupation("AABB"), {}, 1},
+      {makeOccupation("AABC"), {}, 1},
+      {makeOccupation("ABCD"), {}, 2},
     }
   );
 }
@@ -239,31 +229,11 @@ BOOST_AUTO_TEST_CASE(MonodentateSquarePlanar, *boost::unit_test::label("Stereope
   runTestsWithCounts(
     Shapes::Shape::Square,
     {
-      { // M_A
-        Characters(4, 'A'),
-        {},
-        1
-      },
-      { // M_A3B
-        Characters({'A', 'A', 'A', 'B'}),
-        {},
-        1
-      },
-      { // M_A2B2
-        Characters({'A', 'A', 'B', 'B'}),
-        {},
-        2
-      },
-      { // M_A2BC
-        Characters({'A', 'A', 'B', 'C'}),
-        {},
-        2
-      },
-      { // M_ABCD
-        Characters({'A', 'B', 'C', 'D'}),
-        {},
-        3
-      },
+      {makeOccupation("AAAA"), {}, 1},
+      {makeOccupation("AAAB"), {}, 1},
+      {makeOccupation("AABB"), {}, 2},
+      {makeOccupation("AABC"), {}, 2},
+      {makeOccupation("ABCD"), {}, 3},
     }
   );
 }
@@ -279,61 +249,17 @@ BOOST_AUTO_TEST_CASE(MonodentateOctahedron, *boost::unit_test::label("Stereoperm
   runTestsWithCounts(
     Shapes::Shape::Octahedron,
     {
-      {
-        Characters(6, 'A'),
-        {},
-        1
-      },
-      {
-        Characters({'A', 'A', 'A', 'A', 'A', 'B'}),
-        {},
-        1
-      },
-      {
-        Characters({'A', 'A', 'A', 'A', 'B', 'B'}),
-        {},
-        2
-      },
-      {
-        Characters({'A', 'A', 'A', 'B', 'B', 'B'}),
-        {},
-        2
-      },
-      {
-        Characters({'A', 'A', 'A', 'A', 'B', 'C'}),
-        {},
-        2
-      },
-      {
-        Characters({'A', 'A', 'A', 'B', 'B', 'C'}),
-        {},
-        3
-      },
-      {
-        Characters({'A', 'A', 'B', 'B', 'C', 'C'}),
-        {},
-        6
-      },
-      {
-        Characters({'A', 'A', 'A', 'B', 'C', 'D'}),
-        {},
-        5
-      },
-      {
-        Characters({'A', 'A', 'B', 'B', 'C', 'D'}),
-        {},
-        8
-      },
-      {
-        Characters({'A', 'A', 'B', 'C', 'D', 'E'}),
-        {},
-        15
-      },
-      {
-        Characters({'A', 'B', 'C', 'D', 'E', 'F'}),
-        {},
-        30
-      }
+      {makeOccupation("AAAAAA"), {}, 1},
+      {makeOccupation("AAAAAB"), {}, 1},
+      {makeOccupation("AAAABB"), {}, 2},
+      {makeOccupation("AAABBB"), {}, 2},
+      {makeOccupation("AAAABC"), {}, 2},
+      {makeOccupation("AAABBC"), {}, 3},
+      {makeOccupation("AABBCC"), {}, 6},
+      {makeOccupation("AAABCD"), {}, 5},
+      {makeOccupation("AABBCD"), {}, 8},
+      {makeOccupation("AABCDE"), {}, 15},
+      {makeOccupation("ABCDEF"), {}, 30},
     }
   );
 }
@@ -343,7 +269,7 @@ BOOST_AUTO_TEST_CASE(MultidentateOctahedron, *boost::unit_test::label("Stereoper
     Shapes::Shape::Octahedron,
     {
       { // M(A-A)_3
-        Characters({'A', 'A', 'A', 'A', 'A', 'A'}),
+        makeOccupation("AAAAAA"),
         PairSet({{0, 1}, {2, 3}, {4, 5}}),
         2
         /* NOTE: besides the two cis-cis-cis enantiomers, there are
@@ -352,42 +278,42 @@ BOOST_AUTO_TEST_CASE(MultidentateOctahedron, *boost::unit_test::label("Stereoper
          */
       },
       { // M(A-B)_3
-        Characters({'A', 'B', 'A', 'B', 'A', 'B'}),
+        makeOccupation("ABABAB"),
         PairSet({{0, 1}, {2, 3}, {4, 5}}),
         4
       },
       { // M(A-B)_2 CD
-        Characters({'A', 'B', 'A', 'B', 'C', 'D'}),
+        makeOccupation("ABABCD"),
         PairSet({{0, 1}, {2, 3}}),
         11
       },
       { // M(A-A)(B-C)DE
-        Characters({'A', 'A', 'B', 'C', 'D', 'E'}),
+        makeOccupation("AABCDE"),
         PairSet({{0, 1}, {2, 3}}),
         10
       },
       { // M(A-B)(C-D)EF
-        Characters({'A', 'B', 'C', 'D', 'E', 'F'}),
+        makeOccupation("ABCDEF"),
         PairSet({{0, 1}, {2, 3}}),
         20
       },
       { // M(A-B-A)CDE
-        Characters({'A', 'B', 'A', 'C', 'D', 'E'}),
+        makeOccupation("ABACDE"),
         PairSet({{0, 1}, {1, 2}}),
         9
       },
       { // M(A-B-C)_2
-        Characters({'A', 'B', 'C', 'A', 'B', 'C'}),
+        makeOccupation("ABCABC"),
         PairSet({{0, 1}, {1, 2}, {3, 4}, {4, 5}}),
         11
       },
       { // M(A-B-B-A)CD
-        Characters({'A', 'B', 'B', 'A', 'C', 'D'}),
+        makeOccupation("ABBACD"),
         PairSet({{0, 1}, {1, 2}, {2, 3}}),
         7
       },
       { // M(A-B-C-B-A)D
-        Characters({'A', 'B', 'C', 'B', 'A', 'D'}),
+        makeOccupation("ABCBAD"),
         PairSet({{0, 1}, {1, 2}, {2, 3}, {3, 4}}),
         7
       }
@@ -397,10 +323,10 @@ BOOST_AUTO_TEST_CASE(MultidentateOctahedron, *boost::unit_test::label("Stereoper
 
 BOOST_AUTO_TEST_CASE(OctahedralCaseWithoutTransRemoval, *boost::unit_test::label("Stereopermutations")) {
   const auto shape = Shapes::Shape::Octahedron;
-  const auto characters = Characters(6, 'A');
+  const auto occupation = makeOccupation("AAAAAA");
   const auto pairs = PairSet({{0, 1}, {2, 3}, {4, 5}});
 
-  const Stereopermutation stereopermutation {characters, makeLinks(pairs)};
+  const Stereopermutation stereopermutation {occupation, makeLinks(pairs)};
   const auto unique = uniques(stereopermutation, shape);
   BOOST_CHECK_EQUAL(unique.list.size(), 4);
 }
@@ -420,25 +346,25 @@ BOOST_AUTO_TEST_CASE(numUnlinkedStereopermutationsTest, *boost::unit_test::label
       continue;
     }
 
-    std::vector<char> characters (S);
     for(unsigned nIdentical = 1; nIdentical < S; ++nIdentical) {
       // Populate characters for construction of a Stereopermutation
-      for(unsigned i = 0; i < characters.size(); ++i) {
-        characters.at(i) = 'A' + std::max(
+      std::string characters;
+      for(unsigned i = 0; i < S; ++i) {
+        characters += static_cast<char>('A' + std::max(
           0,
           static_cast<int>(i) - static_cast<int>(nIdentical) + 1
-        );
+        ));
       }
 
-      assert(
-        std::count(
-          std::begin(characters),
-          std::end(characters),
-          'A'
-        ) == nIdentical
+      const unsigned count = std::count(
+        std::begin(characters),
+        std::end(characters),
+        'A'
       );
 
-      const Stereopermutation initialStereopermutation {characters};
+      BOOST_REQUIRE_EQUAL(count, nIdentical);
+
+      const Stereopermutation initialStereopermutation {makeOccupation(characters)};
 
       const unsigned uniquesCount = uniques(initialStereopermutation, shape).list.size();
 

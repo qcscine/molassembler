@@ -14,6 +14,14 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 # Generate position independent code in all targets
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
+# Handle buggy optimization with Intel compiler
+if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")
+  set(CMAKE_CXX_FLAGS_RELEASE "-O2 -DNDEBUG" CACHE STRING "" FORCE)  # avoid O3 optimization
+  if ("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
+    set(MOLASSEMBLER_IPO ON CACHE BOOL "" FORCE)  # gain some speed back
+  endif()
+endif()
+
 # Handle opportunity for interprocedural optimization
 if(MOLASSEMBLER_IPO)
   include(CheckIPOSupported)
@@ -45,7 +53,13 @@ if(MSVC)
   add_definitions(/D_USE_MATH_DEFINES)
 else()
   # This ought to work for GCC and Clang equally
-  list(APPEND MOLASSEMBLER_CXX_FLAGS -Wall -Wpedantic -Wextra -Wshadow)
+  list(APPEND MOLASSEMBLER_CXX_FLAGS -Wall -Wextra -Wshadow)
+
+  if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")
+    list(APPEND MOLASSEMBLER_CXX_FLAGS -wd3058)  # excessive warnings otherwise
+  else()
+    list(APPEND MOLASSEMBLER_CXX_FLAGS -Wpedantic)  # not available for intel
+  endif()
 
   # Some GCC-specific compiler options
   if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")

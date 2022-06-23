@@ -42,7 +42,7 @@ void init_composite(pybind11::module& m) {
   angleGroup.def_readonly(
     "isotropic",
     &Composite::AngleGroup::isotropic,
-    "Whether the ranking characters indicate that this group of shape vertices is isotropic in this shape"
+    "Whether the site ranks indicate that this group of shape vertices is isotropic in this shape"
   );
 
   pybind11::class_<Composite::Permutation> permutation(
@@ -91,10 +91,12 @@ void init_composite(pybind11::module& m) {
     "Shape vertex that is fused to the other shape"
   );
 
-  orientationState.def_readonly(
-    "characters",
-    &Composite::OrientationState::characters,
-    "Ranking characters of all vertices of the shape"
+  orientationState.def_property_readonly(
+    "occupation",
+    [](const Composite::OrientationState& orientation) -> std::vector<unsigned> {
+      return orientation.occupation.permutation.sigma;
+    },
+    "Rank of all vertices of the shape"
   );
 
   orientationState.def_readonly(

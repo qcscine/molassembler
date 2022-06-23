@@ -93,37 +93,28 @@ constexpr Temple::Floating::ExpandedAbsoluteEqualityComparator<double> Composite
 Composite::OrientationState::OrientationState(
   Shapes::Shape passShape,
   Shapes::Vertex passFusedVertex,
-  std::vector<char> passCharacters,
+  Stereopermutation::Occupation passOccupation,
   std::size_t passIdentifier
 ) : shape(passShape),
     fusedVertex(passFusedVertex),
-    characters(std::move(passCharacters)),
+    occupation(std::move(passOccupation)),
     identifier(passIdentifier)
 {
   assert(fusedVertex < Shapes::size(shape));
-  assert(characters.size() == Shapes::size(shape));
+  assert(occupation.size() == Shapes::size(shape));
 }
 
-std::vector<char> Composite::OrientationState::applyCharacterRotation(
+Stereopermutation::Occupation Composite::OrientationState::rotateOccupation(
   const std::vector<Shapes::Vertex>& rotation
 ) const {
-  std::vector<char> newCharacters;
-  newCharacters.reserve(rotation.size());
-
-  for(const auto& index : rotation) {
-    newCharacters.push_back(
-      characters.at(index)
-    );
-  }
-
-  return newCharacters;
+  return Temple::StrongIndexPermutation<Shapes::Vertex, Shapes::Vertex>::from(rotation).compose(occupation);
 }
 
 std::vector<Shapes::Vertex> Composite::OrientationState::transformToCanonical() {
-  /* For canonical comparisons, we must treat all fused positions within the
+  /* For canonical comparisons, we must treat all fused vertices within the
    * same position group equally. Although the final generated dihedrals must be
-   * different (since indexing is still based on the current shape positions
-   * within each partial shape, the sequence must be the same across any
+   * different (since indexing is still based on the current shape vertices
+   * within each partial shape), the sequence must be the same across any
    * position group.
    */
   Shapes::Vertex reducedFusedVertex = lowestEqualVertexInShape();
@@ -133,7 +124,7 @@ std::vector<Shapes::Vertex> Composite::OrientationState::transformToCanonical() 
 
   // Apply it to the data members of the instance
   fusedVertex = reducedFusedVertex;
-  characters = applyCharacterRotation(toCanonicalMapping);
+  occupation = rotateOccupation(toCanonicalMapping);
 
   // Return the inverse mapping to allow reversion to the original state
   return Shapes::Properties::inverseRotation(toCanonicalMapping);
@@ -141,7 +132,7 @@ std::vector<Shapes::Vertex> Composite::OrientationState::transformToCanonical() 
 
 void Composite::OrientationState::revert(const std::vector<Shapes::Vertex>& reversionMapping) {
   // Recover the non-canonical state using the reversion mapping
-  characters = applyCharacterRotation(reversionMapping);
+  occupation = rotateOccupation(reversionMapping);
 
   auto findIter = std::find(
     std::begin(reversionMapping),
@@ -237,15 +228,13 @@ std::vector<Shapes::Vertex> Composite::OrientationState::findReductionMapping(
       }
     } else {
       // The rotation is new, determine if it should replace the tracked best
-      const unsigned characterIOP = Temple::permutationIndex(
-        applyCharacterRotation(generatedRotation)
-      );
+      const unsigned occupationIOP = rotateOccupation(generatedRotation).permutation.index();
       if(
         generatedRotation.at(reducedFusedVertex) == fusedVertex
-        && characterIOP < lowestIndexOfPermutation
+        && occupationIOP < lowestIndexOfPermutation
       ) {
         bestRotation = generatedRotation;
-        lowestIndexOfPermutation = characterIOP;
+        lowestIndexOfPermutation = occupationIOP;
       }
 
       // Add the new rotation to the set of discovered ones
@@ -314,7 +303,7 @@ Composite::AngleGroup Composite::OrientationState::smallestAngleGroup() const {
   // Collect the vertices by ranking
   const auto rankingGroups = Temple::groupByMapping(
     angleGroup.vertices,
-    Temple::Functor::at(characters)
+    Temple::Functor::at(occupation)
   );
 
   const Eigen::ParametrizedLine<double, 3> bondLine {
@@ -391,10 +380,10 @@ Composite::PermutationGenerator::PermutationGenerator(
        */
       Temple::sort(
         angleGroup.vertices,
-        [&](const unsigned a, const unsigned b) -> bool {
+        [&](const Shapes::Vertex a, const Shapes::Vertex b) -> bool {
           return (
-            std::tie(orientation.characters.at(a), a)
-            > std::tie(orientation.characters.at(b), b)
+            std::make_tuple(orientation.occupation.at(a), a)
+            > std::make_tuple(orientation.occupation.at(b), b)
           );
         }
       );
@@ -464,8 +453,8 @@ Composite::PermutationGenerator::generateEclipsedOrStaggered(
   auto findRankingEquivalent = [&](const Permutation& permutation) -> boost::optional<Permutation::VertexPair> {
     auto replaceVertices = [&](Shapes::Vertex i, Shapes::Vertex j, double dihedral) {
       return std::make_tuple(
-        orientations.first.characters.at(i),
-        orientations.second.characters.at(j),
+        orientations.first.occupation.at(i),
+        orientations.second.occupation.at(j),
         dihedral
       );
     };

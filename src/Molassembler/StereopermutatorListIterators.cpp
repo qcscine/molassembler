@@ -53,7 +53,7 @@ StereopermutatorList::iterator<Permutator>::operator = (
 }
 
 template<typename Permutator>
-StereopermutatorList::iterator<Permutator>::~iterator<Permutator>() = default;
+StereopermutatorList::iterator<Permutator>::~iterator() = default;
 
 template<typename Permutator>
 StereopermutatorList::iterator<Permutator>::iterator()

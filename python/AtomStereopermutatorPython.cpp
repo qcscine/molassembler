@@ -3,6 +3,7 @@
  *   Copyright ETH Zurich, Laboratory of Physical Chemistry, Reiher Group.
  *   See LICENSE.txt for details.
  */
+#include "Molassembler/Temple/Functional.h"
 #include "TypeCasters.h"
 #include "pybind11/operators.h"
 
@@ -193,8 +194,7 @@ void init_atom_stereopermutator(pybind11::module& m) {
   atomStereopermutator.def_property_readonly(
     "vertex_map",
     [](const AtomStereopermutator& perm) -> std::vector<Shapes::Vertex> {
-      const auto& map = perm.getShapePositionMap();
-      return {map.begin(), map.end()};
+      return Temple::map(perm.getShapePositionMap(), Temple::Functor::second);
     }
   );
 

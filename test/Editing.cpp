@@ -168,8 +168,9 @@ BOOST_AUTO_TEST_CASE(EditingCleave, *boost::unit_test::label("Molassembler")) {
   const unsigned siteIndex = findIter - std::begin(sites);
   const Editing::AtomSitePair atomSitePair {iron, SiteIndex {siteIndex}};
 
-  BOOST_REQUIRE_NO_THROW(cleaved = Editing::cleave(haptic, atomSitePair));
-  BOOST_CHECK_EQUAL(cleaved.second.graph().V(), 12);
+  Editing::Cleaved mappedCleave;
+  BOOST_REQUIRE_NO_THROW(mappedCleave = Editing::cleave(haptic, atomSitePair));
+  BOOST_CHECK_EQUAL(mappedCleave.second.graph().V(), 12);
 }
 
 BOOST_AUTO_TEST_CASE(EditingInsert, *boost::unit_test::label("Molassembler")) {
