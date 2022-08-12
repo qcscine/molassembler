@@ -11,8 +11,6 @@
 #include "boost/graph/isomorphism.hpp"
 #include "boost/graph/graph_utility.hpp"
 #include "Molassembler/Shapes/constexpr/Properties.h"
-#include "Utils/Constants.h"
-#include "Utils/Typenames.h"
 
 #include "Molassembler/Cycles.h"
 #include "Molassembler/Detail/Cartesian.h"

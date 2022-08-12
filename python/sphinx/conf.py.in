@@ -21,7 +21,7 @@ sys.path.insert(0, os.path.abspath('..'))
 
 project = u'molassembler'
 copyright = u'ETH Zurich, Laboratory of Physical Chemistry, Reiher Group'
-author = u'Jan-Grimo Sobez'
+author = u'ETH Zurich, Laboratory of Physical Chemistry, Reiher Group'
 
 # The short X.Y version
 version = u'@molassembler_VERSION_MAJOR@.@molassembler_VERSION_MINOR@'
@@ -136,7 +136,7 @@ latex_elements = {
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
     (master_doc, 'molassembler.tex', u'molassembler Documentation',
-     u'Jan-Grimo Sobez', 'manual'),
+     u'ETH Zurich, Laboratory of Physical Chemistry, Reiher Group', 'manual'),
 ]
 
 

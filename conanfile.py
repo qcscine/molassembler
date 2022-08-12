@@ -8,9 +8,9 @@ from dev.conan.base import ScineConan
 
 class MolassemblerConan(ScineConan):
     name = "scine_molassembler"
-    version = "1.2.0"
+    version = "1.2.1"
     license = "BSD-3-Clause"
-    author = "Jan-Grimo Sobez jan-grimo.sobez@phys.chem.ethz.ch"
+    author = "ETH Zurich, Laboratory of Physical Chemistry, Reiher Group"
     url = "https://scine.ethz.ch/download/molassembler"
     description = "Molecular graph interpretation, modification and conformer generation"
     options = {
@@ -45,7 +45,7 @@ class MolassemblerConan(ScineConan):
         "CMakeLists.txt",
     ]
     requires = [
-        "scine_utilities/[=5.0.0]",
+        "scine_utilities/6.0.0",
         "RingDecomposerLib/1.1.3",
         "nauty/2.7r1"
     ]

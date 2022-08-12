@@ -83,12 +83,13 @@ public:
     Shapes::Shape shape,
     RankingInformation ranking,
     const FeasiblesGenerator& feasibility,
-    const ThermalizationPredicate& thermalization
-  );
+    const ThermalizationPredicate& thermalization,
+    const std::vector<std::vector<SiteIndex>>& siteGroups = {});
 
 /* Modification */
   //! Changes the assignment of the stereopermutator
-  void assign(boost::optional<unsigned> assignment);
+  void assign(boost::optional<unsigned> assignment,
+              const std::vector<std::vector<SiteIndex>>& siteGroups = {});
 
   /*! @brief Assign with a vertex mapping
    *
@@ -139,7 +140,8 @@ public:
   void setShape(
     Shapes::Shape shape,
     const FeasiblesGenerator& feasibility,
-    const ThermalizationPredicate& thermalization
+    const ThermalizationPredicate& thermalization,
+    const std::vector<std::vector<SiteIndex>>& siteGroups = {}
   );
 
   //! Unconditionally alter the thermalization of stereopermutations

@@ -6,19 +6,15 @@ This project adheres to semantic versioning.
 This changelog only captures changes to the python bindings. For detailed
 changes to the underlying C++ library, see the repository's ``CHANGELOG.rst``.
 
-1.1.0
+1.2.1
 -----
-Added
-~~~~~
-- Added modifying functions to ``Graph``
-- Direct copying support for ``Molecule`` instead of via pickling
-- Added build-time generation of typing stubs with pybind11-stubgen
 
-Changed
-~~~~~~~
-- Altered name of ``ChiralStatePreservation`` enum member from ``None`` to
-  ``DoNotPreserve`` (the former is a reserved keyword)
-- Better automatic type signature annotations in docstrings
+No Python-specific changes
+
+1.2.0
+-----
+
+No Python-specific changes
 
 1.0.0 - 2020-01-23
 ------------------

@@ -63,7 +63,6 @@ T lawOfCosinesAngle(
   if(ratio > 1 && std::fabs(ratio - 1) <= 1e-10) {
     return 0.0;
   }
-
   return std::acos(ratio);
 }
 

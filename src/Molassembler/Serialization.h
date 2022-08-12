@@ -37,6 +37,7 @@ class Molecule;
  *     - lr: Ranked ligands
  *     - lnk: Links (key omitted if empty)
  *   - s: Shape name index
+ *   - o:(optional) Position groups of the ligands
  * - b: List of BondStereopermutator Objects
  *   - a: Assignment index (key omitted if unassigned)
  *   - e: Edge on which it is placed
@@ -95,7 +96,8 @@ public:
   static std::string base64Encode(const BinaryType& binary);
   static BinaryType base64Decode(const std::string& base64String);
   /**
-   * @brief Compare two molecules encoded as base64 strings.
+   * @brief Compare two molecules/complexes encoded as base64 strings. The
+   * molecule order is irrelevant.
    * @return True if both strings encode the same molecule(s).
    */
   static bool base64EqualMolecules(const std::string& stringA, const std::string& stringB,
@@ -105,7 +107,8 @@ public:
    *
    * The string format is expected to be\n
    *    "(-100, -95, -90, 1):(10, 15, 20, 4);(1, 6, 11, 1)" \n
-   * Multiple molecules have to be separated by ";".
+   * Multiple molecules have to be separated by ";". The molecule order is
+   * irrelevant.
    */
   static bool equalDecisionLists(const std::string& listStringA, const std::string& listStringB);
 //!@}
@@ -170,6 +173,9 @@ private:
   static std::tuple<int, int, int, int> canonicalizeDecisionListElement(const std::tuple<int, int, int, int>& decisionListElement);
   static bool equalVersions(const std::vector<unsigned> versionA, const std::vector<unsigned> versionB);
   static std::vector<std::string> splitBase64StringIntoMoleculeStrings(std::string base64String);
+  static bool compareMoleculeDecisionList(const std::vector<std::tuple<int, int, int, int>>& listA,
+                                          const std::vector<std::tuple<int, int, int, int>>& listB);
+
 };
 
 } // namespace Molassembler

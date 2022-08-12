@@ -405,20 +405,21 @@ struct Seesaw {
   static constexpr std::array<
     std::array<unsigned, 4>,
     1
-  > rotations {{
-    {{3, 2, 1, 0}} // C2
-  }};
+    > rotations {{
+      {{3, 2, 1, 0}} // C2
+    }};
 
   static constexpr std::array<
     std::array<unsigned, 4>,
     2
-  > tetrahedra {{
-    {{0, ORIGIN_PLACEHOLDER, 1, 2}},
-    {{ORIGIN_PLACEHOLDER, 3, 1, 2}},
-  }};
+    > tetrahedra {{
+      {{0, ORIGIN_PLACEHOLDER, 1, 2}},
+      {{ORIGIN_PLACEHOLDER, 3, 1, 2}},
+    }};
 
   static constexpr std::array<unsigned, 4> mirror {{0, 2, 1, 3}};
 };
+
 
 /*!
  * @brief A face-centered trigonal pyramid shape = trig. pl. + an axial ligand

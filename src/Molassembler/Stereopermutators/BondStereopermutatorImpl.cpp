@@ -162,7 +162,6 @@ BondStereopermutator::Impl::makeOccupation_(
   }
 
   using StrongSiteRankMap = Temple::StrongIndexPermutation<SiteIndex, Stereopermutations::Rank>;
-
   return shapeVertexMap.inverse().compose(StrongSiteRankMap::from(siteRank));
 }
 
@@ -471,10 +470,6 @@ bool BondStereopermutator::Impl::cycleObviouslyInfeasible(
   );
   cycleEdgeLengths.push_back((D-A).norm());
 
-  // std::cout << "Cycle " << Temple::stringify(link.cycleSequence)
-  //   << "(a, b, c) = (" << a << ", " << b << ", " << c << "), "
-  //   << "(alpha, beta, phi) = (" << Temple::Math::toDegrees(alpha) << ", " << Temple::Math::toDegrees(beta) << ", " << Temple::Math::toDegrees(phi) << ") contradicts graph: " << fail << "\n";
-
   return Stereopermutators::cycleModelContradictsGraph(
     elementTypes,
     cycleEdgeLengths,
@@ -677,7 +672,6 @@ std::vector<unsigned> BondStereopermutator::Impl::notObviouslyInfeasibleStereope
     permutatorReferences.first,
     permutatorReferences.second
   );
-
   /* If there are no links between the substituents of the stereopermutators,
    * all permutations are presumably feasible.
    */
@@ -725,16 +719,18 @@ std::vector<unsigned> BondStereopermutator::Impl::notObviouslyInfeasibleStereope
       return boost::none;
     }
 
-    const double dihedralAngle = std::get<2>(*findIter);
     return std::make_tuple(
       firstSiteIndices.front(),
       secondSiteIndices.front(),
-      dihedralAngle
+      std::get<2>(*findIter)
     );
   };
 
   std::set<unsigned> viableStereopermutations;
   const auto permEnd = std::end(composite);
+  /*
+   * Add the stereopermutator if all existing links can be realized.
+   */
   for(auto permIter = std::begin(composite); permIter != permEnd; ++permIter) {
     if(permIter->rankingEquivalentTo) {
       continue;
@@ -770,7 +766,6 @@ std::vector<unsigned> BondStereopermutator::Impl::notObviouslyInfeasibleStereope
       );
     }
   }
-
   return {std::begin(viableStereopermutations), std::end(viableStereopermutations)};
 }
 
@@ -959,7 +954,7 @@ void BondStereopermutator::Impl::fit(
     if(misalignment < bestMisalignment) {
       bestMisalignment = misalignment;
       bestStereopermutations = {feasiblePermutationIndex};
-    } else if(misalignment == bestMisalignment) {
+    } else if(std::abs(misalignment - bestMisalignment) < 1e-10) {
       bestStereopermutations.push_back(feasiblePermutationIndex);
     }
   }

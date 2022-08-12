@@ -27,6 +27,10 @@ using SiteToShapeVertexMap = Temple::StrongIndexPermutation<SiteIndex, Shapes::V
  * the ranking character distribution to shape vertex of a stereopermutation
  * (its characters member) and any defined links between shape positions.
  *
+ * If the shape position groups for the sites and vertices are provided, this
+ * information is used to select the correct site to vertex map if multiple
+ * are isomorphic.
+ *
  * @code{.cpp}
  * auto mapping = siteToShapeVertexMap(...);
  * Shapes::Vertex shapeVertexOfSiteFour = mapping.at(SiteIndex {4});
@@ -37,7 +41,9 @@ using SiteToShapeVertexMap = Temple::StrongIndexPermutation<SiteIndex, Shapes::V
 SiteToShapeVertexMap siteToShapeVertexMap(
   const Stereopermutations::Stereopermutation& stereopermutation,
   const RankingInformation::RankedSitesType& canonicalSites,
-  const std::vector<RankingInformation::Link>& siteLinks
+  const std::vector<RankingInformation::Link>& siteLinks,
+  std::vector<std::vector<SiteIndex>> siteGroups = {},
+  std::vector<std::vector<Shapes::Vertex>> vertexGroups = {}
 );
 
 /*! @brief Generates a flat mapping from shape vertices to site indices

@@ -90,7 +90,8 @@ struct Feasible {
     const ConeAngleType& coneAngles,
     const RankingInformation& ranking,
     Shapes::Shape shape,
-    const Graph& graph
+    const Graph& graph,
+    std::vector<std::vector<SiteIndex>> siteGroups = {}
   );
 
   struct Functor {
@@ -106,6 +107,7 @@ struct Feasible {
      * @param ranking Ranking object indicating chemical differences between
      *   sites and substituents
      * @param graph The graph being modeled
+     * @param siteGroups The sites' shape positions
      *
      * @complexity{@math{\Theta(P\cdot L)} where @math{P} is the number of
      * abstract stereopermutations and @math{L} is the number of links}
@@ -114,7 +116,8 @@ struct Feasible {
       const Abstract& abstract,
       Shapes::Shape shape,
       AtomIndex placement,
-      const RankingInformation& ranking
+      const RankingInformation& ranking,
+      std::vector<std::vector<SiteIndex>> siteGroups = {}
     ) const;
 
     const Graph& graph;
@@ -125,7 +128,8 @@ struct Feasible {
       const Abstract& abstract,
       Shapes::Shape shape,
       AtomIndex placement,
-      const RankingInformation& ranking
+      const RankingInformation& ranking,
+      std::vector<std::vector<SiteIndex>> siteGroups
     ) const;
   };
 

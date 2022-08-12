@@ -183,6 +183,7 @@ DirectedConformerGenerator::Relabeler::Relabeler(
     mol.rankPriority(leftPlacement);
     mol.rankPriority(rightPlacement);
 
+
     const auto& dihedrals = composite.allPermutations().at(0).dihedrals;
     SiteIndex dominantLeft;
     SiteIndex dominantRight;

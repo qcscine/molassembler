@@ -6,6 +6,22 @@ All notable changes to this project will be documented in this file.
 The format is based on `Keep a Changelog <http://keepachangelog.com/en/1.0.0/>`_
 and this project adheres to `Semantic Versioning <http://semver.org/spec/v2.0.0.html>`_.
 
+1.2.1
+-----
+
+Fixed
+.....
+
+- Include the shape position groups into the serialization to ensure the correct
+  reconstruction of site to vertex maps. This should make the molecule serialization
+  and deserialization more consistent (and less error prone).
+
+Deprecated
+..........
+
+- `DirectedConformerGenerator::binMidpointIntegers` deprecated because it returns dihedral angles that are defined differently from
+  DirectedConformerGenerator::Relabeler::add.
+
 1.2.0
 -----
 

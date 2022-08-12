@@ -14,7 +14,6 @@
 
 #include "Molassembler/Shapes/PropertyCaching.h"
 #include "Molassembler/Temple/Adaptors/CyclicFrame.h"
-#include "Molassembler/Temple/Adaptors/Transform.h"
 #include "Molassembler/Temple/Functional.h"
 
 namespace Scine {
@@ -155,13 +154,22 @@ bool Feasible::possiblyFeasible(
   const ConeAngleType& coneAngles,
   const RankingInformation& ranking,
   const Shapes::Shape shape,
-  const Graph& graph
+  const Graph& graph,
+  std::vector<std::vector<SiteIndex>> siteGroups
 ) {
   const auto shapeVertexMap = siteToShapeVertexMap(
     stereopermutation,
     canonicalSites,
-    ranking.links
+    ranking.links,
+    siteGroups,
+    Shapes::Properties::positionGroups(shape)
   );
+
+  // Check if there is a site to vertex map that conserves the site group
+  // positions.
+  if(shapeVertexMap.size() < 1) {
+    return false;
+  }
 
   // Check if any haptic site cones intersect
   const unsigned L = ranking.sites.size();
@@ -205,7 +213,6 @@ bool Feasible::possiblyFeasible(
       }
     }
   }
-
   /* Idea: An stereopermutation is possibly feasible if all links' cycles can
    * be realized as a flat cyclic polygon, in which the edges from the central
    * atom are merged using the joint angle calculable from the
@@ -231,7 +238,8 @@ std::vector<unsigned> Feasible::Functor::operator() (
   const Abstract& abstract,
   Shapes::Shape shape,
   AtomIndex placement,
-  const RankingInformation& ranking
+  const RankingInformation& ranking,
+  std::vector<std::vector<SiteIndex>> siteGroups
 ) const {
   const unsigned P = abstract.permutations.list.size();
 
@@ -262,7 +270,8 @@ std::vector<unsigned> Feasible::Functor::operator() (
         spatial.coneAngles,
         ranking,
         shape,
-        graph
+        graph,
+        siteGroups
       )
     ) {
       indices.push_back(i);
@@ -277,7 +286,8 @@ std::vector<unsigned> Feasible::Unchecked::operator() (
   const Abstract& abstract,
   Shapes::Shape /* shape */,
   AtomIndex /* placement */,
-  const RankingInformation& /* ranking */
+  const RankingInformation& /* ranking */,
+  std::vector<std::vector<SiteIndex>> /* siteGroups */
 ) const {
   const unsigned P = abstract.permutations.list.size();
   return Temple::iota<unsigned>(P);

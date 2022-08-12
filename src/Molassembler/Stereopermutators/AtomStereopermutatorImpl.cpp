@@ -6,33 +6,21 @@
 
 #include "Molassembler/Stereopermutators/AtomStereopermutatorImpl.h"
 
-#include "boost/range/join.hpp"
 #include "Molassembler/Shapes/Properties.h"
 #include "Molassembler/Shapes/PropertyCaching.h"
 #include "Molassembler/Shapes/ContinuousMeasures.h"
-#include <Eigen/Dense>
 #include <Eigen/SparseCore>
 #include "Molassembler/Stereopermutation/Manipulation.h"
-#include "Molassembler/Temple/Adaptors/AllPairs.h"
-#include "Molassembler/Temple/Adaptors/Iota.h"
-#include "Molassembler/Temple/Adaptors/Transform.h"
-#include "Molassembler/Temple/Adaptors/Zip.h"
 #include "Molassembler/Temple/Functional.h"
 #include "Molassembler/Temple/Functor.h"
 #include "Molassembler/Temple/Optionals.h"
-#include "Molassembler/Temple/OrderedPair.h"
 #include "Molassembler/Temple/Random.h"
-#include "Molassembler/Temple/TinySet.h"
-#include "Molassembler/Temple/constexpr/Math.h"
 #include "Molassembler/Temple/constexpr/Numeric.h"
 
 #include "Molassembler/Cycles.h"
-#include "Molassembler/Detail/BuildTypeSwitch.h"
 #include "Molassembler/Detail/Cartesian.h"
 #include "Molassembler/DistanceGeometry/SpatialModel.h"
-#include "Molassembler/DistanceGeometry/ValueBounds.h"
 #include "Molassembler/Graph/PrivateGraph.h"
-#include "Molassembler/Log.h"
 #include "Molassembler/Modeling/CommonTrig.h"
 #include "Molassembler/Stereopermutators/ShapeVertexMaps.h"
 #include "Molassembler/Stereopermutators/RankingMapping.h"
@@ -202,9 +190,10 @@ std::vector<unsigned> resolvePossiblyMissingFeasiblesGenerator(
   const Stereopermutators::Abstract& abstract,
   const Shapes::Shape shape,
   const AtomIndex center,
-  const RankingInformation& ranking
+  const RankingInformation& ranking,
+  std::vector<std::vector<SiteIndex>> siteGroups
 ) {
-  return maybeCall(generator, abstract, shape, center, ranking).value_or_eval(
+  return maybeCall(generator, abstract, shape, center, ranking, siteGroups).value_or_eval(
     [&]() { return Temple::iota<unsigned>(abstract.permutations.list.size()); }
   );
 }
@@ -358,13 +347,14 @@ AtomStereopermutator::Impl::Impl(
   const Shapes::Shape shape,
   RankingInformation ranking,
   const FeasiblesGenerator& feasibility,
-  const ThermalizationPredicate& thermalization
+  const ThermalizationPredicate& thermalization,
+  const std::vector<std::vector<SiteIndex>>& siteGroups
 ) : centerAtom_ {centerAtom},
     shape_ {shape},
     ranking_ {std::move(ranking)},
     abstract_ {ranking_, shape_},
     feasibles_ {
-      resolvePossiblyMissingFeasiblesGenerator(feasibility, abstract_, shape_, centerAtom_, ranking_)
+      resolvePossiblyMissingFeasiblesGenerator(feasibility, abstract_, shape_, centerAtom_, ranking_, siteGroups)
     },
     assignmentOption_ {boost::none},
     shapePositionMap_ {},
@@ -374,11 +364,12 @@ AtomStereopermutator::Impl::Impl(
 {}
 
 /* Modification */
-void AtomStereopermutator::Impl::assign(boost::optional<unsigned> assignment) {
+void AtomStereopermutator::Impl::assign(
+  boost::optional<unsigned> assignment,
+  const std::vector<std::vector<SiteIndex>>& siteGroups) {
   if(assignment && assignment.value() >= feasibles_.size()) {
     throw std::out_of_range("Supplied assignment index is out of range");
   }
-
   // Store new assignment
   assignmentOption_ = std::move(assignment);
 
@@ -391,8 +382,13 @@ void AtomStereopermutator::Impl::assign(boost::optional<unsigned> assignment) {
         feasibles_.at(assignmentOption_.value())
       ),
       abstract_.canonicalSites,
-      ranking_.links
+      ranking_.links,
+      siteGroups,
+      Shapes::Properties::positionGroups(shape_)
     );
+
+    if(shapePositionMap_.size() < 1)
+      throw std::logic_error("Graphs of site and shape vertex links are not isomorphic");
   } else {
     shapePositionMap_.clear();
   }
@@ -562,7 +558,8 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
     newAbstract,
     newShape,
     centerAtom_,
-    newRanking
+    newRanking,
+    {}
   );
 
   boost::optional<unsigned> newAssignmentOption;
@@ -803,18 +800,35 @@ AtomStereopermutator::Impl::fit(
   Shapes::Shape fittedShape;
   std::vector<Shapes::Vertex> matchingMapping;
   std::tie(fittedShape, matchingMapping) = classifyShape(centroids);
-  setShape(fittedShape, feasibility, thermalization);
+
+  auto mapping = matchingMapping;
+  mapping.pop_back();
+  const auto shapePositionMap = ShapeMap::from(mapping);
+  const auto siteGroups = Temple::map(
+    Shapes::Properties::positionGroups(fittedShape),
+    [&](const std::vector<Shapes::Vertex>& interconvertibleVertices) {
+      return Temple::map(
+        interconvertibleVertices,
+        [&](const Shapes::Vertex v) -> SiteIndex {
+          return shapePositionMap.indexOf(v);
+        }
+      );
+    }
+  );
+
+  setShape(fittedShape, feasibility, thermalization, siteGroups);
+  feasibles_ = resolvePossiblyMissingFeasiblesGenerator(
+      feasibility, abstract_, shape_, this->placement(), ranking_, siteGroups);
   assign(matchingMapping);
 
   // Return to prior state if no feasible stereopermutations found
   if(assignmentOption_ == boost::none) {
-    setShape(priorShape, feasibility, thermalization);
-    assign(priorStereopermutation);
+    setShape(priorShape, feasibility, thermalization, siteGroups);
+    assign(priorStereopermutation, siteGroups);
     return boost::none;
   }
 
-  matchingMapping.pop_back();
-  return ShapeMap::from(matchingMapping);
+  return shapePositionMap;
 }
 
 /* Information */
@@ -994,7 +1008,8 @@ unsigned AtomStereopermutator::Impl::numStereopermutations() const {
 void AtomStereopermutator::Impl::setShape(
   const Shapes::Shape shape,
   const FeasiblesGenerator& feasibility,
-  const ThermalizationPredicate& thermalization
+  const ThermalizationPredicate& thermalization,
+  const std::vector<std::vector<SiteIndex>>& siteGroups
 ) {
   if(shape_ == shape) {
     // If the shape doesn't actually change, then nothing does
@@ -1009,7 +1024,8 @@ void AtomStereopermutator::Impl::setShape(
     abstract_,
     shape_,
     centerAtom_,
-    ranking_
+    ranking_,
+    siteGroups
   );
 
   thermalized_ = resolvePossiblyMissingThermalizationPredicate(

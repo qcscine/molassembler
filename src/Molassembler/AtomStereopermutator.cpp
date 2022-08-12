@@ -31,14 +31,16 @@ AtomStereopermutator::AtomStereopermutator(
     Shapes::Shape shape,
     RankingInformation ranking,
     const FeasiblesGenerator& feasibility,
-    const ThermalizationPredicate& thermalization
+    const ThermalizationPredicate& thermalization,
+  const std::vector<std::vector<SiteIndex>>& siteGroups
 ) : pImpl_(
   std::make_unique<Impl>(
     centerAtom,
     shape,
     std::move(ranking),
     feasibility,
-    thermalization
+    thermalization,
+    siteGroups
   )
 ) {}
 
@@ -72,8 +74,9 @@ bool AtomStereopermutator::thermalized(
   return Impl::thermalized(centerAtom, shape, ranking, graph);
 }
 
-void AtomStereopermutator::assign(boost::optional<unsigned> assignment) {
-  pImpl_->assign(std::move(assignment));
+void AtomStereopermutator::assign(boost::optional<unsigned> assignment,
+                                  const std::vector<std::vector<SiteIndex>>& siteGroups) {
+  pImpl_->assign(std::move(assignment), std::move(siteGroups));
 }
 
 void AtomStereopermutator::assignRandom(Random::Engine& engine) {
@@ -131,21 +134,24 @@ void AtomStereopermutator::propagateVertexRemoval(const AtomIndex removedIndex) 
 
 void AtomStereopermutator::setShape(
   const Shapes::Shape shape,
-  const Graph& graph
+  const Graph& graph,
+  const std::vector<std::vector<SiteIndex>>& siteGroups
 ) {
   pImpl_->setShape(
     shape,
     Stereopermutators::Feasible::Functor(graph),
-    thermalizationFunctor(graph)
+    thermalizationFunctor(graph),
+    siteGroups
   );
 }
 
 void AtomStereopermutator::setShape(
   const Shapes::Shape shape,
   const FeasiblesGenerator& feasibility,
-  const ThermalizationPredicate& thermalization
+  const ThermalizationPredicate& thermalization,
+  const std::vector<std::vector<SiteIndex>>& siteGroups
 ) {
-  pImpl_->setShape(shape, feasibility, thermalization);
+  pImpl_->setShape(shape, feasibility, thermalization, siteGroups);
 }
 
 void AtomStereopermutator::thermalize(const bool thermalization) {

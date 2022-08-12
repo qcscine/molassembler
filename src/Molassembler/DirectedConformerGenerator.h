@@ -493,6 +493,10 @@ public:
   Relabeler relabeler() const;
 
   //! Relabels a DecisionList into bin midpoint integers
+  //! Returns the dihedra angles. The angle is defined as the first angle of the
+  //! stereopermutation at the given bond (note that this is inconsistent
+  //! with its definition in Relabeler::add).
+  [[deprecated]]
   std::vector<int> binMidpointIntegers(const DecisionList& decision) const;
 
   //! Relabels a DecisionList into the bounds of its bin

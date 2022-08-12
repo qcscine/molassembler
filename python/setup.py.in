@@ -59,8 +59,8 @@ def collect_data(pkg_name: str) -> Dict[str, List[str]]:
 setuptools.setup(
     name="scine_molassembler",
     version="@Molassembler_VERSION@",
-    author="Jan-Grimo Sobez",
-    author_email="jan-grimo.sobez@phys.chem.ethz.ch",
+    author="ETH Zurich, Laboratory of Physical Chemistry, Reiher Group",
+    author_email="scine@phys.chem.ethz.ch",
     description="Inorganic molecular graph interpretation, modification and conformer generation",
     long_description=markdown_description,
     long_description_content_type="text/markdown",

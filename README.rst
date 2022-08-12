@@ -110,7 +110,7 @@ No dependencies must be preinstalled, and you do not need to download the
 sources. To install/build with Conan::
 
     conan remote add scine https://scine-artifactory.ethz.ch/artifactory/api/conan/public
-    conan install -r scine --build=missing scine_molassembler/1.2.0@
+    conan install -r scine --build=missing scine_molassembler/1.2.1@
 
 Should you want Python bindings, add ``-o scine_molassembler:python=True`` before
 the last argument.
@@ -132,9 +132,9 @@ If ``doxygen`` is found, the C++ library documentation is built. If the Python
 bindings are built and the ``sphinx`` Python module is available, the Python
 binding documentation is generated too.
 
-.. _C++ library: https://scine.ethz.ch/static/download/documentation/molassembler/v1.2.0/cpp/index.html
+.. _C++ library: https://scine.ethz.ch/static/download/documentation/molassembler/v1.2.1/cpp/index.html
 
-.. _Python bindings: https://scine.ethz.ch/static/download/documentation/molassembler/v1.2.0/py/index.html
+.. _Python bindings: https://scine.ethz.ch/static/download/documentation/molassembler/v1.2.1/py/index.html
 
 References
 ----------

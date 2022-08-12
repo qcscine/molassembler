@@ -10,6 +10,8 @@
 #include "Molassembler/Stereopermutation/Stereopermutation.h"
 #include "Molassembler/Temple/Functional.h"
 #include "Molassembler/Temple/constexpr/Numeric.h"
+#include "Molassembler/Temple/Poset.h"
+#include "Molassembler/Shapes/Properties.h"
 
 #include "boost/graph/adjacency_list.hpp"
 #include "boost/graph/isomorphism.hpp"
@@ -117,10 +119,68 @@ void mapUnmappedVertices(
 
 } // namespace
 
+template<typename T>
+std::vector<unsigned> builtRankingColors(
+  const RankingInformation::RankedSitesType& rankingInformation,
+  const std::vector<std::vector<T>>& groups,
+  const unsigned maxSites
+  ) {
+  std::vector<unsigned> grouping(maxSites, 0);
+  if(groups.size()) {
+    grouping = Temple::map(
+      Temple::iota<unsigned>(maxSites),
+      [&](unsigned site) -> unsigned {
+        const auto findIter = Temple::find_if(
+          groups,
+          [&](const auto& equalPositions) -> bool {
+            return Temple::find(equalPositions, site) != std::end(equalPositions);
+          }
+        );
+
+        if(findIter == std::end(groups)) {
+          throw std::logic_error("Could not find site/vertex in position groups.");
+        }
+
+        return findIter - std::begin(groups);
+      }
+    );
+  } // siteGroups.size()
+
+  std::vector<unsigned> rankingColors(maxSites);
+  unsigned currentMaxRank = rankingInformation.size() - 1;
+  for(unsigned rank = 0; rank < rankingInformation.size(); ++rank) {
+    const auto& sitesInRank = rankingInformation[rank];
+    if(sitesInRank.size() == 1) {
+      const unsigned siteZero = sitesInRank[0];
+      rankingColors[siteZero] = rank;
+    } else {
+      Temple::Poset<SiteIndex> siteIndexPoset {sitesInRank};
+      siteIndexPoset.orderUnordered(
+        [&](const SiteIndex i, const SiteIndex j) -> bool {
+          return grouping[i] < grouping[j];
+        }
+      );
+      const auto& orderedSubset = siteIndexPoset.extract();
+      for(const auto& site : orderedSubset[0]) {
+        rankingColors[site] = rank;
+      } // for site
+      for(unsigned i = 1; i < orderedSubset.size(); ++i) {
+        ++currentMaxRank;
+        for(const auto& site : orderedSubset[i]) {
+          rankingColors[site] = currentMaxRank;
+        } // for site
+      } // for i
+    } // else sitesInRank.size() == 1
+  }
+  return rankingColors;
+}
+
 SiteToShapeVertexMap siteToShapeVertexMap(
   const Stereopermutations::Stereopermutation& stereopermutation,
   const RankingInformation::RankedSitesType& canonicalSites,
-  const std::vector<RankingInformation::Link>& siteLinks
+  const std::vector<RankingInformation::Link>& siteLinks,
+  std::vector<std::vector<SiteIndex>> siteGroups,
+  std::vector<std::vector<Shapes::Vertex>> vertexGroups
 ) {
   const bool linksExist = (!stereopermutation.links.empty() || !siteLinks.empty());
   const bool mappingIsBijective = (canonicalSites.size() == stereopermutation.occupation.size());
@@ -141,26 +201,41 @@ SiteToShapeVertexMap siteToShapeVertexMap(
       boost::add_edge(vertexLink.first, vertexLink.second, vertexGraph);
     }
 
-    auto siteRankingColors = Temple::map(
-      Temple::iota<SiteIndex>(S),
-      [&](SiteIndex site) -> unsigned {
-        const auto findIter = Temple::find_if(
-          canonicalSites,
-          [&](const auto& equallyRankedSites) -> bool {
-            return Temple::find(equallyRankedSites, site) != std::end(equallyRankedSites);
-          }
-        );
+    if(siteGroups.size() == 0 || vertexGroups.size() == 0) {
+      siteGroups.clear();
+      vertexGroups.clear();
+    }
 
-        if(findIter == std::end(canonicalSites)) {
-          throw std::logic_error("Could not find site in canonicalSites");
-        }
+    /*
+     * Build ranking colors for site and vertices.
+     * We may include the position groups for the sites and vertices in the
+     * color definition for the graph-invariants. In this way, we ensure that
+     * any isomorphism of both link-models (vertexGraph/siteGraph) conserve
+     * these groups. Otherwise, if we have a degenerate solution, we may get
+     * an index to vertex map that violates the groups, and therefore corresponds
+     * to a different molecular geometry.
+     */
+    std::vector<unsigned> siteRankingColors = builtRankingColors<SiteIndex>(
+      canonicalSites, siteGroups, S);
 
-        return findIter - std::begin(canonicalSites);
-      }
-    );
+    const auto& occupation = stereopermutation.occupation;
+    unsigned maxRank = canonicalSites.size();
+    RankingInformation::RankedSitesType vertexRanking(maxRank);
+    for(unsigned iv = 0; iv < S; ++iv) {
+      const auto& rank = occupation.at(Shapes::Vertex {iv});
+      vertexRanking.at(rank).emplace_back(iv);
+    }
+
+    std::vector<unsigned> vertexRankingColors = builtRankingColors<Shapes::Vertex>(
+      vertexRanking, vertexGroups, S);
 
     std::vector<Vertex> indexMap(S);
     const unsigned maxColor = Temple::max(siteRankingColors) + 1;
+    const unsigned maxVertexColor = Temple::max(vertexRankingColors) + 1;
+    if(maxColor != maxVertexColor) {
+      // Both link-models cannot be isomorphic.
+      return SiteToShapeVertexMap{};
+    }
 
     const bool isomorphic = boost::isomorphism(
       siteGraph,
@@ -171,19 +246,21 @@ SiteToShapeVertexMap siteToShapeVertexMap(
         boost::get(boost::vertex_index, siteGraph)
       ),
       SiteIndexColor(siteRankingColors),
-      VertexColor(stereopermutation),
+      SiteIndexColor(vertexRankingColors),
       maxColor,
       boost::get(boost::vertex_index, siteGraph),
       boost::get(boost::vertex_index, vertexGraph)
     );
 
     if(!isomorphic) {
-      throw std::logic_error("Graphs of site and shape vertex links are not isomorphic");
+      // Return an empty site to vertex map, if the stereopermutation did not
+      // yield a valid isomorphism.
+      return SiteToShapeVertexMap{};
     }
 
     mapUnmappedVertices(
       SiteIndexColor(siteRankingColors),
-      VertexColor(stereopermutation),
+      SiteIndexColor(vertexRankingColors),
       indexMap
     );
 

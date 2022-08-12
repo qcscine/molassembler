@@ -89,6 +89,7 @@ FloatType quadrilateralInternalAngle(
   const std::array<unsigned, 2>& adjacentIndices,
   const std::array<unsigned, 2>& nonAdjacentIndices
 ) {
+
   return std::acos(
     (
       square(edgeLengths.at(adjacentIndices[0]))

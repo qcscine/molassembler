@@ -289,7 +289,8 @@ Composite::AngleGroup Composite::OrientationState::smallestAngleGroup() const {
     if(fpComparator.isLessThan(angleToFusedPosition, angleGroup.angle)) {
       angleGroup.vertices = {i};
       angleGroup.angle = angleToFusedPosition;
-    } else if(fpComparator.isEqual(angleToFusedPosition, angleGroup.angle) && angleGroup.angle != M_PI) {
+    } else if(fpComparator.isEqual(angleToFusedPosition, angleGroup.angle)
+              && angleGroup.angle != M_PI) {
       angleGroup.vertices.push_back(i);
     }
   }
@@ -696,7 +697,6 @@ Composite::PermutationsList Composite::PermutationGenerator::generate(
       }
     );
   }
-
   // Transform the stereopermutations back through the reversion mappings
   const auto revert = [](const Shapes::Vertex v, const Shapes::Permutation& mapping) {
     const auto findIter = Temple::find(mapping, v);
@@ -914,7 +914,6 @@ Composite::Composite(
 
   PermutationGenerator generator(orientations_);
   stereopermutations_ = generator.generate(alignment);
-
   if(alignment == Alignment::Eclipsed) {
     /* Reverse the stereopermutation sequence. This is so that the indices of the
      * generated permutations yield the following simple comparison:

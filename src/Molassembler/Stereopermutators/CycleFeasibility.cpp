@@ -31,8 +31,6 @@ bool distanceToBaseContradictsGraph(
     BondType::Single
   );
 
-  // std::cout << distance << " <= " << singleBondDistance << " -> " << (distance <= singleBondDistance) << "\n";
-
   const double difference = distance - singleBondDistance;
   return difference < 1e-10;
 }

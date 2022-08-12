@@ -93,7 +93,8 @@ public:
       const Stereopermutators::Abstract& abstract,
       Shapes::Shape shape,
       AtomIndex placement,
-      const RankingInformation& ranking
+      const RankingInformation& ranking,
+      std::vector<std::vector<SiteIndex>> siteGroups
     )
   >;
 
@@ -150,6 +151,7 @@ public:
    *   are feasible.
    * @param thermalization A functor for deciding whether the stereopermutator
    *   is thermalized and all stereopermutations coalesce.
+   * @param siteGroups The position groups for the binding sites.
    *
    * @complexity{@math{L\cdot S!} where @math{L} is the number of links and
    * @math{S} is the size of @p shape}
@@ -161,7 +163,8 @@ public:
     Shapes::Shape shape,
     RankingInformation ranking,
     const FeasiblesGenerator& feasibility = {},
-    const ThermalizationPredicate& thermalization = {}
+    const ThermalizationPredicate& thermalization = {},
+    const std::vector<std::vector<SiteIndex>>& siteGroups = {}
   );
 //!@}
 
@@ -223,11 +226,13 @@ public:
    * @param assignment The new assignment of the stereopermutator. May be
    *   @p boost::none, which sets the chiral state as indeterminate. Must be
    *   less than the number of assignments if not None.
+   * @param siteGroups The shape position groups of the sites.
    *
    * @complexity{@math{\Theta(1)} if @p assignment is @c boost::none.
    * @math{\Theta(S)} otherwise}
    */
-  void assign(boost::optional<unsigned> assignment);
+  void assign(boost::optional<unsigned> assignment,
+              const std::vector<std::vector<SiteIndex>>& siteGroups = {});
 
   /*! @brief Assign the Stereopermutator randomly using relative statistical weights
    *
@@ -340,13 +345,15 @@ public:
   void setShape(
     Shapes::Shape shape,
     const FeasiblesGenerator& feasibility = {},
-    const ThermalizationPredicate& thermalization = {}
+    const ThermalizationPredicate& thermalization = {},
+    const std::vector<std::vector<SiteIndex>>& siteGroups = {}
   );
 
   [[deprecated("Prefer graph-less alternative parameters")]]
   void setShape(
     Shapes::Shape shape,
-    const Graph& graph
+    const Graph& graph,
+    const std::vector<std::vector<SiteIndex>>& siteGroups = {}
   );
 
   //! Unconditionally thermalize the stereopermutations
