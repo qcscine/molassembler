@@ -131,7 +131,7 @@ const Eigen::MatrixXd& DistanceBoundsMatrix::access() const {
   return matrix_;
 }
 
-outcome::result<Eigen::MatrixXd> DistanceBoundsMatrix::makeDistanceMatrix(Random::Engine& engine, Partiality partiality) const noexcept {
+Result<Eigen::MatrixXd> DistanceBoundsMatrix::makeDistanceMatrix(Random::Engine& engine, Partiality partiality) const noexcept {
   auto matrixCopy = matrix_;
 
   const unsigned N = matrix_.cols();

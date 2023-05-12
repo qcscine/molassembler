@@ -79,7 +79,7 @@ unsigned DirectedConformerGenerator::idealEnsembleSize() const {
   return pImpl_->idealEnsembleSize();
 }
 
-outcome::result<Utils::PositionCollection>
+Result<Utils::PositionCollection>
 DirectedConformerGenerator::generateRandomConformation(
   const DecisionList& decisionList,
   const DistanceGeometry::Configuration& configuration,
@@ -88,7 +88,7 @@ DirectedConformerGenerator::generateRandomConformation(
   return pImpl_->generateRandomConformation(decisionList, configuration, fitting);
 }
 
-outcome::result<Utils::PositionCollection>
+Result<Utils::PositionCollection>
 DirectedConformerGenerator::generateConformation(
   const DecisionList& decisionList,
   const unsigned seed,

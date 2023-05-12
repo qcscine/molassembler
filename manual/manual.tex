@@ -13,7 +13,7 @@
 %%
 % Book metadata
 \title[SCINE Molassembler manual]{User Manual \vskip 0.5em
-{\setlength{\parindent}{0pt} \Huge SCINE Molassembler 1.2.1}}
+{\setlength{\parindent}{0pt} \Huge SCINE Molassembler 2.0.0}}
 \author[The SCINE Molassembler Developers]{The SCINE Molassembler Developers:
 \newline \noindent Moritz Bensberg, Stephanie A.~Grimmel, Jan-Grimo Sobez, Miguel Steiner, Jan P.~Unsleber, and Markus Reiher}
 \publisher{ETH Z\"urich}
@@ -296,7 +296,7 @@ value in bold face:
 The base command to install \textsc{Molassembler} is:
 
 \begin{Verbatim}
-conan install scine_molassembler/1.2.1@
+conan install scine_molassembler/2.0.0@
 \end{Verbatim}
 
 Changes to default options can be supplied right after \texttt{conan install}
@@ -305,7 +305,7 @@ with \texttt{-o scine\_molassembler:<option>=<value>}.
 For instance, if you want Python bindings, your install command will be:
 
 \begin{Verbatim}
-conan install -o scine_molassembler:python=True scine_molassembler/1.2.1@
+conan install -o scine_molassembler:python=True scine_molassembler/2.0.0@
 \end{Verbatim}
 
 Conan will proceed to identify your operating system, architecture and compiler.
@@ -319,7 +319,7 @@ available in binary form, it will be downloaded.
 \section{From source code with CMake}
 In order to compile \textsc{Molassembler} from source, you will need:
 \begin{itemize}
-  \item a C++ compiler supporting the C++14 standard\footnote{\texttt{gcc} $\ge$
+  \item a C++ compiler supporting the C++17 standard\footnote{\texttt{gcc} $\ge$
     7.3.0, \texttt{clang}~$\ge$~4, \texttt{MinGW-w64}, etc.}
   \item \texttt{cmake} $\ge$ 3.9.0
   \item the \texttt{Boost} libraries $\ge$ 1.65.0
@@ -395,7 +395,7 @@ distributed along or downloaded at configure time:
 \chapter{Using the C++ library}
 
 \textsc{Molassembler} provides a
-\href{https://scine.ethz.ch/static/download/documentation/molassembler/v1.2.1/cpp}{\texttt{Doxygen}
+\href{https://scine.ethz.ch/static/download/documentation/molassembler/v2.0.0/cpp}{\texttt{Doxygen}
 technical
 documentation}\footnote{\texttt{scine.ethz.ch/download/molassembler}}
 which documents the available functions in detail and also provides an overview
@@ -444,7 +444,7 @@ where \texttt{<version>} is the Python version you are using (\textit{e.g.},
 \textsc{Molassembler}. Now you can simply import the module and use it just
 like any other Python module. All functionality available in the Python module
 is
-\href{https://scine.ethz.ch/static/download/documentation/molassembler/v1.2.1/py}{documented with
+\href{https://scine.ethz.ch/static/download/documentation/molassembler/v2.0.0/py}{documented with
 examples}\footnote{\texttt{scine.ethz.ch/download/molassembler}}. You can
 interactively explore the available functionality in an interactive Python shell
 using the \texttt{help} and \texttt{dir} Python functions:

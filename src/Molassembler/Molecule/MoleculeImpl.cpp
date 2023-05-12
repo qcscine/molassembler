@@ -6,11 +6,11 @@
 
 #include "Molassembler/Molecule/MoleculeImpl.h"
 
+#include "Molassembler/Shapes/constexpr/Properties.h"
 #include "boost/functional/hash.hpp"
+#include "boost/graph/graph_utility.hpp"
 #include "boost/graph/graphviz.hpp"
 #include "boost/graph/isomorphism.hpp"
-#include "boost/graph/graph_utility.hpp"
-#include "Molassembler/Shapes/constexpr/Properties.h"
 
 #include "Molassembler/Cycles.h"
 #include "Molassembler/Detail/Cartesian.h"
@@ -22,9 +22,9 @@
 #include "Molassembler/Molecule/MolGraphWriter.h"
 #include "Molassembler/Molecule/RankingTree.h"
 #include "Molassembler/Options.h"
+#include "Molassembler/Stereopermutation/Composites.h"
 #include "Molassembler/Stereopermutators/AbstractPermutations.h"
 #include "Molassembler/Stereopermutators/FeasiblePermutations.h"
-#include "Molassembler/Stereopermutation/Composites.h"
 
 #include "Molassembler/Temple/Optionals.h"
 
@@ -33,8 +33,7 @@ namespace Molassembler {
 
 Utils::AtomCollection Molecule::Impl::applyCanonicalizationMap(
   const std::vector<AtomIndex>& canonicalizationIndexMap,
-  const Utils::AtomCollection& atomCollection
-) {
+  const Utils::AtomCollection& atomCollection) {
   const int N = atomCollection.size();
   Utils::AtomCollection permuted(N);
   for(int i = 0; i < N; ++i) {
@@ -50,8 +49,7 @@ boost::optional<AtomStereopermutator> Molecule::Impl::makePermutator(
   AtomIndex candidateIndex,
   const StereopermutatorList& stereopermutators,
   const boost::optional<AngstromPositions>& maybePositions,
-  const boost::optional<SubstitutionsGenerator::SubstitutionMap>& maybeSubstitutions
-) const {
+  const boost::optional<SubstitutionsGenerator::SubstitutionMap>& maybeSubstitutions) const {
   // If there is already an atom stereopermutator on this index, stop
   if(stereopermutators.option(candidateIndex)) {
     return boost::none;
@@ -73,39 +71,33 @@ boost::optional<AtomStereopermutator> Molecule::Impl::makePermutator(
       return ShapeInference::firstOfSize(S);
     }
 
-    return inferShape(candidateIndex, ranking).value_or_eval(
-      [&]() {return ShapeInference::firstOfSize(S);}
-    );
+    return inferShape(candidateIndex, ranking).value_or_eval([&]() {
+      return ShapeInference::firstOfSize(S);
+    });
   }();
 
-  const Stereopermutators::Feasible::Functor feasibilityFunctor {adjacencies_};
-  const auto thermalizationFunctor = AtomStereopermutator::thermalizationFunctor(adjacencies_);
+  const Stereopermutators::Feasible::Functor feasibilityFunctor{adjacencies_};
+  const auto thermalizationFunctor
+    = AtomStereopermutator::thermalizationFunctor(adjacencies_);
 
-  AtomStereopermutator permutator {
-    candidateIndex,
-    shape,
-    std::move(ranking),
-    feasibilityFunctor,
-    thermalizationFunctor
-  };
+  AtomStereopermutator permutator{
+    candidateIndex, shape, std::move(ranking), feasibilityFunctor, thermalizationFunctor};
 
   if(maybePositions) {
-    const auto substitutions = Temple::Optionals::flatMap(
-      maybeSubstitutions,
-      [&](const auto& map) {
-        return Temple::Optionals::mapFind(map, candidateIndex);
-      }
-    ).value_or(SubstitutionsGenerator::SubstitutionList {});
+    const auto substitutions
+      = Temple::Optionals::flatMap(
+          maybeSubstitutions,
+          [&](const auto& map) {
+            return Temple::Optionals::mapFind(map, candidateIndex);
+          })
+          .value_or(SubstitutionsGenerator::SubstitutionList{});
 
-    const auto siteCentroids = permutator.sitePositions(
-      maybePositions.value(),
-      substitutions
-    );
+    const auto siteCentroids
+      = permutator.sitePositions(maybePositions.value(), substitutions);
     permutator.fit(siteCentroids, feasibilityFunctor, thermalizationFunctor);
   } else if(permutator.numAssignments() == 1) {
     permutator.assign(0);
   }
-
   return permutator;
 }
 
@@ -114,66 +106,55 @@ boost::optional<BondStereopermutator> Molecule::Impl::makePermutator(
   const StereopermutatorList& stereopermutators,
   const boost::optional<AngstromPositions>& maybePositions,
   const boost::optional<SubstitutionsGenerator::SubstitutionMap>& maybeSubstitutions,
-  const BondStereopermutator::Alignment alignment
-) const {
+  const BondStereopermutator::Alignment alignment) const {
   // If there is already a bond stereopermutator on this edge, stop
   if(stereopermutators.option(bond)) {
     return boost::none;
   }
 
   const auto permutatorOptions = Temple::map(
-    bond,
-    [&](const AtomIndex side) {
-      return stereopermutators.option(side);
-    }
-  );
+    bond, [&](const AtomIndex side) { return stereopermutators.option(side); });
 
-  const auto existAndAssigned = Temple::map(
-    permutatorOptions,
-    [](const auto& permutatorOption) -> bool {
-      return permutatorOption && permutatorOption->assigned() != boost::none;
-    }
-  );
+  const auto existAndAssigned
+    = Temple::map(permutatorOptions, [](const auto& permutatorOption) -> bool {
+        return permutatorOption && permutatorOption->assigned() != boost::none;
+      });
 
   if(!existAndAssigned.first || !existAndAssigned.second) {
     return boost::none;
   }
 
+  // If one of the permutators is considered thermalized we must not construct
+  // a bond stereopermutator because at least one atom is considered to occupy
+  // multiple permutations at once.
+  if(permutatorOptions.first->thermalized() || permutatorOptions.second->thermalized()) {
+    return boost::none;
+  }
+
   // Construct a Stereopermutator here
-  BondStereopermutator permutator {
-    adjacencies_.inner(),
-    stereopermutators,
-    bond,
-    alignment
-  };
+  BondStereopermutator permutator{adjacencies_.inner(), stereopermutators, bond, alignment};
 
   // Default-assign single-assignment bond stereopermutators
   if(maybePositions) {
     const auto fittingRefs = Temple::map(
       permutatorOptions,
       [&](const auto& permutatorOption) -> BondStereopermutator::FittingReferences {
-        return {
-          permutatorOption.value(),
-          permutatorOption->getShapePositionMap()
-        };
-      }
-    );
+        return {permutatorOption.value(), permutatorOption->getShapePositionMap()};
+      });
 
     const auto sitePositions = permutator.composite().orientations().map(
       [&](const auto& orientation) -> AtomStereopermutator::SiteCentroids {
-        const auto substitutions = Temple::Optionals::flatMap(
-          maybeSubstitutions,
-          [&](const auto& map) {
-            return Temple::Optionals::mapFind(map, orientation.identifier);
-          }
-        ).value_or(SubstitutionsGenerator::SubstitutionList {});
+        const auto substitutions
+          = Temple::Optionals::flatMap(
+              maybeSubstitutions,
+              [&](const auto& map) {
+                return Temple::Optionals::mapFind(map, orientation.identifier);
+              })
+              .value_or(SubstitutionsGenerator::SubstitutionList{});
 
-        return stereopermutators.at(orientation.identifier).sitePositions(
-          maybePositions.value(),
-          substitutions
-        );
-      }
-    );
+        return stereopermutators.at(orientation.identifier)
+          .sitePositions(maybePositions.value(), substitutions);
+      });
 
     permutator.fit(sitePositions, fittingRefs);
   } else if(permutator.numAssignments() == 1) {
@@ -216,7 +197,8 @@ StereopermutatorList Molecule::Impl::detectStereopermutators_() const {
 
 void Molecule::Impl::ensureModelInvariants_() const {
   if(graph().inner().connectedComponents() > 1) {
-    throw std::logic_error("Molecules must be a single connected component. The supplied graph has multiple");
+    throw std::logic_error("Molecules must be a single connected component. "
+                           "The supplied graph has multiple");
   }
 
   if(graph().V() < 1) {
@@ -228,16 +210,11 @@ bool Molecule::Impl::isValidIndex_(const AtomIndex index) const {
   return index < graph().V();
 }
 
-bool Molecule::Impl::isGraphBasedBondStereopermutatorCandidate_(
-  BondType bondType
-) {
+bool Molecule::Impl::isGraphBasedBondStereopermutatorCandidate_(BondType bondType) {
   return (
-    bondType == BondType::Double
-    || bondType == BondType::Triple
-    || bondType == BondType::Quadruple
-    || bondType == BondType::Quintuple
-    || bondType == BondType::Sextuple
-  );
+    bondType == BondType::Double || bondType == BondType::Triple
+    || bondType == BondType::Quadruple || bondType == BondType::Quintuple
+    || bondType == BondType::Sextuple);
 }
 
 void Molecule::Impl::propagateGraphChange_() {
@@ -295,8 +272,7 @@ void Molecule::Impl::propagateGraphChange_() {
         std::move(localRanking),
         newShapeOption,
         Stereopermutators::Feasible::Functor(adjacencies_),
-        AtomStereopermutator::thermalizationFunctor(adjacencies_)
-      );
+        AtomStereopermutator::thermalizationFunctor(adjacencies_));
 
       /* If the chiral state for this atom stereopermutator was not successfully
        * propagated or it is now unassigned, then bond stereopermutators sharing
@@ -322,6 +298,8 @@ void Molecule::Impl::propagateGraphChange_() {
        */
       if(oldAtomStereopermutatorStateOption) {
         for(const BondIndex& bond : adjacentStereopermutatorBonds) {
+          // stereopermutators_.remove(bond);
+          // stereopermutators_.add(BondStereopermutator(inner, stereopermutators_, bond));
           stereopermutators_.at(bond).propagateGraphChange(
             *oldAtomStereopermutatorStateOption,
             *stereopermutatorOption,
@@ -340,8 +318,7 @@ void Molecule::Impl::propagateGraphChange_() {
   for(const BondIndex bond : graph().bonds()) {
     if(
       stereopermutators_.option(bond)
-      || !isGraphBasedBondStereopermutatorCandidate_(graph().bondType(bond))
-    ) {
+      || !isGraphBasedBondStereopermutatorCandidate_(graph().bondType(bond))) {
       continue;
     }
 
@@ -355,19 +332,16 @@ void Molecule::Impl::propagateGraphChange_() {
 
 /* Public members */
 /* Constructors */
-Molecule::Impl::Impl() noexcept
-  : Impl(Utils::ElementType::H, Utils::ElementType::H, BondType::Single) {}
+Molecule::Impl::Impl() noexcept :
+  Impl(Utils::ElementType::H, Utils::ElementType::H, BondType::Single) {
+}
 
 Molecule::Impl::Impl(const Utils::ElementType element) noexcept {
   PrivateGraph& inner = adjacencies_.inner();
   inner.addVertex(element);
 }
 
-Molecule::Impl::Impl(
-  const Utils::ElementType a,
-  const Utils::ElementType b,
-  const BondType bondType
-) noexcept {
+Molecule::Impl::Impl(const Utils::ElementType a, const Utils::ElementType b, const BondType bondType) noexcept {
   // update adjacencies_
   PrivateGraph& inner = adjacencies_.inner();
   PrivateGraph::Vertex i = inner.addVertex(a);
@@ -375,9 +349,7 @@ Molecule::Impl::Impl(
   inner.addEdge(i, j, bondType);
 }
 
-Molecule::Impl::Impl(Graph graph)
-  : adjacencies_(std::move(graph))
-{
+Molecule::Impl::Impl(Graph graph) : adjacencies_(std::move(graph)) {
   // Initialization
   GraphAlgorithms::updateEtaBonds(adjacencies_.inner());
   stereopermutators_ = detectStereopermutators_();
@@ -387,42 +359,30 @@ Molecule::Impl::Impl(Graph graph)
 Molecule::Impl::Impl(
   Graph graph,
   const AngstromPositions& positions,
-  const boost::optional<
-    std::vector<BondIndex>
-  >& bondStereopermutatorCandidatesOptional,
-  const boost::optional<PeriodicBoundaryDuplicates>& periodics
-) : adjacencies_(std::move(graph))
-{
-  const auto maybeSubstitutions = Temple::Optionals::map(
-    periodics,
-    [&](const PeriodicBoundaryDuplicates& some) {
-      return SubstitutionsGenerator::removeGhosts(adjacencies_, some);
-    }
-  );
+  const boost::optional<std::vector<BondIndex>>& bondStereopermutatorCandidatesOptional,
+  const boost::optional<PeriodicBoundaryDuplicates>& periodics) :
+  adjacencies_(std::move(graph)) {
+  const auto maybeSubstitutions
+    = Temple::Optionals::map(periodics, [&](const PeriodicBoundaryDuplicates& some) {
+        return SubstitutionsGenerator::removeGhosts(adjacencies_, some);
+      });
 
   const auto maybeUninteresting = Temple::Optionals::map(
-    periodics,
-    [](const auto& p) -> const auto& { return p.uninterestingAtoms; }
-  );
+    periodics, [](const auto& p) -> const auto& { return p.uninterestingAtoms; });
 
   GraphAlgorithms::updateEtaBonds(adjacencies_.inner());
   stereopermutators_ = inferStereopermutatorsFromPositions(
-    positions,
-    bondStereopermutatorCandidatesOptional,
-    maybeUninteresting,
-    maybeSubstitutions
-  );
+    positions, bondStereopermutatorCandidatesOptional, maybeUninteresting, maybeSubstitutions);
   ensureModelInvariants_();
 }
 
 Molecule::Impl::Impl(
   Graph graph,
   StereopermutatorList stereopermutators,
-  boost::optional<AtomEnvironmentComponents> canonicalComponentsOption
-) : adjacencies_(std::move(graph)),
-    stereopermutators_(std::move(stereopermutators)),
-    canonicalComponentsOption_(std::move(canonicalComponentsOption))
-{
+  boost::optional<AtomEnvironmentComponents> canonicalComponentsOption) :
+  adjacencies_(std::move(graph)),
+  stereopermutators_(std::move(stereopermutators)),
+  canonicalComponentsOption_(std::move(canonicalComponentsOption)) {
   // Initialization
   ensureModelInvariants_();
 }
@@ -431,10 +391,10 @@ Molecule::Impl::Impl(
 AtomIndex Molecule::Impl::addAtom(
   const Utils::ElementType elementType,
   const AtomIndex adjacentTo,
-  const BondType bondType
-) {
+  const BondType bondType) {
   if(!isValidIndex_(adjacentTo)) {
-    throw std::out_of_range("Molecule::addAtom: Supplied atom index is invalid!");
+    throw std::out_of_range(
+      "Molecule::addAtom: Supplied atom index is invalid!");
   }
 
   const AtomIndex index = adjacencies_.inner().addVertex(elementType);
@@ -446,17 +406,14 @@ AtomIndex Molecule::Impl::addAtom(
   return index;
 }
 
-BondIndex Molecule::Impl::addBond(
-  const AtomIndex a,
-  const AtomIndex b,
-  const BondType bondType
-) {
+BondIndex Molecule::Impl::addBond(const AtomIndex a, const AtomIndex b, const BondType bondType) {
   if(!isValidIndex_(a) || !isValidIndex_(b)) {
     throw std::out_of_range("Molecule::addBond: A supplied index is invalid!");
   }
 
   if(a == b) {
-    throw std::logic_error("Molecule::addBond: Cannot add a bond between identical indices!");
+    throw std::logic_error(
+      "Molecule::addBond: Cannot add a bond between identical indices!");
   }
 
   PrivateGraph& inner = adjacencies_.inner();
@@ -478,14 +435,14 @@ BondIndex Molecule::Impl::addBond(
   propagateGraphChange_();
   canonicalComponentsOption_ = boost::none;
 
-  return BondIndex {a, b};
+  return BondIndex{a, b};
 }
 
 const BondStereopermutator& Molecule::Impl::addPermutator(
   const BondIndex& bond,
-  const BondStereopermutator::Alignment alignment
-) {
-  auto permutator = makePermutator(bond, stereopermutators_, boost::none, boost::none, alignment);
+  const BondStereopermutator::Alignment alignment) {
+  auto permutator
+    = makePermutator(bond, stereopermutators_, boost::none, boost::none, alignment);
   if(!permutator) {
     throw std::logic_error("Violated preconditions for permutator addition");
   }
@@ -502,8 +459,7 @@ void Molecule::Impl::applyPermutation(const std::vector<AtomIndex>& permutation)
 
 void Molecule::Impl::assignStereopermutator(
   const AtomIndex a,
-  const boost::optional<unsigned>& assignmentOption
-) {
+  const boost::optional<unsigned>& assignmentOption) {
   if(!isValidIndex_(a)) {
     throw std::out_of_range("Supplied atom index is invalid!");
   }
@@ -514,10 +470,7 @@ void Molecule::Impl::assignStereopermutator(
     throw std::out_of_range("No stereopermutator at this index!");
   }
 
-  if(
-    assignmentOption
-    && assignmentOption.value() >= stereopermutatorOption->numAssignments()
-  ) {
+  if(assignmentOption && assignmentOption.value() >= stereopermutatorOption->numAssignments()) {
     throw std::out_of_range("Invalid assignment index!");
   }
 
@@ -533,8 +486,7 @@ void Molecule::Impl::assignStereopermutator(
 
 void Molecule::Impl::assignStereopermutator(
   const BondIndex& edge,
-  const boost::optional<unsigned>& assignmentOption
-) {
+  const boost::optional<unsigned>& assignmentOption) {
   if(!isValidIndex_(edge.first) || !isValidIndex_(edge.second)) {
     throw std::out_of_range("Supplied bond atom indices are invalid!");
   }
@@ -542,14 +494,13 @@ void Molecule::Impl::assignStereopermutator(
   auto stereopermutatorOption = stereopermutators_.option(edge);
 
   if(!stereopermutatorOption) {
-    throw std::out_of_range("assignStereopermutator: No stereopermutator at this bond!");
+    throw std::out_of_range(
+      "assignStereopermutator: No stereopermutator at this bond!");
   }
 
-  if(
-    assignmentOption
-    && assignmentOption.value() >= stereopermutatorOption->numAssignments()
-  ) {
-    throw std::out_of_range("assignStereopermutator: Invalid assignment index!");
+  if(assignmentOption && assignmentOption.value() >= stereopermutatorOption->numAssignments()) {
+    throw std::out_of_range(
+      "assignStereopermutator: Invalid assignment index!");
   }
 
   // No need to rerank and remove canonical components if nothing changes
@@ -564,13 +515,15 @@ void Molecule::Impl::assignStereopermutator(
 
 void Molecule::Impl::assignStereopermutatorRandomly(const AtomIndex a, Random::Engine& engine) {
   if(!isValidIndex_(a)) {
-    throw std::out_of_range("Molecule::assignStereopermutatorRandomly: Supplied index is invalid!");
+    throw std::out_of_range(
+      "Molecule::assignStereopermutatorRandomly: Supplied index is invalid!");
   }
 
   auto stereopermutatorOption = stereopermutators_.option(a);
 
   if(!stereopermutatorOption) {
-    throw std::out_of_range("assignStereopermutatorRandomly: No stereopermutator at this index!");
+    throw std::out_of_range(
+      "assignStereopermutatorRandomly: No stereopermutator at this index!");
   }
 
   stereopermutatorOption->assignRandom(engine);
@@ -584,7 +537,8 @@ void Molecule::Impl::assignStereopermutatorRandomly(const BondIndex& e, Random::
   auto stereopermutatorOption = stereopermutators_.option(e);
 
   if(!stereopermutatorOption) {
-    throw std::out_of_range("assignStereopermutatorRandomly: No stereopermutator at this edge!");
+    throw std::out_of_range(
+      "assignStereopermutatorRandomly: No stereopermutator at this edge!");
   }
 
   stereopermutatorOption->assignRandom(engine);
@@ -594,15 +548,11 @@ void Molecule::Impl::assignStereopermutatorRandomly(const BondIndex& e, Random::
   canonicalComponentsOption_ = boost::none;
 }
 
-std::vector<AtomIndex> Molecule::Impl::canonicalize(
-  const AtomEnvironmentComponents componentBitmask
-) {
+std::vector<AtomIndex>
+Molecule::Impl::canonicalize(const AtomEnvironmentComponents componentBitmask) {
   // Generate hashes according to the passed bitmask
-  auto vertexHashes = Hashes::generate(
-    graph().inner(),
-    stereopermutators(),
-    componentBitmask
-  );
+  auto vertexHashes
+    = Hashes::generate(graph().inner(), stereopermutators(), componentBitmask);
 
   // Get a canonical labelling
   auto labelMap = canonicalAutomorphism(graph().inner(), vertexHashes);
@@ -618,7 +568,7 @@ std::vector<AtomIndex> Molecule::Impl::canonicalize(
       }
     }
 
-    inline AtomIndex operator() (const AtomIndex i) const {
+    inline AtomIndex operator()(const AtomIndex i) const {
       return permutation.at(i);
     }
   };
@@ -650,19 +600,21 @@ void Molecule::Impl::removeAtom(const AtomIndex a) {
   std::copy(
     adjacencyIterators.first,
     adjacencyIterators.second,
-    std::back_inserter(previouslyAdjacentVertices)
-  );
-
-  // Remove all edges to and from this vertex
-  inner.clearVertex(a);
-
-  // Any stereopermutator on this index must be dropped
-  stereopermutators_.remove(a);
+    std::back_inserter(previouslyAdjacentVertices));
 
   // Any adjacent bond stereopermutators have to be dropped
   for(const BondIndex& adjacentEdge : adjacencies_.bonds(a)) {
     stereopermutators_.remove(adjacentEdge);
   }
+
+  // Remove all edges to and from this vertex
+  inner.clearVertex(a);
+
+  // Update Eta bonds
+  GraphAlgorithms::updateEtaBonds(adjacencies_.inner());
+
+  // Any stereopermutator on this index must be dropped
+  stereopermutators_.remove(a);
 
   // Remove the vertex itself
   inner.removeVertex(a);
@@ -679,6 +631,7 @@ void Molecule::Impl::removeAtom(const AtomIndex a) {
    * propagateVertexRemoval replaces the removed index with in the
    * stereopermutators' internal state
    */
+
   for(AtomIndex indexToUpdate : previouslyAdjacentVertices) {
     if(indexToUpdate > a) {
       --indexToUpdate;
@@ -697,6 +650,7 @@ void Molecule::Impl::removeAtom(const AtomIndex a) {
     /* If index becomes terminal, drop the stereopermutator and any adjoining
      * bond stereopermutators
      */
+
     if(localRanking.sites.size() <= 1) {
       stereopermutators_.remove(indexToUpdate);
       for(const BondIndex edge : adjacencies_.bonds(indexToUpdate)) {
@@ -707,27 +661,36 @@ void Molecule::Impl::removeAtom(const AtomIndex a) {
 
     // Generate a target shape for the atom stereopermutator
     boost::optional<Shapes::Shape> newShapeOption;
-    if(Options::shapeTransition == ShapeTransition::PrioritizeInferenceFromGraph) {
-      newShapeOption = inferShape(indexToUpdate, localRanking);
-    }
+    // if(Options::shapeTransition ==
+    // ShapeTransition::PrioritizeInferenceFromGraph) {
+    newShapeOption = inferShape(indexToUpdate, localRanking);
+    // }
 
     const auto propagatedState = stereopermutatorOption->propagate(
       std::move(localRanking),
       newShapeOption,
       Stereopermutators::Feasible::Functor(adjacencies_),
-      AtomStereopermutator::thermalizationFunctor(adjacencies_)
-    );
+      AtomStereopermutator::thermalizationFunctor(adjacencies_));
 
     for(const BondIndex edge : adjacencies_.bonds(indexToUpdate)) {
-      stereopermutators_.remove(edge);
-      // TODO propagate
-      // if(auto permutator = stereopermutators_.option(edge)) {
-      //   permutator->propagate(propagatedState);
-      // }
+      if(propagatedState && stereopermutators_.option(edge)) {
+        if(
+          !(stereopermutators_.option(edge.first)->assigned())
+          || !(stereopermutators_.option(edge.second)->assigned())) {
+          continue;
+        }
+        stereopermutators_.remove(edge);
+
+        stereopermutators_.add(BondStereopermutator(inner, stereopermutators_, edge));
+
+      } else if(stereopermutators_.option(edge)) {
+        stereopermutators_.remove(edge);
+      }
     }
   }
 
   propagateGraphChange_();
+
   canonicalComponentsOption_ = boost::none;
 }
 
@@ -747,14 +710,15 @@ void Molecule::Impl::removeBond(const AtomIndex a, const AtomIndex b) {
   PrivateGraph::Edge edgeToRemove = edgeOption.value();
 
   if(!inner.canRemove(edgeToRemove)) {
-    throw std::logic_error("Removing this bond separates the molecule into two pieces!");
+    throw std::logic_error(
+      "Removing this bond separates the molecule into two pieces!");
   }
 
-
-  /* If there is an BondStereopermutator on this edge, we have to drop it explicitly,
-   * since propagateGraphChange_ cannot iterate over a now-removed edge.
+  /* If there is an BondStereopermutator on this edge, we have to drop it
+   * explicitly, since propagateGraphChange_ cannot iterate over a now-removed
+   * edge.
    */
-  stereopermutators_.remove(BondIndex {a, b});
+  stereopermutators_.remove(BondIndex{a, b});
 
   // Remove the edge
   inner.removeEdge(edgeToRemove);
@@ -779,14 +743,13 @@ void Molecule::Impl::removeBond(const AtomIndex a, const AtomIndex b) {
         std::move(localRanking),
         newShapeOption,
         Stereopermutators::Feasible::Functor(adjacencies_),
-        AtomStereopermutator::thermalizationFunctor(adjacencies_)
-      );
+        AtomStereopermutator::thermalizationFunctor(adjacencies_));
     }
 
     //! @todo propagation
     /*if(stereopermutators_.involving(indexToUpdate)) {
-      if(stereopermutators_.at(indexToUpdate)->type() == Stereopermutators::Type::AtomStereopermutator) {
-      } else {
+      if(stereopermutators_.at(indexToUpdate)->type() ==
+    Stereopermutators::Type::AtomStereopermutator) { } else {
         std::dynamic_pointer_cast<Stereopermutators::BondStereopermutator>(
           stereopermutators_.at(indexToUpdate)
         )->removeSubstituent(
@@ -800,8 +763,9 @@ void Molecule::Impl::removeBond(const AtomIndex a, const AtomIndex b) {
   notifyRemoval(a);
   notifyRemoval(b);
 
-  /* All other cases, where there may be BondStereopermutators or AtomStereopermutators
-   * on a or b, should be handled correctly by propagateGraphChange_.
+  /* All other cases, where there may be BondStereopermutators or
+   * AtomStereopermutators on a or b, should be handled correctly by
+   * propagateGraphChange_.
    */
 
   propagateGraphChange_();
@@ -814,19 +778,15 @@ bool Molecule::Impl::removePermutator(const BondIndex& bond) {
   return removed;
 }
 
-bool Molecule::Impl::setBondType(
-  const AtomIndex a,
-  const AtomIndex b,
-  const BondType bondType
-) {
+bool Molecule::Impl::setBondType(const AtomIndex a, const AtomIndex b, const BondType bondType) {
   if(!isValidIndex_(a) || !isValidIndex_(b)) {
-    throw std::out_of_range("Molecule::setBondType: A supplied index is invalid!");
+    throw std::out_of_range(
+      "Molecule::setBondType: A supplied index is invalid!");
   }
 
   if(bondType == BondType::Eta) {
-    throw std::logic_error(
-      "Do not manually change eta bond types, this dynamism is handled internally"
-    );
+    throw std::logic_error("Do not manually change eta bond types, this "
+                           "dynamism is handled internally");
   }
 
   PrivateGraph& inner = adjacencies_.inner();
@@ -843,10 +803,7 @@ bool Molecule::Impl::setBondType(
   return true;
 }
 
-void Molecule::Impl::setElementType(
-  const AtomIndex a,
-  const Utils::ElementType elementType
-) {
+void Molecule::Impl::setElementType(const AtomIndex a, const Utils::ElementType elementType) {
   if(!isValidIndex_(a)) {
     throw std::out_of_range("Molecule::setElementType: This index is invalid!");
   }
@@ -856,12 +813,10 @@ void Molecule::Impl::setElementType(
   canonicalComponentsOption_ = boost::none;
 }
 
-void Molecule::Impl::setShapeAtAtom(
-  const AtomIndex a,
-  const Shapes::Shape shape
-) {
+void Molecule::Impl::setShapeAtAtom(const AtomIndex a, const Shapes::Shape shape) {
   if(!isValidIndex_(a)) {
-    throw std::out_of_range("Molecule::setShapeAtAtom: Supplied atom index is invalid");
+    throw std::out_of_range(
+      "Molecule::setShapeAtAtom: Supplied atom index is invalid");
   }
 
   auto stereopermutatorOption = stereopermutators_.option(a);
@@ -873,18 +828,16 @@ void Molecule::Impl::setShapeAtAtom(
     if(localRanking.sites.size() != Shapes::size(shape)) {
       throw std::logic_error(
         "Molecule::setShapeAtAtom: The size of the supplied shape is not "
-        " the same as the number of determined sites"
-      );
+        " the same as the number of determined sites");
     }
 
     // Add the stereopermutator irrespective of how many assignments it has
-    AtomStereopermutator newStereopermutator {
+    AtomStereopermutator newStereopermutator{
       a,
       shape,
       std::move(localRanking),
       Stereopermutators::Feasible::Functor(adjacencies_),
-      AtomStereopermutator::thermalizationFunctor(adjacencies_)
-    };
+      AtomStereopermutator::thermalizationFunctor(adjacencies_)};
 
     // Default-assign stereopermutators with only one assignment
     if(newStereopermutator.numAssignments() == 1) {
@@ -898,14 +851,10 @@ void Molecule::Impl::setShapeAtAtom(
     return;
   }
 
-  if(
-    Shapes::size(stereopermutatorOption->getShape())
-    != Shapes::size(shape)
-  ) {
+  if(Shapes::size(stereopermutatorOption->getShape()) != Shapes::size(shape)) {
     throw std::logic_error(
       "Molecule::setShapeAtAtom: The size of the supplied shape is "
-      "not the same as that of the existing stereopermutator's current shape!"
-    );
+      "not the same as that of the existing stereopermutator's current shape!");
   }
 
   if(stereopermutatorOption->getShape() == shape) {
@@ -916,8 +865,7 @@ void Molecule::Impl::setShapeAtAtom(
   stereopermutatorOption->setShape(
     shape,
     Stereopermutators::Feasible::Functor(adjacencies_),
-    AtomStereopermutator::thermalizationFunctor(adjacencies_)
-  );
+    AtomStereopermutator::thermalizationFunctor(adjacencies_));
   if(stereopermutatorOption->numAssignments() == 1) {
     stereopermutatorOption->assign(0);
   }
@@ -931,10 +879,7 @@ void Molecule::Impl::setShapeAtAtom(
   canonicalComponentsOption_ = boost::none;
 }
 
-void Molecule::Impl::thermalizeStereopermutator(
-  const AtomIndex a,
-  const bool thermalization
-) {
+void Molecule::Impl::thermalizeStereopermutator(const AtomIndex a, const bool thermalization) {
   if(!isValidIndex_(a)) {
     throw std::out_of_range("Supplied atom index is invalid!");
   }
@@ -971,16 +916,11 @@ std::string Molecule::Impl::str() const {
   if(!stereopermutators_.empty()) {
     info << "Stereopermutator information:\n";
 
-    for(const auto& stereopermutator :
-      stereopermutators_.atomStereopermutators()
-    ) {
+    for(const auto& stereopermutator : stereopermutators_.atomStereopermutators()) {
       info << stereopermutator.info() << "\n";
     }
 
-    for(
-      const auto& stereopermutator :
-      stereopermutators_.bondStereopermutators()
-    ) {
+    for(const auto& stereopermutator : stereopermutators_.bondStereopermutators()) {
       info << stereopermutator.info() << "\n";
     }
   }
@@ -988,25 +928,18 @@ std::string Molecule::Impl::str() const {
   return info.str();
 }
 
-boost::optional<Shapes::Shape> Molecule::Impl::inferShape(
-  const AtomIndex index,
-  const RankingInformation& ranking
-) const {
+boost::optional<Shapes::Shape>
+Molecule::Impl::inferShape(const AtomIndex index, const RankingInformation& ranking) const {
   if(!isValidIndex_(index)) {
     throw std::out_of_range("Molecule::inferShape: Supplied index is invalid!");
   }
 
   if(graph().degree(index) <= 1) {
     throw std::logic_error(
-      "Molecule::inferShape: No geometries exist for terminal atoms"
-    );
+      "Molecule::inferShape: No geometries exist for terminal atoms");
   }
 
-  return ShapeInference::inferShape(
-    adjacencies_,
-    index,
-    ranking
-  );
+  return ShapeInference::inferShape(adjacencies_, index, ranking);
 }
 
 std::string Molecule::Impl::dumpGraphviz() const {
@@ -1015,12 +948,7 @@ std::string Molecule::Impl::dumpGraphviz() const {
   std::stringstream graphvizStream;
 
   boost::write_graphviz(
-    graphvizStream,
-    adjacencies_.inner().bgl(),
-    propertyWriter,
-    propertyWriter,
-    propertyWriter
-  );
+    graphvizStream, adjacencies_.inner().bgl(), propertyWriter, propertyWriter, propertyWriter);
 
   return graphvizStream.str();
 }
@@ -1035,25 +963,18 @@ std::size_t Molecule::Impl::hash() const {
   }
 
   auto hashes = Hashes::generate(
-    graph().inner(),
-    stereopermutators_,
-    canonicalComponentsOption_.value()
-  );
+    graph().inner(), stereopermutators_, canonicalComponentsOption_.value());
 
   // Convolute all of the wide hashes into a size_t hash
   static_assert(
     std::is_same<Hashes::WideHashType, boost::multiprecision::uint128_t>::value,
-    "WideHash is no longer the boost multiprecision 128 uint"
-  );
+    "WideHash is no longer the boost multiprecision 128 uint");
   constexpr unsigned wideHashBytes = 128 / 8;
-  std::vector<std::size_t> wideHashParts (wideHashBytes / sizeof(std::size_t));
+  std::vector<std::size_t> wideHashParts(wideHashBytes / sizeof(std::size_t));
   std::size_t hash = 0;
   for(const auto& wideHash : hashes) {
     boost::multiprecision::export_bits(
-      wideHash,
-      std::begin(wideHashParts),
-      8 * sizeof(std::size_t)
-    );
+      wideHash, std::begin(wideHashParts), 8 * sizeof(std::size_t));
     for(const std::size_t& v : wideHashParts) {
       boost::hash_combine(hash, v);
     }
@@ -1067,12 +988,9 @@ const StereopermutatorList& Molecule::Impl::stereopermutators() const {
 
 StereopermutatorList Molecule::Impl::inferStereopermutatorsFromPositions(
   const AngstromPositions& wrapper,
-  const boost::optional<
-    std::vector<BondIndex>
-  >& explicitBondStereopermutatorCandidatesOption,
+  const boost::optional<std::vector<BondIndex>>& explicitBondStereopermutatorCandidatesOption,
   boost::optional<const std::unordered_set<AtomIndex>&> uninteresting,
-  const boost::optional<SubstitutionsGenerator::SubstitutionMap>& substitutions
-) const {
+  const boost::optional<SubstitutionsGenerator::SubstitutionMap>& substitutions) const {
   StereopermutatorList stereopermutators;
 
   for(const AtomIndex vertex : graph().atoms()) {
@@ -1086,6 +1004,9 @@ StereopermutatorList Molecule::Impl::inferStereopermutatorsFromPositions(
   }
 
   const auto tryInstantiateBondStereopermutator = [&](const BondIndex& bond) {
+    // Do not place stereopermutators on eta bonds.
+    if(graph().bondType(bond) == BondType::Eta)
+      return ;
     auto permutator = makePermutator(bond, stereopermutators, wrapper, substitutions);
 
     if(permutator && permutator->assigned() != boost::none) {
@@ -1108,15 +1029,14 @@ StereopermutatorList Molecule::Impl::inferStereopermutatorsFromPositions(
 
   // Look through all cycles of the molecule and try to find flat cycles
   for(const auto& cycleBonds : graph().cycles()) {
+
     if(cycleBonds.size() == 3) {
       continue;
     }
 
     const auto& cycleIndices = makeRingIndexSequence(cycleBonds);
-    const double rmsPlaneDeviation = Cartesian::planeOfBestFitRmsd(
-      wrapper.positions,
-      cycleIndices
-    );
+    const double rmsPlaneDeviation
+      = Cartesian::planeOfBestFitRmsd(wrapper.positions, cycleIndices);
 
     // Threshold for planarity
     constexpr double flatRmsPlaneDeviation = 0.07;
@@ -1128,26 +1048,21 @@ StereopermutatorList Molecule::Impl::inferStereopermutatorsFromPositions(
       }
     }
   }
-
   return stereopermutators;
 }
 
 bool Molecule::Impl::canonicalCompare(
   const Molecule::Impl& other,
-  const AtomEnvironmentComponents componentBitmask
-) const {
+  const AtomEnvironmentComponents componentBitmask) const {
   /* Make sure that the components used to canonicalize each molecule instance
    * are enough to compare them canonically, too
    */
   if(
-    canonicalComponentsOption_
-    && other.canonicalComponentsOption_
-    && (
-      canonicalComponentsOption_.value() < componentBitmask
-      || other.canonicalComponentsOption_.value() < componentBitmask
-    )
-  ) {
-    throw std::logic_error("Fewer components were used in canonicalizing a Molecule than are being compared!");
+    canonicalComponentsOption_ && other.canonicalComponentsOption_
+    && (canonicalComponentsOption_.value() < componentBitmask
+        || other.canonicalComponentsOption_.value() < componentBitmask)) {
+    throw std::logic_error("Fewer components were used in canonicalizing a "
+                           "Molecule than are being compared!");
   }
 
   if(graph().V() != other.graph().V() || graph().E() != other.graph().E()) {
@@ -1156,19 +1071,13 @@ bool Molecule::Impl::canonicalCompare(
 
   return (
     Hashes::identityCompare(
-      graph().inner(),
-      stereopermutators(),
-      other.graph().inner(),
-      other.stereopermutators(),
-      componentBitmask
-    ) && graph().inner().identicalGraph(other.graph().inner())
-  );
+      graph().inner(), stereopermutators(), other.graph().inner(), other.stereopermutators(), componentBitmask)
+    && graph().inner().identicalGraph(other.graph().inner()));
 }
 
 boost::optional<std::vector<AtomIndex>> Molecule::Impl::modularIsomorphism(
   const Molecule::Impl& other,
-  const AtomEnvironmentComponents componentBitmask
-) const {
+  const AtomEnvironmentComponents componentBitmask) const {
   const unsigned thisNumAtoms = graph().V();
 
   if(thisNumAtoms != other.graph().V()) {
@@ -1180,7 +1089,8 @@ boost::optional<std::vector<AtomIndex>> Molecule::Impl::modularIsomorphism(
     return boost::none;
   }
 
-  // Shortcut with same graph test if componentBitmask matches canonical components
+  // Shortcut with same graph test if componentBitmask matches canonical
+  // components
   if(canonicalComponents() == componentBitmask && other.canonicalComponents() == componentBitmask) {
     if(canonicalCompare(other, componentBitmask)) {
       return Temple::iota<AtomIndex>(thisNumAtoms);
@@ -1201,8 +1111,7 @@ boost::optional<std::vector<AtomIndex>> Molecule::Impl::modularIsomorphism(
 
   std::tie(thisHashes, otherHashes, maxHash) = Hashes::narrow(
     Hashes::generate(graph().inner(), stereopermutators(), componentBitmask),
-    Hashes::generate(other.graph().inner(), other.stereopermutators(), componentBitmask)
-  );
+    Hashes::generate(other.graph().inner(), other.stereopermutators(), componentBitmask));
 
   // Where the corresponding index from the other graph is stored
   std::vector<AtomIndex> indexMap(thisNumAtoms);
@@ -1214,16 +1123,12 @@ boost::optional<std::vector<AtomIndex>> Molecule::Impl::modularIsomorphism(
     thisBGL,
     otherBGL,
     boost::make_safe_iterator_property_map(
-      indexMap.begin(),
-      thisNumAtoms,
-      boost::get(boost::vertex_index, thisBGL)
-    ),
+      indexMap.begin(), thisNumAtoms, boost::get(boost::vertex_index, thisBGL)),
     Hashes::LookupFunctor(thisHashes),
     Hashes::LookupFunctor(otherHashes),
     maxHash,
     boost::get(boost::vertex_index, thisBGL),
-    boost::get(boost::vertex_index, otherBGL)
-  );
+    boost::get(boost::vertex_index, otherBGL));
 
   if(isomorphic) {
     return indexMap;
@@ -1235,8 +1140,7 @@ boost::optional<std::vector<AtomIndex>> Molecule::Impl::modularIsomorphism(
 RankingInformation Molecule::Impl::rankPriority(
   const AtomIndex a,
   const std::vector<AtomIndex>& excludeAdjacent,
-  const boost::optional<AngstromPositions>& positionsOption
-) const {
+  const boost::optional<AngstromPositions>& positionsOption) const {
   if(!isValidIndex_(a)) {
     throw std::out_of_range("Supplied atom index is invalid!");
   }
@@ -1244,11 +1148,8 @@ RankingInformation Molecule::Impl::rankPriority(
   RankingInformation rankingResult;
 
   // Expects that bond types are set properly, complains otherwise
-  rankingResult.sites = GraphAlgorithms::sites(
-    adjacencies_.inner(),
-    a,
-    excludeAdjacent
-  );
+  rankingResult.sites
+    = GraphAlgorithms::sites(adjacencies_.inner(), a, excludeAdjacent);
 
   std::string molGraphviz;
 #ifndef NDEBUG
@@ -1263,43 +1164,31 @@ RankingInformation Molecule::Impl::rankPriority(
     a,
     excludeAdjacent,
     RankingTree::ExpansionOption::OnlyRequiredBranches,
-    positionsOption
-  );
+    positionsOption);
 
   rankingResult.substituentRanking = expandedTree.getRanked();
 
   // Combine site information and substituent ranking into a site ranking
   rankingResult.siteRanking = RankingInformation::rankSites(
-    rankingResult.sites,
-    rankingResult.substituentRanking
-  );
+    rankingResult.sites, rankingResult.substituentRanking);
 
   // Find links between sites
   rankingResult.links = GraphAlgorithms::siteLinks(
-    adjacencies_.inner(),
-    a,
-    rankingResult.sites,
-    excludeAdjacent
-  );
+    adjacencies_.inner(), a, rankingResult.sites, excludeAdjacent);
 
   return rankingResult;
 }
 
-bool Molecule::Impl::operator == (const Impl& other) const {
-  if(
-    canonicalComponentsOption_ == AtomEnvironmentComponents::All
-    && other.canonicalComponentsOption_ == AtomEnvironmentComponents::All
-  ) {
+bool Molecule::Impl::operator==(const Impl& other) const {
+  if(canonicalComponentsOption_ == AtomEnvironmentComponents::All && other.canonicalComponentsOption_ == AtomEnvironmentComponents::All) {
     return canonicalCompare(other, AtomEnvironmentComponents::All);
   }
 
   // Better with newer boost: .has_value()
-  return static_cast<bool>(
-    modularIsomorphism(other, AtomEnvironmentComponents::All)
-  );
+  return static_cast<bool>(modularIsomorphism(other, AtomEnvironmentComponents::All));
 }
 
-bool Molecule::Impl::operator != (const Impl& other) const {
+bool Molecule::Impl::operator!=(const Impl& other) const {
   return !(*this == other);
 }
 

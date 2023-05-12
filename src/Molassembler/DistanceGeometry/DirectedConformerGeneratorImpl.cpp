@@ -36,7 +36,7 @@ int euclideanModulo(const int a, const int base) {
 unsigned distance(const int i, const int j, const int U) {
   assert(i >= 0 && j >= 0 && U > 1);
 
-  int value = std::min(
+  const int value = std::min(
     euclideanModulo(i - j, U),
     euclideanModulo(j - i, U)
   );
@@ -150,7 +150,7 @@ DirectedConformerGenerator::Impl::considerBond(
     return IgnoreReason::HasTerminalConstitutingAtom;
   }
 
-  BondType bondType = molecule.graph().bondType(bondIndex);
+  const BondType bondType = molecule.graph().bondType(bondIndex);
   if(bondType == BondType::Eta) {
     return IgnoreReason::IsEtaBond;
   }
@@ -293,15 +293,15 @@ Molecule DirectedConformerGenerator::Impl::conformationMolecule(const DecisionLi
     }
   );
 
-  return Molecule(
+  return {
     molecule_.graph(),
     std::move(permutators)
-  );
+  };
 }
 
-outcome::result<Utils::PositionCollection>
+Result<Utils::PositionCollection>
 DirectedConformerGenerator::Impl::checkGeneratedConformation(
-  outcome::result<Utils::PositionCollection> conformerResult,
+  Result<Utils::PositionCollection> conformerResult,
   const DecisionList& decisionList,
   const BondStereopermutator::FittingMode fitting
 ) const {
@@ -319,7 +319,7 @@ DirectedConformerGenerator::Impl::checkGeneratedConformation(
   return conformerResult;
 }
 
-outcome::result<Utils::PositionCollection>
+Result<Utils::PositionCollection>
 DirectedConformerGenerator::Impl::generateRandomConformation(
   const DecisionList& decisionList,
   const DistanceGeometry::Configuration& configuration,
@@ -335,7 +335,7 @@ DirectedConformerGenerator::Impl::generateRandomConformation(
   );
 }
 
-outcome::result<Utils::PositionCollection>
+Result<Utils::PositionCollection>
 DirectedConformerGenerator::Impl::generateConformation(
   const DecisionList& decisionList,
   const unsigned seed,
@@ -488,7 +488,7 @@ void DirectedConformerGenerator::Impl::enumerate(
     }
 
     for(unsigned i = 0; i < settings.dihedralRetries; ++i) {
-      outcome::result<Utils::PositionCollection> conformer {DgError::DecisionListMismatch};
+      Result<Utils::PositionCollection> conformer {DgError::DecisionListMismatch};
 
       try {
         conformer = generateConformation(
@@ -518,7 +518,7 @@ void DirectedConformerGenerator::Impl::enumerate(
 }
 
 DirectedConformerGenerator::Relabeler DirectedConformerGenerator::Impl::relabeler() const {
-  return Relabeler(relevantBonds_, molecule_);
+  return {relevantBonds_, molecule_};
 }
 
 std::vector<int>

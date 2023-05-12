@@ -1,0 +1,19 @@
+/*!@file
+ * @copyright This code is licensed under the 3-clause BSD license.
+ *   Copyright ETH Zurich, Laboratory of Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ * @brief Configure-time altered include of Boost or standalone outcome
+ */
+
+#ifndef INCLUDE_MOLASSEMBLER_DETAIL_OUTCOME_H
+#define INCLUDE_MOLASSEMBLER_DETAIL_OUTCOME_H
+
+#include "@OUTCOME_INCLUDE_HEADER@"
+namespace outcome = @OUTCOME_NAMESPACE@;
+
+namespace Scine::Molassembler {
+  template<typename T>
+  using Result = outcome::std_result<T>;
+}
+
+#endif

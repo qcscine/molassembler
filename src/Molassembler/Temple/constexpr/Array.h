@@ -495,10 +495,8 @@ private:
   T items_[nItems];
 
   template<size_t ... Inds>
-  std::array<T, nItems> makeArray_(std::index_sequence<Inds...> /* inds */) {
-    return {{
-      items_[Inds]...
-    }};
+  constexpr std::array<T, nItems> makeArray_(std::index_sequence<Inds...> /* inds */) const {
+    return {{items_[Inds]...}};
   }
 };
 

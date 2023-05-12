@@ -200,13 +200,11 @@ private:
       std::end(stateArray)
     );
 
-    /* C++17 replace with if constexpr
-     *
-     * You can safely ignore the warning that shift cout >= width of type for
+    /* You can safely ignore the warning that shift cout >= width of type for
      * instantiations with uint32_t by clang. In those cases, stateArray is
      * already adequately filled.
      */
-    if(std::is_same<UnsignedType, std::uint64_t>::value) {
+    if constexpr(std::is_same<UnsignedType, std::uint64_t>::value) {
       /* seed_seq only generates 32 bit unsigneds, so just combine 8 32-bit
        * values into 4 64-bit values for the state array
        */

@@ -32,8 +32,6 @@ namespace Random {
 class Engine;
 } // namespace Random
 
-namespace outcome = OUTCOME_V2_NAMESPACE;
-
 // Forward-declare PrivateGraph
 class PrivateGraph;
 
@@ -241,7 +239,7 @@ public:
    * Complexity: O(N * O(shortest paths algorithm))
    * @complexity{@math{\Theta(V^2 \cdot E)}}
    */
-  outcome::result<Eigen::MatrixXd> makeDistanceBounds() const noexcept;
+  Result<Eigen::MatrixXd> makeDistanceBounds() const noexcept;
 
   /*! @brief Generates a distance matrix by randomly fixing distances within triangle inequality bounds
    *
@@ -258,10 +256,10 @@ public:
    * NOTE: This double definition may seem strange, but is necessary to use
    * the forward-declared enum class Partiality correctly.
    */
-  outcome::result<Eigen::MatrixXd> makeDistanceMatrix(Random::Engine& engine) noexcept;
+  Result<Eigen::MatrixXd> makeDistanceMatrix(Random::Engine& engine) noexcept;
 
   //!@overload
-  outcome::result<Eigen::MatrixXd> makeDistanceMatrix(Random::Engine& engine, Partiality partiality) noexcept;
+  Result<Eigen::MatrixXd> makeDistanceMatrix(Random::Engine& engine, Partiality partiality) noexcept;
 
   /*! @brief Returns the source vertex from an edge descriptor
    *

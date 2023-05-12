@@ -13,9 +13,9 @@
 #define INCLUDE_MOLASSEMBLER_TEMPLE_CONSTEXPR_VECTOR_H
 
 #include "Molassembler/Temple/constexpr/Math.h"
-#include "Molassembler/Temple/Stl17.h"
 
 #include <array>
+#include <algorithm>
 
 namespace Scine {
 namespace Molassembler {
@@ -142,7 +142,7 @@ struct Vector {
  */
 PURITY_WEAK constexpr double angle(const Vector& a, const Vector& b) {
   return Math::acos(
-    Stl17::clamp(
+    std::clamp(
       a.dot(b) / (
         a.norm() * b.norm()
       ),

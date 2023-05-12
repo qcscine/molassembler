@@ -36,8 +36,8 @@ static_assert(
 template<typename F, typename G>
 auto compareImplFn(F&& testFn, G&& referenceFn, double accuracy=relativeAccuracy) {
   return [=](const auto ... values) {
-    const double testValue = testFn(values...);
-    const double referenceValue = referenceFn(values...);
+    const double testValue = Temple::invoke(testFn, values...);
+    const double referenceValue = Temple::invoke(referenceFn, values...);
 
     BOOST_TEST_CONTEXT(
       "  x = " << std::setw(12) << Temple::stringify(std::tie(values...))

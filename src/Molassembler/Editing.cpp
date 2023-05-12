@@ -227,33 +227,6 @@ Editing::Cleaved cleaveImpl(
 
 namespace Editing {
 
-std::pair<Molecule, Molecule> cleave(const Molecule& a, const BondIndex bridge) {
-  if(a.graph().canRemove(bridge)) {
-    throw std::logic_error(
-      "The supplied bond can be removed without disconnecting the graph. It is "
-      "not a suitable edge to cleave a molecule in two."
-    );
-  }
-
-  // Discover which vertices belong to which component after cleaving
-  const auto sides = a.graph().inner().splitAlongBridge(
-    toInner(bridge, a.graph().inner())
-  );
-
-  assert(!sides.first.empty() && !sides.second.empty());
-  Cleaved cleaved = cleaveImpl(
-    a,
-    bridge.first,
-    std::vector<AtomIndex>(1, bridge.second),
-    sides.first,
-    sides.second
-  );
-  return std::make_pair(
-    std::move(cleaved.first),
-    std::move(cleaved.second)
-  );
-}
-
 Cleaved cleave(
   const Molecule& a,
   const AtomSitePair site
@@ -275,6 +248,30 @@ Cleaved cleave(
     sides.first,
     sides.second
   );
+}
+
+Cleaved cleave(const Molecule& a, const BondIndex bridge) {
+  if(a.graph().canRemove(bridge)) {
+    throw std::logic_error(
+      "The supplied bond can be removed without disconnecting the graph. It is "
+      "not a suitable edge to cleave a molecule in two."
+    );
+  }
+
+  // Discover which vertices belong to which component after cleaving
+  const auto sides = a.graph().inner().splitAlongBridge(
+    toInner(bridge, a.graph().inner())
+  );
+
+  assert(!sides.first.empty() && !sides.second.empty());
+  Cleaved cleaved = cleaveImpl(
+    a,
+    bridge.first,
+    std::vector<AtomIndex>(1, bridge.second),
+    sides.first,
+    sides.second
+  );
+  return cleaved;
 }
 
 Molecule insert(

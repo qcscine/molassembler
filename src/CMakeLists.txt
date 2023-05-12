@@ -12,6 +12,12 @@ file(GLOB_RECURSE HEADERS_all ${CMAKE_CURRENT_SOURCE_DIR}/Molassembler/*.h)
 file(GLOB_RECURSE SOURCES_all ${CMAKE_CURRENT_SOURCE_DIR}/Molassembler/*.cpp)
 
 configure_file(
+  ${CMAKE_CURRENT_SOURCE_DIR}/Molassembler/Detail/Outcome.h.in
+  ${CMAKE_CURRENT_BINARY_DIR}/Molassembler/Detail/Outcome.h
+  @ONLY
+)
+
+configure_file(
   ${CMAKE_CURRENT_SOURCE_DIR}/Molassembler/Version.h.in
   ${CMAKE_CURRENT_BINARY_DIR}/Molassembler/Version.h
   @ONLY
@@ -41,7 +47,7 @@ if(${CMAKE_VERSION} VERSION_GREATER_EQUAL "3.12.0")
   target_link_libraries(molassembler_obj PRIVATE
     Boost::boost
     Scine::UtilsOS
-    outcome
+    $<TARGET_NAME_IF_EXISTS:outcome>
     RingDecomposerLib
     json
     Boost::filesystem
@@ -53,25 +59,34 @@ else()
   target_include_directories(molassembler_obj
     PUBLIC
       $<TARGET_PROPERTY:Scine::UtilsOS,INTERFACE_INCLUDE_DIRECTORIES>
-      $<TARGET_PROPERTY:outcome,INTERFACE_INCLUDE_DIRECTORIES>
       $<TARGET_PROPERTY:RingDecomposerLib,INTERFACE_INCLUDE_DIRECTORIES>
       $<TARGET_PROPERTY:Boost::boost,INTERFACE_INCLUDE_DIRECTORIES>
   )
+  if(TARGET outcome)
+    target_include_directories(molassembler_obj PUBLIC
+      $<TARGET_PROPERTY:outcome,INTERFACE_INCLUDE_DIRECTORIES>
+    )
+  endif()
 endif()
 add_eigen(molassembler_obj PRIVATE)
 target_compile_options(molassembler_obj PRIVATE
   ${MOLASSEMBLER_CXX_FLAGS}
   $<$<BOOL:${OpenMP_CXX_FOUND}>:${OpenMP_CXX_FLAGS}>
 )
+
 # Suppress warnings coming from various external libraries
 target_include_directories(molassembler_obj SYSTEM PRIVATE
   ${Boost_INCLUDE_DIR}
   ${RDL_INCLUDE_DIR}
-  $<TARGET_PROPERTY:outcome,INTERFACE_INCLUDE_DIRECTORIES>
   $<TARGET_PROPERTY:Eigen3::Eigen,INTERFACE_INCLUDE_DIRECTORIES>
   $<TARGET_PROPERTY:json,INTERFACE_INCLUDE_DIRECTORIES>
   $<TARGET_PROPERTY:nauty,INTERFACE_INCLUDE_DIRECTORIES>
 )
+if(TARGET outcome)
+  target_include_directories(molassembler_obj SYSTEM PRIVATE
+    $<TARGET_PROPERTY:outcome,INTERFACE_INCLUDE_DIRECTORIES>
+  )
+endif()
 set_target_properties(molassembler_obj PROPERTIES
   CXX_VISIBILITY_PRESET hidden
   VISIBILITY_INLINES_HIDDEN ON
@@ -108,7 +123,7 @@ function(molassembler_library_links target_name)
   target_link_libraries(${target_name}
     PUBLIC
       Scine::UtilsOS
-      outcome
+      $<TARGET_NAME_IF_EXISTS:outcome>
     PRIVATE
       Boost::filesystem
       Boost::system

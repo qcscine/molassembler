@@ -23,7 +23,6 @@
 #include "Molassembler/Temple/Optionals.h"
 #include "Molassembler/Temple/SetAlgorithms.h"
 #include "Molassembler/Temple/Stringify.h"
-#include "Molassembler/Temple/Stl17.h"
 
 #include "Molassembler/AtomStereopermutator.h"
 #include "Molassembler/BondStereopermutator.h"
@@ -1607,13 +1606,13 @@ ValueBounds SpatialModel::clamp(
   ValueBounds bounds,
   const ValueBounds& clampBounds
 ) {
-  bounds.lower = Temple::Stl17::clamp(
+  bounds.lower = std::clamp(
     bounds.lower,
     clampBounds.lower,
     clampBounds.upper
   );
 
-  bounds.upper = Temple::Stl17::clamp(
+  bounds.upper = std::clamp(
     bounds.upper,
     clampBounds.lower,
     clampBounds.upper
@@ -2030,7 +2029,7 @@ void SpatialModel::modelSpirocenters_(
             const ValueBounds& secondAngleBounds = angleBounds_.at(secondSequence);
 
             // Increases in cycle angles yield decrease in the cross angle
-            const double crossAngleLower = Temple::Stl17::clamp(
+            const double crossAngleLower = std::clamp(
               spiroCrossAngle(
                 firstAngleBounds.upper,
                 secondAngleBounds.upper
@@ -2039,7 +2038,7 @@ void SpatialModel::modelSpirocenters_(
               M_PI
             );
 
-            const double crossAngleUpper = Temple::Stl17::clamp(
+            const double crossAngleUpper = std::clamp(
               spiroCrossAngle(
                 firstAngleBounds.lower,
                 secondAngleBounds.lower

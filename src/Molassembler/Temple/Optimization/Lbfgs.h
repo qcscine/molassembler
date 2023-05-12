@@ -7,7 +7,6 @@
 #ifndef INCLUDE_TEMPLE_OPTIMIZATION_LBFGS_H
 #define INCLUDE_TEMPLE_OPTIMIZATION_LBFGS_H
 
-#include "Molassembler/Temple/Stl17.h"
 #include "Molassembler/Temple/Optimization/Common.h"
 
 /* TODO
@@ -796,7 +795,7 @@ private:
     unsigned iteration = 1;
     for(
       ;
-      check.shouldContinue(iteration, Stl17::as_const(step));
+      check.shouldContinue(iteration, std::as_const(step));
       ++iteration
     ) {
       // Line search the chosen direction

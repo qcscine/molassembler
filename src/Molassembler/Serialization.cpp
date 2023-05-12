@@ -494,13 +494,14 @@ nlohmann::json serialize(const Molecule& molecule) {
 Molecule deserialize(const nlohmann::json& m) {
   /* In the future, we will have to check the version information to ensure the
    * chosen deserialization algorithm is compatible (in case breaking changes
-   * are made). As long as we do not increment the version past major = 1,
+   * are made). As long as we do not increment the version past major = 2,
    * though, this algorithm does not require any changes.
+   * For now all versions <= 2 are consistent.
    */
   // Ensure the future hasn't come yet
   static_assert(
-    Version::major <= 1,
-    "Incrementing the major version past 1 requires that you look at JSON deserialization!"
+    Version::major <= 2,
+    "Incrementing the major version past 2 requires that you look at JSON deserialization!"
   );
 
   /* Look at the version information to determine if there is a suitable

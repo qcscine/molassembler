@@ -11,7 +11,6 @@
 #ifndef INCLUDE_MOLASSEMBLER_TEMPLE_CONSTEXPR_TRIANGULAR_MATRIX_H
 #define INCLUDE_MOLASSEMBLER_TEMPLE_CONSTEXPR_TRIANGULAR_MATRIX_H
 
-#include "Molassembler/Temple/constexpr/Array.h"
 #include "Molassembler/Temple/constexpr/FloatingPointComparison.h"
 
 namespace Scine {
@@ -19,12 +18,9 @@ namespace Molassembler {
 namespace Temple {
 namespace UpperTriangularMatrixImpl {
 
-/*! @brief Underlying type of the upper triangular matrix.
- *
- * Can be changed to std::array and dependency on Array removed with C++17
- */
+//! @brief Underlying type of the upper triangular matrix.
 template<typename T, size_t size>
-using ArrayType = Array<T, size>;
+using ArrayType = std::array<T, size>;
 
 namespace index_conversion {
   //!  Converts from (i, j) matrix indices to the linear k index for the array

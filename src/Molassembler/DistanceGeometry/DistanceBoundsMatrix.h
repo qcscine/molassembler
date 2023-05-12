@@ -21,8 +21,6 @@ namespace Random {
 class Engine;
 } // namespace Random
 
-namespace outcome = OUTCOME_V2_NAMESPACE;
-
 namespace DistanceGeometry {
 
 class DistanceBoundsMatrix {
@@ -158,7 +156,7 @@ public:
    *
    * @complexity{@math{O(N^5)}}
    */
-  outcome::result<Eigen::MatrixXd> makeDistanceMatrix(
+  Result<Eigen::MatrixXd> makeDistanceMatrix(
     Random::Engine& engine,
     Partiality partiality = Partiality::All
   ) const noexcept;

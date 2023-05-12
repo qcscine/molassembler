@@ -13,7 +13,6 @@
 #include "Molassembler/Temple/Functor.h"
 #include "Molassembler/Temple/SetAlgorithms.h"
 #include "Molassembler/Temple/Stringify.h"
-#include "Molassembler/Temple/Stl17.h"
 #include "Molassembler/Temple/constexpr/Numeric.h"
 #include "Molassembler/Temple/constexpr/ToStl.h"
 #include "Molassembler/Temple/constexpr/TupleTypePairs.h"
@@ -146,7 +145,7 @@ BOOST_AUTO_TEST_CASE(AnglesMatchCoordinates, *boost::unit_test::label("Shapes"))
     for(Vertex i {0}; i < size(shape); i++) {
       for(Vertex j {i + 1}; j < size(shape); j++) {
         const double angleInCoordinates = std::acos(
-          Temple::Stl17::clamp(
+          std::clamp(
             getCoordinates(i).dot(getCoordinates(j)) / (
               getCoordinates(i).norm() * getCoordinates(j).norm()
             ),

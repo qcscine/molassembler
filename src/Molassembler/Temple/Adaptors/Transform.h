@@ -31,7 +31,7 @@ struct Transformer {
   );
 
   using ReturnType = decltype(
-    invoke(
+    Temple::invoke(
       std::declval<UnaryFunction>(),
       std::declval<ContainerValueType>()
     )
@@ -108,7 +108,7 @@ struct Transformer {
     }
 
     ReturnType operator * () const {
-      return invoke(basePtr_->function, *iter_);
+      return Temple::invoke(basePtr_->function, *iter_);
     }
   };
 

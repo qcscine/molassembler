@@ -6,6 +6,25 @@ All notable changes to this project will be documented in this file.
 The format is based on `Keep a Changelog <http://keepachangelog.com/en/1.0.0/>`_
 and this project adheres to `Semantic Versioning <http://semver.org/spec/v2.0.0.html>`_.
 
+2.0.0
+-----
+
+Changed
+.......
+
+- Cleaving graphs always returns Cleave object including ComponentMap
+- Changed C++ standard from C++14 to C++17
+
+Fixed
+.....
+
+- BondStereopermutator update on atom deletion
+- Dependency handling for Boost versions >1.70
+- BondStereoPermutator determination on eta bonds
+- Nitrogen thermalization in cyclic systems
+- Feasible stereopermutations consistency between serialization and deserialization
+- The gradient target for the conformer optimization is now passed correctly.
+
 1.2.1
 -----
 

@@ -143,9 +143,13 @@ SiteMapping SiteMapping::from(
   auto calculateDistance = [&](const std::vector<unsigned>& permutation) -> unsigned {
     unsigned distanceSum = 0;
     for(unsigned i = 0; i < std::min(UA, UB); ++i) {
+      std::vector<AtomIndex> aSites(a.sites.at(unmappedAs.at(i)));
+      std::vector<AtomIndex> bSites(b.sites.at(unmappedBs.at(permutation.at(i))));
+      std::sort(aSites.begin(), aSites.end());
+      std::sort(bSites.begin(), bSites.end());
       distanceSum += symmetricDifferenceSetSize(
-        a.sites.at(unmappedAs.at(i)),
-        b.sites.at(unmappedBs.at(permutation.at(i)))
+        aSites,
+        bSites
       );
     }
     return distanceSum;

@@ -20,7 +20,7 @@ using ConformerVariantType = boost::variant<
   Scine::Utils::PositionCollection,
   DgError
 >;
-extern ConformerVariantType variantCast(outcome::result<Scine::Utils::PositionCollection>);
+extern ConformerVariantType variantCast(Result<Scine::Utils::PositionCollection>);
 
 template<typename T>
 void init_dihedral_info(T& relabeler) {

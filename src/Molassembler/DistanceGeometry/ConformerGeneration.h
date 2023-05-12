@@ -16,9 +16,6 @@
 
 namespace Scine {
 namespace Molassembler {
-
-namespace outcome = OUTCOME_V2_NAMESPACE;
-
 namespace DistanceGeometry {
 namespace Detail {
 
@@ -100,7 +97,7 @@ MoleculeDGInformation gatherDGInformation(
 );
 
 //! @brief Distance Geometry refinement
-outcome::result<AngstromPositions> refine(
+Result<AngstromPositions> refine(
   Eigen::MatrixXd embeddedPositions,
   const DistanceBoundsMatrix& distanceBounds,
   const Configuration& configuration,
@@ -108,7 +105,7 @@ outcome::result<AngstromPositions> refine(
 );
 
 // @brief Individual conformer generation routine
-outcome::result<AngstromPositions> generateConformer(
+Result<AngstromPositions> generateConformer(
   const Molecule& molecule,
   const Configuration& configuration,
   std::shared_ptr<MoleculeDGInformation>& DgDataPtr,
@@ -125,7 +122,7 @@ outcome::result<AngstromPositions> generateConformer(
  * @see generateEnsemble
  */
 std::vector<
-  outcome::result<AngstromPositions>
+  Result<AngstromPositions>
 > run(
   const Molecule& molecule,
   unsigned numConformers,

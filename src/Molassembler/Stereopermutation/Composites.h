@@ -98,7 +98,6 @@ public:
      */
     std::vector<Shapes::Vertex> findReductionMapping(Shapes::Vertex reducedFusedVertex) const;
 
-    /* c++17 nodiscard */
     /*!
      * @brief Transforms the OrientationState to a canonical form
      *
@@ -113,7 +112,7 @@ public:
      * @complexity{@math{O(S!)} where @math{S} is the size of the shape (see
      * findReductionMapping)}
      */
-    std::vector<Shapes::Vertex> transformToCanonical();
+    [[nodiscard]] std::vector<Shapes::Vertex> transformToCanonical();
 
     /*! @brief Reverts the OrientationState to a non-canonical form
      *

@@ -11,7 +11,6 @@
 #include <Eigen/Core>
 #include <Eigen/Eigenvalues>
 #include <unsupported/Eigen/NumericalDiff>
-#include "Molassembler/Temple/STL17.h"
 #include <iostream>
 
 namespace Scine {
@@ -134,8 +133,8 @@ struct NewtonRaphson {
     while(
       check.shouldContinue(
         iteration,
-        Stl17::as_const(value),
-        Stl17::as_const(gradients)
+        std::as_const(value),
+        std::as_const(gradients)
       )
     ) {
       // Solve HΔx = g, then apply x_(n+1) = x_n - Δx

@@ -671,7 +671,7 @@ void RankingTree::applySequenceRules_(
     branchOrderingHelper_
   );
 
-  if /* C++17 constexpr */ (buildTypeIsDebug) {
+  if constexpr (buildTypeIsDebug) {
     Log::log(Log::Particulars::RankingTreeDebugInfo)
       << "  Sets post sequence rule 2: {"
       << Temple::condense(
@@ -949,7 +949,7 @@ void RankingTree::applySequenceRules_(
       tree_[targetIndex].stereopermutatorOption = std::move(newStereopermutator);
     }
 
-    if /* C++17 constexpr */ (buildTypeIsDebug) {
+    if constexpr (buildTypeIsDebug) {
       if(Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0) {
         writeGraphvizFiles_({
           adaptedMolGraphviz_,
@@ -1088,7 +1088,7 @@ void RankingTree::applySequenceRules_(
           }
         }
 
-        if /* C++17 constexpr */ (buildTypeIsDebug) {
+        if constexpr (buildTypeIsDebug) {
           if(Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0) {
             writeGraphvizFiles_({
               adaptedMolGraphviz_,
@@ -1116,7 +1116,7 @@ void RankingTree::applySequenceRules_(
       branchOrderingHelper_
     );
 
-    if /* C++17 constexpr */(buildTypeIsDebug) {
+    if constexpr(buildTypeIsDebug) {
       Log::log(Log::Particulars::RankingTreeDebugInfo)
         << "Sets post sequence rule 3: {"
         << Temple::condense(
@@ -1237,7 +1237,7 @@ void RankingTree::applySequenceRules_(
     // Recalculate undecided sets
     undecidedSets = branchOrderingHelper_.getUndecidedSets();
 
-    if /* C++17 constexpr */ (buildTypeIsDebug) {
+    if constexpr (buildTypeIsDebug) {
       if(
         Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0
         && notEmpty_(comparisonSets)
@@ -1301,7 +1301,7 @@ void RankingTree::applySequenceRules_(
       // Recalculate the undecided sets
       undecidedSets = branchOrderingHelper_.getUndecidedSets();
 
-      if /* C++17 constexpr */ (buildTypeIsDebug) {
+      if constexpr (buildTypeIsDebug) {
         if(
           Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0
           && notEmpty_(comparisonSets)
@@ -1316,7 +1316,7 @@ void RankingTree::applySequenceRules_(
       }
     }
 
-  if /* C++17 constexpr */ (buildTypeIsDebug) {
+  if constexpr (buildTypeIsDebug) {
     Log::log(Log::Particulars::RankingTreeDebugInfo)
       << "Sets post sequence rule 4A: {"
       << Temple::condense(
@@ -1436,7 +1436,7 @@ void RankingTree::applySequenceRules_(
         }
       );
 
-      if /* C++17 constexpr */ (buildTypeIsDebug) {
+      if constexpr (buildTypeIsDebug) {
         if(Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0) {
           writeGraphvizFiles_({
             adaptedMolGraphviz_,
@@ -1487,7 +1487,7 @@ void RankingTree::applySequenceRules_(
       }
     }
 
-    if /* C++17 constexpr */ (buildTypeIsDebug) {
+    if constexpr (buildTypeIsDebug) {
       if(Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0) {
         std::unordered_set<TreeVertexIndex> representativeVertices;
         std::set<TreeEdgeIndex> representativeEdges;
@@ -1620,7 +1620,7 @@ void RankingTree::applySequenceRules_(
                 }
               );
 
-              if /* C++17 constexpr */ (buildTypeIsDebug) {
+              if constexpr (buildTypeIsDebug) {
                 if(Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0) {
                   writeGraphvizFiles_({
                     adaptedMolGraphviz_,
@@ -1658,7 +1658,7 @@ void RankingTree::applySequenceRules_(
       );
     }
 
-    if /* C++17 constexpr */ (buildTypeIsDebug) {
+    if constexpr (buildTypeIsDebug) {
       Log::log(Log::Particulars::RankingTreeDebugInfo)
         << "Sets post sequence rule 4B: {"
         << Temple::condense(
@@ -1702,7 +1702,7 @@ void RankingTree::applySequenceRules_(
     branchOrderingHelper_
   );
 
-  if /* C++17 constexpr */ (buildTypeIsDebug) {
+  if constexpr (buildTypeIsDebug) {
     Log::log(Log::Particulars::RankingTreeDebugInfo)
       << "Sets post sequence rule 5: {"
       << Temple::condense(
@@ -1769,7 +1769,7 @@ std::vector<
     depthLimitOptional
   );
 
-  if /* C++17 constexpr */ (buildTypeIsDebug) {
+  if constexpr (buildTypeIsDebug) {
     Log::log(Log::Particulars::RankingTreeDebugInfo)
       << "  Sets post sequence rule 1: {"
       << Temple::condense(
@@ -1804,7 +1804,7 @@ std::vector<
     depthLimitOptional
   );
 
-  if /* C++17 constexpr */ (buildTypeIsDebug) {
+  if constexpr (buildTypeIsDebug) {
     Log::log(Log::Particulars::RankingTreeDebugInfo)
       << "  Sets post sequence rule 2: {"
       << Temple::condense(
@@ -1840,7 +1840,7 @@ std::vector<
     depthLimitOptional
   );
 
-  if /* C++17 constexpr */ (buildTypeIsDebug) {
+  if constexpr (buildTypeIsDebug) {
     Log::log(Log::Particulars::RankingTreeDebugInfo)
       << "  Sets post sequence rule 3: {"
       << Temple::condense(
@@ -1960,7 +1960,7 @@ std::vector<
 
     unsigned depth = 1;
 
-    if /* C++17 constexpr */ (buildTypeIsDebug) {
+    if constexpr (buildTypeIsDebug) {
       if(
         Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0
         && notEmpty_(comparisonSets)
@@ -2057,7 +2057,7 @@ std::vector<
       // Increment depth
       ++depth;
 
-      if /* C++17 constexpr */ (buildTypeIsDebug) {
+      if constexpr (buildTypeIsDebug) {
         if(
           Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0
           && notEmpty_(comparisonSets)
@@ -2072,7 +2072,7 @@ std::vector<
       }
     }
 
-  if /* C++17 constexpr */ (buildTypeIsDebug) {
+  if constexpr (buildTypeIsDebug) {
     Log::log(Log::Particulars::RankingTreeDebugInfo)
       << "  Sets post sequence rule 4A: {"
       << Temple::condense(
@@ -2177,7 +2177,7 @@ std::vector<
         }
       );
 
-      if /* C++17 constexpr */ (buildTypeIsDebug) {
+      if constexpr (buildTypeIsDebug) {
         if(
           Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0
           && notEmpty_(comparisonSets)
@@ -2333,7 +2333,7 @@ std::vector<
                 }
               );
 
-              if /* C++17 constexpr */ (buildTypeIsDebug) {
+              if constexpr (buildTypeIsDebug) {
                 if(Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0) {
                   writeGraphvizFiles_({
                     adaptedMolGraphviz_,
@@ -2371,7 +2371,7 @@ std::vector<
       );
     }
 
-  if /* C++17 constexpr */ (buildTypeIsDebug) {
+  if constexpr (buildTypeIsDebug) {
     Log::log(Log::Particulars::RankingTreeDebugInfo)
       << "  Sets post sequence rule 4B: {"
       << Temple::condense(
@@ -2412,7 +2412,7 @@ std::vector<
     depthLimitOptional
   );
 
-  if /* C++17 constexpr */ (buildTypeIsDebug) {
+  if constexpr (buildTypeIsDebug) {
     Log::log(Log::Particulars::RankingTreeDebugInfo)
       << "  Sets post sequence rule 5: {"
       << Temple::condense(
@@ -3031,7 +3031,7 @@ RankingTree::RankingTree(
     return;
   }
 
-  if /* C++17 constexpr */ (buildTypeIsDebug) {
+  if constexpr (buildTypeIsDebug) {
     Log::log(Log::Particulars::RankingTreeDebugInfo)
       << "Ranking substituents of atom index "
       << tree_[rootIndex].molIndex
@@ -3078,7 +3078,7 @@ RankingTree::RankingTree(
     // Update the undecided sets
     undecidedSets = branchOrderingHelper_.getUndecidedSets();
 
-    if /* C++17 constexpr */ (buildTypeIsDebug) {
+    if constexpr (buildTypeIsDebug) {
       // Write debug graph files if the corresponding log particular is set
       if(
         Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0
@@ -3163,7 +3163,7 @@ RankingTree::RankingTree(
       compareBFSSets_(comparisonSets, undecidedSets, branchOrderingHelper_);
       undecidedSets = branchOrderingHelper_.getUndecidedSets();
 
-      if /* C++17 constexpr */ (buildTypeIsDebug) {
+      if constexpr (buildTypeIsDebug) {
         // Write debug graph files if the corresponding log particular is set
         if(
           Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0
@@ -3242,7 +3242,7 @@ RankingTree::RankingTree(
     );
   }
 
-  if /* C++17 constexpr */ (buildTypeIsDebug) {
+  if constexpr (buildTypeIsDebug) {
     Log::log(Log::Particulars::RankingTreeDebugInfo)
       << "Sets post sequence rule 1: {"
       << Temple::condense(

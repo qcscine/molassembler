@@ -75,7 +75,7 @@ template<
   UnaryFunction&& function
 ) {
   using U = decltype(
-    invoke(function, *std::begin(container))
+    Temple::invoke(function, *std::begin(container))
   );
 
   Container<U, Dependents<U>...> returnContainer;
@@ -84,7 +84,7 @@ template<
   for(const auto& element : container) {
     addToContainer(
       returnContainer,
-      invoke(function, element)
+      Temple::invoke(function, element)
     );
   }
 
@@ -102,10 +102,10 @@ template<
 constexpr auto mapTupleHelper(Tuple&& tup, Unary&& f, std::index_sequence<Inds ...> /* inds */) {
   using ReturnType = Tuplelike<
     decltype(
-      invoke(f, std::declval<std::tuple_element_t<Inds, Tuple>>())
+      Temple::invoke(f, std::declval<std::tuple_element_t<Inds, Tuple>>())
     )
   ...>;
-  return ReturnType(invoke(f, std::get<Inds>(tup))...);
+  return ReturnType(Temple::invoke(f, std::get<Inds>(tup))...);
 }
 
 } // namespace Detail
@@ -130,8 +130,8 @@ template<
   std::enable_if_t<Traits::isPairlike<Pairlike>::value && !Traits::isTuplelike<Pairlike>::value>* = nullptr
 > constexpr auto map(Pairlike&& pair, Unary&& f) {
   return std::make_pair(
-    invoke(f, pair.first),
-    invoke(f, pair.second)
+    Temple::invoke(f, pair.first),
+    Temple::invoke(f, pair.second)
   );
 }
 
@@ -141,13 +141,13 @@ template<
  */
 template<class Container, class UnaryFunction, std::enable_if_t<!Traits::isPairlike<Container>::value && !Traits::isTuplelike<Container>::value>* = nullptr>
 auto map(Container&& container, UnaryFunction&& function) {
-  using U = decltype(invoke(function, *std::begin(container)));
+  using U = decltype(Temple::invoke(function, *std::begin(container)));
 
   std::vector<U> returnContainer;
   reserveIfPossible(returnContainer, container);
 
   for(auto&& value : container) {
-    returnContainer.push_back(invoke(function, std::move(value)));
+    returnContainer.push_back(Temple::invoke(function, std::move(value)));
   }
 
   return returnContainer;
@@ -157,7 +157,7 @@ auto map(Container&& container, UnaryFunction&& function) {
 template<class Container, class Callable>
 void forEach(const Container& container, Callable&& callable) {
   for(const auto& value : container) {
-    invoke(callable, value);
+    Temple::invoke(callable, value);
   }
 }
 
@@ -220,7 +220,7 @@ template<
 ) {
   for(const auto& value: container) {
     // Call variadic invoke (no tuple unpacking!)
-    init = invoke(reductionFunction, std::move(init), value);
+    init = Temple::invoke(reductionFunction, std::move(init), value);
   }
 
   return init;
@@ -233,7 +233,7 @@ template<
 template<class Container, class UnaryPredicate = Functor::Identity>
 bool all_of(const Container& container, UnaryPredicate&& predicate = UnaryPredicate {}) {
   for(const auto& element : container) {
-    if(!invoke(predicate, element)) {
+    if(!Temple::invoke(predicate, element)) {
       return false;
     }
   }
@@ -248,7 +248,7 @@ bool all_of(const Container& container, UnaryPredicate&& predicate = UnaryPredic
 template<class Container, class UnaryPredicate = Functor::Identity>
 bool any_of(const Container& container, UnaryPredicate&& predicate = UnaryPredicate {}) {
   for(const auto& element : container) {
-    if(invoke(predicate, element)) {
+    if(Temple::invoke(predicate, element)) {
       return true;
     }
   }
@@ -316,13 +316,12 @@ void remove_if(
   );
 }
 
-// C++17 nodiscard
 template<class Container, class Predicate>
-Container copy_if(const Container& container, Predicate&& predicate) {
+[[nodiscard]] Container copy_if(const Container& container, Predicate&& predicate) {
   Container returnContainer;
 
   for(const auto& value : container) {
-    if(invoke(predicate, value)) {
+    if(Temple::invoke(predicate, value)) {
       addToContainer(returnContainer, value);
     }
   }
@@ -330,16 +329,14 @@ Container copy_if(const Container& container, Predicate&& predicate) {
   return returnContainer;
 }
 
-// C++17 nodiscard
 template<class Container>
-Container sorted(Container container) {
+[[nodiscard]] Container sorted(Container container) {
   sort(container);
   return container;
 }
 
-// C++17 nodiscard
 template<class Container, typename Comparator>
-Container sorted(Container container, Comparator&& comparator) {
+[[nodiscard]] Container sorted(Container container, Comparator&& comparator) {
   sort(container, std::forward<Comparator>(comparator));
   return container;
 }

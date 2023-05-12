@@ -28,8 +28,6 @@ namespace Random {
 class Engine;
 } // namespace Random
 
-namespace outcome = OUTCOME_V2_NAMESPACE;
-
 // Forward-declare PrivateGraph
 class PrivateGraph;
 
@@ -176,10 +174,10 @@ public:
    *
    * @complexity{@math{O(V^2 \cdot E)}}
    */
-  outcome::result<Eigen::MatrixXd> makeDistanceMatrix(Random::Engine& engine) noexcept;
+  Result<Eigen::MatrixXd> makeDistanceMatrix(Random::Engine& engine) noexcept;
 
   //!@overload
-  outcome::result<Eigen::MatrixXd> makeDistanceMatrix(Random::Engine& engine, Partiality partiality) noexcept;
+  Result<Eigen::MatrixXd> makeDistanceMatrix(Random::Engine& engine, Partiality partiality) noexcept;
 //!@}
 
 //!@name Information
@@ -200,7 +198,7 @@ public:
    *
    * @complexity{@math{\Theta(V \cdot E)}}
    */
-  outcome::result<Eigen::MatrixXd> makeDistanceBounds() const noexcept;
+  Result<Eigen::MatrixXd> makeDistanceBounds() const noexcept;
 //!@}
 
 private:

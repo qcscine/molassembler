@@ -24,6 +24,9 @@ target_link_libraries(MolassemblerTests
 )
 target_compile_options(MolassemblerTests PRIVATE ${MOLASSEMBLER_CXX_FLAGS})
 target_include_directories(MolassemblerTests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(MolassemblerTests PRIVATE SYSTEM 
+  $<TARGET_PROPERTY:json,INTERFACE_INCLUDE_DIRECTORIES>
+)
 add_test(
   NAME Molassembler
   COMMAND MolassemblerTests --build_info

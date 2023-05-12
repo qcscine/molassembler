@@ -11,7 +11,6 @@
 #include "Molassembler/Temple/Invoke.h"
 
 #include <Eigen/Dense>
-#include <cfenv>
 
 namespace Scine {
 namespace Molassembler {
@@ -424,10 +423,9 @@ double NAngleBound(const Eigen::Matrix4d& lower, const Eigen::Matrix4d& upper) {
   static_assert(i < 4 && j < 4 && k < 4, "Zero-based indices!");
   static_assert(l == NAngleBoundNoneValue || l < 4, "Optional d argument is not zero-based!");
 
-  // NOTE all ifs here could be if constexpr in C++17
-  if(l == NAngleBoundNoneValue) {
+  if constexpr (l == NAngleBoundNoneValue) {
     // Triangle algorithms
-    if(isUpper) {
+    if constexpr (isUpper) {
       // Upper triangle bound
       return upper(i, j) + upper(j, k);
     }
@@ -437,13 +435,13 @@ double NAngleBound(const Eigen::Matrix4d& lower, const Eigen::Matrix4d& upper) {
   }
 
   // Tetrangle algorithms: l != NAngleBoundNoneValue
-  if(isUpper) {
+  if constexpr (isUpper) {
     // Upper tetrangle bound
     return upper(i, j) + upper(j, k) + upper(k, l);
   }
 
   // Lower tetrangle bound (THESE ARE IRREGULAR!)
-  if(firstPattern) {
+  if constexpr (firstPattern) {
     return lower(i, l) - upper(i, j) - upper(k, l); // for the first two
   }
 
@@ -865,7 +863,7 @@ struct TetrangleLimits {
 };
 
 unsigned tetrangleSmooth(Eigen::Ref<Eigen::MatrixXd> bounds) {
-  feenableexcept(FE_DIVBYZERO | FE_INVALID | FE_OVERFLOW);
+  // feenableexcept(FE_DIVBYZERO | FE_INVALID | FE_OVERFLOW);
 
   const unsigned N = bounds.cols();
 
@@ -929,7 +927,7 @@ unsigned tetrangleSmooth(Eigen::Ref<Eigen::MatrixXd> bounds) {
     ++iterations;
   } while(changedSomething);
 
-  fedisableexcept(FE_DIVBYZERO | FE_INVALID | FE_OVERFLOW);
+  // fedisableexcept(FE_DIVBYZERO | FE_INVALID | FE_OVERFLOW);
   return iterations;
 }
 

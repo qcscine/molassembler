@@ -23,8 +23,6 @@ class AtomCollection;
 
 namespace Molassembler {
 
-namespace outcome = OUTCOME_V2_NAMESPACE;
-
 class Molecule;
 
 /** @brief Helper type for directed conformer generation.
@@ -352,7 +350,7 @@ public:
    * @throws std::invalid_argument If the passed decisionList does not match
    *   the length of the result of bondList().
    */
-  outcome::result<Utils::PositionCollection> generateRandomConformation(
+  Result<Utils::PositionCollection> generateRandomConformation(
     const DecisionList& decisionList,
     const DistanceGeometry::Configuration& configuration = DistanceGeometry::Configuration {},
     BondStereopermutator::FittingMode fitting = BondStereopermutator::FittingMode::Nearest
@@ -368,7 +366,7 @@ public:
    * @throws std::invalid_argument If the passed decisionList does not match
    *   the length of the result of bondList().
    */
-  outcome::result<Utils::PositionCollection> generateConformation(
+  Result<Utils::PositionCollection> generateConformation(
     const DecisionList& decisionList,
     unsigned seed,
     const DistanceGeometry::Configuration& configuration = DistanceGeometry::Configuration {},

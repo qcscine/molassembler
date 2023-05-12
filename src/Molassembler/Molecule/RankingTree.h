@@ -378,91 +378,6 @@ private:
   std::string toString(const TreeEdgeIndex& edge) const;
   std::string toString(const VariantType& vertexOrEdge) const;
 
-  /* Some helper structs to get runBFS_ to compile smoothly. Although the
-   * boolean template parameters to runBFS_ are logically constexpr, and any
-   * false branches of if (boolean template parameter) are removed during
-   * optimization, they must compile! This requirement is removed in C++17
-   * if-constexpr structures.
-   *
-   * So EdgeInserter and VertexInserter's primary template (with boolean
-   * parameter specifying whether they should perform a task or not) does
-   * nothing, and there is a partial template specialization for the case
-   * that the boolean template parameter is true, in which case the task is
-   * performed.
-   *
-   * Classes are necessary since partial function specialization is impossible.
-   *
-   * When modernizing the code to C++17, remove those classes and employ much
-   * more legible if-constexpr in all ifs in runBFS_ using only constexpr
-   * template parameters.
-   */
-
-  //! Helper struct to insert edges into the comparison set
-  template<
-    bool insertEdges,
-    typename MultisetValueType,
-    typename MultisetComparatorType
-  > struct EdgeInserter {
-    static void execute(
-      std::map<
-        TreeVertexIndex,
-        std::multiset<MultisetValueType, MultisetComparatorType>
-      >& /* comparisonSets */,
-      const TreeVertexIndex& /* branchIndex */,
-      const TreeEdgeIndex& /* edgeIndex */
-    ) { /* do nothing */ }
-  };
-
-  //! Partial specialization that actually does the insertion
-  template<
-    typename MultisetValueType,
-    typename MultisetComparatorType
-  > struct EdgeInserter<true, MultisetValueType, MultisetComparatorType> {
-    static void execute(
-      std::map<
-        TreeVertexIndex,
-        std::multiset<MultisetValueType, MultisetComparatorType>
-      >& comparisonSets,
-      const TreeVertexIndex& branchIndex,
-      const TreeEdgeIndex& edgeIndex
-    ) {
-      comparisonSets.at(branchIndex).insert(edgeIndex);
-    }
-  };
-
-  //! Helper struct to insert vertices into the comparion set
-  template<
-    bool insertVertices,
-    typename MultisetValueType,
-    typename MultisetComparatorType
-  > struct VertexInserter {
-    static void execute(
-      std::map<
-        TreeVertexIndex,
-        std::multiset<MultisetValueType, MultisetComparatorType>
-      >& /* comparisonSets */,
-      const TreeVertexIndex& /* branchIndex */,
-      const TreeVertexIndex& /* vertexIndex */
-    ) { /* do nothing */ }
-  };
-
-  //! Partial specialization that actually does the insertion
-  template<
-    typename MultisetValueType,
-    typename MultisetComparatorType
-  > struct VertexInserter<true, MultisetValueType, MultisetComparatorType> {
-    static void execute(
-      std::map<
-        TreeVertexIndex,
-        std::multiset<MultisetValueType, MultisetComparatorType>
-      >& comparisonSets,
-      const TreeVertexIndex& branchIndex,
-      const TreeVertexIndex& vertexIndex
-    ) {
-      comparisonSets.at(branchIndex).insert(vertexIndex);
-    }
-  };
-
   /*! Performs a BFS traversal through the tree, performing ranking of a single rule
    *
    * Performs a BFS traversal through the tree, adding encountered edges and/or
@@ -561,9 +476,6 @@ private:
 
 
     /* Initialization */
-    EdgeInserter<insertEdges, MultisetValueType, MultisetComparatorType> edgeInserter;
-    VertexInserter<insertVertices, MultisetValueType, MultisetComparatorType> vertexInserter;
-
     if(!bfsDownOnly) { // Initialization is only necessary in this case
       visitedVertices.insert(sourceIndex);
     }
@@ -577,33 +489,21 @@ private:
           *this
         );
 
-        vertexInserter.execute(
-          comparisonSets,
-          undecidedBranch,
-          undecidedBranch
-        );
+        if constexpr(insertVertices) {
+          comparisonSets.at(undecidedBranch).insert(undecidedBranch);
+        }
 
-        if(insertEdges) {
+        if constexpr(insertEdges) {
           if(bfsDownOnly) {
-            edgeInserter.execute(
-              comparisonSets,
-              undecidedBranch,
-              boost::edge(sourceIndex, undecidedBranch, tree_).first
-            );
+            const auto edge = boost::edge(sourceIndex, undecidedBranch, tree_).first;
+            comparisonSets.at(undecidedBranch).insert(edge);
           } else {
             // Need to be direction-agnostic
             auto forwardEdge = boost::edge(sourceIndex, undecidedBranch, tree_);
             auto backwardEdge = boost::edge(undecidedBranch, sourceIndex, tree_);
 
-            edgeInserter.execute(
-              comparisonSets,
-              undecidedBranch,
-              (
-                forwardEdge.second
-                ? forwardEdge.first
-                : backwardEdge.first
-              )
-            );
+            const auto edge = forwardEdge.second ? forwardEdge.first : backwardEdge.first;
+            comparisonSets.at(undecidedBranch).insert(edge);
           }
         }
 
@@ -617,7 +517,7 @@ private:
     // Update the undecided sets
     undecidedSets = orderingHelper.getUndecidedSets();
 
-    if /* C++17 constexpr */ (buildTypeIsDebug) {
+    if constexpr (buildTypeIsDebug) {
       // Write debug graph files if the corresponding log particular is set
       if(
         Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0
@@ -696,17 +596,13 @@ private:
 
                 // Check if already placed
                 if(visitedVertices.count(edgeSource) == 0) {
-                  vertexInserter.execute(
-                    comparisonSets,
-                    undecidedBranch,
-                    edgeSource
-                  );
+                  if constexpr(insertVertices) {
+                    comparisonSets.at(undecidedBranch).insert(edgeSource);
+                  }
 
-                  edgeInserter.execute(
-                    comparisonSets,
-                    undecidedBranch,
-                    inEdge
-                  );
+                  if constexpr(insertEdges) {
+                    comparisonSets.at(undecidedBranch).insert(inEdge);
+                  }
 
                   newSeeds.push_back(edgeSource);
                 }
@@ -728,17 +624,13 @@ private:
                 continue;
               }
 
-              vertexInserter.execute(
-                comparisonSets,
-                undecidedBranch,
-                edgeTarget
-              );
+              if constexpr(insertVertices) {
+                comparisonSets.at(undecidedBranch).insert(edgeTarget);
+              }
 
-              edgeInserter.execute(
-                comparisonSets,
-                undecidedBranch,
-                outEdge
-              );
+              if constexpr(insertEdges) {
+                comparisonSets.at(undecidedBranch).insert(outEdge);
+              }
 
               // Add out edge target to seeds only if non-terminal
               if(!tree_[edgeTarget].isDuplicate) {
@@ -761,7 +653,7 @@ private:
       // Increment depth
       ++depth;
 
-      if /* C++17 constexpr */ (buildTypeIsDebug) {
+      if constexpr (buildTypeIsDebug) {
         if(
           Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0
           && notEmpty_(comparisonSets)

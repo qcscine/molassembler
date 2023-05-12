@@ -122,26 +122,12 @@ struct minAngleFunctor {
       calculateSmallestAngle<ShapeClass>()...
     }};
 
-    // C++17 min_element (isn't constexpr before)
-    double minElement = smallestAngles.at(0);
-
-    for(unsigned i = 1; i < sizeof...(ShapeClass); ++i) {
-      if(smallestAngles.at(i) < minElement) {
-        minElement = smallestAngles.at(i);
-      }
-    }
-
-    return minElement;
+    return *std::min_element(std::begin(smallestAngles), std::end(smallestAngles));
   }
 };
 
-/*!
- * Typedef to use temple's Array instead of std::array as the underlying
- * base array type since C++14's std::array has too few members marked constexpr
- * as to be useful. When C++17 rolls around, replace this with std::array!
- */
 template<typename T, size_t size>
-using ArrayType = Temple::Array<T, size>;
+using ArrayType = std::array<T, size>;
 
 //! Generate an integer sequence to use with stereopermutations
 template<typename ShapeClass>
@@ -393,11 +379,7 @@ constexpr double calculateChiralDistortion(
 ) {
   double chiralDistortion = 0;
 
-  // C++17:
-  // for(const auto& tetrahedron : ShapeClassFrom::tetrahedra) {
-  for(unsigned i = 0; i < ShapeClassFrom::tetrahedra.size(); ++i) {
-    const auto& tetrahedron = ShapeClassFrom::tetrahedra.at(i);
-
+  for(const auto& tetrahedron : ShapeClassFrom::tetrahedra) {
     chiralDistortion += Temple::Math::abs(
       getTetrahedronVolume(
         getCoordinates<ShapeClassFrom>(tetrahedron.at(0)),

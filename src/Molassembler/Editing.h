@@ -21,6 +21,12 @@ namespace Editing {
 //! Descriptor for an entire haptic site connected to an atom
 using AtomSitePair = std::pair<AtomIndex, SiteIndex>;
 
+struct Cleaved {
+  Molecule first;
+  Molecule second;
+  std::vector<std::pair<unsigned, AtomIndex>> componentMap;
+};
+
 /*! @brief Splits a molecule along a bridge edge
  *
  * @complexity{@math{\Theta(N)}}
@@ -35,13 +41,7 @@ using AtomSitePair = std::pair<AtomIndex, SiteIndex>;
  *
  * @todo Alter return type to Cleaved for next major version
  */
-std::pair<Molecule, Molecule> cleave(const Molecule& a, BondIndex bridge);
-
-struct Cleaved {
-  Molecule first;
-  Molecule second;
-  std::vector<std::pair<unsigned, AtomIndex>> componentMap;
-};
+Cleaved cleave(const Molecule& a, BondIndex bridge);
 
 /*! @brief Splits a molecule at a haptic site
  *

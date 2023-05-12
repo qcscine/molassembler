@@ -18,30 +18,6 @@ void init_editing(pybind11::module& m) {
     defined in the :class:`Molecule` interface.
   )delim";
 
-  editing.def(
-    "cleave",
-    pybind11::overload_cast<const Molecule&, BondIndex>(&Editing::cleave),
-    pybind11::arg("molecule"),
-    pybind11::arg("bridge"),
-    R"delim(
-      Cleave a molecule in two along a bridge bond.
-
-      Bridge bonds are edges in the graph that whose removal splits the graph
-      into two connected components. Any bonds in a cycle, for instance, are
-      not bridge bonds.
-
-      :param molecule: Molecule to cleave
-      :param bridge: Bond index of bridge bond to cleave.
-      :return: A pair of molecules
-      :example:
-
-      >>> import scine_utilities as utils
-      >>> a = Molecule() # Makes H2
-      >>> new_atom = a.add_atom(utils.ElementType.H, 0) # Make linear H3
-      >>> cleaved = editing.cleave(a, BondIndex(0, new_atom)) # Split back
-    )delim"
-  );
-
   pybind11::class_<Editing::Cleaved> cleaved {
     editing,
     "Cleaved",
@@ -63,6 +39,30 @@ void init_editing(pybind11::module& m) {
   cleaved.def_readonly(
     "component_map",
     &Editing::Cleaved::componentMap
+  );
+
+  editing.def(
+    "cleave",
+    pybind11::overload_cast<const Molecule&, BondIndex>(&Editing::cleave),
+    pybind11::arg("molecule"),
+    pybind11::arg("bridge"),
+    R"delim(
+      Cleave a molecule in two along a bridge bond.
+
+      Bridge bonds are edges in the graph whose removal splits the graph
+      into two connected components. Any bonds in a cycle, for instance, are
+      not bridge bonds.
+
+      :param molecule: Molecule to cleave
+      :param bridge: Bond index of bridge bond to cleave.
+      :return: A pair of molecules and a component map.
+      :example:
+
+      >>> import scine_utilities as utils
+      >>> a = Molecule() # Makes H2
+      >>> new_atom = a.add_atom(utils.ElementType.H, 0) # Make linear H3
+      >>> cleaved = editing.cleave(a, BondIndex(0, new_atom)) # Split back
+    )delim"
   );
 
   editing.def(

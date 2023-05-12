@@ -140,7 +140,7 @@ BOOST_AUTO_TEST_CASE(EditingCleave, *boost::unit_test::label("Molassembler")) {
   );
 
   // Perform the cleave test
-  std::pair<Molecule, Molecule> cleaved;
+  Editing::Cleaved cleaved;
   BOOST_REQUIRE_NO_THROW(cleaved = Editing::cleave(caffeine, bridgeEdge));
 
   BOOST_CHECK_MESSAGE(

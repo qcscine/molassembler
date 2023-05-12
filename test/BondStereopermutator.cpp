@@ -223,6 +223,40 @@ BOOST_AUTO_TEST_CASE(BondStatePropagation, *boost::unit_test::label("Molassemble
   BOOST_CHECK(postPermutator.assigned().value() != priorAssignment);
 }
 
+BOOST_AUTO_TEST_CASE(BondStatePropagationOnRemoval, *boost::unit_test::label("Molassembler")) {
+  using namespace Molassembler;
+
+  auto mol = IO::read("various/benzene.mol");
+  mol.removeAtom(6);
+  mol.removeAtom(0);
+  mol.removeAtom(5);
+  mol.removeAtom(0);
+  mol.removeAtom(4);
+  mol.removeAtom(0);
+  mol.removeAtom(3);
+  mol.removeAtom(0);
+  mol.removeAtom(2);
+  mol.removeAtom(0);
+  mol.removeAtom(1);
+}
+
+BOOST_AUTO_TEST_CASE(BondStatePropagationOnRemoval2, *boost::unit_test::label("Molassembler")) {
+  using namespace Molassembler;
+
+  auto mol = IO::read("various/benzene.mol");
+  mol.removeAtom(11);
+  mol.removeAtom(10);
+  mol.removeAtom(9);
+  mol.removeAtom(8);
+  mol.removeAtom(7);
+  mol.removeAtom(6);
+  mol.removeAtom(5);
+  mol.removeAtom(4);
+  mol.removeAtom(3);
+  mol.removeAtom(2);
+  mol.removeAtom(1);
+}
+
 BOOST_AUTO_TEST_CASE(StereocentersInSmallCycles, *boost::unit_test::label("Molassembler")) {
   // Flat map from cycle size to number of assignments
   const std::vector<unsigned> expectedAssignmentsMap {

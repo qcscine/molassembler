@@ -81,7 +81,7 @@ Eigen::MatrixXd fitAndSetFixedPositions(
   referenceMatrix *= Utils::Constants::angstrom_per_bohr;
 
   // Perform the QuaternionFit
-  Utils::QuaternionFit fit(referenceMatrix, positions, weights);
+  Utils::QuaternionFit fit {referenceMatrix, positions, weights};
 
   return fit.getFittedData();
 }
@@ -305,7 +305,7 @@ MoleculeDGInformation gatherDGInformation(
   return data;
 }
 
-outcome::result<AngstromPositions> refine(
+Result<AngstromPositions> refine(
   Eigen::MatrixXd embeddedPositions,
   const DistanceBoundsMatrix& distanceBounds,
   const Configuration& configuration,
@@ -441,7 +441,7 @@ outcome::result<AngstromPositions> refine(
   /* Add dihedral terms and refine again */
   unsigned thirdStageIterations = 0;
   gradientChecker = Detail::GradientOrIterLimitStop<FloatType> {};
-  gradientChecker.gradNorm = 1e-3;
+  gradientChecker.gradNorm = configuration.refinementGradientTarget;
   gradientChecker.iterLimit = (
     configuration.refinementStepLimit
     - firstStageIterations
@@ -489,7 +489,7 @@ outcome::result<AngstromPositions> refine(
   return Detail::convertToAngstromPositions(gatheredPositions);
 }
 
-outcome::result<AngstromPositions> generateConformer(
+Result<AngstromPositions> generateConformer(
   const Molecule& molecule,
   const Configuration& configuration,
   std::shared_ptr<MoleculeDGInformation>& DgDataPtr,
@@ -553,7 +553,7 @@ outcome::result<AngstromPositions> generateConformer(
 }
 
 std::vector<
-  outcome::result<AngstromPositions>
+  Result<AngstromPositions>
 > run(
   const Molecule& molecule,
   const unsigned numConformers,
@@ -561,7 +561,7 @@ std::vector<
   const boost::optional<unsigned> seedOption
 ) {
   using ReturnType = std::vector<
-    outcome::result<AngstromPositions>
+    Result<AngstromPositions>
   >;
 
   // In case there are zero assignment stereopermutators, we give up immediately

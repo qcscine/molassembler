@@ -286,7 +286,7 @@ const ExplicitBoundsGraph::GraphType& ExplicitBoundsGraph::graph() const {
   return graph_;
 }
 
-outcome::result<Eigen::MatrixXd> ExplicitBoundsGraph::makeDistanceBounds() const noexcept {
+Result<Eigen::MatrixXd> ExplicitBoundsGraph::makeDistanceBounds() const noexcept {
   unsigned N = inner_.V();
 
   Eigen::MatrixXd bounds;
@@ -358,11 +358,11 @@ outcome::result<Eigen::MatrixXd> ExplicitBoundsGraph::makeDistanceBounds() const
   return bounds;
 }
 
-outcome::result<Eigen::MatrixXd> ExplicitBoundsGraph::makeDistanceMatrix(Random::Engine& engine) noexcept {
+Result<Eigen::MatrixXd> ExplicitBoundsGraph::makeDistanceMatrix(Random::Engine& engine) noexcept {
   return makeDistanceMatrix(engine, Partiality::All);
 }
 
-outcome::result<Eigen::MatrixXd> ExplicitBoundsGraph::makeDistanceMatrix(Random::Engine& engine, Partiality partiality) noexcept {
+Result<Eigen::MatrixXd> ExplicitBoundsGraph::makeDistanceMatrix(Random::Engine& engine, Partiality partiality) noexcept {
   const unsigned N = inner_.V();
 
   Eigen::MatrixXd distancesMatrix;

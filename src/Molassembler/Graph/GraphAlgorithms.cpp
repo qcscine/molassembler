@@ -102,7 +102,6 @@ std::vector<RankingInformation::Link> siteLinks(
       stereopermutatorB.placement(),
       cycleOuterEdges
     );
-
     std::pair<SiteIndex, SiteIndex> siteIndices {
       stereopermutatorA.getRanking().getSiteIndexOf(aAdjacent),
       stereopermutatorB.getRanking().getSiteIndexOf(bAdjacent)

@@ -16,7 +16,6 @@
 #include "Molassembler/Temple/Functional.h"
 #include "Molassembler/Temple/OrderedPair.h"
 #include "Molassembler/Temple/Random.h"
-#include "Molassembler/Temple/Stl17.h"
 #include "Molassembler/Temple/Optionals.h"
 
 #include "Molassembler/AngstromPositions.h"
@@ -326,7 +325,6 @@ bool BondStereopermutator::Impl::cycleObviouslyInfeasible(
     },
     graph
   );
-
   // Model everything in three dimensions
   const Eigen::Vector3d A = Eigen::AngleAxisd(
     alpha,
@@ -378,7 +376,7 @@ bool BondStereopermutator::Impl::cycleObviouslyInfeasible(
       mu_m = (b - A.x()) / DMinusA.x();
     }
 
-    const double lambda_m = Temple::Stl17::clamp(lambda, 0.0, 1.0);
+    const double lambda_m = std::clamp(lambda, 0.0, 1.0);
 
     P = lambda_m * C;
     Q = A + mu_m * DMinusA;
@@ -1002,11 +1000,6 @@ void BondStereopermutator::Impl::propagateGraphChange(
     composite_.orientations().first.identifier == newPermutator.placement()
   );
 
-  const OrientationState& oldOrientation = select(
-    composite_.orientations(),
-    changedIsFirstInOldOrientations
-  );
-
   // Reuse the OrientationState of the "other" atom stereopermutator
   const OrientationState& unchangedOrientation = select(
     composite_.orientations(),
@@ -1027,11 +1020,19 @@ void BondStereopermutator::Impl::propagateGraphChange(
     ),
     newPermutator.placement()
   };
-
+  
+  // The following few lines seem to be buggy, the general idea is,
+  //   however, sound.
+  //   The lines are thus kept for future work. - JU 22.11.2022
+  //
   // In case nothing has changed, we are done and can stop
-  if(oldOrientation == possiblyModifiedOrientation) {
-    return;
-  }
+  // const OrientationState& oldOrientation = select(
+  //   composite_.orientations(),
+  //   changedIsFirstInOldOrientations
+  // );
+  // if(oldOrientation == possiblyModifiedOrientation) {
+  //   return;
+  // }
 
   /* Generate a new set of permutations (note this may reorder its
    * arguments into the orientations() member)

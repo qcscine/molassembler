@@ -8,7 +8,6 @@
 #ifndef INCLUDE_TEMPLE_OPTIMIZATION_TRUST_REGION_NEWTON_H
 #define INCLUDE_TEMPLE_OPTIMIZATION_TRUST_REGION_NEWTON_H
 
-#include "Molassembler/Temple/Stl17.h"
 #include "Molassembler/Temple/Optimization/Common.h"
 #include "Molassembler/Temple/Optimization/SylvestersCriterion.h"
 #include "boost/math/tools/roots.hpp"
@@ -97,8 +96,8 @@ struct TrustRegionOptimizer {
       ;
       check.shouldContinue(
         iterations,
-        Stl17::as_const(step.values.current),
-        Stl17::as_const(step.gradients.current)
+        std::as_const(step.values.current),
+        std::as_const(step.gradients.current)
       );
       ++iterations
     ) {

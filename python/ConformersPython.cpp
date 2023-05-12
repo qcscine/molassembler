@@ -16,7 +16,7 @@ using namespace Molassembler;
 
 using ConformerVariantType = boost::variant<Utils::PositionCollection, DgError>;
 
-ConformerVariantType variantCast(outcome::result<Utils::PositionCollection> result) {
+ConformerVariantType variantCast(Result<Utils::PositionCollection> result) {
   if(result) {
     return std::move(result.value());
   }

@@ -1,12 +1,30 @@
 include(CMakeFindDependencyMacro)
 
 # Public interface type dependencies
-find_dependency(Outcome REQUIRED)
 find_dependency(ScineUtilsOS REQUIRED)
+
+if(NOT DEFINED Boost_VERSION)
+  find_package(Boost QUIET)
+endif()
 
 if(NOT TARGET Boost::filesystem OR NOT TARGET Boost::system)
   unset(Boost_FOUND)
   find_dependency(Boost REQUIRED COMPONENTS filesystem system)
+endif()
+
+set(BOOST_HAS_OUTCOME 0)
+if(${Boost_VERSION} MATCHES "\\.")
+  if(${Boost_VERSION} VERSION_GREATER_EQUAL 1.70.0)
+    set(BOOST_HAS_OUTCOME 1)
+  endif()
+else()
+  if(${Boost_VERSION} GREATER_EQUAL 107000)
+    set(BOOST_HAS_OUTCOME 1)
+  endif()
+endif()
+
+if(BOOST_HAS_OUTCOME)
+  find_dependency(Outcome REQUIRED)
 endif()
 
 # Only in a static build of molassembler do we need to be able to link these

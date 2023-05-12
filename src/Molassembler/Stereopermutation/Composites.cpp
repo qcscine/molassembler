@@ -19,7 +19,6 @@
 #include "Molassembler/Temple/Functor.h"
 #include "Molassembler/Temple/GroupBy.h"
 #include "Molassembler/Temple/Permutations.h"
-#include "Molassembler/Temple/Stl17.h"
 
 namespace Scine {
 namespace Molassembler {

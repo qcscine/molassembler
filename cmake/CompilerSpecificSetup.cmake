@@ -4,8 +4,8 @@
 # See LICENSE.txt for details.
 #
 
-# Use C++14
-set(CMAKE_CXX_STANDARD 14)
+# Use C++17
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Generate a compile-commands database for use with linters / clang-tidy

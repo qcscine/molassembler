@@ -66,19 +66,19 @@ public:
     return decisionLists_.capacity();
   }
 
-  outcome::result<Utils::PositionCollection> checkGeneratedConformation(
-    outcome::result<Utils::PositionCollection> conformerResult,
+  Result<Utils::PositionCollection> checkGeneratedConformation(
+    Result<Utils::PositionCollection> conformerResult,
     const DecisionList& decisionList,
     BondStereopermutator::FittingMode fitting
   ) const;
 
-  outcome::result<Utils::PositionCollection> generateRandomConformation(
+  Result<Utils::PositionCollection> generateRandomConformation(
     const DecisionList& decisionList,
     const DistanceGeometry::Configuration& configuration,
     BondStereopermutator::FittingMode fitting
   ) const;
 
-  outcome::result<Utils::PositionCollection> generateConformation(
+  Result<Utils::PositionCollection> generateConformation(
     const DecisionList& decisionList,
     unsigned seed,
     const DistanceGeometry::Configuration& configuration,

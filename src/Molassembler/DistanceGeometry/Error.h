@@ -125,7 +125,7 @@ namespace std {
 } // namespace std
 
 namespace Detail {
-  struct DGError_category : public std::error_category {
+  struct DGError_category final : public std::error_category {
     const char* name() const noexcept final {
       return "DistanceGeometryError";
     }

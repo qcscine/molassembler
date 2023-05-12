@@ -10,13 +10,11 @@
 
 #include "Molassembler/Types.h"
 #include "Utils/Typenames.h"
-#include "outcome/outcome.hpp"
+#include "Molassembler/Detail/Outcome.h"
 #include <vector>
 
 namespace Scine {
 namespace Molassembler {
-
-namespace outcome = OUTCOME_V2_NAMESPACE;
 
 // Forward-declarations
 class Molecule;
@@ -190,7 +188,7 @@ struct MASM_EXPORT Configuration {
  * @endcode
  */
 MASM_EXPORT std::vector<
-  outcome::result<Utils::PositionCollection>
+  Result<Utils::PositionCollection>
 > generateRandomEnsemble(
   const Molecule& molecule,
   unsigned numStructures,
@@ -237,7 +235,7 @@ MASM_EXPORT std::vector<
  * specification.
  */
 MASM_EXPORT std::vector<
-  outcome::result<Utils::PositionCollection>
+  Result<Utils::PositionCollection>
 > generateEnsemble(
   const Molecule& molecule,
   unsigned numStructures,
@@ -265,7 +263,7 @@ MASM_EXPORT std::vector<
  *   in the error case it carries data about the error in order to help
  *   diagnose possible mistakes made in the molecular graph specification.
  */
-MASM_EXPORT outcome::result<Utils::PositionCollection> generateRandomConformation(
+MASM_EXPORT Result<Utils::PositionCollection> generateRandomConformation(
   const Molecule& molecule,
   const DistanceGeometry::Configuration& configuration = DistanceGeometry::Configuration {}
 );
@@ -289,7 +287,7 @@ MASM_EXPORT outcome::result<Utils::PositionCollection> generateRandomConformatio
  *   in the error case it carries data about the error in order to help
  *   diagnose possible mistakes made in the molecular graph specification.
  */
-MASM_EXPORT outcome::result<Utils::PositionCollection> generateConformation(
+MASM_EXPORT Result<Utils::PositionCollection> generateConformation(
   const Molecule& molecule,
   unsigned seed,
   const DistanceGeometry::Configuration& configuration = DistanceGeometry::Configuration {}

@@ -181,7 +181,7 @@ void testIdenticalReinterpret(const Molecule& mol, const AtomIndex checkPosition
 
   const auto expectedAssignment = fetchAssignment(mol);
   const unsigned attempts = 3;
-  outcome::result<Utils::PositionCollection> conf {DgError::UnknownException};
+  Result<Utils::PositionCollection> conf {DgError::UnknownException};
   for(unsigned attempt = 0; attempt < attempts; ++attempt) {
     conf = generateRandomConformation(mol);
     if(conf) {

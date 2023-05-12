@@ -11,7 +11,7 @@ namespace Scine {
 namespace Molassembler {
 
 std::vector<
-  outcome::result<Utils::PositionCollection>
+  Result<Utils::PositionCollection>
 > generateRandomEnsemble(
   const Molecule& molecule,
   const unsigned numStructures,
@@ -21,7 +21,7 @@ std::vector<
 
   /* Convert the AngstromPositionss into PositionCollections */
   std::vector<
-    outcome::result<Utils::PositionCollection>
+    Result<Utils::PositionCollection>
   > converted;
   converted.reserve(numStructures);
 
@@ -39,7 +39,7 @@ std::vector<
 }
 
 std::vector<
-  outcome::result<Utils::PositionCollection>
+  Result<Utils::PositionCollection>
 > generateEnsemble(
   const Molecule& molecule,
   const unsigned numStructures,
@@ -50,7 +50,7 @@ std::vector<
 
   /* Convert the AngstromPositionss into PositionCollections */
   std::vector<
-    outcome::result<Utils::PositionCollection>
+    Result<Utils::PositionCollection>
   > converted;
   converted.reserve(numStructures);
 
@@ -67,7 +67,7 @@ std::vector<
   return converted;
 }
 
-outcome::result<Utils::PositionCollection> generateRandomConformation(
+Result<Utils::PositionCollection> generateRandomConformation(
   const Molecule& molecule,
   const DistanceGeometry::Configuration& configuration
 ) {
@@ -83,7 +83,7 @@ outcome::result<Utils::PositionCollection> generateRandomConformation(
   return wrapperResult.as_failure();
 }
 
-outcome::result<Utils::PositionCollection> generateConformation(
+Result<Utils::PositionCollection> generateConformation(
   const Molecule& molecule,
   const unsigned seed,
   const DistanceGeometry::Configuration& configuration

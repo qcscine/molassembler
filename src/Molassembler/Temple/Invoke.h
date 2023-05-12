@@ -71,9 +71,7 @@ auto invokeHelper(
   const TupleType& tuple,
   std::index_sequence<Inds...> /* indices */
 ) {
-  return function(
-    std::get<Inds>(tuple)...
-  );
+  return std::invoke(function, std::get<Inds>(tuple)...);
 }
 
 /*!
@@ -137,18 +135,15 @@ struct isTupleCallable : decltype(isTupleCallableTest<Function, TupleType, Args.
  *   cause a substitution failure and not a compilation error.
  */
 template<
-  typename Function,
+  typename Fn,
   typename TupleType,
-  std::enable_if_t<
-    Detail::isTupleCallable<Function, TupleType>::value,
-    int
-  > = 0
+  std::enable_if_t<Detail::isTupleCallable<Fn, TupleType>::value, int> = 0
 > auto invoke(
-  Function&& function,
+  Fn&& function,
   const TupleType& tuple
 ) {
   return Detail::invokeHelper(
-    std::forward<Function>(function),
+    std::forward<Fn>(function),
     tuple,
     std::make_index_sequence<
       std::tuple_size<TupleType>::value
@@ -156,48 +151,16 @@ template<
   );
 }
 
-/*!
- * @brief If a callable is a member function pointer, invoke it with forwarded
- *   arguments
- *
- * @note This is the suggested C++17 std::invoke reference implementation from
- *   N4169, except with the additional SFINAE constraint that Fn may not be
- *   callable by unpacking a tuple-like singular argument in the parameter pack.
- */
 template<
   typename Fn,
   typename... Args,
   std::enable_if_t<
-    !(sizeof...(Args) == 1 && Detail::isTupleCallable<Fn, Args...>::value)
-    && std::is_member_pointer<std::decay_t<Fn>>{},
+    sizeof...(Args) != 1 || !Detail::isTupleCallable<Fn, Args...>::value,
     int
   > = 0
-> constexpr decltype(auto) invoke(Fn&& f, Args&&... args)
-noexcept(noexcept(std::mem_fn(f)(std::forward<Args>(args)...)))
-{
-  return std::mem_fn(f)(std::forward<Args>(args)...);
-}
-
-/*!
- * @brief If a callable is not a member pointer, invoke it with forwarded
- *   arguments
- *
- * @note This is the suggested C++17 std::invoke reference implementation from
- *   N4169, except with the additional SFINAE constraint that Fn may not be
- *   callable by unpacking a tuple-like singular argument in the parameter pack.
- */
-template<
-  typename Fn,
-  typename... Args,
-  std::enable_if_t<
-    !(sizeof...(Args) == 1 && Detail::isTupleCallable<Fn, Args...>::value)
-    && !std::is_member_pointer<std::decay_t<Fn>>{},
-    int
-  > = 0
-> constexpr decltype(auto) invoke(Fn&& f, Args&&... args)
-    noexcept(noexcept(std::forward<Fn>(f)(std::forward<Args>(args)...)))
-{
-  return std::forward<Fn>(f)(std::forward<Args>(args)...);
+>
+auto invoke(Fn&& function, Args&& ... args) {
+  return std::invoke(function, std::forward<Args>(args)...);
 }
 
 namespace Detail {

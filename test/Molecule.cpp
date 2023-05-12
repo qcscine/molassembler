@@ -934,7 +934,7 @@ BOOST_AUTO_TEST_CASE(Periodic2d, *boost::unit_test::label("Molassembler")) {
   std::unordered_set<unsigned> solid = {0, 1, 2, 3, 4, 5, 6, 7};
   auto pbc = Utils::PeriodicBoundaries(Eigen::Matrix3d::Identity() * 2.0);
   auto ps = Utils::PeriodicSystem(pbc, elements, positions, solid);
-  auto data = ps.getDataForMolassemblerInterpretation();
+  auto data = ps.getDataForMolassemblerInterpretation(false);
   auto atoms = std::get<0>(data);
   auto bonds = std::get<1>(data);
   auto unimportant = std::get<2>(data);
@@ -980,7 +980,7 @@ BOOST_AUTO_TEST_CASE(Periodic3d, *boost::unit_test::label("Molassembler")) {
     solidStateIndices.insert(i);
   }
   auto ps = Utils::PeriodicSystem(pbc, atoms, solidStateIndices);
-  auto data = ps.getDataForMolassemblerInterpretation();
+  auto data = ps.getDataForMolassemblerInterpretation(false);
   auto atomsWithImages = std::get<0>(data);
   auto bonds = std::get<1>(data);
   auto unimportant = std::get<2>(data);

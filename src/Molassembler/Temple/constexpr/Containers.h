@@ -293,74 +293,9 @@ template<
 
 /*! @brief Lexicographical comparison for two instances of an array-like class
  *
- * Array-like container ordering comparator specialization for containers of
- * equal size.
- *
  * @complexity{@math{O(N)}}
  */
 template<
-  template<typename, std::size_t> class ArrayType,
-  typename T,
-  std::size_t sizeA,
-  std::size_t sizeB
-> constexpr std::enable_if_t<
-  sizeA == sizeB,
-  bool
-> arraysLess(
-  const ArrayType<T, sizeA>& a,
-  const ArrayType<T, sizeB>& b
-) {
-  for(unsigned i = 0; i < sizeA; ++i) {
-    if(!(a.at(i) < b.at(i))) {
-      return false;
-    }
-  }
-
-  return true;
-}
-
-/*! @brief Less than comparison of array-like classes for mismatched sizes
- *
- * Array-like container ordering comparator specialization for containers of
- * unequal size, case a < b
- */
-template<
-  template<typename, std::size_t> class ArrayType,
-  typename T,
-  std::size_t sizeA,
-  std::size_t sizeB
-> constexpr std::enable_if_t<
-  sizeA < sizeB,
-  bool
-> arraysLess(
-  const ArrayType<T, sizeA>& /* a */,
-  const ArrayType<T, sizeB>& /* b */
-) {
-  return true;
-}
-
-/*! @brief Less than comparison of array-like classes for mismatched sizes
- *
- * Array-like container ordering comparator specialization for containers of
- * unequal size, case a > b
- */
-template<
-  template<typename, std::size_t> class ArrayType,
-  typename T,
-  std::size_t sizeA,
-  std::size_t sizeB
-> constexpr std::enable_if_t<
-  (sizeA > sizeB),
-  bool
-> arraysLess(
-  const ArrayType<T, sizeA>& /* a */,
-  const ArrayType<T, sizeB>& /* b */
-) {
-  return false;
-}
-
-// C++17: Replace all arraysLess functions with this single function below:
-/*template<
   template<typename, std::size_t> class ArrayType,
   typename T,
   std::size_t sizeA,
@@ -385,7 +320,7 @@ template<
 
     return true;
   }
-}*/
+}
 
 /*! @brief Constexpr lower bound algorithm from STL
  *
@@ -418,7 +353,7 @@ template<
   while(count > 0) {
     it = bound;
     step = count / 2;
-    it += step; // C++17 std::advance (differentiates between RandomAccess / linear)
+    std::advance(it, step);
 
     if(predicate(*it, item)) {
       ++it;

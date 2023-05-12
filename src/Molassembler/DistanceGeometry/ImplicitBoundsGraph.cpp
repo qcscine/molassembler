@@ -159,7 +159,7 @@ bool ImplicitBoundsGraph::hasExplicit(const EdgeDescriptor& edge) const {
   return distances_(internal(edge.first), internal(edge.second)) != 0;
 }
 
-outcome::result<Eigen::MatrixXd> ImplicitBoundsGraph::makeDistanceBounds() const noexcept {
+Result<Eigen::MatrixXd> ImplicitBoundsGraph::makeDistanceBounds() const noexcept {
   Eigen::MatrixXd bounds;
 
   unsigned N = distances_.outerSize();
@@ -226,11 +226,11 @@ outcome::result<Eigen::MatrixXd> ImplicitBoundsGraph::makeDistanceBounds() const
   return bounds;
 }
 
-outcome::result<Eigen::MatrixXd> ImplicitBoundsGraph::makeDistanceMatrix(Random::Engine& engine) noexcept {
+Result<Eigen::MatrixXd> ImplicitBoundsGraph::makeDistanceMatrix(Random::Engine& engine) noexcept {
   return makeDistanceMatrix(engine, Partiality::All);
 }
 
-outcome::result<Eigen::MatrixXd> ImplicitBoundsGraph::makeDistanceMatrix(Random::Engine& engine, Partiality partiality) noexcept {
+Result<Eigen::MatrixXd> ImplicitBoundsGraph::makeDistanceMatrix(Random::Engine& engine, Partiality partiality) noexcept {
   const unsigned N = innerGraphPtr_->V();
 
   std::vector<AtomIndex> indices(N);
