@@ -1,6 +1,6 @@
 /*! @file
  * @copyright This code is licensed under the 3-clause BSD license.
- *   Copyright ETH Zurich, Laboratory of Physical Chemistry, Reiher Group.
+ *   Copyright ETH Zurich, Department of Chemistry and Applied Biosciences, Reiher Group.
  *   See LICENSE.txt for details.
  * @brief Class to explore cyclic structure of molecules
  *
@@ -155,7 +155,7 @@ public:
     std::unique_ptr<RdlCyclePtrs> cyclePtr_;
 
     void advanceToNextPermissibleCycle_();
-    void initializeCyclesFromURFID_();
+    void initializeCyclesFromUrfId_();
     void matchCycleState_(const UrfIdsCycleIterator& other);
   };
 

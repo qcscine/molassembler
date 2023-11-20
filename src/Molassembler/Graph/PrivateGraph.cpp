@@ -1,6 +1,6 @@
 /*!@file
  * @copyright This code is licensed under the 3-clause BSD license.
- *   Copyright ETH Zurich, Laboratory of Physical Chemistry, Reiher Group.
+ *   Copyright ETH Zurich, Department of Chemistry and Applied Biosciences, Reiher Group.
  *   See LICENSE.txt for details.
  */
 
@@ -665,11 +665,11 @@ PrivateGraph::RemovalSafetyData PrivateGraph::generateRemovalSafetyData_() const
 }
 
 Cycles PrivateGraph::generateCycles_() const {
-  return Cycles(*this);
+  return {*this};
 }
 
 Cycles PrivateGraph::generateEtaPreservedCycles_() const {
-  return Cycles(*this, false);
+  return {*this, false};
 }
 
 } // namespace Molassembler

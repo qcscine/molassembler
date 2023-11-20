@@ -1,5 +1,5 @@
 __copyright__ = """This code is licensed under the 3-clause BSD license.
-Copyright ETH Zurich, Laboratory of Physical Chemistry, Reiher Group.
+Copyright ETH Zurich, Department of Chemistry and Applied Biosciences, Reiher Group.
 See LICENSE.txt for details.
 """
 
@@ -8,9 +8,9 @@ from dev.conan.base import ScineConan
 
 class MolassemblerConan(ScineConan):
     name = "scine_molassembler"
-    version = "2.0.0"
+    version = "2.0.1"
     license = "BSD-3-Clause"
-    author = "ETH Zurich, Laboratory of Physical Chemistry, Reiher Group"
+    author = "ETH Zurich, Department of Chemistry and Applied Biosciences, Reiher Group"
     url = "https://scine.ethz.ch/download/molassembler"
     description = "Molecular graph interpretation, modification and conformer generation"
     options = {
@@ -45,7 +45,7 @@ class MolassemblerConan(ScineConan):
         "CMakeLists.txt",
     ]
     requires = [
-        "scine_utilities/8.0.0",
+        "scine_utilities/9.0.0",
         "RingDecomposerLib/1.1.3",
         "nauty/2.7r1"
     ]

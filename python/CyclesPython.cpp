@@ -1,11 +1,26 @@
 /*!@file
  * @copyright This code is licensed under the 3-clause BSD license.
- *   Copyright ETH Zurich, Laboratory of Physical Chemistry, Reiher Group.
+ *   Copyright ETH Zurich, Department of Chemistry and Applied Biosciences, Reiher Group.
  *   See LICENSE.txt for details.
  */
 #include "TypeCasters.h"
 
 #include "Molassembler/Cycles.h"
+
+namespace {
+
+template<typename Iterator>
+struct CopyingIterator {
+  // Need only very little for pybind
+  CopyingIterator(Iterator it) : iter(std::move(it)) {}
+  std::decay_t<typename Iterator::value_type> operator * () const { return *iter; }
+  CopyingIterator& operator ++ () { ++iter; return *this; }
+  bool operator == (const CopyingIterator& other) { return iter == other.iter; }
+
+  Iterator iter;
+};
+
+}
 
 void init_cycles(pybind11::module& m) {
   using namespace Scine::Molassembler;
@@ -84,9 +99,16 @@ void init_cycles(pybind11::module& m) {
     "Returns the number of relevant cycles a bond belongs to"
   );
 
+  // Cycles iterator returns references, which doesn't play nice with Python's
+  // list semantics
   cycles.def(
     "__iter__",
-    [](const Cycles& cyc) {return pybind11::make_iterator(cyc.begin(), cyc.end());},
+    [](const Cycles& cyc) {
+      return pybind11::make_iterator(
+        CopyingIterator(cyc.begin()),
+        CopyingIterator(cyc.end())
+      );
+    },
     "Iterate through all relevant cycles."
   );
 

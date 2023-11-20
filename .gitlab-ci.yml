@@ -99,6 +99,20 @@ pypi-cp39:
   variables:
     PYABI: cp39-cp39
 
+pypi-cp310:
+  stage: build
+  extends: .manylinux
+  only: [master]
+  variables:
+    PYABI: cp310-cp310
+
+pypi-cp311:
+  stage: build
+  extends: .manylinux
+  only: [master]
+  variables:
+    PYABI: cp311-cp311
+
 # CMake-only build
 cmake-only:
   stage: build

@@ -1,6 +1,6 @@
 /*!@file
  * @copyright This code is licensed under the 3-clause BSD license.
- *   Copyright ETH Zurich, Laboratory of Physical Chemistry, Reiher Group.
+ *   Copyright ETH Zurich, Department of Chemistry and Applied Biosciences, Reiher Group.
  *   See LICENSE.txt for details.
  */
 
@@ -8,6 +8,7 @@
 #define INCLUDE_TEMPLE_OPTIMIZATION_LBFGS_H
 
 #include "Molassembler/Temple/Optimization/Common.h"
+#include <utility>
 
 /* TODO
  * - Detect ill-conditioning of LBFGS? Doesn't do well at all near maxima

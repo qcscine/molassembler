@@ -23,7 +23,7 @@ else()
   endif()
 endif()
 
-if(BOOST_HAS_OUTCOME)
+if(NOT BOOST_HAS_OUTCOME)
   find_dependency(Outcome REQUIRED)
 endif()
 
