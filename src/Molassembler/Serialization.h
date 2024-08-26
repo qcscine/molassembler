@@ -8,6 +8,7 @@
 #ifndef INCLUDE_MOLASSEMBLER_SERIALIZATION_H
 #define INCLUDE_MOLASSEMBLER_SERIALIZATION_H
 
+#include <cstdint>
 #include <vector>
 #include <string>
 #include <memory>

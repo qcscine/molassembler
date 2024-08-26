@@ -1050,6 +1050,12 @@ void checkAtomStereopermutator(
   );
 }
 
+BOOST_AUTO_TEST_CASE(EmptyInterpret, *boost::unit_test::label("Molassembler")) {
+  BOOST_CHECK_THROW(Interpret::molecules(Utils::AtomCollection(), Utils::BondOrderCollection(),
+                                         Interpret::BondDiscretizationOption::RoundToNearest),
+                    std::runtime_error);
+}
+
 #ifdef NDEBUG
 BOOST_AUTO_TEST_CASE(ShapeClassification, *boost::unit_test::label("Molassembler")) {
   // Particular cases from issues that reveal shape classification needs.

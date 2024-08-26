@@ -519,4 +519,31 @@ void init_graph(pybind11::module& m) {
       return g.bondType(i);
     }
   );
+
+  // in operator
+  graphClass.def(
+    "__contains__",
+    [](const Graph& g, const AtomIndex i) -> bool {
+      try {
+        g.elementType(i);
+        return true;
+      }
+      catch (const std::out_of_range&) {
+        return false;
+      }
+    }
+  );
+
+  graphClass.def(
+    "__contains__",
+    [](const Graph& g, const BondIndex i) -> bool {
+      try {
+        g.bondType(i);
+        return true;
+      }
+      catch (const std::out_of_range&) {
+        return false;
+      }
+    }
+  );
 }

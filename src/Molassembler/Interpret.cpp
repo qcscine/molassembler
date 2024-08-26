@@ -445,6 +445,10 @@ Parts construeParts(
 ) {
   const unsigned N = elements.size();
 
+  if (N == 0) {
+    throw std::runtime_error("Received no atoms, cannot intepret a molecule");
+  }
+
   // Check preconditions
   if(angstromWrapper.positions.rows() != N) {
     throw std::invalid_argument(

@@ -155,6 +155,14 @@ void init_component_map(T& interpretSubmodule) {
   );
 
   componentMap.def(
+    "__iter__",
+    [](const Interpret::ComponentMap& map) {
+      return pybind11::make_iterator(map.begin(), map.end());
+    },
+    pybind11::keep_alive<0, 1>()
+  );
+
+  componentMap.def(
     "__repr__",
     [](const Interpret::ComponentMap& map) -> std::string {
       std::string repr = "[";

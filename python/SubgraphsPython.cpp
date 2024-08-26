@@ -9,6 +9,7 @@
 #include "Molassembler/Molecule.h"
 #include "Molassembler/Graph.h"
 #include "Molassembler/Subgraphs.h"
+#include "pybind11/operators.h"
 
 using namespace Scine::Molassembler;
 
@@ -80,6 +81,9 @@ void init_bimap(pybind11::module& m) {
   bimap.def_readonly("left", &Subgraphs::IndexMap::left, "Access stored relationships from the left");
   init_bimap_side<Subgraphs::IndexMap::right_map>(bimap, "Right");
   bimap.def_readonly("right", &Subgraphs::IndexMap::right, "Access stored relationships from the right");
+
+  bimap.def(pybind11::self == pybind11::self);
+  bimap.def(pybind11::self != pybind11::self);
 
   bimap.def("__len__", &Subgraphs::IndexMap::size);
 }

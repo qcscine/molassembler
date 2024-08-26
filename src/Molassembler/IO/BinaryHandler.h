@@ -8,6 +8,7 @@
 #ifndef INCLUDE_MOLASSEMBLER_IO_BINARY_H
 #define INCLUDE_MOLASSEMBLER_IO_BINARY_H
 
+#include <cstdint>
 #include <fstream>
 #include <string>
 #include <vector>

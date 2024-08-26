@@ -8,6 +8,7 @@
 #ifndef INCLUDE_BASE_64_ENCODING_H
 #define INCLUDE_BASE_64_ENCODING_H
 
+#include <cstdint>
 #include <string>
 #include <vector>
 

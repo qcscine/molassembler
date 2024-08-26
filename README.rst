@@ -81,6 +81,13 @@ J.-G. Sobez, M. Reiher, "Molassembler: Molecular Graph Construction,
 Modification, and Conformer Generation for Inorganic and Organic
 Molecules", *J. Chem. Inf. Model*, **2020**, *60*, 3884.
 
+Furthermore, when publishing results obtained with any SCINE module, please cite the following paper:
+
+T. Weymuth, J. P. Unsleber, P. L. Türtscher, M. Steiner, J.-G. Sobez, C. H. Müller, M. Mörchen,
+V. Klasovita, S. A. Grimmel, M. Eckhoff, K.-S. Csizi, F. Bosia, M. Bensberg, M. Reiher,
+"SCINE—Software for chemical interaction networks", *J. Chem. Phys.*, **2024**, *160*, 222501
+(DOI `10.1063/5.0206974 <https://doi.org/10.1063/5.0206974>`_).
+
 Installation
 ------------
 
@@ -110,7 +117,7 @@ No dependencies must be preinstalled, and you do not need to download the
 sources. To install/build with Conan::
 
     conan remote add scine https://scine-artifactory.ethz.ch/artifactory/api/conan/public
-    conan install -r scine --build=missing scine_molassembler/2.0.1@
+    conan install -r scine --build=missing scine_molassembler/3.0.0@
 
 Should you want Python bindings, add ``-o scine_molassembler:python=True`` before
 the last argument.
@@ -132,9 +139,9 @@ If ``doxygen`` is found, the C++ library documentation is built. If the Python
 bindings are built and the ``sphinx`` Python module is available, the Python
 binding documentation is generated too.
 
-.. _C++ library: https://scine.ethz.ch/static/download/documentation/molassembler/v2.0.1/cpp/index.html
+.. _C++ library: https://scine.ethz.ch/static/download/documentation/molassembler/v3.0.0/cpp/index.html
 
-.. _Python bindings: https://scine.ethz.ch/static/download/documentation/molassembler/v2.0.1/py/index.html
+.. _Python bindings: https://scine.ethz.ch/static/download/documentation/molassembler/v3.0.0/py/index.html
 
 References
 ----------

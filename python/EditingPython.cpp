@@ -139,7 +139,7 @@ void init_editing(pybind11::module& m) {
 
   editing.def(
     "substitute",
-    &Editing::substitute,
+    pybind11::overload_cast<const Molecule&, const Molecule&, BondIndex, BondIndex>(&Editing::substitute),
     pybind11::arg("left"),
     pybind11::arg("right"),
     pybind11::arg("left_bridge"),
@@ -158,6 +158,34 @@ void init_editing(pybind11::module& m) {
         lighter part away.
       :param right_bridge: Right's bridge bond from which to substitute the
         lighter part away.
+    )delim"
+  );
+
+  editing.def(
+    "substitute",
+    pybind11::overload_cast<const Molecule&, const Molecule&, BondIndex, BondIndex, AtomIndex, AtomIndex>(&Editing::substitute),
+    pybind11::arg("left"),
+    pybind11::arg("right"),
+    pybind11::arg("left_bridge"),
+    pybind11::arg("right_bridge"),
+    pybind11::arg("left_substitute_index"),
+    pybind11::arg("right_substitute_index"),
+    R"delim(
+      Connect two molecules by substituting away the lighter side of a pair of
+      bonds of separate molecules.
+
+      The heavy side is chosen by number of atoms first, then molecular weight
+      if the number of atoms is equal. Should both sides be equal in both, which
+      side is picked is undefined.
+
+      :param left: The first molecule
+      :param right: The second molecule
+      :param left_bridge: Left's bridge bond from which to substitute the
+        lighter part away.
+      :param right_bridge: Right's bridge bond from which to substitute the
+        lighter part away.
+      :param left_substitute_index: Left's atom index to substitute away
+      :param right_substitute_index: Right's atom index to substitute away
     )delim"
   );
 

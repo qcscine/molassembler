@@ -250,9 +250,9 @@ std::vector<Molecule> split(const std::string& filename) {
   Interpret::MoleculesResult interpretation;
   if(readData.second.empty()) {
     // Unfortunately, the file type does not include bond order information
-    interpretation = Interpret::molecules(readData.first);
+    interpretation = Interpret::molecules(readData.first, Interpret::BondDiscretizationOption::RoundToNearest);
   } else {
-    interpretation = Interpret::molecules(readData.first, readData.second);
+    interpretation = Interpret::molecules(readData.first, readData.second, Interpret::BondDiscretizationOption::RoundToNearest);
   }
 
   return interpretation.molecules;

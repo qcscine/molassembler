@@ -1,14 +1,14 @@
 /*!@file
  * @copyright This code is licensed under the 3-clause BSD license.
- *   Copyright ETH Zurich, Department of Chemistry and Applied Biosciences, Reiher Group.
- *   See LICENSE.txt for details.
+ *   Copyright ETH Zurich, Department of Chemistry and Applied Biosciences,
+ * Reiher Group. See LICENSE.txt for details.
  * @brief Editing of molecules past low-level member functions
  */
 #ifndef INCLUDE_MOLASSEMBLER_EDITING_H
 #define INCLUDE_MOLASSEMBLER_EDITING_H
 
-#include "Molassembler/RankingInformation.h"
 #include "Molassembler/Molecule.h"
+#include "Molassembler/RankingInformation.h"
 #include <tuple>
 
 namespace Scine {
@@ -67,8 +67,10 @@ Cleaved cleave(const Molecule& a, AtomSitePair hapticSite);
  * @param log The molecule being inserted into
  * @param wedge The molecule being inserted
  * @param logBond The bond in @p log into which @p wedge is being inserted into
- * @param firstWedgeAtom The atom of wedge to bond to the first atom in @p logBond
- * @param secondWedgeAtom The atom of wedge to bond to the second atom in @p logBond
+ * @param firstWedgeAtom The atom of wedge to bond to the first atom in @p
+ * logBond
+ * @param secondWedgeAtom The atom of wedge to bond to the second atom in @p
+ * logBond
  *
  * @note The bond type of the bond inserted into is reused in the new bonds
  *   to @p firstWedgeAtom and @p secondWedgeAtom.
@@ -80,8 +82,7 @@ Molecule insert(
   const Molecule& wedge,
   BondIndex logBond,
   AtomIndex firstWedgeAtom,
-  AtomIndex secondWedgeAtom
-);
+  AtomIndex secondWedgeAtom);
 
 /** @brief Fuses two molecules, adding all adjacencies and continuations of one
  * Molecule's atoms to another.
@@ -101,12 +102,7 @@ Molecule insert(
  *
  * @return A single molecule fused at the specified atoms
  */
-Molecule superpose(
-  Molecule top,
-  const Molecule& bottom,
-  AtomIndex topAtom,
-  AtomIndex bottomAtom
-);
+Molecule superpose(Molecule top, const Molecule& bottom, AtomIndex topAtom, AtomIndex bottomAtom);
 
 /**
  * @brief Connect two molecules by substituting away the smaller side of a
@@ -117,18 +113,39 @@ Molecule superpose(
  * @param left The first molecule
  * @param right The second molecule
  * @param leftBond @p left's bond from which to substitute the lighter part away
- * @param rightBond @p right's bond from which to substitute the lighter part away
+ * @param rightBond @p right's bond from which to substitute the lighter part
+ * away
  *
  * @note The smaller side is chosen by number of atoms first, then molecular
  *   weight if the number of atoms is equal. Should both sides be equal in
  *   both, which side is picked is undefined.
  */
+Molecule
+substitute(const Molecule& left, const Molecule& right, BondIndex leftBond, BondIndex rightBond);
+
+/**
+ * @brief Connect two molecules by substituting away the defined side of a
+ *   pair of bonds of separate molecules
+ *
+ * @complexity{@math{\Theta(N)}}
+ *
+ * @param left The first molecule
+ * @param right The second molecule
+ * @param leftBond @p left's bond from which to substitute the lighter part away
+ * @param rightBond @p right's bond from which to substitute the lighter part
+ * away
+ * @param leftSubstituteIndex The atom index of @p left to substitute away
+ * @param rightSubstituteIndex The atom index of @p right to substitute away
+ *
+ * @note The substituting indices must be contained in the respective bonds
+ */
 Molecule substitute(
   const Molecule& left,
   const Molecule& right,
   BondIndex leftBond,
-  BondIndex rightBond
-);
+  BondIndex rightBond,
+  AtomIndex leftSubstituteIndex,
+  AtomIndex rightSubstituteIndex);
 
 /**
  * @brief Connect molecules by creating a new bond between two atoms from
@@ -150,13 +167,8 @@ Molecule substitute(
  * @return A single molecule connected by the specified bond type at the
  * indicated atoms
  */
-Molecule connect(
-  Molecule a,
-  const Molecule& b,
-  AtomIndex aConnectAtom,
-  AtomIndex bConnectAtom,
-  BondType bondType
-);
+Molecule
+connect(Molecule a, const Molecule& b, AtomIndex aConnectAtom, AtomIndex bConnectAtom, BondType bondType);
 
 /**
  * @brief Connects two molecules by connecting multiple atoms from one to a
@@ -176,8 +188,7 @@ Molecule addLigand(
   Molecule a,
   const Molecule& ligand,
   AtomIndex complexatingAtom,
-  const std::vector<AtomIndex>& ligandBindingAtoms
-);
+  const std::vector<AtomIndex>& ligandBindingAtoms);
 
 } // namespace Editing
 } // namespace Molassembler

@@ -8,7 +8,7 @@ from dev.conan.base import ScineConan
 
 class MolassemblerConan(ScineConan):
     name = "scine_molassembler"
-    version = "2.0.1"
+    version = "3.0.0"
     license = "BSD-3-Clause"
     author = "ETH Zurich, Department of Chemistry and Applied Biosciences, Reiher Group"
     url = "https://scine.ethz.ch/download/molassembler"
@@ -45,7 +45,7 @@ class MolassemblerConan(ScineConan):
         "CMakeLists.txt",
     ]
     requires = [
-        "scine_utilities/9.0.0",
+        "scine_utilities/[=10.0.0]",
         "RingDecomposerLib/1.1.3",
         "nauty/2.7r1"
     ]
