@@ -125,7 +125,7 @@ BOOST_AUTO_TEST_CASE(CentralAngleRootFinding, *boost::unit_test::label("Molassem
 
       BOOST_CHECK_MESSAGE(
         pass,
-        "Central angle deviation norm is not smaller than 1e-5 for " << Temple::stringify(edgeLengths)
+        "Central angle deviation norm is larger than 1e-4 for " << Temple::stringify(edgeLengths)
           << ", circumcenter is inside: " << std::boolalpha << circumcenterInside << ", deviation: " << deviation
       );
 

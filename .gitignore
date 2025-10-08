@@ -24,6 +24,5 @@ manual/manual.toc
 .clangd/
 .cache/
 *.swp
-.conan_test_package/build
 .idea/*
 .vscode

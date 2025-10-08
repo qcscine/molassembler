@@ -19,6 +19,8 @@
 #include "boost/process/io.hpp"
 #include "boost/process/search_path.hpp"
 
+#include <chrono>
+
 namespace {
 
 bool graphvizInPath() {
@@ -31,35 +33,53 @@ std::string pipeSVG(const Scine::Molassembler::Molecule& molecule) {
 
   // Construct pipe streams for redirection
   boost::process::opstream ips;
-  boost::process::pstream ps;
-  boost::process::pstream err;
+  boost::process::ipstream ps;
+  boost::process::ipstream err;
 
   // Start the child process
-  boost::process::child childProcess(callString, boost::process::std_in<ips, boost::process::std_out> ps,
-                                     boost::process::std_err > err);
+  boost::process::child childProcess(
+		  boost::process::shell, callString,
+		  boost::process::std_in < ips,
+		  boost::process::std_out > ps,
+		  boost::process::std_err > err);
 
   // Feed our graphviz into the process
   ips << molecule.dumpGraphviz();
   ips.flush();
   ips.pipe().close();
 
+  std::stringstream stderrStream;
+  std::string line;
+
+  const auto timeout = std::chrono::seconds(10);
+  const auto start = std::chrono::steady_clock::now();
+
+  // Read output/error while process runs or pipes have data in chunks to avoid deadlock
+  while (childProcess.running() || !ps.eof() || !err.eof()) {
+    // Timeout check
+    if (std::chrono::steady_clock::now() - start > timeout) {
+      childProcess.terminate();
+      throw std::runtime_error("Graphviz 'dot' process timed out after 10 seconds.");
+    }
+
+    // Drain stdout
+    while (std::getline(ps, line)) {
+      os << line << '\n';
+    }
+
+    // Drain stderr
+    while (std::getline(err, line)) {
+      stderrStream << line << '\n';
+    }
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+  }
   // Wait for the child process to exit
   childProcess.wait();
 
-  std::stringstream stderrStream;
-#if BOOST_VERSION >= 107000
-  /* NOTE: This implementation of buffer transfers in boost process has a bug
-   * that isn't fixed before Boost 1.70.
-   */
-  os << ps.rdbuf();
-  stderrStream << err.rdbuf();
-#else
-  // Workaround: cast to a parent class implementing rdbuf() correctly.
-  using BasicIOSReference = std::basic_ios<char, std::char_traits<char>>&;
-  // Feed the results into our ostream
-  os << static_cast<BasicIOSReference>(ps).rdbuf();
-  stderrStream << static_cast<BasicIOSReference>(err).rdbuf();
-#endif
+  if (childProcess.exit_code() != 0) {
+    throw std::runtime_error("Graphviz 'dot' failed:\n" + stderrStream.str());
+  }
 
   return os.str();
 }

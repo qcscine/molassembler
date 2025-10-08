@@ -578,8 +578,8 @@ public:
   //!@name State
   //!@{
     const BTree& baseRef_;
-    const unsigned leftMostNode_;
-    const unsigned rightMostNode_;
+    unsigned leftMostNode_;
+    unsigned rightMostNode_;
     DynamicArray<unsigned, maxHeight + 1> nodeStack_;
     DynamicArray<unsigned, maxHeight + 1> indexStack_;
   //!@}

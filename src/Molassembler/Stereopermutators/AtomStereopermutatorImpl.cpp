@@ -386,7 +386,6 @@ void AtomStereopermutator::Impl::assign(
       siteGroups,
       Shapes::Properties::positionGroups(shape_)
     );
-
     if(shapePositionMap_.size() < 1)
       throw std::logic_error("Graphs of site and shape vertex links are not isomorphic");
   } else {

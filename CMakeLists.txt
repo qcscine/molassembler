@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.9)
 
 project(Molassembler
-  VERSION 3.0.0
+  VERSION 3.0.1
   DESCRIPTION "Graph-based molecular toolkit for possibly inorganic molecules"
   LANGUAGES C CXX
 )
